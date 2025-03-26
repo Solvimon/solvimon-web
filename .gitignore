@@ -1,0 +1,6 @@
+.sdk
+dist
+coverage
+node_modules
+
+*storybook.log

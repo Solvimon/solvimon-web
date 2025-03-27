@@ -20,8 +20,26 @@
   "files": [
     "dist"
   ],
-  "main": "./dist/SolvimonCheckout.js",
+  "main": "./dist/index.es.js",
+  "module": "./dist/index.es.js",
   "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.ce.d.ts",
+      "import": "./dist/index.es.js",
+      "require": "./dist/index.cjs.js"
+    },
+    "./solvimon-checkout": {
+      "types": "./dist/SolvimonCheckout.ce.d.ts",
+      "import": "./dist/SolvimonCheckout.es.js",
+      "require": "./dist/SolvimonCheckout.cjs.js"
+    },
+    "./solvimon-invoice": {
+      "types": "./dist/SolvimonInvoice.ce.d.ts",
+      "import": "./dist/SolvimonInvoice.es.js",
+      "require": "./dist/SolvimonInvoice.cjs.js"
+    }
+  },
   "dependencies": {
     "@adyen/adyen-web": "^6.5.0",
     "@solvimon/tailwind-config": "^1.0.0",
@@ -48,6 +66,7 @@
     "tailwindcss": "^3.4.17",
     "typescript": "~5.6.3",
     "vite": "^6.0.5",
+    "vite-bundle-visualizer": "^1.2.1",
     "vite-plugin-dts": "^3.7.0",
     "vite-plugin-vue-devtools": "^7.6.8",
     "vitest": "^2.1.8",

@@ -2,7 +2,11 @@
 import HelloWorld from './components/HelloWorld.vue'
 import TheWelcome from './components/TheWelcome.vue'
 
-import '@solvimon/sdk';
+import { defineSolvimonCheckout } from '@solvimon/sdk/solvimon-checkout';
+import { defineSolvimonInvoice } from '@solvimon/sdk/solvimon-invoice';
+
+defineSolvimonCheckout();
+defineSolvimonInvoice();
 </script>
 
 <template>
@@ -13,11 +17,12 @@ import '@solvimon/sdk';
       <HelloWorld msg="You did it!" />
     </div>
 
-    <solvimon-checkout />
   </header>
-
+  
   <main>
     <TheWelcome />
+    <solvimon-checkout />
+    <solvimon-invoice />
   </main>
 </template>
 

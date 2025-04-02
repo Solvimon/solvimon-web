@@ -3,8 +3,8 @@
   "version": "0.1.0",
   "description": "Solvimon's Front-end SDK provides you with the building blocks to create a billing self serve experience",
   "private": true,
-  "type": "module",
   "scripts": {
+    "analyze": "vite-bundle-visualizer",
     "prebuild": "npm run build:css",
     "build": "vite build",
     "build-storybook": "storybook build",
@@ -15,27 +15,28 @@
     "storybook": "storybook dev -p 6006",
     "test:unit": "vitest",
     "type-check": "vue-tsc --build",
+    "watch": "vite build --watch",
     "watch:css": "npm run build:css -- --watch"
   },
   "files": [
     "dist"
   ],
-  "main": "./dist/index.es.js",
+  "main": "./dist/index.cjs.js",
   "module": "./dist/index.es.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/index.ce.d.ts",
+      "types": "./dist/index.d.ts",
       "import": "./dist/index.es.js",
       "require": "./dist/index.cjs.js"
     },
     "./solvimon-checkout": {
-      "types": "./dist/SolvimonCheckout.ce.d.ts",
+      "types": "./dist/SolvimonCheckout.d.ts",
       "import": "./dist/SolvimonCheckout.es.js",
       "require": "./dist/SolvimonCheckout.cjs.js"
     },
     "./solvimon-invoice": {
-      "types": "./dist/SolvimonInvoice.ce.d.ts",
+      "types": "./dist/SolvimonInvoice.d.ts",
       "import": "./dist/SolvimonInvoice.es.js",
       "require": "./dist/SolvimonInvoice.cjs.js"
     }
@@ -51,7 +52,7 @@
     "@tsconfig/node22": "^22.0.0",
     "@types/jsdom": "^21.1.7",
     "@types/node": "^22.10.2",
-    "@vitejs/plugin-vue": "^5.2.1",
+    "@vitejs/plugin-vue": "^5.2.3",
     "@vitest/eslint-plugin": "1.1.20",
     "@vue/eslint-config-typescript": "^14.1.3",
     "@vue/test-utils": "^2.4.6",
@@ -66,7 +67,6 @@
     "tailwindcss": "^3.4.17",
     "typescript": "~5.6.3",
     "vite": "^6.0.5",
-    "vite-bundle-visualizer": "^1.2.1",
     "vite-plugin-dts": "^3.7.0",
     "vite-plugin-vue-devtools": "^7.6.8",
     "vitest": "^2.1.8",
@@ -80,7 +80,8 @@
     "@storybook/vue3": "^8.4.7",
     "@storybook/vue3-vite": "^8.4.7",
     "eslint-plugin-storybook": "^0.11.2",
-    "storybook": "^8.4.7"
+    "storybook": "^8.4.7",
+    "vite-bundle-visualizer": "^1.2.1"
   },
   "eslintConfig": {
     "extends": [

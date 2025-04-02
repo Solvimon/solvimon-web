@@ -9,7 +9,6 @@ import dts from 'vite-plugin-dts';
 
 export default defineConfig({
     build: {
-        minify: false,
         outDir: fileURLToPath(new URL('./dist', import.meta.url)),
         lib: {
             entry: [
@@ -21,7 +20,7 @@ export default defineConfig({
         },
         rollupOptions: {
             output: {
-                preserveModules: false,
+                strict: false, // Setting to make sure cjs exports work (for next.js/webpack outputs)
             },
         },
     },

@@ -1,56 +1,12 @@
 <script setup lang="ts">
-import HelloWorld from './components/HelloWorld.vue'
-import TheWelcome from './components/TheWelcome.vue'
 
-import { defineSolvimonCheckout } from '@solvimon/sdk/solvimon-checkout';
-import { defineSolvimonInvoice } from '@solvimon/sdk/solvimon-invoice';
+import { defineSolvimonAddPaymentMethodForm } from '@solvimon/sdk/solvimon-add-payment-method-form';
 
-defineSolvimonCheckout();
-defineSolvimonInvoice();
+defineSolvimonAddPaymentMethodForm();
 </script>
 
 <template>
-  <header>
-    <img alt="Vue logo" class="logo" src="./assets/logo.svg" width="125" height="125" />
-
-    <div class="wrapper">
-      <HelloWorld msg="You did it!" />
-    </div>
-
-  </header>
-  
   <main>
-    <TheWelcome />
-    <solvimon-checkout />
-    <solvimon-invoice />
+    <solvimon-add-payment-method-form token="TGtKT3FSb0c5RTNKNkJqbk1VeFR0V3htTm96TGxBdHMucHVybF96d0RlZUEwdUg3UDNCaEFTaEoxQQ==" environment="DEV" />
   </main>
 </template>
-
-<style scoped>
-header {
-  line-height: 1.5;
-}
-
-.logo {
-  display: block;
-  margin: 0 auto 2rem;
-}
-
-@media (min-width: 1024px) {
-  header {
-    display: flex;
-    place-items: center;
-    padding-right: calc(var(--section-gap) / 2);
-  }
-
-  .logo {
-    margin: 0 2rem 0 0;
-  }
-
-  header .wrapper {
-    display: flex;
-    place-items: flex-start;
-    flex-wrap: wrap;
-  }
-}
-</style>

@@ -39,6 +39,11 @@
       "types": "./dist/SolvimonInvoice.d.ts",
       "import": "./dist/SolvimonInvoice.es.js",
       "require": "./dist/SolvimonInvoice.cjs.js"
+    },
+    "./solvimon-add-payment-method-form": {
+      "types": "./dist/SolvimonAddPaymentMethodForm.ce.d.ts",
+      "import": "./dist/SolvimonAddPaymentMethodForm.es.js",
+      "require": "./dist/SolvimonAddPaymentMethodForm.cjs.js"
     }
   },
   "dependencies": {
@@ -46,6 +51,7 @@
     "@solvimon/tailwind-config": "^1.0.0",
     "@solvimon/ui": "^1.0.0",
     "@stripe/stripe-js": "^2.4.0",
+    "jwt-decode": "^4.0.0",
     "vue": "^3.5.13"
   },
   "devDependencies": {
@@ -61,7 +67,7 @@
     "eslint": "^9.14.0",
     "eslint-plugin-vue": "^9.30.0",
     "glob": "^11.0.1",
-    "jsdom": "^25.0.1",
+    "jsdom": "^26.0.0",
     "npm-run-all2": "^7.0.2",
     "postcss": "^8.5.1",
     "tailwindcss": "^3.4.17",

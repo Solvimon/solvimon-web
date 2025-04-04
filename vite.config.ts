@@ -9,6 +9,7 @@ import dts from 'vite-plugin-dts';
 
 export default defineConfig({
     build: {
+        minify: false,
         outDir: fileURLToPath(new URL('./dist', import.meta.url)),
         lib: {
             entry: [

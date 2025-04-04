@@ -1,23 +1,19 @@
 import { useAuth } from '../components/AuthProvider';
 import { getDefaultHeaders, Headers, isApiErrorResponse } from './request.lib';
-import { ApiErrorResponse, Environment } from '@solvimon/types';
-
-type Options = {
-    enableAccessToken?: boolean;
-    headers?: Record<string, string | null>;
-    method?: 'GET' | 'POST'
-};
+import { ApiErrorResponse } from '@solvimon/types';
+import type { Request, RequestOptions } from './request.types';
 
 const trackSentryException = (...args) => {}
+const getErrorTrackingParams = () => ({});
 
-const defaultOptions: Options = {
+const defaultOptions: RequestOptions = {
     method: 'GET',
     enableAccessToken: true
 }
 
-export const request = async (url: string, data: object = undefined, rawOptions: Options) => {
+export const request: Request = ({ endpoint: url, data = undefined, options: rawOptions }) => {
     const options = { ...defaultOptions, ...rawOptions };
-    
+
     return fetch(url, {
         method: options.method,
         headers: getDefaultHeaders({ headers: options.headers, enableAccessToken: options.enableAccessToken }),
@@ -66,32 +62,6 @@ export const request = async (url: string, data: object = undefined, rawOptions:
                 }
             );
 
-            // await handleError(
-            //     {
-            //         message: isApiErrorResponse(error) ? error.message : '',
-            //         statusCode: isApiErrorResponse(error) ? error.statusCode : undefined,
-            //         requestId: isApiErrorResponse(error) ? error.requestId : undefined,
-            //     },
-            //     {
-            //         showToastOnError: mergedOptions.notificationOnError ?? false,
-            //         logoutOnUnauthorized: mergedOptions.logoutOnUnauthorized ?? true,
-            //     }
-            // );
-
             return Promise.reject(error);
         });
-
-    // if (!mergedOptions.disableAccessCheck) {
-    //     if (await hasAccessToken()) {
-    //         return executeRequest();
-    //     }
-    //     void router.push({ name: 'login' });
-    //     return;
-    // }
-
 };
-
-function getErrorTrackingParams(error: unknown): any {
-    throw new Error('Function not implemented.');
-}
-

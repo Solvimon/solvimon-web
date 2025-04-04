@@ -8,7 +8,7 @@ export const useData = <T extends unknown>(getData: () => Promise<T>) => {
         try {
             data.value = await getData();
         } catch (error) {
-
+            console.error(error)
         } finally {
             isPending.value = false;
         }

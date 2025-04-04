@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import Invoice from '@/components/Invoice/Invoice.vue';
+import type { SolvimonAddPaymentMethodFormProps } from './SolvimonAddPaymentMethodForm.types';
 import Provider from '@/components/Provider/Provider.vue';
-import type { Environment } from '@solvimon/types';
+import PaymentProviderForm from '@/components/paymentProviders/PaymentProviderForm/PaymentProviderForm.vue';
 
-defineProps<{ token: string; environment: Environment }>();
+defineProps<SolvimonAddPaymentMethodFormProps>();
 </script>
 
 <template>
     <Provider :environment="environment" :token="token" locale="en">
-        <Invoice />
+        <PaymentProviderForm :token="token" />
     </Provider>
 </template>

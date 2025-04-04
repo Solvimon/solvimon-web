@@ -1,18 +1,21 @@
 import { request } from '../utils/request';
 import { useConfig } from '../components/ConfigProvider/composables/useConfig';
+import { Token } from '@solvimon/types';
 import { Config } from '../config/types';
 
-
-export const getAccessToken = (tokenUserName: string) => {
+export function getAccessToken(tokenUserName: string) {
     const config = useConfig();
-    const endpoint = `${config.apiUrls.identity}/oauth/token`; 
 
-    return request(endpoint, { token_alias: tokenUserName }, { method: 'POST', enableAccessToken: false });
+    return request<Token>({ 
+        endpoint: `${config.apiUrls.identity}/oauth/token` , 
+        options: { method: 'POST', enableAccessToken: false },
+        data: { token_alias: tokenUserName },
+    });
 }
 
-// Retrieve config as param, as useConfig() is not available in this context, because it's called from setInterval
-export const refreshAccessToken = (config: Config) => {
-    const endpoint = `${config.apiUrls.identity}/oauth/refresh-token`;
-
-    return request(endpoint, {}, { method: 'POST', enableAccessToken: false });
+export function refreshAccessToken(config: Config) {
+    return request<Token>({ 
+        endpoint: `${config.apiUrls.identity}/oauth/refresh-token`, 
+        options: { method: 'POST' }
+    });
 };

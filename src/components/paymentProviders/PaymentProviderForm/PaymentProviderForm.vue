@@ -1,23 +1,31 @@
 <script setup lang="ts">
+import type { PaymentMethodOption } from '@solvimon/types';
 import type { PaymentProviderFormProps } from './PaymentProviderForm.types';
 import { getPaymentMethodOptions } from '@/services/paymentMethod';
 import { useData } from '@/utils/useData';
-import type { PaymentMethodOption } from '@solvimon/types';
-import PaymentProviderFormAdyen from '../PaymentProviderFormAdyen/PaymentProviderFormAdyen.vue';
+import PaymentProviderFormAdyen from '@/components/paymentProviders/PaymentProviderFormAdyen/PaymentProviderFormAdyen.vue';
 import { usePortal } from '@/components/PortalProvider/composables/usePortal';
 
 defineProps<PaymentProviderFormProps>();
 
 const portal = usePortal();
 
-const { data: paymentMethodOptions, isPending } = useData(() => getPaymentMethodOptions({ customerId: portal.value?.customer_id! }));
+const { data: paymentMethodOptions, isPending } = useData(() =>
+    getPaymentMethodOptions({ customerId: portal.value?.customer_id! })
+);
 
-const isAdyenPaymentMethod = (paymentMethodOption: PaymentMethodOption) => !!paymentMethodOption.integration.payment_gateway?.adyen
-
+const isAdyenPaymentMethod = (paymentMethodOption: PaymentMethodOption) =>
+    !!paymentMethodOption.integration.payment_gateway?.adyen;
 </script>
 
 <template>
-    <template v-if="!isPending" v-for="paymentMethodOption in paymentMethodOptions">
-        <PaymentProviderFormAdyen v-if="isAdyenPaymentMethod(paymentMethodOption)" :payment-method-option="paymentMethodOption" />
+    <template v-if="!isPending">
+        <template v-for="paymentMethodOption in paymentMethodOptions">
+            <PaymentProviderFormAdyen
+                v-if="isAdyenPaymentMethod(paymentMethodOption)"
+                :key="`${paymentMethodOption.integration.id}-${paymentMethodOption.payment_acceptor.id}`"
+                :payment-method-option="paymentMethodOption"
+            />
+        </template>
     </template>
 </template>

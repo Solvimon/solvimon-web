@@ -6,10 +6,8 @@ import styles from './page.module.css';
 export default function Home() {
   useEffect(() => {
     async function loadSolvimonSdk() {
-      const { defineSolvimonCheckout } = await import('@solvimon/sdk/solvimon-checkout');
-      const { defineSolvimonInvoice } = await import('@solvimon/sdk/solvimon-invoice');
-      defineSolvimonCheckout();
-      defineSolvimonInvoice();
+      const { defineSolvimonAddPaymentMethodForm } = await import('@solvimon/sdk/solvimon-add-payment-method-form');
+      defineSolvimonAddPaymentMethodForm();
     }
     
     loadSolvimonSdk();
@@ -18,8 +16,7 @@ export default function Home() {
   return (
     <div className={styles.page}>
       <main className={styles.main}>
-        <solvimon-checkout />
-        <solvimon-invoice />
+        <solvimon-add-payment-method-form token="S3JZMVgyZEVhZkduaFZkcWhLMncxRTZLa2NTQ0x3cDkucHVybF9td0RlZUEwdUhvc3ZWT0FSZTQxcg==" environment="DEV" />
       </main>
     </div>
   );

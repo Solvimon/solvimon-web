@@ -1,3 +1,1 @@
-export const trackSentryException = () => {
-    
-}
+export const trackSentryException = () => {};

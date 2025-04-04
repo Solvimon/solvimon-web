@@ -1,1 +1,1 @@
-export const COMPONENT_TAG_PREFIX = 'solvimon-'
+export const COMPONENT_TAG_PREFIX = 'solvimon-';

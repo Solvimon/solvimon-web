@@ -1,12 +1,8 @@
 const TOKEN_DELIMITER = '.';
 
 export const parseToken = (
-    token?: string
-): { tokenUserName: string; portalUrlResourceId: string } | undefined => {
-    if (!token) {
-        return undefined;
-    }
-
+    token: string
+): { tokenUserName: string; portalUrlResourceId: string } => {
     try {
         const decoded = atob(token);
         const delimiterIndex = decoded.lastIndexOf(TOKEN_DELIMITER);

@@ -1,17 +1,12 @@
 <script setup lang="ts">
+import { InvoiceSummary } from '@solvimon/ui';
 import { getInvoice } from '@/services/invoices';
 import { useData } from '@/utils/useData';
-import { InvoiceSummary } from '@solvimon/ui';
 
-const { data, isPending } = useData(() => getInvoice('invo_jwDeek0uG4Zm9dAxu01q'));
-
+const { data, isPending } = useData(() => getInvoice('invo_awDeek0uHooKHCAWB419'));
 </script>
 
 <template>
     <p v-if="isPending">Loading...</p>
-    <InvoiceSummary
-        v-if="data"
-        :invoice="data"
-        variant="interactive"
-    />
+    <InvoiceSummary v-if="data" :invoice="data" variant="interactive" />
 </template>

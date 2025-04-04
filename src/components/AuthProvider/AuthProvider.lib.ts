@@ -1,43 +1,42 @@
-import { onBeforeUnmount, onBeforeMount, ref, type InjectionKey, onMounted } from 'vue';
-import { getAccessTokenParsed } from '../../utils/accessToken';
-import { getAccessToken, refreshAccessToken } from '../../services/token';
-import { parseToken } from '../../utils/token';
-import { useConfig } from '../ConfigProvider/composables/useConfig';
+import { onBeforeUnmount, ref, type InjectionKey, onMounted } from 'vue';
+import { trackSentryException } from '@/utils/errorTracking';
+import { getAccessTokenParsed } from '@/utils/accessToken';
+import { getAccessToken, refreshAccessToken } from '@/services/token';
+import { parseToken } from '@/utils/token';
+import { useConfig } from '@/components/ConfigProvider/composables/useConfig';
 
 export const AUTH_INJECTION_KEY: InjectionKey<ReturnType<typeof getAuth>> = Symbol('auth');
 
-export const getAuth = (
-    token: string,
-) => {
+export const getAuth = (token: string) => {
     const accessToken = ref<string>();
     const refreshInterval = ref<ReturnType<typeof setInterval>>();
     const config = useConfig();
 
     const getToken = async () => {
         const { tokenUserName } = parseToken(token);
-        
+
         try {
             accessToken.value = (await getAccessToken(tokenUserName)).access_token;
-        } catch(err) {
-            console.error(err)
+        } catch (err) {
+            trackSentryException();
         }
-    }
+    };
     const refreshToken = () => {
         void refreshAccessToken(config);
-    }
+    };
 
     onMounted(() => {
-        getToken();
+        void getToken();
         refreshInterval.value = setInterval(() => handleRefreshToken(), 30 * 1000);
-    })
+    });
 
     onBeforeUnmount(() => {
         clearInterval(refreshInterval.value);
         refreshInterval.value = undefined;
-    })
+    });
 
     const handleRefreshToken = () => {
-        const accessTokenParsed = getAccessTokenParsed(accessToken.value);
+        const accessTokenParsed = accessToken.value && getAccessTokenParsed(accessToken.value);
 
         if (!accessTokenParsed) {
             refreshToken();
@@ -53,5 +52,5 @@ export const getAuth = (
 
     return {
         accessToken,
-    }
+    };
 };

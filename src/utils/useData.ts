@@ -1,6 +1,9 @@
-import { onMounted, ref } from 'vue'
+import { onMounted, ref } from 'vue';
 
-export const useData = <T extends unknown>(getData: () => Promise<T>) => {
+export const useData = <T extends unknown>(
+    getData: () => Promise<T>,
+    onError?: (error: any) => void
+) => {
     const data = ref<T>();
     const isPending = ref(true);
 
@@ -8,11 +11,11 @@ export const useData = <T extends unknown>(getData: () => Promise<T>) => {
         try {
             data.value = await getData();
         } catch (error) {
-            console.error(error)
+            onError?.(error);
         } finally {
             isPending.value = false;
         }
-    })
+    });
 
     return { data, isPending };
 };

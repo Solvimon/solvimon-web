@@ -1,7 +1,6 @@
-import { GetDefaultHeaders } from './request.lib.types';
-import { useAuth } from '../components/AuthProvider';
-import { ApiErrorResponse } from '@solvimon/types';
-import { useConfig } from '../components/ConfigProvider/composables/useConfig';
+import type { ApiErrorResponse } from '@solvimon/types';
+import type { GetDefaultHeaders } from './request.lib.types';
+import { useAuth } from '@/components/AuthProvider';
 
 export const Headers = {
     AUTHORIZATION: 'Authorization',
@@ -9,10 +8,15 @@ export const Headers = {
     X_REQUEST_ID: 'X-Request-Id',
 };
 
-export const getDefaultHeaders: GetDefaultHeaders = ({ headers: overrides = {}, enableAccessToken }) => {
+export const getDefaultHeaders: GetDefaultHeaders = ({
+    headers: overrides = {},
+    enableAccessToken,
+}) => {
     const headers = {
         [Headers.CONTENT_TYPE]: 'application/json',
-        ...(enableAccessToken ? {[Headers.AUTHORIZATION]: `Bearer ${useAuth().accessToken.value}` } : {})
+        ...(enableAccessToken
+            ? { [Headers.AUTHORIZATION]: `Bearer ${useAuth().accessToken.value}` }
+            : {}),
     };
 
     if (overrides) {

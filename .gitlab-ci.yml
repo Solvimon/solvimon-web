@@ -1,0 +1,27 @@
+image: node:20
+
+variables:
+  npm_config_cache: "$CI_PROJECT_DIR/.npm"
+
+stages:
+  - test-and-build
+
+cache:
+  key: &global_cache_node_mods node-modules-cache
+  paths:
+    - node_modules/
+    - .npm/
+  policy: pull
+
+test-and-build:
+  stage: test-and-build
+  timeout: 5m
+  script:
+    - npm ci --prefer-offline
+    # Run prebuild steps and build ui packages so imported generated files are there
+    - npm run prebuild -w packages/sdk
+    - npm run build -w packages/ui
+    - npm run lint:ci -w packages/sdk
+    - npm run type-check -w packages/sdk
+    - npm run test:unit -w packages/sdk
+    - npm run build -w packages/sdk

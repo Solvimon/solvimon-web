@@ -1,1 +1,4 @@
-export type GetDefaultHeaders = (params: { headers?: Record<string,string>, enableAccessToken: boolean }) => Record<string, string>;
+export type GetDefaultHeaders = (params: {
+    headers?: Record<string, string | null>;
+    enableAccessToken?: boolean;
+}) => Record<string, string>;

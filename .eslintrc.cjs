@@ -1,5 +1,6 @@
 /* eslint-env node */
 require('@rushstack/eslint-patch/modern-module-resolution');
+
 module.exports = {
     root: true,
     env: {
@@ -17,13 +18,10 @@ module.exports = {
     plugins: ['@html-eslint', 'formatjs', 'unused-imports', 'prettier', 'no-relative-import-paths'],
     parserOptions: {
         ecmaVersion: 'latest',
+        parser: '@typescript-eslint/parser', // Specify TypeScript parser for `<script lang="ts">`
+        project: ['./tsconfig.json', './tsconfig.config.json'],
     },
     overrides: [
-        {
-            files: ['*.html'],
-            parser: '@html-eslint/parser',
-            extends: ['plugin:@html-eslint/recommended'],
-        },
         {
             files: ['**/__tests__/*.{j,t}s?(x)', '**/tests/unit/**/*.spec.{j,t}s?(x)'],
             env: {
@@ -32,6 +30,7 @@ module.exports = {
         },
     ],
     rules: {
+        '@typescript-eslint/no-floating-promises': 'error',
         'no-console': 'error',
         'no-relative-import-paths/no-relative-import-paths': [
             'error',

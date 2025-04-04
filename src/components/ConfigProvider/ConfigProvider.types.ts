@@ -1,4 +1,4 @@
-import { Environment } from "@solvimon/types";
+import type { Environment } from '@solvimon/types';
 
 export interface ConfigProviderProps {
     environment: Environment;

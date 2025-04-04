@@ -1,0 +1,15 @@
+{
+    "extends": "@vue/tsconfig/tsconfig.node.json",
+    "include": ["*.config.*", "package.json"],
+    "exclude": ["src/**/__tests__/*", "src/**/*.spec.ts", "dist/*"],
+    "compilerOptions": {
+        "esModuleInterop": true, 
+        "allowSyntheticDefaultImports": true,
+        "resolveJsonModule": true,
+        "preserveValueImports": false,
+        "importsNotUsedAsValues": "remove",
+        "verbatimModuleSyntax": true,
+        "composite": true,
+        "lib": [ "ES2020"],
+    }
+}

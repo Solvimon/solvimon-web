@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { IntlProvider } from '@solvimon/ui';
-import AuthProvider from '../AuthProvider/AuthProvider.vue';
-import ConfigProvider from '../ConfigProvider/ConfigProvider.vue';
 import type { ProviderProps } from './Provider.types';
-import PortalProvider from '../PortalProvider/PortalProvider.vue';
+import AuthProvider from '@/components/AuthProvider/AuthProvider.vue';
+import ConfigProvider from '@/components/ConfigProvider/ConfigProvider.vue';
+import PortalProvider from '@/components/PortalProvider/PortalProvider.vue';
 
 defineProps<ProviderProps>();
 </script>

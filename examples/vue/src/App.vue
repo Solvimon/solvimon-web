@@ -7,6 +7,6 @@ defineSolvimonAddPaymentMethodForm();
 
 <template>
   <main>
-    <solvimon-add-payment-method-form token="TGtKT3FSb0c5RTNKNkJqbk1VeFR0V3htTm96TGxBdHMucHVybF96d0RlZUEwdUg3UDNCaEFTaEoxQQ==" environment="DEV" />
+    <solvimon-add-payment-method-form token="S3JZMVgyZEVhZkduaFZkcWhLMncxRTZLa2NTQ0x3cDkucHVybF9td0RlZUEwdUhvc3ZWT0FSZTQxcg==" environment="DEV" />
   </main>
 </template>

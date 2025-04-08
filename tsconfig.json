@@ -6,7 +6,6 @@
     "outDir": "dist",
     "baseUrl": "./",
     "target": "esnext",
-    "composite": true,
     "useDefineForClassFields": true,
     "module": "esnext",
     "moduleResolution": "node",

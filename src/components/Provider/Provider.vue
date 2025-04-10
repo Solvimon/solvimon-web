@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { IntlProvider } from '@solvimon/ui';
+import { IconSpriteProvider, IntlProvider } from '@solvimon/ui';
 import type { ProviderProps } from './Provider.types';
 import AuthProvider from '@/components/AuthProvider/AuthProvider.vue';
 import ConfigProvider from '@/components/ConfigProvider/ConfigProvider.vue';
@@ -13,7 +13,9 @@ defineProps<ProviderProps>();
         <AuthProvider :token="token">
             <PortalProvider :token="token">
                 <IntlProvider :locale="locale" :date-locale="dateLocale" :messages="messages">
-                    <slot />
+                    <IconSpriteProvider>
+                        <slot />
+                    </IconSpriteProvider>
                 </IntlProvider>
             </PortalProvider>
         </AuthProvider>

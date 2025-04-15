@@ -11,7 +11,6 @@ module.exports = {
         'eslint:recommended',
         '@vue/eslint-config-typescript',
         'prettier',
-        'plugin:storybook/recommended',
         'plugin:import/recommended',
         '@solvimon/eslint-config',
     ],

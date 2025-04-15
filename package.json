@@ -7,13 +7,10 @@
     "analyze": "vite-bundle-visualizer",
     "prebuild": "npm run build:css",
     "build": "vite build",
-    "build-storybook": "storybook build",
     "build:css": "tailwindcss -i ./src/assets/index.css -o ./.sdk/tailwind.css",
-    "dev": "npm run storybook",
+    "dev": "npm run watch",
     "lint": "npm run lint:ci -- --fix",
     "lint:ci": "eslint . --fix --ignore-path .eslintignore",
-    "prestorybook": "npm run build:css",
-    "storybook": "storybook dev -p 6006",
     "test:unit": "vitest",
     "type-check": "vue-tsc --noEmit -p tsconfig.json --composite false",
     "watch": "vite build --watch",
@@ -58,38 +55,25 @@
     "@vue/test-utils": "^2.4.6",
     "@vue/tsconfig": "^0.7.0",
     "autoprefixer": "^10.4.20",
+    "eslint": "^8.38.0",
     "eslint-import-resolver-typescript": "^3.6.0",
     "eslint-plugin-import": "^2.28.1",
     "eslint-plugin-no-relative-import-paths": "^1.5.2",
     "eslint-plugin-unused-imports": "^2.0.0",
     "eslint-plugin-vue": "^9.10.0",
-    "eslint": "^8.38.0",
     "glob": "^11.0.1",
     "jsdom": "^26.0.0",
     "npm-run-all2": "^7.0.2",
     "postcss": "^8.5.1",
     "tailwindcss": "^3.4.17",
     "typescript": "~5.6.3",
-    "vite-plugin-dts": "^3.7.0",
-    "vite-plugin-vue-devtools": "^7.6.8",
     "vite": "^6.0.5",
-    "vitest": "^2.1.8",
+    "vite-plugin-dts": "^4.5.3",
+    "vite-plugin-vue-devtools": "^7.7.2",
+    "vitest": "^3.1.1",
     "vue-tsc": "^2.1.10"
   },
   "optionalDependencies": {
-    "@storybook/addon-essentials": "^8.4.7",
-    "@storybook/addon-interactions": "^8.4.7",
-    "@storybook/blocks": "^8.4.7",
-    "@storybook/test": "^8.4.7",
-    "@storybook/vue3": "^8.4.7",
-    "@storybook/vue3-vite": "^8.4.7",
-    "eslint-plugin-storybook": "^0.11.2",
-    "storybook": "^8.4.7",
     "vite-bundle-visualizer": "^1.2.1"
-  },
-  "eslintConfig": {
-    "extends": [
-      "plugin:storybook/recommended"
-    ]
   }
 }

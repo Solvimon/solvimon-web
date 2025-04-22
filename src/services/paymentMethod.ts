@@ -1,5 +1,5 @@
 import type {
-    PaymentMethodOptions,
+    PaymentMethodOptionsResponse,
     PaymentMethodTokenizeActionRequiredAdyenResponse,
     PaymentMethodTokenizeActionRequiredResponse,
     PaymentMethodTokenizeActionRequiredStripeResponse,
@@ -14,7 +14,7 @@ import { request } from '@/utils/request';
 export function getPaymentMethodOptions({ customerId }: { customerId: string }) {
     const config = useConfig();
 
-    return request<PaymentMethodOptions>({
+    return request<PaymentMethodOptionsResponse>({
         endpoint: `${config.apiUrls.config}/portal/payment-method-options?customer_id=${customerId}`,
     });
 }

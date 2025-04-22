@@ -1,5 +1,5 @@
-import type { PaymentMethodOption } from '@solvimon/types';
+import type { PaymentMethodOptionResponseEntry } from '@solvimon/types';
 
 export interface PaymentProviderFormAdyenProps {
-    paymentMethodOption: PaymentMethodOption;
+    paymentMethodOption: PaymentMethodOptionResponseEntry;
 }

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { PaymentMethodOption } from '@solvimon/types';
+import type { PaymentMethodOptionResponseEntry } from '@solvimon/types';
 import type { PaymentProviderFormProps } from './PaymentProviderForm.types';
 import { getPaymentMethodOptions } from '@/services/paymentMethod';
 import { useData } from '@/utils/useData';
@@ -14,7 +14,7 @@ const { data: paymentMethodOptions, isPending } = useData(() =>
     getPaymentMethodOptions({ customerId: portal.value?.customer_id! })
 );
 
-const isAdyenPaymentMethod = (paymentMethodOption: PaymentMethodOption) =>
+const isAdyenPaymentMethod = (paymentMethodOption: PaymentMethodOptionResponseEntry) =>
     !!paymentMethodOption.integration.payment_gateway?.adyen;
 </script>
 

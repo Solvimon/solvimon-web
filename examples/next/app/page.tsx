@@ -2,6 +2,15 @@
 
 import { useEffect } from 'react';
 import styles from './page.module.css';
+import type { SolvimonAddPaymentMethodFormProps } from '@solvimon/sdk/solvimon-add-payment-method-form';
+
+declare module 'react' {
+    namespace JSX {
+        interface IntrinsicElements {
+            'solvimon-add-payment-method-form': SolvimonAddPaymentMethodFormProps;
+        }
+    }
+}
 
 export default function Home() {
     useEffect(() => {
@@ -18,10 +27,9 @@ export default function Home() {
     return (
         <div className={styles.page}>
             <main className={styles.main}>
-                {/* @ts-ignore-next-line */}
                 <solvimon-add-payment-method-form
                     token="S3JZMVgyZEVhZkduaFZkcWhLMncxRTZLa2NTQ0x3cDkucHVybF9td0RlZUEwdUhvc3ZWT0FSZTQxcg=="
-                    environment="DEV"
+                    environment={"DEV" as 'TEST'}
                 />
             </main>
         </div>

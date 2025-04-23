@@ -2,18 +2,20 @@ import { type DefineComponent, defineCustomElement as defineCustomElementVue } f
 
 import tailwindStyles from '../../.sdk/tailwind.css?inline';
 
-// even though the type "looks like" a DefineComponent<any, any, any>,
-// TypeScript treats SFCs imported from .vue files as complex intersection types that
-// don't fully satisfy the base DefineComponent signature, even if they technically extend it.
-// So allow as unknown and cast it to the correct type later.
-export const defineCustomElement = (element: unknown) => {
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    const safeElement = element as DefineComponent<any, any, any> & {
-        styles?: string[];
-    };
+type CustomElementOptions = Parameters<typeof defineCustomElementVue>[1];
 
-    return defineCustomElementVue(safeElement, {
+/**
+ * Define a custom element from a vue component.
+ * Note that type errors will occur when using required props, as that's not possible with custom elements.
+ * Instead, handle missing props in the component itself.
+ */
+export function defineCustomElement<T extends DefineComponent<any, any, any>>(
+    component: T,
+    options: CustomElementOptions = {}
+) {
+    return defineCustomElementVue(component, {
         shadowRoot: true,
-        styles: [tailwindStyles, ...(safeElement.styles ?? [])],
+        styles: [tailwindStyles, ...(component.styles ?? []), ...(options.styles ?? [])],
+        ...options,
     });
-};
+}

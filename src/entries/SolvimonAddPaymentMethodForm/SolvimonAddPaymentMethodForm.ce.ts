@@ -1,9 +1,10 @@
 import SolvimonAddPaymentMethodFormVue from './SolvimonAddPaymentMethodForm.vue';
 import { defineCustomElement } from '@/utils/customElements';
-import { COMPONENT_TAG_PREFIX } from '@/constants';
+
+export * from './SolvimonAddPaymentMethodForm.types';
 
 export const SolvimonAddPaymentMethodForm = defineCustomElement(SolvimonAddPaymentMethodFormVue);
-const COMPONENT_NAME = `${COMPONENT_TAG_PREFIX}add-payment-method-form`;
+export const COMPONENT_NAME = 'solvimon-add-payment-method-form';
 
 export const defineSolvimonAddPaymentMethodForm = () => {
     if (!customElements.get(COMPONENT_NAME)) {

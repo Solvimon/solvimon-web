@@ -1,45 +1,80 @@
-# sdk
+# @solvimon/sdk
 
-This template should help get you started developing with Vue 3 in Vite.
+## Getting started
 
-## Recommended IDE Setup
-
-[VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
-
-## Type Support for `.vue` Imports in TS
-
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
-
-## Customize configuration
-
-See [Vite Configuration Reference](https://vite.dev/config/).
-
-## Project Setup
-
-```sh
-npm install
+```bash
+npm install @solvimon/sdk
 ```
 
-### Compile and Hot-Reload for Development
+Solvimon's SDK exports web components, that are framework agnostic. Each component requires at least:
 
-```sh
-npm run dev
+| Property      | Description                                   |
+|---------------|-----------------------------------------------|
+| `token`       | Fetched from our API                         |
+| `environment` | Specifies the environment (`TEST` or `LIVE`) |
+
+It supports two ways of importing:
+
+### `defineSolvimonAddPaymentMethodForm`
+
+```tsx
+import { defineSolvimonAddPaymentMethodForm } from '@solvimon/sdk/solvimon-add-payment-method-form';
+
+defineSolvimonAddPaymentMethodForm();
+
+export default function Home() {
+    return (
+        <solvimon-add-payment-method-form
+            token="<my-token-retrieved-from-solvimon-api>"
+            environment="LIVE"
+        />
+    );
+}
 ```
 
-### Type-Check, Compile and Minify for Production
+### Register yourself (beneficial in Vue setup for typed components)
 
-```sh
-npm run build
+```vue
+<script setup lang="ts">
+import { SolvimonAddPaymentMethodForm } from '@solvimon/sdk/solvimon-add-payment-method-form';
+
+if (customElements.get('solvimon-add-payment-method-form')) {
+    customElements.define('solvimon-add-payment-method-form', SolvimonAddPaymentMethodForm)
+}
+</script>
+
+<template>
+    <solvimon-add-payment-method-form
+        token="<my-token-retrieved-from-solvimon-api>"
+        environment="LIVE"
+    />
+</template>
 ```
 
-### Run Unit Tests with [Vitest](https://vitest.dev/)
+### Isomorphic (server side rendered) usage
 
-```sh
-npm run test:unit
-```
+Our component define functions might cause issues when run in isomorphic setups. To solve this, you might want to consider only loading our SDK client side only:
 
-### Lint with [ESLint](https://eslint.org/)
+```tsx
+import { useEffect } from 'react';
 
-```sh
-npm run lint
+export default function Home() {
+    useEffect(() => {
+        async function loadSolvimonSdkComponent() {
+            const { defineSolvimonAddPaymentMethodForm } = await import(
+                '@solvimon/sdk/solvimon-add-payment-method-form'
+            );
+            defineSolvimonAddPaymentMethodForm();
+        }
+
+        loadSolvimonSdkComponent();
+    }, []);
+
+    return (
+        <solvimon-add-payment-method-form
+            token="<my-token-retrieved-from-solvimon-api>"
+            environment="LIVE"
+        />
+    );
+}
 ```

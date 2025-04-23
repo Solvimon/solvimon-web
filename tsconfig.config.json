@@ -1,5 +1,5 @@
 {
-    "extends": "@vue/tsconfig/tsconfig.node.json",
+    "extends": "@tsconfig/node22",
     "include": ["*.config.*", "package.json"],
     "exclude": ["src/**/__tests__/*", "src/**/*.spec.ts", "dist/*"],
     "compilerOptions": {

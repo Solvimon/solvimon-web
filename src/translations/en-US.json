@@ -1,0 +1,11 @@
+{
+  "sdk.invoice.paid_on_label": "Paid on {date}",
+  "sdk.invoice_details.customer_billing_information.title": "Your billing information",
+  "sdk.invoice_details.invoice.download_pdf": "Download the PDF for a full breakdown",
+  "sdk.invoice_details.invoice.title": "Invoice",
+  "sdk.invoice_details.invoice_details_block.due_date": "Due date",
+  "sdk.invoice_details.invoice_details_block.invoice_date": "Invoice date",
+  "sdk.invoice_details.invoice_details_block.title": "Invoice details",
+  "sdk.invoice_details.payment_history.payment_attempt": "Payment attempt",
+  "sdk.invoice_details.payment_history.title": "Payment history"
+}

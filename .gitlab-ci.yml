@@ -24,4 +24,7 @@ test-and-build:
     - npm run lint:ci -w packages/sdk
     - npm run type-check -w packages/sdk
     - npm run test:unit -w packages/sdk
+    - npm run translations:extract -w packages/sdk
+    - npm run translations:compile -w packages/sdk
+    - npm run translations:check -w packages/sdk
     - npm run build -w packages/sdk

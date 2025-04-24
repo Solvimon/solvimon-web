@@ -1,0 +1,38 @@
+{
+  "sdk.invoice.paid_on_label": {
+    "defaultMessage": "Paid on {date}",
+    "description": "Label for payment date, where {date} gets replaced with the date"
+  },
+  "sdk.invoice_details.customer_billing_information.title": {
+    "defaultMessage": "Your billing information",
+    "description": "Title for the billing information on the detailed invoice view"
+  },
+  "sdk.invoice_details.invoice.download_pdf": {
+    "defaultMessage": "Download the PDF for a full breakdown",
+    "description": "Download the PDF for a full breakdown"
+  },
+  "sdk.invoice_details.invoice.title": {
+    "defaultMessage": "Invoice",
+    "description": "Title for the invoice block on the invoice details page"
+  },
+  "sdk.invoice_details.invoice_details_block.due_date": {
+    "defaultMessage": "Due date",
+    "description": "Title for the due date in invoice details block on the invoice overview page"
+  },
+  "sdk.invoice_details.invoice_details_block.invoice_date": {
+    "defaultMessage": "Invoice date",
+    "description": "Title for the invoice date in invoice details block on the invoice overview page"
+  },
+  "sdk.invoice_details.invoice_details_block.title": {
+    "defaultMessage": "Invoice details",
+    "description": "Title for the invoice details block on the invoice overview page"
+  },
+  "sdk.invoice_details.payment_history.payment_attempt": {
+    "defaultMessage": "Payment attempt",
+    "description": "Title for the payment attempt block"
+  },
+  "sdk.invoice_details.payment_history.title": {
+    "defaultMessage": "Payment history",
+    "description": "Title for the payment history block on the invoice details page"
+  }
+}

@@ -1,7 +1,3 @@
-import type { PublicEnvironment } from '@/types/environment';
+import type { EntryBaseProps } from '@/types/EntryBaseProps';
 
-export interface SolvimonAddPaymentMethodFormProps {
-    token?: string;
-    environment?: PublicEnvironment;
-    onError?: () => string;
-}
+export interface SolvimonAddPaymentMethodFormProps extends EntryBaseProps {}

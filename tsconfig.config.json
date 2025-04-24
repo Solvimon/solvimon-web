@@ -1,6 +1,6 @@
 {
     "extends": "@tsconfig/node22",
-    "include": ["*.config.*", "package.json"],
+    "include": ["*.config.*", "package.json", "scripts/*.ts"],
     "exclude": ["src/**/__tests__/*", "src/**/*.spec.ts", "dist/*"],
     "compilerOptions": {
         "esModuleInterop": true, 

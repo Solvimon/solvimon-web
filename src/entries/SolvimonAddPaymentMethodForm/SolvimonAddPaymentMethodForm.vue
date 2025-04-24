@@ -3,20 +3,11 @@ import type { SolvimonAddPaymentMethodFormProps } from './SolvimonAddPaymentMeth
 import Provider from '@/components/Provider/Provider.vue';
 import PaymentProviderForm from '@/components/paymentProviders/PaymentProviderForm/PaymentProviderForm.vue';
 
-const props = defineProps<SolvimonAddPaymentMethodFormProps>();
-
-if (!props.token) {
-    // eslint-disable-next-line no-console
-    console.error('SolvimonAddPaymentMethodForm: token is required');
-}
-if (!props.environment) {
-    // eslint-disable-next-line no-console
-    console.error('SolvimonAddPaymentMethodForm: environment is required');
-}
+defineProps<SolvimonAddPaymentMethodFormProps>();
 </script>
 
 <template>
-    <Provider v-if="environment && token" :environment="environment" :token="token" locale="en">
-        <PaymentProviderForm :token="token" />
+    <Provider :token="token" :locale="locale">
+        <PaymentProviderForm v-if="token" :token="token" />
     </Provider>
 </template>

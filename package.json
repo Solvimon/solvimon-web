@@ -14,11 +14,12 @@
     "test:unit": "vitest",
     "type-check": "vue-tsc --noEmit -p tsconfig.json --composite false",
     "watch": "vite build --watch",
-    "watch:css": "npm run build:css -- --watch"
+    "watch:css": "npm run build:css -- --watch",
+    "translations:extract": "formatjs extract 'src/**/*.{ts,vue}*' --ignore='**/*.d.ts' --out-file 'src/translations/source.json' --flatten --additional-function-names '$t'",
+    "translations:compile": "formatjs compile 'src/translations/source.json' --out-file 'src/translations/en-US.json'",
+    "translations:check": "tsx ./scripts/check-translations.ts"
   },
-  "files": [
-    "dist"
-  ],
+  "files": ["dist"],
   "main": "./dist/index.cjs.js",
   "module": "./dist/index.es.js",
   "types": "./dist/index.d.ts",
@@ -32,10 +33,16 @@
       "types": "./dist/SolvimonAddPaymentMethodForm.ce.d.ts",
       "import": "./dist/SolvimonAddPaymentMethodForm.es.js",
       "require": "./dist/SolvimonAddPaymentMethodForm.cjs.js"
+    },
+    "./solvimon-invoice": {
+      "types": "./dist/SolvimonInvoice.ce.d.ts",
+      "import": "./dist/SolvimonInvoice.es.js",
+      "require": "./dist/SolvimonInvoice.cjs.js"
     }
   },
   "dependencies": {
     "@adyen/adyen-web": "^6.5.0",
+    "@formatjs/intl": "^3.1.5",
     "@solvimon/tailwind-config": "^1.0.0",
     "@solvimon/ui": "^1.0.0",
     "@stripe/stripe-js": "^2.4.0",
@@ -43,6 +50,7 @@
     "vue": "^3.5.13"
   },
   "devDependencies": {
+    "@formatjs/cli": "^6.6.1",
     "@rushstack/eslint-patch": "^1.2.0",
     "@solvimon/eslint-config": "^1.2.0",
     "@tsconfig/node22": "^22.0.0",
@@ -66,6 +74,7 @@
     "npm-run-all2": "^7.0.2",
     "postcss": "^8.5.1",
     "tailwindcss": "^3.4.17",
+    "tsx": "^4.19.3",
     "typescript": "~5.6.3",
     "vite": "^6.0.5",
     "vite-plugin-dts": "^4.5.3",

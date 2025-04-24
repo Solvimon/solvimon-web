@@ -14,7 +14,7 @@ module.exports = {
         'plugin:import/recommended',
         '@solvimon/eslint-config',
     ],
-    plugins: ['@html-eslint', 'formatjs', 'unused-imports', 'prettier', 'no-relative-import-paths'],
+    plugins: ['@html-eslint', 'unused-imports', 'prettier', 'no-relative-import-paths'],
     parserOptions: {
         ecmaVersion: 'latest',
         parser: '@typescript-eslint/parser', // Specify TypeScript parser for `<script lang="ts">`
@@ -62,15 +62,6 @@ module.exports = {
         '@typescript-eslint/no-unused-vars': 'error',
         'unused-imports/no-unused-imports': 'error',
         'no-setter-return': 'off',
-        'formatjs/enforce-default-message': ['error', 'literal'],
-        'formatjs/no-multiple-whitespaces': ['error'],
-        'formatjs/no-camel-case': ['error'],
-        'formatjs/enforce-id': [
-            'error',
-            {
-                idInterpolationPattern: '[sha512:contenthash:base64:6]',
-            },
-        ],
         'import/no-relative-packages': 'error',
         'import/order': [
             'error',

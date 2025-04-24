@@ -1,16 +1,15 @@
 import { onBeforeUnmount, ref, type InjectionKey, onMounted } from 'vue';
 import { trackSentryException } from '@/utils/errorTracking';
 import { getAccessTokenParsed } from '@/utils/accessToken';
-import { getAccessToken, refreshAccessToken } from '@/services/token';
+import { createTokensService } from '@/services/tokens';
 import { parseToken } from '@/utils/token';
-import { useConfig } from '@/components/ConfigProvider/composables/useConfig';
 
 export const AUTH_INJECTION_KEY: InjectionKey<ReturnType<typeof getAuth>> = Symbol('auth');
 
 export const getAuth = (token: string) => {
     const accessToken = ref<string>();
     const refreshInterval = ref<ReturnType<typeof setInterval>>();
-    const config = useConfig();
+    const { getAccessToken, refreshAccessToken } = createTokensService();
 
     const getToken = async () => {
         const { tokenUserName } = parseToken(token);
@@ -22,7 +21,7 @@ export const getAuth = (token: string) => {
         }
     };
     const refreshToken = () => {
-        void refreshAccessToken(config);
+        void refreshAccessToken();
     };
 
     onMounted(() => {

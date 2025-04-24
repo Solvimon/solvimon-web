@@ -1,0 +1,11 @@
+{
+    "sdk.invoice.paid_on_label": "Betaald op {date}",
+    "sdk.invoice_details.customer_billing_information.title": "Jouw factuur gegevens",
+    "sdk.invoice_details.invoice.download_pdf": "Download de PDF voor een volledig overzicht",
+    "sdk.invoice_details.invoice.title": "Factuur",
+    "sdk.invoice_details.invoice_details_block.due_date": "Vervaldatum",
+    "sdk.invoice_details.invoice_details_block.invoice_date": "Factuurdatum",
+    "sdk.invoice_details.invoice_details_block.title": "Factuurgegevens",
+    "sdk.invoice_details.payment_history.payment_attempt": "Betaalpoging",
+    "sdk.invoice_details.payment_history.title": "Betaalgeschiedenis"
+}

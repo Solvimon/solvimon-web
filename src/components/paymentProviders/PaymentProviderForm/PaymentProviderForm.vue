@@ -1,14 +1,12 @@
 <script setup lang="ts">
 import type { PaymentMethodOptionResponseEntry } from '@solvimon/types';
-import type { PaymentProviderFormProps } from './PaymentProviderForm.types';
-import { getPaymentMethodOptions } from '@/services/paymentMethod';
+import { createPaymentMethodsService } from '@/services/paymentMethods';
 import { useData } from '@/utils/useData';
 import PaymentProviderFormAdyen from '@/components/paymentProviders/PaymentProviderFormAdyen/PaymentProviderFormAdyen.vue';
 import { usePortal } from '@/components/PortalProvider/composables/usePortal';
 
-defineProps<PaymentProviderFormProps>();
-
 const portal = usePortal();
+const { getPaymentMethodOptions } = createPaymentMethodsService();
 
 const { data: paymentMethodOptions, isPending } = useData(() =>
     getPaymentMethodOptions({ customerId: portal.value?.customer_id! })

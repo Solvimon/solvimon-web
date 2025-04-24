@@ -1,12 +1,14 @@
 import { type InjectionKey, onMounted, ref } from 'vue';
 import { parseToken } from '@/utils/token';
-import { getPortalUrl } from '@/services/portal';
-import type { PortalUrl } from '@/services/portal.types';
+import { createPortalsService } from '@/services/portals';
+import type { PortalUrl } from '@/services/portals.types';
 
 export const PORTAL_INJECTION_KEY: InjectionKey<ReturnType<typeof getPortal>> =
     Symbol('portalObject');
 
 export const getPortal = (token: string) => {
+    const { getPortalUrl } = createPortalsService();
+
     const portal = ref<PortalUrl>();
     const parsedToken = parseToken(token);
 

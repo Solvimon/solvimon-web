@@ -48,16 +48,18 @@ const localizedMessages = computed<IntlMessages>(() => ({
     <ConfigProvider v-if="environment" :environment="environment">
         <AuthProvider v-if="token" :token="token">
             <PortalProvider :token="token">
-                <IntlProvider
-                    :locale="locale"
-                    :date-locale="dateLocale"
-                    :messages="localizedMessages"
-                    :show-timezones="false"
-                >
-                    <IconSpriteProvider>
-                        <slot />
-                    </IconSpriteProvider>
-                </IntlProvider>
+                <IconSpriteProvider>
+                    <IntlProvider
+                        :locale="locale"
+                        :date-locale="dateLocale"
+                        :messages="localizedMessages"
+                        :show-timezones="false"
+                    >
+                        <IconSpriteProvider>
+                            <slot />
+                        </IconSpriteProvider>
+                    </IntlProvider>
+                </IconSpriteProvider>
             </PortalProvider>
         </AuthProvider>
     </ConfigProvider>

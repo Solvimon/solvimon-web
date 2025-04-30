@@ -7,4 +7,8 @@ export interface RequiredProviderProps
         ConfigProviderProps,
         IntlProviderProps {}
 
+export interface ProviderEmits {
+    (e: 'error', error: Error): void;
+}
+
 export type ProviderProps = Partial<RequiredProviderProps>;

@@ -4,6 +4,13 @@ import { Headers as HeadersConst } from './requests.lib';
 
 const CALLED_URL = 'https://domain.com/test';
 const TOKEN = 'some-token-123';
+const onError = vi.fn();
+vi.mock('@solvimon/ui', () => ({
+    ...vi.importActual('@solvimon/ui'),
+    useErrorHandling: () => ({
+        onError,
+    }),
+}));
 vi.mock('@/components/AuthProvider', () => ({
     useAuth: vi.fn(() => ({ accessToken: { value: TOKEN } })),
 }));
@@ -20,6 +27,10 @@ describe('createRequestService', () => {
             })
         );
         global.fetch = mockFetch;
+    });
+
+    afterEach(() => {
+        onError.mockClear();
     });
 
     describe('headers', () => {
@@ -145,5 +156,13 @@ describe('createRequestService', () => {
             `${CALLED_URL}?param1=value1&param2=value2`,
             expect.anything()
         );
+    });
+    it('Calls onError when fetch fails', async () => {
+        const request = createRequestService();
+        const errorResponse = new Error('Network error');
+        mockFetch.mockRejectedValueOnce(errorResponse);
+
+        await expect(request({ url: CALLED_URL })).rejects.toThrow(errorResponse);
+        expect(onError).toHaveBeenCalledWith(expect.objectContaining({ cause: errorResponse }));
     });
 });

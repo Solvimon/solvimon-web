@@ -1,9 +1,14 @@
 <script setup lang="ts">
-import { IconSpriteProvider, IntlProvider, type IntlMessages } from '@solvimon/ui';
+import {
+    ErrorHandlingProvider,
+    IconSpriteProvider,
+    IntlProvider,
+    type IntlMessages,
+} from '@solvimon/ui';
 import nlNlUiTranslations from '@solvimon/ui/translations/nl-NL';
 import enUsUiTranslations from '@solvimon/ui/translations/en-US';
 import { computed } from 'vue';
-import type { ProviderProps } from './Provider.types';
+import type { ProviderEmits, ProviderProps } from './Provider.types';
 import nlNlSdkTranslations from '@/translations/nl-NL.json';
 import enUsSdkTranslations from '@/translations/en-US.json';
 import AuthProvider from '@/components/AuthProvider/AuthProvider.vue';
@@ -11,6 +16,7 @@ import ConfigProvider from '@/components/ConfigProvider/ConfigProvider.vue';
 import PortalProvider from '@/components/PortalProvider/PortalProvider.vue';
 
 const props = defineProps<ProviderProps>();
+defineEmits<ProviderEmits>();
 
 if (!props.environment) {
     throw new Error('environment is required');
@@ -45,22 +51,24 @@ const localizedMessages = computed<IntlMessages>(() => ({
 </script>
 
 <template>
-    <ConfigProvider v-if="environment" :environment="environment">
-        <AuthProvider v-if="token" :token="token">
-            <PortalProvider :token="token">
-                <IconSpriteProvider>
-                    <IntlProvider
-                        :locale="locale"
-                        :date-locale="dateLocale"
-                        :messages="localizedMessages"
-                        :show-timezones="false"
-                    >
-                        <IconSpriteProvider>
-                            <slot />
-                        </IconSpriteProvider>
-                    </IntlProvider>
-                </IconSpriteProvider>
-            </PortalProvider>
-        </AuthProvider>
-    </ConfigProvider>
+    <ErrorHandlingProvider @error="onError">
+        <ConfigProvider v-if="environment" :environment="environment">
+            <AuthProvider v-if="token" :token="token">
+                <PortalProvider :token="token">
+                    <IconSpriteProvider>
+                        <IntlProvider
+                            :locale="locale"
+                            :date-locale="dateLocale"
+                            :messages="localizedMessages"
+                            :show-timezones="false"
+                        >
+                            <IconSpriteProvider>
+                                <slot />
+                            </IconSpriteProvider>
+                        </IntlProvider>
+                    </IconSpriteProvider>
+                </PortalProvider>
+            </AuthProvider>
+        </ConfigProvider>
+    </ErrorHandlingProvider>
 </template>

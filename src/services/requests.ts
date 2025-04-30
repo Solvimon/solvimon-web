@@ -1,4 +1,5 @@
 import type { ApiSuccessCollectionResponse } from '@solvimon/types';
+import { useErrorHandling } from '@solvimon/ui';
 import type {
     CollectionRequestParams,
     RequestOptions,
@@ -9,13 +10,12 @@ import type {
 import { Headers } from '@/services/requests.lib';
 import { useAuth } from '@/components/AuthProvider';
 
-const trackSentryException = () => {};
-
 const defaultOptions: RequestOptions = {
     method: 'GET',
 };
 
 export function createRequestService({ enableAccessCheck } = { enableAccessCheck: true }) {
+    const { onError } = useErrorHandling();
     const authHeaders = enableAccessCheck
         ? { [Headers.AUTHORIZATION]: `Bearer ${useAuth().accessToken.value}` }
         : {};
@@ -94,7 +94,7 @@ export function createRequestService({ enableAccessCheck } = { enableAccessCheck
                 // Log to console, to make debugging easier. Also for back-end devs
                 // eslint-disable-next-line no-console
                 console.error(error);
-                trackSentryException();
+                onError?.(new Error('Failed to parse JSON response', { cause: error }));
 
                 throw {
                     hasError: true,
@@ -103,7 +103,7 @@ export function createRequestService({ enableAccessCheck } = { enableAccessCheck
                 };
             }
         } catch (error) {
-            trackSentryException();
+            onError?.(new Error('Request failed', { cause: error }));
             return Promise.reject(error);
         }
     }

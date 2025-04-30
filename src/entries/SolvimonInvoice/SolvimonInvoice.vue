@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import type { SolvimonInvoiceProps } from './SolvimonInvoice.types';
+import type { SolvimonInvoiceEmits, SolvimonInvoiceProps } from './SolvimonInvoice.types';
 import InvoiceDetail from '@/views/InvoiceDetail/InvoiceDetail.vue';
 import Provider from '@/components/Provider/Provider.vue';
 
 const props = defineProps<Partial<SolvimonInvoiceProps>>();
+defineEmits<SolvimonInvoiceEmits>();
 
 if (!props.invoiceId) {
     throw new Error('invoiceId prop is required');
@@ -11,7 +12,12 @@ if (!props.invoiceId) {
 </script>
 
 <template>
-    <Provider :environment="environment" :token="token" :locale="locale">
+    <Provider
+        :environment="environment"
+        :token="token"
+        :locale="locale"
+        @error="(error) => $emit('error', error)"
+    >
         <InvoiceDetail
             v-if="invoiceId"
             :invoice-id="invoiceId"

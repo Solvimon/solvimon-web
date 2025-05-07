@@ -36,6 +36,7 @@ const { data, isPending } = useData(async () => {
             :payment-attempts="data?.paymentAttempts.data"
             :invoice="data.invoice"
             :download-service="() => getInvoicePdf(invoiceId)"
+            variant="external"
         />
 
         <div class="flex flex-col lg:flex-row gap-3 lg:gap-6">

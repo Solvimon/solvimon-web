@@ -7,7 +7,6 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const translationsDir = path.join(__dirname, '../src/translations');
-
 const sourceKeys = Object.keys(source);
 
 const files = fs
@@ -15,7 +14,7 @@ const files = fs
     .filter((file) => file.endsWith('.json') && file !== 'source.json');
 
 files.forEach((file) => {
-    const localePath = path.join(translationsDir, file);
+    const localePath = path.normalize(path.join(translationsDir, file));
     const localeContent = fs.readFileSync(localePath, 'utf-8');
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     const locale = JSON.parse(localeContent) as Record<string, string>;

@@ -1,6 +1,6 @@
 import { type PortalUrl } from './portals.types';
 import { createRequestService } from './requests';
-import { useConfig } from '@/components/ConfigProvider/composables/useConfig';
+import { useConfig } from '@/components/providers/ConfigProvider/composables/useConfig';
 
 export function createPortalsService() {
     const config = useConfig();

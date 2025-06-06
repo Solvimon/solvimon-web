@@ -9,11 +9,11 @@ import nlNlUiTranslations from '@solvimon/ui/translations/nl-NL';
 import enUsUiTranslations from '@solvimon/ui/translations/en-US';
 import { computed } from 'vue';
 import type { ProviderEmits, ProviderProps } from './Provider.types';
+import AuthProvider from '@/components/providers/AuthProvider/AuthProvider.vue';
 import nlNlSdkTranslations from '@/translations/nl-NL.json';
 import enUsSdkTranslations from '@/translations/en-US.json';
-import AuthProvider from '@/components/AuthProvider/AuthProvider.vue';
-import ConfigProvider from '@/components/ConfigProvider/ConfigProvider.vue';
-import PortalProvider from '@/components/PortalProvider/PortalProvider.vue';
+import ConfigProvider from '@/components/providers/ConfigProvider/ConfigProvider.vue';
+import PortalProvider from '@/components/providers/PortalProvider/PortalProvider.vue';
 
 const props = defineProps<ProviderProps>();
 defineEmits<ProviderEmits>();
@@ -54,7 +54,7 @@ const localizedMessages = computed<IntlMessages>(() => ({
     <ErrorHandlingProvider @error="onError">
         <ConfigProvider v-if="environment" :environment="environment">
             <AuthProvider v-if="token" :token="token">
-                <PortalProvider :token="token">
+                <PortalProvider :token="token" :allowed-portal-types="allowedPortalUrlTypes">
                     <IconSpriteProvider>
                         <IntlProvider
                             :locale="locale"

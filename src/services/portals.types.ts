@@ -1,6 +1,12 @@
-import type { Customer, QuoteVersion } from '@solvimon/types';
+import type { Customer, PricingPlanSubscription, QuoteVersion } from '@solvimon/types';
 
-type PortalUrlType = 'INVOICE' | 'PAY_INVOICE' | 'CUSTOMER' | 'QUOTE_VERSION';
+type PortalUrlType =
+    | 'INVOICE'
+    | 'PAY_INVOICE'
+    | 'CUSTOMER'
+    | 'QUOTE_VERSION'
+    | 'INIT_PRICING_PLAN_SUBSCRIPTION';
+
 type PortalUrlStatus = 'PUBLISHED' | 'REVOKED';
 
 export interface BasePortalUrl {
@@ -64,8 +70,16 @@ export interface PortalUrlCustomer extends BasePortalUrl {
     };
 }
 
+export interface PortalUrlInitPricingPlanSubscription extends BasePortalUrl {
+    type: 'INIT_PRICING_PLAN_SUBSCRIPTION';
+    init_pricing_plan_subscription: {
+        pricing_plan_subscription_id: PricingPlanSubscription['id'];
+    };
+}
+
 export type PortalUrl =
     | PortalUrlInvoice
     | PortalUrlPayInvoice
     | PortalUrlQuoteVersion
-    | PortalUrlCustomer;
+    | PortalUrlCustomer
+    | PortalUrlInitPricingPlanSubscription;

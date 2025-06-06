@@ -1,6 +1,6 @@
 import type { Token } from '@solvimon/types';
 import { createRequestService } from './requests';
-import { useConfig } from '@/components/ConfigProvider/composables/useConfig';
+import { useConfig } from '@/components/providers/ConfigProvider/composables/useConfig';
 
 export function createTokensService() {
     const config = useConfig();

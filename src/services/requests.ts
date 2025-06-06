@@ -8,7 +8,7 @@ import type {
     GetDefaultHeaders,
 } from './requests.types';
 import { Headers } from '@/services/requests.lib';
-import { useAuth } from '@/components/AuthProvider';
+import { useAuth } from '@/components/providers/AuthProvider';
 
 const defaultOptions: RequestOptions = {
     method: 'GET',

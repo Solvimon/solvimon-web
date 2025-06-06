@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { SolvimonInvoiceEmits, SolvimonInvoiceProps } from './SolvimonInvoice.types';
 import InvoiceDetail from '@/views/InvoiceDetail/InvoiceDetail.vue';
-import Provider from '@/components/Provider/Provider.vue';
+import Provider from '@/components/providers/Provider/Provider.vue';
 
 const props = defineProps<Partial<SolvimonInvoiceProps>>();
 defineEmits<SolvimonInvoiceEmits>();
@@ -16,6 +16,7 @@ if (!props.invoiceId) {
         :environment="environment"
         :token="token"
         :locale="locale"
+        :allowed-portal-url-types="['INVOICE', 'CUSTOMER']"
         @error="(error) => $emit('error', error)"
     >
         <InvoiceDetail

@@ -1,5 +1,5 @@
 import { inject } from 'vue';
-import { CONFIG_INJECTION_KEY } from '@/components/ConfigProvider/ConfigProvider.lib';
+import { CONFIG_INJECTION_KEY } from '@/components/providers/ConfigProvider/ConfigProvider.lib';
 
 export const useConfig = () => {
     const config = inject(CONFIG_INJECTION_KEY);

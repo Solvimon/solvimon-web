@@ -1,11 +1,11 @@
 import { fileURLToPath, URL } from 'node:url';
 import { resolve } from 'node:path';
-
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import vueDevTools from 'vite-plugin-vue-devtools';
 import { glob } from 'glob';
 import dts from 'vite-plugin-dts';
+import string from 'vite-plugin-string';
 
 export default defineConfig({
     build: {
@@ -27,6 +27,9 @@ export default defineConfig({
     },
     plugins: [
         vue({ features: { customElement: true } }),
+        string({
+            include: ['**/*.css'],
+        }),
         vueDevTools(),
         dts({ rollupTypes: true }),
     ],

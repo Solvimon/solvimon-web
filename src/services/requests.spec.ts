@@ -5,13 +5,14 @@ import { Headers as HeadersConst } from './requests.lib';
 const CALLED_URL = 'https://domain.com/test';
 const TOKEN = 'some-token-123';
 const onError = vi.fn();
+
 vi.mock('@solvimon/ui', () => ({
     ...vi.importActual('@solvimon/ui'),
     useErrorHandling: () => ({
         onError,
     }),
 }));
-vi.mock('@/components/AuthProvider', () => ({
+vi.mock('@/components/providers/AuthProvider', () => ({
     useAuth: vi.fn(() => ({ accessToken: { value: TOKEN } })),
 }));
 

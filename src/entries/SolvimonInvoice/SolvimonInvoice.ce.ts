@@ -1,9 +1,9 @@
 import SolvimonInvoiceVue from './SolvimonInvoice.vue';
 import { defineCustomElement } from '@/utils/customElements';
-import { COMPONENT_TAG_PREFIX } from '@/constants';
+import { getComponentName } from '@/utils/component';
 
 export const SolvimonInvoice = defineCustomElement(SolvimonInvoiceVue);
-const COMPONENT_NAME = `${COMPONENT_TAG_PREFIX}invoice`;
+const COMPONENT_NAME = getComponentName('invoice');
 
 export const defineSolvimonInvoice = () => {
     if (!customElements.get(COMPONENT_NAME)) {

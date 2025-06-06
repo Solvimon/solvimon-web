@@ -3,14 +3,16 @@ import type { PaymentMethodOptionResponseEntry } from '@solvimon/types';
 import { createPaymentMethodsService } from '@/services/paymentMethods';
 import { useData } from '@/utils/useData';
 import PaymentProviderFormAdyen from '@/components/paymentProviders/PaymentProviderFormAdyen/PaymentProviderFormAdyen.vue';
-import { usePortal } from '@/components/PortalProvider/composables/usePortal';
+import { usePortal } from '@/components/providers/PortalProvider/composables/usePortal';
 
 const portal = usePortal();
 const { getPaymentMethodOptions } = createPaymentMethodsService();
 
-const { data: paymentMethodOptions, isPending } = useData(() =>
-    getPaymentMethodOptions({ customerId: portal.value?.customer_id! })
-);
+const { data: paymentMethodOptions, isPending } = useData({
+    getData: async () => {
+        return await getPaymentMethodOptions({ customerId: portal.value?.customer_id! });
+    },
+});
 
 const isAdyenPaymentMethod = (paymentMethodOption: PaymentMethodOptionResponseEntry) =>
     !!paymentMethodOption.integration.payment_gateway?.adyen;

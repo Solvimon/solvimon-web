@@ -17,15 +17,17 @@ const { $t } = useIntl();
 const { getInvoice, getInvoicePdf } = createInvoicesService();
 const { getPayments } = createPaymentsService();
 
-const { data, isPending } = useData(async () => {
-    const [invoice, paymentAttempts] = await Promise.all([
-        getInvoice(props.invoiceId),
-        getPayments(props.invoiceId),
-    ]);
-    return {
-        invoice,
-        paymentAttempts,
-    };
+const { data, isPending } = useData({
+    getData: async () => {
+        const [invoice, paymentAttempts] = await Promise.all([
+            getInvoice(props.invoiceId),
+            getPayments(props.invoiceId),
+        ]);
+        return {
+            invoice,
+            paymentAttempts,
+        };
+    },
 });
 </script>
 

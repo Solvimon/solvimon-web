@@ -19,7 +19,9 @@
     "translations:compile": "formatjs compile 'src/translations/source.json' --out-file 'src/translations/en-US.json'",
     "translations:check": "tsx ./scripts/check-translations.ts"
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "main": "./dist/index.cjs.js",
   "module": "./dist/index.es.js",
   "types": "./dist/index.d.ts",
@@ -38,15 +40,21 @@
       "types": "./dist/SolvimonInvoice.ce.d.ts",
       "import": "./dist/SolvimonInvoice.es.js",
       "require": "./dist/SolvimonInvoice.cjs.js"
+    },
+    "./solvimon-checkout": {
+      "types": "./dist/SolvimonCheckout.ce.d.ts",
+      "import": "./dist/SolvimonCheckout.es.js",
+      "require": "./dist/SolvimonCheckout.cjs.js"
     }
   },
   "dependencies": {
-    "@adyen/adyen-web": "^6.5.0",
+    "@adyen/adyen-web": "^6.14.0",
     "@formatjs/intl": "^3.1.5",
     "@solvimon/tailwind-config": "^1.0.0",
     "@solvimon/ui": "^1.0.0",
     "@stripe/stripe-js": "^2.4.0",
     "jwt-decode": "^4.0.0",
+    "vite-plugin-string": "^1.2.3",
     "vue": "^3.5.13"
   },
   "devDependencies": {
@@ -56,12 +64,15 @@
     "@tsconfig/node22": "^22.0.0",
     "@types/jsdom": "^21.1.7",
     "@types/node": "^22.10.2",
+    "@types/vuelidate": "^0.7.22",
     "@vitejs/plugin-vue": "^5.2.3",
     "@vitest/eslint-plugin": "1.1.20",
     "@vue/eslint-config-prettier": "^7.1.0",
     "@vue/eslint-config-typescript": "^12.0.0",
     "@vue/test-utils": "^2.4.6",
     "@vue/tsconfig": "^0.7.0",
+    "@vuelidate/core": "^2.0.3",
+    "@vuelidate/validators": "^2.0.4",
     "autoprefixer": "^10.4.20",
     "eslint": "^8.38.0",
     "eslint-import-resolver-typescript": "^3.6.0",

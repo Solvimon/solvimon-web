@@ -1,1 +1,4 @@
-export const trackSentryException = () => {};
+export const trackSentryException = (...args: any[]) => {
+    // eslint-disable-next-line no-console
+    console.log(args);
+};

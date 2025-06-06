@@ -6,7 +6,13 @@ import type { PortalUrl } from '@/services/portals.types';
 export const PORTAL_INJECTION_KEY: InjectionKey<ReturnType<typeof getPortal>> =
     Symbol('portalObject');
 
-export const getPortal = (token: string) => {
+export const getPortal = ({
+    token,
+    allowedPortalTypes,
+}: {
+    token: string;
+    allowedPortalTypes?: PortalUrl['type'][];
+}) => {
     const { getPortalUrl } = createPortalsService();
 
     const portal = ref<PortalUrl>();
@@ -27,11 +33,8 @@ export const getPortal = (token: string) => {
                 throw Error('Resource unavailable');
             }
 
-            /**
-             * Check portal url response validity with the expected type.
-             */
-            if (portal.value.type !== 'CUSTOMER') {
-                throw Error(`Expected portal url type CUSTOMER but got type ${portal.value.type}`);
+            if (allowedPortalTypes && !allowedPortalTypes.includes(portal.value.type)) {
+                throw Error(`Incorrect portal url types: ${portal.value.type}`);
             }
         } catch (err) {
             // eslint-disable-next-line no-console

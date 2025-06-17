@@ -36,7 +36,7 @@ const { $t } = useIntl();
             :error="validation.value.email.$errors"
         />
         <CountrySelect
-            v-model="model.country"
+            v-model:single-model-value="model.country"
             required
             :form="FORM_ID"
             :label="

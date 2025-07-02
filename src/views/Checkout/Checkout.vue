@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Button, InvoiceSummary, Section, Typography, useIntl } from '@solvimon/ui';
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import type { Address, AuthorizePaymentPayload, Name } from '@solvimon/types';
 import type { CheckoutProps } from './Checkout.types';
 import { useCheckoutView } from './useCheckoutView';
@@ -104,6 +104,11 @@ const {
     country,
     subscriptionId: portal.value?.init_pricing_plan_subscription?.pricing_plan_subscription_id,
 });
+
+watch(
+    () => checkoutForm.form.value.country,
+    (val) => (country.value = val)
+);
 
 const subscriptionId = portal.value?.init_pricing_plan_subscription?.pricing_plan_subscription_id;
 

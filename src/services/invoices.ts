@@ -50,7 +50,7 @@ export function createInvoicesService() {
                 method: 'POST',
             },
             data: {
-                pricing_plan_subscription_id: pricingPlanSubscriptionId,
+                template_pricing_plan_subscription_id: pricingPlanSubscriptionId,
                 customer_details: {
                     ...customer,
                     reference: 'preview',

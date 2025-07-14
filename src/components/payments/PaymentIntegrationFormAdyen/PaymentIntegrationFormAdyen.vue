@@ -184,6 +184,11 @@ function injectStylesToShadowRoot() {
                 gap: 12px;
             }
 
+            .adyen-checkout__dropdown__list {
+                background-color: white;
+                border-radius: var(--adyen-sdk-border-radius-s, 4px);
+            }
+
             .adyen-checkout__payment-method.adyen-checkout__payment-method--selected:after {
                 content: '✓';
                 width: 20px;

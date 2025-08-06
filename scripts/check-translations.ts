@@ -15,10 +15,17 @@ const files = fs
 
 files.forEach((file) => {
     const localePath = path.normalize(path.join(translationsDir, file));
+
+    // Ensure the path is still within the base directory
+    if (!localePath.startsWith(translationsDir + path.sep)) {
+        // eslint-disable-next-line no-console
+        console.error(`⚠️ Skipping suspicious file path: ${file}`);
+        return;
+    }
+
     const localeContent = fs.readFileSync(localePath, 'utf-8');
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     const locale = JSON.parse(localeContent) as Record<string, string>;
-
     const missingKeys = sourceKeys.filter((key) => !(key in locale));
 
     if (missingKeys.length > 0) {

@@ -16,7 +16,7 @@ export interface PaymentIntegrationFormAdyenProps {
     variant: 'TOKENIZE' | 'AUTHORIZE';
     selected: boolean;
     onSelect?: () => void;
-    amount?: Amount;
+    amount: Amount;
     validateOnSubmit?: () => Promise<boolean>;
     context: AuthorizePaymentPayload['context'];
 }

@@ -57,7 +57,7 @@ function submit() {
 async function getConfiguration() {
     return {
         checkoutConfig: {
-            amount: props.amount ? transformToAdyenAmount(props.amount) : undefined,
+            amount: transformToAdyenAmount(props.amount),
             clientKey:
                 props.paymentMethodOptionResponseEntry.integration?.payment_gateway?.adyen
                     ?.public_key,

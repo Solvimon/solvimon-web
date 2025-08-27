@@ -12,7 +12,7 @@ interface BasePaymentIntegrationFormProps {
     countryCode: string;
     invoiceId?: Invoice['id'];
     variant: 'AUTHORIZE' | 'TOKENIZE';
-    amount?: Amount;
+    amount: Amount;
     redirectUrl: string;
     selectedOption?: string;
     validateOnSubmit?: () => Promise<boolean>;

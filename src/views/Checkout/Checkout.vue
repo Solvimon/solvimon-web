@@ -154,9 +154,10 @@ const handleValidateOnSubmit = async () => {
             }}</Typography>
             <Section>
                 <SubscriptionSummary
-                    v-if="data?.subscription && invoicePreview"
+                    v-if="data?.subscription"
                     :invoice="invoicePreview"
                     :subscription="data?.subscription"
+                    :loading="isPreviewAndPaymentMethodsPending"
                 />
                 <!-- left -->
             </Section>

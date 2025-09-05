@@ -3,5 +3,6 @@ import type { PricingPlanSubscriptionExpanded } from '@/types/subscription';
 
 export interface SubscriptionSummaryProps {
     subscription: PricingPlanSubscriptionExpanded;
-    invoice: Invoice;
+    invoice?: Invoice;
+    loading?: boolean;
 }

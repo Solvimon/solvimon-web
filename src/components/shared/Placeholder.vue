@@ -4,7 +4,7 @@ import type { PlaceholderProps } from './Placeholder.types';
 
 const MARKER = 'data-placeholder-style';
 
-withDefaults(defineProps<PlaceholderProps>(), { animated: true });
+withDefaults(defineProps<PlaceholderProps>(), { animated: false, contentReady: false });
 
 const elementRef = ref();
 
@@ -44,12 +44,16 @@ onMounted(() => {
 </script>
 
 <template>
-    <div ref="elementRef" class="relative bg-gray-50/50 rounded min-h-2">
+    <div class="relative min-h-4">
         <div
+            v-if="!contentReady"
             ref="elementRef"
-            class="absolute inset-0 pointer-events-none"
-            :class="{ 'animated-gradient': animated }"
+            :class="[
+                `absolute inset-0 bg-gray-100 rounded pointer-events-none
+        ${placeholderClass ?? ''}`,
+                { 'animated-gradient': animated },
+            ]"
         />
-        <slot />
+        <slot v-if="contentReady" />
     </div>
 </template>

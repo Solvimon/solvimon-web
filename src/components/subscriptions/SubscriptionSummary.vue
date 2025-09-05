@@ -2,6 +2,7 @@
 import { Amount, Chip, Typography, useIntl } from '@solvimon/ui';
 import { computed } from 'vue';
 import type { SubscriptionSummaryProps } from './SubscriptionSummary.types';
+import Placeholder from '@/components/shared/Placeholder.vue';
 
 const props = defineProps<SubscriptionSummaryProps>();
 
@@ -42,13 +43,17 @@ const description = computed(
 );
 
 const hasUsageBasedComponent = computed(() =>
-    props.invoice.periods.some((period) =>
-        period.groups.some((group) =>
-            group.lines?.some((line) =>
-                line.product_items.some((productItem) => productItem.model_type === 'USAGE_BASED')
-            )
-        )
-    )
+    props.invoice
+        ? props.invoice.periods.some((period) =>
+              period.groups.some((group) =>
+                  group.lines?.some((line) =>
+                      line.product_items.some(
+                          (productItem) => productItem.model_type === 'USAGE_BASED'
+                      )
+                  )
+              )
+          )
+        : false
 );
 </script>
 
@@ -60,23 +65,32 @@ const hasUsageBasedComponent = computed(() =>
                 description
             }}</Typography>
         </div>
-        <div class="flex items-center gap-2">
-            <span>
-                <Typography tag="span" variant="body" weight="semibold">
-                    <Amount :value="invoice.tax_summary.total_amount" />
-                </Typography>
-                <Typography tag="span" variant="body-xs"
-                    >{{ ' / ' }}{{ formattedPeriod }}</Typography
-                >
-            </span>
-            <Chip v-if="hasUsageBasedComponent" color="dark">{{
-                $t({
-                    defaultMessage: '+ usage',
-                    id: 'checkout.subscription.usage_chip.label',
-                    description:
-                        'The label for the chip that indicates a usage based component in the subscription',
-                })
-            }}</Chip>
-        </div>
+        <Placeholder
+            class="min-w-32 min-h-7 self-center"
+            :content-ready="!!invoice?.tax_summary.total_amount && !loading"
+            :loading="loading"
+        >
+            <div class="flex items-center gap-2">
+                <span>
+                    <Typography tag="span" variant="body" weight="semibold">
+                        <Amount
+                            v-if="invoice?.tax_summary.total_amount"
+                            :value="invoice.tax_summary.total_amount"
+                        />
+                    </Typography>
+                    <Typography tag="span" variant="body-xs"
+                        >{{ ' / ' }}{{ formattedPeriod }}</Typography
+                    >
+                </span>
+                <Chip v-if="hasUsageBasedComponent" color="dark">{{
+                    $t({
+                        defaultMessage: '+ usage',
+                        id: 'checkout.subscription.usage_chip.label',
+                        description:
+                            'The label for the chip that indicates a usage based component in the subscription',
+                    })
+                }}</Chip>
+            </div>
+        </Placeholder>
     </div>
 </template>

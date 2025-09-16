@@ -184,11 +184,11 @@ const handleValidateOnSubmit = async () => {
                         v-else-if="isPreviewAndPaymentMethodsPending"
                     />
                     <PaymentIntegrationForm
-                        v-else
+                        v-else-if="invoicePreview"
                         ref="paymentIntegrationFormRef"
                         :country-code="country"
                         :context="context"
-                        :amount="invoicePreview!.invoice_amount_including_tax"
+                        :amount="invoicePreview.invoice_amount_including_tax"
                         variant="AUTHORIZE"
                         :payment-method-options="paymentMethodOptions ?? []"
                         redirect-url="https://www.solvimon.com"

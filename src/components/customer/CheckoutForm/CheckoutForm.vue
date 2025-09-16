@@ -64,14 +64,6 @@ const { $t } = useIntl();
             <RadioGroup
                 v-model="model.type"
                 name="customer_type"
-                :label="
-                    $t({
-                        defaultMessage: 'Customer type',
-                        id: 'checkout.customer_type.label',
-                        description:
-                            'The type of the customer in the checkout form, this can either be an individual or an organization.',
-                    })
-                "
                 variant="pill"
                 required
                 :options="[
@@ -137,7 +129,7 @@ const { $t } = useIntl();
                 name="legal_name"
                 :label="
                     $t({
-                        defaultMessage: 'Legal name',
+                        defaultMessage: 'Legal entity name',
                         id: 'checkout.legal_name.label',
                         description:
                             'The legal name of the organization customer in the checkout form',
@@ -149,7 +141,7 @@ const { $t } = useIntl();
                 name="address_line_1"
                 :label="
                     $t({
-                        defaultMessage: 'Line 1',
+                        defaultMessage: 'Address line 1',
                         id: 'checkout.address.line1.label',
                         description: 'Address line 1 of the customer address in the checkout form',
                     })
@@ -160,7 +152,7 @@ const { $t } = useIntl();
                 name="address_line_2"
                 :label="
                     $t({
-                        defaultMessage: 'Line 2',
+                        defaultMessage: 'Address line 2',
                         id: 'checkout.address.line2.label',
                         description: 'Address line 2 of the customer address in the checkout form',
                     })

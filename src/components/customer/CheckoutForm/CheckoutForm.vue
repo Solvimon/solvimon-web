@@ -1,12 +1,20 @@
 <script setup lang="ts">
-import { CountrySelect, Divider, Input, RadioGroup, Typography, useIntl } from '@solvimon/ui';
+import { CountrySelect, Divider, Input, Toggle, Typography, useIntl } from '@solvimon/ui';
+import { computed } from 'vue';
 import type { CheckoutFormState, CheckoutFormProps, CheckoutFormEmits } from './CheckoutForm.types';
 
 const FORM_ID = 'checkout-form';
 
 defineProps<CheckoutFormProps>();
 defineEmits<CheckoutFormEmits>();
+
 const model = defineModel<CheckoutFormState>({ required: true });
+const companyPurchaseModel = computed({
+    get: () => model.value.type === 'ORGANIZATION',
+    set: (value) => {
+        model.value.type = value ? 'ORGANIZATION' : 'INDIVIDUAL';
+    },
+});
 
 const { $t } = useIntl();
 </script>
@@ -61,32 +69,31 @@ const { $t } = useIntl();
             })
         }}</Typography>
         <div class="flex gap-4 flex-col">
-            <RadioGroup
-                v-model="model.type"
-                name="customer_type"
-                variant="pill"
-                required
-                :options="[
-                    {
-                        value: 'INDIVIDUAL',
-                        label: $t({
-                            defaultMessage: 'Individual',
-                            id: 'checkout.customer_type.option.individual.label',
-                            description:
-                                'The label for the individual option in the customer type selector in the checkout form',
-                        }),
-                    },
-                    {
-                        value: 'ORGANIZATION',
-                        label: $t({
-                            defaultMessage: 'Organization',
-                            id: 'checkout.customer_type.option.organization.label',
-                            description:
-                                'The label for the organization option in the customer type selector in the checkout form',
-                        }),
-                    },
-                ]"
-            />
+            <Toggle v-model="companyPurchaseModel" label-position="before" class="mt-4">
+                <template #inline-label>
+                    <div class="flex flex-col grow">
+                        <Typography tag="span" weight="semibold">{{
+                            $t({
+                                defaultMessage: 'Company purchase',
+                                id: 'checkout.company_purchase_toggle.title',
+                                description:
+                                    'The title of the company purchase toggle in the checkout',
+                            })
+                        }}</Typography>
+                        <Typography tag="span" variant="body-xs" shade="lighter">
+                            {{
+                                $t({
+                                    defaultMessage: 'I am purchasing on behalf of a company',
+                                    id: 'checkout.company_purchase_toggle.sub_title',
+                                    description:
+                                        'The subtitle of the company purchase toggle in the checkout',
+                                })
+                            }}
+                        </Typography>
+                    </div>
+                </template>
+            </Toggle>
+
             <div v-if="model.type === 'INDIVIDUAL'" class="grid grid-cols-3 gap-4">
                 <Input
                     v-model="model.firstName"

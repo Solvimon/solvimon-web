@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-import { FormMessage } from '@solvimon/ui';
+import { FormMessage, useIntl } from '@solvimon/ui';
 import type {
     PaymentIntegrationFormEmits,
     PaymentIntegrationFormProps,
@@ -10,6 +10,8 @@ import PaymentIntegrationFormAdyen from '@/components/payments/PaymentIntegratio
 const props = defineProps<PaymentIntegrationFormProps>();
 defineEmits<PaymentIntegrationFormEmits>();
 defineExpose({ submit });
+
+const { $t } = useIntl();
 
 const selectedIntegration = ref();
 const integrationRefs = ref(new Map());
@@ -54,5 +56,11 @@ function submit() {
             @payment-success="$emit('payment-success')"
         />
     </template>
-    <FormMessage v-if="showIntegrationError" variant="error">Select a payment method</FormMessage>
+    <FormMessage v-if="showIntegrationError" variant="error" class="mt-2">{{
+        $t({
+            defaultMessage: 'Select a payment method',
+            id: 'payment_integration_form.select_payment_method_error',
+            description: 'Error shown when no payment method is selected',
+        })
+    }}</FormMessage>
 </template>

@@ -1,12 +1,14 @@
 <script setup lang="ts">
-import { CountrySelect, Divider, Input, Toggle, Typography, useIntl } from '@solvimon/ui';
-import { computed } from 'vue';
+import { Button, CountrySelect, Input, Toggle, Typography, useIntl } from '@solvimon/ui';
+import { computed, ref } from 'vue';
 import type { CheckoutFormState, CheckoutFormProps, CheckoutFormEmits } from './CheckoutForm.types';
 
 const FORM_ID = 'checkout-form';
 
 defineProps<CheckoutFormProps>();
 defineEmits<CheckoutFormEmits>();
+
+const showBillingDetails = ref(false);
 
 const model = defineModel<CheckoutFormState>({ required: true });
 const companyPurchaseModel = computed({
@@ -16,63 +18,67 @@ const companyPurchaseModel = computed({
     },
 });
 
+const isCompanyPurchase = computed(() => model.value.type === 'ORGANIZATION');
+
 const { $t } = useIntl();
 </script>
 
 <template>
-    <Typography variant="heading-3" tag="h2" class="mt-2">{{
-        $t({
-            defaultMessage: 'Contact information',
-            id: 'checkout.contact_information_block.title',
-            description: 'The title of the contact information block in the checkout form',
-        })
-    }}</Typography>
-    <div class="grid grid-cols-1 gap-4">
-        <Input
-            v-model="model.email"
-            required
-            type="email"
-            :form="FORM_ID"
-            :label="
-                $t({
-                    defaultMessage: 'Email address',
-                    id: 'checkout.email_address.label',
-                    description: 'The email address of the customer in the checkout form',
-                })
-            "
-            placeholder="Your email address"
-            :error="validation.value.email.$errors"
-        />
-        <CountrySelect
-            v-model:single-model-value="model.country"
-            required
-            :form="FORM_ID"
-            :label="
-                $t({
-                    defaultMessage: 'Country',
-                    id: 'checkout.country.label',
-                    description: 'The country of the customer in the checkout form',
-                })
-            "
-            :error="validation.value.country.$errors"
-        />
-    </div>
-
-    <slot name="default" />
-
     <form :id="FORM_ID" @submit.prevent="$emit('submit', model)">
-        <Typography variant="heading-3" tag="h2" class="mt-6">{{
-            $t({
-                defaultMessage: 'Billing information',
-                id: 'checkout.billing_information_block.title',
-                description: 'The title of the billing information block in the checkout form',
-            })
-        }}</Typography>
-        <div class="flex gap-4 flex-col">
-            <Toggle v-model="companyPurchaseModel" label-position="before" class="mt-4">
+        <div class="flex gap-4 justify-between items-center">
+            <Typography variant="heading-3" tag="h2">{{
+                $t({
+                    defaultMessage: 'Customer information',
+                    id: 'checkout.contact_information_block.title',
+                    description: 'The title of the contact information block in the checkout form',
+                })
+            }}</Typography>
+            <Button
+                v-if="!showBillingDetails"
+                size="sm"
+                variant="ghost"
+                icon-prefix="add"
+                @click="showBillingDetails = true"
+                >Add billing details</Button
+            >
+        </div>
+        <div class="grid grid-cols-1 gap-4">
+            <Input
+                v-model="model.email"
+                required
+                type="email"
+                :label="
+                    $t({
+                        defaultMessage: 'Email address',
+                        id: 'checkout.email_address.label',
+                        description: 'The email address of the customer in the checkout form',
+                    })
+                "
+                :placeholder="
+                    $t({
+                        defaultMessage: 'Email address...',
+                        id: 'checkout.email_address.placeholder',
+                        description: 'The email address of the customer in the checkout form',
+                    })
+                "
+                :error="validation.value.email.$errors"
+            />
+            <CountrySelect
+                v-model:single-model-value="model.country"
+                required
+                :label="
+                    $t({
+                        defaultMessage: 'Country',
+                        id: 'checkout.country.label',
+                        description: 'The country of the customer in the checkout form',
+                    })
+                "
+                :error="validation.value.country.$errors"
+            />
+            <Toggle v-model="companyPurchaseModel" label-position="before">
                 <template #inline-label>
                     <div class="flex flex-col grow">
-                        <Typography tag="span" weight="semibold">{{
+                        <Typography tag="span">{{
                             $t({
                                 defaultMessage: 'Company purchase',
                                 id: 'checkout.company_purchase_toggle.title',
@@ -94,114 +100,7 @@ const { $t } = useIntl();
                 </template>
             </Toggle>
 
-            <div v-if="model.type === 'INDIVIDUAL'" class="grid grid-cols-3 gap-4">
-                <Input
-                    v-model="model.firstName"
-                    name="first_name"
-                    :label="
-                        $t({
-                            defaultMessage: 'First name',
-                            id: 'checkout.first_name.label',
-                            description: 'The first name of the customer in the checkout form',
-                        })
-                    "
-                />
-                <Input
-                    v-model="model.infix"
-                    name="infix"
-                    :label="
-                        $t({
-                            defaultMessage: 'Infix',
-                            id: 'checkout.infix.label',
-                            description: 'The infix of the customer in the checkout form',
-                        })
-                    "
-                />
-                <Input
-                    v-model="model.lastName"
-                    name="last_name"
-                    :label="
-                        $t({
-                            defaultMessage: 'Last name',
-                            id: 'checkout.last_name.label',
-                            description: 'The last name of the customer in the checkout form',
-                        })
-                    "
-                />
-            </div>
-            <Input
-                v-if="model.type === 'ORGANIZATION'"
-                v-model="model.companyLegalName"
-                required
-                name="legal_name"
-                :label="
-                    $t({
-                        defaultMessage: 'Legal entity name',
-                        id: 'checkout.legal_name.label',
-                        description:
-                            'The legal name of the organization customer in the checkout form',
-                    })
-                "
-            />
-            <Input
-                v-model="model.addressLine1"
-                name="address_line_1"
-                :label="
-                    $t({
-                        defaultMessage: 'Address line 1',
-                        id: 'checkout.address.line1.label',
-                        description: 'Address line 1 of the customer address in the checkout form',
-                    })
-                "
-            />
-            <Input
-                v-model="model.addressLine2"
-                name="address_line_2"
-                :label="
-                    $t({
-                        defaultMessage: 'Address line 2',
-                        id: 'checkout.address.line2.label',
-                        description: 'Address line 2 of the customer address in the checkout form',
-                    })
-                "
-            />
-            <div class="grid grid-cols-2 gap-4">
-                <Input
-                    v-model="model.postalCode"
-                    name="postal_code"
-                    :label="
-                        $t({
-                            defaultMessage: 'Postal code',
-                            id: 'checkout.address.portal_code.label',
-                            description: 'Postal code of the customer address in the checkout form',
-                        })
-                    "
-                />
-                <Input
-                    v-model="model.city"
-                    name="city"
-                    :label="
-                        $t({
-                            defaultMessage: 'City',
-                            id: 'checkout.address.city.label',
-                            description: 'City of the customer address in the checkout form',
-                        })
-                    "
-                />
-                <Input
-                    v-model="model.state"
-                    name="state"
-                    :label="
-                        $t({
-                            defaultMessage: 'State',
-                            id: 'checkout.address.state.label',
-                            description: 'State of the customer address in the checkout form',
-                        })
-                    "
-                />
-            </div>
-            <template v-if="model.type === 'ORGANIZATION'">
-                <Divider spacing="sm" />
+            <template v-if="isCompanyPurchase">
                 <Input
                     v-model="model.companyVatNumber"
                     name="vat_number"
@@ -212,9 +111,171 @@ const { $t } = useIntl();
                             description: 'The label for the vat number in the checkout form',
                         })
                     "
+                    :placeholder="
+                        $t({
+                            defaultMessage: 'VAT number...',
+                            id: 'checkout.vat_number.placeholder',
+                            description: 'The label for the vat number in the checkout form',
+                        })
+                    "
+                />
+
+                <Input
+                    v-model="model.companyLegalName"
+                    required
+                    name="legal_name"
+                    :label="
+                        $t({
+                            defaultMessage: 'Legal entity name',
+                            id: 'checkout.legal_name.label',
+                            description:
+                                'The legal name of the organization customer in the checkout form',
+                        })
+                    "
+                    :placeholder="
+                        $t({
+                            defaultMessage: 'Legal entity name...',
+                            id: 'checkout.legal_name.placeholder',
+                            description:
+                                'The legal name of the organization customer in the checkout form',
+                        })
+                    "
                 />
             </template>
         </div>
+
+        <template v-if="showBillingDetails">
+            <div class="flex gap-4 justify-between items-center mt-6">
+                <Typography variant="heading-3" tag="h2">{{
+                    $t({
+                        defaultMessage: 'Billing details',
+                        id: 'checkout.billing_information_block.title',
+                        description:
+                            'The title of the billing information block in the checkout form',
+                    })
+                }}</Typography>
+                <Button
+                    v-if="showBillingDetails"
+                    size="sm"
+                    variant="ghost"
+                    icon-prefix="close"
+                    @click="showBillingDetails = false"
+                    >Remove billing details</Button
+                >
+            </div>
+
+            <div class="flex gap-2 flex-col">
+                <div v-if="!isCompanyPurchase" class="grid grid-cols-2 gap-2">
+                    <Input
+                        v-model="model.firstName"
+                        name="first_name"
+                        :label="
+                            $t({
+                                defaultMessage: 'First name',
+                                id: 'checkout.first_name.label',
+                                description: 'The first name of the customer in the checkout form',
+                            })
+                        "
+                        :placeholder="
+                            $t({
+                                defaultMessage: 'First name...',
+                                id: 'checkout.first_name.placeholder',
+                                description: 'The first name of the customer in the checkout form',
+                            })
+                        "
+                    />
+                    <Input
+                        v-model="model.lastName"
+                        name="last_name"
+                        :label="
+                            $t({
+                                defaultMessage: 'Last name',
+                                id: 'checkout.last_name.label',
+                                description: 'The last name of the customer in the checkout form',
+                            })
+                        "
+                        :placeholder="
+                            $t({
+                                defaultMessage: 'Last name...',
+                                id: 'checkout.last_name.placeholder',
+                                description: 'The last name of the customer in the checkout form',
+                            })
+                        "
+                    />
+                </div>
+
+                <Input
+                    v-model="model.addressLine1"
+                    name="address_line_1"
+                    :label="
+                        $t({
+                            defaultMessage: 'Billing address',
+                            id: 'checkout.address.title',
+                            description:
+                                'Address line 1 of the customer address in the checkout form',
+                        })
+                    "
+                    :placeholder="
+                        $t({
+                            defaultMessage: 'Address line 1...',
+                            id: 'checkout.address.line1.placeholder',
+                            description:
+                                'Address line 1 of the customer address in the checkout form',
+                        })
+                    "
+                />
+                <Input
+                    v-model="model.addressLine2"
+                    name="address_line_2"
+                    :placeholder="
+                        $t({
+                            defaultMessage: 'Address line 2...',
+                            id: 'checkout.address.line2.placeholder',
+                            description:
+                                'Address line 2 of the customer address in the checkout form',
+                        })
+                    "
+                />
+                <div class="grid grid-cols-3 gap-2">
+                    <Input
+                        v-model="model.postalCode"
+                        name="postal_code"
+                        :placeholder="
+                            $t({
+                                defaultMessage: 'Postal code...',
+                                id: 'checkout.address.portal_code.placeholder',
+                                description:
+                                    'Postal code of the customer address in the checkout form',
+                            })
+                        "
+                    />
+                    <Input
+                        v-model="model.city"
+                        name="city"
+                        :placeholder="
+                            $t({
+                                defaultMessage: 'City...',
+                                id: 'checkout.address.city.placeholder',
+                                description: 'City of the customer address in the checkout form',
+                            })
+                        "
+                    />
+                    <Input
+                        v-model="model.state"
+                        name="state"
+                        :placeholder="
+                            $t({
+                                defaultMessage: 'State...',
+                                id: 'checkout.address.state.placeholder',
+                                description: 'State of the customer address in the checkout form',
+                            })
+                        "
+                    />
+                </div>
+            </div>
+        </template>
+
+        <slot name="default" />
 
         <slot name="submit-button" />
     </form>

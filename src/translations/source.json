@@ -1,63 +1,63 @@
 {
-  "checkout.address.city.label": {
-    "defaultMessage": "City",
+  "checkout.address.city.placeholder": {
+    "defaultMessage": "City...",
     "description": "City of the customer address in the checkout form"
   },
-  "checkout.address.line1.label": {
-    "defaultMessage": "Line 1",
+  "checkout.address.line1.placeholder": {
+    "defaultMessage": "Address line 1...",
     "description": "Address line 1 of the customer address in the checkout form"
   },
-  "checkout.address.line2.label": {
-    "defaultMessage": "Line 2",
+  "checkout.address.line2.placeholder": {
+    "defaultMessage": "Address line 2...",
     "description": "Address line 2 of the customer address in the checkout form"
   },
-  "checkout.address.portal_code.label": {
-    "defaultMessage": "Postal code",
+  "checkout.address.portal_code.placeholder": {
+    "defaultMessage": "Postal code...",
     "description": "Postal code of the customer address in the checkout form"
   },
-  "checkout.address.state.label": {
-    "defaultMessage": "State",
+  "checkout.address.state.placeholder": {
+    "defaultMessage": "State...",
     "description": "State of the customer address in the checkout form"
   },
+  "checkout.address.title": {
+    "defaultMessage": "Billing address",
+    "description": "Address line 1 of the customer address in the checkout form"
+  },
   "checkout.billing_information_block.title": {
-    "defaultMessage": "Billing information",
+    "defaultMessage": "Billing details",
     "description": "The title of the billing information block in the checkout form"
   },
+  "checkout.company_purchase_toggle.sub_title": {
+    "defaultMessage": "I am purchasing on behalf of a company",
+    "description": "The subtitle of the company purchase toggle in the checkout"
+  },
+  "checkout.company_purchase_toggle.title": {
+    "defaultMessage": "Company purchase",
+    "description": "The title of the company purchase toggle in the checkout"
+  },
   "checkout.contact_information_block.title": {
-    "defaultMessage": "Contact information",
+    "defaultMessage": "Customer information",
     "description": "The title of the contact information block in the checkout form"
   },
   "checkout.country.label": {
     "defaultMessage": "Country",
     "description": "The country of the customer in the checkout form"
   },
-  "checkout.customer_type.label": {
-    "defaultMessage": "Customer type",
-    "description": "The type of the customer in the checkout form, this can either be an individual or an organization."
-  },
-  "checkout.customer_type.option.individual.label": {
-    "defaultMessage": "Individual",
-    "description": "The label for the individual option in the customer type selector in the checkout form"
-  },
-  "checkout.customer_type.option.organization.label": {
-    "defaultMessage": "Organization",
-    "description": "The label for the organization option in the customer type selector in the checkout form"
-  },
-  "checkout.due_today_block.title": {
-    "defaultMessage": "Due today",
-    "description": "The title of the due today block that lists the subscription cost in the checkout"
-  },
   "checkout.email_address.label": {
     "defaultMessage": "Email address",
+    "description": "The email address of the customer in the checkout form"
+  },
+  "checkout.email_address.placeholder": {
+    "defaultMessage": "Email address...",
     "description": "The email address of the customer in the checkout form"
   },
   "checkout.first_name.label": {
     "defaultMessage": "First name",
     "description": "The first name of the customer in the checkout form"
   },
-  "checkout.infix.label": {
-    "defaultMessage": "Infix",
-    "description": "The infix of the customer in the checkout form"
+  "checkout.first_name.placeholder": {
+    "defaultMessage": "First name...",
+    "description": "The first name of the customer in the checkout form"
   },
   "checkout.invoice_preview.no_country_selected_message": {
     "defaultMessage": "Please select a country first",
@@ -67,13 +67,25 @@
     "defaultMessage": "Last name",
     "description": "The last name of the customer in the checkout form"
   },
+  "checkout.last_name.placeholder": {
+    "defaultMessage": "Last name...",
+    "description": "The last name of the customer in the checkout form"
+  },
   "checkout.legal_name.label": {
-    "defaultMessage": "Legal name",
+    "defaultMessage": "Legal entity name",
+    "description": "The legal name of the organization customer in the checkout form"
+  },
+  "checkout.legal_name.placeholder": {
+    "defaultMessage": "Legal entity name...",
     "description": "The legal name of the organization customer in the checkout form"
   },
   "checkout.main_title": {
     "defaultMessage": "Pay and subscribe",
     "description": "The main title of the checkout"
+  },
+  "checkout.order_summary_block.title": {
+    "defaultMessage": "Order summary",
+    "description": "The title of the order summary block that lists the subscription cost in the checkout"
   },
   "checkout.pay_and_subscribe_button.label": {
     "defaultMessage": "Pay and subscribe",
@@ -99,6 +111,10 @@
     "defaultMessage": "VAT number",
     "description": "The label for the vat number in the checkout form"
   },
+  "checkout.vat_number.placeholder": {
+    "defaultMessage": "VAT number...",
+    "description": "The label for the vat number in the checkout form"
+  },
   "customer_overview.subscriptions_block.fallback_subscription_name": {
     "defaultMessage": "Subscription",
     "description": "The fallback name for when no subscription name can be determined"
@@ -114,6 +130,10 @@
   "payment_completed_card.title.tokenize": {
     "defaultMessage": "Your payment method is added",
     "description": "The title for when a payment method was successfully added"
+  },
+  "payment_integration_form.select_payment_method_error": {
+    "defaultMessage": "Select a payment method",
+    "description": "Error shown when no payment method is selected"
   },
   "payments.retry_button.label": {
     "defaultMessage": "Try again",

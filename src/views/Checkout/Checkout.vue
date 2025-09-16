@@ -13,6 +13,7 @@ import CheckoutForm from '@/components/customer/CheckoutForm/CheckoutForm.vue';
 import PaymentIntegrationFormEmpty from '@/components/payments/PaymentIntegrationForm/PaymentIntegrationForm.empty.vue';
 import PaymentIntegrationFormPlaceholder from '@/components/payments/PaymentIntegrationForm/PaymentIntegrationForm.placeholder.vue';
 import { useCheckoutForm } from '@/components/customer/CheckoutForm/useCheckoutForm';
+import Kpi from '@/components/shared/Kpi.vue';
 
 const props = defineProps<CheckoutProps>();
 
@@ -131,7 +132,8 @@ const { data } = useData({
     },
 });
 
-const handleSubmit = () => {
+const handleSubmit = async () => {
+    await checkoutForm.validation.value.$validate();
     paymentIntegrationFormRef.value?.submit();
 };
 
@@ -215,10 +217,10 @@ const handleValidateOnSubmit = async () => {
                 <Section
                     :title="
                         $t({
-                            defaultMessage: 'Due today',
-                            id: 'checkout.due_today_block.title',
+                            defaultMessage: 'Order summary',
+                            id: 'checkout.order_summary_block.title',
                             description:
-                                'The title of the due today block that lists the subscription cost in the checkout',
+                                'The title of the order summary block that lists the subscription cost in the checkout',
                         })
                     "
                 >
@@ -255,6 +257,29 @@ const handleValidateOnSubmit = async () => {
                         <slot name="terms-and-conditions" />
                     </Typography>
                 </Section>
+
+                <div class="flex gap-4 grow text-gray-400">
+                    <Kpi
+                        icon="shield_locked-fill"
+                        :kpi="
+                            $t({
+                                defaultMessage: 'Secure checkout',
+                                id: 'checkout.kpi.secure_checkout.label',
+                                description: 'The secure checkout KPI shown in the checkout',
+                            })
+                        "
+                    />
+                    <Kpi
+                        icon="lock"
+                        :kpi="
+                            $t({
+                                defaultMessage: 'Encrypted payments',
+                                id: 'checkout.kpi.encrypted_payments.label',
+                                description: 'The encrypted payments KPI shown in the checkout',
+                            })
+                        "
+                    />
+                </div>
             </div>
         </div>
     </div>

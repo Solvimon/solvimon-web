@@ -10,7 +10,6 @@ import { createSubscriptionsService } from '@/services/subscriptions';
 import { usePortal } from '@/components/providers/PortalProvider/composables/usePortal';
 import PaymentIntegrationForm from '@/components/payments/PaymentIntegrationForm/PaymentIntegrationForm.vue';
 import CheckoutForm from '@/components/customer/CheckoutForm/CheckoutForm.vue';
-import PaymentIntegrationFormEmpty from '@/components/payments/PaymentIntegrationForm/PaymentIntegrationForm.empty.vue';
 import PaymentIntegrationFormPlaceholder from '@/components/payments/PaymentIntegrationForm/PaymentIntegrationForm.placeholder.vue';
 import { useCheckoutForm } from '@/components/customer/CheckoutForm/useCheckoutForm';
 import Kpi from '@/components/shared/Kpi.vue';
@@ -103,6 +102,7 @@ const {
     isPending: isPreviewAndPaymentMethodsPending,
 } = useCheckoutView({
     country,
+    customerType: computed(() => checkoutForm.form.value.type),
     subscriptionId: portal.value?.init_pricing_plan_subscription?.pricing_plan_subscription_id,
 });
 
@@ -173,7 +173,7 @@ const handleValidateOnSubmit = async () => {
                     v-model="checkoutForm.form.value"
                     :validation="checkoutForm.validation"
                 >
-                    <Typography variant="heading-3" tag="h2" class="mt-6">{{
+                    <Typography variant="heading-3" tag="h2" class="mt-6 mb-1">{{
                         $t({
                             defaultMessage: 'Payment method',
                             id: 'checkout.payment_method_block.title',
@@ -181,7 +181,15 @@ const handleValidateOnSubmit = async () => {
                                 'The title of the payment method block in the checkout form',
                         })
                     }}</Typography>
-                    <PaymentIntegrationFormEmpty v-if="!country" />
+                    <Typography v-if="!country" variant="body-xs" shade="lighter">{{
+                        $t({
+                            defaultMessage:
+                                'Payment methods will be shown after you select a country',
+                            id: 'checkout.payment_method_block.payment_methods_not_loaded_message',
+                            description:
+                                "The messages shown when no country is selected thus the payment methods can't be shown",
+                        })
+                    }}</Typography>
                     <PaymentIntegrationFormPlaceholder
                         v-else-if="isPreviewAndPaymentMethodsPending"
                     />

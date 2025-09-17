@@ -167,7 +167,6 @@ function injectStylesToShadowRoot() {
 
             .adyen-checkout__payment-method {
                 border-color: rgb(229, 231, 235);
-                background-color: transparent;
                 box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
                 transition: box-shadow 0.2s ease-in-out;
             }
@@ -194,20 +193,19 @@ function injectStylesToShadowRoot() {
                 width: 20px;
                 height: 20px;
                 border-radius: 10px;
-                background-color: rgb(220 252 231);
+                background-color: var(--color-primary-600);
                 position: absolute;
-                top: -8px;
-                right: -8px;
+                top: 14px;
+                right: 14px;
                 text-align: center;
                 line-height: 20px;
-                box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-                color: rgb(22 101 52);
+                color: white;
                 transform: scale(100%);
                 font-size: 12px;
             }
 
             .adyen-checkout__payment-method__header {
-                padding: 16px 8px:
+                padding: 8px 16px !important;
             }
             
             .adyen-checkout__payment-method__brands {

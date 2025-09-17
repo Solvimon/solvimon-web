@@ -66,7 +66,7 @@ const hasUsageBasedComponent = computed(() =>
             }}</Typography>
         </div>
         <Placeholder
-            class="min-w-32 min-h-7 self-center"
+            class="min-w-32 min-h-7 md:self-center"
             :content-ready="!!invoice?.tax_summary.total_amount && !loading"
             :loading="loading"
         >

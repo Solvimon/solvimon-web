@@ -10,11 +10,11 @@ module.exports = {
         'plugin:vue/vue3-essential',
         'eslint:recommended',
         '@vue/eslint-config-typescript',
-        'prettier',
         'plugin:import/recommended',
         '@solvimon/eslint-config',
+        'prettier',
     ],
-    plugins: ['@html-eslint', 'unused-imports', 'prettier', 'no-relative-import-paths'],
+    plugins: ['@html-eslint', 'unused-imports', 'no-relative-import-paths'],
     parserOptions: {
         ecmaVersion: 'latest',
         parser: '@typescript-eslint/parser', // Specify TypeScript parser for `<script lang="ts">`

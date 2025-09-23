@@ -15,7 +15,7 @@ cache:
 
 test-and-build:
   stage: test-and-build
-  timeout: 5m
+  timeout: 15m
   script:
     - npm ci --prefer-offline
     # Run prebuild steps and build ui packages so imported generated files are there

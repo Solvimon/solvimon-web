@@ -2,6 +2,7 @@ import type {
     Customer,
     Invoice,
     PaymentMethodOptionsResponse,
+    Pricing,
     PricingPlanSubscription,
 } from '@solvimon/types';
 import { computed, ref, type Ref } from 'vue';
@@ -13,10 +14,12 @@ export function useCheckoutView({
     country,
     customerType,
     subscriptionId,
+    enabledPricingIds,
 }: {
     country: Ref<string | undefined>;
     customerType: Ref<Customer['type'] | undefined>;
     subscriptionId: PricingPlanSubscription['id'];
+    enabledPricingIds?: Pricing['id'][];
 }) {
     const invoicePreview = ref<Invoice>();
     const paymentMethodOptions = ref<PaymentMethodOptionsResponse>();
@@ -33,27 +36,24 @@ export function useCheckoutView({
             const [invoicePreviewResponse, paymentMethodOptionsResponse] = await Promise.all([
                 getInvoicePreview({
                     pricingPlanSubscriptionId: subscriptionId,
+                    enabledPricingIds,
                     customer: {
                         type: customerType.value || 'INDIVIDUAL',
-                        ...(customerType.value === 'INDIVIDUAL'
-                            ? {
-                                  individual: {
-                                      residential_address: {
-                                          country: country.value || 'NL',
-                                      },
-                                  },
-                              }
-                            : {}),
-                        ...(customerType.value === 'ORGANIZATION'
-                            ? {
-                                  organization: {
-                                      legal_name: 'preview',
-                                      registered_address: {
-                                          country: country.value || 'NL',
-                                      },
-                                  },
-                              }
-                            : {}),
+                        ...(customerType.value === 'INDIVIDUAL' && {
+                            individual: {
+                                residential_address: {
+                                    country: country.value || 'NL',
+                                },
+                            },
+                        }),
+                        ...(customerType.value === 'ORGANIZATION' && {
+                            organization: {
+                                legal_name: 'preview',
+                                registered_address: {
+                                    country: country.value || 'NL',
+                                },
+                            },
+                        }),
                     },
                 }),
                 ...(country.value

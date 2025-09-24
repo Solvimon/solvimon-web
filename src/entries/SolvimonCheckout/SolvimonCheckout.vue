@@ -15,7 +15,12 @@ defineEmits<SolvimonCheckoutEmits>();
         :allowed-portal-url-types="['INIT_PRICING_PLAN_SUBSCRIPTION']"
         @error="(error) => $emit('error', error)"
     >
-        <Checkout :email="email" :country-code="countryCode">
+        <Checkout
+            :avatar="avatar"
+            :email="email"
+            :country-code="countryCode"
+            :enabled-pricing-ids="enabledPricingIds"
+        >
             <template v-if="$slots['terms-and-conditions']" #terms-and-conditions
                 ><slot name="terms-and-conditions"
             /></template>

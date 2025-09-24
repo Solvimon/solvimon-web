@@ -72,6 +72,11 @@ const context = computed<AuthorizePaymentPayload['context']>(() => {
         type: 'INIT_PRICING_PLAN_SUBSCRIPTION',
         init_pricing_plan_subscription: {
             template_pricing_plan_subscription_id: subscriptionId,
+            ...(props.enabledPricingIds && {
+                enabled_pricings: props.enabledPricingIds.map((enabledPricingId) => ({
+                    pricing_id: enabledPricingId,
+                })),
+            }),
             customer_details: {
                 email: checkoutForm.form.value.email ?? '',
                 type: checkoutForm.form.value.type,
@@ -104,6 +109,7 @@ const {
     country,
     customerType: computed(() => checkoutForm.form.value.type),
     subscriptionId: portal.value?.init_pricing_plan_subscription?.pricing_plan_subscription_id,
+    enabledPricingIds: props.enabledPricingIds,
 });
 
 watch(
@@ -157,6 +163,7 @@ const handleValidateOnSubmit = async () => {
             <Section>
                 <SubscriptionSummary
                     v-if="data?.subscription"
+                    :avatar="avatar"
                     :invoice="invoicePreview"
                     :subscription="data?.subscription"
                     :loading="isPreviewAndPaymentMethodsPending"

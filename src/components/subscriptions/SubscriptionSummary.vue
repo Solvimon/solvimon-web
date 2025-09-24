@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { Amount, Chip, Typography, useIntl } from '@solvimon/ui';
+import { Amount, Avatar, Chip, Typography, useIntl } from '@solvimon/ui';
 import { computed } from 'vue';
 import type { SubscriptionSummaryProps } from './SubscriptionSummary.types';
 import Placeholder from '@/components/shared/Placeholder.vue';
+import { findSubscriptionPricingsByIds } from '@/utils/subscription';
 
 const props = defineProps<SubscriptionSummaryProps>();
 
@@ -42,6 +43,18 @@ const description = computed(
     () => props.subscription.description || mostRecentPricingPlan.value?.description
 );
 
+const selectedPricings = computed(() => {
+    if (!props.subscription || !props.enabledPricingIds) {
+        return undefined;
+    }
+
+    const pricings = findSubscriptionPricingsByIds(props.subscription, props.enabledPricingIds);
+
+    const names = pricings?.map((pricing) => pricing?.pricing.name).join(' - ');
+
+    return names;
+});
+
 const hasUsageBasedComponent = computed(() =>
     props.invoice
         ? props.invoice.periods.some((period) =>
@@ -59,11 +72,16 @@ const hasUsageBasedComponent = computed(() =>
 
 <template>
     <div class="flex flex-col md:flex-row gap-4">
+        <Avatar v-if="avatar" :image-src="avatar" size="xl" />
         <div class="grow">
-            <Typography variant="heading-2">{{ name }}</Typography>
-            <Typography v-if="description" variant="body-sm" shade="lighter" no-spacing>{{
-                description
+            <Typography tag="h2" variant="heading-1">{{ name }}</Typography>
+            <Typography v-if="selectedPricings" variant="body-sm" shade="lighter" no-spacing>{{
+                selectedPricings
             }}</Typography>
+            <Typography v-if="description" variant="body-sm" shade="lighter" no-spacing>
+                <template v-if="selectedPricings"> • </template>
+                {{ description }}</Typography
+            >
         </div>
         <Placeholder
             class="min-w-32 min-h-7 md:self-center"

@@ -1,4 +1,4 @@
-import type { Customer, Invoice, PricingPlanSubscription } from '@solvimon/types';
+import type { Customer, Invoice, Pricing, PricingPlanSubscription } from '@solvimon/types';
 import { downloadFile } from '@solvimon/ui';
 import { createRequestService } from './requests';
 import { useConfig } from '@/components/providers/ConfigProvider/composables/useConfig';
@@ -40,9 +40,11 @@ export function createInvoicesService() {
     function getInvoicePreview({
         customer,
         pricingPlanSubscriptionId,
+        enabledPricingIds,
     }: {
         customer: Partial<Customer>;
         pricingPlanSubscriptionId: PricingPlanSubscription['id'];
+        enabledPricingIds?: Pricing['id'][];
     }) {
         return request<{ invoice: Invoice }>({
             url: `${config.apiUrls.transaction}/portal/invoices/preview`,
@@ -51,6 +53,11 @@ export function createInvoicesService() {
             },
             data: {
                 template_pricing_plan_subscription_id: pricingPlanSubscriptionId,
+                ...(enabledPricingIds && {
+                    enabled_pricings: enabledPricingIds.map((enabledPricingId) => ({
+                        pricing_id: enabledPricingId,
+                    })),
+                }),
                 customer_details: {
                     ...customer,
                     reference: 'preview',

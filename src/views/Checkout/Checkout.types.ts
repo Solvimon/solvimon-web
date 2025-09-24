@@ -10,4 +10,12 @@ export interface CheckoutProps {
      * Optional email address of the customer. This will be pre-filled in the checkout form.
      */
     email?: string;
+    /**
+     * Optional enabled pricing ids.
+     */
+    enabledPricingIds?: string[];
+    /**
+     * Optional avatar.
+     */
+    avatar?: string;
 }

@@ -166,6 +166,7 @@ const handleValidateOnSubmit = async () => {
                     :avatar="avatar"
                     :invoice="invoicePreview"
                     :subscription="data?.subscription"
+                    :enabled-pricing-ids="enabledPricingIds"
                     :loading="isPreviewAndPaymentMethodsPending"
                 />
                 <!-- left -->

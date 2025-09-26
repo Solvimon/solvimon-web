@@ -3,7 +3,7 @@ import { Amount, Avatar, Chip, Typography, useIntl } from '@solvimon/ui';
 import { computed } from 'vue';
 import type { SubscriptionSummaryProps } from './SubscriptionSummary.types';
 import Placeholder from '@/components/shared/Placeholder.vue';
-import { findSubscriptionPricingsByIds } from '@/utils/subscription';
+import { findPricingsByIds } from '@/utils/subscription';
 
 const props = defineProps<SubscriptionSummaryProps>();
 
@@ -48,9 +48,9 @@ const selectedPricings = computed(() => {
         return undefined;
     }
 
-    const pricings = findSubscriptionPricingsByIds(props.subscription, props.enabledPricingIds);
+    const pricings = findPricingsByIds(props.subscription, props.enabledPricingIds);
 
-    const names = pricings?.map((pricing) => pricing?.pricing.name).join(' - ');
+    const names = pricings?.map((pricing) => pricing.name).join(' - ');
 
     return names;
 });

@@ -244,6 +244,7 @@ const handleValidateOnSubmit = async () => {
                         v-if="invoicePreview"
                         :invoice="invoicePreview"
                         :show-rendered-services-header="false"
+                        is-customer-facing
                     >
                         <template #logo></template>
                     </InvoiceSummary>

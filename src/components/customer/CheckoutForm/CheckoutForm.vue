@@ -25,23 +25,14 @@ const { $t } = useIntl();
 
 <template>
     <form :id="FORM_ID" @submit.prevent="$emit('submit', model)">
-        <div class="flex gap-4 justify-between items-center">
-            <Typography variant="heading-3" tag="h2">{{
-                $t({
-                    defaultMessage: 'Customer information',
-                    id: 'checkout.contact_information_block.title',
-                    description: 'The title of the contact information block in the checkout form',
-                })
-            }}</Typography>
-            <Button
-                v-if="!showBillingDetails"
-                size="sm"
-                variant="ghost"
-                icon-prefix="add"
-                @click="showBillingDetails = true"
-                >Add billing details</Button
-            >
-        </div>
+        <Typography variant="heading-3" tag="h2">{{
+            $t({
+                defaultMessage: 'Customer information',
+                id: 'checkout.contact_information_block.title',
+                description: 'The title of the contact information block in the checkout form',
+            })
+        }}</Typography>
+
         <div class="grid grid-cols-1 gap-4">
             <Input
                 v-model="model.email"
@@ -63,6 +54,7 @@ const { $t } = useIntl();
                 "
                 :error="validation.value.email.$errors"
             />
+
             <CountrySelect
                 v-model:single-model-value="model.country"
                 required
@@ -74,7 +66,27 @@ const { $t } = useIntl();
                     })
                 "
                 :error="validation.value.country.$errors"
-            />
+            >
+                <template #label-suffix>
+                    <Button
+                        v-if="!showBillingDetails"
+                        size="sm"
+                        variant="ghost"
+                        icon-prefix="add"
+                        @click="showBillingDetails = true"
+                    >
+                        {{
+                            $t({
+                                defaultMessage: 'Add billing details',
+                                description:
+                                    'Label of the button in the checkout that lets you fill out all billing details',
+                                id: 'checkout.billing_details.add_billing_details_button.label',
+                            })
+                        }}
+                    </Button>
+                </template>
+            </CountrySelect>
+
             <Toggle v-model="companyPurchaseModel" label-position="before">
                 <template #inline-label>
                     <div class="flex flex-col grow">

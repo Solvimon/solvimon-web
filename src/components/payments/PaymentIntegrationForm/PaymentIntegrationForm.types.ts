@@ -19,13 +19,13 @@ interface BasePaymentIntegrationFormProps {
     context?: AuthorizePaymentPayload['context'];
 }
 
-interface AuthorizePaymentIntegrationFormProps extends BasePaymentIntegrationFormProps {
+export interface AuthorizePaymentIntegrationFormProps extends BasePaymentIntegrationFormProps {
     customerId?: Customer['id'];
     variant: 'AUTHORIZE';
     context: AuthorizePaymentPayload['context'];
 }
 
-interface TokenizePaymentIntegrationFormProps extends BasePaymentIntegrationFormProps {
+export interface TokenizePaymentIntegrationFormProps extends BasePaymentIntegrationFormProps {
     customerId: Customer['id'];
     variant: 'TOKENIZE';
 }

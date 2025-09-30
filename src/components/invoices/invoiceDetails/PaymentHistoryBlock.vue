@@ -22,6 +22,7 @@ const colorMapping: Record<Payment['result'], ChipColor> = {
     CANCELLED: 'red',
     ERROR: 'red',
     PENDING: 'orange',
+    PENDING_REFUND: 'orange',
     REFUNDED: 'orange',
     CHARGED_BACK: 'orange',
     REFUSED: 'red',

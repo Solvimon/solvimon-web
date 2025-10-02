@@ -211,6 +211,7 @@ const handleValidateOnSubmit = async () => {
                         :payment-method-options="paymentMethodOptions ?? []"
                         redirect-url="https://www.solvimon.com"
                         :validate-on-submit="handleValidateOnSubmit"
+                        @error="(error) => $emit('error', error)"
                     />
 
                     <template #submit-button>

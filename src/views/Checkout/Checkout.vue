@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Button, InvoiceSummary, Section, Typography, useIntl } from '@solvimon/ui';
+import { Button, InvoicePreview, Section, Typography, useIntl } from '@solvimon/ui';
 import { computed, ref, watch } from 'vue';
 import type { Address, AuthorizePaymentPayload, Name } from '@solvimon/types';
 import type { CheckoutProps } from './Checkout.types';
@@ -241,14 +241,12 @@ const handleValidateOnSubmit = async () => {
                         })
                     "
                 >
-                    <InvoiceSummary
+                    <InvoicePreview
                         v-if="invoicePreview"
                         :invoice="invoicePreview"
-                        :show-rendered-services-header="false"
                         is-customer-facing
-                    >
-                        <template #logo></template>
-                    </InvoiceSummary>
+                    />
+
                     <Typography v-else variant="body-sm" shade="lighter"
                         >{{
                             $t({

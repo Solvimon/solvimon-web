@@ -70,9 +70,10 @@ const { $t } = useIntl();
                 <template #label-suffix>
                     <Button
                         v-if="!showBillingDetails"
-                        size="sm"
+                        size="xs"
                         variant="ghost"
                         icon-prefix="add"
+                        class="py-0.5"
                         @click="showBillingDetails = true"
                     >
                         {{
@@ -171,6 +172,7 @@ const { $t } = useIntl();
                     size="sm"
                     variant="ghost"
                     icon-prefix="close"
+                    class="py-0.5"
                     @click="showBillingDetails = false"
                     >Remove billing details</Button
                 >

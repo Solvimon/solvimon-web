@@ -1,0 +1,31 @@
+<script setup lang="ts">
+import type {
+    SolvimonPaymentHistoryProps,
+    SolvimonPaymentHistoryEmits,
+} from './SolvimonPaymentHistoryBlock.types';
+import Provider from '@/components/providers/Provider/Provider.vue';
+import PaymentHistoryBlockContent from '@/components/invoices/invoiceDetails/PaymentHistoryBlockContent.vue';
+
+const props = defineProps<Partial<SolvimonPaymentHistoryProps>>();
+defineEmits<SolvimonPaymentHistoryEmits>();
+
+if (!props.environment) {
+    throw new Error('environment props are required');
+}
+
+if (!props.invoiceId) {
+    throw new Error('invoiceId prop is required');
+}
+</script>
+
+<template>
+    <Provider
+        :environment="environment"
+        :token="token"
+        :locale="locale"
+        :allowed-portal-url-types="['INVOICE', 'CUSTOMER']"
+        @error="(error) => $emit('error', error)"
+    >
+        <PaymentHistoryBlockContent v-if="invoiceId" :invoice-id="invoiceId" />
+    </Provider>
+</template>

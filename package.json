@@ -45,6 +45,21 @@
       "types": "./dist/SolvimonCheckout.ce.d.ts",
       "import": "./dist/SolvimonCheckout.es.js",
       "require": "./dist/SolvimonCheckout.cjs.js"
+    },
+    "./solvimon-payment-history-block": {
+      "types": "./dist/SolvimonPaymentHistoryBlock.ce.d.ts",
+      "import": "./dist/SolvimonPaymentHistoryBlock.es.js",
+      "require": "./dist/SolvimonPaymentHistoryBlock.cjs.js"
+    },
+    "./solvimon-invoice-block": {
+      "types": "./dist/SolvimonInvoiceBlock.ce.d.ts",
+      "import": "./dist/SolvimonInvoiceBlock.es.js",
+      "require": "./dist/SolvimonInvoiceBlock.cjs.js"
+    },
+    "./solvimon-invoice-details-block": {
+      "types": "./dist/SolvimonInvoiceDetailsBlock.ce.d.ts",
+      "import": "./dist/SolvimonInvoiceDetailsBlock.es.js",
+      "require": "./dist/SolvimonInvoiceDetailsBlock.cjs.js"
     }
   },
   "dependencies": {

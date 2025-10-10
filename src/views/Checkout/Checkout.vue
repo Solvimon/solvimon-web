@@ -16,11 +16,15 @@ import Kpi from '@/components/shared/Kpi.vue';
 
 const props = defineProps<CheckoutProps>();
 
+const { $t } = useIntl();
 const portal = usePortal();
 
 if (portal.value?.type !== 'INIT_PRICING_PLAN_SUBSCRIPTION') {
     throw Error('Invalid token');
 }
+
+const subscriptionId = portal.value?.init_pricing_plan_subscription?.pricing_plan_subscription_id;
+const successRedirectUrl = portal.value?.init_pricing_plan_subscription?.success_url;
 
 const country = ref<string | undefined>(props.countryCode);
 const paymentIntegrationFormRef = ref();
@@ -117,10 +121,6 @@ watch(
     (val) => (country.value = val)
 );
 
-const subscriptionId = portal.value?.init_pricing_plan_subscription?.pricing_plan_subscription_id;
-
-const { $t } = useIntl();
-
 const { getSubscription } = createSubscriptionsService();
 
 const { data } = useData({
@@ -211,7 +211,7 @@ const handleValidateOnSubmit = async () => {
                         :amount="invoicePreview.invoice_amount_including_tax"
                         variant="AUTHORIZE"
                         :payment-method-options="paymentMethodOptions ?? []"
-                        redirect-url="https://www.solvimon.com"
+                        :success-redirect-url="successRedirectUrl"
                         :validate-on-submit="handleValidateOnSubmit"
                         @error="(error) => $emit('error', error)"
                     />

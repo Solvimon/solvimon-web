@@ -12,7 +12,6 @@ export interface PaymentIntegrationFormAdyenProps {
     customerId?: Customer['id'];
     invoiceId?: Invoice['id'];
     paymentMethodOptionResponseEntry: PaymentMethodOptionResponseEntry;
-    redirectUrl: string;
     variant: 'TOKENIZE' | 'AUTHORIZE';
     selected: boolean;
     onSelect?: () => void;

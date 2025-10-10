@@ -74,6 +74,7 @@ export interface PortalUrlInitPricingPlanSubscription extends BasePortalUrl {
     type: 'INIT_PRICING_PLAN_SUBSCRIPTION';
     init_pricing_plan_subscription: {
         pricing_plan_subscription_id: PricingPlanSubscription['id'];
+        success_url?: string;
     };
 }
 

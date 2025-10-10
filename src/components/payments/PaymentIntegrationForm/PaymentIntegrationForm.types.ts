@@ -13,7 +13,7 @@ interface BasePaymentIntegrationFormProps {
     invoiceId?: Invoice['id'];
     variant: 'AUTHORIZE' | 'TOKENIZE';
     amount: Amount;
-    redirectUrl: string;
+    successRedirectUrl?: string;
     selectedOption?: string;
     validateOnSubmit?: () => Promise<boolean>;
     context?: AuthorizePaymentPayload['context'];

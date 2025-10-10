@@ -8,7 +8,7 @@ import type {
 import PaymentIntegrationFormAdyen from '@/components/payments/PaymentIntegrationFormAdyen/PaymentIntegrationFormAdyen.vue';
 
 const props = defineProps<PaymentIntegrationFormProps>();
-defineEmits<PaymentIntegrationFormEmits>();
+const emit = defineEmits<PaymentIntegrationFormEmits>();
 defineExpose({ submit });
 
 const { $t } = useIntl();
@@ -30,6 +30,14 @@ function submit() {
 
     integrationRefs.value.get(selectedIntegration.value)?.submit();
 }
+
+const handlePaymentSuccess = () => {
+    if (props.successRedirectUrl) {
+        window.location.href = props.successRedirectUrl;
+    }
+
+    emit('payment-success');
+};
 </script>
 
 <template>
@@ -45,7 +53,6 @@ function submit() {
             :country-code="countryCode"
             :customer-id="customerId"
             :variant="variant"
-            :redirect-url="redirectUrl"
             :amount="amount"
             :invoice-id="invoiceId"
             :selected="selectedIntegration === 'PAYMENT_GATEWAY_ADYEN'"
@@ -53,7 +60,7 @@ function submit() {
             @select="() => handleSelect('PAYMENT_GATEWAY_ADYEN')"
             @error="(args) => $emit('error', args)"
             @payment-failed="(args) => $emit('payment-failed', args)"
-            @payment-success="$emit('payment-success')"
+            @payment-success="handlePaymentSuccess"
         />
     </template>
     <FormMessage v-if="showIntegrationError" variant="error" class="mt-2">{{

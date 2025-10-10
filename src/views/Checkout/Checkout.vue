@@ -180,8 +180,10 @@ const handleValidateOnSubmit = async () => {
                 <CheckoutForm
                     v-model="checkoutForm.form.value"
                     :validation="checkoutForm.validation"
+                    :read-only-email="props.email"
+                    :read-only-country="props.countryCode"
                 >
-                    <Typography variant="heading-3" tag="h2" class="mt-6 mb-1">{{
+                    <Typography variant="heading-3" tag="h2" class="mb-2">{{
                         $t({
                             defaultMessage: 'Payment method',
                             id: 'checkout.payment_method_block.title',

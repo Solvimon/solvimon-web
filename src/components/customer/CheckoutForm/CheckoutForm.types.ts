@@ -3,6 +3,8 @@ import type { useCheckoutForm } from './useCheckoutForm';
 export interface CheckoutFormProps {
     validation: ReturnType<typeof useCheckoutForm>['validation'];
     initialState?: Partial<CheckoutFormState>;
+    readOnlyCountry?: string;
+    readOnlyEmail?: string;
 }
 
 export interface CheckoutFormEmits {

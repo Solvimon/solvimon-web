@@ -57,7 +57,7 @@ const selectedPricings = computed(() => {
 
 const hasUsageBasedComponent = computed(() =>
     props.invoice
-        ? props.invoice.periods.some((period) =>
+        ? props.invoice.periods?.some((period) =>
               period.groups.some((group) =>
                   group.lines?.some((line) =>
                       line.product_items.some(

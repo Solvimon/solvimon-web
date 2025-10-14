@@ -140,6 +140,11 @@ const { data } = useData({
 
 const handleSubmit = async () => {
     await checkoutForm.validation.value.$validate();
+
+    if (checkoutForm.validation.value.$invalid) {
+        return;
+    }
+
     paymentIntegrationFormRef.value?.submit();
 };
 

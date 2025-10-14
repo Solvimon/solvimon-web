@@ -51,7 +51,14 @@ const { authorizePayment, getPaymentDetails } = createPaymentsService();
 const { tokenizePaymentMethod } = createPaymentMethodsService();
 
 function submit() {
-    dropInInstance.value?.submit();
+    try {
+        // eslint-disable-next-line no-console
+        console.log(dropInInstance.value?.isValid, dropInInstance.value?.data);
+        dropInInstance.value?.submit();
+    } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error(error);
+    }
 }
 
 async function getConfiguration() {
@@ -69,8 +76,10 @@ async function getConfiguration() {
             paymentMethodsResponse: {
                 paymentMethods:
                     props.paymentMethodOptionResponseEntry.options.flatMap(
-                        (adyenPaymentMethodOption) =>
-                            mapAdyenPaymentMethod(adyenPaymentMethodOption.adyen)
+                        (adyenPaymentMethodOption) => {
+                            const mapped = mapAdyenPaymentMethod(adyenPaymentMethodOption.adyen)
+                            return mapped;
+                        }
                     ) ?? [],
             },
             onSubmit: handleOnSubmit,
@@ -102,6 +111,11 @@ async function mountDropIn() {
         await unmountDropIn();
 
         const { checkoutConfig, dropInConfig } = await getConfiguration();
+
+        // eslint-disable-next-line no-console
+        console.log('CHECKOUT CONFIG', checkoutConfig);
+        // eslint-disable-next-line no-console
+        console.log('DROP IN CONFIG', dropInConfig);
 
         checkoutInstance.value = await AdyenCheckout(checkoutConfig);
         dropInInstance.value = new Dropin(checkoutInstance.value, dropInConfig).mount(

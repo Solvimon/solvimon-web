@@ -513,9 +513,10 @@ function mapAdyenPaymentMethod(adyen: PaymentMethodOptionAdyen['adyen']): Paymen
     return {
         type: adyen.type,
         name: adyen.name,
-        issuers: adyen.issuers ?? [],
-        brands: adyen.brands ?? [],
-        fundingSource: adyen.funding_source,
+        ...(adyen.issuers ? { issuers: adyen.issuers } : {}),
+        ...(adyen.brands ? { brands: adyen.brands } : {}),
+        ...(adyen.funding_source ? { fundingSource: adyen.funding_source } : {}),
+        ...(adyen.configuration ? { configuration: adyen.configuration } : {}),
     };
 }
 

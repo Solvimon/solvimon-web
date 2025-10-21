@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Amount, Avatar, Chip, Typography, useIntl } from '@solvimon/ui';
+import { Amount, Avatar, Chip, Typography, useIntl, TrialChip } from '@solvimon/ui';
 import { computed } from 'vue';
 import type { SubscriptionSummaryProps } from './SubscriptionSummary.types';
 import Placeholder from '@/components/shared/Placeholder.vue';
@@ -74,7 +74,7 @@ const hasUsageBasedComponent = computed(() =>
     <div class="flex flex-col md:flex-row gap-4">
         <Avatar v-if="avatar" :image-src="avatar" size="xl" />
         <div class="grow">
-            <Typography tag="h2" variant="heading-1">{{ name }}</Typography>
+            <Typography tag="h2" variant="heading-1">{{ name }} <TrialChip v-if="trialPeriod" :trial-period="trialPeriod" /></Typography>
             <Typography v-if="selectedPricings" variant="body-sm" shade="lighter" no-spacing>{{
                 selectedPricings
             }}</Typography>

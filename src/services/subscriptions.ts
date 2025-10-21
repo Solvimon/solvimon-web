@@ -30,6 +30,7 @@ export function createSubscriptionsService() {
     }) {
         const expandParams = expanded
             ? [
+                  'pricing_plan_schedule_infos.id',
                   'pricing_plan_schedule_infos.pricing_plan_version_id',
                   'pricing_plan_schedule_infos.pricing_plan_version.pricing_plan_id',
                   'pricing_plan_schedule_infos.pricing_plan_version.pricing_categories.product_category_id',

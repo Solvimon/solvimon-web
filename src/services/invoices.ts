@@ -1,4 +1,10 @@
-import type { Customer, Invoice, Pricing, PricingPlanSubscription } from '@solvimon/types';
+import type {
+    Customer,
+    Invoice,
+    InvoicePreview,
+    Pricing,
+    PricingPlanSubscription,
+} from '@solvimon/types';
 import { downloadFile } from '@solvimon/ui';
 import { createRequestService } from './requests';
 import { useConfig } from '@/components/providers/ConfigProvider/composables/useConfig';
@@ -46,7 +52,7 @@ export function createInvoicesService() {
         pricingPlanSubscriptionId: PricingPlanSubscription['id'];
         enabledPricingIds?: Pricing['id'][];
     }) {
-        return request<{ invoice: Invoice }>({
+        return request<InvoicePreview>({
             url: `${config.apiUrls.transaction}/portal/invoices/preview`,
             options: {
                 method: 'POST',

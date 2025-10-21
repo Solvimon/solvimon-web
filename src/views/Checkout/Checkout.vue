@@ -5,8 +5,6 @@ import type { Address, AuthorizePaymentPayload, Name } from '@solvimon/types';
 import type { CheckoutProps } from './Checkout.types';
 import { useCheckoutView } from './useCheckoutView';
 import SubscriptionSummary from '@/components/subscriptions/SubscriptionSummary.vue';
-import { useData } from '@/utils/useData';
-import { createSubscriptionsService } from '@/services/subscriptions';
 import { usePortal } from '@/components/providers/PortalProvider/composables/usePortal';
 import PaymentIntegrationForm from '@/components/payments/PaymentIntegrationForm/PaymentIntegrationForm.vue';
 import CheckoutForm from '@/components/customer/CheckoutForm/CheckoutForm.vue';
@@ -109,6 +107,9 @@ const {
     invoicePreview,
     paymentMethodOptions,
     isPending: isPreviewAndPaymentMethodsPending,
+    trialInvoicePreview,
+    trialPeriod,
+    subscription
 } = useCheckoutView({
     country,
     customerType: computed(() => checkoutForm.form.value.type),
@@ -120,23 +121,6 @@ watch(
     () => checkoutForm.form.value.country,
     (val) => (country.value = val)
 );
-
-const { getSubscription } = createSubscriptionsService();
-
-const { data } = useData({
-    getData: async () => {
-        const [subscription] = await Promise.all([
-            getSubscription({
-                id: subscriptionId,
-                expanded: true,
-            }),
-        ]);
-
-        return {
-            subscription,
-        };
-    },
-});
 
 const handleSubmit = async () => {
     await checkoutForm.validation.value.$validate();
@@ -152,6 +136,8 @@ const handleValidateOnSubmit = async () => {
     await checkoutForm.validation.value.$validate();
     return !checkoutForm.validation.value.$invalid;
 };
+
+const hasTrialPeriod = computed(() =>!! trialInvoicePreview.value)
 </script>
 
 <template>
@@ -167,12 +153,13 @@ const handleValidateOnSubmit = async () => {
             }}</Typography>
             <Section>
                 <SubscriptionSummary
-                    v-if="data?.subscription"
+                    v-if="subscription"
                     :avatar="avatar"
                     :invoice="invoicePreview"
-                    :subscription="data?.subscription"
+                    :subscription="subscription"
                     :enabled-pricing-ids="enabledPricingIds"
                     :loading="isPreviewAndPaymentMethodsPending"
+                    :trial-period="trialPeriod"
                 />
                 <!-- left -->
             </Section>
@@ -220,19 +207,6 @@ const handleValidateOnSubmit = async () => {
                         :validate-on-submit="handleValidateOnSubmit"
                         @error="(error) => $emit('error', error)"
                     />
-
-                    <template #submit-button>
-                        <Button type="button" size="lg" class="mt-6" @click="handleSubmit">
-                            {{
-                                $t({
-                                    defaultMessage: 'Pay and subscribe',
-                                    id: 'checkout.pay_and_subscribe_button.label',
-                                    description:
-                                        'The label of the pay and subscribe button in the checkout form',
-                                })
-                            }}</Button
-                        >
-                    </template>
                 </CheckoutForm>
             </div>
 
@@ -251,6 +225,8 @@ const handleValidateOnSubmit = async () => {
                     <InvoicePreview
                         v-if="invoicePreview"
                         :invoice="invoicePreview"
+                        :trial-invoice="trialInvoicePreview"
+                        :variant="trialInvoicePreview ? 'without-products' : 'default'"
                         is-customer-facing
                     />
 
@@ -265,6 +241,21 @@ const handleValidateOnSubmit = async () => {
                         }}
                     </Typography>
                 </Section>
+                <Button type="button" size="lg" class="full-width" @click="handleSubmit">
+                            {{  hasTrialPeriod ?
+                                $t({
+                                    defaultMessage: 'Start trial',
+                                    id: 'checkout.pay_and_subscribe_button_trial.label',
+                                    description:
+                                        'The label of the start trial button in the checkout form',
+                                })
+                                :                         $t({
+                                    defaultMessage: 'Pay and subscribe',
+                                    id: 'checkout.pay_and_subscribe_button.label',
+                                    description:
+                                        'The label of the pay and subscribe button in the checkout form',
+                                })
+                            }}</Button>
                 <Section
                     v-if="$slots['terms-and-conditions']"
                     :title="

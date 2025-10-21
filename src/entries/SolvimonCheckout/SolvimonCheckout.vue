@@ -1,10 +1,15 @@
 <script setup lang="ts">
+import { isValidCountryCode } from '@solvimon/ui';
 import type { SolvimonCheckoutEmits, SolvimonCheckoutProps } from './SolvimonCheckout.types';
 import Provider from '@/components/providers/Provider/Provider.vue';
 import Checkout from '@/views/Checkout/Checkout.vue';
 
-defineProps<Partial<SolvimonCheckoutProps>>();
+const props = defineProps<Partial<SolvimonCheckoutProps>>();
 defineEmits<SolvimonCheckoutEmits>();
+
+if (props.countryCode && !isValidCountryCode(props.countryCode)) {
+    throw new Error(`invalid country code provided: "${props.countryCode}"`);
+}
 </script>
 
 <template>

@@ -45,7 +45,9 @@ const { $t } = useIntl();
     <form :id="FORM_ID" @submit.prevent="$emit('submit', model)">
         <div
             class="grid grid-cols-1 gap-6"
-            :class="readOnlyCountry ? gridAreaPaymentMethodsFirst : gridAreaCustomerInformationFirst"
+            :class="
+                readOnlyCountry ? gridAreaPaymentMethodsFirst : gridAreaCustomerInformationFirst
+            "
         >
             <div class="grid grid-cols-1 gap-2 [grid-area:customer-information]">
                 <Section

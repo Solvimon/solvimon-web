@@ -1,5 +1,7 @@
 import type {
+    ApiSuccessCollectionResponse,
     Customer,
+    PaymentMethod,
     PaymentMethodOptionsResponse,
     PaymentMethodTokenizeActionRequiredAdyenResponse,
     PaymentMethodTokenizeActionRequiredResponse,
@@ -12,12 +14,99 @@ import type {
     PaymentMethodTokenizeSuccessResponse,
     PricingPlanSubscription,
 } from '@solvimon/types';
+import { withPagination } from '@solvimon/ui';
 import { createRequestService } from './requests';
 import { useConfig } from '@/components/providers/ConfigProvider/composables/useConfig';
 
-export function createPaymentMethodsService() {
+interface PaymentMethodsService {
+    getPaymentMethods(args: {
+        customerId: Customer['id'];
+        pagination: {
+            page?: number;
+            pageSize?: number;
+            orderBy?: string;
+            orderDirection?: 'asc' | 'desc';
+        };
+        query?: Record<string, string | number | null | undefined>;
+    }): Promise<ApiSuccessCollectionResponse<PaymentMethod>>;
+    getPaymentMethodOptions(args: {
+        customerId: Customer['id'];
+        country?: string;
+    }): Promise<PaymentMethodOptionsResponse>;
+    getPaymentMethodOptions(args: {
+        subscriptionId: PricingPlanSubscription['id'];
+        country?: string;
+    }): Promise<PaymentMethodOptionsResponse>;
+    tokenizePaymentMethod(
+        data: PaymentMethodTokenizeAdyenPayload
+    ): Promise<
+        | PaymentMethodTokenizeSuccessResponse
+        | PaymentMethodTokenizeFailedResponse
+        | PaymentMethodTokenizeActionRequiredAdyenResponse
+    >;
+    tokenizePaymentMethod(
+        data: PaymentMethodTokenizeStripePayload
+    ): Promise<
+        | PaymentMethodTokenizeSuccessResponse
+        | PaymentMethodTokenizeFailedResponse
+        | PaymentMethodTokenizeActionRequiredStripeResponse
+    >;
+    tokenizePaymentMethod(
+        data: PaymentMethodTokenizePayload
+    ): Promise<PaymentMethodTokenizeResponse>;
+}
+
+export function createPaymentMethodsService(): PaymentMethodsService {
     const request = createRequestService();
     const config = useConfig();
+    const BASE_URL = '/portal/payment-methods';
+
+    function getPaymentMethods({
+        customerId,
+        pagination,
+        query,
+    }: {
+        customerId: Customer['id'];
+        pagination: {
+            page?: number;
+            pageSize?: number;
+            orderBy?: string;
+            orderDirection?: 'asc' | 'desc';
+        };
+        query?: Record<string, string | number | null | undefined>;
+    }): Promise<ApiSuccessCollectionResponse<PaymentMethod>> {
+        const queryParams = withPagination(
+            {
+                customer_id: customerId,
+                // TODO: Remove when backend supports customer_id query parameter.
+                customer_resource_id: customerId,
+                ...(query ?? {}),
+            },
+            pagination
+        );
+
+        const url = new URL(`${config.apiUrls.config}${BASE_URL}`);
+
+        Object.entries(queryParams).forEach(([key, value]) => {
+            if (value === null || value === undefined) {
+                return;
+            }
+
+            if (Array.isArray(value)) {
+                value.forEach((entry) => {
+                    url.searchParams.append(`${key}[]`, `${entry}`);
+                });
+                return;
+            }
+
+            url.searchParams.append(key, `${value}`);
+        });
+
+        return request<PaymentMethod>({
+            url: url.toString(),
+            isCollection: true,
+        });
+    }
 
     /**
      * Fetch payment method options for a resource.
@@ -78,6 +167,7 @@ export function createPaymentMethodsService() {
     }
 
     return {
+        getPaymentMethods,
         getPaymentMethodOptions,
         tokenizePaymentMethod,
     };

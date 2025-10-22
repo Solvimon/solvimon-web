@@ -1,114 +1,134 @@
 {
-  "name": "@solvimon/sdk",
-  "version": "0.1.0",
-  "description": "Solvimon's Front-end SDK provides you with the building blocks to create a billing self serve experience",
-  "private": true,
-  "scripts": {
-    "analyze": "vite-bundle-visualizer",
-    "prebuild": "npm run build:css",
-    "build": "vite build",
-    "build:css": "tailwindcss -i ./src/assets/index.css -o ./.sdk/tailwind.css",
-    "dev": "npm run watch",
-    "lint": "npm run lint:ci -- --fix",
-    "lint:ci": "eslint . --fix --ignore-path .eslintignore",
-    "test:unit": "vitest",
-    "type-check": "vue-tsc --noEmit -p tsconfig.json --composite false",
-    "watch": "vite build --watch",
-    "watch:css": "npm run build:css -- --watch",
-    "translations:extract": "formatjs extract 'src/**/*.{ts,vue}*' --ignore='**/*.d.ts' --out-file 'src/translations/source.json' --flatten --additional-function-names '$t'",
-    "translations:compile": "formatjs compile 'src/translations/source.json' --out-file 'src/translations/en-US.json'",
-    "translations:check": "tsx ./scripts/check-translations.ts"
-  },
-  "files": [
-    "dist"
-  ],
-  "main": "./dist/index.cjs.js",
-  "module": "./dist/index.es.js",
-  "types": "./dist/index.d.ts",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.es.js",
-      "require": "./dist/index.cjs.js"
+    "name": "@solvimon/sdk",
+    "version": "0.1.0",
+    "description": "Solvimon's Front-end SDK provides you with the building blocks to create a billing self serve experience",
+    "private": true,
+    "scripts": {
+        "analyze": "vite-bundle-visualizer",
+        "prebuild": "npm run build:css",
+        "build": "vite build",
+        "build:css": "tailwindcss -i ./src/assets/index.css -o ./.sdk/tailwind.css",
+        "dev": "npm run watch",
+        "lint": "npm run lint:ci -- --fix",
+        "lint:ci": "eslint . --fix --ignore-path .eslintignore",
+        "test:unit": "vitest",
+        "type-check": "vue-tsc --noEmit -p tsconfig.json --composite false",
+        "watch": "vite build --watch",
+        "watch:css": "npm run build:css -- --watch",
+        "translations:extract": "formatjs extract 'src/**/*.{ts,vue}*' --ignore='**/*.d.ts' --out-file 'src/translations/source.json' --flatten --additional-function-names '$t'",
+        "translations:compile": "formatjs compile 'src/translations/source.json' --out-file 'src/translations/en-US.json'",
+        "translations:check": "tsx ./scripts/check-translations.ts"
     },
-    "./solvimon-add-payment-method-form": {
-      "types": "./dist/SolvimonAddPaymentMethodForm.ce.d.ts",
-      "import": "./dist/SolvimonAddPaymentMethodForm.es.js",
-      "require": "./dist/SolvimonAddPaymentMethodForm.cjs.js"
+    "files": [
+        "dist"
+    ],
+    "main": "./dist/index.cjs.js",
+    "module": "./dist/index.es.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.es.js",
+            "require": "./dist/index.cjs.js"
+        },
+        "./solvimon-add-payment-method-form": {
+            "types": "./dist/SolvimonAddPaymentMethodForm.ce.d.ts",
+            "import": "./dist/SolvimonAddPaymentMethodForm.es.js",
+            "require": "./dist/SolvimonAddPaymentMethodForm.cjs.js"
+        },
+        "./solvimon-invoice": {
+            "types": "./dist/SolvimonInvoice.ce.d.ts",
+            "import": "./dist/SolvimonInvoice.es.js",
+            "require": "./dist/SolvimonInvoice.cjs.js"
+        },
+        "./solvimon-checkout": {
+            "types": "./dist/SolvimonCheckout.ce.d.ts",
+            "import": "./dist/SolvimonCheckout.es.js",
+            "require": "./dist/SolvimonCheckout.cjs.js"
+        },
+        "./solvimon-payment-history-block": {
+            "types": "./dist/SolvimonPaymentHistoryBlock.ce.d.ts",
+            "import": "./dist/SolvimonPaymentHistoryBlock.es.js",
+            "require": "./dist/SolvimonPaymentHistoryBlock.cjs.js"
+        },
+        "./solvimon-invoice-block": {
+            "types": "./dist/SolvimonInvoiceBlock.ce.d.ts",
+            "import": "./dist/SolvimonInvoiceBlock.es.js",
+            "require": "./dist/SolvimonInvoiceBlock.cjs.js"
+        },
+        "./solvimon-invoice-details-block": {
+            "types": "./dist/SolvimonInvoiceDetailsBlock.ce.d.ts",
+            "import": "./dist/SolvimonInvoiceDetailsBlock.es.js",
+            "require": "./dist/SolvimonInvoiceDetailsBlock.cjs.js"
+        },
+        "./solvimon-customer-payment-methods-block": {
+            "types": "./dist/SolvimonCustomerPaymentMethodsBlock.ce.d.ts",
+            "import": "./dist/SolvimonCustomerPaymentMethodsBlock.es.js",
+            "require": "./dist/SolvimonCustomerPaymentMethodsBlock.cjs.js"
+        },
+        "./solvimon-customer-billing-information-block": {
+            "types": "./dist/SolvimonCustomerBillingInformationBlock.ce.d.ts",
+            "import": "./dist/SolvimonCustomerBillingInformationBlock.es.js",
+            "require": "./dist/SolvimonCustomerBillingInformationBlock.cjs.js"
+        },
+        "./solvimon-customer-subscription-block": {
+            "types": "./dist/SolvimonCustomerSubscriptionBlock.ce.d.ts",
+            "import": "./dist/SolvimonCustomerSubscriptionBlock.es.js",
+            "require": "./dist/SolvimonCustomerSubscriptionBlock.cjs.js"
+        },
+        "./solvimon-customer-invoices-block": {
+            "types": "./dist/SolvimonCustomerInvoicesBlock.ce.d.ts",
+            "import": "./dist/SolvimonCustomerInvoicesBlock.es.js",
+            "require": "./dist/SolvimonCustomerInvoicesBlock.cjs.js"
+        }
     },
-    "./solvimon-invoice": {
-      "types": "./dist/SolvimonInvoice.ce.d.ts",
-      "import": "./dist/SolvimonInvoice.es.js",
-      "require": "./dist/SolvimonInvoice.cjs.js"
+    "dependencies": {
+        "@adyen/adyen-web": "^6.14.0",
+        "@formatjs/intl": "^3.1.5",
+        "@solvimon/tailwind-config": "^1.0.0",
+        "@solvimon/ui": "^1.0.0",
+        "@stripe/stripe-js": "^2.4.0",
+        "jwt-decode": "^4.0.0",
+        "vite-plugin-string": "^1.2.3",
+        "vue": "^3.5.13"
     },
-    "./solvimon-checkout": {
-      "types": "./dist/SolvimonCheckout.ce.d.ts",
-      "import": "./dist/SolvimonCheckout.es.js",
-      "require": "./dist/SolvimonCheckout.cjs.js"
+    "devDependencies": {
+        "@formatjs/cli": "^6.6.1",
+        "@rushstack/eslint-patch": "^1.2.0",
+        "@solvimon/eslint-config": "^1.2.0",
+        "@tsconfig/node22": "^22.0.0",
+        "@types/jsdom": "^21.1.7",
+        "@types/node": "^22.10.2",
+        "@types/vuelidate": "^0.7.22",
+        "@vitejs/plugin-vue": "^5.2.3",
+        "@vitest/eslint-plugin": "1.1.20",
+        "@vue/eslint-config-prettier": "^7.1.0",
+        "@vue/eslint-config-typescript": "^12.0.0",
+        "@vue/test-utils": "^2.4.6",
+        "@vue/tsconfig": "^0.7.0",
+        "@vuelidate/core": "^2.0.3",
+        "@vuelidate/validators": "^2.0.4",
+        "autoprefixer": "^10.4.20",
+        "eslint": "^8.38.0",
+        "eslint-import-resolver-typescript": "^3.6.0",
+        "eslint-plugin-import": "^2.28.1",
+        "eslint-plugin-no-relative-import-paths": "^1.5.2",
+        "eslint-plugin-unused-imports": "^4.1.4",
+        "eslint-plugin-vue": "^9.10.0",
+        "glob": "^11.0.1",
+        "jsdom": "^26.0.0",
+        "npm-run-all2": "^7.0.2",
+        "postcss": "^8.5.1",
+        "tailwindcss": "^3.4.17",
+        "tsx": "^4.19.3",
+        "typescript": "~5.6.3",
+        "vite": "^6.0.5",
+        "vite-plugin-dts": "^4.5.3",
+        "vite-plugin-vue-devtools": "^7.7.2",
+        "vitest": "^3.1.1",
+        "vue-tsc": "^2.1.10"
     },
-    "./solvimon-payment-history-block": {
-      "types": "./dist/SolvimonPaymentHistoryBlock.ce.d.ts",
-      "import": "./dist/SolvimonPaymentHistoryBlock.es.js",
-      "require": "./dist/SolvimonPaymentHistoryBlock.cjs.js"
-    },
-    "./solvimon-invoice-block": {
-      "types": "./dist/SolvimonInvoiceBlock.ce.d.ts",
-      "import": "./dist/SolvimonInvoiceBlock.es.js",
-      "require": "./dist/SolvimonInvoiceBlock.cjs.js"
-    },
-    "./solvimon-invoice-details-block": {
-      "types": "./dist/SolvimonInvoiceDetailsBlock.ce.d.ts",
-      "import": "./dist/SolvimonInvoiceDetailsBlock.es.js",
-      "require": "./dist/SolvimonInvoiceDetailsBlock.cjs.js"
+    "optionalDependencies": {
+        "vite-bundle-visualizer": "^1.2.1"
     }
-  },
-  "dependencies": {
-    "@adyen/adyen-web": "^6.14.0",
-    "@formatjs/intl": "^3.1.5",
-    "@solvimon/tailwind-config": "^1.0.0",
-    "@solvimon/ui": "^1.0.0",
-    "@stripe/stripe-js": "^2.4.0",
-    "jwt-decode": "^4.0.0",
-    "vite-plugin-string": "^1.2.3",
-    "vue": "^3.5.13"
-  },
-  "devDependencies": {
-    "@formatjs/cli": "^6.6.1",
-    "@rushstack/eslint-patch": "^1.2.0",
-    "@solvimon/eslint-config": "^1.2.0",
-    "@tsconfig/node22": "^22.0.0",
-    "@types/jsdom": "^21.1.7",
-    "@types/node": "^22.10.2",
-    "@types/vuelidate": "^0.7.22",
-    "@vitejs/plugin-vue": "^5.2.3",
-    "@vitest/eslint-plugin": "1.1.20",
-    "@vue/eslint-config-prettier": "^7.1.0",
-    "@vue/eslint-config-typescript": "^12.0.0",
-    "@vue/test-utils": "^2.4.6",
-    "@vue/tsconfig": "^0.7.0",
-    "@vuelidate/core": "^2.0.3",
-    "@vuelidate/validators": "^2.0.4",
-    "autoprefixer": "^10.4.20",
-    "eslint": "^8.38.0",
-    "eslint-import-resolver-typescript": "^3.6.0",
-    "eslint-plugin-import": "^2.28.1",
-    "eslint-plugin-no-relative-import-paths": "^1.5.2",
-    "eslint-plugin-unused-imports": "^4.1.4",
-    "eslint-plugin-vue": "^9.10.0",
-    "glob": "^11.0.1",
-    "jsdom": "^26.0.0",
-    "npm-run-all2": "^7.0.2",
-    "postcss": "^8.5.1",
-    "tailwindcss": "^3.4.17",
-    "tsx": "^4.19.3",
-    "typescript": "~5.6.3",
-    "vite": "^6.0.5",
-    "vite-plugin-dts": "^4.5.3",
-    "vite-plugin-vue-devtools": "^7.7.2",
-    "vitest": "^3.1.1",
-    "vue-tsc": "^2.1.10"
-  },
-  "optionalDependencies": {
-    "vite-bundle-visualizer": "^1.2.1"
-  }
 }

@@ -5,7 +5,7 @@ export type GetDefaultHeaders = (params: {
 
 export type RequestOptions = {
     headers?: Record<string, string | null>;
-    method?: 'GET' | 'POST';
+    method?: 'GET' | 'POST' | 'PATCH';
 };
 
 interface BaseRequestParams {

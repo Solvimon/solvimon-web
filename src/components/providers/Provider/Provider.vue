@@ -1,14 +1,15 @@
 <script setup lang="ts">
 import {
-    ErrorHandlingProvider,
     IconSpriteProvider,
     IntlProvider,
+    ErrorHandlingProvider,
     type IntlMessages,
 } from '@solvimon/ui';
 import nlNlUiTranslations from '@solvimon/ui/translations/nl-NL';
 import enUsUiTranslations from '@solvimon/ui/translations/en-US';
 import { computed } from 'vue';
 import type { ProviderEmits, ProviderProps } from './Provider.types';
+import { trackSentryException } from '@/utils/errorTracking';
 import AuthProvider from '@/components/providers/AuthProvider/AuthProvider.vue';
 import nlNlSdkTranslations from '@/translations/nl-NL.json';
 import enUsSdkTranslations from '@/translations/en-US.json';
@@ -51,7 +52,7 @@ const localizedMessages = computed<IntlMessages>(() => ({
 </script>
 
 <template>
-    <ErrorHandlingProvider @error="onError">
+    <ErrorHandlingProvider @error="trackSentryException">
         <ConfigProvider v-if="environment" :environment="environment">
             <AuthProvider v-if="token" :token="token">
                 <PortalProvider :token="token" :allowed-portal-types="allowedPortalUrlTypes">

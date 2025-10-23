@@ -24,12 +24,8 @@
     "description": "Address line 1 of the customer address in the checkout form"
   },
   "checkout.billing_details.add_billing_details_button.label": {
-    "defaultMessage": "Add billing details",
+    "defaultMessage": "More billing details",
     "description": "Label of the button in the checkout that lets you fill out all billing details"
-  },
-  "checkout.billing_information_block.details": {
-    "defaultMessage": "Show billing details",
-    "description": "The show billing details button"
   },
   "checkout.billing_information_block.title": {
     "defaultMessage": "Billing details",
@@ -48,7 +44,7 @@
     "description": "The title of the contact information block in the checkout form"
   },
   "checkout.country.label": {
-    "defaultMessage": "Country",
+    "defaultMessage": "Billing country",
     "description": "The country of the customer in the checkout form"
   },
   "checkout.email_address.label": {
@@ -70,6 +66,10 @@
   "checkout.invoice_preview.no_country_selected_message": {
     "defaultMessage": "Please select a country first",
     "description": "The message shown for the invoice preview when no country is set"
+  },
+  "checkout.invoice_preview.usage_based_message": {
+    "defaultMessage": "+ Usage",
+    "description": "The message shown for the usage based invoice preview"
   },
   "checkout.kpi.encrypted_payments.label": {
     "defaultMessage": "Encrypted payments",
@@ -95,17 +95,25 @@
     "defaultMessage": "Legal entity name...",
     "description": "The legal name of the organization customer in the checkout form"
   },
-  "checkout.main_title": {
-    "defaultMessage": "Pay and subscribe",
-    "description": "The main title of the checkout"
-  },
   "checkout.order_summary_block.title": {
     "defaultMessage": "Order summary",
     "description": "The title of the order summary block that lists the subscription cost in the checkout"
   },
+  "checkout.page_title": {
+    "defaultMessage": "Pay and subscribe",
+    "description": "The title of the checkout page"
+  },
+  "checkout.page_title_with_trial": {
+    "defaultMessage": "Try {subscription_name}",
+    "description": "The title of the checkout page with a trial period"
+  },
   "checkout.pay_and_subscribe_button.label": {
     "defaultMessage": "Pay and subscribe",
     "description": "The label of the pay and subscribe button in the checkout form"
+  },
+  "checkout.pay_and_subscribe_button_trial.label": {
+    "defaultMessage": "Start trial",
+    "description": "The label of the start trial button in the checkout form"
   },
   "checkout.payment_method_block.payment_methods_not_loaded_message": {
     "defaultMessage": "Payment methods will be shown after you select a country",
@@ -119,13 +127,17 @@
     "defaultMessage": "Select a country to see the available payment methods",
     "description": "The message shown when no country is selected in the checkout"
   },
-  "checkout.subscription.usage_chip.label": {
-    "defaultMessage": "+ usage",
-    "description": "The label for the chip that indicates a usage based component in the subscription"
+  "checkout.subscription_description": {
+    "defaultMessage": "<strong>{price}</strong> per {period_name} starting today",
+    "description": "The description of the subscription"
   },
   "checkout.terms_and_conditions_block.title": {
     "defaultMessage": "Terms and conditions",
     "description": "The title of the terms and conditions block in the checkout"
+  },
+  "checkout.trial_period_description": {
+    "defaultMessage": "<strong>{price}</strong> per {period_name} starting {startDate, date, long}",
+    "description": "The description of the trial period"
   },
   "checkout.vat_number.label": {
     "defaultMessage": "VAT number",
@@ -290,10 +302,6 @@
   "payments.retry_button.label": {
     "defaultMessage": "Try again",
     "description": "Retry button text when an error has happened during a payment"
-  },
-  "sdfasdfasdfasdf": {
-    "defaultMessage": "{value,plural,one{{period,select,DAY{Day} WEEK{Week} MONTH{Month} YEAR{Year} other{{value} {period}}}} other{{period,select,DAY{{value} Days} WEEK{{value} Weeks} MONTH{{value} Months} YEAR{{value} Years} other{{value} {period}s}}}}",
-    "description": "tesasdfsadfasdfsadft"
   },
   "sdk.invoice_details.customer_billing_information.title": {
     "defaultMessage": "Your billing information",

@@ -4,13 +4,15 @@ import { computed, ref, watch } from 'vue';
 import type { Address, AuthorizePaymentPayload, Name } from '@solvimon/types';
 import type { CheckoutProps } from './Checkout.types';
 import { useCheckoutView } from './useCheckoutView';
-import SubscriptionSummary from '@/components/subscriptions/SubscriptionSummary.vue';
 import { usePortal } from '@/components/providers/PortalProvider/composables/usePortal';
 import PaymentIntegrationForm from '@/components/payments/PaymentIntegrationForm/PaymentIntegrationForm.vue';
-import CheckoutForm from '@/components/customer/CheckoutForm/CheckoutForm.vue';
 import PaymentIntegrationFormPlaceholder from '@/components/payments/PaymentIntegrationForm/PaymentIntegrationForm.placeholder.vue';
 import { useCheckoutForm } from '@/components/customer/CheckoutForm/useCheckoutForm';
 import Kpi from '@/components/shared/Kpi.vue';
+import SubscriptionSummary from '@/components/subscriptions/SubscriptionSummary.vue';
+import CheckoutForm from '@/components/customer/CheckoutForm/CheckoutForm.vue';
+import CheckoutTitle from '@/components/checkout/CheckoutTitle.vue';
+import { isInvoiceUsageBased } from '@/utils/invoice';
 
 const props = defineProps<CheckoutProps>();
 
@@ -109,7 +111,7 @@ const {
     isPending: isPreviewAndPaymentMethodsPending,
     trialInvoicePreview,
     trialPeriod,
-    subscription
+    subscription,
 } = useCheckoutView({
     country,
     customerType: computed(() => checkoutForm.form.value.type),
@@ -137,34 +139,22 @@ const handleValidateOnSubmit = async () => {
     return !checkoutForm.validation.value.$invalid;
 };
 
-const hasTrialPeriod = computed(() =>!! trialInvoicePreview.value)
+const hasTrialPeriod = computed(() => !!trialInvoicePreview.value);
+const isUsageBased = computed(() =>
+    invoicePreview.value ? isInvoiceUsageBased(invoicePreview.value) : false
+);
 </script>
 
 <template>
-    <div class="flex flex-col grow gap-4">
-        <!-- header -->
-        <div>
-            <Typography variant="heading-1">{{
-                $t({
-                    defaultMessage: 'Pay and subscribe',
-                    description: 'The main title of the checkout',
-                    id: 'checkout.main_title',
-                })
-            }}</Typography>
-            <Section>
-                <SubscriptionSummary
-                    v-if="subscription"
-                    :avatar="avatar"
-                    :invoice="invoicePreview"
-                    :subscription="subscription"
-                    :enabled-pricing-ids="enabledPricingIds"
-                    :loading="isPreviewAndPaymentMethodsPending"
-                    :trial-period="trialPeriod"
-                />
-                <!-- left -->
-            </Section>
-        </div>
+    <CheckoutTitle
+        v-if="invoicePreview && subscription"
+        :trial-period="trialPeriod"
+        :subscription-name="subscription?.name ?? ''"
+        :amount="invoicePreview?.invoice_amount_including_tax"
+        :billing-period="subscription?.billing_period"
+    />
 
+    <div class="flex flex-col grow gap-4 mt-4">
         <!-- content -->
         <div class="flex flex-col md:flex-row grow gap-6">
             <!-- left -->
@@ -213,6 +203,9 @@ const hasTrialPeriod = computed(() =>!! trialInvoicePreview.value)
             <!-- right -->
             <div class="flex flex-col gap-4 w-full md:w-72">
                 <Section
+                    no-border
+                    no-spacing
+                    content-background="none"
                     :title="
                         $t({
                             defaultMessage: 'Order summary',
@@ -222,40 +215,75 @@ const hasTrialPeriod = computed(() =>!! trialInvoicePreview.value)
                         })
                     "
                 >
-                    <InvoicePreview
-                        v-if="invoicePreview"
-                        :invoice="invoicePreview"
-                        :trial-invoice="trialInvoicePreview"
-                        :variant="trialInvoicePreview ? 'without-products' : 'default'"
-                        is-customer-facing
-                    />
+                    <div class="grid grid-cols-1 gap-2">
+                        <!-- subscription summary -->
+                        <Section no-spacing>
+                            <SubscriptionSummary
+                                v-if="subscription"
+                                :avatar="avatar"
+                                :invoice="invoicePreview"
+                                :subscription="subscription"
+                                :enabled-pricing-ids="enabledPricingIds"
+                                :loading="isPreviewAndPaymentMethodsPending"
+                                :trial-period="trialPeriod"
+                            />
+                        </Section>
 
-                    <Typography v-else variant="body-sm" shade="lighter"
-                        >{{
-                            $t({
-                                defaultMessage: 'Please select a country first',
-                                description:
-                                    'The message shown for the invoice preview when no country is set',
-                                id: 'checkout.invoice_preview.no_country_selected_message',
-                            })
-                        }}
-                    </Typography>
+                        <!-- usage based -->
+                        <Section v-if="isUsageBased" no-spacing>
+                            <div class="px-3 py-2">
+                                <Typography no-spacing variant="body-sm" shade="lighter">
+                                    {{
+                                        $t({
+                                            defaultMessage: '+ Usage',
+                                            id: 'checkout.invoice_preview.usage_based_message',
+                                            description:
+                                                'The message shown for the usage based invoice preview',
+                                        })
+                                    }}
+                                </Typography>
+                            </div>
+                        </Section>
+
+                        <!-- invoice preview -->
+                        <Section>
+                            <InvoicePreview
+                                v-if="invoicePreview"
+                                :invoice="invoicePreview"
+                                :trial-invoice="trialInvoicePreview"
+                                :variant="trialInvoicePreview ? 'without-products' : 'default'"
+                                is-customer-facing
+                            />
+                            <Typography v-else variant="body-sm" shade="lighter"
+                                >{{
+                                    $t({
+                                        defaultMessage: 'Please select a country first',
+                                        description:
+                                            'The message shown for the invoice preview when no country is set',
+                                        id: 'checkout.invoice_preview.no_country_selected_message',
+                                    })
+                                }}
+                            </Typography>
+                        </Section>
+                    </div>
                 </Section>
                 <Button type="button" size="lg" class="full-width" @click="handleSubmit">
-                            {{  hasTrialPeriod ?
-                                $t({
-                                    defaultMessage: 'Start trial',
-                                    id: 'checkout.pay_and_subscribe_button_trial.label',
-                                    description:
-                                        'The label of the start trial button in the checkout form',
-                                })
-                                :                         $t({
-                                    defaultMessage: 'Pay and subscribe',
-                                    id: 'checkout.pay_and_subscribe_button.label',
-                                    description:
-                                        'The label of the pay and subscribe button in the checkout form',
-                                })
-                            }}</Button>
+                    {{
+                        hasTrialPeriod
+                            ? $t({
+                                  defaultMessage: 'Start trial',
+                                  id: 'checkout.pay_and_subscribe_button_trial.label',
+                                  description:
+                                      'The label of the start trial button in the checkout form',
+                              })
+                            : $t({
+                                  defaultMessage: 'Pay and subscribe',
+                                  id: 'checkout.pay_and_subscribe_button.label',
+                                  description:
+                                      'The label of the pay and subscribe button in the checkout form',
+                              })
+                    }}</Button
+                >
                 <Section
                     v-if="$slots['terms-and-conditions']"
                     :title="

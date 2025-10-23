@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { Amount, Avatar, Chip, Typography, useIntl, TrialChip } from '@solvimon/ui';
+import { Avatar, Typography, useIntl } from '@solvimon/ui';
 import { computed } from 'vue';
 import type { SubscriptionSummaryProps } from './SubscriptionSummary.types';
-import Placeholder from '@/components/shared/Placeholder.vue';
 import { findPricingsByIds } from '@/utils/subscription';
 
 const props = defineProps<SubscriptionSummaryProps>();
@@ -24,21 +23,6 @@ const name = computed(
         })
 );
 
-const formattedPeriod = computed(() =>
-    $t(
-        {
-            defaultMessage:
-                '{value, plural, one {{period, select, DAY {Day} WEEK {Week} MONTH {Month} YEAR {Year} other {{value} {period}}}} other {{period, select, DAY {{value} Days} WEEK {{value} Weeks} MONTH {{value} Months} YEAR {{value} Years} other {{value} {period}s}}}}',
-            id: 'sdfasdfasdfasdf',
-            description: 'tesasdfsadfasdfsadft',
-        },
-        {
-            value: props.subscription.billing_period.value?.toString() || '1',
-            period: props.subscription.billing_period.type,
-        }
-    )
-);
-
 const description = computed(
     () => props.subscription.description || mostRecentPricingPlan.value?.description
 );
@@ -54,61 +38,20 @@ const selectedPricings = computed(() => {
 
     return names;
 });
-
-const hasUsageBasedComponent = computed(() =>
-    props.invoice
-        ? props.invoice.periods?.some((period) =>
-              period.groups.some((group) =>
-                  group.lines?.some((line) =>
-                      line.product_items.some(
-                          (productItem) => productItem.model_type === 'USAGE_BASED'
-                      )
-                  )
-              )
-          )
-        : false
-);
 </script>
 
 <template>
-    <div class="flex flex-col md:flex-row gap-4">
-        <Avatar v-if="avatar" :image-src="avatar" size="xl" />
+    <div class="flex flex-row gap-3 px-3 py-2">
+        <Avatar v-if="avatar" :image-src="avatar" size="lg" class="my-1" />
         <div class="grow">
-            <Typography tag="h2" variant="heading-1">{{ name }} <TrialChip v-if="trialPeriod" :trial-period="trialPeriod" /></Typography>
-            <Typography v-if="selectedPricings" variant="body-sm" shade="lighter" no-spacing>{{
+            <Typography variant="body" weight="semibold" no-spacing>{{ name }}</Typography>
+            <Typography v-if="selectedPricings" variant="body-xs" shade="lighter" no-spacing>{{
                 selectedPricings
             }}</Typography>
-            <Typography v-if="description" variant="body-sm" shade="lighter" no-spacing>
+            <Typography v-if="description" variant="body-xs" shade="lighter" no-spacing>
                 <template v-if="selectedPricings"> • </template>
                 {{ description }}</Typography
             >
         </div>
-        <Placeholder
-            class="min-w-32 min-h-7 md:self-center"
-            :content-ready="!!invoice?.tax_summary.total_amount && !loading"
-            :loading="loading"
-        >
-            <div class="flex items-center gap-2">
-                <span>
-                    <Typography tag="span" variant="body" weight="semibold">
-                        <Amount
-                            v-if="invoice?.tax_summary.total_amount"
-                            :value="invoice.tax_summary.total_amount"
-                        />
-                    </Typography>
-                    <Typography tag="span" variant="body-xs"
-                        >{{ ' / ' }}{{ formattedPeriod }}</Typography
-                    >
-                </span>
-                <Chip v-if="hasUsageBasedComponent" color="dark">{{
-                    $t({
-                        defaultMessage: '+ usage',
-                        id: 'checkout.subscription.usage_chip.label',
-                        description:
-                            'The label for the chip that indicates a usage based component in the subscription',
-                    })
-                }}</Chip>
-            </div>
-        </Placeholder>
     </div>
 </template>

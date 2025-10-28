@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { type DefineComponent, defineCustomElement as defineCustomElementVue } from 'vue';
 
 import tailwindStyles from '../../.sdk/tailwind.css?inline';
@@ -11,7 +12,7 @@ type CustomElementOptions = Parameters<typeof defineCustomElementVue>[1];
  */
 export function defineCustomElement<T extends DefineComponent<any, any, any>>(
     component: T,
-    options: CustomElementOptions = {}
+    options: CustomElementOptions = {},
 ) {
     return defineCustomElementVue(component, {
         shadowRoot: true,

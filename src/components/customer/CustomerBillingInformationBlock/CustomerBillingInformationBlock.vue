@@ -30,7 +30,7 @@ const fetchCustomer = async (id: Customer['id']): Promise<void> => {
         const response = await getCustomer(id);
         billingInformation.value = { show: true, data: response };
         apiStatus.value = ApiStatus.Done;
-    } catch (error) {
+    } catch (_error) {
         apiStatus.value = ApiStatus.Failed;
     }
 };
@@ -44,7 +44,7 @@ watch(
 
         fetchCustomer(id).catch(() => {});
     },
-    { immediate: true }
+    { immediate: true },
 );
 
 const handleEdit = (): void => {

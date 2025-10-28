@@ -67,12 +67,12 @@ export function createRequestService({ enableAccessCheck } = { enableAccessCheck
             });
 
             if (response.headers.get('Content-Type') === 'application/pdf') {
-                // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+                 
                 return (await response.blob()) as T;
             }
 
             if (!(response.headers.get('Content-Type') === 'application/json')) {
-                // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+                 
                 return (await response.text()) as T;
             }
 

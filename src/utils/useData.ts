@@ -6,7 +6,7 @@ export const useData = <T, V extends string | undefined>({
     watchValue,
 }: {
     getData: (watchValue?: Ref<V>) => Promise<T>;
-    onError?: (error: any) => void;
+    onError?: (error: unknown) => void;
     watchValue?: Ref<V>;
 }) => {
     const data = ref<T>();

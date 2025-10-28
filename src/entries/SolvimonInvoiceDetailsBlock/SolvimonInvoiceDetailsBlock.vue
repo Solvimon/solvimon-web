@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import Provider from '@/components/providers/Provider/Provider.vue';
-import InvoiceDetailsBlockContent from '@/components/invoices/invoiceDetails/InvoiceDetailsBlockContent.vue';
 import type {
     SolvimonInvoiceDetailsBlockEmits,
     SolvimonInvoiceDetailsBlockProps,
 } from './SolvimonInvoiceDetailsBlock.types';
+import Provider from '@/components/providers/Provider/Provider.vue';
+import InvoiceDetailsBlockContent from '@/components/invoices/invoiceDetails/InvoiceDetailsBlockContent.vue';
 
 const props = defineProps<Partial<SolvimonInvoiceDetailsBlockProps>>();
 defineEmits<SolvimonInvoiceDetailsBlockEmits>();

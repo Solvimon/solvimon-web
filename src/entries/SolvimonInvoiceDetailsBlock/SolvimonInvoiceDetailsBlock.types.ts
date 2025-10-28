@@ -7,4 +7,6 @@ export interface SolvimonInvoiceDetailsBlockProps extends EntryBaseProps {
     invoiceId: string;
 }
 
-export interface SolvimonInvoiceDetailsBlockEmits extends EntryBaseEmits {}
+export interface SolvimonInvoiceDetailsBlockEmits extends EntryBaseEmits {
+    (e: 'error', payload: { title: string; message: string }): void;
+}

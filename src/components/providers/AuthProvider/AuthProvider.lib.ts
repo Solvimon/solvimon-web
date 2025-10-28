@@ -16,7 +16,7 @@ export const getAuth = (token: string) => {
 
         try {
             accessToken.value = (await getAccessToken(tokenUserName)).access_token;
-        } catch (err) {
+        } catch (_err) {
             trackSentryException();
         }
     };

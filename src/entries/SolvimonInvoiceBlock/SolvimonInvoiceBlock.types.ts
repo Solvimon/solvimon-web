@@ -11,4 +11,6 @@ export interface SolvimonInvoiceBlockProps extends EntryBaseProps {
      */
     showCustomerBillingInformation?: boolean;
 }
-export interface SolvimonInvoiceBlockEmits extends EntryBaseEmits {}
+export interface SolvimonInvoiceBlockEmits extends EntryBaseEmits {
+    (e: 'error', payload: { title: string; message: string }): void;
+}

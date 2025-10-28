@@ -33,7 +33,7 @@ if (!props.portalUrl) {
         <CustomerSubscriptionBlock
             :portal-url="props.portalUrl"
             :hide-cta-buttons="props.hideCtaButtons"
-            @view-all="(routeName) => $emit('view-all', routeName)"
+            @view-all="(routeName: string) => $emit('view-all', routeName)"
             @view-details="$emit('view-details', $event)"
             @cancel-subscription="$emit('cancel-subscription', $event)"
             @renew-subscription="$emit('renew-subscription', $event)"

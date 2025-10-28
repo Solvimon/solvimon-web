@@ -97,7 +97,7 @@ export function createInvoicesService(): InvoicesService {
                 headers: { 'Content-Type': 'application/pdf' },
             },
         }).then((response) => {
-            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+             
             const newBlob = new Blob([response as BlobPart], {
                 type: 'application/pdf',
             });

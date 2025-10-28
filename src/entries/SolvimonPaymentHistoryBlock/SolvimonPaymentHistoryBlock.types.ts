@@ -7,4 +7,6 @@ export interface SolvimonPaymentHistoryProps extends EntryBaseProps {
     customer: Customer;
 }
 
-export interface SolvimonPaymentHistoryEmits extends EntryBaseEmits {}
+export interface SolvimonPaymentHistoryEmits extends EntryBaseEmits {
+    (e: 'error', payload: { title: string; message: string }): void;
+}

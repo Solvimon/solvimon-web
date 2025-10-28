@@ -578,7 +578,7 @@ function getEnvironment(entry: PaymentMethodOptionResponseEntry): CoreConfigurat
     }
 }
 
-function transformObject(obj?: Object) {
+function transformObject(obj?: object) {
     return obj
         ? Object.fromEntries(Object.entries(obj).map(([key, value]) => [key, String(value)]))
         : undefined;

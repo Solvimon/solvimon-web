@@ -10,7 +10,9 @@ const { getPaymentMethodOptions } = createPaymentMethodsService();
 
 const { data: paymentMethodOptions, isPending } = useData({
     getData: async () => {
-        return await getPaymentMethodOptions({ customerId: portal.value?.customer_id! });
+        const customerId = portal.value?.customer_id;
+        if (!customerId) return [];
+        return getPaymentMethodOptions({ customerId });
     },
 });
 

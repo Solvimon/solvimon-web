@@ -26,8 +26,3 @@ export interface PaymentIntegrationFormAdyenEmits {
     (e: 'payment-failed', error: Error): void;
     (e: 'payment-success'): void;
 }
-
-export type AdyenIntegrationError = {
-    message: string;
-    context: any;
-};

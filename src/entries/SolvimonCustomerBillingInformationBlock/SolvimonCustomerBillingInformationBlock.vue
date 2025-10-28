@@ -27,7 +27,9 @@ if (!props.token) {
         @error="(error) => $emit('error', error)"
     >
         <CustomerBillingInformationBlock
-            @edit-billing-information="(routeName) => emit('edit-billing-information', routeName)"
+            @edit-billing-information="
+                (routeName: string) => emit('edit-billing-information', routeName)
+            "
         />
     </Provider>
 </template>

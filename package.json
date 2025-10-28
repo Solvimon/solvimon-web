@@ -1,6 +1,7 @@
 {
     "name": "@solvimon/sdk",
     "version": "0.1.0",
+    "type": "module",
     "description": "Solvimon's Front-end SDK provides you with the building blocks to create a billing self serve experience",
     "private": true,
     "scripts": {
@@ -9,8 +10,8 @@
         "build": "vite build",
         "build:css": "tailwindcss -i ./src/assets/index.css -o ./.sdk/tailwind.css",
         "dev": "npm run watch",
-        "lint": "npm run lint:ci -- --fix",
-        "lint:ci": "eslint . --fix --ignore-path .eslintignore",
+        "lint": "eslint . --fix",
+        "lint:ci": "eslint . --fix --ignore-pattern .eslintignore",
         "test:unit": "vitest",
         "type-check": "vue-tsc --noEmit -p tsconfig.json --composite false",
         "watch": "vite build --watch",
@@ -102,14 +103,14 @@
         "@types/vuelidate": "^0.7.22",
         "@vitejs/plugin-vue": "^5.2.3",
         "@vitest/eslint-plugin": "1.1.20",
-        "@vue/eslint-config-prettier": "^7.1.0",
-        "@vue/eslint-config-typescript": "^12.0.0",
+        "@vue/eslint-config-prettier": "^10.2.0",
+        "@vue/eslint-config-typescript": "^14.6.0",
         "@vue/test-utils": "^2.4.6",
         "@vue/tsconfig": "^0.7.0",
         "@vuelidate/core": "^2.0.3",
         "@vuelidate/validators": "^2.0.4",
         "autoprefixer": "^10.4.20",
-        "eslint": "^8.38.0",
+        "eslint": "^9.37.0",
         "eslint-import-resolver-typescript": "^3.6.0",
         "eslint-plugin-import": "^2.28.1",
         "eslint-plugin-no-relative-import-paths": "^1.5.2",
@@ -126,7 +127,8 @@
         "vite-plugin-dts": "^4.5.3",
         "vite-plugin-vue-devtools": "^7.7.2",
         "vitest": "^3.1.1",
-        "vue-tsc": "^2.1.10"
+        "vue-tsc": "^2.1.10",
+        "@typescript-eslint/parser": "^8.46.2"
     },
     "optionalDependencies": {
         "vite-bundle-visualizer": "^1.2.1"

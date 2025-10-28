@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { Pricing, PricingPlanSubscriptionExpanded } from '@solvimon/types';
 
 /**
@@ -5,7 +6,7 @@ import type { Pricing, PricingPlanSubscriptionExpanded } from '@solvimon/types';
  */
 export function findPricingsByIds(
     data: PricingPlanSubscriptionExpanded,
-    ids: Pricing['id'][]
+    ids: Pricing['id'][],
 ): Pricing[] {
     const results: Pricing[] = [];
 

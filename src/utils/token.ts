@@ -15,7 +15,7 @@ export function parseToken(token: string): { tokenUserName: string; portalUrlRes
         ];
 
         return { tokenUserName, portalUrlResourceId };
-    } catch (err) {
+    } catch (_err) {
         throw new Error('Invalid token');
     }
 }

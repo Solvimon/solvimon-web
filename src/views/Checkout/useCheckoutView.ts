@@ -82,7 +82,7 @@ export function useCheckoutView({
             subscription.value = subscriptionResponse;
 
             const trialSchedule = subscriptionResponse.pricing_plan_schedule_infos.find(
-                ({ pricing_plan_schedule }) => pricing_plan_schedule.type === 'TRIAL'
+                ({ pricing_plan_schedule }) => pricing_plan_schedule.type === 'TRIAL',
             );
 
             if (trialSchedule) {
@@ -91,17 +91,17 @@ export function useCheckoutView({
                 if (trialSchedule.start_at && trialSchedule.end_at) {
                     trialPeriod.value = convertDateRangeToTimePeriod(
                         new Date(trialSchedule.start_at),
-                        new Date(trialSchedule.end_at)
+                        new Date(trialSchedule.end_at),
                     );
                 }
             }
 
             const invoiceScheduleId = subscriptionResponse.pricing_plan_schedule_infos.find(
-                ({ pricing_plan_schedule }) => pricing_plan_schedule.type === 'DEFAULT'
+                ({ pricing_plan_schedule }) => pricing_plan_schedule.type === 'DEFAULT',
             )?.id;
 
             const invoiceInfo = invoicePreviewResponse.invoice_infos.find(
-                ({ pricing_plan_schedule_id }) => pricing_plan_schedule_id === invoiceScheduleId
+                ({ pricing_plan_schedule_id }) => pricing_plan_schedule_id === invoiceScheduleId,
             );
 
             invoicePreview.value = invoiceInfo?.invoices[0];

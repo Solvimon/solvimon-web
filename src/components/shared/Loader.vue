@@ -6,7 +6,7 @@ withDefaults(
         size?: number;
         withSpacing?: boolean;
     }>(),
-    { size: 4, withSpacing: false }
+    { size: 4, withSpacing: false },
 );
 </script>
 

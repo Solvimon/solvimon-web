@@ -103,9 +103,7 @@ export function createSubscriptionsService(): SubscriptionsService {
                 'pricing_plan_schedule_infos.pricing_plan_version.pricing_plan_id',
             ],
         });
-        const queryString = serializeQueryParams(
-            withPagination(queryWithExpand, paginationParams),
-        );
+        const queryString = serializeQueryParams(withPagination(queryWithExpand, paginationParams));
 
         return request<PricingPlanSubscriptionExpanded>({
             url: `${config.apiUrls.config}${ENDPOINT}${queryString}`,

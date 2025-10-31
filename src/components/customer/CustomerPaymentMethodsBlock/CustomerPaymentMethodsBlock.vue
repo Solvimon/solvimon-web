@@ -36,7 +36,7 @@ const paymentMethodOptions = ref<PaymentMethodOptionsResponse>();
 const apiStatus = ref<ApiStatus>(ApiStatus.Initial);
 
 const shouldFetchPaymentMethods = computed<boolean>(
-    () => props.portalUrl.customer.display?.payment_acceptors ?? false
+    () => props.portalUrl.customer.display?.payment_acceptors ?? false,
 );
 
 const paymentMethods = ref<BlockConfig<PaymentMethodModel>>({

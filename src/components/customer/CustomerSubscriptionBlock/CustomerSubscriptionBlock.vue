@@ -114,14 +114,14 @@ const showOverviewLink = computed<boolean>(() => subscriptions.value.showMoreLin
 const shouldRenderBlock = computed<boolean>(() => subscriptions.value.show && !!customer.value);
 
 const getPaymentMethod = (
-    paymentMethodId?: PaymentMethodModel['id']
+    paymentMethodId?: PaymentMethodModel['id'],
 ): PaymentMethodModel | undefined => {
     if (!paymentMethodId) {
         return undefined;
     }
 
     return paymentMethods.value.data.find(
-        ({ id, type }) => id === paymentMethodId && type === 'CARD'
+        ({ id, type }) => id === paymentMethodId && type === 'CARD',
     );
 };
 

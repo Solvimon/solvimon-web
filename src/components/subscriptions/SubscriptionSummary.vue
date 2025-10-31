@@ -9,7 +9,7 @@ const props = defineProps<SubscriptionSummaryProps>();
 const { $t } = useIntl();
 
 const mostRecentPricingPlan = computed(
-    () => props.subscription.pricing_plan_schedule_infos?.at(-1)?.pricing_plan_version.pricing_plan
+    () => props.subscription.pricing_plan_schedule_infos?.at(-1)?.pricing_plan_version.pricing_plan,
 );
 
 const name = computed(
@@ -20,11 +20,11 @@ const name = computed(
             defaultMessage: 'Subscription',
             description: 'The fallback name for when no subscription name can be determined',
             id: 'customer_overview.subscriptions_block.fallback_subscription_name',
-        })
+        }),
 );
 
 const description = computed(
-    () => props.subscription.description || mostRecentPricingPlan.value?.description
+    () => props.subscription.description || mostRecentPricingPlan.value?.description,
 );
 
 const selectedPricings = computed(() => {

@@ -25,7 +25,7 @@ describe('createRequestService', () => {
                 ok: true,
                 json: () => ({}),
                 headers: new Headers({ 'Content-Type': 'application/json' }),
-            })
+            }),
         );
         global.fetch = mockFetch;
     });
@@ -48,7 +48,7 @@ describe('createRequestService', () => {
                     headers: {
                         [HeadersConst.CONTENT_TYPE]: 'application/json',
                     },
-                })
+                }),
             );
         });
 
@@ -64,7 +64,7 @@ describe('createRequestService', () => {
                         [HeadersConst.CONTENT_TYPE]: 'application/json',
                         [HeadersConst.AUTHORIZATION]: `Bearer ${TOKEN}`,
                     },
-                })
+                }),
             );
         });
 
@@ -90,7 +90,7 @@ describe('createRequestService', () => {
                         [HeadersConst.AUTHORIZATION]: `Bearer ${TOKEN}`,
                         ...CUSTOM_HEADERS,
                     },
-                })
+                }),
             );
         });
 
@@ -114,7 +114,7 @@ describe('createRequestService', () => {
                     headers: {
                         [HeadersConst.CONTENT_TYPE]: 'text/plain',
                     },
-                })
+                }),
             );
         });
 
@@ -136,7 +136,7 @@ describe('createRequestService', () => {
                 expect.objectContaining({
                     method: 'GET',
                     headers: {},
-                })
+                }),
             );
         });
     });
@@ -155,7 +155,7 @@ describe('createRequestService', () => {
 
         expect(mockFetch).toHaveBeenCalledWith(
             `${CALLED_URL}?param1=value1&param2=value2`,
-            expect.anything()
+            expect.anything(),
         );
     });
     it('Calls onError when fetch fails', async () => {

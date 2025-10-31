@@ -41,7 +41,7 @@ export function createRequestService({ enableAccessCheck } = { enableAccessCheck
 
     async function request<T>(params: SingleRequestParams): Promise<T>;
     async function request<T>(
-        params: CollectionRequestParams
+        params: CollectionRequestParams,
     ): Promise<ApiSuccessCollectionResponse<T>>;
     async function request<T>({
         url,
@@ -67,12 +67,10 @@ export function createRequestService({ enableAccessCheck } = { enableAccessCheck
             });
 
             if (response.headers.get('Content-Type') === 'application/pdf') {
-                 
                 return (await response.blob()) as T;
             }
 
             if (!(response.headers.get('Content-Type') === 'application/json')) {
-                 
                 return (await response.text()) as T;
             }
 

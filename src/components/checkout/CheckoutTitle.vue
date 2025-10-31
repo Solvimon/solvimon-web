@@ -25,7 +25,7 @@ const { $t } = useIntl();
                           id: 'checkout.page_title_with_trial',
                           description: 'The title of the checkout page with a trial period',
                       },
-                      { subscription_name: subscriptionName }
+                      { subscription_name: subscriptionName },
                   )
                 : $t({
                       defaultMessage: 'Pay and subscribe',
@@ -41,7 +41,8 @@ const { $t } = useIntl();
                 trialPeriod
                     ? $t(
                           {
-                              defaultMessage: '<strong>{price}</strong> per {period_name} starting {startDate, date, long}',
+                              defaultMessage:
+                                  '<strong>{price}</strong> per {period_name} starting {startDate, date, long}',
                               id: 'checkout.trial_period_description',
                               description: 'The description of the trial period',
                           },
@@ -51,26 +52,32 @@ const { $t } = useIntl();
                               // @ts-ignore
                               startDate: offsetDateWithTimePeriod(
                                   offsetDateWithTimePeriod(new Date(), billingPeriod as TimePeriod),
-                                  { type: 'DAY', value: 1 }
+                                  { type: 'DAY', value: 1 },
                               ),
-                              period_name: formatBillingPeriod(billingPeriod, { short: true, hideValueForExactPeriods: true }),
+                              period_name: formatBillingPeriod(billingPeriod, {
+                                  short: true,
+                                  hideValueForExactPeriods: true,
+                              }),
                               // @ts-ignore
                               strong: (text) => `<strong>${text}</strong>`,
-
-                          }
+                          },
                       )
                     : $t(
                           {
-                              defaultMessage: '<strong>{price}</strong> per {period_name} starting today',
+                              defaultMessage:
+                                  '<strong>{price}</strong> per {period_name} starting today',
                               id: 'checkout.subscription_description',
                               description: 'The description of the subscription',
                           },
                           {
                               price: formatAmount(amount),
-                              period_name: formatBillingPeriod(billingPeriod, { short: true, hideValueForExactPeriods: true }),
+                              period_name: formatBillingPeriod(billingPeriod, {
+                                  short: true,
+                                  hideValueForExactPeriods: true,
+                              }),
                               // @ts-ignore
                               strong: (text) => `<strong>${text}</strong>`,
-                          }
+                          },
                       )
             "
         />

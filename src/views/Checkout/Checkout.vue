@@ -121,7 +121,7 @@ const {
 
 watch(
     () => checkoutForm.form.value.country,
-    (val) => (country.value = val)
+    (val) => (country.value = val),
 );
 
 const handleSubmit = async () => {
@@ -141,7 +141,7 @@ const handleValidateOnSubmit = async () => {
 
 const hasTrialPeriod = computed(() => !!trialInvoicePreview.value);
 const isUsageBased = computed(() =>
-    invoicePreview.value ? isInvoiceUsageBased(invoicePreview.value) : false
+    invoicePreview.value ? isInvoiceUsageBased(invoicePreview.value) : false,
 );
 </script>
 

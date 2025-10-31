@@ -29,7 +29,7 @@ export default function Home() {
             <main className={styles.main}>
                 <solvimon-add-payment-method-form
                     token="S3JZMVgyZEVhZkduaFZkcWhLMncxRTZLa2NTQ0x3cDkucHVybF9td0RlZUEwdUhvc3ZWT0FSZTQxcg=="
-                    environment={"DEV" as 'TEST'}
+                    environment={'DEV' as 'TEST'}
                 />
             </main>
         </div>

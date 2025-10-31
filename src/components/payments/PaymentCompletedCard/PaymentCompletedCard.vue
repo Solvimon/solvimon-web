@@ -19,7 +19,7 @@ const title = computed(() =>
               defaultMessage: 'Your payment method is added',
               description: 'The title for when a payment method was successfully added',
               id: 'payment_completed_card.title.tokenize',
-          })
+          }),
 );
 </script>
 

@@ -2,8 +2,7 @@ import SolvimonCustomerInvoicesBlockVue from './SolvimonCustomerInvoicesBlock.vu
 import { defineCustomElement } from '@/utils/customElements';
 import { getComponentName } from '@/utils/component';
 
-export const SolvimonCustomerInvoicesBlock =
-    defineCustomElement(SolvimonCustomerInvoicesBlockVue);
+export const SolvimonCustomerInvoicesBlock = defineCustomElement(SolvimonCustomerInvoicesBlockVue);
 const COMPONENT_NAME = getComponentName('customer-invoices-block');
 
 export const defineSolvimonCustomerInvoicesBlock = (): void => {

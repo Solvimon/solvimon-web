@@ -30,7 +30,7 @@ const companyPurchaseModel = computed({
 const isCompanyPurchase = computed(() => model.value.type === 'ORGANIZATION');
 
 const readableCountryName = computed(() =>
-    model.value.country ? getCountryNameByCode(model.value.country) : undefined
+    model.value.country ? getCountryNameByCode(model.value.country) : undefined,
 );
 
 const gridAreaPaymentMethodsFirst =

@@ -32,11 +32,11 @@ const subscriptionName = computed<string>(
             defaultMessage: 'Subscription',
             description: 'The fallback name for when no subscription name can be determined',
             id: 'customer_overview.subscriptions_block.fallback_subscription_name',
-        })
+        }),
 );
 
 const subscriptionDescription = computed<string | undefined>(
-    () => mostRecentPricingPlan.value?.description
+    () => mostRecentPricingPlan.value?.description,
 );
 
 const isCancellable = computed<boolean>(() => {

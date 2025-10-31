@@ -2,7 +2,7 @@
 import { SolvimonAddPaymentMethodForm } from '@solvimon/sdk/solvimon-add-payment-method-form';
 
 if (customElements.get('solvimon-add-payment-method-form')) {
-    customElements.define('solvimon-add-payment-method-form', SolvimonAddPaymentMethodForm)
+    customElements.define('solvimon-add-payment-method-form', SolvimonAddPaymentMethodForm);
 }
 </script>
 

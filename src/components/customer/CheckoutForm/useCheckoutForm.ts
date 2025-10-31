@@ -27,7 +27,7 @@ export function useCheckoutForm(initialState: Partial<CheckoutFormState>) {
             country: { required },
             companyLegalName: requiredIf(form.value.type === 'ORGANIZATION'),
         },
-        form
+        form,
     );
 
     return { form, validation };

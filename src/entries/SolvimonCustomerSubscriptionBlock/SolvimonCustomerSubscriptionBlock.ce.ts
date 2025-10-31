@@ -2,8 +2,9 @@ import SolvimonCustomerSubscriptionBlockVue from './SolvimonCustomerSubscription
 import { defineCustomElement } from '@/utils/customElements';
 import { getComponentName } from '@/utils/component';
 
-export const SolvimonCustomerSubscriptionBlock =
-    defineCustomElement(SolvimonCustomerSubscriptionBlockVue);
+export const SolvimonCustomerSubscriptionBlock = defineCustomElement(
+    SolvimonCustomerSubscriptionBlockVue,
+);
 const COMPONENT_NAME = getComponentName('customer-subscription-block');
 
 export const defineSolvimonCustomerSubscriptionBlock = (): void => {

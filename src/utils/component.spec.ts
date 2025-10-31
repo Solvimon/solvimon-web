@@ -7,7 +7,7 @@ describe('component utils', () => {
             const COMPONENT_NAME = 'some-component=name';
 
             expect(getComponentName(COMPONENT_NAME)).toEqual(
-                `${COMPONENT_TAG_PREFIX}${COMPONENT_NAME}`
+                `${COMPONENT_TAG_PREFIX}${COMPONENT_NAME}`,
             );
         });
     });

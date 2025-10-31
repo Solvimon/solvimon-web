@@ -77,9 +77,9 @@ async function getConfiguration() {
                 paymentMethods:
                     props.paymentMethodOptionResponseEntry.options.flatMap(
                         (adyenPaymentMethodOption) => {
-                            const mapped = mapAdyenPaymentMethod(adyenPaymentMethodOption.adyen)
+                            const mapped = mapAdyenPaymentMethod(adyenPaymentMethodOption.adyen);
                             return mapped;
-                        }
+                        },
                     ) ?? [],
             },
             onSubmit: handleOnSubmit,
@@ -119,7 +119,7 @@ async function mountDropIn() {
 
         checkoutInstance.value = await AdyenCheckout(checkoutConfig);
         dropInInstance.value = new Dropin(checkoutInstance.value, dropInConfig).mount(
-            dropInContainerRef.value
+            dropInContainerRef.value,
         );
 
         injectStylesToShadowRoot();
@@ -611,7 +611,7 @@ watch(
     () => {
         void mountDropIn();
     },
-    { deep: true }
+    { deep: true },
 );
 </script>
 

@@ -38,21 +38,21 @@ interface PaymentMethodsService {
         country?: string;
     }): Promise<PaymentMethodOptionsResponse>;
     tokenizePaymentMethod(
-        data: PaymentMethodTokenizeAdyenPayload
+        data: PaymentMethodTokenizeAdyenPayload,
     ): Promise<
         | PaymentMethodTokenizeSuccessResponse
         | PaymentMethodTokenizeFailedResponse
         | PaymentMethodTokenizeActionRequiredAdyenResponse
     >;
     tokenizePaymentMethod(
-        data: PaymentMethodTokenizeStripePayload
+        data: PaymentMethodTokenizeStripePayload,
     ): Promise<
         | PaymentMethodTokenizeSuccessResponse
         | PaymentMethodTokenizeFailedResponse
         | PaymentMethodTokenizeActionRequiredStripeResponse
     >;
     tokenizePaymentMethod(
-        data: PaymentMethodTokenizePayload
+        data: PaymentMethodTokenizePayload,
     ): Promise<PaymentMethodTokenizeResponse>;
 }
 
@@ -82,7 +82,7 @@ export function createPaymentMethodsService(): PaymentMethodsService {
                 customer_resource_id: customerId,
                 ...(query ?? {}),
             },
-            pagination
+            pagination,
         );
 
         const url = new URL(`${config.apiUrls.config}${BASE_URL}`);
@@ -143,21 +143,21 @@ export function createPaymentMethodsService(): PaymentMethodsService {
      * Tokenize the payment method.
      */
     function tokenizePaymentMethod(
-        data: PaymentMethodTokenizeAdyenPayload
+        data: PaymentMethodTokenizeAdyenPayload,
     ): Promise<
         | PaymentMethodTokenizeSuccessResponse
         | PaymentMethodTokenizeFailedResponse
         | PaymentMethodTokenizeActionRequiredAdyenResponse
     >;
     function tokenizePaymentMethod(
-        data: PaymentMethodTokenizeStripePayload
+        data: PaymentMethodTokenizeStripePayload,
     ): Promise<
         | PaymentMethodTokenizeSuccessResponse
         | PaymentMethodTokenizeFailedResponse
         | PaymentMethodTokenizeActionRequiredStripeResponse
     >;
     function tokenizePaymentMethod(
-        data: PaymentMethodTokenizePayload
+        data: PaymentMethodTokenizePayload,
     ): Promise<PaymentMethodTokenizeResponse> {
         return request<PaymentMethodTokenizeActionRequiredResponse>({
             url: `${config.apiUrls.config}/portal/payment-methods/tokenize`,

@@ -7,7 +7,7 @@ export const Headers = {
 };
 
 export const isApiErrorResponse = (
-    error: ApiErrorResponse | unknown
+    error: ApiErrorResponse | unknown,
 ): error is ApiErrorResponse => {
     return (
         !!error &&

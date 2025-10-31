@@ -24,7 +24,7 @@ files.forEach((file) => {
     }
 
     const localeContent = fs.readFileSync(localePath, 'utf-8');
-     
+
     const locale = JSON.parse(localeContent) as Record<string, string>;
     const missingKeys = sourceKeys.filter((key) => !(key in locale));
 

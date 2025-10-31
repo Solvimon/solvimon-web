@@ -3,7 +3,7 @@ import { defineCustomElement } from '@/utils/customElements';
 import { getComponentName } from '@/utils/component';
 
 export const SolvimonCustomerBillingInformationBlock = defineCustomElement(
-    SolvimonCustomerBillingInformationBlockVue
+    SolvimonCustomerBillingInformationBlockVue,
 );
 
 const COMPONENT_NAME = getComponentName('customer-billing-information-block');

@@ -3,13 +3,13 @@
     "include": ["*.config.*", "package.json", "scripts/*.ts"],
     "exclude": ["src/**/__tests__/*", "src/**/*.spec.ts", "dist/*"],
     "compilerOptions": {
-        "esModuleInterop": true, 
+        "esModuleInterop": true,
         "allowSyntheticDefaultImports": true,
         "resolveJsonModule": true,
         "preserveValueImports": false,
         "importsNotUsedAsValues": "remove",
         "verbatimModuleSyntax": true,
         "composite": true,
-        "lib": [ "ES2020"],
+        "lib": ["ES2020"]
     }
 }

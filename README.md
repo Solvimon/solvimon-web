@@ -8,8 +8,8 @@ npm install @solvimon/sdk
 
 Solvimon's SDK exports web components, that are framework agnostic. Each component requires at least:
 
-| Property      | Description                                   |
-|---------------|-----------------------------------------------|
+| Property      | Description                                  |
+| ------------- | -------------------------------------------- |
 | `token`       | Fetched from our API                         |
 | `environment` | Specifies the environment (`TEST` or `LIVE`) |
 
@@ -39,7 +39,7 @@ export default function Home() {
 import { SolvimonAddPaymentMethodForm } from '@solvimon/sdk/solvimon-add-payment-method-form';
 
 if (customElements.get('solvimon-add-payment-method-form')) {
-    customElements.define('solvimon-add-payment-method-form', SolvimonAddPaymentMethodForm)
+    customElements.define('solvimon-add-payment-method-form', SolvimonAddPaymentMethodForm);
 }
 </script>
 

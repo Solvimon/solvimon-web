@@ -28,7 +28,7 @@ const invoices = ref<BlockConfig<Invoice>>({
 });
 
 const shouldFetchInvoices = computed<boolean>(
-    () => props.portalUrl.customer.display?.invoices ?? false
+    () => props.portalUrl.customer.display?.invoices ?? false,
 );
 
 const fetchInvoices = (): Promise<void> =>

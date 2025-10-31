@@ -2,8 +2,9 @@ import SolvimonCustomerPaymentMethodsBlockVue from './SolvimonCustomerPaymentMet
 import { defineCustomElement } from '@/utils/customElements';
 import { getComponentName } from '@/utils/component';
 
-export const SolvimonCustomerPaymentMethodsBlock =
-    defineCustomElement(SolvimonCustomerPaymentMethodsBlockVue);
+export const SolvimonCustomerPaymentMethodsBlock = defineCustomElement(
+    SolvimonCustomerPaymentMethodsBlockVue,
+);
 const COMPONENT_NAME = getComponentName('customer-payment-methods-block');
 
 export const defineSolvimonCustomerPaymentMethodsBlock = (): void => {

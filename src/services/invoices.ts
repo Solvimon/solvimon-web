@@ -62,7 +62,7 @@ export function createInvoicesService(): InvoicesService {
                 customer_id: customerId,
                 ...(query ?? {}),
             },
-            pagination
+            pagination,
         );
 
         const url = new URL(`${config.apiUrls.transaction}/portal/invoices`);
@@ -97,7 +97,6 @@ export function createInvoicesService(): InvoicesService {
                 headers: { 'Content-Type': 'application/pdf' },
             },
         }).then((response) => {
-             
             const newBlob = new Blob([response as BlobPart], {
                 type: 'application/pdf',
             });

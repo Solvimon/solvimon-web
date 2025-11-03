@@ -5,6 +5,7 @@ import type {
     Pricing,
     PricingPlanSubscription,
     ApiSuccessCollectionResponse,
+    PricingPlanSchedule,
 } from '@solvimon/types';
 import { downloadFile, withPagination } from '@solvimon/ui';
 import { createRequestService } from './requests';
@@ -27,6 +28,7 @@ interface InvoicesService {
         customer: Partial<Customer>;
         pricingPlanSubscriptionId: PricingPlanSubscription['id'];
         enabledPricingIds?: Pricing['id'][];
+        startAt?: PricingPlanSchedule['start_at'];
     }) => Promise<InvoicePreview>;
 }
 
@@ -111,10 +113,12 @@ export function createInvoicesService(): InvoicesService {
         customer,
         pricingPlanSubscriptionId,
         enabledPricingIds,
+        startAt,
     }: {
         customer: Partial<Customer>;
         pricingPlanSubscriptionId: PricingPlanSubscription['id'];
         enabledPricingIds?: Pricing['id'][];
+        startAt?: PricingPlanSchedule['start_at'];
     }) {
         return request<InvoicePreview>({
             url: `${config.apiUrls.transaction}/portal/invoices/preview`,
@@ -123,6 +127,7 @@ export function createInvoicesService(): InvoicesService {
             },
             data: {
                 template_pricing_plan_subscription_id: pricingPlanSubscriptionId,
+                ...(startAt && { start_at: startAt }),
                 ...(enabledPricingIds && {
                     enabled_pricings: enabledPricingIds.map((enabledPricingId) => ({
                         pricing_id: enabledPricingId,

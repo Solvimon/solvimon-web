@@ -41,47 +41,46 @@ export function useCheckoutView({
                 return;
             }
 
-            const [subscriptionResponse, invoicePreviewResponse, paymentMethodOptionsResponse] =
-                await Promise.all([
-                    getSubscription({
-                        id: subscriptionId,
-                        expanded: true,
-                    }),
-                    getInvoicePreview({
-                        pricingPlanSubscriptionId: subscriptionId,
-                        enabledPricingIds,
-                        customer: {
-                            type: customerType.value || 'INDIVIDUAL',
-                            ...(customerType.value === 'INDIVIDUAL' && {
-                                individual: {
-                                    residential_address: {
-                                        country: country.value || 'NL',
-                                    },
-                                },
-                            }),
-                            ...(customerType.value === 'ORGANIZATION' && {
-                                organization: {
-                                    legal_name: 'preview',
-                                    registered_address: {
-                                        country: country.value || 'NL',
-                                    },
-                                },
-                            }),
-                        },
-                    }),
-                    ...(country.value
-                        ? [
-                              getPaymentMethodOptions({
-                                  subscriptionId,
-                                  country: country.value,
-                              }),
-                          ]
-                        : []),
-                ]);
+            subscription.value = await getSubscription({
+                id: subscriptionId,
+                expanded: true,
+            });
 
-            subscription.value = subscriptionResponse;
+            const [invoicePreviewResponse, paymentMethodOptionsResponse] = await Promise.all([
+                getInvoicePreview({
+                    pricingPlanSubscriptionId: subscriptionId,
+                    startAt: subscription.value?.pricing_plan_schedule_infos[0]?.start_at,
+                    enabledPricingIds,
+                    customer: {
+                        type: customerType.value || 'INDIVIDUAL',
+                        ...(customerType.value === 'INDIVIDUAL' && {
+                            individual: {
+                                residential_address: {
+                                    country: country.value || 'NL',
+                                },
+                            },
+                        }),
+                        ...(customerType.value === 'ORGANIZATION' && {
+                            organization: {
+                                legal_name: 'preview',
+                                registered_address: {
+                                    country: country.value || 'NL',
+                                },
+                            },
+                        }),
+                    },
+                }),
+                ...(country.value
+                    ? [
+                          getPaymentMethodOptions({
+                              subscriptionId,
+                              country: country.value,
+                          }),
+                      ]
+                    : []),
+            ]);
 
-            const trialSchedule = subscriptionResponse.pricing_plan_schedule_infos.find(
+            const trialSchedule = subscription.value?.pricing_plan_schedule_infos.find(
                 ({ pricing_plan_schedule }) => pricing_plan_schedule.type === 'TRIAL',
             );
 
@@ -96,7 +95,7 @@ export function useCheckoutView({
                 }
             }
 
-            const invoiceScheduleId = subscriptionResponse.pricing_plan_schedule_infos.find(
+            const invoiceScheduleId = subscription.value?.pricing_plan_schedule_infos.find(
                 ({ pricing_plan_schedule }) => pricing_plan_schedule.type === 'DEFAULT',
             )?.id;
 

@@ -1,7 +1,6 @@
 {
     "name": "@solvimon/sdk",
     "version": "0.1.0",
-    "type": "module",
     "description": "Solvimon's Front-end SDK provides you with the building blocks to create a billing self serve experience",
     "private": true,
     "scripts": {

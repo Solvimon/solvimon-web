@@ -1,11 +1,12 @@
 import { join } from 'path';
+import { fileURLToPath } from 'url';
 import solvimonTailwindConfig from '@solvimon/tailwind-config';
 import uiPackageTailwindConfig from '@solvimon/ui/tailwind.config';
-import { fileURLToPath } from 'url';
 
 /** @type {import('tailwindcss').Config} */
-const __dirname = fileURLToPath(new URL('.', import.meta.url));
 
+// Recreate __dirname in ESM
+const __dirname = fileURLToPath(new URL('.', import.meta.url));
 
 module.exports = {
     ...solvimonTailwindConfig,

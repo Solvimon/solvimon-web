@@ -194,7 +194,7 @@ function injectStylesToShadowRoot() {
             }
 
             .adyen-checkout__payment-methods-list {
-                gap: 12px;
+                gap: 8px;
             }
 
             .adyen-checkout__dropdown__list {

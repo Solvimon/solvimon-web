@@ -7,7 +7,6 @@ import {
     Typography,
     useIntl,
 } from '@solvimon/ui';
-import type { TimePeriod } from '@solvimon/types';
 import type { CheckoutTitleProps } from './CheckoutTitle.types';
 
 defineProps<CheckoutTitleProps>();
@@ -51,7 +50,7 @@ const { $t } = useIntl();
                               // TODO: This is the proper type, but formatjs does not support it yet
                               // @ts-ignore
                               startDate: offsetDateWithTimePeriod(
-                                  offsetDateWithTimePeriod(new Date(), billingPeriod as TimePeriod),
+                                  offsetDateWithTimePeriod(new Date(), trialPeriod),
                                   { type: 'DAY', value: 1 },
                               ),
                               period_name: formatBillingPeriod(billingPeriod, {

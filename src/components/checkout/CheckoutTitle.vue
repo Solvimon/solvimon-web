@@ -18,14 +18,7 @@ const { $t } = useIntl();
     <div class="flex gap-3 items-start">
         <Typography variant="heading-1">{{
             trialPeriod
-                ? $t(
-                      {
-                          defaultMessage: 'Try {subscription_name}',
-                          id: 'checkout.page_title_with_trial',
-                          description: 'The title of the checkout page with a trial period',
-                      },
-                      { subscription_name: subscriptionName },
-                  )
+                ? subscriptionName
                 : $t({
                       defaultMessage: 'Pay and subscribe',
                       id: 'checkout.page_title',
@@ -49,10 +42,7 @@ const { $t } = useIntl();
                               price: formatAmount(amount),
                               // TODO: This is the proper type, but formatjs does not support it yet
                               // @ts-ignore
-                              startDate: offsetDateWithTimePeriod(
-                                  offsetDateWithTimePeriod(new Date(), trialPeriod),
-                                  { type: 'DAY', value: 1 },
-                              ),
+                              startDate: offsetDateWithTimePeriod(new Date(), trialPeriod),
                               period_name: formatBillingPeriod(billingPeriod, {
                                   short: true,
                                   hideValueForExactPeriods: true,

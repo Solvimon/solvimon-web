@@ -190,7 +190,10 @@ const isUsageBased = computed(() =>
                         ref="paymentIntegrationFormRef"
                         :country-code="country"
                         :context="context"
-                        :amount="invoicePreview.invoice_amount_including_tax"
+                        :amount="
+                            trialInvoicePreview?.invoice_amount_including_tax ??
+                            invoicePreview.invoice_amount_including_tax
+                        "
                         variant="AUTHORIZE"
                         :payment-method-options="paymentMethodOptions ?? []"
                         :success-redirect-url="successRedirectUrl"

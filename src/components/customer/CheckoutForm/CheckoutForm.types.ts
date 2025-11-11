@@ -5,6 +5,8 @@ export interface CheckoutFormProps {
     initialState?: Partial<CheckoutFormState>;
     readOnlyCountry?: string;
     readOnlyEmail?: string;
+    isBillingInformationMandatory?: boolean;
+    getIsFieldRequired: (field: keyof CheckoutFormState) => boolean;
 }
 
 export interface CheckoutFormEmits {

@@ -156,6 +156,9 @@ const hasTrialPeriod = computed(() => !!trialInvoicePreview.value);
 const isUsageBased = computed(() =>
     invoicePreview.value ? isInvoiceUsageBased(invoicePreview.value) : false,
 );
+const isBillingInformationMandatory = computed(
+    () => (country.value && ['US', 'CA'].includes(country.value)) || false,
+);
 </script>
 
 <template>
@@ -179,6 +182,8 @@ const isUsageBased = computed(() =>
                         :validation="checkoutForm.validation"
                         :read-only-email="props.email"
                         :read-only-country="props.countryCode"
+                        :is-billing-information-mandatory="isBillingInformationMandatory"
+                        :get-is-field-required="checkoutForm.getIsFieldRequired"
                     >
                         <Typography variant="heading-3" tag="h2" class="mb-2">{{
                             $t({
@@ -238,10 +243,10 @@ const isUsageBased = computed(() =>
                             <Section no-spacing>
                                 <SubscriptionSummary
                                     v-if="subscription"
-                                    :avatar="avatar"
+                                    :avatar="props.avatar"
                                     :invoice="invoicePreview"
                                     :subscription="subscription"
-                                    :enabled-pricing-ids="enabledPricingIds"
+                                    :enabled-pricing-ids="props.enabledPricingIds"
                                     :loading="isPreviewAndPaymentMethodsPending"
                                     :trial-period="trialPeriod"
                                 />
@@ -300,8 +305,8 @@ const isUsageBased = computed(() =>
                                       description:
                                           'The label of the pay and subscribe button in the checkout form',
                                   })
-                        }}</Button
-                    >
+                        }}
+                    </Button>
                     <Section
                         v-if="$slots['terms-and-conditions']"
                         :title="

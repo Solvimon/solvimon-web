@@ -14,7 +14,7 @@ import type { CheckoutFormState, CheckoutFormProps, CheckoutFormEmits } from './
 
 const FORM_ID = 'checkout-form';
 
-defineProps<CheckoutFormProps>();
+const props = defineProps<CheckoutFormProps>();
 defineEmits<CheckoutFormEmits>();
 
 const showBillingDetails = ref(false);
@@ -39,6 +39,21 @@ const gridAreaCustomerInformationFirst =
     "[grid-template-areas:'customer-information'_'payment-methods']";
 
 const { $t } = useIntl();
+
+const getOptionalSuffix = (field: keyof CheckoutFormState): string => {
+    if (props.getIsFieldRequired(field)) {
+        return '';
+    }
+
+    return (
+        ' ' +
+        $t({
+            defaultMessage: '(optional)',
+            id: 'checkout.optional_suffix.label',
+            description: 'The suffix for optional fields in the checkout form',
+        })
+    );
+};
 </script>
 
 <template>
@@ -60,7 +75,7 @@ const { $t } = useIntl();
                         })
                     "
                 >
-                    <div class="grid grid-cols-1">
+                    <div class="grid grid-cols-1 gap-2">
                         <Typography v-if="readOnlyEmail" tag="span" weight="semibold">{{
                             readOnlyEmail
                         }}</Typography>
@@ -83,7 +98,7 @@ const { $t } = useIntl();
                                     id: 'checkout.email_address.placeholder',
                                     description:
                                         'The email address of the customer in the checkout form',
-                                })
+                                }) + getOptionalSuffix('email')
                             "
                             :error="validation.value.email.$errors"
                         />
@@ -97,7 +112,7 @@ const { $t } = useIntl();
                                 readableCountryName
                             }}</Typography>
                             <Button
-                                v-if="!showBillingDetails"
+                                v-if="!showBillingDetails && !isBillingInformationMandatory"
                                 size="xs"
                                 variant="ghost"
                                 icon-prefix="add"
@@ -118,19 +133,18 @@ const { $t } = useIntl();
                             v-else
                             v-model:single-model-value="model.country"
                             required
-                            class="mt-2"
                             :label="
                                 $t({
                                     defaultMessage: 'Billing country',
                                     id: 'checkout.country.label',
                                     description: 'The country of the customer in the checkout form',
-                                })
+                                }) + getOptionalSuffix('country')
                             "
                             :error="validation.value.country.$errors"
                         >
                             <template #label-suffix>
                                 <Button
-                                    v-if="!showBillingDetails"
+                                    v-if="!showBillingDetails && !isBillingInformationMandatory"
                                     size="xs"
                                     variant="ghost"
                                     icon-prefix="add"
@@ -146,76 +160,30 @@ const { $t } = useIntl();
                                         })
                                     }}
                                 </Button>
+                                <Button
+                                    v-if="showBillingDetails && !isBillingInformationMandatory"
+                                    size="sm"
+                                    variant="ghost"
+                                    icon-prefix="close"
+                                    class="py-0.5"
+                                    @click="showBillingDetails = false"
+                                    >{{
+                                        $t({
+                                            defaultMessage: 'Remove billing details',
+                                            id: 'checkout.billing_details.remove_billing_details_button.label',
+                                            description:
+                                                'Label of the button in the checkout that lets you remove the billing details',
+                                        })
+                                    }}</Button
+                                >
                             </template>
                         </CountrySelect>
                     </div>
-                </Section>
 
-                <Section v-if="showBillingDetails">
-                    <div class="flex gap-4 justify-between items-center">
-                        <Typography variant="heading-3" tag="h3">{{
-                            $t({
-                                defaultMessage: 'Billing details',
-                                id: 'checkout.billing_information_block.title',
-                                description:
-                                    'The title of the billing information block in the checkout form',
-                            })
-                        }}</Typography>
-                        <Button
-                            v-if="showBillingDetails"
-                            size="sm"
-                            variant="ghost"
-                            icon-prefix="close"
-                            class="py-0.5"
-                            @click="showBillingDetails = false"
-                            >Remove billing details</Button
-                        >
-                    </div>
-
-                    <div class="flex gap-3 flex-col mt-2">
-                        <div v-if="!isCompanyPurchase" class="grid grid-cols-2 gap-2">
-                            <Input
-                                v-model="model.firstName"
-                                name="first_name"
-                                :label="
-                                    $t({
-                                        defaultMessage: 'First name',
-                                        id: 'checkout.first_name.label',
-                                        description:
-                                            'The first name of the customer in the checkout form',
-                                    })
-                                "
-                                :placeholder="
-                                    $t({
-                                        defaultMessage: 'First name...',
-                                        id: 'checkout.first_name.placeholder',
-                                        description:
-                                            'The first name of the customer in the checkout form',
-                                    })
-                                "
-                            />
-                            <Input
-                                v-model="model.lastName"
-                                name="last_name"
-                                :label="
-                                    $t({
-                                        defaultMessage: 'Last name',
-                                        id: 'checkout.last_name.label',
-                                        description:
-                                            'The last name of the customer in the checkout form',
-                                    })
-                                "
-                                :placeholder="
-                                    $t({
-                                        defaultMessage: 'Last name...',
-                                        id: 'checkout.last_name.placeholder',
-                                        description:
-                                            'The last name of the customer in the checkout form',
-                                    })
-                                "
-                            />
-                        </div>
-
+                    <div
+                        v-if="showBillingDetails || isBillingInformationMandatory"
+                        class="flex gap-3 flex-col mt-2"
+                    >
                         <Input
                             v-model="model.addressLine1"
                             name="address_line_1"
@@ -233,8 +201,10 @@ const { $t } = useIntl();
                                     id: 'checkout.address.line1.placeholder',
                                     description:
                                         'Address line 1 of the customer address in the checkout form',
-                                })
+                                }) + getOptionalSuffix('addressLine1')
                             "
+                            required
+                            :error="validation.value.addressLine1.$errors"
                         />
                         <Input
                             v-model="model.addressLine2"
@@ -245,7 +215,7 @@ const { $t } = useIntl();
                                     id: 'checkout.address.line2.placeholder',
                                     description:
                                         'Address line 2 of the customer address in the checkout form',
-                                })
+                                }) + getOptionalSuffix('addressLine2')
                             "
                         />
                         <div class="grid grid-cols-3 gap-2">
@@ -258,8 +228,9 @@ const { $t } = useIntl();
                                         id: 'checkout.address.portal_code.placeholder',
                                         description:
                                             'Postal code of the customer address in the checkout form',
-                                    })
+                                    }) + getOptionalSuffix('postalCode')
                                 "
+                                :error="validation.value.addressLine1.$errors"
                             />
                             <Input
                                 v-model="model.city"
@@ -270,7 +241,7 @@ const { $t } = useIntl();
                                         id: 'checkout.address.city.placeholder',
                                         description:
                                             'City of the customer address in the checkout form',
-                                    })
+                                    }) + getOptionalSuffix('city')
                                 "
                             />
                             <Input
@@ -282,8 +253,9 @@ const { $t } = useIntl();
                                         id: 'checkout.address.state.placeholder',
                                         description:
                                             'State of the customer address in the checkout form',
-                                    })
+                                    }) + getOptionalSuffix('state')
                                 "
+                                :error="validation.value.state.$errors"
                             />
                         </div>
                     </div>

@@ -121,7 +121,7 @@ const handlePaymentMethodUpdated = (): void => {
             })
         "
     >
-        <template v-if="paymentMethods.showMoreLink" #right>
+        <template #right>
             <Button
                 size="sm"
                 variant="ghost"

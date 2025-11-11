@@ -41,7 +41,7 @@ export const createPaymentsService = () => {
         };
     }) {
         return request<PaymentDetailsResponse>({
-            url: `${config.apiUrls.transaction}${BASE_URL}/verify-detail`,
+            url: `${config.apiUrls.transaction}${BASE_URL}/verify-details`,
             options: {
                 method: 'POST',
             },

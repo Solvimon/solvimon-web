@@ -1,7 +1,8 @@
 import { useValidation } from '@solvimon/ui';
 import { email, required, requiredIf } from '@vuelidate/validators';
-import { computed, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import type { CheckoutFormState } from './CheckoutForm.types';
+import { createGeoLocationService } from '@/services/geolocation';
 
 export function useCheckoutForm(initialState: Partial<CheckoutFormState>) {
     const form = ref<CheckoutFormState>({
@@ -47,6 +48,16 @@ export function useCheckoutForm(initialState: Partial<CheckoutFormState>) {
         },
         form,
     );
+
+    onMounted(() => {
+        if (!initialState.country) {
+            void createGeoLocationService()
+                .getGeoLocation()
+                .then(({ country }) => {
+                    form.value.country = country;
+                });
+        }
+    });
 
     return { form, validation, getIsFieldRequired };
 }

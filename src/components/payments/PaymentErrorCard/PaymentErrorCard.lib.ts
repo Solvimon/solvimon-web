@@ -38,4 +38,9 @@ export const ErrorMap: Record<
         message: 'Failed loading payment integration',
         isReloadButtonVisible: true,
     },
+    RESOURCE_REVOKED: {
+        title: 'Resource revoked',
+        message: 'The resource has been revoked',
+        isReloadButtonVisible: true,
+    },
 };

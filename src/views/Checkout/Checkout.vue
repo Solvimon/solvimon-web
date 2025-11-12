@@ -128,6 +128,8 @@ const {
 } = useCheckoutView({
     country,
     customerType: computed(() => checkoutForm.form.value.type),
+    taxId: computed(() => checkoutForm.form.value.companyVatNumber),
+    legalEntityName: computed(() => checkoutForm.form.value.companyLegalName),
     subscriptionId: portal.value?.init_pricing_plan_subscription?.pricing_plan_subscription_id,
     enabledPricingIds: props.enabledPricingIds,
 });

@@ -78,8 +78,6 @@ export function createPaymentMethodsService(): PaymentMethodsService {
         const queryParams = withPagination(
             {
                 customer_id: customerId,
-                // TODO: Remove when backend supports customer_id query parameter.
-                customer_resource_id: customerId,
                 ...(query ?? {}),
             },
             pagination,

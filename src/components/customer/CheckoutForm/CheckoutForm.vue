@@ -29,6 +29,8 @@ const companyPurchaseModel = computed({
 
 const isCompanyPurchase = computed(() => model.value.type === 'ORGANIZATION');
 
+const showVatIdInput = computed(() => model.value.country !== 'US');
+
 const readableCountryName = computed(() =>
     model.value.country ? getCountryNameByCode(model.value.country) : undefined,
 );
@@ -290,6 +292,7 @@ const getOptionalSuffix = (field: keyof CheckoutFormState): string => {
 
                     <div v-if="isCompanyPurchase" class="grid grid-cols-1 gap-3 mt-4">
                         <Input
+                            v-if="showVatIdInput"
                             v-model="model.companyVatNumber"
                             name="vat_number"
                             :label="

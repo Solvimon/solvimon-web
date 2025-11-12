@@ -14,14 +14,21 @@ import { createPaymentMethodsService } from '@/services/paymentMethods';
 import { createInvoicesService } from '@/services/invoices';
 import { createSubscriptionsService } from '@/services/subscriptions';
 
+const EMPTY_LEGAL_ENTITY_NAME = 'preview';
+const EMPTY_COUNTRY = 'NL';
+
 export function useCheckoutView({
     country,
     customerType,
+    taxId,
+    legalEntityName,
     subscriptionId,
     enabledPricingIds,
 }: {
     country: Ref<string | undefined>;
     customerType: Ref<Customer['type'] | undefined>;
+    taxId: Ref<string | undefined>;
+    legalEntityName: Ref<string | undefined>;
     subscriptionId: PricingPlanSubscription['id'];
     enabledPricingIds?: Pricing['id'][];
 }) {
@@ -56,15 +63,15 @@ export function useCheckoutView({
                         ...(customerType.value === 'INDIVIDUAL' && {
                             individual: {
                                 residential_address: {
-                                    country: country.value || 'NL',
+                                    country: country.value || EMPTY_COUNTRY,
                                 },
                             },
                         }),
                         ...(customerType.value === 'ORGANIZATION' && {
                             organization: {
-                                legal_name: 'preview',
+                                legal_name: legalEntityName.value || EMPTY_LEGAL_ENTITY_NAME,
                                 registered_address: {
-                                    country: country.value || 'NL',
+                                    country: country.value || EMPTY_COUNTRY,
                                 },
                             },
                         }),
@@ -109,7 +116,7 @@ export function useCheckoutView({
                 paymentMethodOptions.value = paymentMethodOptionsResponse;
             }
         },
-        watchValue: computed(() => `${country.value}${customerType.value}`),
+        watchValue: computed(() => `${country.value}${customerType.value}${taxId.value}`),
     });
 
     return {

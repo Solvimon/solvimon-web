@@ -1,13 +1,16 @@
-import { onMounted, ref, watch, type Ref } from 'vue';
+import { watchDebounced } from '@vueuse/core';
+import { onMounted, ref, type Ref } from 'vue';
 
 export const useData = <T, V extends string | undefined>({
     getData,
     onError,
     watchValue,
+    debounce = 200,
 }: {
     getData: (watchValue?: Ref<V>) => Promise<T>;
     onError?: (error: unknown) => void;
     watchValue?: Ref<V>;
+    debounce?: number;
 }) => {
     const data = ref<T>();
     const isPending = ref(true);
@@ -26,9 +29,13 @@ export const useData = <T, V extends string | undefined>({
         void handleGetData();
 
         if (watchValue) {
-            watch(watchValue, async () => {
-                void handleGetData();
-            });
+            watchDebounced(
+                watchValue,
+                () => {
+                    void handleGetData();
+                },
+                { debounce },
+            );
         }
     });
 

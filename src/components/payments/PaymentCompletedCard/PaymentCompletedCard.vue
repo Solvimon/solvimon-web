@@ -11,7 +11,7 @@ const { $t } = useIntl();
 const title = computed(() =>
     props.variant === 'AUTHORIZE'
         ? $t({
-              defaultMessage: 'Thank you for your payment',
+              defaultMessage: 'Payment successful',
               description: 'The title for when a payment has been successful',
               id: 'payment_completed_card.title.authorize',
           })
@@ -28,7 +28,7 @@ const title = computed(() =>
         <Typography v-if="amount" variant="body-sm" class="mt-1">
             <Icon icon="check" />{{ formatAmount(amount) }}
         </Typography>
-        <Typography variant="body-xs" shade="lighter" class="mt-3">{{
+        <Typography variant="body-xs" shade="lighter">{{
             $t({
                 defaultMessage: 'You are being redirected...',
                 description: 'The text shown after a successful message before a redirect',

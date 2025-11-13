@@ -1,13 +1,11 @@
 <script setup lang="ts">
 import { Button, InvoicePreview, Section, Typography, useIntl } from '@solvimon/ui';
-import { computed, ref, watch } from 'vue';
-import type { Address, AuthorizePaymentPayload, Name } from '@solvimon/types';
+import { computed, ref } from 'vue';
 import type { CheckoutProps } from './Checkout.types';
 import { useCheckoutView } from './useCheckoutView';
 import { usePortal } from '@/components/providers/PortalProvider/composables/usePortal';
 import PaymentIntegrationForm from '@/components/payments/PaymentIntegrationForm/PaymentIntegrationForm.vue';
 import PaymentIntegrationFormPlaceholder from '@/components/payments/PaymentIntegrationForm/PaymentIntegrationForm.placeholder.vue';
-import { useCheckoutForm } from '@/components/customer/CheckoutForm/useCheckoutForm';
 import Kpi from '@/components/shared/Kpi.vue';
 import SubscriptionSummary from '@/components/subscriptions/SubscriptionSummary.vue';
 import CheckoutForm from '@/components/customer/CheckoutForm/CheckoutForm.vue';
@@ -16,9 +14,12 @@ import { isInvoiceUsageBased } from '@/utils/invoice';
 import CheckoutNotAvailable from '@/components/checkout/CheckoutNotAvailable.vue';
 import type { Error } from '@/types/errors';
 import { trackSentryException } from '@/utils/errorTracking';
+import SubscriptionPaymentCompletedCard from '@/components/payments/SubscriptionPaymentCompletedCard/SubscriptionPaymentCompletedCard.vue';
 
 const props = defineProps<CheckoutProps>();
+
 const criticalError = ref<Error>();
+const paymentIntegrationFormRef = ref();
 
 const { $t } = useIntl();
 const portal = usePortal();
@@ -39,105 +40,22 @@ if (portal.value.status === 'REVOKED') {
 const subscriptionId = portal.value?.init_pricing_plan_subscription?.pricing_plan_subscription_id;
 const successRedirectUrl = portal.value?.init_pricing_plan_subscription?.success_url;
 
-const country = ref<string | undefined>(props.countryCode);
-const paymentIntegrationFormRef = ref();
-
-const initialState =
-    props.countryCode || props.email
-        ? {
-              ...(props.countryCode ? { country: props.countryCode } : {}),
-              ...(props.email ? { email: props.email } : {}),
-          }
-        : {};
-
-const checkoutForm = useCheckoutForm(initialState);
-
-const context = computed<AuthorizePaymentPayload['context']>(() => {
-    const name: Name =
-        checkoutForm.form.value.firstName ||
-        checkoutForm.form.value.infix ||
-        checkoutForm.form.value.lastName
-            ? {
-                  ...(checkoutForm.form.value.firstName
-                      ? { first_name: checkoutForm.form.value.firstName }
-                      : {}),
-                  ...(checkoutForm.form.value.infix
-                      ? { infix: checkoutForm.form.value.infix }
-                      : {}),
-                  ...(checkoutForm.form.value.lastName
-                      ? { last_name: checkoutForm.form.value.lastName }
-                      : {}),
-              }
-            : {};
-
-    const address: Address = {
-        ...(checkoutForm.form.value.addressLine1
-            ? { line1: checkoutForm.form.value.addressLine1 }
-            : {}),
-        ...(checkoutForm.form.value.addressLine2
-            ? { line2: checkoutForm.form.value.addressLine2 }
-            : {}),
-        ...(checkoutForm.form.value.city ? { city: checkoutForm.form.value.city } : {}),
-        ...(checkoutForm.form.value.postalCode
-            ? { postal_code: checkoutForm.form.value.postalCode }
-            : {}),
-        ...(checkoutForm.form.value.state ? { state: checkoutForm.form.value.state } : {}),
-        ...{ country: checkoutForm.form.value.country ?? '' },
-    };
-
-    return {
-        type: 'INIT_PRICING_PLAN_SUBSCRIPTION',
-        init_pricing_plan_subscription: {
-            template_pricing_plan_subscription_id: subscriptionId,
-            ...(props.enabledPricingIds && {
-                enabled_pricings: props.enabledPricingIds.map((enabledPricingId) => ({
-                    pricing_id: enabledPricingId,
-                })),
-            }),
-            customer_details: {
-                email: checkoutForm.form.value.email ?? '',
-                type: checkoutForm.form.value.type,
-                ...(checkoutForm.form.value.type === 'INDIVIDUAL'
-                    ? {
-                          individual: {
-                              residential_address: address,
-                              ...(name ? { name } : {}),
-                          },
-                      }
-                    : {
-                          organization: {
-                              registered_address: address,
-                              ...{ legal_name: checkoutForm.form.value.companyLegalName ?? '' },
-                              ...(checkoutForm.form.value.companyVatNumber
-                                  ? { tax_id: checkoutForm.form.value.companyVatNumber }
-                                  : {}),
-                          },
-                      }),
-            },
-        },
-    };
-});
-
 const {
-    invoicePreview,
     paymentMethodOptions,
     isPending: isPreviewAndPaymentMethodsPending,
+    subscription,
+    checkoutForm,
+    invoicePreview,
     trialInvoicePreview,
     trialPeriod,
-    subscription,
+    authorizationContext,
+    isPaid,
 } = useCheckoutView({
-    country,
-    customerType: computed(() => checkoutForm.form.value.type),
-    taxId: computed(() => checkoutForm.form.value.companyVatNumber),
-    legalEntityName: computed(() => checkoutForm.form.value.companyLegalName),
-    subscriptionId: portal.value?.init_pricing_plan_subscription?.pricing_plan_subscription_id,
+    initialCountry: props.countryCode,
+    initialEmail: props.email,
+    subscriptionId,
     enabledPricingIds: props.enabledPricingIds,
 });
-
-watch(
-    () => checkoutForm.form.value.country,
-    (val) => (country.value = val),
-);
 
 const handleSubmit = async () => {
     await checkoutForm.validation.value.$validate();
@@ -155,12 +73,19 @@ const handleValidateOnSubmit = async () => {
 };
 
 const hasTrialPeriod = computed(() => !!trialInvoicePreview.value);
+
 const isUsageBased = computed(() =>
     invoicePreview.value ? isInvoiceUsageBased(invoicePreview.value) : false,
 );
+
 const isBillingInformationMandatory = computed(
-    () => (country.value && ['US', 'CA'].includes(country.value)) || false,
+    () =>
+        (checkoutForm.form.value.country &&
+            ['US', 'CA'].includes(checkoutForm.form.value.country)) ||
+        false,
 );
+
+const showCustomerInfoOnTop = computed(() => !(props.email && props.countryCode));
 </script>
 
 <template>
@@ -183,9 +108,10 @@ const isBillingInformationMandatory = computed(
                         v-model="checkoutForm.form.value"
                         :validation="checkoutForm.validation"
                         :read-only-email="props.email"
-                        :read-only-country="props.countryCode"
+                        :show-customer-info-on-top="showCustomerInfoOnTop || isPaid"
                         :is-billing-information-mandatory="isBillingInformationMandatory"
                         :get-is-field-required="checkoutForm.getIsFieldRequired"
+                        :read-only="isPaid"
                     >
                         <Typography variant="heading-3" tag="h2" class="mb-2">{{
                             $t({
@@ -195,33 +121,45 @@ const isBillingInformationMandatory = computed(
                                     'The title of the payment method block in the checkout form',
                             })
                         }}</Typography>
-                        <Typography v-if="!country" variant="body-xs" shade="lighter">{{
-                            $t({
-                                defaultMessage:
-                                    'Payment methods will be shown after you select a country',
-                                id: 'checkout.payment_method_block.payment_methods_not_loaded_message',
-                                description:
-                                    "The messages shown when no country is selected thus the payment methods can't be shown",
-                            })
-                        }}</Typography>
-                        <PaymentIntegrationFormPlaceholder
-                            v-else-if="isPreviewAndPaymentMethodsPending"
+                        <SubscriptionPaymentCompletedCard
+                            v-if="isPaid"
+                            :redirect-url="successRedirectUrl"
                         />
-                        <PaymentIntegrationForm
-                            v-else-if="invoicePreview"
-                            ref="paymentIntegrationFormRef"
-                            :country-code="country"
-                            :context="context"
-                            :amount="
-                                trialInvoicePreview?.invoice_amount_including_tax ??
-                                invoicePreview.invoice_amount_including_tax
-                            "
-                            variant="AUTHORIZE"
-                            :payment-method-options="paymentMethodOptions ?? []"
-                            :success-redirect-url="successRedirectUrl"
-                            :validate-on-submit="handleValidateOnSubmit"
-                            @error="(error) => $emit('error', error)"
-                        />
+                        <template v-else>
+                            <Typography
+                                v-if="!checkoutForm.form.value.country"
+                                variant="body-xs"
+                                shade="lighter"
+                                >{{
+                                    $t({
+                                        defaultMessage:
+                                            'Payment methods will be shown after you select a country',
+                                        id: 'checkout.payment_method_block.payment_methods_not_loaded_message',
+                                        description:
+                                            "The messages shown when no country is selected thus the payment methods can't be shown",
+                                    })
+                                }}</Typography
+                            >
+                            <PaymentIntegrationFormPlaceholder
+                                v-else-if="isPreviewAndPaymentMethodsPending"
+                            />
+                            <PaymentIntegrationForm
+                                v-else-if="invoicePreview"
+                                ref="paymentIntegrationFormRef"
+                                :country-code="checkoutForm.form.value.country"
+                                :context="authorizationContext"
+                                :amount="
+                                    trialInvoicePreview?.invoice_amount_including_tax ??
+                                    invoicePreview.invoice_amount_including_tax
+                                "
+                                variant="AUTHORIZE"
+                                :payment-method-options="paymentMethodOptions ?? []"
+                                :success-redirect-url="successRedirectUrl"
+                                :validate-on-submit="handleValidateOnSubmit"
+                                @error="(error) => $emit('error', error)"
+                                @payment-success="isPaid = true"
+                            />
+                        </template>
                     </CheckoutForm>
                 </div>
 
@@ -245,7 +183,7 @@ const isBillingInformationMandatory = computed(
                             <Section no-spacing>
                                 <SubscriptionSummary
                                     v-if="subscription"
-                                    :avatar="props.avatar"
+                                    :avatar="avatar"
                                     :invoice="invoicePreview"
                                     :subscription="subscription"
                                     :enabled-pricing-ids="props.enabledPricingIds"
@@ -277,6 +215,7 @@ const isBillingInformationMandatory = computed(
                                     :invoice="invoicePreview"
                                     :trial-invoice="trialInvoicePreview"
                                     :variant="trialInvoicePreview ? 'without-products' : 'default'"
+                                    :is-paid="isPaid"
                                     is-customer-facing
                                 />
                                 <Typography v-else variant="body-sm" shade="lighter"
@@ -292,7 +231,13 @@ const isBillingInformationMandatory = computed(
                             </Section>
                         </div>
                     </Section>
-                    <Button type="button" size="lg" class="full-width" @click="handleSubmit">
+                    <Button
+                        v-if="!isPaid"
+                        type="button"
+                        size="lg"
+                        class="full-width"
+                        @click="handleSubmit"
+                    >
                         {{
                             hasTrialPeriod
                                 ? $t({

@@ -1,10 +1,20 @@
-import { useValidation } from '@solvimon/ui';
+import { objectDiff, useValidation } from '@solvimon/ui';
 import { email, required, requiredIf } from '@vuelidate/validators';
 import { computed, onMounted, ref } from 'vue';
+import { watchDebounced } from '@vueuse/core';
+import type { CountryCode } from '@solvimon/types';
+import { cloneDeep } from 'lodash-es';
 import type { CheckoutFormState } from './CheckoutForm.types';
+import { getRequiredFieldsForCountry } from './CheckoutForm.lib';
 import { createGeoLocationService } from '@/services/geolocation';
 
-export function useCheckoutForm(initialState: Partial<CheckoutFormState>) {
+export function useCheckoutForm({
+    initialState,
+    onRequiredFieldChange,
+}: {
+    initialState: Partial<CheckoutFormState>;
+    onRequiredFieldChange: (form: CheckoutFormState) => void;
+}) {
     const form = ref<CheckoutFormState>({
         email: undefined,
         country: undefined,
@@ -22,17 +32,9 @@ export function useCheckoutForm(initialState: Partial<CheckoutFormState>) {
         ...(initialState || {}),
     });
 
-    const requiredFields = computed<(keyof CheckoutFormState)[]>(() => {
-        if (form.value.country === 'US') {
-            return ['email', 'country', 'addressLine1', 'postalCode'];
-        }
-
-        if (form.value.country === 'CA') {
-            return ['email', 'country', 'state'];
-        }
-
-        return ['email', 'country'];
-    });
+    const requiredFields = computed<(keyof CheckoutFormState)[]>(() =>
+        getRequiredFieldsForCountry(form.value.country),
+    );
 
     const getIsFieldRequired = (field: keyof CheckoutFormState): boolean =>
         requiredFields.value.includes(field);
@@ -49,14 +51,49 @@ export function useCheckoutForm(initialState: Partial<CheckoutFormState>) {
         form,
     );
 
-    onMounted(() => {
-        if (!initialState.country) {
+    /**
+     * When the country is not set in the initial state, get the country from the geo location service.
+     */
+    const getCountryFromGeoLocationService = (country: CountryCode | undefined) => {
+        if (!country) {
             void createGeoLocationService()
                 .getGeoLocation()
                 .then(({ country }) => {
                     form.value.country = country;
                 });
         }
+    };
+
+    const handleFormChange = (newValue: CheckoutFormState, oldValue: CheckoutFormState) => {
+        const changed = objectDiff({ from: oldValue, to: newValue });
+        const fieldName: keyof CheckoutFormState = Object.keys(
+            changed,
+        )[0] as keyof CheckoutFormState;
+
+        /**
+         * These fields are not required, but need to trigger the required field change event,
+         * so that we can update the invoice preview accordingly.
+         */
+        if (['type', 'companyTaxId'].includes(fieldName)) {
+            onRequiredFieldChange(newValue);
+            return;
+        }
+
+        /**
+         * Whilst `email` is not required, it needs to trigger the required field change event,
+         */
+        if (fieldName !== 'email' && getIsFieldRequired(fieldName)) {
+            onRequiredFieldChange(newValue);
+            return;
+        }
+    };
+
+    onMounted(async () => {
+        await getCountryFromGeoLocationService(initialState?.country);
+    });
+
+    watchDebounced(() => cloneDeep(form.value), handleFormChange, {
+        debounce: 200,
     });
 
     return { form, validation, getIsFieldRequired };

@@ -27,9 +27,9 @@ const handleReload = () => {
                     })
                 }}
                 <a
-                    @click.prevent="handleReload"
                     href="#"
                     class="text-primary-900 hover:underline"
+                    @click.prevent="handleReload"
                     >{{
                         $t({
                             defaultMessage: 'Reload',

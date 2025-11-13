@@ -9,20 +9,19 @@ withDefaults(defineProps<PaymentFeedbackCardProps>(), {
 
 <template>
     <Section>
-        <div class="flex flex-col items-center py-16">
+        <div class="flex flex-col items-center py-10">
             <Icon
                 :icon="status === 'success' ? 'check_circle' : 'error'"
-                class="rounded-full p-4 shadow-lg"
                 :class="{
-                    'bg-green-400 text-white': status === 'success',
-                    'bg-gray-200 text-red-600': status === 'error',
+                    'text-green-400': status === 'success',
+                    'text-red-600': status === 'error',
                 }"
-                size="xl"
+                size="lg"
             />
-            <Typography variant="heading-1" class="mt-8">
+            <Typography variant="heading-3" tag="span" class="mt-2">
                 {{ title }}
             </Typography>
-            <Typography v-if="$slots.default" tag="div" variant="body-sm" class="mt-1">
+            <Typography v-if="$slots.default" tag="div" variant="body-sm">
                 <slot name="default" />
             </Typography>
         </div>

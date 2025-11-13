@@ -31,10 +31,6 @@ const isCompanyPurchase = computed(() => model.value.type === 'ORGANIZATION');
 
 const showVatIdInput = computed(() => model.value.country !== 'US');
 
-const readableCountryName = computed(() =>
-    model.value.country ? getCountryNameByCode(model.value.country) : undefined,
-);
-
 const gridAreaPaymentMethodsFirst =
     "[grid-template-areas:'payment-methods'_'customer-information']";
 const gridAreaCustomerInformationFirst =
@@ -56,6 +52,10 @@ const getOptionalSuffix = (field: keyof CheckoutFormState): string => {
         })
     );
 };
+
+const readableCountryName = computed(() =>
+    model.value.country ? getCountryNameByCode(model.value.country) : undefined,
+);
 </script>
 
 <template>
@@ -63,7 +63,9 @@ const getOptionalSuffix = (field: keyof CheckoutFormState): string => {
         <div
             class="grid grid-cols-1 gap-6"
             :class="
-                readOnlyCountry ? gridAreaPaymentMethodsFirst : gridAreaCustomerInformationFirst
+                showCustomerInfoOnTop
+                    ? gridAreaCustomerInformationFirst
+                    : gridAreaPaymentMethodsFirst
             "
         >
             <div class="grid grid-cols-1 gap-2 [grid-area:customer-information]">
@@ -78,108 +80,89 @@ const getOptionalSuffix = (field: keyof CheckoutFormState): string => {
                     "
                 >
                     <div class="grid grid-cols-1 gap-2">
-                        <Typography v-if="readOnlyEmail" tag="span" weight="semibold">{{
-                            readOnlyEmail
-                        }}</Typography>
-                        <Input
-                            v-else
-                            v-model="model.email"
-                            required
-                            type="email"
-                            :label="
-                                $t({
-                                    defaultMessage: 'Email address',
-                                    id: 'checkout.email_address.label',
-                                    description:
-                                        'The email address of the customer in the checkout form',
-                                })
-                            "
-                            :placeholder="
-                                $t({
-                                    defaultMessage: 'Email address...',
-                                    id: 'checkout.email_address.placeholder',
-                                    description:
-                                        'The email address of the customer in the checkout form',
-                                }) + getOptionalSuffix('email')
-                            "
-                            :error="validation.value.email.$errors"
-                        />
-
-                        <div
-                            v-if="readOnlyCountry"
-                            class="flex justify-between grow"
-                            :class="{ 'mt-2': !readOnlyEmail }"
-                        >
-                            <Typography tag="span" shade="lighter" variant="body-sm">{{
+                        <template v-if="readOnly">
+                            <Typography variant="body" tag="span" weight="semibold" no-spacing>{{
+                                model.email
+                            }}</Typography>
+                            <Typography variant="body-sm" tag="span" shade="lighter" no-spacing>{{
                                 readableCountryName
                             }}</Typography>
-                            <Button
-                                v-if="!showBillingDetails && !isBillingInformationMandatory"
-                                size="xs"
-                                variant="ghost"
-                                icon-prefix="add"
-                                class="py-0.5"
-                                @click="showBillingDetails = true"
-                            >
-                                {{
+                        </template>
+                        <template v-else>
+                            <Input
+                                v-model="model.email"
+                                required
+                                type="email"
+                                :disabled="!!readOnlyEmail"
+                                :label="
                                     $t({
-                                        defaultMessage: 'More billing details',
+                                        defaultMessage: 'Email address',
+                                        id: 'checkout.email_address.label',
                                         description:
-                                            'Label of the button in the checkout that lets you fill out all billing details',
-                                        id: 'checkout.billing_details.add_billing_details_button.label',
+                                            'The email address of the customer in the checkout form',
                                     })
-                                }}
-                            </Button>
-                        </div>
-                        <CountrySelect
-                            v-else
-                            v-model:single-model-value="model.country"
-                            required
-                            :label="
-                                $t({
-                                    defaultMessage: 'Billing country',
-                                    id: 'checkout.country.label',
-                                    description: 'The country of the customer in the checkout form',
-                                }) + getOptionalSuffix('country')
-                            "
-                            :error="validation.value.country.$errors"
-                        >
-                            <template #label-suffix>
-                                <Button
-                                    v-if="!showBillingDetails && !isBillingInformationMandatory"
-                                    size="xs"
-                                    variant="ghost"
-                                    icon-prefix="add"
-                                    class="py-0.5"
-                                    @click="showBillingDetails = true"
-                                >
-                                    {{
-                                        $t({
-                                            defaultMessage: 'More billing details',
-                                            description:
-                                                'Label of the button in the checkout that lets you fill out all billing details',
-                                            id: 'checkout.billing_details.add_billing_details_button.label',
-                                        })
-                                    }}
-                                </Button>
-                                <Button
-                                    v-if="showBillingDetails && !isBillingInformationMandatory"
-                                    size="sm"
-                                    variant="ghost"
-                                    icon-prefix="close"
-                                    class="py-0.5"
-                                    @click="showBillingDetails = false"
-                                    >{{
-                                        $t({
-                                            defaultMessage: 'Remove billing details',
-                                            id: 'checkout.billing_details.remove_billing_details_button.label',
-                                            description:
-                                                'Label of the button in the checkout that lets you remove the billing details',
-                                        })
-                                    }}</Button
-                                >
-                            </template>
-                        </CountrySelect>
+                                "
+                                :placeholder="
+                                    $t({
+                                        defaultMessage: 'Email address...',
+                                        id: 'checkout.email_address.placeholder',
+                                        description:
+                                            'The email address of the customer in the checkout form',
+                                    }) + getOptionalSuffix('email')
+                                "
+                                :error="validation.value.email.$errors"
+                            />
+
+                            <CountrySelect
+                                v-model:single-model-value="model.country"
+                                required
+                                :label="
+                                    $t({
+                                        defaultMessage: 'Billing country',
+                                        id: 'checkout.country.label',
+                                        description:
+                                            'The country of the customer in the checkout form',
+                                    }) + getOptionalSuffix('country')
+                                "
+                                :error="validation.value.country.$errors"
+                            >
+                                <template #label-suffix>
+                                    <Button
+                                        v-if="!showBillingDetails && !isBillingInformationMandatory"
+                                        size="xs"
+                                        variant="ghost"
+                                        icon-prefix="add"
+                                        class="py-0.5"
+                                        @click="showBillingDetails = true"
+                                    >
+                                        {{
+                                            $t({
+                                                defaultMessage: 'More billing details',
+                                                description:
+                                                    'Label of the button in the checkout that lets you fill out all billing details',
+                                                id: 'checkout.billing_details.add_billing_details_button.label',
+                                            })
+                                        }}
+                                    </Button>
+                                    <Button
+                                        v-if="showBillingDetails && !isBillingInformationMandatory"
+                                        size="sm"
+                                        variant="ghost"
+                                        icon-prefix="close"
+                                        class="py-0.5"
+                                        @click="showBillingDetails = false"
+                                        >{{
+                                            $t({
+                                                defaultMessage: 'Remove billing details',
+                                                id: 'checkout.billing_details.remove_billing_details_button.label',
+                                                description:
+                                                    'Label of the button in the checkout that lets you remove the billing details',
+                                            })
+                                        }}</Button
+                                    >
+                                </template>
+                            </CountrySelect>
+                        </template>
                     </div>
 
                     <div
@@ -263,7 +246,7 @@ const getOptionalSuffix = (field: keyof CheckoutFormState): string => {
                     </div>
                 </Section>
 
-                <Section>
+                <Section v-if="!readOnly">
                     <Toggle v-model="companyPurchaseModel" label-position="before" class="!flex">
                         <template #inline-label>
                             <div class="flex flex-col grow">

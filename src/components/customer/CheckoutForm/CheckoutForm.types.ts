@@ -1,12 +1,14 @@
+import type { CountryCode } from '@solvimon/types';
 import type { useCheckoutForm } from './useCheckoutForm';
 
 export interface CheckoutFormProps {
     validation: ReturnType<typeof useCheckoutForm>['validation'];
     initialState?: Partial<CheckoutFormState>;
-    readOnlyCountry?: string;
     readOnlyEmail?: string;
+    showCustomerInfoOnTop?: boolean;
     isBillingInformationMandatory?: boolean;
     getIsFieldRequired: (field: keyof CheckoutFormState) => boolean;
+    readOnly?: boolean;
 }
 
 export interface CheckoutFormEmits {
@@ -15,7 +17,7 @@ export interface CheckoutFormEmits {
 
 export interface CheckoutFormState {
     email: string | undefined;
-    country: string | undefined;
+    country: CountryCode | undefined;
     type: 'INDIVIDUAL' | 'ORGANIZATION';
     companyLegalName: string | undefined;
     firstName: string | undefined;

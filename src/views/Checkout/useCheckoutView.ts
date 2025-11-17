@@ -33,21 +33,26 @@ export function useCheckoutView({
 
     const { paymentMethodOptions, loadPaymentMethodOptions } = usePaymentMethodOptions();
 
+    const loadInvoicePreview = async () => {
+        await invoicePreview.loadInvoicePreview({
+            subscription: subscription.value!,
+            subscriptionStartAt: subscription.value!.pricing_plan_schedule_infos[0]!.start_at!,
+            checkoutForm: checkoutForm.form.value,
+            enabledPricingIds,
+        });
+    };
+
     const checkoutForm = useCheckoutForm({
         initialState: {
             country: initialCountry,
             email: initialEmail,
         },
-        onRequiredFieldChange: (form) => {
+        onRequiredFieldChange: () => {
             if (!subscription.value) {
                 return;
             }
 
-            invoicePreview.loadInvoicePreview({
-                subscription: subscription.value!,
-                subscriptionStartAt: subscription.value!.pricing_plan_schedule_infos[0]!.start_at!,
-                checkoutForm: form,
-            });
+            void loadInvoicePreview();
         },
     });
 
@@ -156,13 +161,7 @@ export function useCheckoutView({
             }
 
             void loadPaymentMethodOptions(subscriptionId, country);
-
-            invoicePreview.loadInvoicePreview({
-                subscription,
-                subscriptionStartAt: subscription.pricing_plan_schedule_infos[0]?.start_at,
-                enabledPricingIds,
-                checkoutForm: checkoutForm.form.value,
-            });
+            void loadInvoicePreview();
 
             stopWatchSubscription();
         },

@@ -74,7 +74,7 @@ export function useCheckoutForm({
          * These fields are not required, but need to trigger the required field change event,
          * so that we can update the invoice preview accordingly.
          */
-        if (['type', 'companyTaxId'].includes(fieldName)) {
+        if (['type', 'companyVatNumber'].includes(fieldName)) {
             onRequiredFieldChange(newValue);
             return;
         }

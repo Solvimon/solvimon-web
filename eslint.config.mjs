@@ -33,11 +33,6 @@ export default defineConfigWithVueTs(
                 parser: '@typescript-eslint/parser',
                 tsconfigRootDir: import.meta.dirname,
                 ecmaVersion: 'latest',
-                project: [
-                    './tsconfig.app.json',
-                    './tsconfig.vitest.json',
-                    './tsconfig.config.json',
-                ],
             },
         },
 
@@ -107,19 +102,6 @@ export default defineConfigWithVueTs(
                     ],
                 },
             ],
-        },
-
-        settings: {
-            'import/resolver': {
-                typescript: {
-                    project: [
-                        './tsconfig.json',
-                        './tsconfig.vitest.json',
-                        './packages/sdk/tsconfig.json',
-                        './packages/sdk/tsconfig.vitest.json',
-                    ],
-                },
-            },
         },
     },
 );

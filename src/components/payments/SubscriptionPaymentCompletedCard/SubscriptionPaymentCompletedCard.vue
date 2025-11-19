@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { Typography, useIntl, Button } from '@solvimon/ui';
-import PaymentFeedbackCard from '../PaymentFeedbackCard/PaymentFeedbackCard.vue';
-import type { SubscriptionPaymentCompletedCardProps } from './SubscriptionPaymentCompletedCard.types';
 import { onBeforeUnmount, onMounted } from 'vue';
+import type { SubscriptionPaymentCompletedCardProps } from './SubscriptionPaymentCompletedCard.types';
+import PaymentFeedbackCard from '@/components/payments/PaymentFeedbackCard/PaymentFeedbackCard.vue';
 
 const REDIRECT_TIMEOUT = 3 * 1000; // 3 seconds
 

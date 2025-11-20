@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import adyenCss from '@adyen/adyen-web/styles/adyen.css?inline';
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import {
     AdyenCheckout,
@@ -24,7 +25,6 @@ import { getOverriddenTranslations } from './PaymentIntegrationFormAdyen.lib';
 import PaymentCompletedCard from '@/components/payments/PaymentCompletedCard/PaymentCompletedCard.vue';
 import PaymentErrorCard from '@/components/payments/PaymentErrorCard/PaymentErrorCard.vue';
 import type { Error } from '@/types/errors';
-import adyenStyles from '@/assets/adyen.css?raw';
 import { createPaymentsService } from '@/services/payments';
 import { trackSentryException } from '@/utils/errorTracking';
 import { getQueryParam } from '@/utils/url';
@@ -106,6 +106,9 @@ async function getConfiguration(): Promise<{
                     enableStoreDetails:
                         !props.forceStorePaymentMethod && props.variant === 'AUTHORIZE',
                 },
+                paypal: {
+                    showPayButton: true,
+                },
             },
             openFirstPaymentMethod: props.selected,
             onSelect: () => emit('select'),
@@ -155,9 +158,7 @@ function injectStylesToShadowRoot() {
     if (root instanceof ShadowRoot) {
         // Inject default Adyen styles
         const style = document.createElement('style');
-        style.textContent = adyenStyles;
-
-        style.textContent += `
+        style.textContent = `${adyenCss}
             :host {
                 --adyen-sdk-color-background-secondary: transparent;
                 --adyen-sdk-color-background-primary: rgb(243 244 246 / 0.5);
@@ -245,6 +246,9 @@ function injectStylesToShadowRoot() {
             }
             .adyen-checkout__checkbox__input + .adyen-checkout__checkbox__label:after {
                 border-color: rgb(229, 231, 235);
+            }
+            .adyen-checkout__payment-method--cashapp .adyen-checkout-pm-details-wrapper {
+                display: none;
             }
         `;
 

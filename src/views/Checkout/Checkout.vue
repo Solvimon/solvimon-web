@@ -156,6 +156,7 @@ const showCustomerInfoOnTop = computed(() => !(props.email && props.countryCode)
                                 :payment-method-options="paymentMethodOptions ?? []"
                                 :success-redirect-url="successRedirectUrl"
                                 :validate-on-submit="handleValidateOnSubmit"
+                                force-store-payment-method
                                 @error="(error) => $emit('error', error)"
                                 @payment-success="isPaid = true"
                             />

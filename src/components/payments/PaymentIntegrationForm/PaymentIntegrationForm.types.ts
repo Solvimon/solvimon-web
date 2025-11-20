@@ -17,6 +17,7 @@ interface BasePaymentIntegrationFormProps {
     selectedOption?: string;
     validateOnSubmit?: () => Promise<boolean>;
     context?: AuthorizePaymentPayload['context'];
+    forceStorePaymentMethod?: boolean;
 }
 
 export interface AuthorizePaymentIntegrationFormProps extends BasePaymentIntegrationFormProps {

@@ -18,6 +18,7 @@ export interface PaymentIntegrationFormAdyenProps {
     amount: Amount;
     validateOnSubmit?: () => Promise<boolean>;
     context: AuthorizePaymentPayload['context'];
+    forceStorePaymentMethod?: boolean;
 }
 
 export interface PaymentIntegrationFormAdyenEmits {

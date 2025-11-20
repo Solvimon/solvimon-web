@@ -4,6 +4,7 @@ import {
     AdyenCheckout,
     Dropin,
     type CoreConfiguration,
+    type DropinConfiguration,
     type PaymentAmountExtended,
     type PaymentMethod,
 } from '@adyen/adyen-web/auto';
@@ -29,6 +30,14 @@ import { trackSentryException } from '@/utils/errorTracking';
 import { getQueryParam } from '@/utils/url';
 import { createPaymentMethodsService } from '@/services/paymentMethods';
 
+/**
+ * The Adyen instances should be stored in plain objects to avoid issues with Vue's reactivity system.
+ * This is because the Adyen SDK is not reactive and does not update when the props change. So keep
+ * these variables as plain objects and don't store it in a ref.
+ */
+let dropInInstance: Dropin | null = null;
+let checkoutInstance: Awaited<ReturnType<typeof AdyenCheckout>> | null = null;
+
 const props = withDefaults(defineProps<PaymentIntegrationFormAdyenProps>(), {
     validateOnSubmit: () => Promise.resolve(true),
 });
@@ -40,8 +49,6 @@ const PAYMENT_ACCEPTOR_ID_QUERY_STRING = 'payment_acceptor_id';
 const PAYMENT_GATEWAY_VARIANT_ADYEN = 'ADYEN';
 
 const dropInContainerRef = ref();
-const dropInInstance = ref<Dropin | null>(null);
-const checkoutInstance = ref<Awaited<ReturnType<typeof AdyenCheckout>> | null>();
 const showPaymentSuccess = ref(false);
 const integrationError = ref<Error>();
 
@@ -53,15 +60,18 @@ const { tokenizePaymentMethod } = createPaymentMethodsService();
 function submit() {
     try {
         // eslint-disable-next-line no-console
-        console.log(dropInInstance.value?.isValid, dropInInstance.value?.data);
-        dropInInstance.value?.submit();
+        console.log(dropInInstance?.isValid, dropInInstance?.data);
+        dropInInstance?.submit();
     } catch (error) {
         // eslint-disable-next-line no-console
         console.error(error);
     }
 }
 
-async function getConfiguration() {
+async function getConfiguration(): Promise<{
+    checkoutConfig: CoreConfiguration;
+    dropInConfig: DropinConfiguration;
+}> {
     return {
         checkoutConfig: {
             amount: transformToAdyenAmount(props.amount),
@@ -76,10 +86,8 @@ async function getConfiguration() {
             paymentMethodsResponse: {
                 paymentMethods:
                     props.paymentMethodOptionResponseEntry.options.flatMap(
-                        (adyenPaymentMethodOption) => {
-                            const mapped = mapAdyenPaymentMethod(adyenPaymentMethodOption.adyen);
-                            return mapped;
-                        },
+                        (adyenPaymentMethodOption) =>
+                            mapAdyenPaymentMethod(adyenPaymentMethodOption.adyen),
                     ) ?? [],
             },
             onSubmit: handleOnSubmit,
@@ -95,7 +103,8 @@ async function getConfiguration() {
                 card: {
                     hasHolderName: true,
                     holderNameRequired: true,
-                    enableStoreDetails: props.variant === 'AUTHORIZE',
+                    enableStoreDetails:
+                        !props.forceStorePaymentMethod && props.variant === 'AUTHORIZE',
                 },
             },
             openFirstPaymentMethod: props.selected,
@@ -117,10 +126,9 @@ async function mountDropIn() {
         // eslint-disable-next-line no-console
         console.log('DROP IN CONFIG', dropInConfig);
 
-        checkoutInstance.value = await AdyenCheckout(checkoutConfig);
-        dropInInstance.value = new Dropin(checkoutInstance.value, dropInConfig).mount(
-            dropInContainerRef.value,
-        );
+        checkoutInstance = await AdyenCheckout(checkoutConfig);
+
+        dropInInstance = new Dropin(checkoutInstance, dropInConfig).mount(dropInContainerRef.value);
 
         injectStylesToShadowRoot();
     } catch (error) {
@@ -133,9 +141,9 @@ async function mountDropIn() {
 }
 
 async function unmountDropIn() {
-    if (dropInInstance.value) {
-        dropInInstance.value.unmount?.();
-        dropInInstance.value = null;
+    if (dropInInstance) {
+        dropInInstance.unmount();
+        dropInInstance = null;
     }
     if (dropInContainerRef.value) {
         dropInContainerRef.value.innerHTML = '';
@@ -276,7 +284,8 @@ function handleOnSubmit(
                     payment_gateway_variant: PAYMENT_GATEWAY_VARIANT_ADYEN,
                     adyen: {
                         ...adyen,
-                        store_payment_method: state.data.storePaymentMethod,
+                        store_payment_method:
+                            props.forceStorePaymentMethod || state.data.storePaymentMethod,
                     },
                     amount: props.amount,
                     ...(props.context ? { context: props.context } : {}),
@@ -432,11 +441,13 @@ function handleOnPaymentFailed(
     ...args: Parameters<NonNullable<CoreConfiguration['onPaymentFailed']>>
 ): ReturnType<NonNullable<CoreConfiguration['onPaymentFailed']>> {
     const [data] = args;
-    emit('payment-failed', {
+    const error: Error = {
         code: 'UNKNOWN_ERROR',
         message: 'Payment failed',
         error: data,
-    });
+    };
+    emit('payment-failed', error);
+    integrationError.value = error;
 }
 
 function handleOnPaymentCompleted(
@@ -450,8 +461,14 @@ function handleOnPaymentCompleted(
 function handleOnError(
     ...args: Parameters<NonNullable<CoreConfiguration['onError']>>
 ): ReturnType<NonNullable<CoreConfiguration['onError']>> {
-    const [error, component] = args;
-    emit('error', { code: 'UNKNOWN_ERROR', message: 'Something went wrong', error });
+    const [data, component] = args;
+    const error: Error = {
+        code: 'UNKNOWN_ERROR',
+        message: 'Something went wrong',
+        error: data,
+    };
+    emit('error', error);
+    integrationError.value = error;
     component?.unmount();
 }
 
@@ -605,7 +622,7 @@ onBeforeUnmount(() => {
     void unmountDropIn();
 });
 
-// 🔁 Re-mount when paymentMethodOptions change
+// Re-mount when paymentMethodOptions change
 watch(
     () => props.paymentMethodOptionResponseEntry,
     () => {

@@ -57,6 +57,7 @@ const handlePaymentSuccess = () => {
             :invoice-id="invoiceId"
             :selected="selectedIntegration === 'PAYMENT_GATEWAY_ADYEN'"
             :validate-on-submit="validateOnSubmit"
+            :force-store-payment-method="forceStorePaymentMethod"
             @select="() => handleSelect('PAYMENT_GATEWAY_ADYEN')"
             @error="(args) => $emit('error', args)"
             @payment-failed="(args) => $emit('payment-failed', args)"

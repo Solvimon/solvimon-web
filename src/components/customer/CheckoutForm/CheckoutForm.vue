@@ -294,6 +294,7 @@ const readableCountryName = computed(() =>
                                         'The label for the vat number in the checkout form',
                                 })
                             "
+                            :error="validation.value.companyVatNumber.$errors"
                         />
 
                         <Input

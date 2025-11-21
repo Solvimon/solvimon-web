@@ -1,4 +1,5 @@
 import { objectDiff, useValidation } from '@solvimon/ui';
+import { taxId } from '@solvimon/ui/validators';
 import { email, required, requiredIf } from '@vuelidate/validators';
 import { computed, onMounted, ref } from 'vue';
 import { watchDebounced } from '@vueuse/core';
@@ -47,6 +48,7 @@ export function useCheckoutForm({
             addressLine1: { required: requiredIf(() => getIsFieldRequired('addressLine1')) },
             postalCode: { required: requiredIf(() => getIsFieldRequired('postalCode')) },
             companyLegalName: requiredIf(form.value.type === 'ORGANIZATION'),
+            companyVatNumber: { taxId },
         },
         form,
     );

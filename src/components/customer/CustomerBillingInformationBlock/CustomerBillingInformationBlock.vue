@@ -95,6 +95,7 @@ const handleEdit = (): void => {
             <CustomerBillingInformation
                 v-if="billingInformation.show"
                 :customer="billingInformation.data"
+                :fallback-to-reference="false"
             >
                 <template #settings>
                     <Button

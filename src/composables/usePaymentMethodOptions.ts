@@ -1,4 +1,5 @@
 import type {
+    Amount,
     CountryCode,
     PaymentMethodOptionsResponse,
     PricingPlanSubscription,
@@ -11,13 +12,19 @@ export const usePaymentMethodOptions = () => {
 
     const { getPaymentMethodOptions } = createPaymentMethodsService();
 
-    const loadPaymentMethodOptions = async (
-        subscriptionId: PricingPlanSubscription['id'],
-        country: CountryCode,
-    ) => {
+    const loadPaymentMethodOptions = async ({
+        subscriptionId,
+        country,
+        amount,
+    }: {
+        subscriptionId: PricingPlanSubscription['id'];
+        country: CountryCode;
+        amount?: Amount;
+    }) => {
         const response = await getPaymentMethodOptions({
             subscriptionId,
             country,
+            amount,
         });
 
         paymentMethodOptions.value = response;

@@ -3,15 +3,17 @@ import adyenCss from '@adyen/adyen-web/styles/adyen.css?inline';
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import {
     AdyenCheckout,
-    Dropin,
     type CoreConfiguration,
+    Dropin,
     type DropinConfiguration,
+    type PaymentAction,
     type PaymentAmountExtended,
     type PaymentMethod,
 } from '@adyen/adyen-web/auto';
 import type {
     Amount,
     AuthorizePaymentPayload,
+    AuthorizePaymentResponse,
     PaymentAcceptor,
     PaymentMethodOptionAdyen,
     PaymentMethodOptionResponseEntry,
@@ -72,14 +74,15 @@ async function getConfiguration(): Promise<{
     checkoutConfig: CoreConfiguration;
     dropInConfig: DropinConfiguration;
 }> {
+    const adyenAmount = transformToAdyenAmount(props.amount);
     return {
         checkoutConfig: {
-            amount: transformToAdyenAmount(props.amount),
+            amount: adyenAmount,
             clientKey:
                 props.paymentMethodOptionResponseEntry.integration?.payment_gateway?.adyen
                     ?.public_key,
             environment: getEnvironment(props.paymentMethodOptionResponseEntry),
-            locale,
+            locale: locale,
             translations: getOverriddenTranslations(props.variant),
             countryCode: props.countryCode,
             analytics: { enabled: false },
@@ -95,7 +98,7 @@ async function getConfiguration(): Promise<{
             onPaymentCompleted: handleOnPaymentCompleted,
             onPaymentFailed: handleOnPaymentFailed,
             onError: handleOnError,
-            showPayButton: false,
+            showPayButton: true,
         },
         dropInConfig: {
             disableFinalAnimation: true,
@@ -107,6 +110,7 @@ async function getConfiguration(): Promise<{
                         !props.forceStorePaymentMethod && props.variant === 'AUTHORIZE',
                 },
                 paypal: {
+                    intent: adyenAmount.value > 0 ? 'authorize' : 'tokenize',
                     showPayButton: true,
                 },
             },
@@ -123,11 +127,6 @@ async function mountDropIn() {
         await unmountDropIn();
 
         const { checkoutConfig, dropInConfig } = await getConfiguration();
-
-        // eslint-disable-next-line no-console
-        console.log('CHECKOUT CONFIG', checkoutConfig);
-        // eslint-disable-next-line no-console
-        console.log('DROP IN CONFIG', dropInConfig);
 
         checkoutInstance = await AdyenCheckout(checkoutConfig);
 
@@ -230,7 +229,7 @@ function injectStylesToShadowRoot() {
             .adyen-checkout__payment-method__header {
                 padding: 8px 16px !important;
             }
-            
+
             .adyen-checkout__payment-method__brands {
                 align-items: center;
             }
@@ -321,13 +320,20 @@ function handleOnSubmit(
                             paymentResult.action.payment_gateway_variant ===
                                 PAYMENT_GATEWAY_VARIANT_ADYEN
                         ) {
-                            component.handleAction({
+                            const requiredAction = handleActionRequiredPaymentAction(
+                                paymentResult,
                                 paymentMethodType,
-                                method: paymentResult.action.method,
-                                url: paymentResult.action.url,
-                                data: paymentResult.action.data,
-                                type: paymentResult.action.adyen?.action_type,
-                            });
+                            );
+                            if (!requiredAction) {
+                                emit('error', {
+                                    code: 'AUTHORIZATION_FAILED',
+                                    message: `Failed payment authorization for payment acceptor with id ${paymentAcceptorId}`,
+                                    error: paymentResult,
+                                });
+                                return;
+                            }
+
+                            component.handleAction(requiredAction);
                             return;
                         }
 
@@ -392,13 +398,20 @@ function handleOnSubmit(
                             paymentResult.action.payment_gateway_variant ===
                                 PAYMENT_GATEWAY_VARIANT_ADYEN
                         ) {
-                            component.handleAction({
+                            const requiredAction = handleActionRequiredPaymentAction(
+                                paymentResult,
                                 paymentMethodType,
-                                method: paymentResult.action.method,
-                                url: paymentResult.action.url,
-                                data: paymentResult.action.data,
-                                type: paymentResult.action.adyen?.action_type,
-                            });
+                            );
+                            if (!requiredAction) {
+                                emit('error', {
+                                    code: 'AUTHORIZATION_FAILED',
+                                    message: `Failed payment authorization for payment acceptor with id ${paymentAcceptorId}`,
+                                    error: paymentResult,
+                                });
+                                return;
+                            }
+
+                            component.handleAction(requiredAction);
                             return;
                         }
 
@@ -422,23 +435,54 @@ function handleOnSubmit(
         .catch(() => {});
 }
 
+function handleActionRequiredPaymentAction(
+    response: AuthorizePaymentResponse,
+    paymentMethodType: string,
+): PaymentAction | undefined {
+    if (response.status !== 'ACTION_REQUIRED') {
+        return undefined;
+    }
+
+    const action = response.action;
+    if (action.payment_gateway_variant != 'ADYEN') {
+        return undefined;
+    }
+
+    const adyenRequiredAction = action.adyen;
+    return {
+        paymentMethodType: adyenRequiredAction?.payment_method_type ?? paymentMethodType,
+        method: action.method,
+        url: action.url,
+        data: action.data,
+        type: adyenRequiredAction?.action_type,
+        paymentData: adyenRequiredAction?.payment_data,
+        sdkData: adyenRequiredAction?.sdk_data,
+    };
+}
+
 function handleOnAdditionalDetails(
     ...args: Parameters<NonNullable<CoreConfiguration['onAdditionalDetails']>>
 ): ReturnType<NonNullable<CoreConfiguration['onAdditionalDetails']>> {
     const [state] = args;
-    const redirectResult = state.data.details.redirectResult;
-    const threeDSResult = state.data.details.threeDSResult;
+    const detailsResult = state.data.details;
+    const paymentDataResult = state.data.paymentData;
 
-    if (
-        (redirectResult || threeDSResult) &&
-        props.paymentMethodOptionResponseEntry.payment_acceptor.id
-    ) {
+    if (props.paymentMethodOptionResponseEntry.payment_acceptor.id) {
         handlePaymentDetails({
-            threeDSResult,
-            redirectResult,
+            detailsResult,
+            paymentDataResult,
             paymentAcceptorId: props.paymentMethodOptionResponseEntry.payment_acceptor.id,
         });
+        return;
     }
+
+    const error: Error = {
+        code: 'UNKNOWN_ERROR',
+        message: 'Payment failed',
+        error: args,
+    };
+    emit('payment-failed', error);
+    integrationError.value = error;
 }
 
 function handleOnPaymentFailed(
@@ -477,20 +521,32 @@ function handleOnError(
 }
 
 function handlePaymentDetails({
+    detailsResult,
     threeDSResult,
     redirectResult,
+    paymentDataResult,
     paymentAcceptorId,
 }: {
+    detailsResult?: Record<string, unknown>;
+    /**
+     * @deprecated replaced by sending along [details]
+     */
     threeDSResult?: string;
+    /**
+     * @deprecated replaced by sending along [details]
+     */
     redirectResult?: string;
+    paymentDataResult?: string;
     paymentAcceptorId: PaymentAcceptor['id'];
 }) {
     getPaymentDetails({
         paymentAcceptorId,
         paymentGatewayVariant: PAYMENT_GATEWAY_VARIANT_ADYEN,
         adyen: {
+            ...(detailsResult ? { details: detailsResult } : {}),
             ...(redirectResult ? { redirect_result: redirectResult } : {}),
             ...(threeDSResult ? { threeds_result: threeDSResult } : {}),
+            ...(paymentDataResult ? { payment_data: paymentDataResult } : {}),
         },
     })
         .then((result) => {
@@ -581,9 +637,9 @@ function getEnvironment(entry: PaymentMethodOptionResponseEntry): CoreConfigurat
 
     if (!environment) {
         trackSentryException(undefined, {
-            Message: 'No environment set for adyen advanced flow, defaulted to live',
+            Message: 'No environment set for adyen advanced flow, defaulted to test',
         });
-        return 'live';
+        return 'test';
     }
 
     switch (environment) {

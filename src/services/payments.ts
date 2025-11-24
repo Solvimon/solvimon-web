@@ -1,9 +1,9 @@
 import type {
     AuthorizePaymentPayload,
-    AuthorizePaymentResponse,
     Payment,
     PaymentAcceptor,
     PaymentDetailsResponse,
+    AuthorizePaymentResponse,
 } from '@solvimon/types';
 import { createRequestService } from './requests';
 import { useConfig } from '@/components/providers/ConfigProvider/composables/useConfig';
@@ -38,6 +38,7 @@ export const createPaymentsService = () => {
         adyen: {
             redirect_result?: string | undefined;
             threeds_result?: string | undefined;
+            payment_data?: string | undefined;
         };
     }) {
         return request<PaymentDetailsResponse>({

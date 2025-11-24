@@ -6,6 +6,7 @@ import {
     type Address,
     type AuthorizePaymentPayload,
     type Name,
+    type Amount,
 } from '@solvimon/types';
 import { computed, onMounted, ref, watch } from 'vue';
 import { createSubscriptionsService } from '@/services/subscriptions';
@@ -130,17 +131,28 @@ export function useCheckoutView({
         };
     });
 
+    const amount = computed(() => {
+        return (
+            invoicePreview.trialInvoicePreview.value?.invoice_amount_including_tax ??
+            invoicePreview.invoicePreview.value?.invoice_amount_including_tax
+        );
+    });
+
     /**
-     * Reload the payment method options whenever the country changes.
+     * Reload the payment method options whenever the country or amount changes.
      */
     watch(
-        () => checkoutForm.form.value.country,
-        (country: CountryCode | undefined) => {
+        [() => checkoutForm.form.value.country, amount],
+        ([country, amountValue]: [CountryCode | undefined, Amount | undefined]) => {
             if (!subscription.value || !country) {
                 return;
             }
 
-            void loadPaymentMethodOptions(subscription.value.id, country);
+            void loadPaymentMethodOptions({
+                subscriptionId: subscription.value.id,
+                country,
+                amount: amountValue,
+            });
         },
     );
 
@@ -160,12 +172,11 @@ export function useCheckoutView({
                 return;
             }
 
-            void loadPaymentMethodOptions(subscriptionId, country);
+            void loadPaymentMethodOptions({ subscriptionId, country, amount: amount.value });
             void loadInvoicePreview();
 
             stopWatchSubscription();
         },
-        { immediate: true },
     );
 
     return {
@@ -178,5 +189,6 @@ export function useCheckoutView({
         checkoutForm,
         authorizationContext,
         isPaid,
+        amount,
     };
 }

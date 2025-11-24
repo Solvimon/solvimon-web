@@ -50,6 +50,7 @@ const {
     trialPeriod,
     authorizationContext,
     isPaid,
+    amount,
 } = useCheckoutView({
     initialCountry: props.countryCode,
     initialEmail: props.email,
@@ -144,14 +145,11 @@ const showCustomerInfoOnTop = computed(() => !(props.email && props.countryCode)
                                 v-else-if="isPreviewAndPaymentMethodsPending"
                             />
                             <PaymentIntegrationForm
-                                v-else-if="invoicePreview"
+                                v-else-if="invoicePreview && amount"
                                 ref="paymentIntegrationFormRef"
                                 :country-code="checkoutForm.form.value.country"
                                 :context="authorizationContext"
-                                :amount="
-                                    trialInvoicePreview?.invoice_amount_including_tax ??
-                                    invoicePreview.invoice_amount_including_tax
-                                "
+                                :amount="amount"
                                 variant="AUTHORIZE"
                                 :payment-method-options="paymentMethodOptions ?? []"
                                 :success-redirect-url="successRedirectUrl"

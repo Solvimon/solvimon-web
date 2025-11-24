@@ -40,7 +40,7 @@ describe('usePaymentMethodOptions', () => {
 
         expect(paymentMethodOptions.value).toEqual([]);
 
-        await loadPaymentMethodOptions(subscriptionId, country);
+        await loadPaymentMethodOptions({ subscriptionId, country });
 
         expect(mockGetPaymentMethodOptions).toHaveBeenCalledTimes(1);
         expect(mockGetPaymentMethodOptions).toHaveBeenCalledWith({

@@ -36,6 +36,7 @@ export const createPaymentsService = () => {
         paymentAcceptorId: PaymentAcceptor['id'];
         paymentGatewayVariant: 'ADYEN';
         adyen: {
+            details?: Record<string, unknown>;
             redirect_result?: string | undefined;
             threeds_result?: string | undefined;
             payment_data?: string | undefined;

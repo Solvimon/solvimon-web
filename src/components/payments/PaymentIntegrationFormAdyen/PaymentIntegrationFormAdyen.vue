@@ -469,7 +469,8 @@ function handleOnAdditionalDetails(
 
     if (props.paymentMethodOptionResponseEntry.payment_acceptor.id) {
         handlePaymentDetails({
-            detailsResult,
+            // For the moment: Adyen gives a null value back which is not accepted by Solvimon API, so filter that out
+            detailsResult: detailsResult ? removeEmptyValues(detailsResult) : undefined,
             paymentDataResult,
             paymentAcceptorId: props.paymentMethodOptionResponseEntry.payment_acceptor.id,
         });
@@ -483,6 +484,12 @@ function handleOnAdditionalDetails(
     };
     emit('payment-failed', error);
     integrationError.value = error;
+}
+
+function removeEmptyValues(obj: Record<string, unknown>): Record<string, unknown> {
+    return Object.fromEntries(
+        Object.entries(obj).filter(([, value]) => value !== null && value !== undefined),
+    );
 }
 
 function handleOnPaymentFailed(
@@ -596,7 +603,9 @@ function handleRedirectResult() {
 
     handlePaymentDetails({
         paymentAcceptorId,
-        redirectResult: decodeURI(redirectResult),
+        detailsResult: {
+            redirectResult: decodeURI(redirectResult),
+        },
     });
 }
 

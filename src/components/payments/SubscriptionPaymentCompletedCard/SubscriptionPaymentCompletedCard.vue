@@ -4,28 +4,16 @@ import { onBeforeUnmount, onMounted } from 'vue';
 import type { SubscriptionPaymentCompletedCardProps } from './SubscriptionPaymentCompletedCard.types';
 import PaymentFeedbackCard from '@/components/payments/PaymentFeedbackCard/PaymentFeedbackCard.vue';
 
-const REDIRECT_TIMEOUT = 3 * 1000; // 3 seconds
-
 const props = defineProps<SubscriptionPaymentCompletedCardProps>();
 
 const { $t } = useIntl();
 
-let redirectTimeout: ReturnType<typeof setTimeout> | null = null;
-
 onMounted(() => {
-    if (props.redirectUrl) {
-        redirectTimeout = setTimeout(() => {
-            if (props.redirectUrl) {
-                window.location.href = props.redirectUrl;
-            }
-        }, REDIRECT_TIMEOUT);
+    if (!props.redirectUrl) {
+        return;
     }
-});
 
-onBeforeUnmount(() => {
-    if (redirectTimeout) {
-        clearTimeout(redirectTimeout);
-    }
+    window.location.replace(props.redirectUrl);
 });
 </script>
 

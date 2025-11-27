@@ -98,7 +98,7 @@ async function getConfiguration(): Promise<{
             onPaymentCompleted: handleOnPaymentCompleted,
             onPaymentFailed: handleOnPaymentFailed,
             onError: handleOnError,
-            showPayButton: true,
+            showPayButton: false,
         },
         dropInConfig: {
             disableFinalAnimation: true,

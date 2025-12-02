@@ -59,6 +59,9 @@ export const useInvoicePreview = () => {
                     organization: {
                         legal_name: checkoutForm.companyLegalName || EMPTY_LEGAL_ENTITY_NAME,
                         registered_address: address,
+                        ...(checkoutForm.companyVatNumber && {
+                            tax_id: checkoutForm.companyVatNumber,
+                        }),
                     },
                 }),
             },

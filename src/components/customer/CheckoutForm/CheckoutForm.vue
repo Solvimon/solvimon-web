@@ -68,7 +68,7 @@ const readableCountryName = computed(() =>
                     : gridAreaPaymentMethodsFirst
             "
         >
-            <div class="grid grid-cols-1 gap-2 [grid-area:customer-information]">
+            <div class="grid grid-cols-1 gap-1 [grid-area:customer-information]">
                 <Section
                     :title="
                         $t({
@@ -247,7 +247,12 @@ const readableCountryName = computed(() =>
                 </Section>
 
                 <Section v-if="!readOnly">
-                    <Toggle v-model="companyPurchaseModel" label-position="before" class="!flex">
+                    <Toggle
+                        v-model="companyPurchaseModel"
+                        no-spacing
+                        label-position="before"
+                        class="!flex"
+                    >
                         <template #inline-label>
                             <div class="flex flex-col grow">
                                 <Typography tag="span">{{

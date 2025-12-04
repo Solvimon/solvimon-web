@@ -1,338 +1,346 @@
 {
-    "checkout.address.city.placeholder": {
-        "defaultMessage": "City...",
-        "description": "City of the customer address in the checkout form"
-    },
-    "checkout.address.line1.placeholder": {
-        "defaultMessage": "Address line 1...",
-        "description": "Address line 1 of the customer address in the checkout form"
-    },
-    "checkout.address.line2.placeholder": {
-        "defaultMessage": "Address line 2...",
-        "description": "Address line 2 of the customer address in the checkout form"
-    },
-    "checkout.address.portal_code.placeholder": {
-        "defaultMessage": "Postal code...",
-        "description": "Postal code of the customer address in the checkout form"
-    },
-    "checkout.address.state.placeholder": {
-        "defaultMessage": "State...",
-        "description": "State of the customer address in the checkout form"
-    },
-    "checkout.address.title": {
-        "defaultMessage": "Billing address",
-        "description": "Address line 1 of the customer address in the checkout form"
-    },
-    "checkout.billing_details.add_billing_details_button.label": {
-        "defaultMessage": "More billing details",
-        "description": "Label of the button in the checkout that lets you fill out all billing details"
-    },
-    "checkout.billing_information_block.title": {
-        "defaultMessage": "Billing details",
-        "description": "The title of the billing information block in the checkout form"
-    },
-    "checkout.company_purchase_toggle.sub_title": {
-        "defaultMessage": "I am purchasing on behalf of a company",
-        "description": "The subtitle of the company purchase toggle in the checkout"
-    },
-    "checkout.company_purchase_toggle.title": {
-        "defaultMessage": "Company purchase",
-        "description": "The title of the company purchase toggle in the checkout"
-    },
-    "checkout.contact_information_block.title": {
-        "defaultMessage": "Customer information",
-        "description": "The title of the contact information block in the checkout form"
-    },
-    "checkout.country.label": {
-        "defaultMessage": "Billing country",
-        "description": "The country of the customer in the checkout form"
-    },
-    "checkout.email_address.label": {
-        "defaultMessage": "Email address",
-        "description": "The email address of the customer in the checkout form"
-    },
-    "checkout.email_address.placeholder": {
-        "defaultMessage": "Email address...",
-        "description": "The email address of the customer in the checkout form"
-    },
-    "checkout.first_name.label": {
-        "defaultMessage": "First name",
-        "description": "The first name of the customer in the checkout form"
-    },
-    "checkout.first_name.placeholder": {
-        "defaultMessage": "First name...",
-        "description": "The first name of the customer in the checkout form"
-    },
-    "checkout.invoice_preview.no_country_selected_message": {
-        "defaultMessage": "Please select a country first",
-        "description": "The message shown for the invoice preview when no country is set"
-    },
-    "checkout.invoice_preview.usage_based_message": {
-        "defaultMessage": "+ Usage",
-        "description": "The message shown for the usage based invoice preview"
-    },
-    "checkout.kpi.encrypted_payments.label": {
-        "defaultMessage": "Encrypted payments",
-        "description": "The encrypted payments KPI shown in the checkout"
-    },
-    "checkout.kpi.secure_checkout.label": {
-        "defaultMessage": "Secure checkout",
-        "description": "The secure checkout KPI shown in the checkout"
-    },
-    "checkout.last_name.label": {
-        "defaultMessage": "Last name",
-        "description": "The last name of the customer in the checkout form"
-    },
-    "checkout.last_name.placeholder": {
-        "defaultMessage": "Last name...",
-        "description": "The last name of the customer in the checkout form"
-    },
-    "checkout.legal_name.label": {
-        "defaultMessage": "Legal entity name",
-        "description": "The legal name of the organization customer in the checkout form"
-    },
-    "checkout.legal_name.placeholder": {
-        "defaultMessage": "Legal entity name...",
-        "description": "The legal name of the organization customer in the checkout form"
-    },
-    "checkout.order_summary_block.title": {
-        "defaultMessage": "Order summary",
-        "description": "The title of the order summary block that lists the subscription cost in the checkout"
-    },
-    "checkout.page_title": {
-        "defaultMessage": "Pay and subscribe",
-        "description": "The title of the checkout page"
-    },
-    "checkout.page_title_with_trial": {
-        "defaultMessage": "Try {subscription_name}",
-        "description": "The title of the checkout page with a trial period"
-    },
-    "checkout.pay_and_subscribe_button.label": {
-        "defaultMessage": "Pay and subscribe",
-        "description": "The label of the pay and subscribe button in the checkout form"
-    },
-    "checkout.pay_and_subscribe_button_trial.label": {
-        "defaultMessage": "Start trial",
-        "description": "The label of the start trial button in the checkout form"
-    },
-    "checkout.payment_method_block.payment_methods_not_loaded_message": {
-        "defaultMessage": "Payment methods will be shown after you select a country",
-        "description": "The messages shown when no country is selected thus the payment methods can't be shown"
-    },
-    "checkout.payment_method_block.title": {
-        "defaultMessage": "Payment method",
-        "description": "The title of the payment method block in the checkout form"
-    },
-    "checkout.payment_methods.no_country_selected_message": {
-        "defaultMessage": "Select a country to see the available payment methods",
-        "description": "The message shown when no country is selected in the checkout"
-    },
-    "checkout.subscription_description": {
-        "defaultMessage": "<strong>{price}</strong> per {period_name} starting today",
-        "description": "The description of the subscription"
-    },
-    "checkout.terms_and_conditions_block.title": {
-        "defaultMessage": "Terms and conditions",
-        "description": "The title of the terms and conditions block in the checkout"
-    },
-    "checkout.trial_period_description": {
-        "defaultMessage": "<strong>{price}</strong> per {period_name} starting {startDate, date, long}",
-        "description": "The description of the trial period"
-    },
-    "checkout.vat_number.label": {
-        "defaultMessage": "VAT number",
-        "description": "The label for the vat number in the checkout form"
-    },
-    "checkout.vat_number.placeholder": {
-        "defaultMessage": "VAT number...",
-        "description": "The label for the vat number in the checkout form"
-    },
-    "customer.invoice_table.pay_invoice_button.label": {
-        "defaultMessage": "Pay",
-        "description": "The label for the pay invoice button"
-    },
-    "customer.subscriptions_block.cancel_button_label": {
-        "defaultMessage": "Cancel subscription",
-        "description": "The label for the cancel subscription button in the subscriptions block"
-    },
-    "customer.subscriptions_block.next_billing_date": {
-        "defaultMessage": "Next billing date",
-        "description": "The label for the next billing date"
-    },
-    "customer.subscriptions_block.renew_button_label": {
-        "defaultMessage": "Renew subscription",
-        "description": "The label for the renew subscription button in the subscriptions block"
-    },
-    "customer.subscriptions_block.show_details_button_label": {
-        "defaultMessage": "Subscription details",
-        "description": "The label for the subscription details button in the subscriptions block"
-    },
-    "customer_invoices.load_failed.subtitle": {
-        "defaultMessage": "Please refresh or contact support.",
-        "description": "Subtitle when invoices fail to load"
-    },
-    "customer_invoices.load_failed.title": {
-        "defaultMessage": "We can’t load your invoices",
-        "description": "Title when invoices fail to load"
-    },
-    "customer_overview.billing_information_block.load_failed.subtitle": {
-        "defaultMessage": "Please refresh or contact support.",
-        "description": "Subtitle when payments methods fail to load"
-    },
-    "customer_overview.billing_information_block.load_failed.title": {
-        "defaultMessage": "We can’t load your billing information",
-        "description": "Title when payments methods fail to load"
-    },
-    "customer_overview.billing_information_block.title": {
-        "defaultMessage": "Billing information",
-        "description": "Title for the billing information block on the customer overview page"
-    },
-    "customer_overview.billing_information_block.view_all_payment_methods_link_label": {
-        "defaultMessage": "Edit",
-        "description": "The link text that links to the overview page of the customer billing information"
-    },
-    "customer_overview.invoices_block.no_active_subscription_content": {
-        "defaultMessage": "You haven’t received an invoice yet. It’ll appear here once it’s generated.",
-        "description": "Body text when there are no invoices to display in the invoices block"
-    },
-    "customer_overview.invoices_block.no_invoices_title": {
-        "defaultMessage": "No invoices to display",
-        "description": "Shown when there are no invoices to display in the invoices block"
-    },
-    "customer_overview.invoices_block.title": {
-        "defaultMessage": "Invoices",
-        "description": "Title for the invoices block on the customer overview page"
-    },
-    "customer_overview.invoices_block.view_all_invoices_link_label": {
-        "defaultMessage": "View all",
-        "description": "Link to the customer invoices overview page"
-    },
-    "customer_overview.payment_methods.title": {
-        "defaultMessage": "Payment methods",
-        "description": "Title for the payment methods block on the customer overview page"
-    },
-    "customer_overview.payment_methods_block.add_payment_method_button_label": {
-        "defaultMessage": "Add payment method",
-        "description": "Text for the add payment method button that is shown when no payment methods have been configured"
-    },
-    "customer_overview.payment_methods_block.add_payment_method_helper_text": {
-        "defaultMessage": "Add a payment method for recurring invoice payments.",
-        "description": "Helper text for adding a payment method when no payment methods are configured"
-    },
-    "customer_overview.payment_methods_block.load_failed.subtitle": {
-        "defaultMessage": "Please refresh or contact support.",
-        "description": "Subtitle when payments methods fail to load"
-    },
-    "customer_overview.payment_methods_block.load_failed.title": {
-        "defaultMessage": "We can’t load your payment methods",
-        "description": "Title when payments methods fail to load"
-    },
-    "customer_overview.payment_methods_block.view_all_payment_methods_link_label": {
-        "defaultMessage": "View all",
-        "description": "The link text that links to the overview page of the customer invoices"
-    },
-    "customer_overview.subscriptions_block.fallback_subscription_name": {
-        "defaultMessage": "Subscription",
-        "description": "The fallback name for when no subscription name can be determined"
-    },
-    "customer_overview.subscriptions_block.load_failed.subtitle": {
-        "defaultMessage": "Please refresh or contact support.",
-        "description": "Subtitle when subscriptions fail to load"
-    },
-    "customer_overview.subscriptions_block.load_failed.title": {
-        "defaultMessage": "We can’t load your subscriptions",
-        "description": "Title when subscriptions fail to load"
-    },
-    "customer_overview.subscriptions_block.no_active_subscription_content": {
-        "defaultMessage": "There’s no active subscription to display.",
-        "description": "Text that is being displayed when there is no active subscription in the subscriptions block"
-    },
-    "customer_overview.subscriptions_block.no_active_subscription_title": {
-        "defaultMessage": "No subscriptions",
-        "description": "Title for the my subscriptions block on the customer overview page"
-    },
-    "customer_overview.subscriptions_block.title": {
-        "defaultMessage": "My subscriptions",
-        "description": "Title for the subscriptions block on the customer overview page"
-    },
-    "customer_overview.subscriptions_block.view_all_button_label": {
-        "defaultMessage": "View all",
-        "description": "The text for the view all subscriptions button"
-    },
-    "empty_state.retry.button": {
-        "defaultMessage": "Refresh",
-        "description": "Label of the button in the error state that lets you retry your action"
-    },
-    "invoice_table.chip.paid": {
-        "defaultMessage": "Paid",
-        "description": "The label of the chip for paid invoices"
-    },
-    "invoice_table.header.amount": {
-        "defaultMessage": "Amount",
-        "description": "The title of the invoice amount header column of the invoice table"
-    },
-    "invoice_table.header.date": {
-        "defaultMessage": "Date",
-        "description": "The title of the invoice date header column of the invoice table"
-    },
-    "invoice_table.header.invoice_number": {
-        "defaultMessage": "Invoice",
-        "description": "The title of the invoice number header column of the invoice table"
-    },
-    "invoice_table.header.status": {
-        "defaultMessage": "Status",
-        "description": "The title of the invoice status header column of the invoice table"
-    },
-    "payment_completed_card.redirect_message": {
-        "defaultMessage": "You are being redirected...",
-        "description": "The text shown after a successful message before a redirect"
-    },
-    "payment_completed_card.title.authorize": {
-        "defaultMessage": "Thank you for your payment",
-        "description": "The title for when a payment has been successful"
-    },
-    "payment_completed_card.title.tokenize": {
-        "defaultMessage": "Your payment method is added",
-        "description": "The title for when a payment method was successfully added"
-    },
-    "payment_integration_form.select_payment_method_error": {
-        "defaultMessage": "Select a payment method",
-        "description": "Error shown when no payment method is selected"
-    },
-    "payments.retry_button.label": {
-        "defaultMessage": "Try again",
-        "description": "Retry button text when an error has happened during a payment"
-    },
-    "sdk.invoice_details.customer_billing_information.title": {
-        "defaultMessage": "Your billing information",
-        "description": "Title for the billing information on the detailed invoice view"
-    },
-    "sdk.invoice_details.invoice.download_pdf": {
-        "defaultMessage": "Download the PDF for a full breakdown",
-        "description": "Download the PDF for a full breakdown"
-    },
-    "sdk.invoice_details.invoice.title": {
-        "defaultMessage": "Invoice",
-        "description": "Title for the invoice block on the invoice details page"
-    },
-    "sdk.invoice_details.invoice_details_block.due_date": {
-        "defaultMessage": "Due date",
-        "description": "Title for the due date in invoice details block on the invoice overview page"
-    },
-    "sdk.invoice_details.invoice_details_block.invoice_date": {
-        "defaultMessage": "Invoice date",
-        "description": "Title for the invoice date in invoice details block on the invoice overview page"
-    },
-    "sdk.invoice_details.invoice_details_block.title": {
-        "defaultMessage": "Invoice details",
-        "description": "Title for the invoice details block on the invoice overview page"
-    },
-    "sdk.invoice_details.payment_history.payment_attempt": {
-        "defaultMessage": "Payment attempt",
-        "description": "Title for the payment attempt block"
-    },
-    "sdk.invoice_details.payment_history.title": {
-        "defaultMessage": "Payment history",
-        "description": "Title for the payment history block on the invoice details page"
-    }
+  "checkout.address.city.placeholder": {
+    "defaultMessage": "City...",
+    "description": "City of the customer address in the checkout form"
+  },
+  "checkout.address.line1.placeholder": {
+    "defaultMessage": "Address line 1...",
+    "description": "Address line 1 of the customer address in the checkout form"
+  },
+  "checkout.address.line2.placeholder": {
+    "defaultMessage": "Address line 2...",
+    "description": "Address line 2 of the customer address in the checkout form"
+  },
+  "checkout.address.portal_code.placeholder": {
+    "defaultMessage": "Postal code...",
+    "description": "Postal code of the customer address in the checkout form"
+  },
+  "checkout.address.state.placeholder": {
+    "defaultMessage": "State...",
+    "description": "State of the customer address in the checkout form"
+  },
+  "checkout.address.title": {
+    "defaultMessage": "Billing address",
+    "description": "Address line 1 of the customer address in the checkout form"
+  },
+  "checkout.billing_details.add_billing_details_button.label": {
+    "defaultMessage": "More billing details",
+    "description": "Label of the button in the checkout that lets you fill out all billing details"
+  },
+  "checkout.billing_details.remove_billing_details_button.label": {
+    "defaultMessage": "Remove billing details",
+    "description": "Label of the button in the checkout that lets you remove the billing details"
+  },
+  "checkout.company_purchase_toggle.sub_title": {
+    "defaultMessage": "I am purchasing on behalf of a company",
+    "description": "The subtitle of the company purchase toggle in the checkout"
+  },
+  "checkout.company_purchase_toggle.title": {
+    "defaultMessage": "Company purchase",
+    "description": "The title of the company purchase toggle in the checkout"
+  },
+  "checkout.contact_information_block.title": {
+    "defaultMessage": "Customer information",
+    "description": "The title of the contact information block in the checkout form"
+  },
+  "checkout.country.label": {
+    "defaultMessage": "Billing country",
+    "description": "The country of the customer in the checkout form"
+  },
+  "checkout.email_address.label": {
+    "defaultMessage": "Email address",
+    "description": "The email address of the customer in the checkout form"
+  },
+  "checkout.email_address.placeholder": {
+    "defaultMessage": "Email address...",
+    "description": "The email address of the customer in the checkout form"
+  },
+  "checkout.invoice_preview.no_country_selected_message": {
+    "defaultMessage": "Please select a country first",
+    "description": "The message shown for the invoice preview when no country is set"
+  },
+  "checkout.invoice_preview.usage_based_message": {
+    "defaultMessage": "+ Usage",
+    "description": "The message shown for the usage based invoice preview"
+  },
+  "checkout.kpi.encrypted_payments.label": {
+    "defaultMessage": "Secure and encrypted payments",
+    "description": "The encrypted payments KPI shown in the checkout"
+  },
+  "checkout.legal_name.label": {
+    "defaultMessage": "Legal entity name",
+    "description": "The legal name of the organization customer in the checkout form"
+  },
+  "checkout.legal_name.placeholder": {
+    "defaultMessage": "Legal entity name...",
+    "description": "The legal name of the organization customer in the checkout form"
+  },
+  "checkout.not_available.contact_support_message": {
+    "defaultMessage": "this page to try again, or contact customer support.",
+    "description": "The message shown when the user wants to contact customer support"
+  },
+  "checkout.not_available.description": {
+    "defaultMessage": "The checkout is currently not available.",
+    "description": "The description of the checkout not available page"
+  },
+  "checkout.not_available.reload_button": {
+    "defaultMessage": "Reload",
+    "description": "The label of the reload button"
+  },
+  "checkout.not_available.title": {
+    "defaultMessage": "Checkout not available",
+    "description": "The title of the checkout not available page"
+  },
+  "checkout.optional_suffix.label": {
+    "defaultMessage": "(optional)",
+    "description": "The suffix for optional fields in the checkout form"
+  },
+  "checkout.order_summary_block.title": {
+    "defaultMessage": "Order summary",
+    "description": "The title of the order summary block that lists the subscription cost in the checkout"
+  },
+  "checkout.page_title": {
+    "defaultMessage": "Pay and subscribe",
+    "description": "The title of the checkout page"
+  },
+  "checkout.pay_and_subscribe_button.label": {
+    "defaultMessage": "Pay and subscribe",
+    "description": "The label of the pay and subscribe button in the checkout form"
+  },
+  "checkout.pay_and_subscribe_button_trial.label": {
+    "defaultMessage": "Start trial",
+    "description": "The label of the start trial button in the checkout form"
+  },
+  "checkout.payment_method_block.payment_methods_not_loaded_message": {
+    "defaultMessage": "Payment methods will be shown after you select a country",
+    "description": "The messages shown when no country is selected thus the payment methods can't be shown"
+  },
+  "checkout.payment_method_block.title": {
+    "defaultMessage": "Payment method",
+    "description": "The title of the payment method block in the checkout form"
+  },
+  "checkout.payment_methods.no_country_selected_message": {
+    "defaultMessage": "Select a country to see the available payment methods",
+    "description": "The message shown when no country is selected in the checkout"
+  },
+  "checkout.subscription_description": {
+    "defaultMessage": "<strong>{price}</strong> per {period_name} starting today",
+    "description": "The description of the subscription"
+  },
+  "checkout.terms_and_conditions_block.title": {
+    "defaultMessage": "Terms and conditions",
+    "description": "The title of the terms and conditions block in the checkout"
+  },
+  "checkout.trial_period_description": {
+    "defaultMessage": "<strong>{price}</strong> per {period_name} starting {startDate, date, long}",
+    "description": "The description of the trial period"
+  },
+  "checkout.vat_number.label": {
+    "defaultMessage": "VAT number",
+    "description": "The label for the vat number in the checkout form"
+  },
+  "checkout.vat_number.placeholder": {
+    "defaultMessage": "VAT number...",
+    "description": "The label for the vat number in the checkout form"
+  },
+  "customer.invoice_table.pay_invoice_button.label": {
+    "defaultMessage": "Pay",
+    "description": "The label for the pay invoice button"
+  },
+  "customer.subscriptions_block.cancel_button_label": {
+    "defaultMessage": "Cancel subscription",
+    "description": "The label for the cancel subscription button in the subscriptions block"
+  },
+  "customer.subscriptions_block.next_billing_date": {
+    "defaultMessage": "Next billing date",
+    "description": "The label for the next billing date"
+  },
+  "customer.subscriptions_block.renew_button_label": {
+    "defaultMessage": "Renew subscription",
+    "description": "The label for the renew subscription button in the subscriptions block"
+  },
+  "customer.subscriptions_block.show_details_button_label": {
+    "defaultMessage": "Subscription details",
+    "description": "The label for the subscription details button in the subscriptions block"
+  },
+  "customer_invoices.load_failed.subtitle": {
+    "defaultMessage": "Please refresh or contact support.",
+    "description": "Subtitle when invoices fail to load"
+  },
+  "customer_invoices.load_failed.title": {
+    "defaultMessage": "We can’t load your invoices",
+    "description": "Title when invoices fail to load"
+  },
+  "customer_overview.billing_information_block.load_failed.subtitle": {
+    "defaultMessage": "Please refresh or contact support.",
+    "description": "Subtitle when payments methods fail to load"
+  },
+  "customer_overview.billing_information_block.load_failed.title": {
+    "defaultMessage": "We can’t load your billing information",
+    "description": "Title when payments methods fail to load"
+  },
+  "customer_overview.billing_information_block.title": {
+    "defaultMessage": "Billing information",
+    "description": "Title for the billing information block on the customer overview page"
+  },
+  "customer_overview.billing_information_block.view_all_payment_methods_link_label": {
+    "defaultMessage": "Edit",
+    "description": "The link text that links to the overview page of the customer billing information"
+  },
+  "customer_overview.invoices_block.no_active_subscription_content": {
+    "defaultMessage": "You haven’t received an invoice yet. It’ll appear here once it’s generated.",
+    "description": "Body text when there are no invoices to display in the invoices block"
+  },
+  "customer_overview.invoices_block.no_invoices_title": {
+    "defaultMessage": "No invoices to display",
+    "description": "Shown when there are no invoices to display in the invoices block"
+  },
+  "customer_overview.invoices_block.title": {
+    "defaultMessage": "Invoices",
+    "description": "Title for the invoices block on the customer overview page"
+  },
+  "customer_overview.invoices_block.view_all_invoices_link_label": {
+    "defaultMessage": "View all",
+    "description": "Link to the customer invoices overview page"
+  },
+  "customer_overview.payment_methods.title": {
+    "defaultMessage": "Payment methods",
+    "description": "Title for the payment methods block on the customer overview page"
+  },
+  "customer_overview.payment_methods_block.add_payment_method_button_label": {
+    "defaultMessage": "Add payment method",
+    "description": "Text for the add payment method button that is shown when no payment methods have been configured"
+  },
+  "customer_overview.payment_methods_block.add_payment_method_helper_text": {
+    "defaultMessage": "Add a payment method for recurring invoice payments.",
+    "description": "Helper text for adding a payment method when no payment methods are configured"
+  },
+  "customer_overview.payment_methods_block.load_failed.subtitle": {
+    "defaultMessage": "Please refresh or contact support.",
+    "description": "Subtitle when payments methods fail to load"
+  },
+  "customer_overview.payment_methods_block.load_failed.title": {
+    "defaultMessage": "We can’t load your payment methods",
+    "description": "Title when payments methods fail to load"
+  },
+  "customer_overview.payment_methods_block.view_all_payment_methods_link_label": {
+    "defaultMessage": "View all",
+    "description": "The link text that links to the overview page of the customer invoices"
+  },
+  "customer_overview.subscriptions_block.fallback_subscription_name": {
+    "defaultMessage": "Subscription",
+    "description": "The fallback name for when no subscription name can be determined"
+  },
+  "customer_overview.subscriptions_block.load_failed.subtitle": {
+    "defaultMessage": "Please refresh or contact support.",
+    "description": "Subtitle when subscriptions fail to load"
+  },
+  "customer_overview.subscriptions_block.load_failed.title": {
+    "defaultMessage": "We can’t load your subscriptions",
+    "description": "Title when subscriptions fail to load"
+  },
+  "customer_overview.subscriptions_block.no_active_subscription_content": {
+    "defaultMessage": "There’s no active subscription to display.",
+    "description": "Text that is being displayed when there is no active subscription in the subscriptions block"
+  },
+  "customer_overview.subscriptions_block.no_active_subscription_title": {
+    "defaultMessage": "No subscriptions",
+    "description": "Title for the my subscriptions block on the customer overview page"
+  },
+  "customer_overview.subscriptions_block.title": {
+    "defaultMessage": "My subscriptions",
+    "description": "Title for the subscriptions block on the customer overview page"
+  },
+  "customer_overview.subscriptions_block.view_all_button_label": {
+    "defaultMessage": "View all",
+    "description": "The text for the view all subscriptions button"
+  },
+  "empty_state.retry.button": {
+    "defaultMessage": "Refresh",
+    "description": "Label of the button in the error state that lets you retry your action"
+  },
+  "invoice_table.chip.paid": {
+    "defaultMessage": "Paid",
+    "description": "The label of the chip for paid invoices"
+  },
+  "invoice_table.header.amount": {
+    "defaultMessage": "Amount",
+    "description": "The title of the invoice amount header column of the invoice table"
+  },
+  "invoice_table.header.date": {
+    "defaultMessage": "Date",
+    "description": "The title of the invoice date header column of the invoice table"
+  },
+  "invoice_table.header.invoice_number": {
+    "defaultMessage": "Invoice",
+    "description": "The title of the invoice number header column of the invoice table"
+  },
+  "invoice_table.header.status": {
+    "defaultMessage": "Status",
+    "description": "The title of the invoice status header column of the invoice table"
+  },
+  "payment_completed_card.redirect_message": {
+    "defaultMessage": "You are being redirected...",
+    "description": "The text shown after a successful message before a redirect"
+  },
+  "payment_completed_card.title.authorize": {
+    "defaultMessage": "Payment successful",
+    "description": "The title for when a payment has been successful"
+  },
+  "payment_completed_card.title.tokenize": {
+    "defaultMessage": "Your payment method is added",
+    "description": "The title for when a payment method was successfully added"
+  },
+  "payment_integration_form.select_payment_method_error": {
+    "defaultMessage": "Select a payment method",
+    "description": "Error shown when no payment method is selected"
+  },
+  "payments.retry_button.label": {
+    "defaultMessage": "Try again",
+    "description": "Retry button text when an error has happened during a payment"
+  },
+  "sdk.invoice_details.customer_billing_information.title": {
+    "defaultMessage": "Your billing information",
+    "description": "Title for the billing information on the detailed invoice view"
+  },
+  "sdk.invoice_details.invoice.download_pdf": {
+    "defaultMessage": "Download the PDF for a full breakdown",
+    "description": "Download the PDF for a full breakdown"
+  },
+  "sdk.invoice_details.invoice.title": {
+    "defaultMessage": "Invoice",
+    "description": "Title for the invoice block on the invoice details page"
+  },
+  "sdk.invoice_details.invoice_details_block.due_date": {
+    "defaultMessage": "Due date",
+    "description": "Title for the due date in invoice details block on the invoice overview page"
+  },
+  "sdk.invoice_details.invoice_details_block.invoice_date": {
+    "defaultMessage": "Invoice date",
+    "description": "Title for the invoice date in invoice details block on the invoice overview page"
+  },
+  "sdk.invoice_details.invoice_details_block.title": {
+    "defaultMessage": "Invoice details",
+    "description": "Title for the invoice details block on the invoice overview page"
+  },
+  "sdk.invoice_details.payment_history.payment_attempt": {
+    "defaultMessage": "Payment attempt",
+    "description": "Title for the payment attempt block"
+  },
+  "sdk.invoice_details.payment_history.title": {
+    "defaultMessage": "Payment history",
+    "description": "Title for the payment history block on the invoice details page"
+  },
+  "subscription_payment_completed_card.continue": {
+    "defaultMessage": "Continue to merchant",
+    "description": "The text for the continue button"
+  },
+  "subscription_payment_completed_card.thank_you_for_subscribing": {
+    "defaultMessage": "Thank you for subscribing.",
+    "description": "The text shown after a successful message before a redirect"
+  },
+  "subscription_payment_completed_card.title": {
+    "defaultMessage": "Payment successful",
+    "description": "The title for when a payment has been successful"
+  }
 }

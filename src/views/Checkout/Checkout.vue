@@ -163,7 +163,7 @@ const showCustomerInfoOnTop = computed(() => !(props.email && props.countryCode)
                 </div>
 
                 <!-- right -->
-                <div class="flex flex-col gap-4 w-full md:w-72">
+                <div class="flex flex-col gap-2 w-full md:w-72">
                     <Section
                         no-border
                         no-spacing
@@ -177,7 +177,7 @@ const showCustomerInfoOnTop = computed(() => !(props.email && props.countryCode)
                             })
                         "
                     >
-                        <div class="grid grid-cols-1 gap-2">
+                        <div class="grid grid-cols-1 gap-1">
                             <!-- subscription summary -->
                             <Section no-spacing>
                                 <SubscriptionSummary
@@ -269,22 +269,12 @@ const showCustomerInfoOnTop = computed(() => !(props.email && props.countryCode)
                         </Typography>
                     </Section>
 
-                    <div class="flex gap-4 grow text-gray-400">
-                        <Kpi
-                            icon="shield_locked-fill"
-                            :kpi="
-                                $t({
-                                    defaultMessage: 'Secure checkout',
-                                    id: 'checkout.kpi.secure_checkout.label',
-                                    description: 'The secure checkout KPI shown in the checkout',
-                                })
-                            "
-                        />
+                    <div class="flex gap-4 grow text-gray-400 justify-center">
                         <Kpi
                             icon="lock"
                             :kpi="
                                 $t({
-                                    defaultMessage: 'Encrypted payments',
+                                    defaultMessage: 'Secure and encrypted payments',
                                     id: 'checkout.kpi.encrypted_payments.label',
                                     description: 'The encrypted payments KPI shown in the checkout',
                                 })

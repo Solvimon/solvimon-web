@@ -9,6 +9,7 @@ import {
     type Amount,
 } from '@solvimon/types';
 import { computed, onMounted, ref, watch } from 'vue';
+import { taxId } from '@solvimon/ui/validators';
 import { createSubscriptionsService } from '@/services/subscriptions';
 import { useInvoicePreview } from '@/composables/useInvoicePreview';
 import { useCheckoutForm } from '@/components/customer/CheckoutForm/useCheckoutForm';
@@ -121,7 +122,8 @@ export function useCheckoutView({
                               organization: {
                                   registered_address: address,
                                   ...{ legal_name: checkoutForm.form.value.companyLegalName ?? '' },
-                                  ...(checkoutForm.form.value.companyVatNumber
+                                  ...(checkoutForm.form.value.companyVatNumber &&
+                                  taxId.$validator(checkoutForm.form.value.companyVatNumber, {}, {})
                                       ? { tax_id: checkoutForm.form.value.companyVatNumber }
                                       : {}),
                               },

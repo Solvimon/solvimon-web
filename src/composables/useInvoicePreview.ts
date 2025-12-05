@@ -8,6 +8,7 @@ import type {
 import type { TimePeriod } from '@solvimon/types';
 import { ref } from 'vue';
 import { convertDateRangeToTimePeriod } from '@solvimon/ui';
+import { taxId } from '@solvimon/ui/validators';
 import { createInvoicesService } from '@/services/invoices';
 import type { CheckoutFormState } from '@/components/customer/CheckoutForm/CheckoutForm.types';
 
@@ -60,7 +61,9 @@ export const useInvoicePreview = () => {
                         legal_name: checkoutForm.companyLegalName || EMPTY_LEGAL_ENTITY_NAME,
                         registered_address: address,
                         ...(checkoutForm.companyVatNumber && {
-                            tax_id: checkoutForm.companyVatNumber,
+                            tax_id: taxId.$validator(checkoutForm.companyVatNumber, {}, {})
+                                ? checkoutForm.companyVatNumber
+                                : undefined,
                         }),
                     },
                 }),

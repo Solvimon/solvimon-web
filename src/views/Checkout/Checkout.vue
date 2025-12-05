@@ -15,6 +15,7 @@ import CheckoutNotAvailable from '@/components/checkout/CheckoutNotAvailable.vue
 import type { Error } from '@/types/errors';
 import { trackSentryException } from '@/utils/errorTracking';
 import SubscriptionPaymentCompletedCard from '@/components/payments/SubscriptionPaymentCompletedCard/SubscriptionPaymentCompletedCard.vue';
+import OrderSummary from '@/components/subscriptions/OrderSummary.vue';
 
 const props = defineProps<CheckoutProps>();
 
@@ -100,6 +101,22 @@ const showCustomerInfoOnTop = computed(() => !(props.email && props.countryCode)
             :billing-period="subscription?.billing_period"
         />
 
+        <OrderSummary
+            v-if="subscription"
+            :subscription="subscription"
+            :invoice="invoicePreview"
+            :trial-invoice="trialInvoicePreview"
+            :enabled-pricing-ids="props.enabledPricingIds"
+            :trial-period="trialPeriod"
+            :avatar="avatar"
+            :is-paid="isPaid"
+            :is-usage-based="isUsageBased"
+            :is-preview-and-payment-methods-pending="isPreviewAndPaymentMethodsPending"
+            class="mt-4 md:hidden"
+            collapsible="collapsed"
+            no-title
+        />
+
         <div class="flex flex-col grow gap-4 mt-4">
             <!-- content -->
             <div class="flex flex-col md:flex-row grow gap-6">
@@ -164,72 +181,19 @@ const showCustomerInfoOnTop = computed(() => !(props.email && props.countryCode)
 
                 <!-- right -->
                 <div class="flex flex-col gap-2 w-full md:w-72">
-                    <Section
-                        no-border
-                        no-spacing
-                        content-background="none"
-                        :title="
-                            $t({
-                                defaultMessage: 'Order summary',
-                                id: 'checkout.order_summary_block.title',
-                                description:
-                                    'The title of the order summary block that lists the subscription cost in the checkout',
-                            })
-                        "
-                    >
-                        <div class="grid grid-cols-1 gap-1">
-                            <!-- subscription summary -->
-                            <Section no-spacing>
-                                <SubscriptionSummary
-                                    v-if="subscription"
-                                    :avatar="avatar"
-                                    :invoice="invoicePreview"
-                                    :subscription="subscription"
-                                    :enabled-pricing-ids="props.enabledPricingIds"
-                                    :loading="isPreviewAndPaymentMethodsPending"
-                                    :trial-period="trialPeriod"
-                                />
-                            </Section>
+                    <OrderSummary
+                        v-if="subscription"
+                        :subscription="subscription"
+                        :invoice="invoicePreview"
+                        :trial-invoice="trialInvoicePreview"
+                        :enabled-pricing-ids="props.enabledPricingIds"
+                        :trial-period="trialPeriod"
+                        :avatar="avatar"
+                        :is-paid="isPaid"
+                        :is-usage-based="isUsageBased"
+                        :is-preview-and-payment-methods-pending="isPreviewAndPaymentMethodsPending"
+                    />
 
-                            <!-- usage based -->
-                            <Section v-if="isUsageBased" no-spacing>
-                                <div class="px-3 py-2">
-                                    <Typography no-spacing variant="body-sm" shade="lighter">
-                                        {{
-                                            $t({
-                                                defaultMessage: '+ Usage',
-                                                id: 'checkout.invoice_preview.usage_based_message',
-                                                description:
-                                                    'The message shown for the usage based invoice preview',
-                                            })
-                                        }}
-                                    </Typography>
-                                </div>
-                            </Section>
-
-                            <!-- invoice preview -->
-                            <Section>
-                                <InvoicePreview
-                                    v-if="invoicePreview"
-                                    :invoice="invoicePreview"
-                                    :trial-invoice="trialInvoicePreview"
-                                    :variant="trialInvoicePreview ? 'without-products' : 'default'"
-                                    :is-paid="isPaid"
-                                    is-customer-facing
-                                />
-                                <Typography v-else variant="body-sm" shade="lighter"
-                                    >{{
-                                        $t({
-                                            defaultMessage: 'Please select a country first',
-                                            description:
-                                                'The message shown for the invoice preview when no country is set',
-                                            id: 'checkout.invoice_preview.no_country_selected_message',
-                                        })
-                                    }}
-                                </Typography>
-                            </Section>
-                        </div>
-                    </Section>
                     <Button
                         v-if="!isPaid"
                         type="button"

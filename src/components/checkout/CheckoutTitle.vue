@@ -15,17 +15,23 @@ const { $t } = useIntl();
 </script>
 
 <template>
-    <div class="flex gap-3 items-start">
-        <Typography variant="heading-1">{{
-            trialPeriod
-                ? subscriptionName
-                : $t({
-                      defaultMessage: 'Pay and subscribe',
-                      id: 'checkout.page_title',
-                      description: 'The title of the checkout page',
-                  })
-        }}</Typography>
-        <TrialChip v-if="trialPeriod" :trial-period="trialPeriod" size="lg" class="mt-1" />
+    <div>
+        <Typography variant="heading-1" class="inline-block"
+            >{{
+                trialPeriod
+                    ? subscriptionName
+                    : $t({
+                          defaultMessage: 'Pay and subscribe',
+                          id: 'checkout.page_title',
+                          description: 'The title of the checkout page',
+                      })
+            }}{{ ' '
+            }}<TrialChip
+                v-if="trialPeriod"
+                :trial-period="trialPeriod"
+                size="lg"
+                class="-translate-y-0.5"
+        /></Typography>
     </div>
     <Typography variant="body-sm" shade="lighter" no-spacing>
         <span

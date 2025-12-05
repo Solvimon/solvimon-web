@@ -2,6 +2,7 @@
 import {
     Button,
     CountrySelect,
+    Expand,
     getCountryNameByCode,
     Input,
     Section,
@@ -165,85 +166,86 @@ const readableCountryName = computed(() =>
                         </template>
                     </div>
 
-                    <div
-                        v-if="showBillingDetails || isBillingInformationMandatory"
-                        class="flex gap-3 flex-col mt-2"
-                    >
-                        <Input
-                            v-model="model.addressLine1"
-                            name="address_line_1"
-                            :label="
-                                $t({
-                                    defaultMessage: 'Billing address',
-                                    id: 'checkout.address.title',
-                                    description:
-                                        'Address line 1 of the customer address in the checkout form',
-                                })
-                            "
-                            :placeholder="
-                                $t({
-                                    defaultMessage: 'Address line 1...',
-                                    id: 'checkout.address.line1.placeholder',
-                                    description:
-                                        'Address line 1 of the customer address in the checkout form',
-                                }) + getOptionalSuffix('addressLine1')
-                            "
-                            required
-                            :error="validation.value.addressLine1.$errors"
-                        />
-                        <Input
-                            v-model="model.addressLine2"
-                            name="address_line_2"
-                            :placeholder="
-                                $t({
-                                    defaultMessage: 'Address line 2...',
-                                    id: 'checkout.address.line2.placeholder',
-                                    description:
-                                        'Address line 2 of the customer address in the checkout form',
-                                }) + getOptionalSuffix('addressLine2')
-                            "
-                        />
-                        <div class="grid grid-cols-3 gap-2">
-                            <Input
-                                v-model="model.postalCode"
-                                name="postal_code"
-                                :placeholder="
-                                    $t({
-                                        defaultMessage: 'Postal code...',
-                                        id: 'checkout.address.portal_code.placeholder',
-                                        description:
-                                            'Postal code of the customer address in the checkout form',
-                                    }) + getOptionalSuffix('postalCode')
-                                "
-                                :error="validation.value.addressLine1.$errors"
-                            />
-                            <Input
-                                v-model="model.city"
-                                name="city"
-                                :placeholder="
-                                    $t({
-                                        defaultMessage: 'City...',
-                                        id: 'checkout.address.city.placeholder',
-                                        description:
-                                            'City of the customer address in the checkout form',
-                                    }) + getOptionalSuffix('city')
-                                "
-                            />
-                            <Input
-                                v-model="model.state"
-                                name="state"
-                                :placeholder="
-                                    $t({
-                                        defaultMessage: 'State...',
-                                        id: 'checkout.address.state.placeholder',
-                                        description:
-                                            'State of the customer address in the checkout form',
-                                    }) + getOptionalSuffix('state')
-                                "
-                                :error="validation.value.state.$errors"
-                            />
+                    <Expand>
+                        <div v-if="showBillingDetails || isBillingInformationMandatory">
+                            <div class="flex gap-3 flex-col mt-2">
+                                <Input
+                                    v-model="model.addressLine1"
+                                    name="address_line_1"
+                                    :label="
+                                        $t({
+                                            defaultMessage: 'Billing address',
+                                            id: 'checkout.address.title',
+                                            description:
+                                                'Address line 1 of the customer address in the checkout form',
+                                        })
+                                    "
+                                    :placeholder="
+                                        $t({
+                                            defaultMessage: 'Address line 1...',
+                                            id: 'checkout.address.line1.placeholder',
+                                            description:
+                                                'Address line 1 of the customer address in the checkout form',
+                                        }) + getOptionalSuffix('addressLine1')
+                                    "
+                                    required
+                                    :error="validation.value.addressLine1.$errors"
+                                />
+                                <Input
+                                    v-model="model.addressLine2"
+                                    name="address_line_2"
+                                    :placeholder="
+                                        $t({
+                                            defaultMessage: 'Address line 2...',
+                                            id: 'checkout.address.line2.placeholder',
+                                            description:
+                                                'Address line 2 of the customer address in the checkout form',
+                                        }) + getOptionalSuffix('addressLine2')
+                                    "
+                                />
+                                <div class="grid grid-cols-3 gap-2">
+                                    <Input
+                                        v-model="model.postalCode"
+                                        name="postal_code"
+                                        :placeholder="
+                                            $t({
+                                                defaultMessage: 'Postal code...',
+                                                id: 'checkout.address.portal_code.placeholder',
+                                                description:
+                                                    'Postal code of the customer address in the checkout form',
+                                            }) + getOptionalSuffix('postalCode')
+                                        "
+                                        :error="validation.value.addressLine1.$errors"
+                                    />
+                                    <Input
+                                        v-model="model.city"
+                                        name="city"
+                                        :placeholder="
+                                            $t({
+                                                defaultMessage: 'City...',
+                                                id: 'checkout.address.city.placeholder',
+                                                description:
+                                                    'City of the customer address in the checkout form',
+                                            }) + getOptionalSuffix('city')
+                                        "
+                                    />
+                                    <Input
+                                        v-model="model.state"
+                                        name="state"
+                                        :placeholder="
+                                            $t({
+                                                defaultMessage: 'State...',
+                                                id: 'checkout.address.state.placeholder',
+                                                description:
+                                                    'State of the customer address in the checkout form',
+                                            }) + getOptionalSuffix('state')
+                                        "
+                                        :error="validation.value.state.$errors"
+                                    />
+                                </div>
+                            </div>
                         </div>
-                    </div>
+                    </Expand>
                 </Section>
 
                 <Section v-if="!readOnly">
@@ -278,52 +280,56 @@ const readableCountryName = computed(() =>
                         </template>
                     </Toggle>
 
-                    <div v-if="isCompanyPurchase" class="grid grid-cols-1 gap-3 mt-4">
-                        <Input
-                            v-if="showVatIdInput"
-                            v-model="model.companyVatNumber"
-                            name="vat_number"
-                            :label="
-                                $t({
-                                    defaultMessage: 'VAT number',
-                                    id: 'checkout.vat_number.label',
-                                    description:
-                                        'The label for the vat number in the checkout form',
-                                })
-                            "
-                            :placeholder="
-                                $t({
-                                    defaultMessage: 'VAT number...',
-                                    id: 'checkout.vat_number.placeholder',
-                                    description:
-                                        'The label for the vat number in the checkout form',
-                                })
-                            "
-                            :error="validation.value.companyVatNumber.$errors"
-                        />
+                    <Expand>
+                        <div v-if="isCompanyPurchase">
+                            <div class="grid grid-cols-1 gap-3 mt-4">
+                                <Input
+                                    v-if="showVatIdInput"
+                                    v-model="model.companyVatNumber"
+                                    name="vat_number"
+                                    :label="
+                                        $t({
+                                            defaultMessage: 'VAT number',
+                                            id: 'checkout.vat_number.label',
+                                            description:
+                                                'The label for the vat number in the checkout form',
+                                        })
+                                    "
+                                    :placeholder="
+                                        $t({
+                                            defaultMessage: 'VAT number...',
+                                            id: 'checkout.vat_number.placeholder',
+                                            description:
+                                                'The label for the vat number in the checkout form',
+                                        })
+                                    "
+                                    :error="validation.value.companyVatNumber.$errors"
+                                />
 
-                        <Input
-                            v-model="model.companyLegalName"
-                            required
-                            name="legal_name"
-                            :label="
-                                $t({
-                                    defaultMessage: 'Legal entity name',
-                                    id: 'checkout.legal_name.label',
-                                    description:
-                                        'The legal name of the organization customer in the checkout form',
-                                })
-                            "
-                            :placeholder="
-                                $t({
-                                    defaultMessage: 'Legal entity name...',
-                                    id: 'checkout.legal_name.placeholder',
-                                    description:
-                                        'The legal name of the organization customer in the checkout form',
-                                })
-                            "
-                        />
-                    </div>
+                                <Input
+                                    v-model="model.companyLegalName"
+                                    required
+                                    name="legal_name"
+                                    :label="
+                                        $t({
+                                            defaultMessage: 'Legal entity name',
+                                            id: 'checkout.legal_name.label',
+                                            description:
+                                                'The legal name of the organization customer in the checkout form',
+                                        })
+                                    "
+                                    :placeholder="
+                                        $t({
+                                            defaultMessage: 'Legal entity name...',
+                                            id: 'checkout.legal_name.placeholder',
+                                            description:
+                                                'The legal name of the organization customer in the checkout form',
+                                        })
+                                    "
+                                />
+                            </div>
+                        </div>
+                    </Expand>
                 </Section>
             </div>
 

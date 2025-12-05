@@ -16,6 +16,7 @@ import type { Error } from '@/types/errors';
 import { trackSentryException } from '@/utils/errorTracking';
 import SubscriptionPaymentCompletedCard from '@/components/payments/SubscriptionPaymentCompletedCard/SubscriptionPaymentCompletedCard.vue';
 import OrderSummary from '@/components/subscriptions/OrderSummary.vue';
+import EmptyStatePlaceholder from '@/components/checkout/EmptyStatePlaceholder.vue';
 
 const props = defineProps<CheckoutProps>();
 
@@ -144,8 +145,41 @@ const showCustomerInfoOnTop = computed(() => !(props.email && props.countryCode)
                             :redirect-url="successRedirectUrl"
                         />
                         <template v-else>
+                            <EmptyStatePlaceholder
+                                v-if="
+                                    !checkoutForm.form.value.country &&
+                                    !isPreviewAndPaymentMethodsPending
+                                "
+                                icon="captive_portal"
+                            >
+                                <template #title>
+                                    {{
+                                        $t({
+                                            defaultMessage: 'Select your billing country',
+                                            id: 'checkout.payment_method_block.no_country_selected_title',
+                                            description:
+                                                'The title shown when no country is selected',
+                                        })
+                                    }}
+                                </template>
+                                <template #message>
+                                    {{
+                                        $t({
+                                            defaultMessage:
+                                                'Payment methods will be shown after you select the billing country.',
+                                            id: 'checkout.payment_method_block.no_country_selected_message',
+                                            description:
+                                                'The message shown when no country is selected',
+                                        })
+                                    }}
+                                </template>
+                            </EmptyStatePlaceholder>
+
                             <Typography
-                                v-if="!checkoutForm.form.value.country"
+                                v-if="
+                                    !checkoutForm.form.value.country &&
+                                    !isPreviewAndPaymentMethodsPending
+                                "
                                 variant="body-xs"
                                 shade="lighter"
                                 >{{
@@ -161,8 +195,39 @@ const showCustomerInfoOnTop = computed(() => !(props.email && props.countryCode)
                             <PaymentIntegrationFormPlaceholder
                                 v-else-if="isPreviewAndPaymentMethodsPending"
                             />
+                            <EmptyStatePlaceholder
+                                v-else-if="
+                                    !isPreviewAndPaymentMethodsPending &&
+                                    paymentMethodOptions.length === 0
+                                "
+                                icon="credit_card_off"
+                            >
+                                <template #title>
+                                    {{
+                                        $t({
+                                            defaultMessage: 'No payment methods available',
+                                            id: 'checkout.payment_method_block.no_payment_methods_available_title',
+                                            description:
+                                                'The title shown when there are no available payment methods',
+                                        })
+                                    }}
+                                </template>
+                                <template #message>
+                                    {{
+                                        $t({
+                                            defaultMessage:
+                                                'There are no available payment methods. Please contact support for more information.',
+                                            id: 'checkout.payment_method_block.no_payment_methods_available_message',
+                                            description:
+                                                'The message shown when there are no available payment methods',
+                                        })
+                                    }}
+                                </template>
+                            </EmptyStatePlaceholder>
                             <PaymentIntegrationForm
-                                v-else-if="invoicePreview && amount"
+                                v-else-if="
+                                    invoicePreview && amount && checkoutForm.form.value.country
+                                "
                                 ref="paymentIntegrationFormRef"
                                 :country-code="checkoutForm.form.value.country"
                                 :context="authorizationContext"

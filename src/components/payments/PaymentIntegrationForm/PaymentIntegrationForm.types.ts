@@ -36,8 +36,24 @@ export type PaymentIntegrationFormProps =
     | TokenizePaymentIntegrationFormProps;
 
 export interface PaymentIntegrationFormEmits {
+    /**
+     * Emitted when a payment method is selected.
+     */
     (e: 'select', value: 'PAYMENT_GATEWAY_ADYEN' | 'PAYMENT_GATEWAY_STRIPE'): void;
+    /**
+     * Emitted when an error occurs.
+     */
     (e: 'error', error: Error): void;
+    /**
+     * Emitted when a payment fails.
+     */
     (e: 'payment-failed', error: Error): void;
+    /**
+     * Emitted when a payment is successful.
+     */
     (e: 'payment-success'): void;
+    /**
+     * Emitted when the payment integration form is ready and the payment integration form is initialized.
+     */
+    (e: 'ready'): void;
 }

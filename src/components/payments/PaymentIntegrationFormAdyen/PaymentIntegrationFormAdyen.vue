@@ -116,6 +116,7 @@ async function getConfiguration(): Promise<{
             },
             openFirstPaymentMethod: props.selected,
             onSelect: () => emit('select'),
+            onReady: () => emit('ready'),
         },
     };
 }

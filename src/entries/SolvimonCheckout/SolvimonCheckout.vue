@@ -51,6 +51,7 @@ const validEmail = getValidEmail(props.email);
             :email="validEmail"
             :country-code="validCountryCode"
             :enabled-pricing-ids="enabledPricingIds"
+            @ready="emit('ready')"
         >
             <template v-if="$slots['terms-and-conditions']" #terms-and-conditions
                 ><slot name="terms-and-conditions"

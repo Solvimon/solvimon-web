@@ -22,8 +22,24 @@ export interface PaymentIntegrationFormAdyenProps {
 }
 
 export interface PaymentIntegrationFormAdyenEmits {
+    /**
+     * Emitted when a payment method is selected.
+     */
     (e: 'select'): void;
+    /**
+     * Emitted when an error occurs.
+     */
     (e: 'error', error: Error): void;
+    /**
+     * Emitted when a payment fails.
+     */
     (e: 'payment-failed', error: Error): void;
+    /**
+     * Emitted when a payment is successful.
+     */
     (e: 'payment-success'): void;
+    /**
+     * Emitted when the payment integration form is ready and the Adyen SDK is initialized.
+     */
+    (e: 'ready'): void;
 }

@@ -1,4 +1,5 @@
 import type { CountryCode } from '@solvimon/types';
+import type { Error } from '@/types/errors';
 
 export interface CheckoutProps {
     /**
@@ -18,4 +19,15 @@ export interface CheckoutProps {
      * Optional avatar.
      */
     avatar?: string;
+}
+
+export interface CheckoutEmits {
+    /**
+     * Emitted when an error occurs.
+     */
+    (e: 'error', error: Error): void;
+    /**
+     * Emitted when the checkout is ready.
+     */
+    (e: 'ready'): void;
 }

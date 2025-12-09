@@ -1,13 +1,12 @@
 <script setup lang="ts">
 import { Button, InvoicePreview, Section, Typography, useIntl } from '@solvimon/ui';
-import { computed, ref } from 'vue';
-import type { CheckoutProps } from './Checkout.types';
+import { computed, onMounted, ref } from 'vue';
+import type { CheckoutEmits, CheckoutProps } from './Checkout.types';
 import { useCheckoutView } from './useCheckoutView';
 import { usePortal } from '@/components/providers/PortalProvider/composables/usePortal';
 import PaymentIntegrationForm from '@/components/payments/PaymentIntegrationForm/PaymentIntegrationForm.vue';
 import PaymentIntegrationFormPlaceholder from '@/components/payments/PaymentIntegrationForm/PaymentIntegrationForm.placeholder.vue';
 import Kpi from '@/components/shared/Kpi.vue';
-import SubscriptionSummary from '@/components/subscriptions/SubscriptionSummary.vue';
 import CheckoutForm from '@/components/customer/CheckoutForm/CheckoutForm.vue';
 import CheckoutTitle from '@/components/checkout/CheckoutTitle.vue';
 import { isInvoiceUsageBased } from '@/utils/invoice';
@@ -19,6 +18,7 @@ import OrderSummary from '@/components/subscriptions/OrderSummary.vue';
 import EmptyStatePlaceholder from '@/components/checkout/EmptyStatePlaceholder.vue';
 
 const props = defineProps<CheckoutProps>();
+const emit = defineEmits<CheckoutEmits>();
 
 const criticalError = ref<Error>();
 const paymentIntegrationFormRef = ref();
@@ -89,6 +89,10 @@ const isBillingInformationMandatory = computed(
 );
 
 const showCustomerInfoOnTop = computed(() => !(props.email && props.countryCode));
+
+onMounted(() => {
+    emit('ready');
+});
 </script>
 
 <template>
@@ -239,6 +243,7 @@ const showCustomerInfoOnTop = computed(() => !(props.email && props.countryCode)
                                 force-store-payment-method
                                 @error="(error) => $emit('error', error)"
                                 @payment-success="isPaid = true"
+                                @ready="emit('ready')"
                             />
                         </template>
                     </CheckoutForm>

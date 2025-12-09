@@ -62,6 +62,7 @@ const handlePaymentSuccess = () => {
             @error="(args) => $emit('error', args)"
             @payment-failed="(args) => $emit('payment-failed', args)"
             @payment-success="handlePaymentSuccess"
+            @ready="emit('ready')"
         />
     </template>
     <FormMessage v-if="showIntegrationError" variant="error" class="mt-2">{{

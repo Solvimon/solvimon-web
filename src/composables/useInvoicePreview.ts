@@ -1,12 +1,13 @@
-import type {
-    Address,
-    Invoice,
-    Pricing,
-    PricingPlanSchedule,
-    PricingPlanSubscriptionExpanded,
+import {
+    ApiStatus,
+    type Address,
+    type Invoice,
+    type Pricing,
+    type PricingPlanSchedule,
+    type PricingPlanSubscriptionExpanded,
 } from '@solvimon/types';
 import type { TimePeriod } from '@solvimon/types';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { convertDateRangeToTimePeriod } from '@solvimon/ui';
 import { taxId } from '@solvimon/ui/validators';
 import { createInvoicesService } from '@/services/invoices';
@@ -21,7 +22,7 @@ export const useInvoicePreview = () => {
     const trialPeriod = ref<TimePeriod>();
     const trialInvoicePreview = ref<Invoice>();
     const invoicePreview = ref<Invoice>();
-    const isPending = ref(false);
+    const status = ref<ApiStatus>(ApiStatus.Initial);
 
     const loadInvoicePreview = ({
         subscription,
@@ -45,6 +46,7 @@ export const useInvoicePreview = () => {
             ...(checkoutForm.postalCode && { postal_code: checkoutForm.postalCode }),
         } satisfies Partial<Address>;
 
+        status.value = ApiStatus.Loading;
         void getInvoicePreview({
             pricingPlanSubscriptionId: subscription.id,
             startAt: subscriptionStartAt,
@@ -68,32 +70,40 @@ export const useInvoicePreview = () => {
                     },
                 }),
             },
-        }).then((invoicePreviewResponse) => {
-            const trialSchedule = subscription?.pricing_plan_schedule_infos.find(
-                ({ pricing_plan_schedule }) => pricing_plan_schedule.type === 'TRIAL',
-            );
+        })
+            .then((invoicePreviewResponse) => {
+                const trialSchedule = subscription?.pricing_plan_schedule_infos.find(
+                    ({ pricing_plan_schedule }) => pricing_plan_schedule.type === 'TRIAL',
+                );
 
-            if (trialSchedule) {
-                trialInvoicePreview.value = invoicePreviewResponse.first_invoice;
+                if (trialSchedule) {
+                    trialInvoicePreview.value = invoicePreviewResponse.first_invoice;
 
-                if (trialSchedule.start_at && trialSchedule.end_at) {
-                    trialPeriod.value = convertDateRangeToTimePeriod(
-                        new Date(trialSchedule.start_at),
-                        new Date(trialSchedule.end_at),
-                    );
+                    if (trialSchedule.start_at && trialSchedule.end_at) {
+                        trialPeriod.value = convertDateRangeToTimePeriod(
+                            new Date(trialSchedule.start_at),
+                            new Date(trialSchedule.end_at),
+                        );
+                    }
                 }
-            }
 
-            const invoiceScheduleId = subscription?.pricing_plan_schedule_infos.find(
-                ({ pricing_plan_schedule }) => pricing_plan_schedule.type === 'DEFAULT',
-            )?.id;
+                const invoiceScheduleId = subscription?.pricing_plan_schedule_infos.find(
+                    ({ pricing_plan_schedule }) => pricing_plan_schedule.type === 'DEFAULT',
+                )?.id;
 
-            const invoiceInfo = invoicePreviewResponse.invoice_infos.find(
-                ({ pricing_plan_schedule_id }) => pricing_plan_schedule_id === invoiceScheduleId,
-            );
+                const invoiceInfo = invoicePreviewResponse.invoice_infos.find(
+                    ({ pricing_plan_schedule_id }) =>
+                        pricing_plan_schedule_id === invoiceScheduleId,
+                );
 
-            invoicePreview.value = invoiceInfo?.invoices[0];
-        });
+                invoicePreview.value = invoiceInfo?.invoices[0];
+            })
+            .catch(() => {
+                status.value = ApiStatus.Failed;
+            })
+            .finally(() => {
+                status.value = ApiStatus.Done;
+            });
     };
 
     return {
@@ -101,6 +111,6 @@ export const useInvoicePreview = () => {
         invoicePreview,
         trialInvoicePreview,
         trialPeriod,
-        isPending,
+        isPending: computed(() => status.value === ApiStatus.Loading),
     };
 };

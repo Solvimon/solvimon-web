@@ -26,14 +26,18 @@ export function useCheckoutView({
     subscriptionId: PricingPlanSubscription['id'];
     enabledPricingIds?: Pricing['id'][];
 }) {
-    const isPaid = ref(false);
+    const isPaid = ref<boolean>(false);
     const subscription = ref<PricingPlanSubscriptionExpanded>();
 
     const { getSubscription } = createSubscriptionsService();
 
     const invoicePreview = useInvoicePreview();
 
-    const { paymentMethodOptions, loadPaymentMethodOptions } = usePaymentMethodOptions();
+    const {
+        paymentMethodOptions,
+        loadPaymentMethodOptions,
+        isPending: isPaymentMethodsPending,
+    } = usePaymentMethodOptions();
 
     const loadInvoicePreview = async () => {
         await invoicePreview.loadInvoicePreview({
@@ -186,7 +190,8 @@ export function useCheckoutView({
         trialInvoicePreview: invoicePreview.trialInvoicePreview,
         trialPeriod: invoicePreview.trialPeriod,
         paymentMethodOptions,
-        isPending: false,
+        isPaymentMethodsPending: isPaymentMethodsPending,
+        isInvoicePreviewPending: invoicePreview.isPending,
         subscription,
         checkoutForm,
         authorizationContext,

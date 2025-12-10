@@ -5,7 +5,6 @@ import type { CheckoutEmits, CheckoutProps } from './Checkout.types';
 import { useCheckoutView } from './useCheckoutView';
 import { usePortal } from '@/components/providers/PortalProvider/composables/usePortal';
 import PaymentIntegrationForm from '@/components/payments/PaymentIntegrationForm/PaymentIntegrationForm.vue';
-import PaymentIntegrationFormPlaceholder from '@/components/payments/PaymentIntegrationForm/PaymentIntegrationForm.placeholder.vue';
 import Kpi from '@/components/shared/Kpi.vue';
 import CheckoutForm from '@/components/customer/CheckoutForm/CheckoutForm.vue';
 import CheckoutTitle from '@/components/checkout/CheckoutTitle.vue';
@@ -16,6 +15,7 @@ import { trackSentryException } from '@/utils/errorTracking';
 import SubscriptionPaymentCompletedCard from '@/components/payments/SubscriptionPaymentCompletedCard/SubscriptionPaymentCompletedCard.vue';
 import OrderSummary from '@/components/subscriptions/OrderSummary.vue';
 import EmptyStatePlaceholder from '@/components/checkout/EmptyStatePlaceholder.vue';
+import Skeleton from '@/components/shared/Skeleton.vue';
 
 const props = defineProps<CheckoutProps>();
 const emit = defineEmits<CheckoutEmits>();
@@ -44,8 +44,9 @@ const successRedirectUrl = portal.value?.init_pricing_plan_subscription?.success
 
 const {
     paymentMethodOptions,
-    isPending: isPreviewAndPaymentMethodsPending,
     subscription,
+    isPaymentMethodsPending,
+    isInvoicePreviewPending,
     checkoutForm,
     invoicePreview,
     trialInvoicePreview,
@@ -98,13 +99,15 @@ onMounted(() => {
 <template>
     <CheckoutNotAvailable v-if="criticalError" />
     <template v-else>
-        <CheckoutTitle
-            v-if="invoicePreview && subscription"
-            :trial-period="trialPeriod"
-            :subscription-name="subscription?.name ?? ''"
-            :amount="invoicePreview?.invoice_amount_including_tax"
-            :billing-period="subscription?.billing_period"
-        />
+        <Skeleton class="min-h-[52px] w-96">
+            <CheckoutTitle
+                v-if="invoicePreview && subscription"
+                :trial-period="trialPeriod"
+                :subscription-name="subscription?.name ?? ''"
+                :amount="invoicePreview?.invoice_amount_including_tax"
+                :billing-period="subscription?.billing_period"
+            />
+        </Skeleton>
 
         <OrderSummary
             v-if="subscription"
@@ -116,7 +119,9 @@ onMounted(() => {
             :avatar="avatar"
             :is-paid="isPaid"
             :is-usage-based="isUsageBased"
-            :is-preview-and-payment-methods-pending="isPreviewAndPaymentMethodsPending"
+            :is-preview-and-payment-methods-pending="
+                isPaymentMethodsPending || isInvoicePreviewPending
+            "
             class="mt-4 md:hidden"
             collapsible="collapsed"
             no-title
@@ -136,157 +141,157 @@ onMounted(() => {
                         :get-is-field-required="checkoutForm.getIsFieldRequired"
                         :read-only="isPaid"
                     >
-                        <Typography variant="heading-3" tag="h2" class="mb-2">{{
-                            $t({
-                                defaultMessage: 'Payment method',
-                                id: 'checkout.payment_method_block.title',
-                                description:
-                                    'The title of the payment method block in the checkout form',
-                            })
-                        }}</Typography>
                         <SubscriptionPaymentCompletedCard
                             v-if="isPaid"
                             :redirect-url="successRedirectUrl"
                         />
                         <template v-else>
-                            <EmptyStatePlaceholder
-                                v-if="
-                                    !checkoutForm.form.value.country &&
-                                    !isPreviewAndPaymentMethodsPending
-                                "
-                                icon="captive_portal"
-                            >
-                                <template #title>
-                                    {{
+                            <Skeleton variant="section" class="min-h-[130px]">
+                                <div v-if="!isPaymentMethodsPending && !isInvoicePreviewPending">
+                                    <Typography variant="heading-3" tag="h2" class="mb-2">{{
                                         $t({
-                                            defaultMessage: 'Select your billing country',
-                                            id: 'checkout.payment_method_block.no_country_selected_title',
+                                            defaultMessage: 'Payment method',
+                                            id: 'checkout.payment_method_block.title',
                                             description:
-                                                'The title shown when no country is selected',
+                                                'The title of the payment method block in the checkout form',
                                         })
-                                    }}
-                                </template>
-                                <template #message>
-                                    {{
-                                        $t({
-                                            defaultMessage:
-                                                'Payment methods will be shown after you select the billing country.',
-                                            id: 'checkout.payment_method_block.no_country_selected_message',
-                                            description:
-                                                'The message shown when no country is selected',
-                                        })
-                                    }}
-                                </template>
-                            </EmptyStatePlaceholder>
+                                    }}</Typography>
+                                    <EmptyStatePlaceholder
+                                        v-if="!checkoutForm.form.value.country"
+                                        icon="captive_portal"
+                                    >
+                                        <template #title>
+                                            {{
+                                                $t({
+                                                    defaultMessage: 'Select your billing country',
+                                                    id: 'checkout.payment_method_block.no_country_selected_title',
+                                                    description:
+                                                        'The title shown when no country is selected',
+                                                })
+                                            }}
+                                        </template>
+                                        <template #message>
+                                            {{
+                                                $t({
+                                                    defaultMessage:
+                                                        'Payment methods will be shown after you select the billing country.',
+                                                    id: 'checkout.payment_method_block.no_country_selected_message',
+                                                    description:
+                                                        'The message shown when no country is selected',
+                                                })
+                                            }}
+                                        </template>
+                                    </EmptyStatePlaceholder>
 
-                            <Typography
-                                v-if="
-                                    !checkoutForm.form.value.country &&
-                                    !isPreviewAndPaymentMethodsPending
-                                "
-                                variant="body-xs"
-                                shade="lighter"
-                                >{{
-                                    $t({
-                                        defaultMessage:
-                                            'Payment methods will be shown after you select a country',
-                                        id: 'checkout.payment_method_block.payment_methods_not_loaded_message',
-                                        description:
-                                            "The messages shown when no country is selected thus the payment methods can't be shown",
-                                    })
-                                }}</Typography
-                            >
-                            <PaymentIntegrationFormPlaceholder
-                                v-else-if="isPreviewAndPaymentMethodsPending"
-                            />
-                            <EmptyStatePlaceholder
-                                v-else-if="
-                                    !isPreviewAndPaymentMethodsPending &&
-                                    paymentMethodOptions.length === 0
-                                "
-                                icon="credit_card_off"
-                            >
-                                <template #title>
-                                    {{
-                                        $t({
-                                            defaultMessage: 'No payment methods available',
-                                            id: 'checkout.payment_method_block.no_payment_methods_available_title',
-                                            description:
-                                                'The title shown when there are no available payment methods',
-                                        })
-                                    }}
-                                </template>
-                                <template #message>
-                                    {{
-                                        $t({
-                                            defaultMessage:
-                                                'There are no available payment methods. Please contact support for more information.',
-                                            id: 'checkout.payment_method_block.no_payment_methods_available_message',
-                                            description:
-                                                'The message shown when there are no available payment methods',
-                                        })
-                                    }}
-                                </template>
-                            </EmptyStatePlaceholder>
-                            <PaymentIntegrationForm
-                                v-else-if="
-                                    invoicePreview && amount && checkoutForm.form.value.country
-                                "
-                                ref="paymentIntegrationFormRef"
-                                :country-code="checkoutForm.form.value.country"
-                                :context="authorizationContext"
-                                :amount="amount"
-                                variant="AUTHORIZE"
-                                :payment-method-options="paymentMethodOptions ?? []"
-                                :success-redirect-url="successRedirectUrl"
-                                :validate-on-submit="handleValidateOnSubmit"
-                                force-store-payment-method
-                                @error="(error) => $emit('error', error)"
-                                @payment-success="isPaid = true"
-                                @ready="emit('ready')"
-                            />
+                                    <Typography
+                                        v-if="!checkoutForm.form.value.country"
+                                        variant="body-xs"
+                                        shade="lighter"
+                                        >{{
+                                            $t({
+                                                defaultMessage:
+                                                    'Payment methods will be shown after you select a country',
+                                                id: 'checkout.payment_method_block.payment_methods_not_loaded_message',
+                                                description:
+                                                    "The messages shown when no country is selected thus the payment methods can't be shown",
+                                            })
+                                        }}</Typography
+                                    >
+                                    <EmptyStatePlaceholder
+                                        v-else-if="paymentMethodOptions.length === 0"
+                                        icon="credit_card_off"
+                                    >
+                                        <template #title>
+                                            {{
+                                                $t({
+                                                    defaultMessage: 'No payment methods available',
+                                                    id: 'checkout.payment_method_block.no_payment_methods_available_title',
+                                                    description:
+                                                        'The title shown when there are no available payment methods',
+                                                })
+                                            }}
+                                        </template>
+                                        <template #message>
+                                            {{
+                                                $t({
+                                                    defaultMessage:
+                                                        'There are no available payment methods. Please contact support for more information.',
+                                                    id: 'checkout.payment_method_block.no_payment_methods_available_message',
+                                                    description:
+                                                        'The message shown when there are no available payment methods',
+                                                })
+                                            }}
+                                        </template>
+                                    </EmptyStatePlaceholder>
+                                    <PaymentIntegrationForm
+                                        v-else-if="
+                                            invoicePreview &&
+                                            amount &&
+                                            checkoutForm.form.value.country
+                                        "
+                                        ref="paymentIntegrationFormRef"
+                                        :country-code="checkoutForm.form.value.country"
+                                        :context="authorizationContext"
+                                        :amount="amount"
+                                        variant="AUTHORIZE"
+                                        :payment-method-options="paymentMethodOptions ?? []"
+                                        :success-redirect-url="successRedirectUrl"
+                                        :validate-on-submit="handleValidateOnSubmit"
+                                        force-store-payment-method
+                                        @error="(error) => $emit('error', error)"
+                                        @payment-success="isPaid = true"
+                                        @ready="emit('ready')"
+                                    />
+                                </div>
+                            </Skeleton>
                         </template>
                     </CheckoutForm>
                 </div>
 
                 <!-- right -->
                 <div class="flex flex-col gap-2 w-full md:w-72">
-                    <OrderSummary
-                        v-if="subscription"
-                        :subscription="subscription"
-                        :invoice="invoicePreview"
-                        :trial-invoice="trialInvoicePreview"
-                        :enabled-pricing-ids="props.enabledPricingIds"
-                        :trial-period="trialPeriod"
-                        :avatar="avatar"
-                        :is-paid="isPaid"
-                        :is-usage-based="isUsageBased"
-                        :is-preview-and-payment-methods-pending="isPreviewAndPaymentMethodsPending"
-                    />
+                    <Skeleton variant="section" class="min-h-[220px]">
+                        <OrderSummary
+                            v-if="subscription && invoicePreview"
+                            :subscription="subscription"
+                            :invoice="invoicePreview"
+                            :trial-invoice="trialInvoicePreview"
+                            :enabled-pricing-ids="props.enabledPricingIds"
+                            :trial-period="trialPeriod"
+                            :avatar="avatar"
+                            :is-paid="isPaid"
+                            :is-usage-based="isUsageBased"
+                            :is-preview-and-payment-methods-pending="
+                                isPaymentMethodsPending || isInvoicePreviewPending
+                            "
+                        />
+                    </Skeleton>
 
-                    <Button
-                        v-if="!isPaid"
-                        type="button"
-                        size="lg"
-                        class="full-width"
-                        @click="handleSubmit"
-                    >
-                        {{
-                            hasTrialPeriod
-                                ? $t({
-                                      defaultMessage: 'Start trial',
-                                      id: 'checkout.pay_and_subscribe_button_trial.label',
-                                      description:
-                                          'The label of the start trial button in the checkout form',
-                                  })
-                                : $t({
-                                      defaultMessage: 'Pay and subscribe',
-                                      id: 'checkout.pay_and_subscribe_button.label',
-                                      description:
-                                          'The label of the pay and subscribe button in the checkout form',
-                                  })
-                        }}
-                    </Button>
+                    <Skeleton class="min-h-[44px]">
+                        <Button
+                            v-if="!isPaid && invoicePreview && !isInvoicePreviewPending"
+                            type="button"
+                            size="lg"
+                            class="full-width"
+                            @click="handleSubmit"
+                        >
+                            {{
+                                hasTrialPeriod
+                                    ? $t({
+                                          defaultMessage: 'Start trial',
+                                          id: 'checkout.pay_and_subscribe_button_trial.label',
+                                          description:
+                                              'The label of the start trial button in the checkout form',
+                                      })
+                                    : $t({
+                                          defaultMessage: 'Pay and subscribe',
+                                          id: 'checkout.pay_and_subscribe_button.label',
+                                          description:
+                                              'The label of the pay and subscribe button in the checkout form',
+                                      })
+                            }}
+                        </Button>
+                    </Skeleton>
                     <Section
                         v-if="$slots['terms-and-conditions']"
                         :title="

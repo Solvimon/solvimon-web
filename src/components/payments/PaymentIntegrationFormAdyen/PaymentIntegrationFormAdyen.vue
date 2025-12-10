@@ -1,14 +1,13 @@
 <script setup lang="ts">
 import adyenCss from '@adyen/adyen-web/styles/adyen.css?inline';
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
-import {
-    AdyenCheckout,
-    type CoreConfiguration,
-    Dropin,
-    type DropinConfiguration,
-    type PaymentAction,
-    type PaymentAmountExtended,
-    type PaymentMethod,
+import type {
+    Core,
+    CoreConfiguration,
+    DropinConfiguration,
+    PaymentAction,
+    PaymentAmountExtended,
+    PaymentMethod,
 } from '@adyen/adyen-web/auto';
 import type {
     Amount,
@@ -35,10 +34,15 @@ import { createPaymentMethodsService } from '@/services/paymentMethods';
 /**
  * The Adyen instances should be stored in plain objects to avoid issues with Vue's reactivity system.
  * This is because the Adyen SDK is not reactive and does not update when the props change. So keep
- * these variables as plain objects and don't store it in a ref.
+ * these variables as plain objects and don't store it in a ref. They are typed as any, since
+ * no types are exposed. Since we're dynamically importing the Adyen SDK for code splitting,
+ * we can't use the return types either.
  */
-let dropInInstance: Dropin | null = null;
-let checkoutInstance: Awaited<ReturnType<typeof AdyenCheckout>> | null = null;
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let dropInInstance: any | null = null;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let checkoutInstance: any | null = null;
 
 const props = withDefaults(defineProps<PaymentIntegrationFormAdyenProps>(), {
     validateOnSubmit: () => Promise.resolve(true),
@@ -126,6 +130,10 @@ async function mountDropIn() {
 
     try {
         await unmountDropIn();
+
+        // Dynamically import Adyen SDK to enable code splitting
+        const adyenModule = await import('@adyen/adyen-web/auto');
+        const { AdyenCheckout, Dropin } = adyenModule;
 
         const { checkoutConfig, dropInConfig } = await getConfiguration();
 

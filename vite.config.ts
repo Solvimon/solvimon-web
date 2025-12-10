@@ -9,8 +9,16 @@ import string from 'vite-plugin-string';
 
 export default defineConfig({
     build: {
-        minify: false,
+        minify: 'terser',
+        terserOptions: {
+            compress: {
+                drop_console: true,
+                drop_debugger: true,
+                pure_funcs: ['console.log', 'console.info', 'console.debug'],
+            },
+        },
         outDir: fileURLToPath(new URL('./dist', import.meta.url)),
+        chunkSizeWarningLimit: 1000,
         lib: {
             entry: [
                 resolve(__dirname, 'src/entries/index.ts'),
@@ -20,8 +28,14 @@ export default defineConfig({
             fileName: (format, name) => `${name.replace('.ce', '')}.${format}.js`,
         },
         rollupOptions: {
+            external: ['vue', '@solvimon/ui', '@solvimon/types'],
             output: {
                 strict: false, // Setting to make sure cjs exports work (for next.js/webpack outputs)
+                globals: {
+                    vue: 'Vue',
+                    '@solvimon/ui': 'SolvimonUI',
+                    '@solvimon/types': 'SolvimonTypes',
+                },
             },
         },
     },

@@ -39,12 +39,14 @@ const mockUseInvoicePreview = vi.fn<
         invoicePreview: { value: { invoice_amount_including_tax: Amount } | null };
         trialInvoicePreview: { value: { invoice_amount_including_tax: Amount } | null };
         trialPeriod: { value: unknown };
+        isPending: { value: boolean };
         loadInvoicePreview: ReturnType<typeof vi.fn>;
     }
 >(() => ({
     invoicePreview: { value: null },
     trialInvoicePreview: { value: null },
     trialPeriod: { value: null },
+    isPending: { value: false },
     loadInvoicePreview: mockLoadInvoicePreview,
 }));
 
@@ -75,6 +77,7 @@ const mockUseCheckoutForm = vi.fn(() => createMockCheckoutForm());
 
 const mockUsePaymentMethodOptions = vi.fn(() => ({
     paymentMethodOptions: { value: [] },
+    isPending: { value: false },
     loadPaymentMethodOptions: mockLoadPaymentMethodOptions,
 }));
 
@@ -141,7 +144,8 @@ describe('useCheckoutView', () => {
 
         expect(result.subscription.value).toBeUndefined();
         expect(result.isPaid.value).toBe(false);
-        expect(result.isPending).toBe(false);
+        expect(result.isPaymentMethodsPending.value).toBe(false);
+        expect(result.isInvoicePreviewPending.value).toBe(false);
         expect(mockUseCheckoutForm).toHaveBeenCalled();
     });
 
@@ -194,6 +198,7 @@ describe('useCheckoutView', () => {
             },
             trialInvoicePreview: { value: null as { invoice_amount_including_tax: Amount } | null },
             trialPeriod: { value: null },
+            isPending: { value: false },
             loadInvoicePreview: mockLoadInvoicePreview,
         };
 
@@ -357,6 +362,7 @@ describe('useCheckoutView', () => {
                 } | null,
             },
             trialPeriod: { value: null },
+            isPending: { value: false },
             loadInvoicePreview: mockLoadInvoicePreview,
         };
 
@@ -383,6 +389,7 @@ describe('useCheckoutView', () => {
             },
             trialInvoicePreview: { value: null as { invoice_amount_including_tax: Amount } | null },
             trialPeriod: { value: null },
+            isPending: { value: false },
             loadInvoicePreview: mockLoadInvoicePreview,
         };
 
@@ -404,6 +411,7 @@ describe('useCheckoutView', () => {
             invoicePreview: { value: null },
             trialInvoicePreview: { value: null },
             trialPeriod: { value: null },
+            isPending: { value: false },
             loadInvoicePreview: mockLoadInvoicePreview,
         };
 
@@ -442,6 +450,7 @@ describe('useCheckoutView', () => {
             invoicePreview: { value: null as { invoice_amount_including_tax: Amount } | null },
             trialInvoicePreview: { value: null as { invoice_amount_including_tax: Amount } | null },
             trialPeriod: { value: null },
+            isPending: { value: false },
             loadInvoicePreview: mockLoadInvoicePreview,
         };
 

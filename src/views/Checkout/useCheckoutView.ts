@@ -10,6 +10,7 @@ import {
 } from '@solvimon/types';
 import { computed, onMounted, ref, watch } from 'vue';
 import { taxId } from '@solvimon/ui/validators';
+import { watchOnce } from '@vueuse/core';
 import { createSubscriptionsService } from '@/services/subscriptions';
 import { useInvoicePreview } from '@/composables/useInvoicePreview';
 import { useCheckoutForm } from '@/components/customer/CheckoutForm/useCheckoutForm';
@@ -32,6 +33,10 @@ export function useCheckoutView({
     const { getSubscription } = createSubscriptionsService();
 
     const invoicePreview = useInvoicePreview();
+
+    const shouldLoadPaymentMethodOptions = computed(() => {
+        return subscription.value && checkoutForm.form.value.country && amount.value;
+    });
 
     const {
         paymentMethodOptions,
@@ -150,7 +155,7 @@ export function useCheckoutView({
     watch(
         [() => checkoutForm.form.value.country, amount],
         ([country, amountValue]: [CountryCode | undefined, Amount | undefined]) => {
-            if (!subscription.value || !country) {
+            if (!subscription.value || !country || !amountValue) {
                 return;
             }
 
@@ -164,26 +169,18 @@ export function useCheckoutView({
 
     onMounted(async () => {
         await loadSubscription();
+        await loadInvoicePreview();
     });
 
-    /**
-     * Only do this once, when the subscription is loaded.
-     */
-    const stopWatchSubscription = watch(
-        () => subscription.value,
-        (subscription) => {
-            const country = checkoutForm.form.value.country || initialCountry;
-
-            if (!subscription || !country) {
-                return;
-            }
-
-            void loadPaymentMethodOptions({ subscriptionId, country, amount: amount.value });
-            void loadInvoicePreview();
-
-            stopWatchSubscription();
-        },
-    );
+    watchOnce(shouldLoadPaymentMethodOptions, (shouldLoad) => {
+        if (shouldLoad) {
+            void loadPaymentMethodOptions({
+                subscriptionId: subscription.value!.id,
+                country: checkoutForm.form.value.country!,
+                amount: amount.value,
+            });
+        }
+    });
 
     return {
         invoicePreview: invoicePreview.invoicePreview,

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Button, InvoicePreview, Section, Typography, useIntl } from '@solvimon/ui';
+import { Button, Section, Typography, useIntl } from '@solvimon/ui';
 import { computed, onMounted, ref } from 'vue';
 import type { CheckoutEmits, CheckoutProps } from './Checkout.types';
 import { useCheckoutView } from './useCheckoutView';
@@ -106,6 +106,7 @@ onMounted(() => {
                 :subscription-name="subscription?.name ?? ''"
                 :amount="invoicePreview?.invoice_amount_including_tax"
                 :billing-period="subscription?.billing_period"
+                :country-code="checkoutForm.form.value.country"
             />
         </Skeleton>
 
@@ -122,6 +123,7 @@ onMounted(() => {
             :is-preview-and-payment-methods-pending="
                 isPaymentMethodsPending || isInvoicePreviewPending
             "
+            :country-code="checkoutForm.form.value.country"
             class="mt-4 md:hidden"
             collapsible="collapsed"
             no-title
@@ -182,21 +184,6 @@ onMounted(() => {
                                             }}
                                         </template>
                                     </EmptyStatePlaceholder>
-
-                                    <Typography
-                                        v-if="!checkoutForm.form.value.country"
-                                        variant="body-xs"
-                                        shade="lighter"
-                                        >{{
-                                            $t({
-                                                defaultMessage:
-                                                    'Payment methods will be shown after you select a country',
-                                                id: 'checkout.payment_method_block.payment_methods_not_loaded_message',
-                                                description:
-                                                    "The messages shown when no country is selected thus the payment methods can't be shown",
-                                            })
-                                        }}</Typography
-                                    >
                                     <EmptyStatePlaceholder
                                         v-else-if="paymentMethodOptions.length === 0"
                                         icon="credit_card_off"
@@ -258,6 +245,7 @@ onMounted(() => {
                             :trial-invoice="trialInvoicePreview"
                             :enabled-pricing-ids="props.enabledPricingIds"
                             :trial-period="trialPeriod"
+                            :country-code="checkoutForm.form.value.country"
                             :avatar="avatar"
                             :is-paid="isPaid"
                             :is-usage-based="isUsageBased"

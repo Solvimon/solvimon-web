@@ -73,7 +73,17 @@ const createMockCheckoutForm = (overrides?: Partial<CheckoutFormState>) => ({
     getIsFieldRequired: vi.fn(),
 });
 
-const mockUseCheckoutForm = vi.fn(() => createMockCheckoutForm());
+const mockUseCheckoutForm = vi.fn<
+    (args?: {
+        initialState?: Partial<CheckoutFormState>;
+        onRequiredFieldChange?: (form: CheckoutFormState) => void;
+    }) => ReturnType<typeof createMockCheckoutForm>
+>(
+    (args?: {
+        initialState?: Partial<CheckoutFormState>;
+        onRequiredFieldChange?: (form: CheckoutFormState) => void;
+    }) => createMockCheckoutForm(),
+);
 
 const mockUsePaymentMethodOptions = vi.fn(() => ({
     paymentMethodOptions: { value: [] },
@@ -92,7 +102,10 @@ vi.mock('@/composables/useInvoicePreview', () => ({
 }));
 
 vi.mock('@/components/customer/CheckoutForm/useCheckoutForm', () => ({
-    useCheckoutForm: () => mockUseCheckoutForm(),
+    useCheckoutForm: (args?: {
+        initialState?: Partial<CheckoutFormState>;
+        onRequiredFieldChange?: (form: CheckoutFormState) => void;
+    }) => mockUseCheckoutForm(args),
 }));
 
 vi.mock('@/composables/usePaymentMethodOptions', () => ({
@@ -125,6 +138,13 @@ describe('useCheckoutView', () => {
         mockLoadInvoicePreview.mockResolvedValue(undefined);
         mockLoadPaymentMethodOptions.mockResolvedValue(undefined);
         mockTaxIdValidator.mockReturnValue(true);
+        // Reset mock to default implementation
+        mockUseCheckoutForm.mockImplementation(
+            (args?: {
+                initialState?: Partial<CheckoutFormState>;
+                onRequiredFieldChange?: (form: CheckoutFormState) => void;
+            }) => createMockCheckoutForm(),
+        );
     });
 
     afterEach(() => {
@@ -176,6 +196,7 @@ describe('useCheckoutView', () => {
     it('loads invoice preview and payment method options when subscription is loaded', async () => {
         const subscriptionId = 'sub_123' as PricingPlanSubscription['id'];
         const initialCountry = 'NL' as CountryCode;
+        let onRequiredFieldChangeCallback: ((form: CheckoutFormState) => void) | undefined;
 
         const checkoutFormMock = createMockCheckoutForm({
             email: 'test@example.com',
@@ -188,7 +209,17 @@ describe('useCheckoutView', () => {
             postalCode: '1000AA',
         });
 
-        mockUseCheckoutForm.mockReturnValue(checkoutFormMock);
+        mockUseCheckoutForm.mockImplementation(
+            (args?: {
+                initialState?: Partial<CheckoutFormState>;
+                onRequiredFieldChange?: (form: CheckoutFormState) => void;
+            }) => {
+                if (args?.onRequiredFieldChange) {
+                    onRequiredFieldChangeCallback = args.onRequiredFieldChange;
+                }
+                return checkoutFormMock;
+            },
+        );
 
         const invoicePreviewMock = {
             invoicePreview: {
@@ -213,7 +244,13 @@ describe('useCheckoutView', () => {
         // Manually set subscription to trigger watchers
         result.subscription.value = mockSubscription;
         await nextTick();
-        await nextTick();
+
+        // Trigger the onRequiredFieldChange callback to simulate form field change
+        // This is what would happen when a required field changes after subscription is loaded
+        if (onRequiredFieldChangeCallback) {
+            onRequiredFieldChangeCallback(checkoutFormMock.form.value as CheckoutFormState);
+            await nextTick();
+        }
 
         expect(mockLoadInvoicePreview).toHaveBeenCalled();
         expect(mockLoadPaymentMethodOptions).toHaveBeenCalledWith({
@@ -438,7 +475,10 @@ describe('useCheckoutView', () => {
         });
 
         mockUseCheckoutForm.mockImplementation(
-            (args?: { onRequiredFieldChange?: (form: CheckoutFormState) => void }) => {
+            (args?: {
+                initialState?: Partial<CheckoutFormState>;
+                onRequiredFieldChange?: (form: CheckoutFormState) => void;
+            }) => {
                 if (args?.onRequiredFieldChange) {
                     onRequiredFieldChangeCallback = args.onRequiredFieldChange;
                 }
@@ -465,6 +505,9 @@ describe('useCheckoutView', () => {
         // Set subscription value so loadInvoicePreview can be called
         result.subscription.value = mockSubscription;
         await nextTick();
+
+        // Verify callback was captured
+        expect(onRequiredFieldChangeCallback).toBeDefined();
 
         // Simulate required field change
         if (onRequiredFieldChangeCallback) {

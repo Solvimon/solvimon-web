@@ -63,6 +63,7 @@ const { $t } = useIntl();
                     :variant="trialInvoice ? 'without-products' : 'default'"
                     :is-paid="isPaid"
                     :collapsible="collapsible"
+                    :is-preview-without-taxes="!countryCode"
                     is-customer-facing
                 />
                 <Typography v-else variant="body-sm" shade="lighter"

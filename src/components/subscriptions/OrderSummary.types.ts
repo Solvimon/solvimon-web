@@ -1,4 +1,4 @@
-import type { Invoice, Pricing, TimePeriod } from '@solvimon/types';
+import type { CountryCode, Invoice, Pricing, TimePeriod } from '@solvimon/types';
 import type { PricingPlanSubscriptionExpanded } from '@/types/subscription';
 
 export interface OrderSummaryProps {
@@ -51,4 +51,8 @@ export interface OrderSummaryProps {
      * @default false
      */
     noTitle?: boolean;
+    /**
+     * The country code used to calculate the taxes.
+     */
+    countryCode: CountryCode | undefined;
 }

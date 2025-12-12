@@ -69,9 +69,14 @@ const hasSlotContent = computed(() => {
         <template v-if="variant === 'section'">
             <div>
                 <div class="rounded border border-gray-50 bg-gray-50/50 h-6 w-40" />
-                <div class="rounded border border-gray-50 bg-gray-50/50 mt-1 md:mt-2" />
+                <div
+                    :class="[
+                        'rounded border border-gray-50 bg-gray-50/50 mt-1 md:mt-2',
+                        $props.class,
+                    ]"
+                />
             </div>
         </template>
-        <div v-else class="rounded border border-gray-50 bg-gray-50/50" />
+        <div v-else :class="['rounded border border-gray-50 bg-gray-50/50', $props.class]" />
     </template>
 </template>

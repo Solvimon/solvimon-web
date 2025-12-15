@@ -526,11 +526,17 @@ function handleOnError(
     ...args: Parameters<NonNullable<CoreConfiguration['onError']>>
 ): ReturnType<NonNullable<CoreConfiguration['onError']>> {
     const [data, component] = args;
+
+    if (data.name === 'CANCEL') {
+        return;
+    }
+
     const error: Error = {
         code: 'UNKNOWN_ERROR',
         message: 'Something went wrong',
         error: data,
     };
+
     emit('error', error);
     integrationError.value = error;
     component?.unmount();

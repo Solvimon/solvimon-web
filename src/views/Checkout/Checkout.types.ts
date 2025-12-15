@@ -3,6 +3,10 @@ import type { Error } from '@/types/errors';
 
 export interface CheckoutProps {
     /**
+     * The avatar for the checkout.
+     */
+    avatar?: string;
+    /**
      * Optional two letter country code for the customer. When supplied, the correct
      * payment method options and tax will be shown.
      */
@@ -15,10 +19,6 @@ export interface CheckoutProps {
      * Optional enabled pricing ids.
      */
     enabledPricingIds?: string[];
-    /**
-     * Optional avatar.
-     */
-    avatar?: string;
 }
 
 export interface CheckoutEmits {

@@ -23,8 +23,8 @@ if (!props.environment) {
     throw new Error('environment is required');
 }
 
-if (!props.token) {
-    throw new Error('token is required');
+if (!props.token && !props.portalObject) {
+    throw new Error('token or portalObject is required');
 }
 
 const defaultMessages: Record<string, IntlMessages> = {
@@ -55,7 +55,11 @@ const localizedMessages = computed<IntlMessages>(() => ({
     <ErrorHandlingProvider @error="trackSentryException">
         <ConfigProvider v-if="environment" :environment="environment">
             <AuthProvider v-if="token" :token="token">
-                <PortalProvider :token="token" :allowed-portal-types="allowedPortalUrlTypes">
+                <PortalProvider
+                    :token="token"
+                    :allowed-portal-types="allowedPortalTypes"
+                    :portal-object="portalObject"
+                >
                     <IconSpriteProvider>
                         <IntlProvider
                             :locale="locale"

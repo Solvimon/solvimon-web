@@ -6,10 +6,8 @@ import type { ConfigProviderProps } from '@/components/providers/ConfigProvider/
 export interface RequiredProviderProps
     extends AuthProviderProps,
         ConfigProviderProps,
-        IntlProviderProps {
-    allowedPortalUrlTypes: PortalProviderProps['allowedPortalTypes'];
-}
-
+        IntlProviderProps,
+        Pick<PortalProviderProps, 'allowedPortalTypes' | 'portalObject'> {}
 export interface ProviderEmits {
     (e: 'error', error: Error): void;
 }

@@ -1,6 +1,16 @@
 import type { PortalUrl } from '@/services/portals.types';
 
-export interface PortalProviderProps {
-    token: string;
+export type PortalProviderProps = {
+    /**
+     * The token to be used for the portal.
+     */
+    token?: string;
+    /**
+     * The portal object to be used for the portal.
+     */
+    portalObject?: PortalUrl;
+    /**
+     * The allowed portal types.
+     */
     allowedPortalTypes?: PortalUrl['type'][];
-}
+};

@@ -41,13 +41,14 @@ const validEmail = getValidEmail(props.email);
 <template>
     <Provider
         :environment="environment"
-        :token="token"
+        :token="token || portalObject?.token"
         :locale="locale"
+        :portal-object="portalObject"
         :allowed-portal-url-types="['INIT_PRICING_PLAN_SUBSCRIPTION']"
         @error="(error) => $emit('error', error)"
     >
         <Checkout
-            :avatar="avatar"
+            :avatar="branding?.emblem?.public_url"
             :email="validEmail"
             :country-code="validCountryCode"
             :enabled-pricing-ids="enabledPricingIds"

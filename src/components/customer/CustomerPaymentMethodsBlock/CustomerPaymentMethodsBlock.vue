@@ -13,30 +13,34 @@ import {
     type PaymentMethod as PaymentMethodModel,
     type PaymentMethodOptionsResponse,
 } from '@solvimon/types';
-import type {
-    CustomerPaymentMethodsBlockEmits,
-    CustomerPaymentMethodsBlockProps,
-} from './CustomerPaymentMethodsBlock.types';
+import type { CustomerPaymentMethodsBlockEmits } from './CustomerPaymentMethodsBlock.types';
 import type { BlockConfig } from '@/components/customer/OverViewPage.types';
 import { createPaymentMethodsService } from '@/services/paymentMethods';
 
 import ErrorState from '@/components/errorState/ErrorState.vue';
 import Loader from '@/components/shared/Loader.vue';
+import { usePortal } from '@/components/providers/PortalProvider/composables/usePortal';
 
 const DEFAULT_PAYMENT_METHODS_LIMIT = 2;
 
-const props = defineProps<CustomerPaymentMethodsBlockProps>();
 const emit = defineEmits<CustomerPaymentMethodsBlockEmits>();
 
 const { $t } = useIntl();
 const { getPaymentMethods, getPaymentMethodOptions } = createPaymentMethodsService();
+const portal = usePortal();
+
+if (portal.value.type !== 'CUSTOMER') {
+    throw new Error('Invalid portal type');
+}
+
+const portalObject = portal.value;
 
 const paymentMethodOptions = ref<PaymentMethodOptionsResponse>();
 
 const apiStatus = ref<ApiStatus>(ApiStatus.Initial);
 
 const shouldFetchPaymentMethods = computed<boolean>(
-    () => props.portalUrl.customer.display?.payment_acceptors ?? false,
+    () => portalObject.customer.display?.payment_acceptors ?? false,
 );
 
 const paymentMethods = ref<BlockConfig<PaymentMethodModel>>({
@@ -47,7 +51,7 @@ const paymentMethods = ref<BlockConfig<PaymentMethodModel>>({
 
 const fetchPaymentMethods = (): Promise<void> =>
     getPaymentMethods({
-        customerId: props.portalUrl.customer_id,
+        customerId: portalObject.customer_id,
         pagination: { pageSize: DEFAULT_PAYMENT_METHODS_LIMIT, page: 1 },
     }).then((response) => {
         paymentMethods.value = {
@@ -58,7 +62,7 @@ const fetchPaymentMethods = (): Promise<void> =>
     });
 
 const fetchPaymentMethodOptions = (): Promise<void> =>
-    getPaymentMethodOptions({ customerId: props.portalUrl.customer_id }).then((response) => {
+    getPaymentMethodOptions({ customerId: portalObject.customer_id }).then((response) => {
         paymentMethodOptions.value = response;
     });
 

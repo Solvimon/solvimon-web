@@ -19,12 +19,21 @@ import { createSubscriptionsService } from '@/services/subscriptions';
 
 import ErrorState from '@/components/errorState/ErrorState.vue';
 import Loader from '@/components/shared/Loader.vue';
+import { usePortal } from '@/components/providers/PortalProvider/composables/usePortal';
 
 const DEFAULT_SUBSCRIPTIONS_LIMIT = 3;
 const DEFAULT_PAYMENT_METHODS_LIMIT = 2;
 
 const props = defineProps<CustomerSubscriptionsBlockProps>();
 const emit = defineEmits<CustomerSubscriptionsBlockEmits>();
+
+const portal = usePortal();
+
+if (portal.value.type !== 'CUSTOMER') {
+    throw new Error('Invalid portal type');
+}
+
+const portalObject = portal.value;
 
 const { $t } = useIntl();
 const { getPaymentMethods } = createPaymentMethodsService();
@@ -48,7 +57,7 @@ const apiStatus = ref<ApiStatus>(ApiStatus.Initial);
 
 const fetchPaymentMethods = (): Promise<void> =>
     getPaymentMethods({
-        customerId: props.portalUrl.customer_id,
+        customerId: portalObject.customer_id,
         pagination: { pageSize: DEFAULT_PAYMENT_METHODS_LIMIT, page: 1 },
     }).then((response) => {
         paymentMethods.value = {
@@ -60,7 +69,7 @@ const fetchPaymentMethods = (): Promise<void> =>
 
 const fetchSubscriptions = (): Promise<void> =>
     getActiveSubscriptions({
-        customerId: props.portalUrl.customer_id,
+        customerId: portalObject.customer_id,
         pagination: { pageSize: DEFAULT_SUBSCRIPTIONS_LIMIT, page: 1 },
     }).then((response) => {
         let data = response.data;
@@ -80,7 +89,7 @@ const fetchSubscriptions = (): Promise<void> =>
     });
 
 const fetchCustomer = (): Promise<void> =>
-    getCustomer(props.portalUrl.customer_id).then((response) => {
+    getCustomer(portalObject.customer_id).then((response) => {
         customer.value = response;
     });
 
@@ -90,11 +99,11 @@ const runInitialRequests = async (): Promise<void> => {
         await triggerConditionalRequests([
             {
                 request: fetchSubscriptions,
-                condition: !!props.portalUrl.customer.display?.pricing_plan_subscriptions,
+                condition: !!portalObject.customer.display?.pricing_plan_subscriptions,
             },
             {
                 request: fetchPaymentMethods,
-                condition: !!props.portalUrl.customer.display?.payment_acceptors,
+                condition: !!portalObject.customer.display?.payment_acceptors,
             },
             { request: fetchCustomer, condition: true },
         ]);

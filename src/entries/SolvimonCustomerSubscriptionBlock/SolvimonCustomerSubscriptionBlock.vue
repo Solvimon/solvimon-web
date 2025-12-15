@@ -16,10 +16,6 @@ if (!props.environment) {
 if (!props.token) {
     throw new Error('token prop is required');
 }
-
-if (!props.portalUrl) {
-    throw new Error('portalUrl prop is required');
-}
 </script>
 
 <template>
@@ -27,12 +23,12 @@ if (!props.portalUrl) {
         :environment="environment"
         :token="token"
         :locale="locale"
-        :allowed-portal-url-types="['CUSTOMER']"
+        :allowed-portal-types="['CUSTOMER']"
+        :portal-object="portalObject"
         @error="(error) => $emit('error', error)"
     >
         <CustomerSubscriptionBlock
-            :portal-url="props.portalUrl"
-            :hide-cta-buttons="props.hideCtaButtons"
+            :hide-cta-buttons="hideCtaButtons"
             @view-all="(routeName: string) => $emit('view-all', routeName)"
             @view-details="$emit('view-details', $event)"
             @cancel-subscription="$emit('cancel-subscription', $event)"

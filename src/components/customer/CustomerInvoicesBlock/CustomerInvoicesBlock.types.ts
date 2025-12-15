@@ -1,6 +1,6 @@
-import type { PortalUrl, Invoice } from '@solvimon/types';
+import type { Invoice } from '@solvimon/types';
+
 export interface CustomerInvoicesBlockProps {
-    portalUrl: PortalUrl;
     showOverviewLink?: boolean;
 }
 

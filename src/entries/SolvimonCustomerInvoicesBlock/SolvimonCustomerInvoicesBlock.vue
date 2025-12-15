@@ -16,10 +16,6 @@ if (!props.environment) {
 if (!props.token) {
     throw new Error('token prop is required');
 }
-
-if (!props.portalUrl) {
-    throw new Error('portalUrl prop is required');
-}
 </script>
 
 <template>
@@ -27,11 +23,11 @@ if (!props.portalUrl) {
         :environment="environment"
         :token="token"
         :locale="locale"
-        :allowed-portal-url-types="['CUSTOMER']"
+        :allowed-portal-types="['CUSTOMER']"
+        :portal-object="portalObject"
         @error="(error) => $emit('error', error)"
     >
         <CustomerInvoicesBlock
-            :portal-url="props.portalUrl"
             @view-all="(routeName) => $emit('view-all', routeName)"
             @view-invoice="$emit('view-invoice', $event)"
             @pay-invoice="$emit('pay-invoice', $event)"

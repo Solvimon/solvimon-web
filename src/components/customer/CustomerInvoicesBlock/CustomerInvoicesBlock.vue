@@ -11,9 +11,19 @@ import type { BlockConfig } from '@/components/customer/OverViewPage.types';
 import { createInvoicesService } from '@/services/invoices';
 import ErrorState from '@/components/errorState/ErrorState.vue';
 import Loader from '@/components/shared/Loader.vue';
+import { usePortal } from '@/components/providers/PortalProvider/composables/usePortal';
 
 const props = defineProps<CustomerInvoicesBlockProps>();
 const emit = defineEmits<CustomerInvoicesBlockEmits>();
+
+const portal = usePortal();
+
+if (portal.value.type !== 'CUSTOMER') {
+    throw new Error('Invalid portal type');
+}
+
+const portalObject = portal.value;
+
 const { $t } = useIntl();
 const { getInvoices } = createInvoicesService();
 
@@ -28,12 +38,12 @@ const invoices = ref<BlockConfig<Invoice>>({
 });
 
 const shouldFetchInvoices = computed<boolean>(
-    () => props.portalUrl.customer.display?.invoices ?? false,
+    () => portalObject.customer.display?.invoices ?? false,
 );
 
 const fetchInvoices = (): Promise<void> =>
     getInvoices({
-        customerId: props.portalUrl.customer_id,
+        customerId: portalObject.customer_id,
         pagination: { pageSize: PAYMENT_INVOICES_LIMIT, page: 1 },
     }).then((response) => {
         invoices.value = {

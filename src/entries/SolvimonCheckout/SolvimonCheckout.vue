@@ -44,7 +44,7 @@ const validEmail = getValidEmail(props.email);
         :token="token || portalObject?.token"
         :locale="locale"
         :portal-object="portalObject"
-        :allowed-portal-url-types="['INIT_PRICING_PLAN_SUBSCRIPTION']"
+        :allowed-portal-types="['INIT_PRICING_PLAN_SUBSCRIPTION']"
         @error="(error) => $emit('error', error)"
     >
         <Checkout

@@ -12,6 +12,7 @@ import Loader from '@/components/shared/Loader.vue';
 const emit = defineEmits<CustomerBillingInformationBlockEmits>();
 
 const portal = usePortal();
+
 const { getCustomer } = createCustomerService();
 const { $t } = useIntl();
 

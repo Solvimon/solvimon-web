@@ -23,7 +23,8 @@ if (!props.invoiceId) {
         :environment="environment"
         :token="token"
         :locale="locale"
-        :allowed-portal-url-types="['INVOICE', 'CUSTOMER']"
+        :allowed-portal-types="['INVOICE', 'CUSTOMER']"
+        :portal-object="portalObject"
         @error="(error) => $emit('error', error)"
     >
         <PaymentHistoryBlockContent v-if="invoiceId" :invoice-id="invoiceId" />

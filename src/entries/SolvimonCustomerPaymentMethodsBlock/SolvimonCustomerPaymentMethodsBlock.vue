@@ -5,6 +5,7 @@ import type {
 } from './SolvimonCustomerPaymentMethodsBlock.types';
 import Provider from '@/components/providers/Provider/Provider.vue';
 import CustomerPaymentMethodsBlock from '@/components/customer/CustomerPaymentMethodsBlock/CustomerPaymentMethodsBlock.vue';
+import { usePortal } from '@/components/providers/PortalProvider/composables/usePortal';
 
 const props = defineProps<Partial<SolvimonCustomerPaymentMethodsBlockProps>>();
 defineEmits<SolvimonCustomerPaymentMethodsBlockEmits>();
@@ -16,10 +17,6 @@ if (!props.environment) {
 if (!props.token) {
     throw new Error('token prop is required');
 }
-
-if (!props.portalUrl) {
-    throw new Error('portalUrl prop is required');
-}
 </script>
 
 <template>
@@ -27,11 +24,11 @@ if (!props.portalUrl) {
         :environment="environment"
         :token="token"
         :locale="locale"
-        :allowed-portal-url-types="['CUSTOMER']"
+        :allowed-portal-types="['CUSTOMER']"
+        :portal-object="portalObject"
         @error="(error) => $emit('error', error)"
     >
         <CustomerPaymentMethodsBlock
-            :portal-url="props.portalUrl"
             @payment-method-updated="() => $emit('payment-method-updated')"
             @view-all="(routeName) => $emit('view-all', routeName)"
             @add-payment-method="(routeName) => $emit('add-payment-method', routeName)"

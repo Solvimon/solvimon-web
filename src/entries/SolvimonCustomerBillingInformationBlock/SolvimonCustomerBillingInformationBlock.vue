@@ -23,7 +23,8 @@ if (!props.token) {
         :environment="environment"
         :token="token"
         :locale="locale"
-        :allowed-portal-url-types="['CUSTOMER']"
+        :allowed-portal-types="['CUSTOMER']"
+        :portal-object="portalObject"
         @error="(error) => $emit('error', error)"
     >
         <CustomerBillingInformationBlock

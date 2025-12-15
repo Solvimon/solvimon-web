@@ -1,7 +1,4 @@
-import type { PortalUrl } from '@solvimon/types';
-
 export interface CustomerSubscriptionsBlockProps {
-    portalUrl: PortalUrl;
     subscriptionIds?: string[];
     hideCtaButtons?: boolean;
 }

@@ -2,7 +2,6 @@
 import adyenCss from '@adyen/adyen-web/styles/adyen.css?inline';
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import type {
-    Core,
     CoreConfiguration,
     DropinConfiguration,
     PaymentAction,
@@ -267,7 +266,7 @@ function injectStylesToShadowRoot() {
 function handleOnSubmit(
     ...args: Parameters<NonNullable<CoreConfiguration['onSubmit']>>
 ): ReturnType<NonNullable<CoreConfiguration['onSubmit']>> {
-    const [state, component, actions] = args;
+    const [state, _component, actions] = args;
 
     props
         .validateOnSubmit()
@@ -306,15 +305,6 @@ function handleOnSubmit(
                     .then((paymentResult) => {
                         const paymentMethodType = state.data.paymentMethod.type;
 
-                        if (
-                            paymentResult.status === 'SUCCESS' &&
-                            paymentResult.payment.result === 'AUTHORIZED'
-                        ) {
-                            showPaymentSuccess.value = true;
-                            actions.resolve({ resultCode: 'Authorised' });
-                            return;
-                        }
-
                         if (paymentResult.status === 'FAILURE') {
                             emit('error', {
                                 code: 'AUTHORIZATION_FAILED',
@@ -333,6 +323,7 @@ function handleOnSubmit(
                                 paymentResult,
                                 paymentMethodType,
                             );
+
                             if (!requiredAction) {
                                 emit('error', {
                                     code: 'AUTHORIZATION_FAILED',
@@ -342,16 +333,17 @@ function handleOnSubmit(
                                 return;
                             }
 
-                            component.handleAction(requiredAction);
+                            dropInInstance.handleAction(requiredAction);
+
+                            actions.resolve({
+                                resultCode: paymentResult.action.adyen.result_code,
+                                action: requiredAction,
+                            });
                             return;
                         }
 
-                        emit('error', {
-                            code: 'AUTHORIZATION_FAILED',
-                            message: `Failed payment authorization for payment acceptor with id ${paymentAcceptorId}`,
-                            error: paymentResult,
-                        });
-                        actions.resolve({ resultCode: 'Error' });
+                        showPaymentSuccess.value = true;
+                        actions.resolve({ resultCode: 'Authorised' });
                     })
                     .catch((error) => {
                         emit('error', {
@@ -384,15 +376,6 @@ function handleOnSubmit(
                     .then((paymentResult) => {
                         const paymentMethodType = state.data.paymentMethod.type;
 
-                        if (
-                            paymentResult.status === 'SUCCESS' &&
-                            paymentResult.payment.result === 'AUTHORIZED'
-                        ) {
-                            showPaymentSuccess.value = true;
-                            actions.resolve({ resultCode: 'Authorised' });
-                            return;
-                        }
-
                         if (paymentResult.status === 'FAILURE') {
                             emit('error', {
                                 code: 'TOKENIZE_FAILED',
@@ -411,6 +394,7 @@ function handleOnSubmit(
                                 paymentResult,
                                 paymentMethodType,
                             );
+
                             if (!requiredAction) {
                                 emit('error', {
                                     code: 'AUTHORIZATION_FAILED',
@@ -420,16 +404,17 @@ function handleOnSubmit(
                                 return;
                             }
 
-                            component.handleAction(requiredAction);
+                            dropInInstance.handleAction(requiredAction);
+
+                            actions.resolve({
+                                resultCode: paymentResult.action.adyen.result_code,
+                                action: requiredAction,
+                            });
                             return;
                         }
 
-                        emit('error', {
-                            code: 'TOKENIZE_FAILED',
-                            message: 'Tokenization failed',
-                            error: paymentResult,
-                        });
-                        actions.resolve({ resultCode: 'Error' });
+                        showPaymentSuccess.value = true;
+                        actions.resolve({ resultCode: 'Authorised' });
                     })
                     .catch((error) => {
                         emit('error', {

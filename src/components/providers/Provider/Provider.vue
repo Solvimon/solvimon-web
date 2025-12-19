@@ -4,6 +4,7 @@ import {
     IntlProvider,
     ErrorHandlingProvider,
     type IntlMessages,
+    BrandProvider,
 } from '@solvimon/ui';
 import nlNlUiTranslations from '@solvimon/ui/translations/nl-NL';
 import enUsUiTranslations from '@solvimon/ui/translations/en-US';
@@ -15,6 +16,7 @@ import nlNlSdkTranslations from '@/translations/nl-NL.json';
 import enUsSdkTranslations from '@/translations/en-US.json';
 import ConfigProvider from '@/components/providers/ConfigProvider/ConfigProvider.vue';
 import PortalProvider from '@/components/providers/PortalProvider/PortalProvider.vue';
+import TeleportProvider from '../TeleportProvider/TeleportProvider.vue';
 
 const props = defineProps<ProviderProps>();
 defineEmits<ProviderEmits>();
@@ -53,27 +55,32 @@ const localizedMessages = computed<IntlMessages>(() => ({
 
 <template>
     <ErrorHandlingProvider @error="trackSentryException">
-        <ConfigProvider v-if="environment" :environment="environment">
-            <AuthProvider v-if="token" :token="token">
-                <PortalProvider
-                    :token="token"
-                    :allowed-portal-types="allowedPortalTypes"
-                    :portal-object="portalObject"
-                >
-                    <IconSpriteProvider>
-                        <IntlProvider
-                            :locale="locale"
-                            :date-locale="dateLocale"
-                            :messages="localizedMessages"
-                            :show-timezones="false"
-                        >
-                            <IconSpriteProvider>
+        <TeleportProvider>
+            <BrandProvider
+                :primary-color="primaryColor"
+                :secondary-color="secondaryColor"
+                is-shadow-root
+            />
+            <ConfigProvider v-if="environment" :environment="environment">
+                <AuthProvider v-if="token" :token="token">
+                    <PortalProvider
+                        :token="token"
+                        :allowed-portal-types="allowedPortalTypes"
+                        :portal-object="portalObject"
+                    >
+                        <IconSpriteProvider>
+                            <IntlProvider
+                                :locale="locale"
+                                :date-locale="dateLocale"
+                                :messages="localizedMessages"
+                                :show-timezones="false"
+                            >
                                 <slot />
-                            </IconSpriteProvider>
-                        </IntlProvider>
-                    </IconSpriteProvider>
-                </PortalProvider>
-            </AuthProvider>
-        </ConfigProvider>
+                            </IntlProvider>
+                        </IconSpriteProvider>
+                    </PortalProvider>
+                </AuthProvider>
+            </ConfigProvider>
+        </TeleportProvider>
     </ErrorHandlingProvider>
 </template>

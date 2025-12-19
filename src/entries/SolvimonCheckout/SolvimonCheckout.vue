@@ -45,6 +45,8 @@ const validEmail = getValidEmail(props.email);
         :locale="locale"
         :portal-object="portalObject"
         :allowed-portal-types="['INIT_PRICING_PLAN_SUBSCRIPTION']"
+        :primary-color="branding?.colors?.primary"
+        :secondary-color="branding?.colors?.secondary"
         @error="(error) => $emit('error', error)"
     >
         <Checkout

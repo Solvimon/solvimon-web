@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { provide, ref, type Ref } from 'vue';
+import { provide, ref, toRef } from 'vue';
 import type { PortalProviderProps } from './PortalProvider.types';
 import {
     getPortal,
@@ -9,14 +9,10 @@ import type { PortalUrl } from '@/services/portals.types';
 
 const props = defineProps<PortalProviderProps>();
 
-const portal = ref<PortalUrl | undefined>(props.portalObject);
-
-if (!portal.value && props.token) {
-    portal.value = getPortal({
-        token: props.token,
-        allowedPortalTypes: props.allowedPortalTypes,
-    }).value;
-}
+const portal =
+    props.portalObject === undefined && props.token
+        ? getPortal({ token: props.token, allowedPortalTypes: props.allowedPortalTypes })
+        : toRef(props.portalObject);
 
 provide(PORTAL_INJECTION_KEY, portal);
 </script>

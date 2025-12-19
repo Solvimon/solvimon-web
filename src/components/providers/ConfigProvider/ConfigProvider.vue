@@ -6,6 +6,7 @@ import { getConfig } from '@/config/lib';
 
 const props = defineProps<ConfigProviderProps>();
 const config = getConfig(props.environment);
+
 provide(CONFIG_INJECTION_KEY, config);
 </script>
 

@@ -5,6 +5,7 @@ import type { AuthProviderProps } from './AuthProvider.types';
 
 const props = defineProps<AuthProviderProps>();
 const auth = getAuth(props.token);
+
 provide(AUTH_INJECTION_KEY, auth);
 </script>
 

@@ -6,6 +6,7 @@ import vueDevTools from 'vite-plugin-vue-devtools';
 import { glob } from 'glob';
 import dts from 'vite-plugin-dts';
 import string from 'vite-plugin-string';
+import type { ElementNode, AttributeNode, TemplateChildNode, RootNode } from '@vue/compiler-core';
 
 export default defineConfig({
     build: {
@@ -40,7 +41,14 @@ export default defineConfig({
         },
     },
     plugins: [
-        vue({ features: { customElement: true } }),
+        vue({
+            features: { customElement: true },
+            template: {
+                compilerOptions: {
+                    nodeTransforms: [removeAttributes(process.env.ENVIRONMENT === 'LIVE')],
+                },
+            },
+        }),
         string({
             include: ['**/*.css'],
         }),
@@ -53,3 +61,25 @@ export default defineConfig({
         },
     },
 });
+
+/**
+ * Automatically remove all `data-testid` attributes for production builds.
+ */
+function removeAttributes(isProduction = false) {
+    return (node: TemplateChildNode | RootNode) => {
+        const ATTRIBUTES_TO_REMOVE = ['data-testid'];
+
+        if (node.type !== 1 || !isProduction) {
+            return;
+        }
+
+        const elementNode = node as ElementNode;
+        elementNode.props = elementNode.props.filter((prop) => {
+            if (prop.type === 6) {
+                const attrNode = prop as AttributeNode;
+                return !ATTRIBUTES_TO_REMOVE.includes(attrNode.name);
+            }
+            return true;
+        });
+    };
+}

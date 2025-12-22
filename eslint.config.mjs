@@ -82,7 +82,7 @@ export default defineConfigWithVueTs(
             'vue/no-undef-components': [
                 'error',
                 {
-                    ignorePatterns: ['RouterView', 'RouterLink'],
+                    ignorePatterns: ['RouterView', 'RouterLink', 'solvimon-.*'],
                 },
             ],
             'vue/attributes-order': 'error',
@@ -102,6 +102,13 @@ export default defineConfigWithVueTs(
                     ],
                 },
             ],
+        },
+    },
+    // Override for test app files
+    {
+        files: ['tests/app/**/*.{ts,vue}'],
+        rules: {
+            'no-console': 'off',
         },
     },
 );

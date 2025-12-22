@@ -2,3 +2,11 @@
 dist
 coverage
 node_modules
+
+# Playwright
+tests/playwright/test-results/
+tests/playwright/report/
+tests/playwright/results.xml
+
+# ESLint
+.eslintcache

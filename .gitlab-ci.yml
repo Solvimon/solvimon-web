@@ -5,6 +5,7 @@ variables:
 
 stages:
     - build
+    - test
 
 cache:
     key:
@@ -12,13 +13,12 @@ cache:
             - package-lock.json
     paths:
         - .npm/
+        - .cache/ms-playwright/
     policy: pull
 
 build-and-test:
     stage: build
     timeout: 5m
-    variables:
-        CYPRESS_INSTALL_BINARY: 0
     script:
         - npm ci --cache .npm --prefer-offline
         # Run prebuild steps and build ui packages so imported generated files are there
@@ -32,3 +32,36 @@ build-and-test:
         - npm run translations:compile -w packages/sdk
         - npm run translations:check -w packages/sdk
         - npm run build -w packages/sdk
+    artifacts:
+        paths:
+            - packages/ui/dist
+            - packages/sdk/dist
+        expire_in: 1 week
+
+test:e2e:
+    stage: test
+    timeout: 15m
+    dependencies:
+        - build-and-test
+    cache:
+        key:
+            files:
+                - package-lock.json
+        paths:
+            - .npm/
+            - .cache/ms-playwright/
+        policy: pull-push
+    before_script:
+        - npm ci --cache .npm --prefer-offline
+        - npx playwright install --with-deps chromium
+        - npm run test:ssl:generate -w packages/sdk || true
+    script:
+        - npm run test:e2e -w packages/sdk
+    artifacts:
+        when: always
+        paths:
+            - packages/sdk/tests/playwright/report/
+            - packages/sdk/tests/playwright/test-results/
+        reports:
+            junit: packages/sdk/tests/playwright/results.xml
+        expire_in: 1 week

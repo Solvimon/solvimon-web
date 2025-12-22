@@ -1,7 +1,7 @@
 {
     "extends": "@tsconfig/node22",
-    "include": ["*.config.*", "package.json", "scripts/*.ts"],
-    "exclude": ["src/**/__tests__/*", "src/**/*.spec.ts", "dist/*"],
+    "include": ["*.config.*", "global.config.ts", "package.json", "scripts/*.ts"],
+    "exclude": ["src/**/__tests__/*", "src/**/*.spec.ts", "tests/**/*", "dist/*"],
     "compilerOptions": {
         "esModuleInterop": true,
         "allowSyntheticDefaultImports": true,
@@ -10,6 +10,7 @@
         "importsNotUsedAsValues": "remove",
         "verbatimModuleSyntax": true,
         "composite": true,
-        "lib": ["ES2020"]
+        "lib": ["ES2020"],
+        "types": ["node"]
     }
 }

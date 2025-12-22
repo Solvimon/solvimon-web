@@ -94,6 +94,7 @@ const readableCountryName = computed(() =>
                                 v-model="model.email"
                                 required
                                 type="email"
+                                name="email"
                                 :disabled="!!readOnlyEmail"
                                 :label="
                                     $t({
@@ -117,6 +118,7 @@ const readableCountryName = computed(() =>
                             <CountrySelect
                                 v-model:single-model-value="model.country"
                                 required
+                                name="country"
                                 :label="
                                     $t({
                                         defaultMessage: 'Billing country',

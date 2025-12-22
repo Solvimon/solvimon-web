@@ -6,7 +6,7 @@ import type {
     DropinConfiguration,
     PaymentAction,
     PaymentAmountExtended,
-    PaymentMethod,
+    RawPaymentMethod
 } from '@adyen/adyen-web/auto';
 import type {
     Amount,
@@ -609,7 +609,7 @@ function handleRedirectResult() {
     });
 }
 
-function mapAdyenPaymentMethod(adyen: PaymentMethodOptionAdyen['adyen']): PaymentMethod {
+function mapAdyenPaymentMethod(adyen: PaymentMethodOptionAdyen['adyen']): RawPaymentMethod {
     return {
         type: adyen.type,
         name: adyen.name,

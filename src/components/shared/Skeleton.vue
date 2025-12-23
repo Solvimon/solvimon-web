@@ -55,7 +55,7 @@ const isVnodeEmpty = (node: unknown): boolean => {
 const hasSlotContent = computed(() => {
     if (!slots.default) return false;
 
-    const vnodes = slots.default();
+    const vnodes = slots.default({});
     if (!vnodes || vnodes.length === 0) return false;
 
     // Slot has content if at least one vnode is not empty

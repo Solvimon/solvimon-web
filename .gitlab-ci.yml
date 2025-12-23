@@ -21,10 +21,7 @@ build-and-test:
     timeout: 5m
     script:
         - npm ci --cache .npm --prefer-offline
-        # Run prebuild steps and build ui packages so imported generated files are there
-        - npm run prebuild -w packages/sdk
         - npm run build -w packages/ui
-
         - npm run lint:ci -w packages/sdk
         - npm run type-check -w packages/sdk
         - npm run test:unit -w packages/sdk

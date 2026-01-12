@@ -5,6 +5,7 @@ import type {
 } from './SolvimonCustomerInvoicesBlock.types';
 import Provider from '@/components/providers/Provider/Provider.vue';
 import CustomerInvoicesBlock from '@/components/customer/CustomerInvoicesBlock/CustomerInvoicesBlock.vue';
+import { COMPONENT_NAME } from './SolvimonCustomerInvoicesBlock.ce';
 
 const props = defineProps<Partial<SolvimonCustomerInvoicesBlockProps>>();
 defineEmits<SolvimonCustomerInvoicesBlockEmits>();
@@ -20,6 +21,7 @@ if (!props.token) {
 
 <template>
     <Provider
+        :custom-element-name="COMPONENT_NAME"
         :environment="environment"
         :token="token"
         :locale="locale"

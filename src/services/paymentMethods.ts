@@ -95,7 +95,7 @@ export function createPaymentMethodsService() {
                 ...(customerId ? { customer_id: customerId } : {}),
                 ...(country ? { country } : {}),
                 ...(subscriptionId ? { pricing_plan_subscription_id: subscriptionId } : {}),
-                ...(amount ? { amount } : {}),
+                ...(amount ? { amount: { currency: amount.currency, quantity: '9.99' } } : {}),
             },
         });
     }

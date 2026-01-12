@@ -23,6 +23,18 @@
     "defaultMessage": "Billing address",
     "description": "Address line 1 of the customer address in the checkout form"
   },
+  "checkout.agreement.subscription": {
+    "defaultMessage": "{subscription_amount}/{billing_period} until canceled, starting {start_date, date, long}.",
+    "description": "The agreement for the subscription"
+  },
+  "checkout.agreement.trial": {
+    "defaultMessage": "{discounted_amount} for {trial_period}, then {subscription_amount}/{billing_period} until canceled, starting {start_date, date, ::MMMMd}.",
+    "description": "The agreement for the trial period"
+  },
+  "checkout.agreement.trial.free": {
+    "defaultMessage": "Free",
+    "description": "The free amount for the trial period"
+  },
   "checkout.billing_details.add_billing_details_button.label": {
     "defaultMessage": "More billing details",
     "description": "Label of the button in the checkout that lets you fill out all billing details"
@@ -54,6 +66,14 @@
   "checkout.email_address.placeholder": {
     "defaultMessage": "Email address...",
     "description": "The email address of the customer in the checkout form"
+  },
+  "checkout.express_payment_methods.divider_text": {
+    "defaultMessage": "Or",
+    "description": "The text of the divider text in the express payment methods block in the checkout form"
+  },
+  "checkout.express_payment_methods.title": {
+    "defaultMessage": "Subscribe instantly with",
+    "description": "The title of the express payment methods block in the checkout form"
   },
   "checkout.invoice_preview.no_country_selected_message": {
     "defaultMessage": "Please select a country first",
@@ -111,9 +131,21 @@
     "defaultMessage": "Start trial",
     "description": "The label of the start trial button in the checkout form"
   },
-  "checkout.payment_method_block.payment_methods_not_loaded_message": {
-    "defaultMessage": "Payment methods will be shown after you select a country",
-    "description": "The messages shown when no country is selected thus the payment methods can't be shown"
+  "checkout.payment_method_block.no_country_selected_message": {
+    "defaultMessage": "Payment methods will be shown after you select the billing country.",
+    "description": "The message shown when no country is selected"
+  },
+  "checkout.payment_method_block.no_country_selected_title": {
+    "defaultMessage": "Select your billing country",
+    "description": "The title shown when no country is selected"
+  },
+  "checkout.payment_method_block.no_payment_methods_available_message": {
+    "defaultMessage": "There are no available payment methods. Please contact support for more information.",
+    "description": "The message shown when there are no available payment methods"
+  },
+  "checkout.payment_method_block.no_payment_methods_available_title": {
+    "defaultMessage": "No payment methods available",
+    "description": "The title shown when there are no available payment methods"
   },
   "checkout.payment_method_block.title": {
     "defaultMessage": "Payment method",
@@ -124,15 +156,19 @@
     "description": "The message shown when no country is selected in the checkout"
   },
   "checkout.subscription_description": {
-    "defaultMessage": "<strong>{price}</strong> per {period_name} starting today",
+    "defaultMessage": "You will be billed <strong>{price}</strong> per {period_name}, starting today.",
     "description": "The description of the subscription"
   },
   "checkout.terms_and_conditions_block.title": {
     "defaultMessage": "Terms and conditions",
     "description": "The title of the terms and conditions block in the checkout"
   },
+  "checkout.trial.label": {
+    "defaultMessage": "Trial",
+    "description": "The label of the trial"
+  },
   "checkout.trial_period_description": {
-    "defaultMessage": "<strong>{price}</strong> per {period_name} starting {startDate, date, long}",
+    "defaultMessage": "You will be billed <strong>{price}</strong> per {period_name}, starting {startDate, date, long}.",
     "description": "The description of the trial period"
   },
   "checkout.vat_number.label": {
@@ -258,6 +294,10 @@
   "empty_state.retry.button": {
     "defaultMessage": "Refresh",
     "description": "Label of the button in the error state that lets you retry your action"
+  },
+  "invoice_preview.taxes_not_determined_by_billing_information_tooltip": {
+    "defaultMessage": "Will be determined by billing information",
+    "description": "Tooltip content for the invoice preview when taxes are not determined by billing information"
   },
   "invoice_table.chip.paid": {
     "defaultMessage": "Paid",

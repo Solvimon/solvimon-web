@@ -1,12 +1,13 @@
-import {
-    type PricingPlanSubscriptionExpanded,
-    type Pricing,
-    type PricingPlanSubscription,
-    type CountryCode,
-    type Address,
-    type AuthorizePaymentPayload,
-    type Name,
-    type Amount,
+import type {
+    PricingPlanSubscriptionExpanded,
+    Pricing,
+    PricingPlanSubscription,
+    CountryCode,
+    Address,
+    AuthorizePaymentPayload,
+    Name,
+    Amount,
+    Invoice,
 } from '@solvimon/types';
 import { computed, onMounted, ref, watch } from 'vue';
 import { taxId } from '@solvimon/ui/validators';
@@ -15,6 +16,7 @@ import { createSubscriptionsService } from '@/services/subscriptions';
 import { useInvoicePreview } from '@/composables/useInvoicePreview';
 import { useCheckoutForm } from '@/components/customer/CheckoutForm/useCheckoutForm';
 import { usePaymentMethodOptions } from '@/composables/usePaymentMethodOptions';
+import type { CheckoutFormState } from '@/components/customer/CheckoutForm/CheckoutForm.types';
 
 export function useCheckoutView({
     initialCountry,
@@ -44,13 +46,33 @@ export function useCheckoutView({
         isPending: isPaymentMethodsPending,
     } = usePaymentMethodOptions();
 
-    const loadInvoicePreview = async () => {
-        await invoicePreview.loadInvoicePreview({
+    const loadInvoicePreview = () => {
+        return invoicePreview.loadInvoicePreview({
             subscription: subscription.value!,
-            subscriptionStartAt: subscription.value!.pricing_plan_schedule_infos[0]!.start_at!,
             checkoutForm: checkoutForm.form.value,
             enabledPricingIds,
         });
+    };
+
+    /**
+     * This function updates the invoice preview when the billing information changes
+     */
+    const updateInvoicePreviewOnBillingInformationChange = async (
+        formState: Partial<CheckoutFormState>,
+    ): Promise<{
+        trialInvoicePreview: Invoice;
+        invoicePreview: Invoice;
+    }> => {
+        await invoicePreview.loadInvoicePreview({
+            subscription: subscription.value!,
+            checkoutForm: { ...checkoutForm.form.value, ...formState },
+            enabledPricingIds,
+        });
+
+        return {
+            trialInvoicePreview: invoicePreview.trialInvoicePreview.value!,
+            invoicePreview: invoicePreview.invoicePreview.value!,
+        };
     };
 
     const checkoutForm = useCheckoutForm({
@@ -186,6 +208,7 @@ export function useCheckoutView({
         invoicePreview: invoicePreview.invoicePreview,
         trialInvoicePreview: invoicePreview.trialInvoicePreview,
         trialPeriod: invoicePreview.trialPeriod,
+        updateInvoicePreviewOnBillingInformationChange,
         paymentMethodOptions,
         isPaymentMethodsPending: isPaymentMethodsPending,
         isInvoicePreviewPending: invoicePreview.isPending,

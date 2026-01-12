@@ -64,10 +64,19 @@ const hasSlotContent = computed(() => {
 </script>
 
 <template>
-    <slot name="default" v-if="hasSlotContent" />
+    <slot v-if="hasSlotContent" name="default" />
     <template v-else>
-        <template v-if="variant === 'section'">
-            <div>
+        <template v-if="variant === 'title'">
+            <div v-bind="$attrs" class="rounded border border-gray-50 bg-gray-50/50 h-6 w-40" />
+        </template>
+        <template v-else-if="variant === 'divider-text'">
+            <div
+                v-bind="$attrs"
+                class="rounded border border-gray-50 bg-gray-50/50 h-4 w-12 mx-auto"
+            />
+        </template>
+        <template v-else-if="variant === 'section'">
+            <div v-bind="$attrs">
                 <div class="rounded border border-gray-50 bg-gray-50/50 h-6 w-40" />
                 <div
                     :class="[
@@ -77,6 +86,10 @@ const hasSlotContent = computed(() => {
                 />
             </div>
         </template>
-        <div v-else :class="['rounded border border-gray-50 bg-gray-50/50', $props.class]" />
+        <div
+            v-else
+            v-bind="$attrs"
+            :class="['rounded border border-gray-50 bg-gray-50/50', $props.class]"
+        />
     </template>
 </template>

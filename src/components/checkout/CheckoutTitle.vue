@@ -2,7 +2,6 @@
 import {
     formatAmount,
     formatBillingPeriod,
-    offsetDateWithTimePeriod,
     Skeleton,
     Tooltip,
     TooltipContent,
@@ -22,7 +21,7 @@ const { $t } = useIntl();
     <div>
         <Typography variant="heading-1" class="inline-block"
             >{{
-                trialPeriod
+                trialStartDate
                     ? subscriptionName
                     : $t({
                           defaultMessage: 'Pay and subscribe',
@@ -38,7 +37,7 @@ const { $t } = useIntl();
         /></Typography>
     </div>
     <Typography variant="body-sm" shade="lighter" no-spacing>
-        <span class="flex items-center" v-if="!countryCode">
+        <span v-if="!countryCode" class="flex items-center">
             <Tooltip is-dark-mode>
                 <Skeleton
                     width-class="w-10"
@@ -61,18 +60,17 @@ const { $t } = useIntl();
             </Tooltip>
             <span
                 v-html="
-                    trialPeriod
+                    trialStartDate
                         ? $t(
                               {
                                   defaultMessage:
-                                      'per {period_name} starting {startDate, date, long}',
+                                      'per {period_name} starting, {startDate, date, long}',
                                   id: 'checkout.trial_period_description',
                                   description: 'The description of the trial period',
                               },
                               {
-                                  // TODO: This is the proper type, but formatjs does not support it yet
-                                  // @ts-ignore
-                                  startDate: offsetDateWithTimePeriod(new Date(), trialPeriod),
+                                  // @ts-expect-error formatjs does not support this type yet
+                                  startDate: subscriptionStartDate,
                                   period_name: formatBillingPeriod(billingPeriod, {
                                       short: true,
                                       hideValueForExactPeriods: true,
@@ -81,7 +79,7 @@ const { $t } = useIntl();
                           )
                         : $t(
                               {
-                                  defaultMessage: 'per {period_name} starting today',
+                                  defaultMessage: 'per {period_name}, starting today',
                                   id: 'checkout.subscription_description',
                                   description: 'The description of the subscription',
                               },
@@ -98,19 +96,18 @@ const { $t } = useIntl();
         <span
             v-else
             v-html="
-                trialPeriod
+                trialStartDate
                     ? $t(
                           {
                               defaultMessage:
-                                  '<strong>{price}</strong> per {period_name} starting {startDate, date, long}',
+                                  'You will be billed <strong>{price}</strong> per {period_name}, starting {startDate, date, long}.',
                               id: 'checkout.trial_period_description',
                               description: 'The description of the trial period',
                           },
                           {
                               price: formatAmount(amount),
-                              // TODO: This is the proper type, but formatjs does not support it yet
-                              // @ts-ignore
-                              startDate: offsetDateWithTimePeriod(new Date(), trialPeriod),
+                              // @ts-expect-error formatjs does not support this type yet
+                              startDate: subscriptionStartDate,
                               period_name: formatBillingPeriod(billingPeriod, {
                                   short: true,
                                   hideValueForExactPeriods: true,
@@ -122,7 +119,7 @@ const { $t } = useIntl();
                     : $t(
                           {
                               defaultMessage:
-                                  '<strong>{price}</strong> per {period_name} starting today',
+                                  'You will be billed <strong>{price}</strong> per {period_name}, starting today.',
                               id: 'checkout.subscription_description',
                               description: 'The description of the subscription',
                           },

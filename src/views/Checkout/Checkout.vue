@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { Button, Section, Typography, useIntl } from '@solvimon/ui';
+import { Button, formatAmount, Section, Typography, useIntl, useTimePeriod } from '@solvimon/ui';
 import { computed, onMounted, ref } from 'vue';
+import type { Address, CountryCode } from '@solvimon/types';
 import type { CheckoutEmits, CheckoutProps } from './Checkout.types';
 import { useCheckoutView } from './useCheckoutView';
 import { usePortal } from '@/components/providers/PortalProvider/composables/usePortal';
@@ -11,11 +12,13 @@ import CheckoutTitle from '@/components/checkout/CheckoutTitle.vue';
 import { isInvoiceUsageBased } from '@/utils/invoice';
 import CheckoutNotAvailable from '@/components/checkout/CheckoutNotAvailable.vue';
 import type { Error } from '@/types/errors';
-import { trackSentryException } from '@/utils/errorTracking';
 import SubscriptionPaymentCompletedCard from '@/components/payments/SubscriptionPaymentCompletedCard/SubscriptionPaymentCompletedCard.vue';
 import OrderSummary from '@/components/subscriptions/OrderSummary.vue';
 import EmptyStatePlaceholder from '@/components/checkout/EmptyStatePlaceholder.vue';
 import Skeleton from '@/components/shared/Skeleton.vue';
+import ExpressPaymentMethods from '@/components/payments/ExpressPaymentMethods/ExpressPaymentMethods.vue';
+import { useExperimentalFeature } from '@/components/providers/ExperimentalFeatureProvider/composables/useExperimentalFeature';
+import { useLogger } from '@/components/providers';
 
 const props = defineProps<CheckoutProps>();
 const emit = defineEmits<CheckoutEmits>();
@@ -23,10 +26,16 @@ const emit = defineEmits<CheckoutEmits>();
 const criticalError = ref<Error>();
 const paymentIntegrationFormRef = ref();
 
-const { $t } = useIntl();
+const logger = useLogger();
+const { $t, locale } = useIntl();
+const { formatTimePeriod } = useTimePeriod();
 const portal = usePortal();
+const experimentalFeatures = useExperimentalFeature();
+
+logger.info('COMPONENT_INITIALIZED', 'Checkout component initialized');
 
 if (portal.value?.type !== 'INIT_PRICING_PLAN_SUBSCRIPTION') {
+    logger.error('INVALID_TOKEN', 'Invalid token');
     throw Error('Invalid token');
 }
 
@@ -36,7 +45,7 @@ if (portal.value.status === 'REVOKED') {
         message: `Portal url with resource id "${portal.value.id}" is revoked`,
     };
 
-    trackSentryException(criticalError.value);
+    logger.error('RESOURCE_REVOKED', `Portal url with resource id "${portal.value.id}" is revoked`);
 }
 
 const subscriptionId = portal.value?.init_pricing_plan_subscription?.pricing_plan_subscription_id;
@@ -54,6 +63,7 @@ const {
     authorizationContext,
     isPaid,
     amount,
+    updateInvoicePreviewOnBillingInformationChange,
 } = useCheckoutView({
     initialCountry: props.countryCode,
     initialEmail: props.email,
@@ -89,7 +99,120 @@ const isBillingInformationMandatory = computed(
         false,
 );
 
+const agreement = computed(() => {
+    if (trialInvoicePreview.value) {
+        return $t(
+            {
+                defaultMessage:
+                    '{discounted_amount} for {trial_period}, then {subscription_amount}/{billing_period} until canceled, starting {start_date, date, ::MMMMd}.',
+                id: 'checkout.agreement.trial',
+                description: 'The agreement for the trial period',
+            },
+            {
+                discounted_amount:
+                    trialInvoicePreview.value.tax_summary.total_amount.quantity === '0.00'
+                        ? $t({
+                              defaultMessage: 'Free',
+                              id: 'checkout.agreement.trial.free',
+                              description: 'The free amount for the trial period',
+                          })
+                        : formatAmount(trialInvoicePreview.value.tax_summary.total_amount),
+                trial_period: formatTimePeriod(trialPeriod.value!, { short: true }),
+                subscription_amount: formatAmount(
+                    invoicePreview.value?.tax_summary.total_amount ?? {
+                        quantity: '0.00',
+                        currency: 'EUR',
+                    },
+                ),
+                billing_period: formatTimePeriod(
+                    invoicePreview.value?.billing_period ?? { type: 'MONTH', value: 1 },
+                    { short: true, singular: true, hideValueForExactPeriods: true },
+                ),
+                // @ts-expect-error formatjs does not support this type yet
+                start_date: new Date(invoicePreview.value.periods[0].start_at),
+            },
+        );
+    }
+
+    return $t(
+        {
+            defaultMessage:
+                '{subscription_amount}/{billing_period} until canceled, starting {start_date, date, long}.',
+            id: 'checkout.agreement.subscription',
+            description: 'The agreement for the subscription',
+        },
+        {
+            subscription_amount: invoicePreview.value?.tax_summary.total_amount
+                ? formatAmount(invoicePreview.value?.tax_summary.total_amount)
+                : '',
+            billing_period: formatTimePeriod(
+                invoicePreview.value?.billing_period ?? { type: 'MONTH', value: 1 },
+                { short: true, singular: true, hideValueForExactPeriods: true },
+            ),
+            // @ts-expect-error formatjs does not support this type yet
+            start_date: new Date(invoicePreview.value.periods[0].start_at),
+        },
+    );
+});
+
+const expressPaymentMethodBillingInformation = computed(() => {
+    if (!invoicePreview.value) {
+        return undefined;
+    }
+
+    const subscriptionName =
+        subscription.value?.name ??
+        subscription.value?.pricing_plan_schedule_infos?.at(-1)?.pricing_plan_version.pricing_plan
+            ?.name ??
+        'Subscription';
+
+    return {
+        description: subscriptionName,
+        managementURL: 'https://www.solvimon.com/account/billing',
+        agreement: agreement.value,
+        ...(trialInvoicePreview.value &&
+            trialPeriod.value && {
+                trial: {
+                    label: $t({
+                        defaultMessage: 'Trial',
+                        id: 'checkout.trial.label',
+                        description: 'The label of the trial',
+                    }),
+                    amount: trialInvoicePreview.value.tax_summary.total_amount,
+                    startDate: new Date(trialInvoicePreview.value.periods[0].start_at),
+                    endDate: new Date(trialInvoicePreview.value.periods[0].end_at),
+                },
+            }),
+        regular: {
+            label: subscriptionName,
+            amount: invoicePreview.value.tax_summary.total_amount,
+            startDate: new Date(invoicePreview.value.periods[0].start_at),
+            interval: subscription.value?.billing_period ?? { type: 'MONTH', value: 1 },
+        },
+    };
+});
+
+const handleUpdateBillingInformation = (billingInformation: Partial<Address>) => {
+    const { country, ...rest } = billingInformation;
+    checkoutForm.updateInitialState({
+        ...rest,
+        ...(country ? { country: country as CountryCode } : {}),
+    });
+};
+
 const showCustomerInfoOnTop = computed(() => !(props.email && props.countryCode));
+
+const trialStartDate = computed<Date | undefined>(() => {
+    return trialInvoicePreview.value?.periods[0].start_at
+        ? new Date(trialInvoicePreview.value.periods[0].start_at)
+        : undefined;
+});
+
+const subscriptionStartDate = computed<Date | undefined>(() => {
+    return invoicePreview.value?.periods[0].start_at
+        ? new Date(invoicePreview.value.periods[0].start_at)
+        : undefined;
+});
 
 onMounted(() => {
     emit('ready');
@@ -101,8 +224,10 @@ onMounted(() => {
     <template v-else>
         <Skeleton class="min-h-[52px] w-96">
             <CheckoutTitle
-                v-if="invoicePreview && subscription"
+                v-if="invoicePreview && subscription && subscriptionStartDate"
+                :trial-start-date="trialStartDate"
                 :trial-period="trialPeriod"
+                :subscription-start-date="subscriptionStartDate"
                 :subscription-name="subscription?.name ?? ''"
                 :amount="invoicePreview?.invoice_amount_including_tax"
                 :billing-period="subscription?.billing_period"
@@ -134,6 +259,24 @@ onMounted(() => {
             <div class="flex flex-col md:flex-row grow gap-6">
                 <!-- left -->
                 <div class="grow flex flex-col gap-4">
+                    <ExpressPaymentMethods
+                        v-if="
+                            !isPaid &&
+                            checkoutForm.form.value.country &&
+                            amount &&
+                            experimentalFeatures?.['express-checkout']
+                        "
+                        :amount="amount"
+                        :country-code="checkoutForm.form.value.country"
+                        :locale="locale"
+                        :payment-methods-options-response="paymentMethodOptions ?? []"
+                        :billing-information="expressPaymentMethodBillingInformation!"
+                        :on-billing-information-change="
+                            updateInvoicePreviewOnBillingInformationChange
+                        "
+                        @update-billing-information="handleUpdateBillingInformation"
+                    />
+
                     <CheckoutForm
                         v-model="checkoutForm.form.value"
                         :validation="checkoutForm.validation"
@@ -225,7 +368,6 @@ onMounted(() => {
                                         :success-redirect-url="successRedirectUrl"
                                         :validate-on-submit="handleValidateOnSubmit"
                                         force-store-payment-method
-                                        @error="(error) => $emit('error', error)"
                                         @payment-success="isPaid = true"
                                         @ready="emit('ready')"
                                     />
@@ -255,9 +397,9 @@ onMounted(() => {
                         />
                     </Skeleton>
 
-                    <Skeleton class="min-h-[44px]">
+                    <Skeleton v-if="!isPaid" class="min-h-[44px]">
                         <Button
-                            v-if="!isPaid && invoicePreview && !isInvoicePreviewPending"
+                            v-if="invoicePreview && !isInvoicePreviewPending"
                             type="button"
                             size="lg"
                             class="full-width"

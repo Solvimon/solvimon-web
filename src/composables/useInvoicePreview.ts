@@ -31,7 +31,7 @@ export const useInvoicePreview = () => {
         enabledPricingIds,
     }: {
         subscription: PricingPlanSubscriptionExpanded;
-        subscriptionStartAt: PricingPlanSchedule['start_at'];
+        subscriptionStartAt?: PricingPlanSchedule['start_at'];
         checkoutForm: CheckoutFormState;
         enabledPricingIds?: Pricing['id'][];
     }) => {

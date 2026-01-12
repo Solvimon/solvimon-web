@@ -5,7 +5,7 @@ import type { ConfigProviderProps } from './ConfigProvider.types';
 import { getConfig } from '@/config/lib';
 
 const props = defineProps<ConfigProviderProps>();
-const config = getConfig(props.environment);
+const config = getConfig(props.environment, props.customElementName);
 
 provide(CONFIG_INJECTION_KEY, config);
 </script>

@@ -41,10 +41,6 @@ export interface PaymentIntegrationFormEmits {
      */
     (e: 'select', value: 'PAYMENT_GATEWAY_ADYEN' | 'PAYMENT_GATEWAY_STRIPE'): void;
     /**
-     * Emitted when an error occurs.
-     */
-    (e: 'error', error: Error): void;
-    /**
      * Emitted when a payment fails.
      */
     (e: 'payment-failed', error: Error): void;

@@ -5,7 +5,7 @@ import type {
 } from './SolvimonCustomerPaymentMethodsBlock.types';
 import Provider from '@/components/providers/Provider/Provider.vue';
 import CustomerPaymentMethodsBlock from '@/components/customer/CustomerPaymentMethodsBlock/CustomerPaymentMethodsBlock.vue';
-import { usePortal } from '@/components/providers/PortalProvider/composables/usePortal';
+import { COMPONENT_NAME } from './SolvimonCustomerPaymentMethodsBlock.ce';
 
 const props = defineProps<Partial<SolvimonCustomerPaymentMethodsBlockProps>>();
 defineEmits<SolvimonCustomerPaymentMethodsBlockEmits>();
@@ -21,6 +21,7 @@ if (!props.token) {
 
 <template>
     <Provider
+        :custom-element-name="COMPONENT_NAME"
         :environment="environment"
         :token="token"
         :locale="locale"

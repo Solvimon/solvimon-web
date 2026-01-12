@@ -6,4 +6,6 @@ export interface CheckoutTitleProps {
     amount: Amount;
     billingPeriod: BillingPeriod;
     countryCode: CountryCode | undefined;
+    trialStartDate?: Date;
+    subscriptionStartDate: Date;
 }

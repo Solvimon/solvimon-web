@@ -27,10 +27,6 @@ export interface PaymentIntegrationFormAdyenEmits {
      */
     (e: 'select'): void;
     /**
-     * Emitted when an error occurs.
-     */
-    (e: 'error', error: Error): void;
-    /**
      * Emitted when a payment fails.
      */
     (e: 'payment-failed', error: Error): void;

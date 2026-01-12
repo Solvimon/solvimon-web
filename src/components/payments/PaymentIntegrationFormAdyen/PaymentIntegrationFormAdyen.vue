@@ -1,20 +1,11 @@
 <script setup lang="ts">
 import adyenCss from '@adyen/adyen-web/styles/adyen.css?inline';
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import type { CoreConfiguration, DropinConfiguration, PaymentAction } from '@adyen/adyen-web/auto';
 import type {
-    CoreConfiguration,
-    DropinConfiguration,
-    PaymentAction,
-    PaymentAmountExtended,
-    RawPaymentMethod
-} from '@adyen/adyen-web/auto';
-import type {
-    Amount,
     AuthorizePaymentPayload,
     AuthorizePaymentResponse,
     PaymentAcceptor,
-    PaymentMethodOptionAdyen,
-    PaymentMethodOptionResponseEntry,
 } from '@solvimon/types';
 import { useIntl } from '@solvimon/ui';
 import type {
@@ -26,9 +17,21 @@ import PaymentCompletedCard from '@/components/payments/PaymentCompletedCard/Pay
 import PaymentErrorCard from '@/components/payments/PaymentErrorCard/PaymentErrorCard.vue';
 import type { Error } from '@/types/errors';
 import { createPaymentsService } from '@/services/payments';
-import { trackSentryException } from '@/utils/errorTracking';
 import { getQueryParam } from '@/utils/url';
 import { createPaymentMethodsService } from '@/services/paymentMethods';
+import {
+    createReturnUrl,
+    getAdyenClientKeyFromPaymentMethodOptionsResponse,
+    getAdyenEnvironmentFromPaymentMethodOptionsResponse,
+    mapAdyenPaymentMethods,
+    PAYMENT_ACCEPTOR_ID_QUERY_STRING,
+    REDIRECT_RESULT_QUERY_STRING,
+    transformObjectToAdyenObject,
+    transformToAdyenAmount,
+} from '@/utils/adyen';
+import { useExperimentalFeature } from '@/components/providers/ExperimentalFeatureProvider/composables/useExperimentalFeature';
+import { filterOutExpressPaymentMethods } from '@/utils/paymentMethods';
+import { useLogger } from '@/components/providers';
 
 /**
  * The Adyen instances should be stored in plain objects to avoid issues with Vue's reactivity system.
@@ -49,23 +52,21 @@ const props = withDefaults(defineProps<PaymentIntegrationFormAdyenProps>(), {
 const emit = defineEmits<PaymentIntegrationFormAdyenEmits>();
 defineExpose({ submit });
 
-const REDIRECT_RESULT_QUERY_STRING = 'redirectResult';
-const PAYMENT_ACCEPTOR_ID_QUERY_STRING = 'payment_acceptor_id';
 const PAYMENT_GATEWAY_VARIANT_ADYEN = 'ADYEN';
 
 const dropInContainerRef = ref();
 const showPaymentSuccess = ref(false);
 const integrationError = ref<Error>();
 
+const logger = useLogger();
 const { locale } = useIntl();
 
 const { authorizePayment, getPaymentDetails } = createPaymentsService();
 const { tokenizePaymentMethod } = createPaymentMethodsService();
+const experimentalFeatures = useExperimentalFeature();
 
 function submit() {
     try {
-        // eslint-disable-next-line no-console
-        console.log(dropInInstance?.isValid, dropInInstance?.data);
         dropInInstance?.submit();
     } catch (error) {
         // eslint-disable-next-line no-console
@@ -78,24 +79,26 @@ async function getConfiguration(): Promise<{
     dropInConfig: DropinConfiguration;
 }> {
     const adyenAmount = transformToAdyenAmount(props.amount);
+    const paymentMethods = experimentalFeatures?.value?.['express-checkout']
+        ? filterOutExpressPaymentMethods(
+              mapAdyenPaymentMethods(props.paymentMethodOptionResponseEntry),
+          )
+        : mapAdyenPaymentMethods(props.paymentMethodOptionResponseEntry);
+
     return {
         checkoutConfig: {
             amount: adyenAmount,
-            clientKey:
-                props.paymentMethodOptionResponseEntry.integration?.payment_gateway?.adyen
-                    ?.public_key,
-            environment: getEnvironment(props.paymentMethodOptionResponseEntry),
-            locale: locale,
+            clientKey: getAdyenClientKeyFromPaymentMethodOptionsResponse(
+                props.paymentMethodOptionResponseEntry,
+            ),
+            environment: getAdyenEnvironmentFromPaymentMethodOptionsResponse(
+                props.paymentMethodOptionResponseEntry,
+            ),
+            locale,
             translations: getOverriddenTranslations(props.variant),
             countryCode: props.countryCode,
             analytics: { enabled: false },
-            paymentMethodsResponse: {
-                paymentMethods:
-                    props.paymentMethodOptionResponseEntry.options.flatMap(
-                        (adyenPaymentMethodOption) =>
-                            mapAdyenPaymentMethod(adyenPaymentMethodOption.adyen),
-                    ) ?? [],
-            },
+            paymentMethodsResponse: { paymentMethods },
             onSubmit: handleOnSubmit,
             onAdditionalDetails: handleOnAdditionalDetails,
             onPaymentCompleted: handleOnPaymentCompleted,
@@ -142,11 +145,11 @@ async function mountDropIn() {
 
         injectStylesToShadowRoot();
     } catch (error) {
-        emit('error', {
-            code: 'PAYMENT_INTEGRATION_INITIALIZATION_FAILED',
-            message: 'Failed to mount Adyen web drop-in',
-            error,
-        });
+        logger.error(
+            'PAYMENT_INTEGRATION_INITIALIZATION_FAILED',
+            'Failed to mount Adyen web drop-in',
+            { error },
+        );
     }
 }
 
@@ -207,6 +210,10 @@ function injectStylesToShadowRoot() {
 
             .adyen-checkout__payment-method:after {
                 transform: scale(0%);
+            }
+
+            .adyen-checkout__paypal__button {
+                display: block !important;
             }
 
             .adyen-checkout__payment-methods-list {
@@ -278,9 +285,9 @@ function handleOnSubmit(
             const paymentAcceptorId = props.paymentMethodOptionResponseEntry.payment_acceptor.id;
 
             const adyen: AuthorizePaymentPayload['adyen'] = {
-                risk_data: transformObject(state.data.riskData),
-                payment_method: transformObject(state.data.paymentMethod),
-                browser_info: transformObject(state.data.browserInfo),
+                risk_data: transformObjectToAdyenObject(state.data.riskData),
+                payment_method: transformObjectToAdyenObject(state.data.paymentMethod),
+                browser_info: transformObjectToAdyenObject(state.data.browserInfo),
             };
 
             if (props.variant === 'AUTHORIZE') {
@@ -306,10 +313,11 @@ function handleOnSubmit(
                         const paymentMethodType = state.data.paymentMethod.type;
 
                         if (paymentResult.status === 'FAILURE') {
-                            emit('error', {
-                                code: 'AUTHORIZATION_FAILED',
-                                message: `Failed payment authorization for payment acceptor with id ${paymentAcceptorId}`,
-                            });
+                            logger.error(
+                                'PAYMENT_AUTHORIZATION_FAILED',
+                                `Failed payment authorization for payment acceptor with id ${paymentAcceptorId}`,
+                                { error: paymentResult },
+                            );
                             actions.resolve({ resultCode: 'Error' });
                             return;
                         }
@@ -325,11 +333,11 @@ function handleOnSubmit(
                             );
 
                             if (!requiredAction) {
-                                emit('error', {
-                                    code: 'AUTHORIZATION_FAILED',
-                                    message: `Failed payment authorization for payment acceptor with id ${paymentAcceptorId}`,
-                                    error: paymentResult,
-                                });
+                                logger.error(
+                                    'PAYMENT_AUTHORIZATION_FAILED',
+                                    `Failed payment authorization for payment acceptor with id ${paymentAcceptorId}`,
+                                    { error: paymentResult },
+                                );
                                 return;
                             }
 
@@ -346,11 +354,11 @@ function handleOnSubmit(
                         actions.resolve({ resultCode: 'Authorised' });
                     })
                     .catch((error) => {
-                        emit('error', {
-                            code: 'AUTHORIZATION_FAILED',
-                            message: `Failed payment authorization for payment acceptor with id ${paymentAcceptorId}`,
-                            error,
-                        });
+                        logger.error(
+                            'PAYMENT_AUTHORIZATION_FAILED',
+                            `Failed payment authorization for payment acceptor with id ${paymentAcceptorId}`,
+                            { error },
+                        );
                         actions.resolve({ resultCode: 'Error' });
                     });
                 return;
@@ -363,7 +371,11 @@ function handleOnSubmit(
                 });
 
                 if (!props.customerId) {
-                    throw Error('Missing customer id');
+                    logger.error(
+                        'TOKENIZATION_FAILED',
+                        `Missing customer id for payment acceptor with id ${paymentAcceptorId}`,
+                    );
+                    return;
                 }
 
                 tokenizePaymentMethod({
@@ -377,10 +389,11 @@ function handleOnSubmit(
                         const paymentMethodType = state.data.paymentMethod.type;
 
                         if (paymentResult.status === 'FAILURE') {
-                            emit('error', {
-                                code: 'TOKENIZE_FAILED',
-                                message: 'Tokenization failed',
-                            });
+                            logger.error(
+                                'TOKENIZATION_FAILED',
+                                `Tokenization failed for payment acceptor with id ${paymentAcceptorId}`,
+                                { error: paymentResult },
+                            );
                             actions.resolve({ resultCode: 'Error' });
                             return;
                         }
@@ -396,11 +409,11 @@ function handleOnSubmit(
                             );
 
                             if (!requiredAction) {
-                                emit('error', {
-                                    code: 'AUTHORIZATION_FAILED',
-                                    message: `Failed payment authorization for payment acceptor with id ${paymentAcceptorId}`,
-                                    error: paymentResult,
-                                });
+                                logger.error(
+                                    'TOKENIZATION_FAILED',
+                                    `Tokenization failed for payment acceptor with id ${paymentAcceptorId}`,
+                                    { error: paymentResult },
+                                );
                                 return;
                             }
 
@@ -417,11 +430,11 @@ function handleOnSubmit(
                         actions.resolve({ resultCode: 'Authorised' });
                     })
                     .catch((error) => {
-                        emit('error', {
-                            code: 'TOKENIZE_FAILED',
-                            message: 'Tokenization failed',
-                            error,
-                        });
+                        logger.error(
+                            'TOKENIZATION_FAILED',
+                            `Tokenization failed for payment acceptor with id ${paymentAcceptorId}`,
+                            { error },
+                        );
                         actions.resolve({ resultCode: 'Error' });
                     });
             }
@@ -521,8 +534,7 @@ function handleOnError(
         message: 'Something went wrong',
         error: data,
     };
-
-    emit('error', error);
+    logger.error('INTEGRATION_ERROR', 'Something went wrong', { error: data });
     integrationError.value = error;
     component?.unmount();
 }
@@ -572,9 +584,7 @@ function handlePaymentDetails({
             }
         })
         .catch((error) => {
-            emit('error', {
-                code: 'PAYMENT_DETAILS_CALL_FAILED',
-                message: 'Failed fetching payment details',
+            logger.error('PAYMENT_DETAILS_CALL_FAILED', 'Failed fetching payment details', {
                 error,
             });
         });
@@ -594,10 +604,11 @@ function handleRedirectResult() {
     }
 
     if (!paymentAcceptorId) {
-        emit('error', {
-            code: 'REDIRECT_RESULT_PAYMENT_ACCEPTOR_MISSING',
-            message: 'Redirect result is set but payment acceptor id is missing',
-        });
+        logger.error(
+            'INVALID_REDIRECT_RESULT',
+            'Redirect result is set but payment acceptor id is missing',
+            { context: { redirectResult } },
+        );
         return;
     }
 
@@ -607,79 +618,6 @@ function handleRedirectResult() {
             redirectResult: decodeURI(redirectResult),
         },
     });
-}
-
-function mapAdyenPaymentMethod(adyen: PaymentMethodOptionAdyen['adyen']): RawPaymentMethod {
-    return {
-        type: adyen.type,
-        name: adyen.name,
-        ...(adyen.issuers ? { issuers: adyen.issuers } : {}),
-        ...(adyen.brands ? { brands: adyen.brands } : {}),
-        ...(adyen.funding_source ? { fundingSource: adyen.funding_source } : {}),
-        ...(adyen.configuration ? { configuration: adyen.configuration } : {}),
-    };
-}
-
-/**
- * Transforms a Solvimon amount to an Adyen amount.
- */
-function transformToAdyenAmount(amount: Amount): PaymentAmountExtended {
-    const formatter = new Intl.NumberFormat(undefined, {
-        style: 'currency',
-        currency: amount.currency,
-    });
-
-    const { maximumFractionDigits = 10 } = formatter.resolvedOptions();
-
-    return {
-        value: Math.round(+amount.quantity * Math.pow(10, maximumFractionDigits)),
-        currency: amount.currency,
-    };
-}
-
-/**
- * Maps the environment from uppercase (as saved in the backend), to lowercase (as used
- * by the Adyen SDK).
- */
-function getEnvironment(entry: PaymentMethodOptionResponseEntry): CoreConfiguration['environment'] {
-    const environment = entry.integration.payment_gateway?.adyen?.environment;
-
-    if (!environment) {
-        trackSentryException(undefined, {
-            Message: 'No environment set for adyen advanced flow, defaulted to test',
-        });
-        return 'test';
-    }
-
-    switch (environment) {
-        case 'TEST':
-            return 'test';
-        case 'LIVE':
-            return 'live';
-        default:
-            trackSentryException(undefined, {
-                Message: `Unsupported environment "${environment}" for adyen advanced flow, defaulted to "live"`,
-            });
-            return 'live';
-    }
-}
-
-function transformObject(obj?: object) {
-    return obj
-        ? Object.fromEntries(Object.entries(obj).map(([key, value]) => [key, String(value)]))
-        : undefined;
-}
-
-function createReturnUrl({
-    paymentAcceptorId,
-    redirectUrl = window.location.href,
-}: {
-    redirectUrl?: string;
-    paymentAcceptorId: string;
-}): string {
-    const returnUrl = new URL(redirectUrl);
-    returnUrl.searchParams.set(PAYMENT_ACCEPTOR_ID_QUERY_STRING, paymentAcceptorId);
-    return returnUrl.toString();
 }
 
 onMounted(() => {

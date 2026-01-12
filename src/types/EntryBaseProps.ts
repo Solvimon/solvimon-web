@@ -7,4 +7,5 @@ export type EntryBaseProps = ProviderProps & {
      */
     branding?: PlatformBranding;
 };
+
 export type EntryBaseEmits = ProviderEmits;

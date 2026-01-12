@@ -16,22 +16,11 @@ export function useCheckoutForm({
     initialState: Partial<CheckoutFormState>;
     onRequiredFieldChange: (form: CheckoutFormState) => void;
 }) {
-    const form = ref<CheckoutFormState>({
-        email: undefined,
-        country: undefined,
-        type: 'INDIVIDUAL',
-        companyLegalName: undefined,
-        firstName: undefined,
-        infix: undefined,
-        lastName: undefined,
-        addressLine1: undefined,
-        addressLine2: undefined,
-        postalCode: undefined,
-        city: undefined,
-        state: undefined,
-        companyVatNumber: undefined,
-        ...(initialState || {}),
-    });
+    const form = ref<CheckoutFormState>(getInitialState(initialState));
+
+    const updateInitialState = (state: Partial<CheckoutFormState>) => {
+        form.value = getInitialState({ ...form.value, ...state });
+    };
 
     const requiredFields = computed<(keyof CheckoutFormState)[]>(() =>
         getRequiredFieldsForCountry(form.value.country),
@@ -98,5 +87,24 @@ export function useCheckoutForm({
         debounce: 200,
     });
 
-    return { form, validation, getIsFieldRequired };
+    return { form, validation, getIsFieldRequired, updateInitialState };
 }
+
+const getInitialState = (initialState: Partial<CheckoutFormState> = {}): CheckoutFormState => {
+    return {
+        email: undefined,
+        country: undefined,
+        type: 'INDIVIDUAL',
+        companyLegalName: undefined,
+        firstName: undefined,
+        infix: undefined,
+        lastName: undefined,
+        addressLine1: undefined,
+        addressLine2: undefined,
+        postalCode: undefined,
+        city: undefined,
+        state: undefined,
+        companyVatNumber: undefined,
+        ...initialState,
+    };
+};

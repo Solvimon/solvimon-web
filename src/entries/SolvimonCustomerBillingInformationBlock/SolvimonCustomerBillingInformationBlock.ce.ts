@@ -6,7 +6,7 @@ export const SolvimonCustomerBillingInformationBlock = defineCustomElement(
     SolvimonCustomerBillingInformationBlockVue,
 );
 
-const COMPONENT_NAME = getComponentName('customer-billing-information-block');
+export const COMPONENT_NAME = getComponentName('customer-billing-information-block');
 
 export const defineSolvimonCustomerBillingInformationBlock = () => {
     if (!customElements.get(COMPONENT_NAME)) {

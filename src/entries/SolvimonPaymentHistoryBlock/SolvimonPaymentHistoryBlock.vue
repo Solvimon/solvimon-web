@@ -5,6 +5,7 @@ import type {
 } from './SolvimonPaymentHistoryBlock.types';
 import Provider from '@/components/providers/Provider/Provider.vue';
 import PaymentHistoryBlockContent from '@/components/invoices/invoiceDetails/PaymentHistoryBlockContent.vue';
+import { COMPONENT_NAME } from './SolvimonPaymentHistoryBlock.ce';
 
 const props = defineProps<Partial<SolvimonPaymentHistoryProps>>();
 defineEmits<SolvimonPaymentHistoryEmits>();
@@ -20,6 +21,7 @@ if (!props.invoiceId) {
 
 <template>
     <Provider
+        :custom-element-name="COMPONENT_NAME"
         :environment="environment"
         :token="token"
         :locale="locale"

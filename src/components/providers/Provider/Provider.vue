@@ -10,13 +10,15 @@ import nlNlUiTranslations from '@solvimon/ui/translations/nl-NL';
 import enUsUiTranslations from '@solvimon/ui/translations/en-US';
 import { computed } from 'vue';
 import type { ProviderEmits, ProviderProps } from './Provider.types';
+import LoggerProvider from '@/components/providers/LoggerProvider/LoggerProvider.vue';
+import ExperimentalFeatureProvider from '@/components/providers/ExperimentalFeatureProvider/ExperimentalFeatureProvider.vue';
+import TeleportProvider from '@/components/providers/TeleportProvider/TeleportProvider.vue';
 import { trackSentryException } from '@/utils/errorTracking';
 import AuthProvider from '@/components/providers/AuthProvider/AuthProvider.vue';
 import nlNlSdkTranslations from '@/translations/nl-NL.json';
 import enUsSdkTranslations from '@/translations/en-US.json';
 import ConfigProvider from '@/components/providers/ConfigProvider/ConfigProvider.vue';
 import PortalProvider from '@/components/providers/PortalProvider/PortalProvider.vue';
-import TeleportProvider from '../TeleportProvider/TeleportProvider.vue';
 
 const props = defineProps<ProviderProps>();
 defineEmits<ProviderEmits>();
@@ -61,25 +63,33 @@ const localizedMessages = computed<IntlMessages>(() => ({
                 :secondary-color="secondaryColor"
                 is-shadow-root
             />
-            <ConfigProvider v-if="environment" :environment="environment">
-                <AuthProvider v-if="token" :token="token">
-                    <PortalProvider
-                        :token="token"
-                        :allowed-portal-types="allowedPortalTypes"
-                        :portal-object="portalObject"
-                    >
-                        <IconSpriteProvider>
-                            <IntlProvider
-                                :locale="locale"
-                                :date-locale="dateLocale"
-                                :messages="localizedMessages"
-                                :show-timezones="false"
+            <ConfigProvider
+                v-if="environment"
+                :environment="environment"
+                :custom-element-name="customElementName"
+            >
+                <LoggerProvider :log-level="props.logLevel" :on-log="props.onLog">
+                    <AuthProvider v-if="token" :token="token">
+                        <ExperimentalFeatureProvider :experimental-features="experimentalFeatures">
+                            <PortalProvider
+                                :token="token"
+                                :allowed-portal-types="allowedPortalTypes"
+                                :portal-object="portalObject"
                             >
-                                <slot />
-                            </IntlProvider>
-                        </IconSpriteProvider>
-                    </PortalProvider>
-                </AuthProvider>
+                                <IconSpriteProvider>
+                                    <IntlProvider
+                                        :locale="locale"
+                                        :date-locale="dateLocale"
+                                        :messages="localizedMessages"
+                                        :show-timezones="false"
+                                    >
+                                        <slot />
+                                    </IntlProvider>
+                                </IconSpriteProvider>
+                            </PortalProvider>
+                        </ExperimentalFeatureProvider>
+                    </AuthProvider>
+                </LoggerProvider>
             </ConfigProvider>
         </TeleportProvider>
     </ErrorHandlingProvider>

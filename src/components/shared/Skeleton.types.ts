@@ -1,4 +1,4 @@
 export interface SkeletonProps {
-    variant?: 'default' | 'section';
+    variant?: 'default' | 'section' | 'title' | 'divider-text';
     class?: string;
 }

@@ -7,7 +7,10 @@ import { ciConfig } from './config.ci';
 
 import type { Config } from './types';
 
-export const getConfig = (environment: Environment): Config & { environment: Environment } => {
+export const getConfig = (
+    environment: Environment,
+    customElementName: string,
+): Config & { environment: Environment; customElementName: string } => {
     const config = {
         CI: ciConfig,
         LIVE: liveConfig,
@@ -18,6 +21,7 @@ export const getConfig = (environment: Environment): Config & { environment: Env
 
     return {
         environment,
+        customElementName,
         ...config,
     };
 };

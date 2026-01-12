@@ -5,6 +5,7 @@ import type {
 } from './SolvimonCustomerSubscriptionBlock.types';
 import Provider from '@/components/providers/Provider/Provider.vue';
 import CustomerSubscriptionBlock from '@/components/customer/CustomerSubscriptionBlock/CustomerSubscriptionBlock.vue';
+import { COMPONENT_NAME } from './SolvimonCustomerSubscriptionBlock.ce';
 
 const props = defineProps<Partial<SolvimonCustomerSubscriptionBlockProps>>();
 defineEmits<SolvimonCustomerSubscriptionBlockEmits>();
@@ -20,6 +21,7 @@ if (!props.token) {
 
 <template>
     <Provider
+        :custom-element-name="COMPONENT_NAME"
         :environment="environment"
         :token="token"
         :locale="locale"

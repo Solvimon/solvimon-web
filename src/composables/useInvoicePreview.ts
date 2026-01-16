@@ -12,6 +12,7 @@ import { convertDateRangeToTimePeriod } from '@solvimon/ui';
 import { taxId } from '@solvimon/ui/validators';
 import { createInvoicesService } from '@/services/invoices';
 import type { CheckoutFormState } from '@/components/customer/CheckoutForm/CheckoutForm.types';
+import { getScheduleCustomizations } from '@/utils/pricingPlanSchedule';
 
 const EMPTY_LEGAL_ENTITY_NAME = 'preview';
 const EMPTY_COUNTRY = 'NL';
@@ -47,10 +48,20 @@ export const useInvoicePreview = () => {
         } satisfies Partial<Address>;
 
         status.value = ApiStatus.Loading;
+
+        const scheduleCustomizations =
+            getScheduleCustomizations({
+                enabledPricings: enabledPricingIds?.map((enabledPricingId) => ({
+                    pricing_id: enabledPricingId,
+                })),
+                seatsValues: checkoutForm.seatsValues,
+                pricingPlanScheduleInfos: subscription.pricing_plan_schedule_infos,
+            }) ?? [];
+
         void getInvoicePreview({
             pricingPlanSubscriptionId: subscription.id,
             startAt: subscriptionStartAt,
-            ...(enabledPricingIds && { enabledPricingIds }),
+            customizations: scheduleCustomizations,
             customer: {
                 type: checkoutForm.type || 'INDIVIDUAL',
                 ...(checkoutForm.type === 'INDIVIDUAL' && {

@@ -2,10 +2,10 @@ import type {
     Customer,
     Invoice,
     InvoicePreview,
-    Pricing,
     PricingPlanSubscription,
     ApiSuccessCollectionResponse,
     PricingPlanSchedule,
+    PricingPlanScheduleCustomization,
 } from '@solvimon/types';
 import { downloadFile, withPagination } from '@solvimon/ui';
 import { createRequestService } from './requests';
@@ -27,8 +27,8 @@ interface InvoicesService {
     getInvoicePreview: (args: {
         customer: Partial<Customer>;
         pricingPlanSubscriptionId: PricingPlanSubscription['id'];
-        enabledPricingIds?: Pricing['id'][];
         startAt?: PricingPlanSchedule['start_at'];
+        customizations?: PricingPlanScheduleCustomization[];
     }) => Promise<InvoicePreview>;
 }
 
@@ -95,9 +95,7 @@ export function createInvoicesService(): InvoicesService {
     async function getInvoicePdf(id: string): Promise<void> {
         return request<Blob>({
             url: `${config.apiUrls.transaction}/portal/invoices/${id}/pdf`,
-            options: {
-                headers: { 'Content-Type': 'application/pdf' },
-            },
+            options: { headers: { 'Content-Type': 'application/pdf' } },
         }).then((response) => {
             const newBlob = new Blob([response as BlobPart], {
                 type: 'application/pdf',
@@ -112,27 +110,21 @@ export function createInvoicesService(): InvoicesService {
     function getInvoicePreview({
         customer,
         pricingPlanSubscriptionId,
-        enabledPricingIds,
         startAt,
+        customizations,
     }: {
         customer: Partial<Customer>;
         pricingPlanSubscriptionId: PricingPlanSubscription['id'];
-        enabledPricingIds?: Pricing['id'][];
         startAt?: PricingPlanSchedule['start_at'];
+        customizations?: PricingPlanScheduleCustomization[];
     }) {
         return request<InvoicePreview>({
             url: `${config.apiUrls.transaction}/portal/invoices/preview`,
-            options: {
-                method: 'POST',
-            },
+            options: { method: 'POST' },
             data: {
                 template_pricing_plan_subscription_id: pricingPlanSubscriptionId,
                 ...(startAt && { start_at: startAt }),
-                ...(enabledPricingIds && {
-                    enabled_pricings: enabledPricingIds.map((enabledPricingId) => ({
-                        pricing_id: enabledPricingId,
-                    })),
-                }),
+                ...(customizations && { pricing_plan_schedule_customizations: customizations }),
                 customer_details: {
                     ...customer,
                     reference: 'preview',

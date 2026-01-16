@@ -1,4 +1,4 @@
-import type { CountryCode } from '@solvimon/types';
+import type { ConfiguredMeterValue, CountryCode } from '@solvimon/types';
 import type { useCheckoutForm } from './useCheckoutForm';
 
 export interface CheckoutFormProps {
@@ -29,4 +29,5 @@ export interface CheckoutFormState {
     city: string | undefined;
     state: string | undefined;
     companyVatNumber: string | undefined;
+    seatsValues: ConfiguredMeterValue[] | undefined;
 }

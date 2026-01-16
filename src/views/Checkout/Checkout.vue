@@ -19,6 +19,8 @@ import Skeleton from '@/components/shared/Skeleton.vue';
 import ExpressPaymentMethods from '@/components/payments/ExpressPaymentMethods/ExpressPaymentMethods.vue';
 import { useExperimentalFeature } from '@/components/providers/ExperimentalFeatureProvider/composables/useExperimentalFeature';
 import { useLogger } from '@/components/providers';
+import PlanCustomizationEditor from '@/components/subscriptions/PlanCustomizationForm/PlanCustomizationEditor.vue';
+import { getAllPricingsFromScheduleInfos } from '@/utils/pricing';
 
 const props = defineProps<CheckoutProps>();
 const emit = defineEmits<CheckoutEmits>();
@@ -98,6 +100,13 @@ const isBillingInformationMandatory = computed(
             ['US', 'CA'].includes(checkoutForm.form.value.country)) ||
         false,
 );
+
+const seatsValues = computed({
+    get: () => checkoutForm.form.value.seatsValues ?? [],
+    set: (value) => {
+        checkoutForm.form.value.seatsValues = value;
+    },
+});
 
 const agreement = computed(() => {
     if (trialInvoicePreview.value) {
@@ -214,6 +223,10 @@ const subscriptionStartDate = computed<Date | undefined>(() => {
         : undefined;
 });
 
+const pricings = computed(() =>
+    getAllPricingsFromScheduleInfos(subscription.value?.pricing_plan_schedule_infos ?? []),
+);
+
 onMounted(() => {
     emit('ready');
 });
@@ -235,48 +248,11 @@ onMounted(() => {
             />
         </Skeleton>
 
-        <OrderSummary
-            v-if="subscription"
-            :subscription="subscription"
-            :invoice="invoicePreview"
-            :trial-invoice="trialInvoicePreview"
-            :enabled-pricing-ids="enabledPricingIds"
-            :trial-period="trialPeriod"
-            :avatar="avatar"
-            :is-paid="isPaid"
-            :is-usage-based="isUsageBased"
-            :is-preview-and-payment-methods-pending="
-                isPaymentMethodsPending || isInvoicePreviewPending
-            "
-            :country-code="checkoutForm.form.value.country"
-            class="mt-4 md:hidden"
-            collapsible="collapsed"
-            no-title
-        />
-
         <div class="flex flex-col grow gap-4 mt-4">
             <!-- content -->
             <div class="flex flex-col md:flex-row grow gap-6">
                 <!-- left -->
                 <div class="grow flex flex-col gap-4">
-                    <ExpressPaymentMethods
-                        v-if="
-                            !isPaid &&
-                            checkoutForm.form.value.country &&
-                            amount &&
-                            experimentalFeatures?.['express-checkout']
-                        "
-                        :amount="amount"
-                        :country-code="checkoutForm.form.value.country"
-                        :locale="locale"
-                        :payment-methods-options-response="paymentMethodOptions ?? []"
-                        :billing-information="expressPaymentMethodBillingInformation!"
-                        :on-billing-information-change="
-                            updateInvoicePreviewOnBillingInformationChange
-                        "
-                        @update-billing-information="handleUpdateBillingInformation"
-                    />
-
                     <CheckoutForm
                         v-model="checkoutForm.form.value"
                         :validation="checkoutForm.validation"
@@ -286,6 +262,55 @@ onMounted(() => {
                         :get-is-field-required="checkoutForm.getIsFieldRequired"
                         :read-only="isPaid"
                     >
+                        <template #mobile-order-summary>
+                            <OrderSummary
+                                v-if="subscription"
+                                :subscription="subscription"
+                                :invoice="invoicePreview"
+                                :trial-invoice="trialInvoicePreview"
+                                :enabled-pricing-ids="enabledPricingIds"
+                                :trial-period="trialPeriod"
+                                :avatar="avatar"
+                                :is-paid="isPaid"
+                                :is-usage-based="isUsageBased"
+                                :is-preview-and-payment-methods-pending="
+                                    isPaymentMethodsPending || isInvoicePreviewPending
+                                "
+                                :country-code="checkoutForm.form.value.country"
+                                class="mt-4 md:hidden"
+                                collapsible="collapsed"
+                                variant="products-inline"
+                            />
+                        </template>
+
+                        <template #express-payment-methods>
+                            <ExpressPaymentMethods
+                                v-if="
+                                    !isPaid &&
+                                    checkoutForm.form.value.country &&
+                                    amount &&
+                                    experimentalFeatures?.['express-checkout']
+                                "
+                                :amount="amount"
+                                :country-code="checkoutForm.form.value.country"
+                                :locale="locale"
+                                :payment-methods-options-response="paymentMethodOptions ?? []"
+                                :billing-information="expressPaymentMethodBillingInformation!"
+                                :on-billing-information-change="
+                                    updateInvoicePreviewOnBillingInformationChange
+                                "
+                                @update-billing-information="handleUpdateBillingInformation"
+                            />
+                        </template>
+
+                        <template #plan-customization>
+                            <PlanCustomizationEditor
+                                v-model:seats-values="seatsValues"
+                                :initial-seats-values="checkoutForm.initialState?.value.seatsValues"
+                                :pricings="pricings"
+                            />
+                        </template>
+
                         <SubscriptionPaymentCompletedCard
                             v-if="isPaid"
                             :redirect-url="successRedirectUrl"

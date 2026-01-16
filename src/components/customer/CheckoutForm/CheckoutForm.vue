@@ -70,6 +70,16 @@ const readableCountryName = computed(() =>
             "
         >
             <div class="grid grid-cols-1 gap-1 [grid-area:customer-information]">
+                <!-- plan customization section -->
+                <slot name="plan-customization" />
+
+                <!-- mobile order summary section -->
+                <slot name="mobile-order-summary" />
+
+                <!-- express payment methods section -->
+                <slot name="express-payment-methods" />
+
+                <!-- customer information section -->
                 <Section
                     :title="
                         $t({
@@ -250,6 +260,7 @@ const readableCountryName = computed(() =>
                     </Expand>
                 </Section>
 
+                <!-- company purchase section -->
                 <Section v-if="!readOnly">
                     <Toggle
                         v-model="companyPurchaseModel"

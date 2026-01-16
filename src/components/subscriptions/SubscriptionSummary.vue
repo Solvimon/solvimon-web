@@ -14,8 +14,8 @@ const mostRecentPricingPlan = computed(
 
 const name = computed(
     () =>
-        props.subscription.name ||
         mostRecentPricingPlan.value?.name ||
+        props.subscription.name ||
         $t({
             defaultMessage: 'Subscription',
             description: 'The fallback name for when no subscription name can be determined',

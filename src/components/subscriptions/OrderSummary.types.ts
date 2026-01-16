@@ -55,4 +55,8 @@ export interface OrderSummaryProps {
      * The country code used to calculate the taxes.
      */
     countryCode: CountryCode | undefined;
+    /**
+     * The variant of the order summary.
+     */
+    variant?: 'default' | 'products-inline';
 }

@@ -4,6 +4,7 @@ import type {
     InvoicePreview,
     Pricing,
     PricingPlanSchedule,
+    PricingPlanScheduleCustomization,
     PricingPlanSubscriptionExpanded,
 } from '@solvimon/types';
 import type { CheckoutFormState } from '@/components/customer/CheckoutForm/CheckoutForm.types';
@@ -15,7 +16,7 @@ const { mockGetInvoicePreview, convertDateRangeToTimePeriodMock } = vi.hoisted((
             (args: {
                 pricingPlanSubscriptionId: PricingPlanSubscriptionExpanded['id'];
                 startAt?: PricingPlanSchedule['start_at'];
-                enabledPricingIds?: Pricing['id'][];
+                customizations?: PricingPlanScheduleCustomization[];
                 customer: unknown;
             }) => Promise<InvoicePreview>
         >(),
@@ -109,7 +110,13 @@ describe('useInvoicePreview', () => {
         expect(mockGetInvoicePreview).toHaveBeenCalledWith({
             pricingPlanSubscriptionId: 'sub_123',
             startAt: subscriptionStartAt,
-            enabledPricingIds,
+            customizations: [
+                {
+                    pricing_plan_schedule_id: 'default_schedule_id',
+                    enabled_pricings: [{ pricing_id: 'pricing_1' }],
+                    seats_values: undefined,
+                },
+            ],
             customer: {
                 type: 'ORGANIZATION',
                 organization: {

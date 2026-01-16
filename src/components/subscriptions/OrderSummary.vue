@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { InvoicePreview, Section, Typography, useIntl } from '@solvimon/ui';
+import { InvoicePreview, InvoicePreviewGroups, Section, Typography, useIntl } from '@solvimon/ui';
 import SubscriptionSummary from './SubscriptionSummary.vue';
 import type { OrderSummaryProps } from './OrderSummary.types';
 
@@ -54,13 +54,20 @@ const { $t } = useIntl();
                 </div>
             </Section>
 
-            <!-- invoice preview -->
+            <!-- invoice groups preview -->
+            <InvoicePreviewGroups
+                v-if="invoice && variant !== 'products-inline'"
+                :invoice="invoice"
+                :wrapper-component="Section"
+            />
+
+            <!-- invoice totals preview -->
             <Section>
                 <InvoicePreview
                     v-if="invoice"
+                    :variant="variant === 'products-inline' ? 'default' : 'without-products'"
                     :invoice="invoice"
                     :trial-invoice="trialInvoice"
-                    :variant="trialInvoice ? 'without-products' : 'default'"
                     :is-paid="isPaid"
                     :collapsible="collapsible"
                     :is-preview-without-taxes="!countryCode"

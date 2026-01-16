@@ -17,9 +17,13 @@ export function useCheckoutForm({
     onRequiredFieldChange: (form: CheckoutFormState) => void;
 }) {
     const form = ref<CheckoutFormState>(getInitialState(initialState));
+    const initialFormState = ref<CheckoutFormState>(getInitialState(initialState));
 
     const updateInitialState = (state: Partial<CheckoutFormState>) => {
-        form.value = getInitialState({ ...form.value, ...state });
+        const newState = getInitialState({ ...form.value, ...state });
+
+        form.value = newState;
+        initialFormState.value = cloneDeep(newState);
     };
 
     const requiredFields = computed<(keyof CheckoutFormState)[]>(() =>
@@ -71,6 +75,14 @@ export function useCheckoutForm({
         }
 
         /**
+         * Update when seats values change.
+         */
+        if (fieldName === 'seatsValues') {
+            onRequiredFieldChange(newValue);
+            return;
+        }
+
+        /**
          * Whilst `email` is not required, it needs to trigger the required field change event,
          */
         if (fieldName !== 'email' && getIsFieldRequired(fieldName)) {
@@ -87,7 +99,13 @@ export function useCheckoutForm({
         debounce: 200,
     });
 
-    return { form, validation, getIsFieldRequired, updateInitialState };
+    return {
+        form,
+        validation,
+        getIsFieldRequired,
+        updateInitialState,
+        initialState: initialFormState,
+    };
 }
 
 const getInitialState = (initialState: Partial<CheckoutFormState> = {}): CheckoutFormState => {
@@ -105,6 +123,7 @@ const getInitialState = (initialState: Partial<CheckoutFormState> = {}): Checkou
         city: undefined,
         state: undefined,
         companyVatNumber: undefined,
+        seatsValues: undefined,
         ...initialState,
     };
 };

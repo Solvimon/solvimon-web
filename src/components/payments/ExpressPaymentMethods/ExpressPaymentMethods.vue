@@ -99,7 +99,7 @@ const expressPaymentButtonCount = computed(() => {
 </script>
 
 <template>
-    <div v-if="hasPaymentMethodOptions">
+    <div v-if="hasPaymentMethodOptions" class="mt-4 md:hidden">
         <div class="mb-2">
             <Skeleton v-if="!isReady" variant="title" />
             <Typography v-else variant="heading-3" tag="h2">{{

@@ -17,6 +17,10 @@ import { useInvoicePreview } from '@/composables/useInvoicePreview';
 import { useCheckoutForm } from '@/components/customer/CheckoutForm/useCheckoutForm';
 import { usePaymentMethodOptions } from '@/composables/usePaymentMethodOptions';
 import type { CheckoutFormState } from '@/components/customer/CheckoutForm/CheckoutForm.types';
+import {
+    getFirstPricingPlanScheduleOfType,
+    getScheduleCustomizations,
+} from '@/utils/pricingPlanSchedule';
 
 export function useCheckoutView({
     initialCountry,
@@ -94,7 +98,26 @@ export function useCheckoutView({
             id: subscriptionId,
             expanded: true,
         });
+
+        const subscriptionSchedule = getFirstPricingPlanScheduleOfType({
+            pricingPlanScheduleInfos: response.pricing_plan_schedule_infos,
+            type: 'DEFAULT',
+        });
+
         subscription.value = response;
+        checkoutForm.updateInitialState({
+            ...checkoutForm.form.value,
+            ...(subscriptionSchedule?.pricing_plan_schedule?.seats_values
+                ? {
+                      seats_values: subscriptionSchedule?.pricing_plan_schedule?.seats_values.map(
+                          ({ pricing_item_config_id, number }) => ({
+                              pricing_item_config_id,
+                              number,
+                          }),
+                      ),
+                  }
+                : {}),
+        });
     };
 
     const authorizationContext = computed<AuthorizePaymentPayload['context']>(() => {
@@ -130,14 +153,20 @@ export function useCheckoutView({
             ...{ country: checkoutForm.form.value.country ?? '' },
         };
 
+        const scheduleCustomizations = getScheduleCustomizations({
+            enabledPricings: enabledPricingIds?.map((enabledPricingId) => ({
+                pricing_id: enabledPricingId,
+            })),
+            seatsValues: checkoutForm.form.value.seatsValues,
+            pricingPlanScheduleInfos: subscription.value?.pricing_plan_schedule_infos ?? [],
+        });
+
         return {
             type: 'INIT_PRICING_PLAN_SUBSCRIPTION',
             init_pricing_plan_subscription: {
                 template_pricing_plan_subscription_id: subscriptionId,
-                ...(enabledPricingIds && {
-                    enabled_pricings: enabledPricingIds.map((enabledPricingId) => ({
-                        pricing_id: enabledPricingId,
-                    })),
+                ...(scheduleCustomizations && {
+                    pricing_plan_schedule_customizations: scheduleCustomizations,
                 }),
                 customer_details: {
                     email: checkoutForm.form.value.email ?? '',

@@ -21,6 +21,8 @@ const {
     mockLoadInvoicePreview,
     mockLoadPaymentMethodOptions,
     mockTaxIdValidator,
+    mockGetFirstPricingPlanScheduleOfType,
+    mockGetScheduleCustomizations,
 } = vi.hoisted(() => ({
     mockGetSubscription:
         vi.fn<
@@ -32,6 +34,8 @@ const {
     mockLoadInvoicePreview: vi.fn(),
     mockLoadPaymentMethodOptions: vi.fn(),
     mockTaxIdValidator: vi.fn(() => true),
+    mockGetFirstPricingPlanScheduleOfType: vi.fn(),
+    mockGetScheduleCustomizations: vi.fn(),
 }));
 
 const mockUseInvoicePreview = vi.fn<
@@ -66,11 +70,13 @@ const createMockCheckoutForm = (overrides?: Partial<CheckoutFormState>) => ({
             city: undefined,
             state: undefined,
             companyVatNumber: undefined,
+            seats_values: undefined,
             ...overrides,
         } as CheckoutFormState,
     },
     validation: { value: {} },
     getIsFieldRequired: vi.fn(),
+    updateInitialState: vi.fn(),
 });
 
 const mockUseCheckoutForm = vi.fn<
@@ -118,6 +124,11 @@ vi.mock('@solvimon/ui/validators', () => ({
     },
 }));
 
+vi.mock('@/utils/pricingPlanSchedule', () => ({
+    getFirstPricingPlanScheduleOfType: mockGetFirstPricingPlanScheduleOfType,
+    getScheduleCustomizations: mockGetScheduleCustomizations,
+}));
+
 describe('useCheckoutView', () => {
     const mockSubscription: PricingPlanSubscriptionExpanded = {
         id: 'sub_123' as PricingPlanSubscription['id'],
@@ -138,6 +149,14 @@ describe('useCheckoutView', () => {
         mockLoadInvoicePreview.mockResolvedValue(undefined);
         mockLoadPaymentMethodOptions.mockResolvedValue(undefined);
         mockTaxIdValidator.mockReturnValue(true);
+        mockGetFirstPricingPlanScheduleOfType.mockReturnValue({
+            ...mockSubscription.pricing_plan_schedule_infos[0],
+            pricing_plan_schedule: {
+                ...mockSubscription.pricing_plan_schedule_infos[0].pricing_plan_schedule,
+                seats_values: undefined,
+            },
+        });
+        mockGetScheduleCustomizations.mockReturnValue(undefined);
         // Reset mock to default implementation
         mockUseCheckoutForm.mockImplementation(
             (args?: {
@@ -366,6 +385,15 @@ describe('useCheckoutView', () => {
 
         mockUseCheckoutForm.mockReturnValue(checkoutFormMock);
 
+        const scheduleCustomizations = [
+            {
+                pricing_plan_schedule_id: 'schedule_1',
+                enabled_pricings: [{ pricing_id: 'pricing_1' }, { pricing_id: 'pricing_2' }],
+            },
+        ];
+
+        mockGetScheduleCustomizations.mockReturnValue(scheduleCustomizations);
+
         const result = useCheckoutView({
             initialCountry: undefined,
             initialEmail: undefined,
@@ -373,13 +401,15 @@ describe('useCheckoutView', () => {
             enabledPricingIds,
         });
 
+        // Set subscription value so authorizationContext can compute
+        result.subscription.value = mockSubscription;
+
         const context = result.authorizationContext
             .value as AuthorizePaymentInitPricingPlanSubscriptionContext;
 
-        expect(context.init_pricing_plan_subscription.enabled_pricings).toEqual([
-            { pricing_id: 'pricing_1' },
-            { pricing_id: 'pricing_2' },
-        ]);
+        expect(context.init_pricing_plan_subscription.pricing_plan_schedule_customizations).toEqual(
+            scheduleCustomizations,
+        );
     });
 
     it('computes amount from trial invoice preview when available', () => {

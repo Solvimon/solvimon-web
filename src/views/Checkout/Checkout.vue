@@ -227,6 +227,10 @@ const pricings = computed(() =>
     getAllPricingsFromScheduleInfos(subscription.value?.pricing_plan_schedule_infos ?? []),
 );
 
+const showPlanCustomizationEditor = computed(() => {
+    return checkoutForm.form.value.seatsValues && checkoutForm.form.value.seatsValues.length > 0;
+});
+
 onMounted(() => {
     emit('ready');
 });
@@ -303,7 +307,7 @@ onMounted(() => {
                             />
                         </template>
 
-                        <template #plan-customization>
+                        <template v-if="showPlanCustomizationEditor" #plan-customization>
                             <PlanCustomizationEditor
                                 v-model:seats-values="seatsValues"
                                 :initial-seats-values="checkoutForm.initialState?.value.seatsValues"

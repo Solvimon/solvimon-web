@@ -109,7 +109,7 @@ export function useCheckoutView({
             ...checkoutForm.form.value,
             ...(subscriptionSchedule?.pricing_plan_schedule?.seats_values
                 ? {
-                      seats_values: subscriptionSchedule?.pricing_plan_schedule?.seats_values.map(
+                      seatsValues: subscriptionSchedule?.pricing_plan_schedule?.seats_values.map(
                           ({ pricing_item_config_id, number }) => ({
                               pricing_item_config_id,
                               number,

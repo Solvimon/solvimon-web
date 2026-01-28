@@ -20,15 +20,13 @@ const itemModel = (index: number) =>
 </script>
 
 <template>
-    <div class="grid grid-cols-1 gap-1">
-        <Section v-for="(item, index) in modelValue" :key="index">
-            <SeatsEditorItem
-                v-if="item.pricing_item_config_id"
-                :key="item.pricing_item_config_id"
-                v-model="itemModel(index).value"
-                :default-value="initialSeatsValues?.[index]"
-                :pricings="pricings"
-            />
-        </Section>
-    </div>
+    <Section v-for="(item, index) in modelValue" :key="index">
+        <SeatsEditorItem
+            v-if="item.pricing_item_config_id"
+            :key="item.pricing_item_config_id"
+            v-model="itemModel(index).value"
+            :default-value="initialSeatsValues?.[index]"
+            :pricings="pricings"
+        />
+    </Section>
 </template>

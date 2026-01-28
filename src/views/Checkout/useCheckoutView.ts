@@ -21,6 +21,7 @@ import {
     getFirstPricingPlanScheduleOfType,
     getScheduleCustomizations,
 } from '@/utils/pricingPlanSchedule';
+import { withPreselectedEnabledPricings } from '@/utils/enabledPricings';
 
 export function useCheckoutView({
     initialCountry,
@@ -54,7 +55,7 @@ export function useCheckoutView({
         return invoicePreview.loadInvoicePreview({
             subscription: subscription.value!,
             checkoutForm: checkoutForm.form.value,
-            enabledPricingIds,
+            enabledPricingIds: checkoutForm.form.value.enabledPricingIds,
         });
     };
 
@@ -107,6 +108,7 @@ export function useCheckoutView({
         subscription.value = response;
         checkoutForm.updateInitialState({
             ...checkoutForm.form.value,
+            enabledPricingIds: withPreselectedEnabledPricings(response, enabledPricingIds),
             ...(subscriptionSchedule?.pricing_plan_schedule?.seats_values
                 ? {
                       seatsValues: subscriptionSchedule?.pricing_plan_schedule?.seats_values.map(

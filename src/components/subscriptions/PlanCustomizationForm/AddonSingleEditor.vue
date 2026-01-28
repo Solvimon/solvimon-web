@@ -1,0 +1,88 @@
+<script setup lang="ts">
+import { Section, Toggle, useIntl } from '@solvimon/ui';
+import type { AddonSingleEditorProps } from './AddonSingleEditor.types';
+import PricingGroupTitle from './PricingGroupTitle.vue';
+import PricingGroupContent from './PricingGroupContent.vue';
+import { computed } from 'vue';
+import type { Pricing } from '@solvimon/types';
+import { getNameFromPricing } from '@/utils/pricing';
+import { usePricingItem } from '@/composables/usePricingItem';
+
+const props = defineProps<AddonSingleEditorProps>();
+const model = defineModel<Pricing['id'][]>('modelValue', { required: true });
+
+const { $t } = useIntl();
+const { renderPricingForPricingItem } = usePricingItem();
+
+const groupPricingIds = props.pricings.map((pricing) => pricing.id);
+
+const constraintDescription = computed(() => {
+    if (props.constraint === 'AT_MOST_ONE') {
+        return $t({
+            defaultMessage: 'Select up to one product',
+            id: '123456',
+            description: 'Add to subscription button',
+        });
+    }
+
+    return $t({
+        defaultMessage: 'Select one product',
+        id: '123456',
+        description: 'Add to subscription button',
+    });
+});
+
+const isSelected = (pricingId: Pricing['id']) => {
+    return props.modelValue.includes(pricingId);
+};
+
+const handleToggle = (pricingId: Pricing['id']) => {
+    if (isSelected(pricingId)) {
+        model.value = model.value.filter((id) => id !== pricingId);
+    } else {
+        const filteredPricingIds = model.value.filter((id) => !groupPricingIds.includes(id));
+        model.value = [...filteredPricingIds, pricingId];
+    }
+};
+</script>
+
+<template>
+    <Section no-spacing>
+        <div class="p-1">
+            <PricingGroupTitle>
+                <template #title>{{ groupName }}</template>
+                <template #description>{{ constraintDescription }}</template>
+            </PricingGroupTitle>
+
+            <div class="grid grid-cols-1 gap-1 pt-1">
+                <template v-for="pricing in pricings" :key="pricing.id">
+                    <Section
+                        content-background="none"
+                        :class="{ '!bg-white': isSelected(pricing.id) }"
+                    >
+                        <PricingGroupContent
+                            :name="getNameFromPricing(pricing) ?? ''"
+                            :description="
+                                pricing.items?.[0]
+                                    ? renderPricingForPricingItem(pricing.items?.[0])
+                                    : $t({
+                                          defaultMessage: 'Unsupported pricing',
+                                          id: 'pricing_item_pricing.unsupported_pricing_error',
+                                          description:
+                                              'Text displayed when the pricing item pricing is unsupported',
+                                      })
+                            "
+                        >
+                            <template #default>
+                                <Toggle
+                                    :model-value="isSelected(pricing.id)"
+                                    @update:model-value="handleToggle(pricing.id)"
+                                />
+                            </template>
+                        </PricingGroupContent>
+                    </Section>
+                </template>
+            </div>
+        </div>
+    </Section>
+</template>

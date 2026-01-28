@@ -10,3 +10,7 @@ export function getAllPricingsFromScheduleInfos(
             ) ?? [],
     );
 }
+
+export function getNameFromPricing(pricing: PricingExtended): string | undefined {
+    return pricing.name ?? pricing.products?.[0]?.name;
+}

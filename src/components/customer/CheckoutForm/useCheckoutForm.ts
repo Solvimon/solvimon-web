@@ -83,6 +83,14 @@ export function useCheckoutForm({
         }
 
         /**
+         * Update when enabled pricing ids change.
+         */
+        if (fieldName === 'enabledPricingIds') {
+            onRequiredFieldChange(newValue);
+            return;
+        }
+
+        /**
          * Whilst `email` is not required, it needs to trigger the required field change event,
          */
         if (fieldName !== 'email' && getIsFieldRequired(fieldName)) {
@@ -124,6 +132,7 @@ const getInitialState = (initialState: Partial<CheckoutFormState> = {}): Checkou
         state: undefined,
         companyVatNumber: undefined,
         seatsValues: undefined,
+        enabledPricingIds: undefined,
         ...initialState,
     };
 };

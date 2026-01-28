@@ -1,5 +1,8 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import type { Pricing, PricingPlanSubscriptionExpanded } from '@solvimon/types';
+import type {
+    Pricing,
+    PricingGroupExtended,
+    PricingPlanSubscriptionExpanded,
+} from '@solvimon/types';
 
 /**
  * Recursively searches for PRICING objects with matching IDs.
@@ -10,6 +13,7 @@ export function findPricingsByIds(
 ): Pricing[] {
     const results: Pricing[] = [];
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     function recurse(obj: any) {
         if (Array.isArray(obj)) {
             obj.forEach(recurse);
@@ -24,4 +28,15 @@ export function findPricingsByIds(
     recurse(data);
 
     return results;
+}
+
+export function getPricingGroupsFromExtendedPricingPlanSubscription(
+    subscription: PricingPlanSubscriptionExpanded,
+): PricingGroupExtended[] {
+    return subscription.pricing_plan_schedule_infos.flatMap(
+        (info) =>
+            info.pricing_plan_version.pricing_categories?.flatMap(
+                (category) => category.pricing_groups ?? [],
+            ) ?? [],
+    );
 }

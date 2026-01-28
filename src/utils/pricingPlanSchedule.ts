@@ -1,6 +1,7 @@
 import type {
     ConfiguredMeterValue,
     EnabledPricing,
+    PricingExtended,
     PricingPlanScheduleCustomization,
     PricingPlanScheduleInfo,
     PricingPlanScheduleInfoExpanded,
@@ -19,6 +20,15 @@ export function getFirstPricingPlanScheduleOfType({
     return pricingPlanScheduleInfos.find(
         (scheduleInfo) => scheduleInfo.pricing_plan_schedule.type === type,
     );
+}
+
+export function getAllPricingsFromScheduleInfos({
+    pricingPlanScheduleInfo,
+}: {
+    pricingPlanScheduleInfo: PricingPlanScheduleInfoExpanded;
+}): PricingExtended[] {
+    const categories = pricingPlanScheduleInfo.pricing_plan_version.pricing_categories ?? [];
+    return categories.flatMap((category) => category.pricings ?? []);
 }
 
 /**

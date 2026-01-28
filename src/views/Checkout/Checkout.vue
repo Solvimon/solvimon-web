@@ -21,6 +21,11 @@ import { useExperimentalFeature } from '@/components/providers/ExperimentalFeatu
 import { useLogger } from '@/components/providers';
 import PlanCustomizationEditor from '@/components/subscriptions/PlanCustomizationForm/PlanCustomizationEditor.vue';
 import { getAllPricingsFromScheduleInfos } from '@/utils/pricing';
+import { getPricingGroupsFromExtendedPricingPlanSubscription } from '@/utils/subscription';
+import {
+    isSubscriptionWithAddonProducts,
+    isSubscriptionWithEnabledPricings,
+} from '@/utils/enabledPricings';
 
 const props = defineProps<CheckoutProps>();
 const emit = defineEmits<CheckoutEmits>();
@@ -101,7 +106,14 @@ const isBillingInformationMandatory = computed(
         false,
 );
 
-const seatsValues = computed({
+const enabledPricingIdsModel = computed({
+    get: () => checkoutForm.form.value.enabledPricingIds ?? [],
+    set: (value) => {
+        checkoutForm.form.value.enabledPricingIds = value;
+    },
+});
+
+const seatsValuesModel = computed({
     get: () => checkoutForm.form.value.seatsValues ?? [],
     set: (value) => {
         checkoutForm.form.value.seatsValues = value;
@@ -228,7 +240,21 @@ const pricings = computed(() =>
 );
 
 const showPlanCustomizationEditor = computed(() => {
-    return checkoutForm.form.value.seatsValues && checkoutForm.form.value.seatsValues.length > 0;
+    // Check if the subscription contains seats values
+    if (checkoutForm.form.value.seatsValues && checkoutForm.form.value.seatsValues.length > 0) {
+        return true;
+    }
+
+    // Check if the subscription contains pricing groups with selection constraint
+    if (subscription.value && isSubscriptionWithEnabledPricings(subscription.value!)) {
+        return true;
+    }
+
+    if (subscription.value && isSubscriptionWithAddonProducts(subscription.value!)) {
+        return true;
+    }
+
+    return false;
 });
 
 onMounted(() => {
@@ -272,7 +298,7 @@ onMounted(() => {
                                 :subscription="subscription"
                                 :invoice="invoicePreview"
                                 :trial-invoice="trialInvoicePreview"
-                                :enabled-pricing-ids="enabledPricingIds"
+                                :enabled-pricing-ids="enabledPricingIdsModel"
                                 :trial-period="trialPeriod"
                                 :avatar="avatar"
                                 :is-paid="isPaid"
@@ -307,11 +333,21 @@ onMounted(() => {
                             />
                         </template>
 
-                        <template v-if="showPlanCustomizationEditor" #plan-customization>
+                        <template
+                            v-if="showPlanCustomizationEditor && subscription"
+                            #plan-customization
+                        >
                             <PlanCustomizationEditor
-                                v-model:seats-values="seatsValues"
+                                :subscription="subscription"
+                                v-model:seats-values="seatsValuesModel"
+                                v-model:enabled-pricing-ids="enabledPricingIdsModel"
                                 :initial-seats-values="checkoutForm.initialState?.value.seatsValues"
                                 :pricings="pricings"
+                                :pricing-groups="
+                                    getPricingGroupsFromExtendedPricingPlanSubscription(
+                                        subscription,
+                                    )
+                                "
                             />
                         </template>
 

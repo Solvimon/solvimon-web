@@ -20,8 +20,6 @@ import ExpressPaymentMethods from '@/components/payments/ExpressPaymentMethods/E
 import { useExperimentalFeature } from '@/components/providers/ExperimentalFeatureProvider/composables/useExperimentalFeature';
 import { useLogger } from '@/components/providers';
 import PlanCustomizationEditor from '@/components/subscriptions/PlanCustomizationForm/PlanCustomizationEditor.vue';
-import { getAllPricingsFromScheduleInfos } from '@/utils/pricing';
-import { getPricingGroupsFromExtendedPricingPlanSubscription } from '@/utils/subscription';
 import {
     isSubscriptionWithAddonProducts,
     isSubscriptionWithEnabledPricings,
@@ -235,10 +233,6 @@ const subscriptionStartDate = computed<Date | undefined>(() => {
         : undefined;
 });
 
-const pricings = computed(() =>
-    getAllPricingsFromScheduleInfos(subscription.value?.pricing_plan_schedule_infos ?? []),
-);
-
 const showPlanCustomizationEditor = computed(() => {
     // Check if the subscription contains seats values
     if (checkoutForm.form.value.seatsValues && checkoutForm.form.value.seatsValues.length > 0) {
@@ -342,12 +336,6 @@ onMounted(() => {
                                 v-model:seats-values="seatsValuesModel"
                                 v-model:enabled-pricing-ids="enabledPricingIdsModel"
                                 :initial-seats-values="checkoutForm.initialState?.value.seatsValues"
-                                :pricings="pricings"
-                                :pricing-groups="
-                                    getPricingGroupsFromExtendedPricingPlanSubscription(
-                                        subscription,
-                                    )
-                                "
                             />
                         </template>
 

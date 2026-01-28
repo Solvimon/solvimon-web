@@ -7,14 +7,34 @@ import AddonSingleEditor from './AddonSingleEditor.vue';
 import AddonMultipleEditor from './AddonMultipleEditor.vue';
 import PricingGroupSingleEditor from './PricingGroupSingleEditor.vue';
 import PricingGroupMultipleEditor from './PricingGroupMultipleEditor.vue';
+import { getFirstPricingPlanScheduleOfType } from '@/utils/pricingPlanSchedule';
+import { computed } from 'vue';
+import { getPricingGroupsFromExtendedPricingPlanSubscription } from '@/utils/subscription';
 
-defineProps<PlanCustomizationEditorProps>();
+const props = defineProps<PlanCustomizationEditorProps>();
+
 const seatsModel = defineModel<ConfiguredMeterValue[]>('seatsValues', { required: true });
 const enabledPricingIdsModel = defineModel<Pricing['id'][]>('enabledPricingIds', {
     required: true,
 });
 
 const { $t } = useIntl();
+
+const pricings = computed(
+    () =>
+        getFirstPricingPlanScheduleOfType({
+            pricingPlanScheduleInfos: props.subscription.pricing_plan_schedule_infos,
+            type: 'DEFAULT',
+        })?.pricing_plan_version?.pricing_categories?.[0]?.pricings ?? [],
+);
+
+const addonPricings = computed(() =>
+    pricings.value.filter((pricing) => pricing.product_type === 'ADDON'),
+);
+
+const pricingGroups = computed(() =>
+    getPricingGroupsFromExtendedPricingPlanSubscription(props.subscription),
+);
 </script>
 
 <template>
@@ -83,7 +103,7 @@ const { $t } = useIntl();
             </template>
 
             <!-- product level addons -->
-            <AddonMultipleEditor v-model="enabledPricingIdsModel" :pricings="pricings" />
+            <AddonMultipleEditor v-model="enabledPricingIdsModel" :pricings="addonPricings" />
         </div>
     </Section>
 </template>

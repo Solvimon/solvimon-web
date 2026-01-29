@@ -62,3 +62,5 @@ test:e2e:
         reports:
             junit: packages/sdk/tests/playwright/results.xml
         expire_in: 1 week
+    rules:
+        - if: $CI_COMMIT_REF_NAME !~ /^release/ && $CI_COMMIT_REF_NAME !~ /^tag/

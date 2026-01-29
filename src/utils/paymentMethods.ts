@@ -10,12 +10,13 @@ const EXPRESS_PAYMENT_METHOD_TYPES = ['applepay'] as const;
 export function getExpressPaymentMethodOptions(
     paymentMethodsOptionsResponse: PaymentMethodOptionsResponse,
 ): PaymentMethodOption[] {
-    return paymentMethodsOptionsResponse.flatMap((entry) =>
-        entry.options.filter((option) =>
-            EXPRESS_PAYMENT_METHOD_NAMES.some(
-                (name) => name.toLowerCase() === option.name.toLowerCase(),
-            ),
-        ),
+    return paymentMethodsOptionsResponse.flatMap(
+        (entry) =>
+            entry.options?.filter((option) =>
+                EXPRESS_PAYMENT_METHOD_NAMES.some(
+                    (name) => name.toLowerCase() === option.name.toLowerCase(),
+                ),
+            ) ?? [],
     );
 }
 
@@ -25,25 +26,27 @@ export function getExpressPaymentMethodOptions(
 export function getPaymentMethodOptionsWithoutExpress(
     paymentMethodsOptionsResponse: PaymentMethodOptionsResponse,
 ): PaymentMethodOptionsResponse {
-    return paymentMethodsOptionsResponse
-        .map((entry) => {
-            const filteredOptions = entry.options.filter(
-                (option) =>
-                    !EXPRESS_PAYMENT_METHOD_NAMES.some(
-                        (name) => name.toLowerCase() === option.name.toLowerCase(),
-                    ),
-            );
+    const result: PaymentMethodOptionsResponse = [];
 
-            if (filteredOptions.length === 0) {
-                return null;
-            }
+    for (const entry of paymentMethodsOptionsResponse) {
+        const filteredOptions = (entry.options ?? []).filter(
+            (option) =>
+                !EXPRESS_PAYMENT_METHOD_NAMES.some(
+                    (name) => name.toLowerCase() === option.name.toLowerCase(),
+                ),
+        );
 
-            return {
-                ...entry,
-                options: filteredOptions,
-            };
-        })
-        .filter((entry): entry is PaymentMethodOptionsResponse[number] => entry !== null);
+        if (filteredOptions.length === 0) {
+            continue;
+        }
+
+        result.push({
+            ...entry,
+            options: filteredOptions,
+        });
+    }
+
+    return result;
 }
 
 /**

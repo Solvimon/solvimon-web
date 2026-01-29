@@ -13,6 +13,7 @@ import { usePricingItem } from '@/composables/usePricingItem';
 import { breakpointsTailwind, useBreakpoints } from '@vueuse/core';
 import { getNameFromPricing } from '@/utils/pricing';
 import PricingGroupTitle from './PricingGroupTitle.vue';
+import { useViewport } from '@/composables/useViewport';
 
 const SHOW_RADIO_GROUP_MAX_OPTIONS = 3;
 
@@ -23,6 +24,7 @@ const model = defineModel<PricingGroupSingleEditorProps['modelValue']>('modelVal
 
 const { $t } = useIntl();
 const { renderPricingForPricingItem } = usePricingItem();
+const { isMobileViewport } = useViewport();
 
 const groupPricingIds = computed(() => props.pricings.map((pricing) => pricing.id));
 
@@ -71,9 +73,6 @@ const getSelectOptions = (): SelectExtendedOptionEntry[] => {
         value,
     }));
 };
-
-const breakpoints = useBreakpoints(breakpointsTailwind);
-const isMobileViewport = breakpoints.smallerOrEqual('sm');
 </script>
 
 <template>

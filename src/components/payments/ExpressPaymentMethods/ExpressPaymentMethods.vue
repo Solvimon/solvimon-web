@@ -31,7 +31,7 @@ const paymentMethodOptionsResponseEntryIncludingApplePay = computed<
     }
 
     return props.paymentMethodsOptionsResponse?.find((entry) =>
-        entry.options.some((option) => option.name.toLowerCase() === 'apple pay'),
+        entry.options?.some((option) => option.name.toLowerCase() === 'apple pay'),
     );
 });
 
@@ -43,7 +43,7 @@ const paymentMethodOptionsResponseEntryIncludingPayPal = computed<
     }
 
     return props.paymentMethodsOptionsResponse?.find((entry) =>
-        entry.options.some((option) => option.name.toLowerCase() === 'paypal'),
+        entry.options?.some((option) => option.name.toLowerCase() === 'paypal'),
     );
 });
 
@@ -55,7 +55,7 @@ const paymentMethodOptionsResponseEntryIncludingGooglePay = computed<
     }
 
     return props.paymentMethodsOptionsResponse?.find((entry) =>
-        entry.options.some((option) => option.name.toLowerCase() === 'google pay'),
+        entry.options?.some((option) => option.name.toLowerCase() === 'google pay'),
     );
 });
 

@@ -7,7 +7,7 @@ import { CheckboxGroupExtended } from '@solvimon/ui';
 import { usePricingItem } from '@/composables/usePricingItem';
 import { computed } from 'vue';
 import { containsAtLeastOneOf } from '@solvimon/ui/validators';
-import { breakpointsTailwind, useBreakpoints } from '@vueuse/core';
+import { useViewport } from '@/composables/useViewport';
 
 const props = defineProps<PricingGroupMultiEditorProps>();
 
@@ -17,6 +17,7 @@ const model = defineModel<PricingGroupMultiEditorProps['modelValue']>('modelValu
 
 const { $t } = useIntl();
 const { renderPricingForPricingItem } = usePricingItem();
+const { isMobileViewport } = useViewport();
 
 const rules = computed(() => ({
     value: {
@@ -26,9 +27,6 @@ const rules = computed(() => ({
 
 const validationState = computed(() => ({ value: model.value }));
 const validation = useValidation(rules, validationState);
-
-const breakpoints = useBreakpoints(breakpointsTailwind);
-const isMobileViewport = breakpoints.smallerOrEqual('sm');
 </script>
 
 <template>

@@ -1,5 +1,5 @@
 import type {
-    Pricing,
+    PricingExtended,
     PricingGroupExtended,
     PricingPlanSubscriptionExpanded,
 } from '@solvimon/types';
@@ -9,9 +9,9 @@ import type {
  */
 export function findPricingsByIds(
     data: PricingPlanSubscriptionExpanded,
-    ids: Pricing['id'][],
-): Pricing[] {
-    const results: Pricing[] = [];
+    ids: PricingExtended['id'][],
+): PricingExtended[] {
+    const results: PricingExtended[] = [];
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     function recurse(obj: any) {

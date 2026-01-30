@@ -34,7 +34,9 @@ const selectedPricings = computed(() => {
 
     const pricings = findPricingsByIds(props.subscription, props.enabledPricingIds);
 
-    const names = pricings?.map((pricing) => pricing.name).join(' - ');
+    const names = pricings
+        ?.map((pricing) => pricing.name ?? pricing.products?.[0]?.name)
+        .join(' - ');
 
     return names;
 });

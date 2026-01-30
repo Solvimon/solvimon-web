@@ -43,7 +43,7 @@ const handleToggle = (pricingId: Pricing['id']) => {
             <div class="grid grid-cols-1 gap-1">
                 <template v-for="pricing in pricings" :key="pricing.id">
                     <Section
-                        :content-background="groupName ? 'none' : 'gray'"
+                        :content-background="groupName || isSelected(pricing.id) ? 'none' : 'gray'"
                         :class="{ '!bg-white': isSelected(pricing.id) }"
                     >
                         <PricingGroupContent

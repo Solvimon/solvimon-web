@@ -10,9 +10,11 @@ import type { TimePeriod } from '@solvimon/types';
 import { computed, ref } from 'vue';
 import { convertDateRangeToTimePeriod } from '@solvimon/ui';
 import { taxId } from '@solvimon/ui/validators';
+import { isEqual } from 'lodash';
 import { createInvoicesService } from '@/services/invoices';
 import type { CheckoutFormState } from '@/components/customer/CheckoutForm/CheckoutForm.types';
 import { getScheduleCustomizations } from '@/utils/pricingPlanSchedule';
+import type { GetInvoicePreviewPayload } from '@/services/invoices.types';
 
 const EMPTY_LEGAL_ENTITY_NAME = 'preview';
 const EMPTY_COUNTRY = 'NL';
@@ -24,6 +26,7 @@ export const useInvoicePreview = () => {
     const trialInvoicePreview = ref<Invoice>();
     const invoicePreview = ref<Invoice>();
     const status = ref<ApiStatus>(ApiStatus.Initial);
+    const cachedPreviewPayload = ref<GetInvoicePreviewPayload>();
 
     const loadInvoicePreview = ({
         subscription,
@@ -58,7 +61,7 @@ export const useInvoicePreview = () => {
                 pricingPlanScheduleInfos: subscription.pricing_plan_schedule_infos,
             }) ?? [];
 
-        void getInvoicePreview({
+        const payload = {
             pricingPlanSubscriptionId: subscription.id,
             startAt: subscriptionStartAt,
             customizations: scheduleCustomizations,
@@ -81,7 +84,15 @@ export const useInvoicePreview = () => {
                     },
                 }),
             },
-        })
+        } satisfies GetInvoicePreviewPayload;
+
+        if (isEqual(payload, cachedPreviewPayload.value)) {
+            return;
+        }
+
+        cachedPreviewPayload.value = payload;
+
+        void getInvoicePreview(payload)
             .then((invoicePreviewResponse) => {
                 const trialSchedule = subscription?.pricing_plan_schedule_infos.find(
                     ({ pricing_plan_schedule }) => pricing_plan_schedule.type === 'TRIAL',

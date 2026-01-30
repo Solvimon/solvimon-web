@@ -1,13 +1,5 @@
 <script setup lang="ts">
-import {
-    Button,
-    Divider,
-    formatAmount,
-    Section,
-    Typography,
-    useIntl,
-    useTimePeriod,
-} from '@solvimon/ui';
+import { Button, formatAmount, Typography, useIntl, useTimePeriod } from '@solvimon/ui';
 import { computed, onMounted, ref } from 'vue';
 import type { Address, CountryCode } from '@solvimon/types';
 import type { CheckoutEmits, CheckoutProps } from './Checkout.types';
@@ -45,7 +37,6 @@ const logger = useLogger();
 const { $t, locale } = useIntl();
 const { formatTimePeriod } = useTimePeriod();
 const portal = usePortal();
-const experimentalFeatures = useExperimentalFeature();
 const { isMobileViewport } = useViewport();
 
 logger.info('COMPONENT_INITIALIZED', 'Checkout component initialized');
@@ -316,12 +307,7 @@ onMounted(() => {
 
         <template #express-payment-methods>
             <ExpressPaymentMethods
-                v-if="
-                    !isPaid &&
-                    checkoutForm.form.value.country &&
-                    amount &&
-                    experimentalFeatures?.['express-checkout']
-                "
+                v-if="!isPaid && checkoutForm.form.value.country && amount"
                 :amount="amount"
                 :country-code="checkoutForm.form.value.country"
                 :locale="locale"
@@ -350,7 +336,12 @@ onMounted(() => {
 
         <template v-if="!isPaid" #payment-methods>
             <Skeleton variant="section" class="min-h-[130px]">
-                <div v-if="!isPaymentMethodsPending && !isInvoicePreviewPending">
+                <div
+                    v-if="
+                        !isPaymentMethodsPending ||
+                        (isPaymentMethodsPending && paymentMethodOptions.length > 0)
+                    "
+                >
                     <Typography variant="heading-3" tag="h2" class="mb-2">{{
                         $t({
                             defaultMessage: 'Payment method',
@@ -410,7 +401,7 @@ onMounted(() => {
                         </template>
                     </EmptyStatePlaceholder>
                     <PaymentIntegrationForm
-                        v-else-if="invoicePreview && amount && checkoutForm.form.value.country"
+                        v-else-if="amount && checkoutForm.form.value.country"
                         ref="paymentIntegrationFormRef"
                         :country-code="checkoutForm.form.value.country"
                         :context="authorizationContext"
@@ -434,7 +425,7 @@ onMounted(() => {
                     :subscription="subscription"
                     :invoice="invoicePreview"
                     :trial-invoice="trialInvoicePreview"
-                    :enabled-pricing-ids="props.enabledPricingIds"
+                    :enabled-pricing-ids="enabledPricingIdsModel"
                     :trial-period="trialPeriod"
                     :country-code="checkoutForm.form.value.country"
                     :avatar="avatar"
@@ -450,7 +441,7 @@ onMounted(() => {
         <template #pay-button>
             <Skeleton v-if="!isPaid" class="min-h-[44px]">
                 <Button
-                    v-if="invoicePreview && !isInvoicePreviewPending"
+                    v-if="invoicePreview"
                     type="button"
                     size="lg"
                     class="full-width"

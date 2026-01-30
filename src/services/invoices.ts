@@ -9,6 +9,7 @@ import type {
 } from '@solvimon/types';
 import { downloadFile, withPagination } from '@solvimon/ui';
 import { createRequestService } from './requests';
+import type { GetInvoicePreviewPayload } from './invoices.types';
 import { useConfig } from '@/components/providers/ConfigProvider/composables/useConfig';
 
 interface InvoicesService {
@@ -112,12 +113,7 @@ export function createInvoicesService(): InvoicesService {
         pricingPlanSubscriptionId,
         startAt,
         customizations,
-    }: {
-        customer: Partial<Customer>;
-        pricingPlanSubscriptionId: PricingPlanSubscription['id'];
-        startAt?: PricingPlanSchedule['start_at'];
-        customizations?: PricingPlanScheduleCustomization[];
-    }) {
+    }: GetInvoicePreviewPayload) {
         return request<InvoicePreview>({
             url: `${config.apiUrls.transaction}/portal/invoices/preview`,
             options: { method: 'POST' },

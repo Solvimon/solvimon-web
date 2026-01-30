@@ -32,6 +32,7 @@ import {
 import { useExperimentalFeature } from '@/components/providers/ExperimentalFeatureProvider/composables/useExperimentalFeature';
 import { filterOutExpressPaymentMethods } from '@/utils/paymentMethods';
 import { useLogger } from '@/components/providers';
+import { isEqual } from 'lodash';
 
 /**
  * The Adyen instances should be stored in plain objects to avoid issues with Vue's reactivity system.
@@ -632,7 +633,10 @@ onBeforeUnmount(() => {
 // Re-mount when paymentMethodOptions change
 watch(
     () => props.paymentMethodOptionResponseEntry,
-    () => {
+    (newValue, oldValue) => {
+        // Don't re-mount when payment method options are the same.
+        if (isEqual(newValue, oldValue)) return;
+
         void mountDropIn();
     },
     { deep: true },

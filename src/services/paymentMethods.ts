@@ -1,20 +1,23 @@
 import type {
-    Amount,
     ApiSuccessCollectionResponse,
     AuthorizePaymentActionRequiredResponse,
     AuthorizePaymentFailureResponse,
     AuthorizePaymentResponse,
     AuthorizePaymentSuccessResponse,
-    Customer,
     PaymentMethod,
     PaymentMethodOptionsResponse,
     PaymentMethodTokenizeAdyenPayload,
     PaymentMethodTokenizePayload,
     PaymentMethodTokenizeStripePayload,
-    PricingPlanSubscription,
 } from '@solvimon/types';
 import { withPagination } from '@solvimon/ui';
 import { createRequestService } from './requests';
+import type {
+    GetPaymentMethodOptionsByCustomerIdPayload,
+    GetPaymentMethodOptionsBySubscriptionIdPayload,
+    GetPaymentMethodOptionsPayload,
+    GetPaymentMethodsPayload,
+} from './paymentMethods.types';
 import { useConfig } from '@/components/providers/ConfigProvider/composables/useConfig';
 
 export function createPaymentMethodsService() {
@@ -26,16 +29,7 @@ export function createPaymentMethodsService() {
         customerId,
         pagination,
         query,
-    }: {
-        customerId: Customer['id'];
-        pagination: {
-            page?: number;
-            pageSize?: number;
-            orderBy?: string;
-            orderDirection?: 'asc' | 'desc';
-        };
-        query?: Record<string, string | number | null | undefined>;
-    }): Promise<ApiSuccessCollectionResponse<PaymentMethod>> {
+    }: GetPaymentMethodsPayload): Promise<ApiSuccessCollectionResponse<PaymentMethod>> {
         const queryParams = withPagination(
             { customer_id: customerId, ...(query ?? {}) },
             pagination,
@@ -67,27 +61,18 @@ export function createPaymentMethodsService() {
     /**
      * Fetch payment method options for a resource.
      */
-    function getPaymentMethodOptions(params: {
-        amount?: Amount;
-        country?: string;
-        customerId: Customer['id'];
-    }): Promise<PaymentMethodOptionsResponse>;
-    function getPaymentMethodOptions(params: {
-        amount?: Amount;
-        country?: string;
-        subscriptionId: PricingPlanSubscription['id'];
-    }): Promise<PaymentMethodOptionsResponse>;
+    function getPaymentMethodOptions(
+        params: GetPaymentMethodOptionsByCustomerIdPayload,
+    ): Promise<PaymentMethodOptionsResponse>;
+    function getPaymentMethodOptions(
+        params: GetPaymentMethodOptionsBySubscriptionIdPayload,
+    ): Promise<PaymentMethodOptionsResponse>;
     function getPaymentMethodOptions({
         customerId,
         country,
         subscriptionId,
         amount,
-    }: {
-        amount?: Amount;
-        country?: string;
-        customerId?: Customer['id'];
-        subscriptionId?: PricingPlanSubscription['id'];
-    }): Promise<PaymentMethodOptionsResponse> {
+    }: GetPaymentMethodOptionsPayload): Promise<PaymentMethodOptionsResponse> {
         return request<PaymentMethodOptionsResponse>({
             url: `${config.apiUrls.config}/portal/payment-method-options`,
             options: { method: 'POST' },

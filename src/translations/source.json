@@ -1,4 +1,8 @@
 {
+  "123456": {
+    "defaultMessage": "Select one product",
+    "description": "Add to subscription button"
+  },
   "checkout.address.city.placeholder": {
     "defaultMessage": "City...",
     "description": "City of the customer address in the checkout form"
@@ -58,6 +62,10 @@
   "checkout.country.label": {
     "defaultMessage": "Billing country",
     "description": "The country of the customer in the checkout form"
+  },
+  "checkout.customize_plan_block.title": {
+    "defaultMessage": "Customize plan",
+    "description": "The title of the customize plan block in the checkout form"
   },
   "checkout.email_address.label": {
     "defaultMessage": "Email address",
@@ -158,10 +166,6 @@
   "checkout.subscription_description": {
     "defaultMessage": "You will be billed <strong>{price}</strong> per {period_name}, starting today.",
     "description": "The description of the subscription"
-  },
-  "checkout.terms_and_conditions_block.title": {
-    "defaultMessage": "Terms and conditions",
-    "description": "The title of the terms and conditions block in the checkout"
   },
   "checkout.trial.label": {
     "defaultMessage": "Trial",
@@ -339,6 +343,46 @@
     "defaultMessage": "Try again",
     "description": "Retry button text when an error has happened during a payment"
   },
+  "pricing_item_pricing": {
+    "defaultMessage": "{pricing} per {billing_period}",
+    "description": "The pricing item pricing"
+  },
+  "pricing_item_pricing.flat_top_up": {
+    "defaultMessage": "Flat top up pricing",
+    "description": "The pricing item pricing for a flat top up pricing item"
+  },
+  "pricing_item_pricing.none": {
+    "defaultMessage": "Not billed",
+    "description": "The pricing item pricing for a not billed pricing item"
+  },
+  "pricing_item_pricing.pass_through": {
+    "defaultMessage": "Pass through pricing",
+    "description": "The pricing item pricing for a pass through pricing item"
+  },
+  "pricing_item_pricing.per_seat": {
+    "defaultMessage": "Per seat",
+    "description": "The pricing item pricing for a per seat pricing item"
+  },
+  "pricing_item_pricing.stair_step": {
+    "defaultMessage": "Stair step pricing",
+    "description": "The pricing item pricing for a stair step pricing item"
+  },
+  "pricing_item_pricing.tiered": {
+    "defaultMessage": "Tiered pricing",
+    "description": "The pricing item pricing for a tiered pricing item"
+  },
+  "pricing_item_pricing.tiered_top_up": {
+    "defaultMessage": "Tiered top up pricing",
+    "description": "The pricing item pricing for a tiered top up pricing item"
+  },
+  "pricing_item_pricing.top_tiered": {
+    "defaultMessage": "Top tiered pricing",
+    "description": "The pricing item pricing for a top tiered pricing item"
+  },
+  "pricing_item_pricing.unsupported_pricing_error": {
+    "defaultMessage": "Unsupported pricing",
+    "description": "Text displayed when the pricing item pricing is unsupported"
+  },
   "sdk.invoice_details.customer_billing_information.title": {
     "defaultMessage": "Your billing information",
     "description": "Title for the billing information on the detailed invoice view"
@@ -370,6 +414,30 @@
   "sdk.invoice_details.payment_history.title": {
     "defaultMessage": "Payment history",
     "description": "Title for the payment history block on the invoice details page"
+  },
+  "seats.label": {
+    "defaultMessage": "Seats",
+    "description": "The label for the seats input field"
+  },
+  "seats.price_per_seat_period": {
+    "defaultMessage": "{amount} per seat/{period}",
+    "description": "The price per seat and billing period label for seat-based pricing"
+  },
+  "seats.tiered_price_per_seat_period": {
+    "defaultMessage": "{amount} per seat/{period}",
+    "description": "The price per seat and billing period label for a tiered pricing tier"
+  },
+  "seats.tiered_pricing_label": {
+    "defaultMessage": "Tiered pricing",
+    "description": "The label indicating tiered pricing structure for seats"
+  },
+  "seats.tiered_range_label": {
+    "defaultMessage": "{lower_bound} - {upper_bound} seats",
+    "description": "The label showing the seat count range for a tiered pricing tier"
+  },
+  "seats.tiered_unbounded_range_label": {
+    "defaultMessage": "> {lower_bound} seats",
+    "description": "The label showing the unbounded seat count range (greater than) for a tiered pricing tier"
   },
   "subscription_payment_completed_card.continue": {
     "defaultMessage": "Continue to merchant",

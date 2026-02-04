@@ -30,5 +30,6 @@ export interface CheckoutFormState {
     state: string | undefined;
     companyVatNumber: string | undefined;
     seatsValues: ConfiguredMeterValue[] | undefined;
+    promotionCode?: string;
     enabledPricingIds: Pricing['id'][] | undefined;
 }

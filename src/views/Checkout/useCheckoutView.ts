@@ -52,11 +52,18 @@ export function useCheckoutView({
     } = usePaymentMethodOptions();
 
     const loadInvoicePreview = () => {
-        return invoicePreview.loadInvoicePreview({
+        const payload = {
             subscription: subscription.value!,
             checkoutForm: checkoutForm.form.value,
-            enabledPricingIds: checkoutForm.form.value.enabledPricingIds,
-        });
+            enabledPricingIds,
+            promotionCode: checkoutForm.form.value.promotionCode,
+        };
+
+        if (checkoutForm.form.value.enabledPricingIds) {
+            payload.enabledPricingIds = checkoutForm.form.value.enabledPricingIds;
+        }
+
+        return invoicePreview.loadInvoicePreview(payload);
     };
 
     /**
@@ -68,10 +75,13 @@ export function useCheckoutView({
         trialInvoicePreview: Invoice;
         invoicePreview: Invoice;
     }> => {
+        const promotionCode = formState.promotionCode ?? checkoutForm.form.value.promotionCode;
+
         await invoicePreview.loadInvoicePreview({
             subscription: subscription.value!,
             checkoutForm: { ...checkoutForm.form.value, ...formState },
             enabledPricingIds,
+            promotionCode,
         });
 
         return {
@@ -90,7 +100,9 @@ export function useCheckoutView({
                 return;
             }
 
-            void loadInvoicePreview();
+            void loadInvoicePreview().catch(() => {
+                // Ignore preview failures triggered by automatic form updates.
+            });
         },
     });
 
@@ -163,12 +175,49 @@ export function useCheckoutView({
             pricingPlanScheduleInfos: subscription.value?.pricing_plan_schedule_infos ?? [],
         });
 
+        const promotionCode = checkoutForm.form.value.promotionCode;
+        const scheduleCustomizationsWithPromotion =
+            promotionCode && subscription.value
+                ? (() => {
+                      const customizations = scheduleCustomizations
+                          ? [...scheduleCustomizations]
+                          : [];
+                      const defaultScheduleId =
+                          customizations[0]?.pricing_plan_schedule_id ??
+                          getFirstPricingPlanScheduleOfType({
+                              pricingPlanScheduleInfos:
+                                  subscription.value?.pricing_plan_schedule_infos ?? [],
+                              type: 'DEFAULT',
+                          })?.id;
+
+                      if (!defaultScheduleId) {
+                          return scheduleCustomizations;
+                      }
+
+                      const existingCustomization = customizations.find(
+                          ({ pricing_plan_schedule_id }) =>
+                              pricing_plan_schedule_id === defaultScheduleId,
+                      );
+
+                      if (existingCustomization) {
+                          existingCustomization.promotion_codes = [promotionCode];
+                      } else {
+                          customizations.push({
+                              pricing_plan_schedule_id: defaultScheduleId,
+                              promotion_codes: [promotionCode],
+                          });
+                      }
+
+                      return customizations;
+                  })()
+                : scheduleCustomizations;
+
         return {
             type: 'INIT_PRICING_PLAN_SUBSCRIPTION',
             init_pricing_plan_subscription: {
                 template_pricing_plan_subscription_id: subscriptionId,
-                ...(scheduleCustomizations && {
-                    pricing_plan_schedule_customizations: scheduleCustomizations,
+                ...(scheduleCustomizationsWithPromotion && {
+                    pricing_plan_schedule_customizations: scheduleCustomizationsWithPromotion,
                 }),
                 customer_details: {
                     email: checkoutForm.form.value.email ?? '',
@@ -222,7 +271,11 @@ export function useCheckoutView({
 
     onMounted(async () => {
         await loadSubscription();
-        await loadInvoicePreview();
+        try {
+            await loadInvoicePreview();
+        } catch {
+            // Ignore initial preview failures; caller-specific handlers can opt in.
+        }
     });
 
     watchOnce(shouldLoadPaymentMethodOptions, (shouldLoad) => {
@@ -240,6 +293,7 @@ export function useCheckoutView({
         trialInvoicePreview: invoicePreview.trialInvoicePreview,
         trialPeriod: invoicePreview.trialPeriod,
         updateInvoicePreviewOnBillingInformationChange,
+        lastPreviewScheduleId: invoicePreview.lastPreviewScheduleId,
         paymentMethodOptions,
         isPaymentMethodsPending: isPaymentMethodsPending,
         isInvoicePreviewPending: invoicePreview.isPending,

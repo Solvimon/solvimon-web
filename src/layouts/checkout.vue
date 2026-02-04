@@ -24,6 +24,7 @@
             <div class="grid grid-cols-1 gap-2 w-full md:shrink-0 md:w-72">
                 <slot name="order-summary" />
 
+                <slot name="promotion-code" />
                 <slot name="pay-button" />
 
                 <slot name="kpis" />

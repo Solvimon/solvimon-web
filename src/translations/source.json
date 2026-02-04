@@ -163,6 +163,42 @@
     "defaultMessage": "Select a country to see the available payment methods",
     "description": "The message shown when no country is selected in the checkout"
   },
+  "checkout.promotion_code.add_label": {
+    "defaultMessage": "Add promotion code",
+    "description": "Label for adding a promotion code in checkout"
+  },
+  "checkout.promotion_code.applied_label": {
+    "defaultMessage": "Promotion applied",
+    "description": "Fallback label for an applied promotion code in checkout"
+  },
+  "checkout.promotion_code.applied_status": {
+    "defaultMessage": "Promotion code applied",
+    "description": "Aria live message when a promotion code is applied in checkout"
+  },
+  "checkout.promotion_code.apply_aria_label": {
+    "defaultMessage": "Apply promotion code",
+    "description": "Aria label for the promotion code apply button in checkout"
+  },
+  "checkout.promotion_code.apply_button": {
+    "defaultMessage": "Apply",
+    "description": "Button label for applying a promotion code in checkout"
+  },
+  "checkout.promotion_code.input_aria_label": {
+    "defaultMessage": "Promotion code",
+    "description": "Aria label for promotion code input in checkout"
+  },
+  "checkout.promotion_code.placeholder": {
+    "defaultMessage": "Promotion code",
+    "description": "Placeholder for promotion code input in checkout"
+  },
+  "checkout.promotion_code.remove_aria_label": {
+    "defaultMessage": "Remove promotion code",
+    "description": "Aria label for the promotion code remove button in checkout"
+  },
+  "checkout.promotion_code.removed_status": {
+    "defaultMessage": "Promotion code removed",
+    "description": "Aria live message when a promotion code is removed in checkout"
+  },
   "checkout.subscription_description": {
     "defaultMessage": "You will be billed <strong>{price}</strong> per {period_name}, starting today.",
     "description": "The description of the subscription"

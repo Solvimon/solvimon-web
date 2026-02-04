@@ -113,6 +113,7 @@ export function createInvoicesService(): InvoicesService {
         pricingPlanSubscriptionId,
         startAt,
         customizations,
+        pricing_plan_schedule_customizations,
     }: GetInvoicePreviewPayload) {
         return request<InvoicePreview>({
             url: `${config.apiUrls.transaction}/portal/invoices/preview`,
@@ -121,6 +122,9 @@ export function createInvoicesService(): InvoicesService {
                 template_pricing_plan_subscription_id: pricingPlanSubscriptionId,
                 ...(startAt && { start_at: startAt }),
                 ...(customizations && { pricing_plan_schedule_customizations: customizations }),
+                ...(pricing_plan_schedule_customizations && {
+                    pricing_plan_schedule_customizations,
+                }),
                 customer_details: {
                     ...customer,
                     reference: 'preview',

@@ -1,5 +1,12 @@
 <script setup lang="ts">
-import { Button, formatAmount, Typography, useIntl, useTimePeriod } from '@solvimon/ui';
+import {
+    Button,
+    ErrorNotification,
+    formatAmount,
+    Typography,
+    useIntl,
+    useTimePeriod,
+} from '@solvimon/ui';
 import { computed, onMounted, ref } from 'vue';
 import type { Address, CountryCode } from '@solvimon/types';
 import type { CheckoutEmits, CheckoutProps } from './Checkout.types';
@@ -26,6 +33,8 @@ import {
 } from '@/utils/enabledPricings';
 import { CheckoutLayout } from '@/layouts';
 import { useViewport } from '@/composables/useViewport';
+import PromotionCodeSection from '@/components/checkout/PromotionCodeSection.vue';
+import { usePromotionCode } from './usePromotionCode';
 
 const props = defineProps<CheckoutProps>();
 const emit = defineEmits<CheckoutEmits>();
@@ -253,6 +262,46 @@ const showPlanCustomizationEditor = computed(() => {
     return false;
 });
 
+const promotionCode = ref<string | null>(null);
+
+const {
+    applyPromotionCode,
+    removePromotionCode,
+    isPromotionCodePending,
+    promotionCodeErrorMessage,
+} = usePromotionCode({
+    checkoutForm,
+    updateInvoicePreviewOnBillingInformationChange,
+    logger,
+    formatErrorMessage: ({ action }) =>
+        $t(
+            action === 'apply'
+                ? {
+                      defaultMessage: 'Promotion code could not be applied. Please try again.',
+                      id: 'checkout.promotion_code.apply_failed',
+                      description:
+                          'Error message when applying a promotion code in checkout failed',
+                  }
+                : {
+                      defaultMessage: 'Promotion code could not be removed. Please try again.',
+                      id: 'checkout.promotion_code.remove_failed',
+                      description:
+                          'Error message when removing a promotion code in checkout failed',
+                  },
+        ),
+    onInvalidPromotionCode: () => {
+        promotionCode.value = null;
+    },
+    onApplyError: () => {
+        promotionCode.value = null;
+    },
+});
+
+const handlePaymentSuccess = () => {
+    isPaid.value = true;
+    promotionCodeErrorMessage.value = null;
+};
+
 onMounted(() => {
     emit('ready');
 });
@@ -411,7 +460,7 @@ onMounted(() => {
                         :success-redirect-url="successRedirectUrl"
                         :validate-on-submit="handleValidateOnSubmit"
                         force-store-payment-method
-                        @payment-success="isPaid = true"
+                        @payment-success="handlePaymentSuccess"
                         @ready="emit('ready')"
                     />
                 </div>
@@ -438,6 +487,19 @@ onMounted(() => {
             </Skeleton>
         </template>
 
+        <template v-if="!isPaid" #promotion-code>
+            <PromotionCodeSection
+                :promotion-code="promotionCode"
+                @update:applied-code="promotionCode = $event"
+                @remove="removePromotionCode"
+                @apply="applyPromotionCode"
+            />
+            <ErrorNotification
+                v-if="promotionCodeErrorMessage"
+                class="mt-2"
+                :title="promotionCodeErrorMessage"
+            />
+        </template>
         <template #pay-button>
             <Skeleton v-if="!isPaid" class="min-h-[44px]">
                 <Button
@@ -446,6 +508,7 @@ onMounted(() => {
                     size="lg"
                     class="full-width"
                     @click="handleSubmit"
+                    :disabled="isPromotionCodePending"
                 >
                     {{
                         hasTrialPeriod

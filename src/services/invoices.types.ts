@@ -10,4 +10,5 @@ export interface GetInvoicePreviewPayload {
     pricingPlanSubscriptionId: PricingPlanSubscription['id'];
     startAt?: PricingPlanSchedule['start_at'];
     customizations?: PricingPlanScheduleCustomization[];
+    pricing_plan_schedule_customizations?: PricingPlanScheduleCustomization[];
 }

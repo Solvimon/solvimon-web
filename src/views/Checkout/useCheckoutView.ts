@@ -76,6 +76,8 @@ export function useCheckoutView({
         invoicePreview: Invoice;
     }> => {
         const promotionCode = formState.promotionCode ?? checkoutForm.form.value.promotionCode;
+        const enabledPricingIds =
+            formState.enabledPricingIds ?? checkoutForm.form.value.enabledPricingIds;
 
         await invoicePreview.loadInvoicePreview({
             subscription: subscription.value!,

@@ -143,8 +143,7 @@ export const useInvoicePreview = () => {
             )?.id;
 
             const invoiceInfo = invoicePreviewResponse.invoice_infos.find(
-                ({ pricing_plan_schedule_id }) =>
-                    pricing_plan_schedule_id === invoiceScheduleId,
+                ({ pricing_plan_schedule_id }) => pricing_plan_schedule_id === invoiceScheduleId,
             );
 
             invoicePreview.value = invoiceInfo?.invoices[0];

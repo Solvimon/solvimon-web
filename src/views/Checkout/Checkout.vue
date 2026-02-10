@@ -11,6 +11,7 @@ import { computed, onMounted, ref } from 'vue';
 import type { Address, CountryCode } from '@solvimon/types';
 import type { CheckoutEmits, CheckoutProps } from './Checkout.types';
 import { useCheckoutView } from './useCheckoutView';
+import { usePromotionCode } from './usePromotionCode';
 import { usePortal } from '@/components/providers/PortalProvider/composables/usePortal';
 import PaymentIntegrationForm from '@/components/payments/PaymentIntegrationForm/PaymentIntegrationForm.vue';
 import Kpi from '@/components/shared/Kpi.vue';
@@ -34,7 +35,6 @@ import {
 import { CheckoutLayout } from '@/layouts';
 import { useViewport } from '@/composables/useViewport';
 import PromotionCodeSection from '@/components/checkout/PromotionCodeSection.vue';
-import { usePromotionCode } from './usePromotionCode';
 
 const props = defineProps<CheckoutProps>();
 const emit = defineEmits<CheckoutEmits>();
@@ -262,6 +262,15 @@ const showPlanCustomizationEditor = computed(() => {
     return false;
 });
 
+const handlePaymentSuccess = () => {
+    isPaid.value = true;
+    promotionCodeErrorMessage.value = null;
+};
+
+onMounted(() => {
+    emit('ready');
+});
+
 const promotionCode = ref<string | null>(null);
 
 const {
@@ -295,15 +304,6 @@ const {
     onApplyError: () => {
         promotionCode.value = null;
     },
-});
-
-const handlePaymentSuccess = () => {
-    isPaid.value = true;
-    promotionCodeErrorMessage.value = null;
-};
-
-onMounted(() => {
-    emit('ready');
 });
 </script>
 

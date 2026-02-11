@@ -3,9 +3,9 @@ import type {
     SolvimonPaymentHistoryProps,
     SolvimonPaymentHistoryEmits,
 } from './SolvimonPaymentHistoryBlock.types';
+import { COMPONENT_NAME } from './SolvimonPaymentHistoryBlock.ce';
 import Provider from '@/components/providers/Provider/Provider.vue';
 import PaymentHistoryBlockContent from '@/components/invoices/invoiceDetails/PaymentHistoryBlockContent.vue';
-import { COMPONENT_NAME } from './SolvimonPaymentHistoryBlock.ce';
 
 const props = defineProps<Partial<SolvimonPaymentHistoryProps>>();
 defineEmits<SolvimonPaymentHistoryEmits>();

@@ -8,11 +8,11 @@ import {
     useTimePeriod,
     Expand,
 } from '@solvimon/ui';
-import type { SeatsEditorItemProps } from './SeatsEditorItem.types';
 import type { ConfiguredMeterValue } from '@solvimon/types';
 import { computed, ref } from 'vue';
-import { useSeatBasedPricing } from '@/composables/useSeatBasedPricing';
+import type { SeatsEditorItemProps } from './SeatsEditorItem.types';
 import TieredTable from './TieredTable.vue';
+import { useSeatBasedPricing } from '@/composables/useSeatBasedPricing';
 
 const props = defineProps<SeatsEditorItemProps>();
 const model = defineModel<ConfiguredMeterValue>('modelValue', { required: true });

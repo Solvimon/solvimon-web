@@ -1,11 +1,10 @@
 <script setup lang="ts">
-import { provide, ref, toRef } from 'vue';
+import { provide, toRef } from 'vue';
 import type { PortalProviderProps } from './PortalProvider.types';
 import {
     getPortal,
     PORTAL_INJECTION_KEY,
 } from '@/components/providers/PortalProvider/PortalProvider.lib';
-import type { PortalUrl } from '@/services/portals.types';
 
 const props = defineProps<PortalProviderProps>();
 

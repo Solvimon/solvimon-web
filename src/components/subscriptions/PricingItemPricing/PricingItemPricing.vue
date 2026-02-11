@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { formatAmount, Typography, useIntl, useTimePeriod } from '@solvimon/ui';
-import type { PricingItemPricingProps } from './PricingItemPricing.types';
 import { computed } from 'vue';
+import type { PricingItemPricingProps } from './PricingItemPricing.types';
 
 const props = withDefaults(defineProps<PricingItemPricingProps>(), {
     variant: 'body-sm',

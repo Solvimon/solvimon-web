@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { Pricing } from '@solvimon/types';
-import type { AddonMultipleEditorProps } from './AddonMultipleEditor.types';
 import { Button, Section, useIntl } from '@solvimon/ui';
+import type { AddonMultipleEditorProps } from './AddonMultipleEditor.types';
 import PricingGroupTitle from './PricingGroupTitle.vue';
 import PricingGroupContent from './PricingGroupContent.vue';
 import { getNameFromPricing } from '@/utils/pricing';
@@ -62,19 +62,19 @@ const handleToggle = (pricingId: Pricing['id']) => {
                             <template #default>
                                 <Button
                                     v-if="isSelected(pricing.id)"
-                                    @click="handleToggle(pricing.id)"
                                     color="gray"
                                     variant="outline"
                                     square
                                     size="sm"
                                     icon-prefix="remove_shopping_cart"
+                                    @click="handleToggle(pricing.id)"
                                 />
                                 <Button
                                     v-else
-                                    @click="handleToggle(pricing.id)"
                                     color="primary"
                                     icon-prefix="add"
                                     size="sm"
+                                    @click="handleToggle(pricing.id)"
                                     >{{
                                         $t({
                                             defaultMessage: 'Add to subscription ',

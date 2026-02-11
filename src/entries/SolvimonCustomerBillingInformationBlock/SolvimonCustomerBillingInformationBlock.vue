@@ -3,9 +3,9 @@ import type {
     SolvimonCustomerBillingInformationBlockEmits,
     SolvimonCustomerBillingInformationBlockProps,
 } from './SolvimonCustomerBillingInformationBlock.types';
+import { COMPONENT_NAME } from './SolvimonCustomerBillingInformationBlock.ce';
 import Provider from '@/components/providers/Provider/Provider.vue';
 import CustomerBillingInformationBlock from '@/components/customer/CustomerBillingInformationBlock/CustomerBillingInformationBlock.vue';
-import { COMPONENT_NAME } from './SolvimonCustomerBillingInformationBlock.ce';
 
 const props = defineProps<Partial<SolvimonCustomerBillingInformationBlockProps>>();
 const emit = defineEmits<SolvimonCustomerBillingInformationBlockEmits>();

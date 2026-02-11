@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import type { TieredTableRowProps } from './TieredTableRow.types';
 import { computed } from 'vue';
 import { formatAmount, Typography, useIntl, useTimePeriod } from '@solvimon/ui';
+import type { TieredTableRowProps } from './TieredTableRow.types';
 
 const props = defineProps<TieredTableRowProps>();
 

@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import type { PricingGroupMultiEditorProps } from './PricingGroupMultipleEditor.types';
-import { getNameFromPricing } from '@/utils/pricing';
 import { Section, useIntl, useValidation } from '@solvimon/ui';
-import PricingGroupTitle from './PricingGroupTitle.vue';
 import { CheckboxGroupExtended } from '@solvimon/ui';
-import { usePricingItem } from '@/composables/usePricingItem';
 import { computed } from 'vue';
 import { containsAtLeastOneOf } from '@solvimon/ui/validators';
+import PricingGroupTitle from './PricingGroupTitle.vue';
+import type { PricingGroupMultiEditorProps } from './PricingGroupMultipleEditor.types';
+import { usePricingItem } from '@/composables/usePricingItem';
+import { getNameFromPricing } from '@/utils/pricing';
 import { useViewport } from '@/composables/useViewport';
 
 const props = defineProps<PricingGroupMultiEditorProps>();

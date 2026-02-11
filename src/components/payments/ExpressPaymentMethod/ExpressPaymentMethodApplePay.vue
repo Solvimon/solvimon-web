@@ -57,14 +57,18 @@ const initApplePay = async () => {
             }),
 
             // Regular
-            regularBilling: {
-                label: props.billingInformation.regular.label,
-                amount: props.billingInformation.regular.amount.quantity.toString(),
-                type: 'final',
-                paymentTiming: 'recurring',
-                recurringPaymentStartDate: props.billingInformation.regular.startDate,
-                ...getAppleIntervalConfigFromTimePeriod(props.billingInformation.regular.interval),
-            },
+            ...(props.billingInformation.regular && {
+                regularBilling: {
+                    label: props.billingInformation.regular.label,
+                    amount: props.billingInformation.regular.amount.quantity.toString(),
+                    type: 'final',
+                    paymentTiming: 'recurring',
+                    recurringPaymentStartDate: props.billingInformation.regular.startDate,
+                    ...getAppleIntervalConfigFromTimePeriod(
+                        props.billingInformation.regular.interval ?? { type: 'MONTH', value: 1 },
+                    ),
+                },
+            }),
         },
         requiredBillingContactFields: ['postalAddress'],
         requiredShippingContactFields: ['email'],

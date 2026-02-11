@@ -2,7 +2,7 @@
 import { provide } from 'vue';
 import { createLogger, LOGGER_PROVIDER_INJECTION_KEY } from './LoggerProvider.lib';
 import type { LoggerProviderProps } from './LoggerProvider.types';
-import { useConfig } from '../ConfigProvider/composables/useConfig';
+import { useConfig } from '@/components/providers/ConfigProvider/composables/useConfig';
 
 const props = withDefaults(defineProps<LoggerProviderProps>(), {
     minLevel: 'error',

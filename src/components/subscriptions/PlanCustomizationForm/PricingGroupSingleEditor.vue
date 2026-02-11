@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import type { PricingGroupSingleEditorProps } from './PricingGroupSingleEditor.types';
 import {
     RadioGroupExtended,
     Section,
@@ -9,10 +8,10 @@ import {
     type RadioGroupExtendedProps,
     type SelectExtendedOptionEntry,
 } from '@solvimon/ui';
-import { usePricingItem } from '@/composables/usePricingItem';
-import { breakpointsTailwind, useBreakpoints } from '@vueuse/core';
-import { getNameFromPricing } from '@/utils/pricing';
+import type { PricingGroupSingleEditorProps } from './PricingGroupSingleEditor.types';
 import PricingGroupTitle from './PricingGroupTitle.vue';
+import { usePricingItem } from '@/composables/usePricingItem';
+import { getNameFromPricing } from '@/utils/pricing';
 import { useViewport } from '@/composables/useViewport';
 
 const SHOW_RADIO_GROUP_MAX_OPTIONS = 3;

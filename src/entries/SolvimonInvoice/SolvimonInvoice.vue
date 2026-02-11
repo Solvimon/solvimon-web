@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import type { SolvimonInvoiceEmits, SolvimonInvoiceProps } from './SolvimonInvoice.types';
+import { COMPONENT_NAME } from './SolvimonInvoice.ce';
 import InvoiceDetail from '@/views/InvoiceDetail/InvoiceDetail.vue';
 import Provider from '@/components/providers/Provider/Provider.vue';
-import { COMPONENT_NAME } from './SolvimonInvoice.ce';
 
 const props = defineProps<Partial<SolvimonInvoiceProps>>();
 defineEmits<SolvimonInvoiceEmits>();

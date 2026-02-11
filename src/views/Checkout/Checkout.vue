@@ -25,7 +25,6 @@ import OrderSummary from '@/components/subscriptions/OrderSummary.vue';
 import EmptyStatePlaceholder from '@/components/checkout/EmptyStatePlaceholder.vue';
 import Skeleton from '@/components/shared/Skeleton.vue';
 import ExpressPaymentMethods from '@/components/payments/ExpressPaymentMethods/ExpressPaymentMethods.vue';
-import { useExperimentalFeature } from '@/components/providers/ExperimentalFeatureProvider/composables/useExperimentalFeature';
 import { useLogger } from '@/components/providers';
 import PlanCustomizationEditor from '@/components/subscriptions/PlanCustomizationForm/PlanCustomizationEditor.vue';
 import {
@@ -35,6 +34,7 @@ import {
 import { CheckoutLayout } from '@/layouts';
 import { useViewport } from '@/composables/useViewport';
 import PromotionCodeSection from '@/components/checkout/PromotionCodeSection.vue';
+import { getFallbackTrialAndSubscriptionStartAndEndDates } from '@/utils/subscription';
 
 const props = defineProps<CheckoutProps>();
 const emit = defineEmits<CheckoutEmits>();
@@ -159,7 +159,7 @@ const agreement = computed(() => {
                     { short: true, singular: true, hideValueForExactPeriods: true },
                 ),
                 // @ts-expect-error formatjs does not support this type yet
-                start_date: new Date(invoicePreview.value.periods[0].start_at),
+                start_date: new Date(subscriptionStartDate.value),
             },
         );
     }
@@ -180,7 +180,7 @@ const agreement = computed(() => {
                 { short: true, singular: true, hideValueForExactPeriods: true },
             ),
             // @ts-expect-error formatjs does not support this type yet
-            start_date: new Date(invoicePreview.value.periods[0].start_at),
+            start_date: new Date(subscriptionStartDate.value),
         },
     );
 });
@@ -209,14 +209,16 @@ const expressPaymentMethodBillingInformation = computed(() => {
                         description: 'The label of the trial',
                     }),
                     amount: trialInvoicePreview.value.tax_summary.total_amount,
-                    startDate: new Date(trialInvoicePreview.value.periods[0].start_at),
-                    endDate: new Date(trialInvoicePreview.value.periods[0].end_at),
+                    startDate: trialStartDate.value ? new Date(trialStartDate.value) : undefined,
+                    endDate: trialEndDate.value ? new Date(trialEndDate.value) : undefined,
                 },
             }),
         regular: {
             label: subscriptionName,
             amount: invoicePreview.value.tax_summary.total_amount,
-            startDate: new Date(invoicePreview.value.periods[0].start_at),
+            startDate: subscriptionStartDate.value
+                ? new Date(subscriptionStartDate.value)
+                : undefined,
             interval: subscription.value?.billing_period ?? { type: 'MONTH', value: 1 },
         },
     };
@@ -233,15 +235,28 @@ const handleUpdateBillingInformation = (billingInformation: Partial<Address>) =>
 const showCustomerInfoOnTop = computed(() => !(props.email && props.countryCode));
 
 const trialStartDate = computed<Date | undefined>(() => {
-    return trialInvoicePreview.value?.periods[0].start_at
-        ? new Date(trialInvoicePreview.value.periods[0].start_at)
-        : undefined;
+    const firstPeriod = trialInvoicePreview.value?.periods?.[0];
+    const fallback = fallbackSubscriptionDates.value?.trialStartDate;
+
+    return firstPeriod?.start_at ? new Date(firstPeriod.start_at) : fallback;
+});
+
+const fallbackSubscriptionDates = computed(() => {
+    return getFallbackTrialAndSubscriptionStartAndEndDates(subscription.value!);
+});
+
+const trialEndDate = computed<Date | undefined>(() => {
+    const firstPeriod = trialInvoicePreview.value?.periods?.[0];
+    const fallback = fallbackSubscriptionDates.value?.trialEndDate;
+
+    return firstPeriod?.end_at ? new Date(firstPeriod.end_at) : fallback;
 });
 
 const subscriptionStartDate = computed<Date | undefined>(() => {
-    return invoicePreview.value?.periods[0].start_at
-        ? new Date(invoicePreview.value.periods[0].start_at)
-        : undefined;
+    const firstPeriod = invoicePreview.value?.periods?.[0];
+    const fallback = fallbackSubscriptionDates.value?.subscriptionStartDate;
+
+    return firstPeriod?.start_at ? new Date(firstPeriod.start_at) : fallback;
 });
 
 const showPlanCustomizationEditor = computed(() => {
@@ -347,21 +362,26 @@ const {
 
         <template v-if="showPlanCustomizationEditor && subscription" #plan-customization>
             <PlanCustomizationEditor
-                :subscription="subscription"
                 v-model:seats-values="seatsValuesModel"
                 v-model:enabled-pricing-ids="enabledPricingIdsModel"
+                :subscription="subscription"
                 :initial-seats-values="checkoutForm.initialState?.value.seatsValues"
             />
         </template>
 
         <template #express-payment-methods>
             <ExpressPaymentMethods
-                v-if="!isPaid && checkoutForm.form.value.country && amount"
+                v-if="
+                    !isPaid &&
+                    checkoutForm.form.value.country &&
+                    amount &&
+                    expressPaymentMethodBillingInformation
+                "
                 :amount="amount"
                 :country-code="checkoutForm.form.value.country"
                 :locale="locale"
                 :payment-methods-options-response="paymentMethodOptions ?? []"
-                :billing-information="expressPaymentMethodBillingInformation!"
+                :billing-information="expressPaymentMethodBillingInformation"
                 :on-billing-information-change="updateInvoicePreviewOnBillingInformationChange"
                 @update-billing-information="handleUpdateBillingInformation"
             />
@@ -507,8 +527,8 @@ const {
                     type="button"
                     size="lg"
                     class="full-width"
-                    @click="handleSubmit"
                     :disabled="isPromotionCodePending"
+                    @click="handleSubmit"
                 >
                     {{
                         hasTrialPeriod

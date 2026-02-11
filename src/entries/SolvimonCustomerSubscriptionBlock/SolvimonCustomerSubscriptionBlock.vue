@@ -3,9 +3,9 @@ import type {
     SolvimonCustomerSubscriptionBlockEmits,
     SolvimonCustomerSubscriptionBlockProps,
 } from './SolvimonCustomerSubscriptionBlock.types';
+import { COMPONENT_NAME } from './SolvimonCustomerSubscriptionBlock.ce';
 import Provider from '@/components/providers/Provider/Provider.vue';
 import CustomerSubscriptionBlock from '@/components/customer/CustomerSubscriptionBlock/CustomerSubscriptionBlock.vue';
-import { COMPONENT_NAME } from './SolvimonCustomerSubscriptionBlock.ce';
 
 const props = defineProps<Partial<SolvimonCustomerSubscriptionBlockProps>>();
 defineEmits<SolvimonCustomerSubscriptionBlockEmits>();

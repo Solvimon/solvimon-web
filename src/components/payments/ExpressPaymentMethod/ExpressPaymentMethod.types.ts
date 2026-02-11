@@ -44,11 +44,11 @@ export interface ExpressPaymentMethodProps {
             /**
              * The start date of the trial period
              */
-            startDate: Date;
+            startDate?: Date;
             /**
              * The end date of the trial period
              */
-            endDate: Date;
+            endDate?: Date;
         };
         /**
          * The regular period
@@ -66,11 +66,11 @@ export interface ExpressPaymentMethodProps {
             /**
              * The start date of the regular period
              */
-            startDate: Date;
+            startDate?: Date;
             /**
              * The interval of the regular period
              */
-            interval: BillingPeriod;
+            interval?: BillingPeriod;
         };
     };
 }

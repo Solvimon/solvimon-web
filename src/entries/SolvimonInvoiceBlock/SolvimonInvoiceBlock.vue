@@ -3,9 +3,9 @@ import type {
     SolvimonInvoiceBlockProps,
     SolvimonInvoiceBlockEmits,
 } from './SolvimonInvoiceBlock.types';
+import { COMPONENT_NAME } from './SolvimonInvoiceBlock.ce';
 import InvoiceBlockContent from '@/components/invoices/invoiceDetails/InvoiceBlockContent.vue';
 import Provider from '@/components/providers/Provider/Provider.vue';
-import { COMPONENT_NAME } from './SolvimonInvoiceBlock.ce';
 
 const props = defineProps<Partial<SolvimonInvoiceBlockProps>>();
 defineEmits<SolvimonInvoiceBlockEmits>();

@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import { Section, useIntl } from '@solvimon/ui';
-import SeatsEditor from './SeatsEditor.vue';
 import type { ConfiguredMeterValue, Pricing } from '@solvimon/types';
+import { computed } from 'vue';
+import SeatsEditor from './SeatsEditor.vue';
 import type { PlanCustomizationEditorProps } from './PlanCustomizationEditor.types';
 import AddonSingleEditor from './AddonSingleEditor.vue';
 import AddonMultipleEditor from './AddonMultipleEditor.vue';
 import PricingGroupSingleEditor from './PricingGroupSingleEditor.vue';
 import PricingGroupMultipleEditor from './PricingGroupMultipleEditor.vue';
 import { getFirstPricingPlanScheduleOfType } from '@/utils/pricingPlanSchedule';
-import { computed } from 'vue';
 import { getPricingGroupsFromExtendedPricingPlanSubscription } from '@/utils/subscription';
 
 const props = defineProps<PlanCustomizationEditorProps>();

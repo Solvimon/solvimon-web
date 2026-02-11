@@ -3,9 +3,9 @@ import type {
     SolvimonCustomerPaymentMethodsBlockEmits,
     SolvimonCustomerPaymentMethodsBlockProps,
 } from './SolvimonCustomerPaymentMethodsBlock.types';
+import { COMPONENT_NAME } from './SolvimonCustomerPaymentMethodsBlock.ce';
 import Provider from '@/components/providers/Provider/Provider.vue';
 import CustomerPaymentMethodsBlock from '@/components/customer/CustomerPaymentMethodsBlock/CustomerPaymentMethodsBlock.vue';
-import { COMPONENT_NAME } from './SolvimonCustomerPaymentMethodsBlock.ce';
 
 const props = defineProps<Partial<SolvimonCustomerPaymentMethodsBlockProps>>();
 defineEmits<SolvimonCustomerPaymentMethodsBlockEmits>();

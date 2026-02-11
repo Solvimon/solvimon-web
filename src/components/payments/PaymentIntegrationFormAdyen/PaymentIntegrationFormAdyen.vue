@@ -8,6 +8,7 @@ import type {
     PaymentAcceptor,
 } from '@solvimon/types';
 import { useIntl } from '@solvimon/ui';
+import { isEqual } from 'lodash';
 import type {
     PaymentIntegrationFormAdyenEmits,
     PaymentIntegrationFormAdyenProps,
@@ -32,7 +33,6 @@ import {
 import { useExperimentalFeature } from '@/components/providers/ExperimentalFeatureProvider/composables/useExperimentalFeature';
 import { filterOutExpressPaymentMethods } from '@/utils/paymentMethods';
 import { useLogger } from '@/components/providers';
-import { isEqual } from 'lodash';
 
 /**
  * The Adyen instances should be stored in plain objects to avoid issues with Vue's reactivity system.

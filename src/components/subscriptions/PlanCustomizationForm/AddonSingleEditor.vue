@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { Section, Toggle, useIntl } from '@solvimon/ui';
+import { computed } from 'vue';
+import type { Pricing } from '@solvimon/types';
 import type { AddonSingleEditorProps } from './AddonSingleEditor.types';
 import PricingGroupTitle from './PricingGroupTitle.vue';
 import PricingGroupContent from './PricingGroupContent.vue';
-import { computed } from 'vue';
-import type { Pricing } from '@solvimon/types';
 import { getNameFromPricing } from '@/utils/pricing';
 import { usePricingItem } from '@/composables/usePricingItem';
 

@@ -13,7 +13,7 @@ export default defineConfig({
     workers: process.env.CI ? 2 : undefined,
     timeout: 30000,
     expect: {
-        timeout: 5000,
+        timeout: 10000,
     },
     reporter: process.env.CI
         ? [

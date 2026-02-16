@@ -6,7 +6,6 @@ import { computed } from 'vue';
 defineSolvimonCheckout();
 
 const handleError = (error: Error) => {
-    // eslint-disable-next-line no-console
     console.error(error);
 };
 

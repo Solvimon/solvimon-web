@@ -527,7 +527,7 @@ const {
                     type="button"
                     size="lg"
                     class="full-width"
-                    :disabled="isPromotionCodePending"
+                    :disabled="isPromotionCodePending || paymentMethodOptions.length === 0"
                     @click="handleSubmit"
                 >
                     {{

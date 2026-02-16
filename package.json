@@ -10,7 +10,7 @@
         "build:css": "tailwindcss -i ./src/assets/index.css -o ./.sdk/tailwind.css",
         "dev": "npm run watch",
         "lint": "eslint . --fix",
-        "lint:ci": "eslint . --fix --ignore-pattern .eslintignore",
+        "lint:ci": "eslint . --ignore-pattern .eslintignore",
         "test:unit": "vitest",
         "type-check:declarations": "vue-tsc --declaration --emitDeclarationOnly -p tsconfig.json --composite false",
         "type-check": "vue-tsc --noEmit -p tsconfig.json --composite false",

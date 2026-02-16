@@ -27,7 +27,7 @@ const seatsNumber = computed<number>({
     set(number: number) {
         model.value = {
             ...model.value,
-            number: number ? number.toString() : undefined,
+            number: number !== undefined ? number.toString() : undefined,
         };
     },
 });

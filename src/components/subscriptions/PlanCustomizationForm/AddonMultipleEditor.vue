@@ -34,8 +34,8 @@ const handleToggle = (pricingId: Pricing['id']) => {
                 <template #description>{{
                     $t({
                         defaultMessage: 'Select any number of products',
-                        id: '123456',
-                        description: 'Add to subscription button',
+                        id: 'addon_multiple_editor.description',
+                        description: 'The description of the addon multiple editor',
                     })
                 }}</template>
             </PricingGroupTitle>
@@ -53,7 +53,7 @@ const handleToggle = (pricingId: Pricing['id']) => {
                                     ? renderPricingForPricingItem(pricing.items?.[0])
                                     : $t({
                                           defaultMessage: 'Unsupported pricing',
-                                          id: 'pricing_item_pricing.unsupported_pricing_error',
+                                          id: 'addon_multiple_editor.unsupported_pricing_error',
                                           description:
                                               'Text displayed when the pricing item pricing is unsupported',
                                       })
@@ -78,8 +78,9 @@ const handleToggle = (pricingId: Pricing['id']) => {
                                     >{{
                                         $t({
                                             defaultMessage: 'Add to subscription ',
-                                            id: '123456',
-                                            description: 'Add to plan button',
+                                            id: 'addon_multiple_editor.add_to_subscription_button',
+                                            description:
+                                                'The button to add a pricing to the subscription',
                                         })
                                     }}</Button
                                 >

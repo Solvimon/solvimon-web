@@ -10,6 +10,7 @@ import PricingGroupSingleEditor from './PricingGroupSingleEditor.vue';
 import PricingGroupMultipleEditor from './PricingGroupMultipleEditor.vue';
 import { getFirstPricingPlanScheduleOfType } from '@/utils/pricingPlanSchedule';
 import { getPricingGroupsFromExtendedPricingPlanSubscription } from '@/utils/subscription';
+import { getAllPricingsFromPricingPlanVersion } from '@/utils/pricingPlanVersion';
 
 const props = defineProps<PlanCustomizationEditorProps>();
 
@@ -20,13 +21,18 @@ const enabledPricingIdsModel = defineModel<Pricing['id'][]>('enabledPricingIds',
 
 const { $t } = useIntl();
 
-const pricings = computed(
-    () =>
-        getFirstPricingPlanScheduleOfType({
-            pricingPlanScheduleInfos: props.subscription.pricing_plan_schedule_infos,
-            type: 'DEFAULT',
-        })?.pricing_plan_version?.pricing_categories?.[0]?.pricings ?? [],
-);
+const pricings = computed(() => {
+    const pricingPlanVersion = getFirstPricingPlanScheduleOfType({
+        pricingPlanScheduleInfos: props.subscription.pricing_plan_schedule_infos,
+        type: 'DEFAULT',
+    })?.pricing_plan_version;
+
+    if (!pricingPlanVersion) {
+        return [];
+    }
+
+    return getAllPricingsFromPricingPlanVersion(pricingPlanVersion);
+});
 
 const addonPricings = computed(() =>
     pricings.value.filter((pricing) => pricing.product_type === 'ADDON'),

@@ -29,11 +29,23 @@ export function usePricingItem() {
         }
 
         if (config.type === 'FLAT' && config.bands?.[0]?.amount) {
-            return $t({
-                defaultMessage: '{pricing} per {billing_period}',
-                id: 'pricing_item_pricing',
-                description: 'The pricing item pricing',
-            });
+            return $t(
+                {
+                    defaultMessage: '{pricing} per {billing_period}',
+                    id: 'pricing_item_pricing',
+                    description: 'The pricing item pricing',
+                },
+                {
+                    pricing: formatAmount(config.bands[0].amount),
+                    billing_period: formatTimePeriod(
+                        config?.billing_period ?? { type: 'MONTH', value: 1 },
+                        {
+                            short: true,
+                            hideValueForExactPeriods: true,
+                        },
+                    ),
+                },
+            );
         }
 
         if (config.type === 'FIXED' && config.bands?.[0]?.fixed_amount) {

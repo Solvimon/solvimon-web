@@ -170,7 +170,7 @@ export function useCheckoutView({
         };
 
         const scheduleCustomizations = getScheduleCustomizations({
-            enabledPricings: enabledPricingIds?.map((enabledPricingId) => ({
+            enabledPricings: checkoutForm.form.value.enabledPricingIds?.map((enabledPricingId) => ({
                 pricing_id: enabledPricingId,
             })),
             seatsValues: checkoutForm.form.value.seatsValues,
@@ -204,8 +204,15 @@ export function useCheckoutView({
                       if (existingCustomization) {
                           existingCustomization.promotion_codes = [promotionCode];
                       } else {
+                          const baseCustomization = scheduleCustomizations?.[0];
                           customizations.push({
                               pricing_plan_schedule_id: defaultScheduleId,
+                              ...(baseCustomization?.enabled_pricings && {
+                                  enabled_pricings: baseCustomization.enabled_pricings,
+                              }),
+                              ...(baseCustomization?.seats_values && {
+                                  seats_values: baseCustomization.seats_values,
+                              }),
                               promotion_codes: [promotionCode],
                           });
                       }

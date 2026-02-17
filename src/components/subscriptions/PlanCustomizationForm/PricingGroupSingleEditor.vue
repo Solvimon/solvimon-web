@@ -1,20 +1,23 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import {
+    PricingGroupRangeInput,
     RadioGroupExtended,
     Section,
     SelectExtended,
     useIntl,
+    type PricingGroupRangeInputOption,
     type RadioGroupExtendedProps,
     type SelectExtendedOptionEntry,
 } from '@solvimon/ui';
-import type { PricingGroupSingleEditorProps } from './PricingGroupSingleEditor.types';
 import PricingGroupTitle from './PricingGroupTitle.vue';
+import type { PricingGroupSingleEditorProps } from './PricingGroupSingleEditor.types';
 import { usePricingItem } from '@/composables/usePricingItem';
 import { getNameFromPricing } from '@/utils/pricing';
 import { useViewport } from '@/composables/useViewport';
 
 const SHOW_RADIO_GROUP_MAX_OPTIONS = 3;
+const SHOW_SELECT_MAX_OPTIONS = 6;
 
 const props = defineProps<PricingGroupSingleEditorProps>();
 const model = defineModel<PricingGroupSingleEditorProps['modelValue']>('modelValue', {
@@ -37,13 +40,7 @@ const singleModelValue = computed<string | undefined>({
     },
 });
 
-type PricingGroupOption = {
-    label: string;
-    value: string;
-    description: string;
-};
-
-const options = computed<PricingGroupOption[]>(() => {
+const options = computed<PricingGroupRangeInputOption[]>(() => {
     return props.pricings.map((pricing) => {
         const pricingItem = pricing.items?.[0];
 
@@ -79,13 +76,6 @@ const getSelectOptions = (): SelectExtendedOptionEntry[] => {
         <div class="p-1">
             <PricingGroupTitle>
                 <template #title>{{ groupName }}</template>
-                <template #description>{{
-                    $t({
-                        defaultMessage: 'Select one product',
-                        id: '123456',
-                        description: 'Add to subscription button',
-                    })
-                }}</template>
             </PricingGroupTitle>
             <div class="pt-1">
                 <RadioGroupExtended
@@ -96,11 +86,17 @@ const getSelectOptions = (): SelectExtendedOptionEntry[] => {
                     :show-radio="false"
                 />
                 <SelectExtended
-                    v-else
+                    v-else-if="options.length <= SHOW_SELECT_MAX_OPTIONS"
                     v-model:single-model-value="singleModelValue"
                     :options="getSelectOptions()"
                     size="xl"
                     show-sub-label-in-input
+                />
+                <PricingGroupRangeInput
+                    v-else
+                    v-model="singleModelValue"
+                    :options="options"
+                    :name="`pricing-group-range-input-${groupName}`"
                 />
             </div>
         </div>

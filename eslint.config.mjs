@@ -6,6 +6,7 @@ import formatjs from 'eslint-plugin-formatjs';
 import unusedImports from 'eslint-plugin-unused-imports';
 import noRelativeImportPaths from 'eslint-plugin-no-relative-import-paths';
 import importPlugin from 'eslint-plugin-import';
+import { rules as localRules } from '@solvimon/eslint-config';
 
 export default defineConfigWithVueTs(
     globalIgnores([
@@ -39,6 +40,7 @@ export default defineConfigWithVueTs(
         plugins: {
             formatjs,
             'unused-imports': unusedImports,
+            'local-rules': { rules: localRules },
             'no-relative-import-paths': noRelativeImportPaths,
             import: importPlugin,
         },

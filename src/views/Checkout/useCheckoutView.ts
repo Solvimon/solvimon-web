@@ -118,8 +118,15 @@ export function useCheckoutView({
             pricingPlanScheduleInfos: response.pricing_plan_schedule_infos,
             type: 'DEFAULT',
         });
+        // Default to the smallest billing period from the plan (list is ordered).
+        const defaultBillingPeriod =
+            subscriptionSchedule?.pricing_plan_version?.billing_period_settings?.billing_periods?.[0]
+                ?.period;
 
-        subscription.value = response;
+        subscription.value = {
+            ...response,
+            billing_period: defaultBillingPeriod ?? response.billing_period,
+        };
         checkoutForm.updateInitialState({
             ...checkoutForm.form.value,
             enabledPricingIds: withPreselectedEnabledPricings(response, enabledPricingIds),
@@ -175,6 +182,8 @@ export function useCheckoutView({
             })),
             seatsValues: checkoutForm.form.value.seatsValues,
             pricingPlanScheduleInfos: subscription.value?.pricing_plan_schedule_infos ?? [],
+            pricingCurrency: subscription.value?.billing_currency,
+            billingPeriod: subscription.value?.billing_period,
         });
 
         const promotionCode = checkoutForm.form.value.promotionCode;
@@ -299,8 +308,10 @@ export function useCheckoutView({
 
     return {
         invoicePreview: invoicePreview.invoicePreview,
+        invoicePreviewByBillingPeriod: invoicePreview.invoicePreviewByBillingPeriod,
         trialInvoicePreview: invoicePreview.trialInvoicePreview,
         trialPeriod: invoicePreview.trialPeriod,
+        loadInvoicePreview,
         updateInvoicePreviewOnBillingInformationChange,
         lastPreviewScheduleId: invoicePreview.lastPreviewScheduleId,
         paymentMethodOptions,

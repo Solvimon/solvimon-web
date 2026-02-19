@@ -65,6 +65,8 @@ describe('useInvoicePreview', () => {
                     },
                 },
             ],
+            billing_currency: 'GBP',
+            billing_period: { type: 'MONTH', value: 1 },
         } as unknown as PricingPlanSubscriptionExpanded;
 
         const checkoutForm = {
@@ -115,6 +117,8 @@ describe('useInvoicePreview', () => {
                     pricing_plan_schedule_id: 'default_schedule_id',
                     enabled_pricings: [{ pricing_id: 'pricing_1' }],
                     seats_values: undefined,
+                    pricing_currency: 'GBP',
+                    billing_period: { type: 'MONTH', value: 1 },
                 },
             ],
             customer: {
@@ -139,5 +143,76 @@ describe('useInvoicePreview', () => {
         expect(trialInvoicePreview.value).toEqual(trialInvoice);
         expect(trialPeriod.value).toEqual(mockedTrialPeriod);
         expect(invoicePreview.value).toEqual(defaultInvoice);
+    });
+
+    it('uses pricing currency from country when supported, otherwise default currency settings', () => {
+        const subscription = {
+            id: 'sub_456',
+            pricing_plan_schedule_infos: [
+                {
+                    id: 'default_schedule_id',
+                    pricing_plan_schedule: {
+                        type: 'DEFAULT',
+                    },
+                    pricing_plan_version: {
+                        billing_period_settings: {
+                            billing_periods: [
+                                {
+                                    period: { type: 'MONTH', value: 1 },
+                                },
+                            ],
+                        },
+                        pricing_currency_settings: {
+                            default_pricing_currency: 'BRL',
+                            pricing_currencies: ['BRL', 'AUD'],
+                        },
+                    },
+                },
+            ],
+        } as unknown as PricingPlanSubscriptionExpanded;
+
+        const { loadInvoicePreview } = useInvoicePreview();
+
+        loadInvoicePreview({
+            subscription,
+            checkoutForm: { type: 'INDIVIDUAL', country: 'NL' } as CheckoutFormState,
+            enabledPricingIds: undefined,
+        });
+
+        expect(mockGetInvoicePreview).toHaveBeenCalledWith({
+            pricingPlanSubscriptionId: 'sub_456',
+            startAt: undefined,
+            customizations: [],
+            customer: {
+                type: 'INDIVIDUAL',
+                individual: {
+                    residential_address: {
+                        country: 'NL',
+                    },
+                },
+            },
+        });
+
+        mockGetInvoicePreview.mockClear();
+
+        loadInvoicePreview({
+            subscription,
+            checkoutForm: { type: 'INDIVIDUAL', country: 'AU' } as CheckoutFormState,
+            enabledPricingIds: undefined,
+        });
+
+        expect(mockGetInvoicePreview).toHaveBeenCalledWith({
+            pricingPlanSubscriptionId: 'sub_456',
+            startAt: undefined,
+            customizations: [],
+            customer: {
+                type: 'INDIVIDUAL',
+                individual: {
+                    residential_address: {
+                        country: 'AU',
+                    },
+                },
+            },
+        });
     });
 });

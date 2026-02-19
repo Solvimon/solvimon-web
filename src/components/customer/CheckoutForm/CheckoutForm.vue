@@ -10,7 +10,7 @@ import {
     Typography,
     useIntl,
 } from '@solvimon/ui';
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import type { CheckoutFormState, CheckoutFormProps, CheckoutFormEmits } from './CheckoutForm.types';
 
 const FORM_ID = 'checkout-form';
@@ -51,6 +51,15 @@ const getOptionalSuffix = (field: keyof CheckoutFormState): string => {
 
 const readableCountryName = computed(() =>
     model.value.country ? getCountryNameByCode(model.value.country) : undefined,
+);
+
+// Debug: track country selection changes.
+watch(
+    () => model.value.country,
+    (country) => {
+        // eslint-disable-next-line no-console
+        console.debug('[checkout] country changed', country);
+    },
 );
 </script>
 

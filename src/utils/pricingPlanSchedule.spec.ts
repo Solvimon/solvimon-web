@@ -1,5 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { getFirstPricingPlanScheduleOfType, getScheduleCustomizations } from './pricingPlanSchedule';
+import {
+    getFirstPricingPlanScheduleOfType,
+    getScheduleCustomizations,
+} from './pricingPlanSchedule';
 import type {
     ConfiguredMeterValue,
     EnabledPricing,
@@ -184,7 +187,7 @@ describe('pricingPlanSchedule utils', () => {
             expect(result).toBeUndefined();
         });
 
-        it('should return undefined when no enabledPricings and no seatsValues are provided', () => {
+        it('should return undefined when no enabledPricings, seatsValues, pricingCurrency, or billingPeriod are provided', () => {
             const schedules: PricingPlanScheduleInfoExpanded[] = [
                 createMockScheduleInfo('schedule-1', 'DEFAULT'),
             ];

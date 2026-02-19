@@ -21,7 +21,7 @@
             </div>
 
             <!-- sidebar -->
-            <div class="grid grid-cols-1 gap-2 w-full md:shrink-0 md:w-72">
+            <div class="grid grid-cols-1 gap-2 w-full md:shrink-0 md:w-80">
                 <slot name="order-summary" />
 
                 <slot name="promotion-code" />

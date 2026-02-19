@@ -11,6 +11,10 @@ export interface OrderSummaryProps {
      */
     invoice?: Invoice;
     /**
+     * The invoice previews per billing period.
+     */
+    invoicePreviewByBillingPeriod?: Record<string, Invoice>;
+    /**
      * The trial invoice to display.
      */
     trialInvoice?: Invoice;

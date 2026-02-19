@@ -7,5 +7,8 @@
     "sdk.invoice_details.invoice_details_block.invoice_date": "Factuurdatum",
     "sdk.invoice_details.invoice_details_block.title": "Factuurgegevens",
     "sdk.invoice_details.payment_history.payment_attempt": "Betaalpoging",
-    "sdk.invoice_details.payment_history.title": "Betaalgeschiedenis"
+    "sdk.invoice_details.payment_history.title": "Betaalgeschiedenis",
+    "checkout.order_summary_block.billing_period.label": "Gefactureerd per {period}",
+    "checkout.order_summary_block.billing_period.sub_label": "{amount} per {period}",
+    "checkout.order_summary_block.billing_period.quarterly": "Gefactureerd per kwartaal"
 }

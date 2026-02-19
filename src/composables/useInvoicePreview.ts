@@ -1,6 +1,7 @@
 import {
     ApiStatus,
     type Address,
+    type BillingPeriod,
     type Invoice,
     type Pricing,
     type PricingPlanSchedule,
@@ -13,7 +14,11 @@ import { taxId } from '@solvimon/ui/validators';
 import { isEqual } from 'lodash';
 import { createInvoicesService } from '@/services/invoices';
 import type { CheckoutFormState } from '@/components/customer/CheckoutForm/CheckoutForm.types';
-import { getScheduleCustomizations } from '@/utils/pricingPlanSchedule';
+import {
+    getFirstPricingPlanScheduleOfType,
+    getScheduleCustomizations,
+} from '@/utils/pricingPlanSchedule';
+import { getPricingCurrencyForCountry } from '@/utils/countryCurrency';
 import type { GetInvoicePreviewPayload } from '@/services/invoices.types';
 
 const EMPTY_LEGAL_ENTITY_NAME = 'preview';
@@ -25,9 +30,12 @@ export const useInvoicePreview = () => {
     const trialPeriod = ref<TimePeriod>();
     const trialInvoicePreview = ref<Invoice>();
     const invoicePreview = ref<Invoice>();
+    const invoicePreviewByBillingPeriod = ref<Record<string, Invoice>>({});
     const status = ref<ApiStatus>(ApiStatus.Initial);
-    const cachedPreviewPayload = ref<GetInvoicePreviewPayload>();
+    const cachedPreviewPayloads = ref<Record<string, GetInvoicePreviewPayload>>({});
     const lastPreviewScheduleId = ref<string>();
+
+    const getBillingPeriodKey = (period: BillingPeriod) => `${period.type}:${period.value}`;
 
     const loadInvoicePreview = async ({
         subscription,
@@ -55,98 +63,159 @@ export const useInvoicePreview = () => {
 
         status.value = ApiStatus.Loading;
 
-        const scheduleCustomizations =
-            getScheduleCustomizations({
-                enabledPricings: enabledPricingIds?.map((enabledPricingId) => ({
-                    pricing_id: enabledPricingId,
-                })),
-                seatsValues: checkoutForm.seatsValues,
-                pricingPlanScheduleInfos: subscription.pricing_plan_schedule_infos,
-            }) ?? [];
+        const scheduleInfo = getFirstPricingPlanScheduleOfType({
+            pricingPlanScheduleInfos: subscription.pricing_plan_schedule_infos,
+            type: 'DEFAULT',
+        });
 
-        if (promotionCode) {
-            const defaultScheduleId = subscription.pricing_plan_schedule_infos.find(
-                ({ pricing_plan_schedule }) => pricing_plan_schedule.type === 'DEFAULT',
-            )?.id;
+        const pricingCurrencySettings =
+            scheduleInfo?.pricing_plan_version?.pricing_currency_settings;
 
-            if (defaultScheduleId) {
-                const existingCustomization = scheduleCustomizations.find(
-                    ({ pricing_plan_schedule_id }) =>
-                        pricing_plan_schedule_id === defaultScheduleId,
-                );
+        const billingPeriods =
+            scheduleInfo?.pricing_plan_version?.billing_period_settings?.billing_periods ?? [];
 
-                if (existingCustomization) {
-                    existingCustomization.promotion_codes = [promotionCode];
-                } else {
-                    scheduleCustomizations.push({
-                        pricing_plan_schedule_id: defaultScheduleId,
-                        promotion_codes: [promotionCode],
-                    });
-                }
-            }
-        }
+        const periodsForPreview =
+            billingPeriods.length > 0
+                ? billingPeriods.map(({ period }) => period)
+                : subscription.billing_period
+                  ? [subscription.billing_period]
+                  : [];
 
-        const payload = {
-            pricingPlanSubscriptionId: subscription.id,
-            startAt: subscriptionStartAt,
-            customizations: scheduleCustomizations,
-            customer: {
-                type: checkoutForm.type || 'INDIVIDUAL',
-                ...(checkoutForm.type === 'INDIVIDUAL' && {
-                    individual: {
-                        residential_address: address,
-                    },
-                }),
-                ...(checkoutForm.type === 'ORGANIZATION' && {
-                    organization: {
-                        legal_name: checkoutForm.companyLegalName || EMPTY_LEGAL_ENTITY_NAME,
-                        registered_address: address,
-                        ...(checkoutForm.companyVatNumber && {
-                            tax_id: taxId.$validator(checkoutForm.companyVatNumber, {}, {})
-                                ? checkoutForm.companyVatNumber
-                                : undefined,
-                        }),
-                    },
-                }),
-            },
-        } satisfies GetInvoicePreviewPayload;
+        const pricingCurrency = getPricingCurrencyForCountry({
+            country: checkoutForm.country,
+            pricingCurrencySettings,
+            fallbackCurrency: subscription.billing_currency,
+        });
 
-        if (isEqual(payload, cachedPreviewPayload.value)) {
+        if (!periodsForPreview.length) {
+            status.value = ApiStatus.Done;
             return;
         }
 
-        cachedPreviewPayload.value = payload;
+        const selectedPeriodKey = subscription.billing_period
+            ? getBillingPeriodKey(subscription.billing_period)
+            : getBillingPeriodKey(periodsForPreview[0]);
 
-        try {
-            const invoicePreviewResponse = await getInvoicePreview(payload);
+        const previewPromises = periodsForPreview.map(async (period) => {
+            const periodKey = getBillingPeriodKey(period);
 
-            lastPreviewScheduleId.value =
-                invoicePreviewResponse.invoice_infos.at(-1)?.pricing_plan_schedule_id;
+            const scheduleCustomizations =
+                getScheduleCustomizations({
+                    enabledPricings: enabledPricingIds?.map((enabledPricingId) => ({
+                        pricing_id: enabledPricingId,
+                    })),
+                    seatsValues: checkoutForm.seatsValues,
+                    pricingPlanScheduleInfos: subscription.pricing_plan_schedule_infos,
+                    pricingCurrency,
+                    billingPeriod: period,
+                }) ?? [];
 
-            const trialSchedule = subscription?.pricing_plan_schedule_infos.find(
-                ({ pricing_plan_schedule }) => pricing_plan_schedule.type === 'TRIAL',
-            );
+            if (promotionCode) {
+                const defaultScheduleId = subscription.pricing_plan_schedule_infos.find(
+                    ({ pricing_plan_schedule }) => pricing_plan_schedule.type === 'DEFAULT',
+                )?.id;
 
-            if (trialSchedule) {
-                trialInvoicePreview.value = invoicePreviewResponse.first_invoice;
-
-                if (trialSchedule.start_at && trialSchedule.end_at) {
-                    trialPeriod.value = convertDateRangeToTimePeriod(
-                        new Date(trialSchedule.start_at),
-                        new Date(trialSchedule.end_at),
+                if (defaultScheduleId) {
+                    const existingCustomization = scheduleCustomizations.find(
+                        ({ pricing_plan_schedule_id }) =>
+                            pricing_plan_schedule_id === defaultScheduleId,
                     );
+
+                    if (existingCustomization) {
+                        existingCustomization.promotion_codes = [promotionCode];
+                    } else {
+                        scheduleCustomizations.push({
+                            pricing_plan_schedule_id: defaultScheduleId,
+                            promotion_codes: [promotionCode],
+                        });
+                    }
                 }
             }
 
-            const invoiceScheduleId = subscription?.pricing_plan_schedule_infos.find(
+            const payload = {
+                pricingPlanSubscriptionId: subscription.id,
+                startAt: subscriptionStartAt,
+                customizations: scheduleCustomizations,
+                customer: {
+                    type: checkoutForm.type || 'INDIVIDUAL',
+                    ...(checkoutForm.type === 'INDIVIDUAL' && {
+                        individual: {
+                            residential_address: address,
+                        },
+                    }),
+                    ...(checkoutForm.type === 'ORGANIZATION' && {
+                        organization: {
+                            legal_name: checkoutForm.companyLegalName || EMPTY_LEGAL_ENTITY_NAME,
+                            registered_address: address,
+                            ...(checkoutForm.companyVatNumber && {
+                                tax_id: taxId.$validator(checkoutForm.companyVatNumber, {}, {})
+                                    ? checkoutForm.companyVatNumber
+                                    : undefined,
+                            }),
+                        },
+                    }),
+                },
+            } satisfies GetInvoicePreviewPayload;
+
+            const cachedPayload = cachedPreviewPayloads.value[periodKey];
+            if (cachedPayload && isEqual(payload, cachedPayload)) {
+                return { periodKey, response: undefined };
+            }
+
+            cachedPreviewPayloads.value = {
+                ...cachedPreviewPayloads.value,
+                [periodKey]: payload,
+            };
+
+            const response = await getInvoicePreview(payload);
+            return { periodKey, response };
+        });
+
+        try {
+            const updatedPreviews: Record<string, Invoice> = {
+                ...invoicePreviewByBillingPeriod.value,
+            };
+
+            const results = await Promise.all(previewPromises);
+
+            const trialSchedule = subscription.pricing_plan_schedule_infos.find(
+                ({ pricing_plan_schedule }) => pricing_plan_schedule.type === 'TRIAL',
+            );
+
+            const invoiceScheduleId = subscription.pricing_plan_schedule_infos.find(
                 ({ pricing_plan_schedule }) => pricing_plan_schedule.type === 'DEFAULT',
             )?.id;
 
-            const invoiceInfo = invoicePreviewResponse.invoice_infos.find(
-                ({ pricing_plan_schedule_id }) => pricing_plan_schedule_id === invoiceScheduleId,
-            );
+            results.forEach(({ periodKey, response }) => {
+                if (!response) return;
 
-            invoicePreview.value = invoiceInfo?.invoices[0];
+                lastPreviewScheduleId.value =
+                    response.invoice_infos.at(-1)?.pricing_plan_schedule_id;
+
+                if (trialSchedule) {
+                    trialInvoicePreview.value = response.first_invoice;
+
+                    if (trialSchedule.start_at && trialSchedule.end_at) {
+                        trialPeriod.value = convertDateRangeToTimePeriod(
+                            new Date(trialSchedule.start_at),
+                            new Date(trialSchedule.end_at),
+                        );
+                    }
+                }
+
+                const invoiceInfo = response.invoice_infos.find(
+                    ({ pricing_plan_schedule_id }) =>
+                        pricing_plan_schedule_id === invoiceScheduleId,
+                );
+
+                const invoice = invoiceInfo?.invoices[0];
+                if (invoice) {
+                    updatedPreviews[periodKey] = invoice;
+                }
+            });
+
+            invoicePreviewByBillingPeriod.value = updatedPreviews;
+            invoicePreview.value = updatedPreviews[selectedPeriodKey];
         } catch (error) {
             status.value = ApiStatus.Failed;
             throw error;
@@ -158,6 +227,7 @@ export const useInvoicePreview = () => {
     return {
         loadInvoicePreview,
         invoicePreview,
+        invoicePreviewByBillingPeriod,
         trialInvoicePreview,
         trialPeriod,
         lastPreviewScheduleId,

@@ -4,15 +4,17 @@ import type { PricingGroupContentProps } from './PricingGroupContent.types';
 
 defineProps<PricingGroupContentProps>();
 </script>
-sc
 
 <template>
-    <div class="flex gap-4">
+    <div class="flex items-start">
         <div class="flex flex-col grow">
-            <Typography tag="span" variant="body-sm" weight="semibold">{{ name }}</Typography>
+            <div class="flex items-center gap-1">
+                <Typography tag="span" variant="body-sm" weight="semibold">{{ name }}</Typography>
+                <slot name="badge" />
+            </div>
             <Typography tag="span" variant="body-xs" shade="lighter">{{ description }}</Typography>
         </div>
-        <div class="flex items-center">
+        <div class="flex items-center ml-4 self-center">
             <slot name="default" />
         </div>
     </div>

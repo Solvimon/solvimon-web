@@ -8,7 +8,7 @@ import {
     useTimePeriod,
 } from '@solvimon/ui';
 import { computed, onMounted, ref } from 'vue';
-import type { Address, CountryCode } from '@solvimon/types';
+import type { Address, BillingPeriod, CountryCode } from '@solvimon/types';
 import type { CheckoutEmits, CheckoutProps } from './Checkout.types';
 import { useCheckoutView } from './useCheckoutView';
 import { usePromotionCode } from './usePromotionCode';
@@ -31,6 +31,11 @@ import {
     isSubscriptionWithAddonProducts,
     isSubscriptionWithEnabledPricings,
 } from '@/utils/enabledPricings';
+import {
+    getFirstPricingPlanScheduleOfType,
+    getPricingItemConfigMetaById,
+} from '@/utils/pricingPlanSchedule';
+import { getPricingCurrencyForCountry } from '@/utils/countryCurrency';
 import { CheckoutLayout } from '@/layouts';
 import { useViewport } from '@/composables/useViewport';
 import PromotionCodeSection from '@/components/checkout/PromotionCodeSection.vue';
@@ -74,11 +79,13 @@ const {
     isInvoicePreviewPending,
     checkoutForm,
     invoicePreview,
+    invoicePreviewByBillingPeriod,
     trialInvoicePreview,
     trialPeriod,
     authorizationContext,
     isPaid,
     amount,
+    loadInvoicePreview,
     updateInvoicePreviewOnBillingInformationChange,
 } = useCheckoutView({
     initialCountry: props.countryCode,
@@ -122,10 +129,83 @@ const enabledPricingIdsModel = computed({
     },
 });
 
+// Pick the DEFAULT schedule once so all lookups use the same schedule.
+const scheduleInfo = computed(() =>
+    subscription.value
+        ? getFirstPricingPlanScheduleOfType({
+              pricingPlanScheduleInfos: subscription.value.pricing_plan_schedule_infos,
+              type: 'DEFAULT',
+          })
+        : undefined,
+);
+
+// Use country → pricing currency mapping to decide which seat configs to show.
+const activePricingCurrency = computed(() => {
+    if (!subscription.value) {
+        return undefined;
+    }
+    const pricingCurrencySettings =
+        scheduleInfo.value?.pricing_plan_version?.pricing_currency_settings;
+    return getPricingCurrencyForCountry({
+        country: checkoutForm.form.value.country,
+        pricingCurrencySettings,
+        fallbackCurrency: subscription.value.billing_currency,
+    });
+});
+
+// Filter seat configs by the selected currency + billing period.
+const seatConfigIdsForSelection = computed(() => {
+    if (!scheduleInfo.value || !subscription.value) {
+        return new Set<string>();
+    }
+
+    const pricingItemConfigById = getPricingItemConfigMetaById({
+        pricingPlanScheduleInfo: scheduleInfo.value,
+    });
+    const targetCurrency = activePricingCurrency.value;
+    const targetPeriod = subscription.value.billing_period;
+    const ids = new Set<string>();
+
+    pricingItemConfigById.forEach((configMeta, id) => {
+        if (targetCurrency && configMeta.currency !== targetCurrency) {
+            return;
+        }
+        if (
+            targetPeriod &&
+            configMeta.billingPeriod &&
+            (configMeta.billingPeriod.type !== targetPeriod.type ||
+                configMeta.billingPeriod.value !== targetPeriod.value)
+        ) {
+            return;
+        }
+        ids.add(id);
+    });
+
+    return ids;
+});
+
+// Only expose seat values that match the active currency + billing period, but keep all values in state.
 const seatsValuesModel = computed({
-    get: () => checkoutForm.form.value.seatsValues ?? [],
+    get: () => {
+        const all = checkoutForm.form.value.seatsValues ?? [];
+        const ids = seatConfigIdsForSelection.value;
+        if (!ids.size) {
+            return all;
+        }
+        return all.filter(({ pricing_item_config_id }) => ids.has(pricing_item_config_id));
+    },
     set: (value) => {
-        checkoutForm.form.value.seatsValues = value;
+        const current = checkoutForm.form.value.seatsValues ?? [];
+        const ids = seatConfigIdsForSelection.value;
+        if (!ids.size) {
+            checkoutForm.form.value.seatsValues = value;
+            return;
+        }
+
+        const filtered = current.filter(
+            ({ pricing_item_config_id }) => !ids.has(pricing_item_config_id),
+        );
+        checkoutForm.form.value.seatsValues = filtered.concat(value);
     },
 });
 
@@ -277,15 +357,6 @@ const showPlanCustomizationEditor = computed(() => {
     return false;
 });
 
-const handlePaymentSuccess = () => {
-    isPaid.value = true;
-    promotionCodeErrorMessage.value = null;
-};
-
-onMounted(() => {
-    emit('ready');
-});
-
 const promotionCode = ref<string | null>(null);
 
 const {
@@ -320,6 +391,28 @@ const {
         promotionCode.value = null;
     },
 });
+
+const handlePaymentSuccess = () => {
+    isPaid.value = true;
+    promotionCodeErrorMessage.value = null;
+};
+
+const handleBillingPeriodChange = (billingPeriod: BillingPeriod) => {
+    if (!subscription.value) {
+        return;
+    }
+
+    subscription.value = {
+        ...subscription.value,
+        billing_period: billingPeriod,
+    };
+
+    void loadInvoicePreview();
+};
+
+onMounted(() => {
+    emit('ready');
+});
 </script>
 
 <template>
@@ -345,6 +438,7 @@ const {
                 v-if="subscription"
                 :subscription="subscription"
                 :invoice="invoicePreview"
+                :invoice-preview-by-billing-period="invoicePreviewByBillingPeriod"
                 :trial-invoice="trialInvoicePreview"
                 :enabled-pricing-ids="enabledPricingIdsModel"
                 :trial-period="trialPeriod"
@@ -357,6 +451,7 @@ const {
                 :country-code="checkoutForm.form.value.country"
                 collapsible="collapsed"
                 variant="products-inline"
+                @billing-period-change="handleBillingPeriodChange"
             />
         </template>
 
@@ -493,6 +588,7 @@ const {
                     v-if="subscription && invoicePreview"
                     :subscription="subscription"
                     :invoice="invoicePreview"
+                    :invoice-preview-by-billing-period="invoicePreviewByBillingPeriod"
                     :trial-invoice="trialInvoicePreview"
                     :enabled-pricing-ids="enabledPricingIdsModel"
                     :trial-period="trialPeriod"
@@ -503,6 +599,7 @@ const {
                     :is-preview-and-payment-methods-pending="
                         isPaymentMethodsPending || isInvoicePreviewPending
                     "
+                    @billing-period-change="handleBillingPeriodChange"
                 />
             </Skeleton>
         </template>

@@ -412,6 +412,188 @@ describe('useCheckoutView', () => {
         );
     });
 
+    it('omits pricingCurrency and billingPeriod in authorization customizations for single settings', () => {
+        const subscriptionId = 'sub_123' as PricingPlanSubscription['id'];
+
+        mockUseCheckoutForm.mockReturnValue(
+            createMockCheckoutForm({
+                type: 'INDIVIDUAL' as const,
+                country: 'NL' as CountryCode,
+            }),
+        );
+        mockGetFirstPricingPlanScheduleOfType.mockReturnValue({
+            id: 'schedule_1',
+            pricing_plan_schedule: { type: 'DEFAULT' },
+            pricing_plan_version: {
+                pricing_currency_settings: {
+                    default_pricing_currency: 'EUR',
+                    pricing_currencies: ['EUR'],
+                },
+                billing_period_settings: {
+                    billing_periods: [{ period: { type: 'MONTH', value: 1 } }],
+                },
+            },
+        });
+        mockGetScheduleCustomizations.mockReturnValue(undefined);
+
+        const result = useCheckoutView({
+            initialCountry: undefined,
+            initialEmail: undefined,
+            subscriptionId,
+        });
+        result.subscription.value = {
+            ...mockSubscription,
+            billing_currency: 'EUR',
+            billing_period: { type: 'MONTH', value: 1 },
+        } as unknown as PricingPlanSubscriptionExpanded;
+
+        void result.authorizationContext.value;
+
+        expect(mockGetScheduleCustomizations).toHaveBeenCalledWith(
+            expect.objectContaining({
+                pricingCurrency: undefined,
+                billingPeriod: undefined,
+            }),
+        );
+    });
+
+    it('includes pricingCurrency and billingPeriod in authorization customizations for multi settings', () => {
+        const subscriptionId = 'sub_123' as PricingPlanSubscription['id'];
+
+        mockUseCheckoutForm.mockReturnValue(
+            createMockCheckoutForm({
+                type: 'INDIVIDUAL' as const,
+                country: 'NL' as CountryCode,
+            }),
+        );
+        mockGetFirstPricingPlanScheduleOfType.mockReturnValue({
+            id: 'schedule_1',
+            pricing_plan_schedule: { type: 'DEFAULT' },
+            pricing_plan_version: {
+                pricing_currency_settings: {
+                    default_pricing_currency: 'EUR',
+                    pricing_currencies: ['EUR', 'AUD'],
+                },
+                billing_period_settings: {
+                    billing_periods: [
+                        { period: { type: 'MONTH', value: 1 } },
+                        { period: { type: 'YEAR', value: 1 } },
+                    ],
+                },
+            },
+        });
+        mockGetScheduleCustomizations.mockReturnValue(undefined);
+
+        const result = useCheckoutView({
+            initialCountry: undefined,
+            initialEmail: undefined,
+            subscriptionId,
+        });
+        result.subscription.value = {
+            ...mockSubscription,
+            billing_currency: 'AUD',
+            billing_period: { type: 'YEAR', value: 1 },
+        } as unknown as PricingPlanSubscriptionExpanded;
+
+        void result.authorizationContext.value;
+
+        expect(mockGetScheduleCustomizations).toHaveBeenCalledWith(
+            expect.objectContaining({
+                pricingCurrency: 'AUD',
+                billingPeriod: { type: 'YEAR', value: 1 },
+            }),
+        );
+    });
+
+    it('includes only billingPeriod in authorization customizations when only multi billing periods exist', () => {
+        const subscriptionId = 'sub_123' as PricingPlanSubscription['id'];
+
+        mockUseCheckoutForm.mockReturnValue(
+            createMockCheckoutForm({
+                type: 'INDIVIDUAL' as const,
+                country: 'NL' as CountryCode,
+            }),
+        );
+        mockGetFirstPricingPlanScheduleOfType.mockReturnValue({
+            id: 'schedule_1',
+            pricing_plan_schedule: { type: 'DEFAULT' },
+            pricing_plan_version: {
+                billing_period_settings: {
+                    billing_periods: [
+                        { period: { type: 'MONTH', value: 1 } },
+                        { period: { type: 'YEAR', value: 1 } },
+                    ],
+                },
+            },
+        });
+        mockGetScheduleCustomizations.mockReturnValue(undefined);
+
+        const result = useCheckoutView({
+            initialCountry: undefined,
+            initialEmail: undefined,
+            subscriptionId,
+        });
+        result.subscription.value = {
+            ...mockSubscription,
+            billing_currency: 'EUR',
+            billing_period: { type: 'YEAR', value: 1 },
+        } as unknown as PricingPlanSubscriptionExpanded;
+
+        void result.authorizationContext.value;
+
+        expect(mockGetScheduleCustomizations).toHaveBeenCalledWith(
+            expect.objectContaining({
+                pricingCurrency: undefined,
+                billingPeriod: { type: 'YEAR', value: 1 },
+            }),
+        );
+    });
+
+    it('includes only pricingCurrency in authorization customizations when only multi pricing currencies exist', () => {
+        const subscriptionId = 'sub_123' as PricingPlanSubscription['id'];
+
+        mockUseCheckoutForm.mockReturnValue(
+            createMockCheckoutForm({
+                type: 'INDIVIDUAL' as const,
+                country: 'NL' as CountryCode,
+            }),
+        );
+        mockGetFirstPricingPlanScheduleOfType.mockReturnValue({
+            id: 'schedule_1',
+            pricing_plan_schedule: { type: 'DEFAULT' },
+            pricing_plan_version: {
+                pricing_currency_settings: {
+                    default_pricing_currency: 'EUR',
+                    pricing_currencies: ['EUR', 'AUD'],
+                },
+                billing_period_settings: {
+                    billing_periods: [{ period: { type: 'MONTH', value: 1 } }],
+                },
+            },
+        });
+        mockGetScheduleCustomizations.mockReturnValue(undefined);
+
+        const result = useCheckoutView({
+            initialCountry: undefined,
+            initialEmail: undefined,
+            subscriptionId,
+        });
+        result.subscription.value = {
+            ...mockSubscription,
+            billing_currency: 'AUD',
+            billing_period: { type: 'MONTH', value: 1 },
+        } as unknown as PricingPlanSubscriptionExpanded;
+
+        void result.authorizationContext.value;
+
+        expect(mockGetScheduleCustomizations).toHaveBeenCalledWith(
+            expect.objectContaining({
+                pricingCurrency: 'AUD',
+                billingPeriod: undefined,
+            }),
+        );
+    });
+
     it('computes amount from trial invoice preview when available', () => {
         const subscriptionId = 'sub_123' as PricingPlanSubscription['id'];
         const trialAmount: Amount = { currency: 'EUR', quantity: '50' };

@@ -176,14 +176,29 @@ export function useCheckoutView({
             ...{ country: checkoutForm.form.value.country ?? '' },
         };
 
+        const scheduleInfo = getFirstPricingPlanScheduleOfType({
+            pricingPlanScheduleInfos: subscription.value?.pricing_plan_schedule_infos ?? [],
+            type: 'DEFAULT',
+        });
+        const pricingCurrencySettings =
+            scheduleInfo?.pricing_plan_version?.pricing_currency_settings;
+        const hasMultiplePricingCurrencies =
+            (pricingCurrencySettings?.pricing_currencies?.length ?? 0) > 1;
+
+        const billingPeriods =
+            scheduleInfo?.pricing_plan_version?.billing_period_settings?.billing_periods ?? [];
+        const hasMultipleBillingPeriods = billingPeriods.length > 1;
+
         const scheduleCustomizations = getScheduleCustomizations({
             enabledPricings: checkoutForm.form.value.enabledPricingIds?.map((enabledPricingId) => ({
                 pricing_id: enabledPricingId,
             })),
             seatsValues: checkoutForm.form.value.seatsValues,
             pricingPlanScheduleInfos: subscription.value?.pricing_plan_schedule_infos ?? [],
-            pricingCurrency: subscription.value?.billing_currency,
-            billingPeriod: subscription.value?.billing_period,
+            pricingCurrency: hasMultiplePricingCurrencies
+                ? subscription.value?.billing_currency
+                : undefined,
+            billingPeriod: hasMultipleBillingPeriods ? subscription.value?.billing_period : undefined,
         });
 
         const promotionCode = checkoutForm.form.value.promotionCode;

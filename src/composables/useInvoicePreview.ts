@@ -70,9 +70,12 @@ export const useInvoicePreview = () => {
 
         const pricingCurrencySettings =
             scheduleInfo?.pricing_plan_version?.pricing_currency_settings;
+        const hasMultiplePricingCurrencies =
+            (pricingCurrencySettings?.pricing_currencies?.length ?? 0) > 1;
 
         const billingPeriods =
             scheduleInfo?.pricing_plan_version?.billing_period_settings?.billing_periods ?? [];
+        const hasMultipleBillingPeriods = billingPeriods.length > 1;
 
         const periodsForPreview =
             billingPeriods.length > 0
@@ -106,8 +109,8 @@ export const useInvoicePreview = () => {
                     })),
                     seatsValues: checkoutForm.seatsValues,
                     pricingPlanScheduleInfos: subscription.pricing_plan_schedule_infos,
-                    pricingCurrency,
-                    billingPeriod: period,
+                    pricingCurrency: hasMultiplePricingCurrencies ? pricingCurrency : undefined,
+                    billingPeriod: hasMultipleBillingPeriods ? period : undefined,
                 }) ?? [];
 
             if (promotionCode) {

@@ -117,8 +117,6 @@ describe('useInvoicePreview', () => {
                     pricing_plan_schedule_id: 'default_schedule_id',
                     enabled_pricings: [{ pricing_id: 'pricing_1' }],
                     seats_values: undefined,
-                    pricing_currency: 'GBP',
-                    billing_period: { type: 'MONTH', value: 1 },
                 },
             ],
             customer: {
@@ -214,5 +212,137 @@ describe('useInvoicePreview', () => {
                 },
             },
         });
+    });
+
+    it('includes pricing_currency and billing_period in customizations only for multi settings', async () => {
+        const subscription = {
+            id: 'sub_789',
+            billing_currency: 'AUD',
+            billing_period: { type: 'MONTH', value: 1 },
+            pricing_plan_schedule_infos: [
+                {
+                    id: 'default_schedule_id',
+                    pricing_plan_schedule: { type: 'DEFAULT' },
+                    pricing_plan_version: {
+                        pricing_currency_settings: {
+                            default_pricing_currency: 'AUD',
+                            pricing_currencies: ['AUD', 'BRL'],
+                        },
+                        billing_period_settings: {
+                            billing_periods: [
+                                { period: { type: 'MONTH', value: 1 } },
+                                { period: { type: 'YEAR', value: 1 } },
+                            ],
+                        },
+                    },
+                },
+            ],
+        } as unknown as PricingPlanSubscriptionExpanded;
+
+        const invoicePreviewResponse = {
+            first_invoice: { id: 'first' },
+            invoice_infos: [],
+        } as unknown as InvoicePreview;
+        mockGetInvoicePreview.mockResolvedValue(invoicePreviewResponse);
+
+        const { loadInvoicePreview } = useInvoicePreview();
+        await loadInvoicePreview({
+            subscription,
+            checkoutForm: { type: 'INDIVIDUAL', country: 'AU' } as CheckoutFormState,
+            enabledPricingIds: ['pricing_1' as Pricing['id']],
+        });
+
+        expect(mockGetInvoicePreview).toHaveBeenCalledWith(
+            expect.objectContaining({
+                customizations: [
+                    expect.objectContaining({
+                        pricing_currency: 'AUD',
+                        billing_period: { type: 'MONTH', value: 1 },
+                        enabled_pricings: [{ pricing_id: 'pricing_1' }],
+                    }),
+                ],
+            }),
+        );
+    });
+
+    it('includes only billing_period when only multi billing period settings exist', async () => {
+        const subscription = {
+            id: 'sub_790',
+            billing_currency: 'AUD',
+            billing_period: { type: 'YEAR', value: 1 },
+            pricing_plan_schedule_infos: [
+                {
+                    id: 'default_schedule_id',
+                    pricing_plan_schedule: { type: 'DEFAULT' },
+                    pricing_plan_version: {
+                        billing_period_settings: {
+                            billing_periods: [
+                                { period: { type: 'MONTH', value: 1 } },
+                                { period: { type: 'YEAR', value: 1 } },
+                            ],
+                        },
+                    },
+                },
+            ],
+        } as unknown as PricingPlanSubscriptionExpanded;
+
+        mockGetInvoicePreview.mockResolvedValue({
+            first_invoice: { id: 'first' },
+            invoice_infos: [],
+        } as unknown as InvoicePreview);
+
+        const { loadInvoicePreview } = useInvoicePreview();
+        await loadInvoicePreview({
+            subscription,
+            checkoutForm: { type: 'INDIVIDUAL', country: 'AU' } as CheckoutFormState,
+            enabledPricingIds: ['pricing_1' as Pricing['id']],
+        });
+
+        const payload = mockGetInvoicePreview.mock.calls[0][0];
+        const customization = payload.customizations?.[0];
+
+        expect(customization?.billing_period).toEqual({ type: 'MONTH', value: 1 });
+        expect(customization).not.toHaveProperty('pricing_currency');
+    });
+
+    it('includes only pricing_currency when only multi pricing currency settings exist', async () => {
+        const subscription = {
+            id: 'sub_791',
+            billing_currency: 'AUD',
+            billing_period: { type: 'MONTH', value: 1 },
+            pricing_plan_schedule_infos: [
+                {
+                    id: 'default_schedule_id',
+                    pricing_plan_schedule: { type: 'DEFAULT' },
+                    pricing_plan_version: {
+                        pricing_currency_settings: {
+                            default_pricing_currency: 'AUD',
+                            pricing_currencies: ['AUD', 'BRL'],
+                        },
+                        billing_period_settings: {
+                            billing_periods: [{ period: { type: 'MONTH', value: 1 } }],
+                        },
+                    },
+                },
+            ],
+        } as unknown as PricingPlanSubscriptionExpanded;
+
+        mockGetInvoicePreview.mockResolvedValue({
+            first_invoice: { id: 'first' },
+            invoice_infos: [],
+        } as unknown as InvoicePreview);
+
+        const { loadInvoicePreview } = useInvoicePreview();
+        await loadInvoicePreview({
+            subscription,
+            checkoutForm: { type: 'INDIVIDUAL', country: 'AU' } as CheckoutFormState,
+            enabledPricingIds: ['pricing_1' as Pricing['id']],
+        });
+
+        const payload = mockGetInvoicePreview.mock.calls[0][0];
+        const customization = payload.customizations?.[0];
+
+        expect(customization?.pricing_currency).toBe('AUD');
+        expect(customization).not.toHaveProperty('billing_period');
     });
 });

@@ -5,7 +5,7 @@ import { globalIgnores } from 'eslint/config';
 import formatjs from 'eslint-plugin-formatjs';
 import unusedImports from 'eslint-plugin-unused-imports';
 import noRelativeImportPaths from 'eslint-plugin-no-relative-import-paths';
-import importPlugin from 'eslint-plugin-import';
+import importX from 'eslint-plugin-import-x';
 import { rules as localRules } from '@solvimon/eslint-config';
 
 export default defineConfigWithVueTs(
@@ -42,7 +42,7 @@ export default defineConfigWithVueTs(
             'unused-imports': unusedImports,
             'local-rules': { rules: localRules },
             'no-relative-import-paths': noRelativeImportPaths,
-            import: importPlugin,
+            'import-x': importX,
         },
 
         rules: {
@@ -91,8 +91,8 @@ export default defineConfigWithVueTs(
             'no-undef': 'off',
             'unused-imports/no-unused-imports': 'error',
             'no-setter-return': 'off',
-            'import/no-relative-packages': 'error',
-            'import/order': [
+            'import-x/no-relative-packages': 'error',
+            'import-x/order': [
                 'error',
                 {
                     pathGroups: [

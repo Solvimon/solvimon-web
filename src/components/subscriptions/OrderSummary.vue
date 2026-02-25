@@ -12,7 +12,7 @@ import {
     useTimePeriod,
     type SelectExtendedOptionEntry,
 } from '@solvimon/ui';
-import type { BillingPeriod } from '@solvimon/types';
+import type { BillingPeriod, Pricing } from '@solvimon/types';
 import { computed } from 'vue';
 import { breakpointsTailwind, useBreakpoints } from '@vueuse/core';
 import SubscriptionSummary from './SubscriptionSummary.vue';
@@ -187,24 +187,27 @@ const effectiveBillingPeriods = computed<BillingPeriod[]>(() => {
         periodByKey.set(getBillingPeriodKey(period), period);
     };
 
-    const categories = scheduleInfo?.pricing_plan_version?.pricing_categories ?? [];
-    categories.forEach((category) => {
-        category.pricings?.forEach((pricing) => {
-            pricing.items?.forEach((item) => {
-                item.configs?.forEach((config) => registerPeriod(config.billing_period));
-                item.billing_period_configs?.forEach((periodConfig) =>
+    const registerPeriodsFromPricing = (pricing?: Pricing) => {
+        pricing?.items?.forEach((item) => {
+            item.configs?.forEach((config) => registerPeriod(config.billing_period));
+            item.billing_period_configs?.forEach((periodConfig) =>
+                registerPeriod(periodConfig.billing_period),
+            );
+            item.pricing_currency_configs?.forEach((currencyConfig) => {
+                currencyConfig.configs?.forEach((config) => registerPeriod(config.billing_period));
+                currencyConfig.billing_period_configs?.forEach((periodConfig) =>
                     registerPeriod(periodConfig.billing_period),
                 );
-                item.pricing_currency_configs?.forEach((currencyConfig) => {
-                    currencyConfig.configs?.forEach((config) =>
-                        registerPeriod(config.billing_period),
-                    );
-                    currencyConfig.billing_period_configs?.forEach((periodConfig) =>
-                        registerPeriod(periodConfig.billing_period),
-                    );
-                });
             });
         });
+    };
+
+    const categories = scheduleInfo?.pricing_plan_version?.pricing_categories ?? [];
+    categories.forEach((category) => {
+        category.pricings?.forEach((pricing) => registerPeriodsFromPricing(pricing));
+        category.pricing_groups?.forEach((group) =>
+            group.pricings?.forEach((pricing) => registerPeriodsFromPricing(pricing)),
+        );
     });
 
     if (!periodByKey.size) {
@@ -230,7 +233,7 @@ const billingPeriodOptions = computed<SelectExtendedOptionEntry[]>(() => {
         ? getAnnualizedAmount(biggestPeriod, getPeriodTotalAmount(biggestPeriod))
         : undefined;
 
-    return effectiveBillingPeriods.value.map((period) => {
+    const options = effectiveBillingPeriods.value.map((period) => {
         const label =
             period.type === 'MONTH' && period.value === 3
                 ? $t({
@@ -275,6 +278,8 @@ const billingPeriodOptions = computed<SelectExtendedOptionEntry[]>(() => {
             value: `${period.type}:${period.value}`,
         };
     });
+
+    return options;
 });
 
 const periodBounds = computed(() => {

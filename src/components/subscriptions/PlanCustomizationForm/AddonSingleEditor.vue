@@ -12,7 +12,10 @@ const props = defineProps<AddonSingleEditorProps>();
 const model = defineModel<Pricing['id'][]>('modelValue', { required: true });
 
 const { $t } = useIntl();
-const { renderPricingForPricingItem } = usePricingItem();
+const { renderPricingForPricingItem } = usePricingItem({
+    currency: computed(() => props.currency),
+    billingPeriod: computed(() => props.billingPeriod),
+});
 
 const groupPricingIds = props.pricings.map((pricing) => pricing.id);
 
@@ -20,16 +23,28 @@ const constraintDescription = computed(() => {
     if (props.constraint === 'AT_MOST_ONE') {
         return $t({
             defaultMessage: 'Select up to one product',
-            id: '123456',
-            description: 'Add to subscription button',
+            id: 'addon_single_editor.description.at_most_one',
+            description: 'The description of the addon single editor for at most one product',
         });
     }
 
-    return $t({
-        defaultMessage: 'Select one product',
-        id: '123456',
-        description: 'Add to subscription button',
-    });
+    if (props.constraint === 'EXACTLY_ONE') {
+        return $t({
+            defaultMessage: 'Select one product',
+            id: 'addon_single_editor.description.exactly_one',
+            description: 'The description of the addon single editor for exactly one product',
+        });
+    }
+
+    if (props.constraint === 'AT_LEAST_ONE') {
+        return $t({
+            defaultMessage: 'Select at least one product',
+            id: 'addon_single_editor.description.at_least_one',
+            description: 'The description of the addon single editor for at least one product',
+        });
+    }
+
+    return '';
 });
 
 const isSelected = (pricingId: Pricing['id']) => {
@@ -64,7 +79,9 @@ const handleToggle = (pricingId: Pricing['id']) => {
                             :name="getNameFromPricing(pricing) ?? ''"
                             :description="
                                 pricing.items?.[0]
-                                    ? renderPricingForPricingItem(pricing.items?.[0])
+                                    ? renderPricingForPricingItem({
+                                          pricingItem: pricing.items?.[0],
+                                      })
                                     : $t({
                                           defaultMessage: 'Unsupported pricing',
                                           id: 'pricing_item_pricing.unsupported_pricing_error',

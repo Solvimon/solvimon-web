@@ -461,6 +461,8 @@ onMounted(() => {
                 v-model:enabled-pricing-ids="enabledPricingIdsModel"
                 :subscription="subscription"
                 :initial-seats-values="checkoutForm.initialState?.value.seatsValues"
+                :billing-period="subscription.billing_period"
+                :currency="activePricingCurrency"
             />
         </template>
 

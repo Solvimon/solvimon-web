@@ -1,8 +1,6 @@
-import type { Pricing, PricingExtended, PricingGroupExtended } from '@solvimon/types';
+import type { PricingGroupExtended } from '@solvimon/types';
+import type { PricingGroupEditorBaseProps } from './PricingGroupEditorBase.types';
 
-export interface AddonSingleEditorProps {
-    modelValue: Pricing['id'][];
-    groupName: string;
+export interface AddonSingleEditorProps extends PricingGroupEditorBaseProps {
     constraint: PricingGroupExtended['selection_constraint'];
-    pricings: PricingExtended[];
 }

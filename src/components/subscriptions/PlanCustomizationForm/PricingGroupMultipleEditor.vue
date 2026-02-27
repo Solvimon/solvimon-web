@@ -4,19 +4,22 @@ import { CheckboxGroupExtended } from '@solvimon/ui';
 import { computed } from 'vue';
 import { containsAtLeastOneOf } from '@solvimon/ui/validators';
 import PricingGroupTitle from './PricingGroupTitle.vue';
-import type { PricingGroupMultiEditorProps } from './PricingGroupMultipleEditor.types';
+import type { PricingGroupEditorBaseProps } from './PricingGroupEditorBase.types';
 import { usePricingItem } from '@/composables/usePricingItem';
 import { getNameFromPricing } from '@/utils/pricing';
 import { useViewport } from '@/composables/useViewport';
 
-const props = defineProps<PricingGroupMultiEditorProps>();
+const props = defineProps<PricingGroupEditorBaseProps>();
 
-const model = defineModel<PricingGroupMultiEditorProps['modelValue']>('modelValue', {
+const model = defineModel<PricingGroupEditorBaseProps['modelValue']>('modelValue', {
     required: true,
 });
 
 const { $t } = useIntl();
-const { renderPricingForPricingItem } = usePricingItem();
+const { renderPricingForPricingItem } = usePricingItem({
+    currency: computed(() => props.currency),
+    billingPeriod: computed(() => props.billingPeriod),
+});
 const { isMobileViewport } = useViewport();
 
 const rules = computed(() => ({
@@ -37,8 +40,9 @@ const validation = useValidation(rules, validationState);
                 <template #description>{{
                     $t({
                         defaultMessage: 'Select at least one product',
-                        id: '123456',
-                        description: 'Add to subscription button',
+                        id: 'pricing_group_multiple_editor.at_least_one_description',
+                        description:
+                            'The description of the pricing group multiple editor for at least one product',
                     })
                 }}</template>
             </PricingGroupTitle>
@@ -49,7 +53,9 @@ const validation = useValidation(rules, validationState);
                         pricings.map((pricing) => ({
                             label: getNameFromPricing(pricing) ?? '',
                             description: pricing.items?.[0]
-                                ? renderPricingForPricingItem(pricing.items?.[0])
+                                ? renderPricingForPricingItem({
+                                      pricingItem: pricing.items?.[0],
+                                  })
                                 : $t({
                                       defaultMessage: 'Unsupported pricing',
                                       id: 'pricing_item_pricing.unsupported_pricing_error',

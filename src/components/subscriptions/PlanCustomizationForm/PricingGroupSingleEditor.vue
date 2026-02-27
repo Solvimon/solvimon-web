@@ -11,7 +11,7 @@ import {
     type SelectExtendedOptionEntry,
 } from '@solvimon/ui';
 import PricingGroupTitle from './PricingGroupTitle.vue';
-import type { PricingGroupSingleEditorProps } from './PricingGroupSingleEditor.types';
+import type { PricingGroupEditorBaseProps } from './PricingGroupEditorBase.types';
 import { usePricingItem } from '@/composables/usePricingItem';
 import { getNameFromPricing } from '@/utils/pricing';
 import { useViewport } from '@/composables/useViewport';
@@ -19,13 +19,16 @@ import { useViewport } from '@/composables/useViewport';
 const SHOW_RADIO_GROUP_MAX_OPTIONS = 3;
 const SHOW_SELECT_MAX_OPTIONS = 6;
 
-const props = defineProps<PricingGroupSingleEditorProps>();
-const model = defineModel<PricingGroupSingleEditorProps['modelValue']>('modelValue', {
+const props = defineProps<PricingGroupEditorBaseProps>();
+const model = defineModel<PricingGroupEditorBaseProps['modelValue']>('modelValue', {
     required: true,
 });
 
 const { $t } = useIntl();
-const { renderPricingForPricingItem } = usePricingItem();
+const { renderPricingForPricingItem } = usePricingItem({
+    currency: computed(() => props.currency),
+    billingPeriod: computed(() => props.billingPeriod),
+});
 const { isMobileViewport } = useViewport();
 
 const groupPricingIds = computed(() => props.pricings.map((pricing) => pricing.id));
@@ -48,7 +51,7 @@ const options = computed<PricingGroupRangeInputOption[]>(() => {
             label: getNameFromPricing(pricing) ?? '',
             value: pricing.id,
             description: pricingItem
-                ? renderPricingForPricingItem(pricingItem)
+                ? renderPricingForPricingItem({ pricingItem })
                 : $t({
                       defaultMessage: 'Unsupported pricing',
                       id: 'pricing_item_pricing.unsupported_pricing_error',

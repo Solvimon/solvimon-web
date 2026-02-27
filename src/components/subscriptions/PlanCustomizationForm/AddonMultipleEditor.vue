@@ -1,17 +1,23 @@
 <script setup lang="ts">
 import type { Pricing } from '@solvimon/types';
 import { Button, Section, useIntl } from '@solvimon/ui';
-import type { AddonMultipleEditorProps } from './AddonMultipleEditor.types';
+import { computed } from 'vue';
 import PricingGroupTitle from './PricingGroupTitle.vue';
 import PricingGroupContent from './PricingGroupContent.vue';
+import type { PricingGroupEditorBaseProps } from './PricingGroupEditorBase.types';
 import { getNameFromPricing } from '@/utils/pricing';
 import { usePricingItem } from '@/composables/usePricingItem';
 
-defineProps<AddonMultipleEditorProps>();
+const props = defineProps<
+    Omit<PricingGroupEditorBaseProps, 'groupName'> & { groupName?: string }
+>();
 const model = defineModel<Pricing['id'][]>('modelValue', { required: true });
 
 const { $t } = useIntl();
-const { renderPricingForPricingItem } = usePricingItem();
+const { renderPricingForPricingItem } = usePricingItem({
+    currency: computed(() => props.currency),
+    billingPeriod: computed(() => props.billingPeriod),
+});
 
 const isSelected = (pricingId: Pricing['id']) => {
     return model.value.includes(pricingId);
@@ -50,7 +56,9 @@ const handleToggle = (pricingId: Pricing['id']) => {
                             :name="getNameFromPricing(pricing) ?? ''"
                             :description="
                                 pricing.items?.[0]
-                                    ? renderPricingForPricingItem(pricing.items?.[0])
+                                    ? renderPricingForPricingItem({
+                                          pricingItem: pricing.items?.[0],
+                                      })
                                     : $t({
                                           defaultMessage: 'Unsupported pricing',
                                           id: 'addon_multiple_editor.unsupported_pricing_error',

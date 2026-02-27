@@ -7,7 +7,6 @@ import type { PlanCustomizationEditorProps } from './PlanCustomizationEditor.typ
 import AddonSingleEditor from './AddonSingleEditor.vue';
 import AddonMultipleEditor from './AddonMultipleEditor.vue';
 import PricingGroupSingleEditor from './PricingGroupSingleEditor.vue';
-import PricingGroupMultipleEditor from './PricingGroupMultipleEditor.vue';
 import { getFirstPricingPlanScheduleOfType } from '@/utils/pricingPlanSchedule';
 import { getPricingGroupsFromExtendedPricingPlanSubscription } from '@/utils/subscription';
 import { getAllPricingsFromPricingPlanVersion } from '@/utils/pricingPlanVersion';
@@ -74,16 +73,8 @@ const pricingGroups = computed(() =>
                     v-model="enabledPricingIdsModel"
                     :group-name="pricingGroup.name"
                     :pricings="pricingGroup.pricings"
-                />
-
-                <PricingGroupMultipleEditor
-                    v-else-if="
-                        pricingGroup.product_type === 'DEFAULT' &&
-                        pricingGroup.selection_constraint === 'AT_LEAST_ONE'
-                    "
-                    v-model="enabledPricingIdsModel"
-                    :group-name="pricingGroup.name"
-                    :pricings="pricingGroup.pricings"
+                    :billing-period="billingPeriod"
+                    :currency="currency"
                 />
 
                 <AddonSingleEditor
@@ -95,6 +86,8 @@ const pricingGroups = computed(() =>
                     :group-name="pricingGroup.name"
                     :pricings="pricingGroup.pricings"
                     :constraint="pricingGroup.selection_constraint"
+                    :billing-period="billingPeriod"
+                    :currency="currency"
                 />
 
                 <AddonMultipleEditor
@@ -105,11 +98,18 @@ const pricingGroups = computed(() =>
                     v-model="enabledPricingIdsModel"
                     :pricings="pricingGroup.pricings"
                     :group-name="pricingGroup.name"
+                    :billing-period="billingPeriod"
+                    :currency="currency"
                 />
             </template>
 
             <!-- product level addons -->
-            <AddonMultipleEditor v-model="enabledPricingIdsModel" :pricings="addonPricings" />
+            <AddonMultipleEditor
+                v-model="enabledPricingIdsModel"
+                :pricings="addonPricings"
+                :billing-period="billingPeriod"
+                :currency="currency"
+            />
         </div>
     </Section>
 </template>

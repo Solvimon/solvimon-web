@@ -1,16 +1,27 @@
-import type { PricingItemExtended } from '@solvimon/types';
-import { formatAmount, useIntl, useTimePeriod } from '@solvimon/ui';
+import type { BillingPeriod, Currency, PricingItemExtended } from '@solvimon/types';
+import { formatAmount, getConfigFromPricingItem, useIntl, useTimePeriod } from '@solvimon/ui';
+import type { Ref } from 'vue';
 
 /**
  * Utility function for rendering the pricing for a pricing item.
  */
-export function usePricingItem() {
+export function usePricingItem({
+    currency,
+    billingPeriod,
+}: {
+    currency?: Ref<Currency['currencyCode'] | undefined>;
+    billingPeriod?: Ref<BillingPeriod>;
+} = {}) {
     const { $t } = useIntl();
     const { formatTimePeriod } = useTimePeriod();
 
-    const renderPricingForPricingItem = (pricingItem: PricingItemExtended) => {
+    const renderPricingForPricingItem = ({ pricingItem }: { pricingItem: PricingItemExtended }) => {
         const productItem = pricingItem.product_items?.[0];
-        const config = pricingItem.configs?.[0];
+        const config = getConfigFromPricingItem({
+            pricingItem,
+            currency: currency?.value,
+            billingPeriod: billingPeriod?.value,
+        });
 
         if (!config) {
             return $t({
@@ -26,6 +37,10 @@ export function usePricingItem() {
                 id: 'pricing_item_pricing.per_seat',
                 description: 'The pricing item pricing for a per seat pricing item',
             });
+        }
+
+        if (productItem?.model_type === 'ONE_OFF' && config.bands?.[0]?.fixed_amount) {
+            return formatAmount(config.bands?.[0]?.fixed_amount);
         }
 
         if (config.type === 'FLAT' && config.bands?.[0]?.amount) {

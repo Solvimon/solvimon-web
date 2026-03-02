@@ -1,4 +1,4 @@
-import SolvimonCheckoutVue from './SolvimonCheckout.vue';
+import SolvimonCheckoutVue from './Checkout.entry.vue';
 import { defineCustomElement } from '@/utils/customElements';
 import { getComponentName } from '@/utils/component';
 

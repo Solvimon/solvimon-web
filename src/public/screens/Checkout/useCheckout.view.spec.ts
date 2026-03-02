@@ -9,7 +9,7 @@ import type {
     AuthorizePaymentPayload,
 } from '@solvimon/types';
 import type { CheckoutFormState } from '@/components/customer/CheckoutForm/CheckoutForm.types';
-import { useCheckoutView } from './useCheckoutView';
+import { useCheckoutView } from './useCheckout.view';
 
 type AuthorizePaymentInitPricingPlanSubscriptionContext = Extract<
     NonNullable<AuthorizePaymentPayload['context']>,

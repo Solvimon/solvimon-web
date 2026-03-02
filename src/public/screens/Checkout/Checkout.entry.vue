@@ -2,10 +2,10 @@
 import { isValidCountryCode } from '@solvimon/ui';
 import type { CountryCode } from '@solvimon/types';
 import { getCurrentInstance, onMounted } from 'vue';
-import type { SolvimonCheckoutEmits, SolvimonCheckoutProps } from './SolvimonCheckout.types';
-import { COMPONENT_NAME } from './SolvimonCheckout.ce';
+import type { SolvimonCheckoutEmits, SolvimonCheckoutProps } from './Checkout.entry.types';
+import { COMPONENT_NAME } from './Checkout.entry.ce';
 import Provider from '@/components/providers/Provider/Provider.vue';
-import Checkout from '@/views/Checkout/Checkout.vue';
+import Checkout from '@/public/screens/Checkout/Checkout.vue';
 import { useLogger } from '@/components/providers';
 import type { LogEntry } from '@/components/providers/LoggerProvider/LoggerProvider.types';
 

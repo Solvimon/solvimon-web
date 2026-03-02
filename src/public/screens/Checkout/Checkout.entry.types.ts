@@ -1,5 +1,5 @@
 import type { EntryBaseEmits, EntryBaseProps } from '@/types/EntryBaseProps';
-import type { CheckoutProps } from '@/views/Checkout/Checkout.types';
+import type { CheckoutProps } from '@/public/screens/Checkout/Checkout.types';
 
 export interface SolvimonCheckoutProps extends EntryBaseProps, CheckoutProps {}
 

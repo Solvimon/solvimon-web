@@ -37,55 +37,55 @@
             "import": "./dist/index.es.js",
             "require": "./dist/index.cjs.js"
         },
+        "./screens/checkout": {
+            "types": "./dist/screens/Checkout/Checkout.ce.d.ts",
+            "import": "./dist/screens/Checkout/Checkout.es.js",
+            "require": "./dist/screens/Checkout/Checkout.cjs.js"
+        },
         "./solvimon-add-payment-method-form": {
-            "types": "./dist/SolvimonAddPaymentMethodForm.ce.d.ts",
-            "import": "./dist/SolvimonAddPaymentMethodForm.es.js",
-            "require": "./dist/SolvimonAddPaymentMethodForm.cjs.js"
+            "types": "./dist/SolvimonAddPaymentMethodForm/SolvimonAddPaymentMethodForm.ce.d.ts",
+            "import": "./dist/SolvimonAddPaymentMethodForm/SolvimonAddPaymentMethodForm.es.js",
+            "require": "./dist/SolvimonAddPaymentMethodForm/SolvimonAddPaymentMethodForm.cjs.js"
         },
         "./solvimon-invoice": {
-            "types": "./dist/SolvimonInvoice.ce.d.ts",
-            "import": "./dist/SolvimonInvoice.es.js",
-            "require": "./dist/SolvimonInvoice.cjs.js"
-        },
-        "./solvimon-checkout": {
-            "types": "./dist/SolvimonCheckout.ce.d.ts",
-            "import": "./dist/SolvimonCheckout.es.js",
-            "require": "./dist/SolvimonCheckout.cjs.js"
+            "types": "./dist/SolvimonInvoice/SolvimonInvoice.ce.d.ts",
+            "import": "./dist/SolvimonInvoice/SolvimonInvoice.es.js",
+            "require": "./dist/SolvimonInvoice/SolvimonInvoice.cjs.js"
         },
         "./solvimon-payment-history-block": {
-            "types": "./dist/SolvimonPaymentHistoryBlock.ce.d.ts",
-            "import": "./dist/SolvimonPaymentHistoryBlock.es.js",
-            "require": "./dist/SolvimonPaymentHistoryBlock.cjs.js"
+            "types": "./dist/SolvimonPaymentHistoryBlock/SolvimonPaymentHistoryBlock.ce.d.ts",
+            "import": "./dist/SolvimonPaymentHistoryBlock/SolvimonPaymentHistoryBlock.es.js",
+            "require": "./dist/SolvimonPaymentHistoryBlock/SolvimonPaymentHistoryBlock.cjs.js"
         },
         "./solvimon-invoice-block": {
-            "types": "./dist/SolvimonInvoiceBlock.ce.d.ts",
-            "import": "./dist/SolvimonInvoiceBlock.es.js",
-            "require": "./dist/SolvimonInvoiceBlock.cjs.js"
+            "types": "./dist/SolvimonInvoiceBlock/SolvimonInvoiceBlock.ce.d.ts",
+            "import": "./dist/SolvimonInvoiceBlock/SolvimonInvoiceBlock.es.js",
+            "require": "./dist/SolvimonInvoiceBlock/SolvimonInvoiceBlock.cjs.js"
         },
         "./solvimon-invoice-details-block": {
-            "types": "./dist/SolvimonInvoiceDetailsBlock.ce.d.ts",
-            "import": "./dist/SolvimonInvoiceDetailsBlock.es.js",
-            "require": "./dist/SolvimonInvoiceDetailsBlock.cjs.js"
+            "types": "./dist/SolvimonInvoiceDetailsBlock/SolvimonInvoiceDetailsBlock.ce.d.ts",
+            "import": "./dist/SolvimonInvoiceDetailsBlock/SolvimonInvoiceDetailsBlock.es.js",
+            "require": "./dist/SolvimonInvoiceDetailsBlock/SolvimonInvoiceDetailsBlock.cjs.js"
         },
         "./solvimon-customer-payment-methods-block": {
-            "types": "./dist/SolvimonCustomerPaymentMethodsBlock.ce.d.ts",
-            "import": "./dist/SolvimonCustomerPaymentMethodsBlock.es.js",
-            "require": "./dist/SolvimonCustomerPaymentMethodsBlock.cjs.js"
+            "types": "./dist/SolvimonCustomerPaymentMethodsBlock/SolvimonCustomerPaymentMethodsBlock.ce.d.ts",
+            "import": "./dist/SolvimonCustomerPaymentMethodsBlock/SolvimonCustomerPaymentMethodsBlock.es.js",
+            "require": "./dist/SolvimonCustomerPaymentMethodsBlock/SolvimonCustomerPaymentMethodsBlock.cjs.js"
         },
         "./solvimon-customer-billing-information-block": {
-            "types": "./dist/SolvimonCustomerBillingInformationBlock.ce.d.ts",
-            "import": "./dist/SolvimonCustomerBillingInformationBlock.es.js",
-            "require": "./dist/SolvimonCustomerBillingInformationBlock.cjs.js"
+            "types": "./dist/SolvimonCustomerBillingInformationBlock/SolvimonCustomerBillingInformationBlock.ce.d.ts",
+            "import": "./dist/SolvimonCustomerBillingInformationBlock/SolvimonCustomerBillingInformationBlock.es.js",
+            "require": "./dist/SolvimonCustomerBillingInformationBlock/SolvimonCustomerBillingInformationBlock.cjs.js"
         },
         "./solvimon-customer-subscription-block": {
-            "types": "./dist/SolvimonCustomerSubscriptionBlock.ce.d.ts",
-            "import": "./dist/SolvimonCustomerSubscriptionBlock.es.js",
-            "require": "./dist/SolvimonCustomerSubscriptionBlock.cjs.js"
+            "types": "./dist/SolvimonCustomerSubscriptionBlock/SolvimonCustomerSubscriptionBlock.ce.d.ts",
+            "import": "./dist/SolvimonCustomerSubscriptionBlock/SolvimonCustomerSubscriptionBlock.es.js",
+            "require": "./dist/SolvimonCustomerSubscriptionBlock/SolvimonCustomerSubscriptionBlock.cjs.js"
         },
         "./solvimon-customer-invoices-block": {
-            "types": "./dist/SolvimonCustomerInvoicesBlock.ce.d.ts",
-            "import": "./dist/SolvimonCustomerInvoicesBlock.es.js",
-            "require": "./dist/SolvimonCustomerInvoicesBlock.cjs.js"
+            "types": "./dist/SolvimonCustomerInvoicesBlock/SolvimonCustomerInvoicesBlock.ce.d.ts",
+            "import": "./dist/SolvimonCustomerInvoicesBlock/SolvimonCustomerInvoicesBlock.es.js",
+            "require": "./dist/SolvimonCustomerInvoicesBlock/SolvimonCustomerInvoicesBlock.cjs.js"
         }
     },
     "dependencies": {

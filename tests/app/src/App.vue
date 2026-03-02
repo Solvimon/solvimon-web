@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { defineSolvimonCheckout } from '@solvimon/sdk/solvimon-checkout';
+import { defineSolvimonCheckout } from '@solvimon/sdk/screens/checkout';
 import { computed } from 'vue';
 
 // Define the custom element

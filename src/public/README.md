@@ -1,6 +1,14 @@
 # Public entries
 
-Components that are exposed should be listed in the `public` directory. In the public directory, two sub directories are available, `components` and `screens`.
+Components that are exposed should be listed in the `public` directory. In the public directory, three sub directories are available: `components`, `screens`, and `core`.
+
+## Core (mount API)
+
+The `core` directory exposes a **mount API** so consumers can define and configure components/screens and mount them into a container they specify, without using web components directly.
+
+- **Import**: `@solvimon/sdk/core`
+- **Usage**: Call `createSolvimonMount({ container, config, view })` with your DOM container (or selector), shared config (environment, token, locale, branding), and which screen or component to render. Returns `{ unmount }`.
+- See `public/core/README.md` for details.
 
 To add a new public entry, always make sure you at least have the following files:
 

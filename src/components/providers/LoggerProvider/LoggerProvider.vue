@@ -2,13 +2,15 @@
 import { provide } from 'vue';
 import { createLogger, LOGGER_PROVIDER_INJECTION_KEY } from './LoggerProvider.lib';
 import type { LoggerProviderProps } from './LoggerProvider.types';
+import { useHostElementProvider } from '@/components/providers/HostElementProvider/composables/useHostElementProvider';
 import { useConfig } from '@/components/providers/ConfigProvider/composables/useConfig';
 
 const props = withDefaults(defineProps<LoggerProviderProps>(), {
     minLevel: 'error',
     onLog: () => {},
 });
-const { customElementName, environment } = useConfig();
+const { customElementName } = useHostElementProvider();
+const { environment } = useConfig();
 const logger = createLogger(props.onLog, {
     minLevel: props.logLevel,
     customElementName,

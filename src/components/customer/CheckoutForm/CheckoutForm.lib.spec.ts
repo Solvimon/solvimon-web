@@ -1,4 +1,3 @@
-import { describe, it, expect } from 'vitest';
 import { countrySpecificRequiredFieldsMap, getRequiredFieldsForCountry } from './CheckoutForm.lib';
 
 describe('CheckoutForm.lib', () => {

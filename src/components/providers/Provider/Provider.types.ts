@@ -1,4 +1,5 @@
 import type { IntlProviderProps, BrandProviderProps } from '@solvimon/ui';
+import type { HostElementProviderProps } from '@/components/providers/HostElementProvider/HostElementProvider.types';
 import type { LoggerProviderProps } from '@/components/providers/LoggerProvider/LoggerProvider.types';
 import type { ExperimentalFeatureProviderProps } from '@/components/providers/ExperimentalFeatureProvider/ExperimentalFeatureProvider.types';
 import type { PortalProviderProps } from '@/components/providers/PortalProvider/PortalProvider.types';
@@ -13,10 +14,10 @@ export interface RequiredProviderProps
         BrandProviderProps,
         ExperimentalFeatureProviderProps,
         LoggerProviderProps,
-        Pick<PortalProviderProps, 'allowedPortalTypes' | 'portalObject'> {}
+        Pick<PortalProviderProps, 'allowedPortalTypes' | 'portalObject'>,
+        HostElementProviderProps {}
 export interface ProviderEmits {
     (e: 'error', error: Error): void;
 }
 
-export type ProviderProps = Partial<RequiredProviderProps> &
-    Required<Pick<RequiredProviderProps, 'customElementName'>>;
+export type ProviderProps = Partial<RequiredProviderProps>;

@@ -1,0 +1,93 @@
+import {
+    ApiStatus,
+    type ApiCollectionResponse,
+    type ApiSuccessCollectionResponse,
+} from '@solvimon/types';
+import { getPaginatedFullList, isApiSuccessCollectionResponse } from '@solvimon/ui';
+import { computed, ref } from 'vue';
+import { cloneDeep } from 'lodash-es';
+
+export function useIncrementalLoading<T>({
+    initialData = [],
+    service,
+}: {
+    initialData?: T[];
+    service: (page: number) => Promise<ApiCollectionResponse<T>>;
+}) {
+    const items = ref<T[]>(initialData);
+    const status = ref<ApiStatus>(ApiStatus.Initial);
+    const error = ref<Error | null>(null);
+    const page = ref<number>(1);
+    const hasNextBatch = ref<boolean>(false);
+    const isPending = computed<boolean>(() => status.value === ApiStatus.Loading);
+
+    const loadPage = async (pageNumber: number) => {
+        // Prevent concurrent requests
+        if (isPending.value) return;
+
+        try {
+            // Reset the loading state
+            error.value = null;
+            status.value = ApiStatus.Loading;
+
+            // Fetch the date
+            const response = await service(pageNumber);
+
+            // Check if we get a valid response
+            if (!isApiSuccessCollectionResponse(response)) {
+                status.value = ApiStatus.Done;
+                return;
+            }
+
+            const successResponse = response as ApiSuccessCollectionResponse<T>;
+
+            // Check if there is a next batch
+            hasNextBatch.value = !!successResponse.links?.next;
+
+            items.value = [...items.value, ...successResponse.data] as T[];
+            status.value = ApiStatus.Done;
+            page.value = pageNumber;
+        } catch (err) {
+            error.value = err as Error;
+            status.value = ApiStatus.Failed;
+        }
+    };
+
+    const fetchAll = async () => {
+        error.value = null;
+        status.value = ApiStatus.Loading;
+
+        const response = await getPaginatedFullList(async (pageNum: number) => {
+            const response = await service(pageNum);
+            if (!isApiSuccessCollectionResponse(response)) {
+                status.value = ApiStatus.Failed;
+
+                throw new Error('message' in response ? response.message : 'Request failed');
+            }
+            return response;
+        });
+
+        items.value = response.data;
+        status.value = ApiStatus.Done;
+    };
+
+    const fetchMore = async () => {
+        return await loadPage(page.value + 1);
+    };
+
+    const nonMutableItems = computed(() => cloneDeep(items.value));
+
+    const fetchInitial = async () => {
+        return await loadPage(1);
+    };
+
+    return {
+        items: nonMutableItems,
+        error,
+        fetchInitial,
+        fetchMore,
+        fetchAll,
+        isPending,
+        hasNextBatch,
+    };
+}

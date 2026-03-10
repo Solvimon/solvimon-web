@@ -1,4 +1,3 @@
-import { describe, it, expect } from 'vitest';
 import { filterOutExpressPaymentMethods } from './paymentMethods';
 import type { RawPaymentMethod } from '@adyen/adyen-web';
 

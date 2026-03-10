@@ -1,4 +1,3 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { nextTick } from 'vue';
 import type {
     PricingPlanSubscription,
@@ -114,7 +113,7 @@ vi.mock('@/components/customer/CheckoutForm/useCheckoutForm', () => ({
     }) => mockUseCheckoutForm(args),
 }));
 
-vi.mock('@/composables/usePaymentMethodOptions', () => ({
+vi.mock('@/composables/useCheckoutPaymentMethodOptions', () => ({
     usePaymentMethodOptions: () => mockUsePaymentMethodOptions(),
 }));
 

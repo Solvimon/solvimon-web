@@ -36,7 +36,7 @@ import {
     getPricingItemConfigMetaById,
 } from '@/utils/pricingPlanSchedule';
 import { getPricingCurrencyForCountry } from '@/utils/countryCurrency';
-import { CheckoutLayout } from '@/layouts';
+import { ContentWithAsideLayout } from '@/layouts';
 import { useViewport } from '@/composables/useViewport';
 import PromotionCodeSection from '@/components/checkout/PromotionCodeSection.vue';
 import { getFallbackTrialAndSubscriptionStartAndEndDates } from '@/utils/subscription';
@@ -417,8 +417,8 @@ onMounted(() => {
 
 <template>
     <CheckoutNotAvailable v-if="criticalError" />
-    <CheckoutLayout v-else>
-        <template #title>
+    <ContentWithAsideLayout v-else>
+        <template #header>
             <Skeleton class="min-h-[52px] w-96">
                 <CheckoutTitle
                     v-if="invoicePreview && subscription && subscriptionStartDate"
@@ -433,9 +433,10 @@ onMounted(() => {
             </Skeleton>
         </template>
 
-        <template v-if="isMobileViewport" #mobile-order-summary>
+        <!-- content -->
+        <template #content>
             <OrderSummary
-                v-if="subscription"
+                v-if="subscription && isMobileViewport"
                 :subscription="subscription"
                 :invoice="invoicePreview"
                 :invoice-preview-by-billing-period="invoicePreviewByBillingPeriod"
@@ -453,10 +454,10 @@ onMounted(() => {
                 variant="products-inline"
                 @billing-period-change="handleBillingPeriodChange"
             />
-        </template>
 
-        <template v-if="showPlanCustomizationEditor && subscription" #plan-customization>
+            <!-- plan customization -->
             <PlanCustomizationEditor
+                v-if="showPlanCustomizationEditor && subscription"
                 v-model:seats-values="seatsValuesModel"
                 v-model:enabled-pricing-ids="enabledPricingIdsModel"
                 :subscription="subscription"
@@ -464,9 +465,8 @@ onMounted(() => {
                 :billing-period="subscription.billing_period"
                 :currency="activePricingCurrency"
             />
-        </template>
 
-        <template #express-payment-methods>
+            <!-- express payment methods -->
             <ExpressPaymentMethods
                 v-if="
                     !isPaid &&
@@ -482,14 +482,13 @@ onMounted(() => {
                 :on-billing-information-change="updateInvoicePreviewOnBillingInformationChange"
                 @update-billing-information="handleUpdateBillingInformation"
             />
-        </template>
 
-        <template v-if="isPaid" #payment-success-notification>
-            <SubscriptionPaymentCompletedCard :redirect-url="successRedirectUrl" />
-        </template>
+            <!-- payment success notification -->
+            <SubscriptionPaymentCompletedCard v-if="isPaid" :redirect-url="successRedirectUrl" />
 
-        <template v-if="!isPaid" #customer-information-form>
+            <!-- customer information form -->
             <CheckoutForm
+                v-if="!isPaid"
                 v-model="checkoutForm.form.value"
                 :validation="checkoutForm.validation"
                 :read-only-email="props.email"
@@ -498,10 +497,9 @@ onMounted(() => {
                 :get-is-field-required="checkoutForm.getIsFieldRequired"
                 :read-only="isPaid"
             />
-        </template>
 
-        <template v-if="!isPaid" #payment-methods>
-            <Skeleton variant="section" class="min-h-[130px]">
+            <!-- payment methods -->
+            <Skeleton v-if="!isPaid" variant="section" class="min-h-[130px]">
                 <div
                     v-if="
                         !isPaymentMethodsPending ||
@@ -584,7 +582,8 @@ onMounted(() => {
             </Skeleton>
         </template>
 
-        <template #order-summary>
+        <template #aside>
+            <!-- order summary -->
             <Skeleton variant="section" class="min-h-[220px]">
                 <OrderSummary
                     v-if="subscription && invoicePreview"
@@ -604,10 +603,10 @@ onMounted(() => {
                     @billing-period-change="handleBillingPeriodChange"
                 />
             </Skeleton>
-        </template>
 
-        <template v-if="!isPaid" #promotion-code>
+            <!-- promotion code -->
             <PromotionCodeSection
+                v-if="!isPaid"
                 :promotion-code="promotionCode"
                 @update:applied-code="promotionCode = $event"
                 @remove="removePromotionCode"
@@ -618,8 +617,8 @@ onMounted(() => {
                 class="mt-2"
                 :title="promotionCodeErrorMessage"
             />
-        </template>
-        <template #pay-button>
+
+            <!-- pay button-->
             <Skeleton v-if="!isPaid" class="min-h-[44px]">
                 <Button
                     v-if="invoicePreview"
@@ -646,9 +645,8 @@ onMounted(() => {
                     }}
                 </Button>
             </Skeleton>
-        </template>
 
-        <template #kpis>
+            <!-- kpis-->
             <Typography
                 tag="div"
                 variant="body-sm"
@@ -667,5 +665,5 @@ onMounted(() => {
                 />
             </Typography>
         </template>
-    </CheckoutLayout>
+    </ContentWithAsideLayout>
 </template>

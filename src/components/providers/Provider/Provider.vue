@@ -10,6 +10,7 @@ import nlNlUiTranslations from '@solvimon/ui/translations/nl-NL';
 import enUsUiTranslations from '@solvimon/ui/translations/en-US';
 import { computed } from 'vue';
 import type { ProviderEmits, ProviderProps } from './Provider.types';
+import ActionDispatchProvider from '@/components/providers/ActionDispatchProvider/ActionDispatchProvider.vue';
 import LoggerProvider from '@/components/providers/LoggerProvider/LoggerProvider.vue';
 import ExperimentalFeatureProvider from '@/components/providers/ExperimentalFeatureProvider/ExperimentalFeatureProvider.vue';
 import TeleportProvider from '@/components/providers/TeleportProvider/TeleportProvider.vue';
@@ -18,6 +19,7 @@ import AuthProvider from '@/components/providers/AuthProvider/AuthProvider.vue';
 import nlNlSdkTranslations from '@/translations/nl-NL.json';
 import enUsSdkTranslations from '@/translations/en-US.json';
 import ConfigProvider from '@/components/providers/ConfigProvider/ConfigProvider.vue';
+import HostElementProvider from '@/components/providers/HostElementProvider/HostElementProvider.vue';
 import PortalProvider from '@/components/providers/PortalProvider/PortalProvider.vue';
 
 const props = defineProps<ProviderProps>();
@@ -31,6 +33,10 @@ if (!props.token && !props.portalObject) {
     throw new Error('token or portalObject is required');
 }
 
+if (!props.customElementName) {
+    throw new Error('customElementName is required');
+}
+
 const defaultMessages: Record<string, IntlMessages> = {
     'nl-NL': {
         ...nlNlUiTranslations,
@@ -41,6 +47,7 @@ const defaultMessages: Record<string, IntlMessages> = {
         ...enUsSdkTranslations,
     },
 };
+
 const localizedDefaultMessages = computed<IntlMessages>(() => {
     if (!props.locale || !(props.locale in defaultMessages)) {
         return defaultMessages['en-US'];
@@ -49,6 +56,7 @@ const localizedDefaultMessages = computed<IntlMessages>(() => {
     const localizedMessages = defaultMessages[props.locale];
     return localizedMessages;
 });
+
 const localizedMessages = computed<IntlMessages>(() => ({
     ...localizedDefaultMessages.value,
     ...props.messages,
@@ -56,41 +64,43 @@ const localizedMessages = computed<IntlMessages>(() => ({
 </script>
 
 <template>
-    <ErrorHandlingProvider @error="trackSentryException">
-        <TeleportProvider>
-            <BrandProvider
-                :primary-color="primaryColor"
-                :secondary-color="secondaryColor"
-                is-shadow-root
-            />
-            <ConfigProvider
-                v-if="environment"
-                :environment="environment"
-                :custom-element-name="customElementName"
-            >
-                <LoggerProvider :log-level="props.logLevel" :on-log="props.onLog">
-                    <AuthProvider v-if="token" :token="token">
-                        <ExperimentalFeatureProvider :experimental-features="experimentalFeatures">
-                            <PortalProvider
-                                :token="token"
-                                :allowed-portal-types="allowedPortalTypes"
-                                :portal-object="portalObject"
-                            >
-                                <IconSpriteProvider>
-                                    <IntlProvider
-                                        :locale="locale"
-                                        :date-locale="dateLocale"
-                                        :messages="localizedMessages"
-                                        :show-timezones="false"
+    <HostElementProvider :custom-element-name="props.customElementName">
+        <ActionDispatchProvider>
+            <ErrorHandlingProvider @error="trackSentryException">
+                <TeleportProvider>
+                    <BrandProvider
+                        :primary-color="primaryColor"
+                        :secondary-color="secondaryColor"
+                        is-shadow-root
+                    />
+                    <ConfigProvider v-if="environment" :environment="environment">
+                        <LoggerProvider :log-level="props.logLevel" :on-log="props.onLog">
+                            <AuthProvider v-if="token" :token="token">
+                                <ExperimentalFeatureProvider
+                                    :experimental-features="experimentalFeatures"
+                                >
+                                    <PortalProvider
+                                        :token="token"
+                                        :allowed-portal-types="allowedPortalTypes"
+                                        :portal-object="portalObject"
                                     >
-                                        <slot />
-                                    </IntlProvider>
-                                </IconSpriteProvider>
-                            </PortalProvider>
-                        </ExperimentalFeatureProvider>
-                    </AuthProvider>
-                </LoggerProvider>
-            </ConfigProvider>
-        </TeleportProvider>
-    </ErrorHandlingProvider>
+                                        <IconSpriteProvider>
+                                            <IntlProvider
+                                                :locale="locale"
+                                                :date-locale="dateLocale"
+                                                :messages="localizedMessages"
+                                                :show-timezones="false"
+                                            >
+                                                <slot />
+                                            </IntlProvider>
+                                        </IconSpriteProvider>
+                                    </PortalProvider>
+                                </ExperimentalFeatureProvider>
+                            </AuthProvider>
+                        </LoggerProvider>
+                    </ConfigProvider>
+                </TeleportProvider>
+            </ErrorHandlingProvider>
+        </ActionDispatchProvider>
+    </HostElementProvider>
 </template>

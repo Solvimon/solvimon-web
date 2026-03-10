@@ -6,10 +6,6 @@ export interface ConfigProviderProps {
      * The solvimon environment to be used
      */
     environment: Environment;
-    /**
-     * The custom element name to be used
-     */
-    customElementName: string;
 }
 
 export type Config = ReturnType<typeof getConfig>;

@@ -2,9 +2,16 @@ import type { Invoice } from '@solvimon/types';
 
 export interface InvoiceTableProps {
     invoices: Invoice[];
+    isLoading?: boolean;
+    hasMoreItems?: boolean;
+    configuration: {
+        showPayButton?: boolean;
+        showViewButton?: boolean;
+    };
 }
 
 export interface InvoiceTableEmits {
-    (e: 'view-invoice', invoiceId: Invoice['id']): void;
-    (e: 'pay-invoice', invoiceId: Invoice['id']): void;
+    (e: 'view-invoice', payload: { invoiceId: Invoice['id'] }): void;
+    (e: 'pay-invoice', payload: { invoiceId: Invoice['id'] }): void;
+    (e: 'load-more'): void;
 }

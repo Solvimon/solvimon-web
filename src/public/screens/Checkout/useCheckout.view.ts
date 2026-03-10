@@ -15,7 +15,7 @@ import { watchOnce } from '@vueuse/core';
 import { createSubscriptionsService } from '@/services/subscriptions';
 import { useInvoicePreview } from '@/composables/useInvoicePreview';
 import { useCheckoutForm } from '@/components/customer/CheckoutForm/useCheckoutForm';
-import { usePaymentMethodOptions } from '@/composables/usePaymentMethodOptions';
+import { usePaymentMethodOptions } from '@/composables/useCheckoutPaymentMethodOptions';
 import type { CheckoutFormState } from '@/components/customer/CheckoutForm/CheckoutForm.types';
 import {
     getFirstPricingPlanScheduleOfType,
@@ -120,8 +120,8 @@ export function useCheckoutView({
         });
         // Default to the smallest billing period from the plan (list is ordered).
         const defaultBillingPeriod =
-            subscriptionSchedule?.pricing_plan_version?.billing_period_settings?.billing_periods?.[0]
-                ?.period;
+            subscriptionSchedule?.pricing_plan_version?.billing_period_settings
+                ?.billing_periods?.[0]?.period;
 
         subscription.value = {
             ...response,
@@ -198,7 +198,9 @@ export function useCheckoutView({
             pricingCurrency: hasMultiplePricingCurrencies
                 ? subscription.value?.billing_currency
                 : undefined,
-            billingPeriod: hasMultipleBillingPeriods ? subscription.value?.billing_period : undefined,
+            billingPeriod: hasMultipleBillingPeriods
+                ? subscription.value?.billing_period
+                : undefined,
         });
 
         const promotionCode = checkoutForm.form.value.promotionCode;

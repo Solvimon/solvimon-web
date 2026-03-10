@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest';
+import type { Mock } from 'vitest';
 import { createRequestService } from './requests';
 import { Headers as HeadersConst } from './requests.lib';
 

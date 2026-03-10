@@ -1,1 +1,1 @@
-export { default as CheckoutLayout } from './checkout.vue';
+export { default as ContentWithAsideLayout } from './ContentWithAsideLayout.vue';

@@ -37,10 +37,43 @@
             "import": "./dist/index.es.js",
             "require": "./dist/index.cjs.js"
         },
+        "./core": {
+            "types": "./dist/core/index.d.ts",
+            "import": "./dist/core/index.es.js",
+            "require": "./dist/core/index.cjs.js"
+        },
+        "./core/action-request-types": {
+            "types": "./dist/core/action-request.types.d.ts"
+        },
         "./screens/checkout": {
             "types": "./dist/screens/Checkout/Checkout.ce.d.ts",
             "import": "./dist/screens/Checkout/Checkout.es.js",
             "require": "./dist/screens/Checkout/Checkout.cjs.js"
+        },
+        "./screens/customer-overview": {
+            "types": "./dist/screens/CustomerOverview/CustomerOverview.ce.d.ts",
+            "import": "./dist/screens/CustomerOverview/CustomerOverview.es.js",
+            "require": "./dist/screens/CustomerOverview/CustomerOverview.cjs.js"
+        },
+        "./components/subscriptions-list": {
+            "types": "./dist/components/SubscriptionsList/SubscriptionsList.ce.d.ts",
+            "import": "./dist/components/SubscriptionsList/SubscriptionsList.es.js",
+            "require": "./dist/components/SubscriptionsList/SubscriptionsList.cjs.js"
+        },
+        "./components/customer-payment-methods": {
+            "types": "./dist/components/CustomerPaymentMethods/CustomerPaymentMethods.ce.d.ts",
+            "import": "./dist/components/CustomerPaymentMethods/CustomerPaymentMethods.es.js",
+            "require": "./dist/components/CustomerPaymentMethods/CustomerPaymentMethods.cjs.js"
+        },
+        "./components/billing-information": {
+            "types": "./dist/components/BillingInformation/BillingInformation.ce.d.ts",
+            "import": "./dist/components/BillingInformation/BillingInformation.es.js",
+            "require": "./dist/components/BillingInformation/BillingInformation.cjs.js"
+        },
+        "./components/invoices-list": {
+            "types": "./dist/components/InvoicesList/InvoicesList.ce.d.ts",
+            "import": "./dist/components/InvoicesList/InvoicesList.es.js",
+            "require": "./dist/components/InvoicesList/InvoicesList.cjs.js"
         },
         "./solvimon-add-payment-method-form": {
             "types": "./dist/SolvimonAddPaymentMethodForm/SolvimonAddPaymentMethodForm.ce.d.ts",
@@ -66,26 +99,6 @@
             "types": "./dist/SolvimonInvoiceDetailsBlock/SolvimonInvoiceDetailsBlock.ce.d.ts",
             "import": "./dist/SolvimonInvoiceDetailsBlock/SolvimonInvoiceDetailsBlock.es.js",
             "require": "./dist/SolvimonInvoiceDetailsBlock/SolvimonInvoiceDetailsBlock.cjs.js"
-        },
-        "./solvimon-customer-payment-methods-block": {
-            "types": "./dist/SolvimonCustomerPaymentMethodsBlock/SolvimonCustomerPaymentMethodsBlock.ce.d.ts",
-            "import": "./dist/SolvimonCustomerPaymentMethodsBlock/SolvimonCustomerPaymentMethodsBlock.es.js",
-            "require": "./dist/SolvimonCustomerPaymentMethodsBlock/SolvimonCustomerPaymentMethodsBlock.cjs.js"
-        },
-        "./solvimon-customer-billing-information-block": {
-            "types": "./dist/SolvimonCustomerBillingInformationBlock/SolvimonCustomerBillingInformationBlock.ce.d.ts",
-            "import": "./dist/SolvimonCustomerBillingInformationBlock/SolvimonCustomerBillingInformationBlock.es.js",
-            "require": "./dist/SolvimonCustomerBillingInformationBlock/SolvimonCustomerBillingInformationBlock.cjs.js"
-        },
-        "./solvimon-customer-subscription-block": {
-            "types": "./dist/SolvimonCustomerSubscriptionBlock/SolvimonCustomerSubscriptionBlock.ce.d.ts",
-            "import": "./dist/SolvimonCustomerSubscriptionBlock/SolvimonCustomerSubscriptionBlock.es.js",
-            "require": "./dist/SolvimonCustomerSubscriptionBlock/SolvimonCustomerSubscriptionBlock.cjs.js"
-        },
-        "./solvimon-customer-invoices-block": {
-            "types": "./dist/SolvimonCustomerInvoicesBlock/SolvimonCustomerInvoicesBlock.ce.d.ts",
-            "import": "./dist/SolvimonCustomerInvoicesBlock/SolvimonCustomerInvoicesBlock.es.js",
-            "require": "./dist/SolvimonCustomerInvoicesBlock/SolvimonCustomerInvoicesBlock.cjs.js"
         }
     },
     "dependencies": {
@@ -97,6 +110,7 @@
         "@vueuse/core": "^9.13.0",
         "@vueuse/shared": "^10.7.2",
         "jwt-decode": "^4.0.0",
+        "lodash-es": "^4.17.23",
         "vite-plugin-string": "^1.2.3",
         "vue": "^3.5.13"
     },

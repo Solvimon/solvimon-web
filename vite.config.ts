@@ -1,6 +1,6 @@
 import { fileURLToPath, URL } from 'node:url';
 import { resolve, relative, dirname } from 'node:path';
-import { copyFileSync, mkdirSync, existsSync, rmSync } from 'node:fs';
+import { copyFileSync, mkdirSync, existsSync, rmSync, readdirSync } from 'node:fs';
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import vueDevTools from 'vite-plugin-vue-devtools';
@@ -33,6 +33,15 @@ const screenEntries = getLibEntries(
     'screens/',
 );
 
+const componentEntries = getLibEntries(
+    'src/public/components',
+    '**/*.entry.ce.ts',
+    /\.entry\.ce\.ts$/,
+    'components/',
+);
+
+const coreEntry = resolve(__dirname, 'src/public/core/index.ts');
+
 export default defineConfig({
     build: {
         minify: 'terser',
@@ -46,10 +55,12 @@ export default defineConfig({
         outDir: fileURLToPath(new URL('./dist', import.meta.url)),
         chunkSizeWarningLimit: 1000,
         lib: {
-            entry: { ...legacyEntries, ...screenEntries },
+            entry: { ...legacyEntries, ...screenEntries, ...componentEntries, core: coreEntry },
             formats: ['es', 'cjs'],
             fileName: (format, name) =>
-                `${name.replace(/^[/\\]+/, '').replace('.ce', '')}.${format}.js`,
+                name === 'core'
+                    ? `core/index.${format}.js`
+                    : `${name.replace(/^[/\\]+/, '').replace('.ce', '')}.${format}.js`,
         },
         rollupOptions: {
             external: ['vue', '@solvimon/ui', '@solvimon/types'],
@@ -80,7 +91,12 @@ export default defineConfig({
         dts({
             rollupTypes: false,
             outDir: './dist',
-            include: ['src/entries/**/*.ce.ts', 'src/public/screens/**/*.entry.ce.ts'],
+            include: [
+                'src/entries/**/*.ce.ts',
+                'src/public/screens/**/*.entry.ce.ts',
+                'src/public/components/**/*.entry.ce.ts',
+                'src/public/core/**/*.ts',
+            ],
             exclude: ['**/*.spec.ts', '**/*.test.ts', '**/node_modules/**'],
             copyDtsFiles: false,
         }),
@@ -131,6 +147,40 @@ function copyEntryDeclarations() {
                     copyFileSync(srcPath, outPath);
                 }
             }
+            // Component entries: copy from dist/src/public/components/X/X.entry.ce.d.ts to dist/components/X/X.ce.d.ts
+            for (const entryKey of Object.keys(componentEntries)) {
+                const match = /^components\/([^/]+)\//.exec(entryKey);
+                if (!match) continue;
+                const componentName = match[1];
+                const srcPath = resolve(
+                    outDir,
+                    'src/public/components',
+                    componentName,
+                    `${componentName}.entry.ce.d.ts`,
+                );
+                const outPath = resolve(
+                    outDir,
+                    'components',
+                    componentName,
+                    `${componentName}.ce.d.ts`,
+                );
+                if (existsSync(srcPath)) {
+                    mkdirSync(dirname(outPath), { recursive: true });
+                    copyFileSync(srcPath, outPath);
+                }
+            }
+            // Core entry: copy all .d.ts from dist/src/public/core/ to dist/core/
+            const coreSrcDir = resolve(outDir, 'src/public/core');
+            const coreOutDir = resolve(outDir, 'core');
+            if (existsSync(coreSrcDir)) {
+                mkdirSync(coreOutDir, { recursive: true });
+                for (const name of readdirSync(coreSrcDir)) {
+                    if (name.endsWith('.d.ts')) {
+                        copyFileSync(resolve(coreSrcDir, name), resolve(coreOutDir, name));
+                    }
+                }
+            }
+
             // Remove dist/src (vite-plugin-dts output) now that declarations are copied
             const srcDir = resolve(outDir, 'src');
             if (existsSync(srcDir)) {

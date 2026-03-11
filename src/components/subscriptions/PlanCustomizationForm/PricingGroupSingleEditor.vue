@@ -6,13 +6,12 @@ import {
     Section,
     SelectExtended,
     useIntl,
-    type PricingGroupRangeInputOption,
+    usePricingItem,
     type RadioGroupExtendedProps,
     type SelectExtendedOptionEntry,
 } from '@solvimon/ui';
 import PricingGroupTitle from './PricingGroupTitle.vue';
 import type { PricingGroupEditorBaseProps } from './PricingGroupEditorBase.types';
-import { usePricingItem } from '@/composables/usePricingItem';
 import { getNameFromPricing } from '@/utils/pricing';
 import { useViewport } from '@/composables/useViewport';
 
@@ -43,7 +42,7 @@ const singleModelValue = computed<string | undefined>({
     },
 });
 
-const options = computed<PricingGroupRangeInputOption[]>(() => {
+const options = computed<{ label: string; value: string; description: string }[]>(() => {
     return props.pricings.map((pricing) => {
         const pricingItem = pricing.items?.[0];
 

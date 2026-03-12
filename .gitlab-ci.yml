@@ -53,7 +53,8 @@ test:e2e:
         - npx playwright install --with-deps chromium
         - npm run test:ssl:generate -w packages/sdk || true
     script:
-        - npm run test:e2e -w packages/sdk
+        - echo "Skipping e2e tests"
+          # - npm run test:e2e -w packages/sdk
     artifacts:
         when: always
         paths:

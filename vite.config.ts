@@ -108,7 +108,7 @@ export default defineConfig({
         },
     },
     test: {
-        setupFiles: ['vitest-localstorage-mock'],
+        setupFiles: ['./vitest.setup.ts', 'vitest-localstorage-mock'],
     },
 });
 

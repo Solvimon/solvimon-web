@@ -11,13 +11,22 @@ const { dispatchAction } = useActionDispatchProvider();
 </script>
 
 <template>
-    <Skeleton v-if="isLoading" variant="section" class="min-h-[100px]" />
+    <Skeleton
+        v-if="isLoading"
+        variant="section"
+        class="min-h-[100px]"
+        data-testid="subscriptions-list-skeleton"
+    />
     <SubscriptionsList
-        v-else
+        v-else-if="customer"
         :customer="customer"
         :subscriptions="subscriptions"
         :payment-methods="paymentMethods"
         :is-loading="isLoading"
+        :show-view-all-button="configuration?.showViewAllButton"
+        :show-view-details-button="configuration?.showViewDetailsButton"
+        :show-cancel-button="configuration?.showCancelButton"
+        :show-renew-button="configuration?.showRenewButton"
         @view-subscription-details="
             dispatchAction({
                 action: 'view-subscription-details',

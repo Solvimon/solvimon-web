@@ -1,6 +1,7 @@
 import type { Customer, PaymentMethod, PricingPlanSubscriptionExpanded } from '@solvimon/types';
 
 export type SubscriptionsListConfiguration = {
+    maxItems?: number;
     showViewAllButton?: boolean;
     showViewDetailsButton?: boolean;
     showCancelButton?: boolean;
@@ -8,7 +9,7 @@ export type SubscriptionsListConfiguration = {
 };
 
 export interface SubscriptionsListProps {
-    customer: Customer;
+    customer: Customer | null;
     subscriptions: PricingPlanSubscriptionExpanded[];
     paymentMethods?: PaymentMethod[];
     isLoading: boolean;

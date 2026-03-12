@@ -10,6 +10,7 @@ defineProps<Partial<SolvimonCustomerPaymentMethodsEntryProps>>();
     <CustomerPaymentMethodsView>
         <template #default="{ paymentMethods, paymentMethodsOptions, isLoading }">
             <CustomerPaymentMethods
+                :configuration="configuration"
                 :payment-methods="paymentMethods"
                 :payment-methods-options="paymentMethodsOptions"
                 :is-loading="isLoading"

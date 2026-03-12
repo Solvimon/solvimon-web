@@ -5,13 +5,18 @@ import { usePortal } from '@/components/providers/PortalProvider/composables/use
 import { useInvoicesList } from '@/composables/useInvoicesList';
 import { Provider } from '@/components/providers';
 
-defineProps<SolvimonInvoicesListEntryProps>();
+const DEFAULT_BATCH_SIZE = 15;
+
+const props = defineProps<SolvimonInvoicesListEntryProps>();
 
 const portal = usePortal();
 
 const customerId = portal.value?.customer_id;
 
-const invoices = useInvoicesList({ customerId, batchSize: 10 });
+const invoices = useInvoicesList({
+    customerId,
+    batchSize: props.configuration?.batchSize || DEFAULT_BATCH_SIZE,
+});
 </script>
 
 <template>

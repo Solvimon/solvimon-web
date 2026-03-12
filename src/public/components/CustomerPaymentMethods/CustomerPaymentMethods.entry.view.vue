@@ -7,17 +7,22 @@ import { useLoadInitialData } from '@/composables/useLoadInitialData';
 import { usePaymentMethods } from '@/composables/usePaymentMethods';
 import { Provider } from '@/components/providers';
 
-defineProps<SolvimonCustomerPaymentMethodsEntryProps>();
+const DEFAULT_MAX_ITEMS = 3;
+
+const props = defineProps<SolvimonCustomerPaymentMethodsEntryProps>();
 
 const portal = usePortal();
 
 const customerId = portal.value?.customer_id;
 
-const paymentMethods = usePaymentMethods({ customerId });
+const paymentMethods = usePaymentMethods({
+    customerId,
+    pageSize: props.configuration?.maxItems || DEFAULT_MAX_ITEMS,
+});
 const customerPaymentMethodOptions = useCustomerPaymentMethodOptions({ customerId });
 
 const { isLoading } = useLoadInitialData(
-    paymentMethods.fetchAll(),
+    paymentMethods.fetchInitial(),
     customerPaymentMethodOptions.fetch(),
 );
 </script>

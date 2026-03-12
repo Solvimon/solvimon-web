@@ -15,7 +15,12 @@ const { dispatchAction } = useActionDispatchProvider();
 </script>
 
 <template>
-    <Skeleton v-if="isLoading" variant="section" class="min-h-[100px]" />
+    <Skeleton
+        v-if="isLoading"
+        variant="section"
+        class="min-h-[100px]"
+        data-testid="billing-information-skeleton"
+    />
     <CustomerBillingInformation v-else :customer="customer" :fallback-to-reference="false">
         <template v-if="configuration.showEditButton" #settings>
             <Button

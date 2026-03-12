@@ -6,12 +6,16 @@ const CALLED_URL = 'https://domain.com/test';
 const TOKEN = 'some-token-123';
 const onError = vi.fn();
 
-vi.mock('@solvimon/ui', () => ({
-    ...vi.importActual('@solvimon/ui'),
-    useErrorHandling: () => ({
-        onError,
-    }),
-}));
+vi.mock('@solvimon/ui', async () => {
+    const actual = await vi.importActual<typeof import('@solvimon/ui')>('@solvimon/ui');
+
+    return {
+        ...actual,
+        useErrorHandling: () => ({
+            onError,
+        }),
+    };
+});
 vi.mock('@/components/providers/AuthProvider', () => ({
     useAuth: vi.fn(() => ({ accessToken: { value: TOKEN } })),
 }));

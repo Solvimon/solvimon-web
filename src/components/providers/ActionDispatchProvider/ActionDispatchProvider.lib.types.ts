@@ -41,6 +41,10 @@ export interface ActionRequestDetailViewAllPaymentMethods extends ActionRequestD
     action: 'view-all-payment-methods';
 }
 
+export interface ActionRequestDetailAddPaymentMethod extends ActionRequestDetailBase {
+    action: 'add-payment-method';
+}
+
 export interface ActionRequestDetailEditBillingInformation extends ActionRequestDetailBase {
     action: 'edit-billing-information';
 }
@@ -53,6 +57,7 @@ export type ActionRequestDetail =
     | ActionRequestDetailCancelSubscription
     | ActionRequestDetailRenewSubscription
     | ActionRequestDetailViewAllPaymentMethods
+    | ActionRequestDetailAddPaymentMethod
     | ActionRequestDetailEditBillingInformation;
 
 export type RequestActionEvent = CustomEvent<RequestAction>;

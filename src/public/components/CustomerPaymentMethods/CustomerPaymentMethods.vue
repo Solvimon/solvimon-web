@@ -15,12 +15,20 @@ const { dispatchAction } = useActionDispatchProvider();
 </script>
 
 <template>
-    <Skeleton v-if="isLoading" variant="section" class="h-72" />
+    <Skeleton
+        v-if="isLoading"
+        variant="section"
+        class="h-72"
+        data-testid="customer-payment-methods-skeleton"
+    />
     <CustomerPaymentMethodsBlock
         v-else
         :is-loading="isLoading"
         :payment-methods="paymentMethods"
         :payment-methods-options="paymentMethodsOptions"
+        :show-view-all-button="configuration?.showViewAllButton"
+        :show-add-button="configuration?.showAddButton"
         @view-all-payment-methods="dispatchAction({ action: 'view-all-payment-methods' })"
+        @add-payment-method="dispatchAction({ action: 'add-payment-method' })"
     />
 </template>

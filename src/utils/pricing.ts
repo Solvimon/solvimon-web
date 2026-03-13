@@ -1,4 +1,5 @@
 import type { PricingExtended, PricingPlanScheduleInfoExpanded } from '@solvimon/types';
+import { isEmpty } from 'lodash-es';
 
 export function getAllPricingsFromScheduleInfos(
     scheduleInfos: PricingPlanScheduleInfoExpanded[],
@@ -12,5 +13,5 @@ export function getAllPricingsFromScheduleInfos(
 }
 
 export function getNameFromPricing(pricing: PricingExtended): string | undefined {
-    return pricing.name ?? pricing.products?.[0]?.name;
+    return !isEmpty(pricing.name) ? pricing.name : pricing.products?.[0]?.name;
 }

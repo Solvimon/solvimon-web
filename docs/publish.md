@@ -98,7 +98,67 @@ These commands update `packages/sdk/package.json` only. They do not create a Git
 - The SDK package is published to a private registry, but `packages/sdk/package.json` must remain publishable. That means it must not use `"private": true`.
 - The SDK bundle includes the internal `@solvimon/ui` and `@solvimon/types` packages, so consumers only need access to `@solvimon/sdk`.
 - The publish job uses `CI_JOB_TOKEN` to authenticate against the GitLab package registry.
-- The auto-tag job must have permission to push tags back to the repository. If that permission is missing, the tag creation step will fail.
+- The auto-tag job uses dedicated CI variables to push tags back to the repository.
+- Local `npm publish` is blocked by a guard script. Publishing is only allowed from GitLab CI.
+
+## Required CI Variables
+
+The SDK auto-tag job does not use `CI_JOB_TOKEN` for Git pushes. Instead, configure these protected CI/CD variables in GitLab:
+
+- `SDK_RELEASE_USERNAME`
+- `SDK_RELEASE_TOKEN`
+
+Recommended setup:
+
+1. Create a project access token or bot token with permission to push tags to the repository.
+2. Give it at least repository write access.
+3. Add the token username as `SDK_RELEASE_USERNAME`.
+4. Add the token secret as `SDK_RELEASE_TOKEN`.
+5. Mark both variables as masked and protected.
+
+The publish job can continue using `CI_JOB_TOKEN` for the npm registry publish itself.
+
+## Consuming The SDK
+
+Consumers can install the SDK from the private GitLab npm registry by configuring npm for the `@solvimon` scope and authenticating with a token that has package read access.
+
+### Project Endpoint
+
+Add this to the consumer project's `.npmrc`:
+
+```ini
+@solvimon:registry=https://gitlab.com/api/v4/projects/<PROJECT_ID>/packages/npm/
+//gitlab.com/api/v4/projects/<PROJECT_ID>/packages/npm/:_authToken=${NPM_TOKEN}
+always-auth=true
+```
+
+Then install the SDK:
+
+```bash
+npm install @solvimon/sdk
+```
+
+### Group Endpoint
+
+If you prefer consuming packages through a group-level endpoint, use:
+
+```ini
+@solvimon:registry=https://gitlab.com/api/v4/groups/<GROUP_ID>/-/packages/npm/
+//gitlab.com/api/v4/groups/<GROUP_ID>/-/packages/npm/:_authToken=${NPM_TOKEN}
+always-auth=true
+```
+
+Then install:
+
+```bash
+npm install @solvimon/sdk
+```
+
+### Notes For Consumers
+
+- Consumers need a token with package read access.
+- The SDK now bundles the internal `@solvimon/ui` and `@solvimon/types` packages, so consumers only need `@solvimon/sdk`.
+- Do not commit registry tokens to `.npmrc`. Use environment variables such as `NPM_TOKEN`.
 
 ## Troubleshooting
 
@@ -106,6 +166,6 @@ If the SDK does not publish after merging a version bump:
 
 1. Check whether `packages/sdk/package.json` was actually changed in the merged commit.
 2. Check whether the version already has a tag like `sdk-v<version>`.
-3. Check whether the CI job was allowed to push tags to the repository.
+3. Check whether `SDK_RELEASE_USERNAME` and `SDK_RELEASE_TOKEN` are configured in GitLab CI/CD variables.
 4. Check the `publish:npm` job logs in the SDK pipeline.
 5. Check whether the version bump command updated `packages/sdk/package.json` to the expected version before merge.

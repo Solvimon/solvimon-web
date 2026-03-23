@@ -106,6 +106,11 @@ tag:sdk-release:
               exit 0
           fi
 
+          if [ -z "$SDK_RELEASE_USERNAME" ] || [ -z "$SDK_RELEASE_TOKEN" ]; then
+              echo "Missing SDK_RELEASE_USERNAME or SDK_RELEASE_TOKEN CI variable."
+              exit 1
+          fi
+
           VERSION="$(node -p "require('./packages/sdk/package.json').version")"
           TAG="sdk-v${VERSION}"
 
@@ -119,7 +124,7 @@ tag:sdk-release:
           git config user.name "GitLab CI"
           git config user.email "gitlab-ci@solvimon.invalid"
           git tag "$TAG" "$CI_COMMIT_SHA"
-          git push "https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git" "$TAG"
+          git push "https://${SDK_RELEASE_USERNAME}:${SDK_RELEASE_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git" "$TAG"
     rules:
         - if: '$CI_COMMIT_BRANCH == "main"'
 

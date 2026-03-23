@@ -3,6 +3,9 @@
     "version": "0.1.0",
     "description": "Solvimon's Front-end SDK provides you with the building blocks to create a billing self serve experience",
     "private": false,
+    "publishConfig": {
+        "access": "restricted"
+    },
     "scripts": {
         "analyze": "vite-bundle-visualizer",
         "prebuild": "npm run build:css && npm run type-check:declarations",
@@ -28,7 +31,8 @@
         "version:patch": "npm version patch --no-git-tag-version",
         "version:minor": "npm version minor --no-git-tag-version",
         "version:major": "npm version major --no-git-tag-version",
-        "prepublishOnly": "npm run build"
+        "publish:guard": "node scripts/publish-guard.mjs",
+        "prepublishOnly": "npm run publish:guard && npm run build"
     },
     "files": [
         "dist"

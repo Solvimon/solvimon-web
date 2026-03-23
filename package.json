@@ -2,7 +2,7 @@
     "name": "@solvimon/sdk",
     "version": "0.1.0",
     "description": "Solvimon's Front-end SDK provides you with the building blocks to create a billing self serve experience",
-    "private": true,
+    "private": false,
     "scripts": {
         "analyze": "vite-bundle-visualizer",
         "prebuild": "npm run build:css && npm run type-check:declarations",
@@ -23,7 +23,12 @@
         "test:e2e": "playwright test",
         "test:e2e:ui": "playwright test --ui",
         "test:e2e:ci": "playwright test",
-        "test:ssl:generate": "tsx scripts/generate-ssl-cert.ts"
+        "test:ssl:generate": "tsx scripts/generate-ssl-cert.ts",
+        "version:bump": "node scripts/bump-version.mjs",
+        "version:patch": "npm version patch --no-git-tag-version",
+        "version:minor": "npm version minor --no-git-tag-version",
+        "version:major": "npm version major --no-git-tag-version",
+        "prepublishOnly": "npm run build"
     },
     "files": [
         "dist"
@@ -104,8 +109,6 @@
     "dependencies": {
         "@adyen/adyen-web": "^6.14.0",
         "@formatjs/intl": "^3.1.5",
-        "@solvimon/tailwind-config": "^1.0.0",
-        "@solvimon/ui": "^1.0.0",
         "@stripe/stripe-js": "^2.4.0",
         "@vueuse/core": "^9.13.0",
         "@vueuse/shared": "^10.7.2",
@@ -119,6 +122,9 @@
         "@playwright/test": "^1.57.0",
         "@rushstack/eslint-patch": "^1.2.0",
         "@solvimon/eslint-config": "^1.2.0",
+        "@solvimon/tailwind-config": "^1.0.0",
+        "@solvimon/types": "^1.49.0",
+        "@solvimon/ui": "^1.0.0",
         "@tsconfig/node22": "^22.0.0",
         "@types/jsdom": "^21.1.7",
         "@types/node": "^22.10.2",

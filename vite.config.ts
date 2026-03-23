@@ -41,6 +41,7 @@ const componentEntries = getLibEntries(
 );
 
 const coreEntry = resolve(__dirname, 'src/public/core/index.ts');
+const rootEntry = resolve(__dirname, 'src/index.ts');
 
 export default defineConfig({
     build: {
@@ -55,7 +56,13 @@ export default defineConfig({
         outDir: fileURLToPath(new URL('./dist', import.meta.url)),
         chunkSizeWarningLimit: 1000,
         lib: {
-            entry: { ...legacyEntries, ...screenEntries, ...componentEntries, core: coreEntry },
+            entry: {
+                index: rootEntry,
+                ...legacyEntries,
+                ...screenEntries,
+                ...componentEntries,
+                core: coreEntry,
+            },
             formats: ['es', 'cjs'],
             fileName: (format, name) =>
                 name === 'core'
@@ -63,14 +70,12 @@ export default defineConfig({
                     : `${name.replace(/^[/\\]+/, '').replace('.ce', '')}.${format}.js`,
         },
         rollupOptions: {
-            external: ['vue', '@solvimon/ui', '@solvimon/types'],
+            external: ['vue'],
             output: {
                 preserveModules: false,
                 strict: false, // Setting to make sure cjs exports work (for next.js/webpack outputs)
                 globals: {
                     vue: 'Vue',
-                    '@solvimon/ui': 'SolvimonUI',
-                    '@solvimon/types': 'SolvimonTypes',
                 },
             },
         },
@@ -92,6 +97,7 @@ export default defineConfig({
             rollupTypes: false,
             outDir: './dist',
             include: [
+                'src/index.ts',
                 'src/entries/**/*.ce.ts',
                 'src/public/screens/**/*.entry.ce.ts',
                 'src/public/components/**/*.entry.ce.ts',
@@ -179,6 +185,13 @@ function copyEntryDeclarations() {
                         copyFileSync(resolve(coreSrcDir, name), resolve(coreOutDir, name));
                     }
                 }
+            }
+
+            // Root entry: copy dist/src/index.d.ts to dist/index.d.ts
+            const rootSrcPath = resolve(outDir, 'src/index.d.ts');
+            const rootOutPath = resolve(outDir, 'index.d.ts');
+            if (existsSync(rootSrcPath)) {
+                copyFileSync(rootSrcPath, rootOutPath);
             }
 
             // Remove dist/src (vite-plugin-dts output) now that declarations are copied

@@ -333,21 +333,6 @@ const handleBinaryBillingToggle = (checked: boolean) => {
     const { smallestPeriod, biggestPeriod } = periodBounds.value;
     selectedBillingPeriodKey.value = checked ? biggestPeriod : smallestPeriod;
 };
-
-// Show only the first period because later periods repeat the same groups.
-// Example: priced quarterly but billed yearly -> backend returns 4 identical periods.
-const invoicePreview = computed(() => {
-    if (!props.invoice) {
-        return undefined;
-    }
-    if (!props.invoice.periods?.length) {
-        return props.invoice;
-    }
-    return {
-        ...props.invoice,
-        periods: [props.invoice.periods[0]],
-    };
-});
 </script>
 
 <template>
@@ -446,17 +431,17 @@ const invoicePreview = computed(() => {
 
             <!-- invoice groups preview -->
             <InvoicePreviewGroups
-                v-if="invoicePreview && variant !== 'products-inline'"
-                :invoice="invoicePreview"
+                v-if="invoice && variant !== 'products-inline'"
+                :invoice="invoice"
                 :wrapper-component="Section"
             />
 
             <!-- invoice totals preview -->
             <Section>
                 <InvoicePreview
-                    v-if="invoicePreview"
+                    v-if="invoice"
                     :variant="variant === 'products-inline' ? 'default' : 'without-products'"
-                    :invoice="invoicePreview"
+                    :invoice="invoice"
                     :trial-invoice="trialInvoice"
                     :is-paid="isPaid"
                     :collapsible="collapsible"

@@ -403,6 +403,7 @@ const handleBinaryBillingToggle = (checked: boolean) => {
                 </div>
             </Section>
 
+            <!-- billing period selector -->
             <SelectExtended
                 v-else-if="billingPeriodOptions.length > 2"
                 v-model:single-model-value="selectedBillingPeriodKey"

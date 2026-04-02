@@ -1,4 +1,7 @@
-image: node:20
+include:
+    - local: /.gitlab/node-version.yml
+
+image: node:${NODE_VERSION}
 
 variables:
     npm_config_cache: '$CI_PROJECT_DIR/.npm'
@@ -21,6 +24,9 @@ stages:
     - test
     - release
     - publish
+
+default:
+    interruptible: true
 
 cache:
     key:
@@ -83,6 +89,7 @@ test:e2e:
 
 tag:sdk-release:
     stage: release
+    interruptible: false
     timeout: 5m
     script:
         - |
@@ -130,6 +137,7 @@ tag:sdk-release:
 
 publish:npm:
     stage: publish
+    interruptible: false
     timeout: 10m
     cache:
         key:

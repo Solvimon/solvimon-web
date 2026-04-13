@@ -24,6 +24,7 @@ vi.mock('./errorTracking', () => ({
 // Helper function to create a minimal PaymentAcceptor
 function createMockPaymentAcceptor(overrides: Partial<PaymentAcceptor> = {}): PaymentAcceptor {
     return {
+        object_type: 'PAYMENT_ACCEPTOR',
         id: 'paya_test',
         name: 'Test Payment Acceptor',
         reference: 'test_ref',

@@ -49,6 +49,7 @@ describe('ExpressPaymentMethodPaypal', () => {
         isVisible: true,
         paymentMethodOptionsResponse: {
             payment_acceptor: {
+                object_type: 'PAYMENT_ACCEPTOR',
                 id: 'test-acceptor-id',
                 name: 'Test Payment Acceptor',
                 reference: 'test-ref',

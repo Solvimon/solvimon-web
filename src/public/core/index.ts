@@ -1,18 +1,19 @@
 /**
  * Solvimon Core – define and mount components/screens in a container
  *
- * Use createSolvimonMount to render a screen or component without using web components directly.
- * You provide the container (element or selector), shared config, and which view to show.
+ * Use createSolvimonCore to configure shared settings once and mount screens or components
+ * into your own container without using web components directly.
  */
 
-export { createSolvimonMount } from './mount';
+export { createSolvimonCore } from './configuration';
 export { getRegisteredScreenIds, getRegisteredComponentIds } from './registry';
 export type {
+    CoreConfiguration,
+    ComponentConfigurationById,
+    ScreenConfigurationById,
+    ComponentMountConfiguration,
+    ScreenMountConfiguration,
     SolvimonMountConfig,
-    ScreenView,
-    ComponentView,
-    ViewConfig,
-    MountOptions,
     SolvimonMountInstance,
     RegisteredScreenId,
     RegisteredComponentId,

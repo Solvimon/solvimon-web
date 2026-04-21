@@ -1,17 +1,16 @@
 <script setup lang="ts">
 import CustomerOverview from './CustomerOverview.vue';
 import { COMPONENT_NAME } from './CustomerOverview.entry.ce';
-import type { CustomerOverviewEntryProps } from './CustomerOverview.entry.types';
+import type { SolvimonCustomerOverviewEntryProps } from './CustomerOverview.entry.types';
 import Provider from '@/components/providers/Provider/Provider.vue';
 
-defineProps<Partial<CustomerOverviewEntryProps>>();
+defineProps<SolvimonCustomerOverviewEntryProps>();
 </script>
 
 <template>
     <Provider
         :custom-element-name="COMPONENT_NAME"
         :environment="environment"
-        :token="token || portalObject?.token"
         :locale="locale"
         :portal-object="portalObject"
         :allowed-portal-types="['CUSTOMER']"
@@ -19,7 +18,7 @@ defineProps<Partial<CustomerOverviewEntryProps>>();
         :secondary-color="branding?.colors?.secondary"
         :experimental-features="experimentalFeatures"
         :log-level="logLevel"
-        :on-log="() => {}"
+        :on-log="onLog"
         @error="(error) => $emit('error', error)"
     >
         <CustomerOverview />

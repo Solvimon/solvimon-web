@@ -1,0 +1,21 @@
+<script setup lang="ts">
+import type { PaymentHistoryProps } from './PaymentHistory.types';
+import PaymentHistoryBlock from '@/components/invoices/invoiceDetails/PaymentHistoryBlock.vue';
+import Skeleton from '@/components/shared/Skeleton.vue';
+
+defineProps<PaymentHistoryProps>();
+</script>
+
+<template>
+    <Skeleton
+        v-if="isLoading"
+        variant="section"
+        class="min-h-[100px]"
+        data-testid="payment-history-skeleton"
+    />
+    <PaymentHistoryBlock
+        v-else-if="paymentAttempts.length"
+        :payment-attempts="paymentAttempts"
+        :customer="customer"
+    />
+</template>

@@ -1,14 +1,15 @@
 export {
-    createSolvimonMount,
+    createSolvimonCore,
     getRegisteredScreenIds,
     getRegisteredComponentIds,
 } from './public/core';
 export type {
     SolvimonMountConfig,
-    ScreenView,
-    ComponentView,
-    ViewConfig,
-    MountOptions,
+    CoreConfiguration,
+    ComponentConfigurationById,
+    ScreenConfigurationById,
+    ComponentMountConfiguration,
+    ScreenMountConfiguration,
     SolvimonMountInstance,
     RegisteredScreenId,
     RegisteredComponentId,
@@ -20,23 +21,6 @@ export {
     SolvimonAddPaymentMethodForm,
     defineSolvimonAddPaymentMethodForm,
 } from './entries/SolvimonAddPaymentMethodForm/SolvimonAddPaymentMethodForm.ce';
-export {
-    SolvimonInvoice,
-    defineSolvimonInvoice,
-} from './entries/SolvimonInvoice/SolvimonInvoice.ce';
-export {
-    SolvimonInvoiceBlock,
-    defineSolvimonInvoiceBlock,
-} from './entries/SolvimonInvoiceBlock/SolvimonInvoiceBlock.ce';
-export {
-    SolvimonInvoiceDetailsBlock,
-    defineSolvimonInvoiceDetailsBlock,
-} from './entries/SolvimonInvoiceDetailsBlock/SolvimonInvoiceDetailsBlock.ce';
-export {
-    SolvimonPaymentHistoryBlock,
-    defineSolvimonPaymentHistoryBlock,
-} from './entries/SolvimonPaymentHistoryBlock/SolvimonPaymentHistoryBlock.ce';
-
 export {
     SolvimonCheckout,
     defineSolvimonCheckout,
@@ -55,9 +39,17 @@ export {
     defineSolvimonCustomerPaymentMethods,
 } from './public/components/CustomerPaymentMethods/CustomerPaymentMethods.entry.ce';
 export {
+    SolvimonInvoiceDetails,
+    defineSolvimonInvoiceDetails,
+} from './public/components/InvoiceDetails/InvoiceDetails.entry.ce';
+export {
     SolvimonInvoicesList,
     defineSolvimonInvoicesList,
 } from './public/components/InvoicesList/InvoicesList.entry.ce';
+export {
+    SolvimonPaymentHistory,
+    defineSolvimonPaymentHistory,
+} from './public/components/PaymentHistory/PaymentHistory.entry.ce';
 export {
     SolvimonSubscriptionsList,
     defineSolvimonSubscriptionsList,

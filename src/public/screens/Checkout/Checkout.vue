@@ -43,6 +43,7 @@ import { getFallbackTrialAndSubscriptionStartAndEndDates } from '@/utils/subscri
 
 const props = defineProps<CheckoutProps>();
 const emit = defineEmits<CheckoutEmits>();
+const configuration = computed(() => props.configuration);
 
 const criticalError = ref<Error>();
 const paymentIntegrationFormRef = ref();
@@ -88,10 +89,10 @@ const {
     loadInvoicePreview,
     updateInvoicePreviewOnBillingInformationChange,
 } = useCheckoutView({
-    initialCountry: props.countryCode,
-    initialEmail: props.email,
+    initialCountry: props.configuration?.countryCode,
+    initialEmail: props.configuration?.email,
     subscriptionId,
-    enabledPricingIds: props.enabledPricingIds,
+    enabledPricingIds: props.configuration?.enabledPricingIds,
 });
 
 const handleSubmit = async () => {
@@ -312,7 +313,9 @@ const handleUpdateBillingInformation = (billingInformation: Partial<Address>) =>
     });
 };
 
-const showCustomerInfoOnTop = computed(() => !(props.email && props.countryCode));
+const showCustomerInfoOnTop = computed(
+    () => !(props.configuration?.email && props.configuration?.countryCode),
+);
 
 const trialStartDate = computed<Date | undefined>(() => {
     const firstPeriod = trialInvoicePreview.value?.periods?.[0];
@@ -443,7 +446,7 @@ onMounted(() => {
                 :trial-invoice="trialInvoicePreview"
                 :enabled-pricing-ids="enabledPricingIdsModel"
                 :trial-period="trialPeriod"
-                :avatar="avatar"
+                :avatar="configuration?.avatar"
                 :is-paid="isPaid"
                 :is-usage-based="isUsageBased"
                 :is-preview-and-payment-methods-pending="
@@ -491,7 +494,7 @@ onMounted(() => {
                 v-if="!isPaid"
                 v-model="checkoutForm.form.value"
                 :validation="checkoutForm.validation"
-                :read-only-email="props.email"
+                :read-only-email="props.configuration?.email"
                 :show-customer-info-on-top="showCustomerInfoOnTop || isPaid"
                 :is-billing-information-mandatory="isBillingInformationMandatory"
                 :get-is-field-required="checkoutForm.getIsFieldRequired"
@@ -594,7 +597,7 @@ onMounted(() => {
                     :enabled-pricing-ids="enabledPricingIdsModel"
                     :trial-period="trialPeriod"
                     :country-code="checkoutForm.form.value.country"
-                    :avatar="avatar"
+                    :avatar="configuration?.avatar"
                     :is-paid="isPaid"
                     :is-usage-based="isUsageBased"
                     :is-preview-and-payment-methods-pending="

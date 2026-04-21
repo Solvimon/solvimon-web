@@ -1,49 +1,16 @@
 <script setup lang="ts">
 import { isValidCountryCode } from '@solvimon/ui';
 import type { CountryCode } from '@solvimon/types';
-import { getCurrentInstance, onMounted } from 'vue';
-import type { SolvimonCheckoutEmits, SolvimonCheckoutProps } from './Checkout.entry.types';
+import type { SolvimonCheckoutEmits, SolvimonCheckoutEntryProps } from './Checkout.entry.types';
 import { COMPONENT_NAME } from './Checkout.entry.ce';
 import Provider from '@/components/providers/Provider/Provider.vue';
 import Checkout from '@/public/screens/Checkout/Checkout.vue';
 import { useLogger } from '@/components/providers';
-import type { LogEntry } from '@/components/providers/LoggerProvider/LoggerProvider.types';
 
-const props = defineProps<Partial<SolvimonCheckoutProps>>();
+const props = defineProps<SolvimonCheckoutEntryProps>();
 const emit = defineEmits<SolvimonCheckoutEmits>();
 
 const logger = useLogger();
-const instance = getCurrentInstance();
-let hostElement: HTMLElement | null = null;
-
-onMounted(() => {
-    // Get the custom element host (the actual <solvimon-checkout> element)
-    hostElement = instance?.vnode.el?.getRootNode()?.host as HTMLElement | null;
-});
-
-// Create a wrapper for onLog that dispatches a CustomEvent
-const handleLogWrapper = (entry: LogEntry) => {
-    if (props.onLog) {
-        // Call the original callback
-        props.onLog(entry);
-    }
-
-    // Also dispatch a CustomEvent for custom element compatibility
-    const target = hostElement || instance?.vnode.el?.getRootNode()?.host;
-    if (target) {
-        const event = new CustomEvent('log', {
-            detail: {
-                code: entry.code,
-                message: entry.message,
-                context: entry.context,
-            },
-            bubbles: true,
-            cancelable: true,
-            composed: true,
-        });
-        target.dispatchEvent(event);
-    }
-};
 
 const getValidCountryCode = (countryCode: CountryCode | undefined) => {
     if (countryCode) {
@@ -71,15 +38,14 @@ const getValidEmail = (email: string | undefined) => {
     return undefined;
 };
 
-const validCountryCode = getValidCountryCode(props.countryCode);
-const validEmail = getValidEmail(props.email);
+const validCountryCode = getValidCountryCode(props.configuration?.countryCode);
+const validEmail = getValidEmail(props.configuration?.email);
 </script>
 
 <template>
     <Provider
         :custom-element-name="COMPONENT_NAME"
         :environment="environment"
-        :token="token || portalObject?.token"
         :locale="locale"
         :portal-object="portalObject"
         :allowed-portal-types="['INIT_PRICING_PLAN_SUBSCRIPTION']"
@@ -87,14 +53,14 @@ const validEmail = getValidEmail(props.email);
         :secondary-color="branding?.colors?.secondary"
         :experimental-features="experimentalFeatures"
         :log-level="logLevel"
-        :on-log="handleLogWrapper"
+        :on-log="onLog"
         @error="(error) => $emit('error', error)"
     >
         <Checkout
             :avatar="branding?.emblem?.public_url"
             :email="validEmail"
             :country-code="validCountryCode"
-            :enabled-pricing-ids="enabledPricingIds"
+            :enabled-pricing-ids="configuration?.enabledPricingIds"
             @ready="emit('ready')"
         >
             <template v-if="$slots['terms-and-conditions']" #terms-and-conditions

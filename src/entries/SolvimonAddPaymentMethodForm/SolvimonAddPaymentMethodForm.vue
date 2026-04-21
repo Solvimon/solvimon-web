@@ -4,11 +4,18 @@ import { COMPONENT_NAME } from './SolvimonAddPaymentMethodForm.ce';
 import Provider from '@/components/providers/Provider/Provider.vue';
 import PaymentProviderForm from '@/components/paymentProviders/PaymentProviderForm/PaymentProviderForm.vue';
 
-defineProps<Partial<SolvimonAddPaymentMethodFormProps>>();
+defineProps<SolvimonAddPaymentMethodFormProps>();
 </script>
 
 <template>
-    <Provider :token="token" :locale="locale" :custom-element-name="COMPONENT_NAME">
-        <PaymentProviderForm v-if="token" :token="token" />
+    <Provider
+        :locale="locale"
+        :custom-element-name="COMPONENT_NAME"
+        :environment="environment"
+        :portal-object="portalObject"
+        :log-level="logLevel"
+        :on-log="onLog"
+    >
+        <PaymentProviderForm :token="portalObject.token" />
     </Provider>
 </template>

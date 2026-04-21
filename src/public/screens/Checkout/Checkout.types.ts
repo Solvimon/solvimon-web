@@ -1,7 +1,7 @@
 import type { CountryCode } from '@solvimon/types';
 import type { Error } from '@/types/errors';
 
-export interface CheckoutProps {
+export interface CheckoutConfiguration {
     /**
      * The avatar for the checkout.
      */
@@ -19,6 +19,10 @@ export interface CheckoutProps {
      * Optional enabled pricing ids.
      */
     enabledPricingIds?: string[];
+}
+
+export interface CheckoutProps {
+    configuration?: CheckoutConfiguration;
 }
 
 export interface CheckoutEmits {

@@ -1,74 +1,121 @@
-import type { EntryBaseProps } from '@/types/EntryBaseProps';
+import type { Environment, PlatformBranding } from '@solvimon/types';
+import type { IntlMessages } from '@solvimon/ui';
+import type { SolvimonBillingInformationEntryProps } from '@/public/components/BillingInformation/BillingInformation.entry.types';
+import type { SolvimonCustomerPaymentMethodsEntryProps } from '@/public/components/CustomerPaymentMethods/CustomerPaymentMethods.entry.types';
+import type { SolvimonInvoiceEntryProps } from '@/public/components/Invoice/Invoice.entry.types';
+import type { SolvimonInvoiceDetailsEntryProps } from '@/public/components/InvoiceDetails/InvoiceDetails.entry.types';
+import type { SolvimonInvoicesListEntryProps } from '@/public/components/InvoicesList/InvoicesList.entry.types';
+import type { SolvimonPaymentHistoryEntryProps } from '@/public/components/PaymentHistory/PaymentHistory.entry.types';
+import type { SolvimonSubscriptionsListEntryProps } from '@/public/components/SubscriptionsList/SubscriptionsList.entry.types';
+import type { SolvimonCheckoutEntryProps } from '@/public/screens/Checkout/Checkout.entry.types';
+import type { SolvimonCustomerOverviewEntryProps } from '@/public/screens/CustomerOverview/CustomerOverview.entry.types';
 
 /**
  * Shared configuration passed to all mounted Solvimon components and screens.
- * Extends the base entry props (environment, token, locale, branding, etc.).
+ * Extends the base entry props (environment, locale, branding, etc.).
  */
-export type SolvimonMountConfig = EntryBaseProps;
-
-/**
- * View that renders a full screen (e.g. Customer Overview, Checkout).
- */
-export interface ScreenView {
-    type: 'screen';
-    /** Screen id; use one of the registered screen ids (e.g. 'customer-overview', 'checkout'). */
-    id: string;
-    /** Optional props specific to this screen (callbacks, overrides). */
-    props?: Record<string, unknown>;
+export interface SharedSolvimonMountConfig {
+    environment?: Environment;
+    locale?: string;
+    dateLocale?: string;
+    messages?: IntlMessages;
+    experimentalFeatures?: unknown[];
+    logLevel?: 'debug' | 'info' | 'warn' | 'error';
+    onLog?: (entry: unknown) => void;
+    branding?: PlatformBranding;
 }
 
-/**
- * View that renders a single component (e.g. Invoices List, Payment Methods).
- */
-export interface ComponentView {
-    type: 'component';
-    /** Component id; use one of the registered component ids. */
-    id: string;
-    /** Optional props specific to this component. */
-    props?: Record<string, unknown>;
-}
+export type SolvimonMountConfig = SharedSolvimonMountConfig;
 
 /**
- * Describes what to render in the container: either a screen or a component.
- */
-export type ViewConfig = ScreenView | ComponentView;
-
-/**
- * Options for mounting Solvimon into a consumer-provided container.
- */
-export interface MountOptions {
-    /**
-     * The container to mount into. Can be a CSS selector string or an Element.
-     */
-    container: Element | string;
-    /**
-     * Shared configuration (environment, token, locale, branding, etc.).
-     */
-    config: SolvimonMountConfig;
-    /**
-     * Which screen or component to render and its optional props.
-     */
-    view: ViewConfig;
-}
-
-/**
- * Return type of createSolvimonMount. Exposes unmount and optional app instance.
+ * Return type of the Solvimon core mount methods.
  */
 export interface SolvimonMountInstance {
     /** Unmounts the Solvimon app from the container. */
     unmount: () => void;
 }
 
-/**
- * Registered screen ids that can be used in ViewConfig.
- */
-export type RegisteredScreenId = 'customer-overview' | 'checkout';
+interface RegisteredComponentEntryPropsById {
+    invoice: SolvimonInvoiceEntryProps;
+    'invoice-details': SolvimonInvoiceDetailsEntryProps;
+    'invoices-list': SolvimonInvoicesListEntryProps;
+    'payment-history': SolvimonPaymentHistoryEntryProps;
+    'subscriptions-list': SolvimonSubscriptionsListEntryProps;
+    'customer-payment-methods': SolvimonCustomerPaymentMethodsEntryProps;
+    'billing-information': SolvimonBillingInformationEntryProps;
+}
+
+interface RegisteredScreenEntryPropsById {
+    checkout: SolvimonCheckoutEntryProps;
+    'customer-overview': SolvimonCustomerOverviewEntryProps;
+}
 
 /**
- * Registered component ids that can be used in ViewConfig.
+ * Registered screen ids that can be used with createScreen.
  */
-export type RegisteredComponentId =
-    | 'invoices-list'
-    | 'subscriptions-list'
-    | 'customer-payment-methods'
-    | 'billing-information';
+export type RegisteredScreenId = keyof RegisteredScreenEntryPropsById;
+
+/**
+ * Registered component ids that can be used with createComponent.
+ */
+export type RegisteredComponentId = keyof RegisteredComponentEntryPropsById;
+
+type InferConfiguration<TProps> = TProps extends { configuration: infer TConfiguration }
+    ? TConfiguration
+    : TProps extends { configuration?: infer TConfiguration }
+      ? TConfiguration | undefined
+      : undefined;
+
+type InferPortalObject<TProps> = TProps extends { portalObject: infer TPortalObject }
+    ? TPortalObject
+    : TProps extends { portalObject?: infer TPortalObject }
+      ? TPortalObject | undefined
+      : undefined;
+
+type MountContext<TPortalObject> = [TPortalObject] extends [undefined]
+    ? Record<never, never>
+    : undefined extends TPortalObject
+      ? { portalObject?: Exclude<TPortalObject, undefined> }
+      : { portalObject: TPortalObject };
+
+export type ComponentConfigurationById = {
+    [TId in RegisteredComponentId]: InferConfiguration<RegisteredComponentEntryPropsById[TId]>;
+};
+
+export type ScreenConfigurationById = {
+    [TId in RegisteredScreenId]: InferConfiguration<RegisteredScreenEntryPropsById[TId]>;
+};
+
+type ComponentConfigurationProp<TConfiguration> = [TConfiguration] extends [undefined]
+    ? { configuration?: undefined }
+    : undefined extends TConfiguration
+      ? { configuration?: Exclude<TConfiguration, undefined> }
+      : { configuration: TConfiguration };
+
+type ScreenConfigurationProp<TConfiguration> = [TConfiguration] extends [undefined]
+    ? { configuration?: undefined }
+    : undefined extends TConfiguration
+      ? { configuration?: Exclude<TConfiguration, undefined> }
+      : { configuration: TConfiguration };
+
+export type ComponentMountConfiguration<TId extends RegisteredComponentId> = {
+    container: Element | string;
+} & MountContext<InferPortalObject<RegisteredComponentEntryPropsById[TId]>> &
+    ComponentConfigurationProp<ComponentConfigurationById[TId]>;
+
+export type ScreenMountConfiguration<TId extends RegisteredScreenId> = {
+    container: Element | string;
+} & MountContext<InferPortalObject<RegisteredScreenEntryPropsById[TId]>> &
+    ScreenConfigurationProp<ScreenConfigurationById[TId]>;
+
+export interface CoreConfiguration<TConfig extends SolvimonMountConfig = SolvimonMountConfig> {
+    config: TConfig;
+    createComponent: <TId extends RegisteredComponentId>(
+        id: TId,
+        configuration: ComponentMountConfiguration<TId>,
+    ) => SolvimonMountInstance['unmount'];
+    createScreen: <TId extends RegisteredScreenId>(
+        id: TId,
+        configuration: ScreenMountConfiguration<TId>,
+    ) => SolvimonMountInstance['unmount'];
+}

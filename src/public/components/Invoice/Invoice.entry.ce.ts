@@ -1,8 +1,8 @@
-import SolvimonInvoiceVue from './SolvimonInvoice.vue';
+import InvoiceVue from './Invoice.entry.vue';
 import { defineCustomElement } from '@/utils/customElements';
 import { getComponentName } from '@/utils/component';
 
-export const SolvimonInvoice = defineCustomElement(SolvimonInvoiceVue);
+export const SolvimonInvoice = defineCustomElement(InvoiceVue);
 export const COMPONENT_NAME = getComponentName('invoice');
 
 export const defineSolvimonInvoice = () => {

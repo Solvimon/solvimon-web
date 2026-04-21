@@ -29,8 +29,8 @@ if (!props.environment) {
     throw new Error('environment is required');
 }
 
-if (!props.token && !props.portalObject) {
-    throw new Error('token or portalObject is required');
+if (!props.portalObject) {
+    throw new Error('portalObject is required');
 }
 
 if (!props.customElementName) {
@@ -75,12 +75,12 @@ const localizedMessages = computed<IntlMessages>(() => ({
                     />
                     <ConfigProvider v-if="environment" :environment="environment">
                         <LoggerProvider :log-level="props.logLevel" :on-log="props.onLog">
-                            <AuthProvider v-if="token" :token="token">
+                            <AuthProvider :token="portalObject.token">
                                 <ExperimentalFeatureProvider
                                     :experimental-features="experimentalFeatures"
                                 >
                                     <PortalProvider
-                                        :token="token"
+                                        :token="portalObject.token"
                                         :allowed-portal-types="allowedPortalTypes"
                                         :portal-object="portalObject"
                                     >

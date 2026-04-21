@@ -1,6 +1,6 @@
 import { onMounted, ref } from 'vue';
 
-export function useLoadInitialData(...services: Promise<void>[]) {
+export function useLoadInitialData(...services: Promise<unknown>[]) {
     const isLoading = ref<boolean>(true);
 
     onMounted(async () => {

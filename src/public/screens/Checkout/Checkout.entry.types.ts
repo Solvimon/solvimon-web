@@ -1,7 +1,9 @@
+import type { CheckoutPagePortalUrl } from '@solvimon/types';
 import type { EntryBaseEmits, EntryBaseProps } from '@/types/EntryBaseProps';
 import type { CheckoutProps } from '@/public/screens/Checkout/Checkout.types';
 
-export interface SolvimonCheckoutProps extends EntryBaseProps, CheckoutProps {}
+export interface SolvimonCheckoutEntryProps
+    extends EntryBaseProps<CheckoutPagePortalUrl>, CheckoutProps {}
 
 export interface SolvimonCheckoutEmits extends EntryBaseEmits {
     /**

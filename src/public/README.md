@@ -4,10 +4,10 @@ Components that are exposed should be listed in the `public` directory. In the p
 
 ## Core (mount API)
 
-The `core` directory exposes a **mount API** so consumers can define and configure components/screens and mount them into a container they specify, without using web components directly.
+The `core` directory exposes a typed mounting API so consumers can create a shared SDK core with `createSolvimonCore(...)` and then mount components/screens into a container they specify, without using web components directly.
 
 - **Import**: `@solvimon/sdk/core`
-- **Usage**: Call `createSolvimonMount({ container, config, view })` with your DOM container (or selector), shared config (environment, token, locale, branding), and which screen or component to render. Returns `{ unmount }`.
+- **Usage**: Call `createSolvimonCore(sharedConfig)` once, then use `createScreen(...)` or `createComponent(...)` with a container and typed per-view configuration. Returns an `unmount` function.
 - See `public/core/README.md` for details.
 
 To add a new public entry, always make sure you at least have the following files:

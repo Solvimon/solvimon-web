@@ -1,8 +1,30 @@
-import type { InjectionKey } from 'vue';
+import type { InjectionKey, Ref } from 'vue';
 import type { Environment } from '@solvimon/types';
 import type { LogEntry, Logger, LogLevel, LogSink, SerializedError } from './LoggerProvider.types';
 
 export const LOGGER_PROVIDER_INJECTION_KEY: InjectionKey<Logger> = Symbol('sdkLogger');
+
+export function createCustomElementLogSink(
+    sink: LogSink,
+    hostRef: Ref<HTMLElement | null>,
+): LogSink {
+    return (entry) => {
+        sink(entry);
+
+        if (!hostRef.value) {
+            return;
+        }
+
+        hostRef.value.dispatchEvent(
+            new CustomEvent('log', {
+                detail: entry,
+                bubbles: true,
+                cancelable: true,
+                composed: true,
+            }),
+        );
+    };
+}
 
 export function serializeError(err: unknown): SerializedError {
     if (!err) return undefined;

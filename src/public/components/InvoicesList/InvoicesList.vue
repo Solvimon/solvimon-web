@@ -8,6 +8,10 @@ withDefaults(defineProps<InvoicesListProps>(), {
     configuration: () => ({
         showPayButton: true,
         showViewButton: true,
+        pagination: {
+            batchSize: 15,
+            enabled: true,
+        },
     }),
 });
 defineEmits<InvoicesListEmits>();

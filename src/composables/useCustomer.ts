@@ -1,32 +1,12 @@
-import { ApiStatus, type Customer } from '@solvimon/types';
-import { computed, ref } from 'vue';
+import type { Customer } from '@solvimon/types';
 import { createCustomerService } from '@/services/customer';
-import { updateRefIfChanged } from '@/utils/ref';
+import { useService } from '@/composables/useService';
 
 export function useCustomer({ customerId }: { customerId: Customer['id'] }) {
     const { getCustomer } = createCustomerService();
+    const { data, fetch, apiStatus, error, isPending } = useService({
+        service: () => getCustomer(customerId),
+    });
 
-    const customer = ref<Customer | null>(null);
-    const apiStatus = ref<ApiStatus>(ApiStatus.Initial);
-    const error = ref<Error | null>(null);
-    const isPending = computed(() => apiStatus.value === ApiStatus.Loading);
-
-    const fetch = async () => {
-        try {
-            apiStatus.value = ApiStatus.Loading;
-            error.value = null;
-
-            const response = await getCustomer(customerId);
-
-            updateRefIfChanged(customer, response);
-            apiStatus.value = ApiStatus.Done;
-        } catch (err) {
-            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            // @ts-expect-error
-            error.value = err;
-            apiStatus.value = ApiStatus.Failed;
-        }
-    };
-
-    return { customer, apiStatus, error, fetch, isPending };
+    return { data, apiStatus, error, fetch, isPending };
 }

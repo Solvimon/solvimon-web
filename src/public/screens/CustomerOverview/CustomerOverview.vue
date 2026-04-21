@@ -38,8 +38,8 @@ const { isLoading } = useLoadInitialData(
     <ContentWithAsideLayout>
         <template #header>
             <SubscriptionsList
-                v-if="customer.customer.value"
-                :customer="customer.customer.value"
+                v-if="customer.data.value"
+                :customer="customer.data.value"
                 :subscriptions="subscriptions.items.value"
                 :payment-methods="paymentMethods.items.value"
                 :is-loading="isLoading"
@@ -63,9 +63,9 @@ const { isLoading } = useLoadInitialData(
             />
 
             <BillingInformation
-                v-if="customer.customer.value"
+                v-if="customer.data.value"
                 :is-loading="isLoading"
-                :customer="customer.customer.value"
+                :customer="customer.data.value"
                 :payment-methods="paymentMethods.items.value"
             />
         </template>

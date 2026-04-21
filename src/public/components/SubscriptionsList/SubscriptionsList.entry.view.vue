@@ -2,17 +2,14 @@
 import { COMPONENT_NAME } from './SubscriptionsList.entry.ce';
 import type { SolvimonSubscriptionsListEntryProps } from './SubscriptionsList.entry.types';
 import { Provider } from '@/components/providers';
-import { usePortal } from '@/components/providers/PortalProvider/composables/usePortal';
 import { useCustomer } from '@/composables/useCustomer';
 import { useLoadInitialData } from '@/composables/useLoadInitialData';
 import { usePaymentMethods } from '@/composables/usePaymentMethods';
 import { useSubscriptionsList } from '@/composables/useSubscriptionsList';
 
-defineProps<SolvimonSubscriptionsListEntryProps>();
+const props = defineProps<SolvimonSubscriptionsListEntryProps>();
 
-const portal = usePortal();
-
-const customerId = portal.value?.customer_id;
+const customerId = props.portalObject.customer_id;
 
 const customer = useCustomer({ customerId });
 const subscriptions = useSubscriptionsList({ customerId });
@@ -29,7 +26,6 @@ const { isLoading } = useLoadInitialData(
     <Provider
         :custom-element-name="COMPONENT_NAME"
         :environment="environment"
-        :token="token || portal?.token"
         :locale="locale"
         :portal-object="portalObject"
         :allowed-portal-types="['CUSTOMER']"
@@ -37,11 +33,12 @@ const { isLoading } = useLoadInitialData(
         :secondary-color="branding?.colors?.secondary"
         :experimental-features="experimentalFeatures"
         :log-level="logLevel"
+        :on-log="onLog"
         @error="(error) => $emit('error', error)"
     >
         <slot
             name="default"
-            :customer="customer.customer.value"
+            :customer="customer"
             :subscriptions="subscriptions.items"
             :payment-methods="paymentMethods.items"
             :is-loading="isLoading"

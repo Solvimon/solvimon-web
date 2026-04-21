@@ -1,8 +1,9 @@
+import type { Invoice } from '@solvimon/types';
 import { createInvoicesService } from '@/services/invoices';
 import { createPaymentsService } from '@/services/payments';
 import { useData } from '@/utils/useData';
 
-export function useInvoiceData(invoiceId: string) {
+export function useInvoiceData(invoiceId: Invoice['id']) {
     const { getInvoice } = createInvoicesService();
     const { getPayments } = createPaymentsService();
 

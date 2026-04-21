@@ -8,7 +8,7 @@ import type { ConfigProviderProps } from '@/components/providers/ConfigProvider/
 
 export interface RequiredProviderProps
     extends
-        AuthProviderProps,
+        Omit<AuthProviderProps, 'token'>,
         ConfigProviderProps,
         IntlProviderProps,
         BrandProviderProps,
@@ -20,4 +20,4 @@ export interface ProviderEmits {
     (e: 'error', error: Error): void;
 }
 
-export type ProviderProps = Partial<RequiredProviderProps>;
+export type ProviderProps = RequiredProviderProps;

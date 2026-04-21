@@ -1,11 +1,22 @@
+import type { Invoice, Payment } from '@solvimon/types';
+
 export interface InvoiceDetailProps {
+    invoice: Invoice;
+    paymentAttempts?: Payment[];
+    downloadService: (id: Invoice['id']) => Promise<void>;
     /**
-     * The ID of the invoice to be displayed
+     * Optionally show download button
+     * @default true
      */
-    invoiceId: string;
+    showDownloadButton?: boolean;
     /**
      * Whether to show the customer billing information.
-     * @default: true
+     * @default true
      */
     showCustomerBillingInformation?: boolean;
+    /**
+     * Optionally show payment attempts
+     * @default true
+     */
+    showPaymentAttempts?: boolean;
 }

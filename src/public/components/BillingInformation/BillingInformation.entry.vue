@@ -2,18 +2,34 @@
 import BillingInformation from './BillingInformation.vue';
 import type { SolvimonBillingInformationEntryProps } from './BillingInformation.entry.types';
 import BillingInformationView from './BillingInformation.entry.view.vue';
+import { COMPONENT_NAME } from './BillingInformation.entry.ce';
+import { Provider } from '@/components/providers';
 
-defineProps<Partial<SolvimonBillingInformationEntryProps>>();
+defineProps<SolvimonBillingInformationEntryProps>();
 </script>
 
 <template>
-    <BillingInformationView>
-        <template #default="{ customer }">
-            <BillingInformation
-                v-if="customer.customer.value"
-                :is-loading="customer.isPending.value"
-                :customer="customer.customer.value"
-            />
-        </template>
-    </BillingInformationView>
+    <Provider
+        :custom-element-name="COMPONENT_NAME"
+        :environment="environment"
+        :locale="locale"
+        :portal-object="portalObject"
+        :allowed-portal-types="['CUSTOMER']"
+        :primary-color="branding?.colors?.primary"
+        :secondary-color="branding?.colors?.secondary"
+        :experimental-features="experimentalFeatures"
+        :log-level="logLevel"
+        :on-log="onLog"
+        @error="(error) => $emit('error', error)"
+    >
+        <BillingInformationView v-bind="$props">
+            <template #default="{ customer }">
+                <BillingInformation
+                    v-if="customer.data.value"
+                    :is-loading="customer.isPending.value"
+                    :customer="customer.data.value"
+                />
+            </template>
+        </BillingInformationView>
+    </Provider>
 </template>

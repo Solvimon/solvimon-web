@@ -9,7 +9,7 @@ export type SubscriptionsListConfiguration = {
 };
 
 export interface SubscriptionsListProps {
-    customer: Customer | null;
+    customer: Customer | undefined;
     subscriptions: PricingPlanSubscriptionExpanded[];
     paymentMethods?: PaymentMethod[];
     isLoading: boolean;

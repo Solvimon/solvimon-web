@@ -1,7 +1,10 @@
 import type { RegisteredScreenId, RegisteredComponentId } from './types';
 import { defineSolvimonCustomerOverview } from '@/public/screens/CustomerOverview/CustomerOverview.entry.ce';
 import { defineSolvimonCheckout } from '@/public/screens/Checkout/Checkout.entry.ce';
+import { defineSolvimonInvoice } from '@/public/components/Invoice/Invoice.entry.ce';
+import { defineSolvimonInvoiceDetails } from '@/public/components/InvoiceDetails/InvoiceDetails.entry.ce';
 import { defineSolvimonInvoicesList } from '@/public/components/InvoicesList/InvoicesList.entry.ce';
+import { defineSolvimonPaymentHistory } from '@/public/components/PaymentHistory/PaymentHistory.entry.ce';
 import { defineSolvimonSubscriptionsList } from '@/public/components/SubscriptionsList/SubscriptionsList.entry.ce';
 import { defineSolvimonCustomerPaymentMethods } from '@/public/components/CustomerPaymentMethods/CustomerPaymentMethods.entry.ce';
 import { defineSolvimonBillingInformation } from '@/public/components/BillingInformation/BillingInformation.entry.ce';
@@ -15,7 +18,10 @@ const SCREEN_DEFINERS: Record<RegisteredScreenId, DefineFn> = {
 };
 
 const COMPONENT_DEFINERS: Record<RegisteredComponentId, DefineFn> = {
+    invoice: defineSolvimonInvoice,
+    'invoice-details': defineSolvimonInvoiceDetails,
     'invoices-list': defineSolvimonInvoicesList,
+    'payment-history': defineSolvimonPaymentHistory,
     'subscriptions-list': defineSolvimonSubscriptionsList,
     'customer-payment-methods': defineSolvimonCustomerPaymentMethods,
     'billing-information': defineSolvimonBillingInformation,

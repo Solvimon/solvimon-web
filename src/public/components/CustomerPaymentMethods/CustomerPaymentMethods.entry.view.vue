@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { COMPONENT_NAME } from './CustomerPaymentMethods.entry.ce';
 import type { SolvimonCustomerPaymentMethodsEntryProps } from './CustomerPaymentMethods.entry.types';
-import { usePortal } from '@/components/providers/PortalProvider/composables/usePortal';
 import { useCustomerPaymentMethodOptions } from '@/composables/useCustomerPaymentMethodOptions';
 import { useLoadInitialData } from '@/composables/useLoadInitialData';
 import { usePaymentMethods } from '@/composables/usePaymentMethods';
@@ -11,9 +10,7 @@ const DEFAULT_MAX_ITEMS = 3;
 
 const props = defineProps<SolvimonCustomerPaymentMethodsEntryProps>();
 
-const portal = usePortal();
-
-const customerId = portal.value?.customer_id;
+const customerId = props.portalObject.customer_id;
 
 const paymentMethods = usePaymentMethods({
     customerId,
@@ -31,7 +28,6 @@ const { isLoading } = useLoadInitialData(
     <Provider
         :custom-element-name="COMPONENT_NAME"
         :environment="environment"
-        :token="token || portal?.token"
         :locale="locale"
         :portal-object="portalObject"
         :allowed-portal-types="['CUSTOMER']"
@@ -39,6 +35,7 @@ const { isLoading } = useLoadInitialData(
         :secondary-color="branding?.colors?.secondary"
         :experimental-features="experimentalFeatures"
         :log-level="logLevel"
+        :on-log="onLog"
         @error="(error) => $emit('error', error)"
     >
         <slot

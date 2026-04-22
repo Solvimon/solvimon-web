@@ -33,21 +33,19 @@ const customerWalletBalances = useCustomerWalletBalances({ customerId });
 const { $t } = useIntl();
 
 const walletBalanceItems = computed<WalletBalanceListItem[]>(() =>
-    (customerWalletBalances.walletBalances.value?.wallet_balances ?? []).map(
-        (walletBalance) => ({
-            walletId: walletBalance.wallet_id,
-            title: $t({
-                defaultMessage: 'Balance',
-                description: 'Fallback wallet title on the customer overview page',
-                id: 'H5+NAX',
-            }),
-            balance: walletBalance.wallet_balance.balance,
-            balanceAt:
-                walletBalance.wallet_balance.balance_at ??
-                customerWalletBalances.walletBalances.value?.balance_at ??
-                null,
+    (customerWalletBalances.walletBalances.value?.wallet_balances ?? []).map((walletBalance) => ({
+        walletId: walletBalance.wallet_id,
+        title: $t({
+            defaultMessage: 'Balance',
+            description: 'Fallback wallet title on the customer overview page',
+            id: 'H5+NAX',
         }),
-    ),
+        balance: walletBalance.wallet_balance.balance,
+        balanceAt:
+            walletBalance.wallet_balance.balance_at ??
+            customerWalletBalances.walletBalances.value?.balance_at ??
+            null,
+    })),
 );
 
 const { isLoading } = useLoadInitialData(

@@ -3,6 +3,7 @@ import { InvoiceSummary, InfoBlock, useIntl, Section } from '@solvimon/ui';
 import { computed } from 'vue';
 import { useWindowSize } from '@vueuse/core';
 import type { Invoice } from '@solvimon/types';
+import InvoiceCreditsBreakdown from './InvoiceCreditsBreakdown.vue';
 
 defineProps<{
     invoice: Invoice;
@@ -40,6 +41,8 @@ const isSmallScreen = computed(() => width.value <= 768);
             >
             <InvoiceSummary :invoice="invoice" :is-expandable="!isSmallScreen">
                 <template #logo> <slot name="logo" /> </template
-            ></InvoiceSummary></div
+            ></InvoiceSummary>
+            <InvoiceCreditsBreakdown :invoice="invoice" />
+        </div
     ></Section>
 </template>

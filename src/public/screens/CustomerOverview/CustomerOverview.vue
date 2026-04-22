@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { computed } from 'vue';
+import { ApiStatus } from '@solvimon/types';
+import { useIntl, type WalletBalanceListItem } from '@solvimon/ui';
 import type { CustomerOverviewProps } from './CustomerOverview.types';
 import { ContentWithAsideLayout } from '@/layouts';
 import InvoicesList from '@/public/components/InvoicesList/InvoicesList.vue';
@@ -12,6 +15,8 @@ import BillingInformation from '@/public/components/BillingInformation/BillingIn
 import { useLoadInitialData } from '@/composables/useLoadInitialData';
 import CustomerPaymentMethods from '@/public/components/CustomerPaymentMethods/CustomerPaymentMethods.vue';
 import { useCustomerPaymentMethodOptions } from '@/composables/useCustomerPaymentMethodOptions';
+import { useCustomerWalletBalances } from '@/composables/useCustomerWalletBalances';
+import CustomerWalletBalances from '@/public/components/CustomerWalletBalances/CustomerWalletBalances.vue';
 
 defineProps<CustomerOverviewProps>();
 
@@ -24,6 +29,26 @@ const invoices = useInvoicesList({ customerId, batchSize: 5 });
 const subscriptions = useSubscriptionsList({ customerId, batchSize: 2 });
 const paymentMethods = usePaymentMethods({ customerId });
 const customerPaymentMethodOptions = useCustomerPaymentMethodOptions({ customerId });
+const customerWalletBalances = useCustomerWalletBalances({ customerId });
+const { $t } = useIntl();
+
+const walletBalanceItems = computed<WalletBalanceListItem[]>(() =>
+    (customerWalletBalances.walletBalances.value?.wallet_balances ?? []).map(
+        (walletBalance) => ({
+            walletId: walletBalance.wallet_id,
+            title: $t({
+                defaultMessage: 'Balance',
+                description: 'Fallback wallet title on the customer overview page',
+                id: 'H5+NAX',
+            }),
+            balance: walletBalance.wallet_balance.balance,
+            balanceAt:
+                walletBalance.wallet_balance.balance_at ??
+                customerWalletBalances.walletBalances.value?.balance_at ??
+                null,
+        }),
+    ),
+);
 
 const { isLoading } = useLoadInitialData(
     customer.fetch(),
@@ -31,6 +56,7 @@ const { isLoading } = useLoadInitialData(
     subscriptions.fetchInitial(),
     paymentMethods.fetchAll(),
     customerPaymentMethodOptions.fetch(),
+    customerWalletBalances.fetch(),
 );
 </script>
 
@@ -56,6 +82,12 @@ const { isLoading } = useLoadInitialData(
             />
         </template>
         <template #aside>
+            <CustomerWalletBalances
+                :has-error="customerWalletBalances.apiStatus.value === ApiStatus.Failed"
+                :is-loading="isLoading"
+                :wallet-balances="walletBalanceItems"
+            />
+
             <CustomerPaymentMethods
                 :is-loading="isLoading"
                 :payment-methods="paymentMethods.items.value"

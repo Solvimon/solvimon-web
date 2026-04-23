@@ -40,7 +40,7 @@ const walletBalanceItems = computed<WalletBalanceListItem[]>(() =>
             description: 'Fallback wallet title on the customer overview page',
             id: 'H5+NAX',
         }),
-        balance: walletBalance.wallet_balance.balance,
+        balance: walletBalance.wallet_balance.open_balance,
         balanceAt:
             walletBalance.wallet_balance.balance_at ??
             customerWalletBalances.walletBalances.value?.balance_at ??

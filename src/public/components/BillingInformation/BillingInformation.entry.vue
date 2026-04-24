@@ -25,9 +25,9 @@ defineProps<SolvimonBillingInformationEntryProps>();
         <BillingInformationView v-bind="$props">
             <template #default="{ customer }">
                 <BillingInformation
-                    v-if="customer.data.value"
-                    :is-loading="customer.isPending.value"
-                    :customer="customer.data.value"
+                    v-if="customer.customer.value"
+                    :is-loading="customer.get.isPending.value"
+                    :customer="customer.customer.value"
                 />
             </template>
         </BillingInformationView>

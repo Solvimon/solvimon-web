@@ -1,18 +1,10 @@
-# vue
+# Vue
 
-This template should help get you started developing with Vue 3 in Vite.
+This example shows how to mount the published `payment-method-form` SDK component in a Vue + Vite app by using `createSolvimonCore` from `@solvimon/sdk/core`.
 
-## Recommended IDE Setup
+The current example lives in [src/App.vue](./src/App.vue) and mounts the component into a container `div` on `onMounted`.
 
-[VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
-
-## Type Support for `.vue` Imports in TS
-
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
-
-## Customize configuration
-
-See [Vite Configuration Reference](https://vite.dev/config/).
+Before using it for real, replace the placeholder `portalObject` and token with values returned by your backend.
 
 ## Project Setup
 
@@ -31,3 +23,47 @@ npm run dev
 ```sh
 npm run build
 ```
+
+## Integration Pattern
+
+```vue
+<script setup lang="ts">
+import { createSolvimonCore } from '@solvimon/sdk/core';
+import { onMounted, onUnmounted, ref } from 'vue';
+
+const container = ref<HTMLDivElement | null>(null);
+const solvimon = createSolvimonCore({
+    environment: 'DEV',
+    locale: 'en-US',
+    logLevel: 'info',
+});
+
+let unmount: (() => void) | null = null;
+
+onMounted(() => {
+    if (!container.value) return;
+
+    unmount = solvimon.createComponent('payment-method-form', {
+        container: container.value,
+        portalObject: {
+            object_type: 'PORTAL_URL',
+            id: 'purl_example',
+            type: 'CUSTOMER',
+            customer_id: 'cust_example',
+            token: 'replace-with-a-real-portal-token',
+            status: 'PUBLISHED',
+        },
+        configuration: {
+            variant: 'TOKENIZE',
+            successRedirectUrl: 'https://example.com/customer/payment-methods',
+        },
+    });
+});
+
+onUnmounted(() => {
+    unmount?.();
+});
+</script>
+```
+
+The example also imports Adyen’s stylesheet in [src/main.ts](./src/main.ts), because the payment method form depends on it.

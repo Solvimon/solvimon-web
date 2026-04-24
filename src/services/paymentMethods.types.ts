@@ -14,16 +14,16 @@ export interface GetPaymentMethodsPayload {
 interface GetPaymentMethodOptionsBasePayload {
     amount?: Amount;
     country?: string;
-    customerId?: Customer['id'];
-    subscriptionId?: PricingPlanSubscription['id'];
 }
 
 export interface GetPaymentMethodOptionsByCustomerIdPayload extends GetPaymentMethodOptionsBasePayload {
     customerId: Customer['id'];
+    subscriptionId?: never;
 }
 
 export interface GetPaymentMethodOptionsBySubscriptionIdPayload extends GetPaymentMethodOptionsBasePayload {
     subscriptionId: PricingPlanSubscription['id'];
+    customerId?: never;
 }
 
 export type GetPaymentMethodOptionsPayload =

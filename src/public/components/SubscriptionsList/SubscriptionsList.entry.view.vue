@@ -16,7 +16,7 @@ const subscriptions = useSubscriptionsList({ customerId });
 const paymentMethods = usePaymentMethods({ customerId });
 
 const { isLoading } = useLoadInitialData(
-    customer.fetch(),
+    customer.get.execute(),
     subscriptions.fetchInitial(),
     paymentMethods.fetchAll(),
 );

@@ -26,7 +26,7 @@ defineProps<SolvimonSubscriptionsListEntryProps>();
             <template #default="{ customer, subscriptions, paymentMethods, isLoading, loadMore }">
                 <SubscriptionsList
                     :configuration="configuration"
-                    :customer="customer.data.value"
+                    :customer="customer.customer.value"
                     :subscriptions="subscriptions.value"
                     :payment-methods="paymentMethods.value"
                     :is-loading="isLoading"

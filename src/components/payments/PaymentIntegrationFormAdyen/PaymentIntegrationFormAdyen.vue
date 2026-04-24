@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import adyenCss from '@adyen/adyen-web/styles/adyen.css?inline';
-import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import type { CoreConfiguration, DropinConfiguration, PaymentAction } from '@adyen/adyen-web/auto';
 import type {
     AuthorizePaymentPayload,
@@ -66,6 +66,8 @@ const { authorizePayment, getPaymentDetails } = createPaymentsService();
 const { tokenizePaymentMethod } = createPaymentMethodsService();
 const experimentalFeatures = useExperimentalFeature();
 
+const showPayButton = computed(() => props.variant === 'TOKENIZE');
+
 function submit() {
     try {
         dropInInstance?.submit();
@@ -105,7 +107,7 @@ async function getConfiguration(): Promise<{
             onPaymentCompleted: handleOnPaymentCompleted,
             onPaymentFailed: handleOnPaymentFailed,
             onError: handleOnError,
-            showPayButton: false,
+            showPayButton: showPayButton.value,
         },
         dropInConfig: {
             disableFinalAnimation: true,
@@ -262,10 +264,15 @@ function injectStylesToShadowRoot() {
             .adyen-checkout__checkbox__input + .adyen-checkout__checkbox__label:after {
                 border-color: rgb(229, 231, 235);
             }
+        `;
+
+        if (props.variant === 'AUTHORIZE') {
+            style.textContent += `
             .adyen-checkout__payment-method--cashapp .adyen-checkout-pm-details-wrapper {
                 display: none;
             }
-        `;
+            `;
+        }
 
         root.appendChild(style);
     }
@@ -313,7 +320,7 @@ function handleOnSubmit(
                     .then((paymentResult) => {
                         const paymentMethodType = state.data.paymentMethod.type;
 
-                        if (paymentResult.status === 'FAILURE') {
+                        if (['FAILURE', 'REFUSED'].includes(paymentResult.status)) {
                             logger.error(
                                 'PAYMENT_AUTHORIZATION_FAILED',
                                 `Failed payment authorization for payment acceptor with id ${paymentAcceptorId}`,
@@ -384,12 +391,12 @@ function handleOnSubmit(
                     payment_acceptor_id: paymentAcceptorId,
                     payment_gateway_variant: PAYMENT_GATEWAY_VARIANT_ADYEN,
                     adyen,
-                    returnUrl,
+                    return_url: returnUrl,
                 })
                     .then((paymentResult) => {
                         const paymentMethodType = state.data.paymentMethod.type;
 
-                        if (paymentResult.status === 'FAILURE') {
+                        if (['FAILURE', 'REFUSED'].includes(paymentResult.status)) {
                             logger.error(
                                 'TOKENIZATION_FAILED',
                                 `Tokenization failed for payment acceptor with id ${paymentAcceptorId}`,

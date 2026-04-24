@@ -5,7 +5,13 @@ import { useService } from '@/composables/useService';
 export function useInvoice({ invoiceId }: { invoiceId: Invoice['id'] }) {
     const { getInvoice, getInvoicePdf: downloadInvoicePdf } = createInvoicesService();
     const service: () => ReturnType<typeof getInvoice> = () => getInvoice(invoiceId);
-    const { data, fetch, apiStatus, error, isPending } = useService({
+    const {
+        data,
+        execute: get,
+        apiStatus,
+        error,
+        isPending,
+    } = useService({
         service,
     });
 
@@ -14,7 +20,7 @@ export function useInvoice({ invoiceId }: { invoiceId: Invoice['id'] }) {
         downloadInvoicePdf,
         apiStatus,
         error,
-        fetch,
+        get,
         isPending,
     };
 }

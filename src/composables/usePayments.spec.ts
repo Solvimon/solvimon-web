@@ -29,14 +29,14 @@ describe('usePayments', () => {
 
         mockGetPayments.mockResolvedValue({ data: response });
 
-        const { data, fetch, error, apiStatus, isPending } = usePayments();
+        const { payments, get, error, apiStatus, isPending } = usePayments();
 
-        expect(data.value).toBeUndefined();
+        expect(payments.value).toBeUndefined();
         expect(error.value).toBeNull();
         expect(apiStatus.value).toBe(ApiStatus.Initial);
         expect(isPending.value).toBe(false);
 
-        const promise = fetch(invoiceId);
+        const promise = get(invoiceId);
 
         expect(apiStatus.value).toBe(ApiStatus.Loading);
         expect(isPending.value).toBe(true);
@@ -45,7 +45,7 @@ describe('usePayments', () => {
 
         expect(mockGetPayments).toHaveBeenCalledTimes(1);
         expect(mockGetPayments).toHaveBeenCalledWith(invoiceId);
-        expect(data.value).toStrictEqual(response);
+        expect(payments.value).toStrictEqual(response);
         expect(error.value).toBeNull();
         expect(apiStatus.value).toBe(ApiStatus.Done);
         expect(isPending.value).toBe(false);
@@ -57,12 +57,12 @@ describe('usePayments', () => {
 
         mockGetPayments.mockRejectedValue(serviceError);
 
-        const { data, fetch, error, apiStatus, isPending } = usePayments();
+        const { payments, get, error, apiStatus, isPending } = usePayments();
 
-        await expect(fetch(invoiceId)).rejects.toBeUndefined();
+        await expect(get(invoiceId)).rejects.toBeUndefined();
 
         expect(mockGetPayments).toHaveBeenCalledWith(invoiceId);
-        expect(data.value).toBeUndefined();
+        expect(payments.value).toBeUndefined();
         expect(error.value).toStrictEqual(serviceError);
         expect(apiStatus.value).toBe(ApiStatus.Failed);
         expect(isPending.value).toBe(false);

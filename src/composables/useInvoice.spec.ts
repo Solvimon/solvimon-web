@@ -31,7 +31,7 @@ describe('useInvoice', () => {
 
         mockGetInvoice.mockResolvedValue(response);
 
-        const { invoice, fetch, error, apiStatus, isPending, downloadInvoicePdf } = useInvoice({
+        const { invoice, get, error, apiStatus, isPending, downloadInvoicePdf } = useInvoice({
             invoiceId,
         });
 
@@ -41,7 +41,7 @@ describe('useInvoice', () => {
         expect(isPending.value).toBe(false);
         expect(downloadInvoicePdf).toBe(mockGetInvoicePdf);
 
-        const promise = fetch();
+        const promise = get();
 
         expect(apiStatus.value).toBe(ApiStatus.Loading);
         expect(isPending.value).toBe(true);
@@ -62,11 +62,11 @@ describe('useInvoice', () => {
 
         mockGetInvoice.mockRejectedValue(serviceError);
 
-        const { invoice, fetch, error, apiStatus, isPending } = useInvoice({
+        const { invoice, get, error, apiStatus, isPending } = useInvoice({
             invoiceId,
         });
 
-        await expect(fetch()).rejects.toBeUndefined();
+        await expect(get()).rejects.toBeUndefined();
 
         expect(mockGetInvoice).toHaveBeenCalledWith(invoiceId);
         expect(invoice.value).toBeUndefined();

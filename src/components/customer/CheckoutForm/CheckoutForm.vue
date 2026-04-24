@@ -10,7 +10,7 @@ import {
     Typography,
     useIntl,
 } from '@solvimon/ui';
-import { computed, ref, watch } from 'vue';
+import { computed, ref } from 'vue';
 import type { CheckoutFormState, CheckoutFormProps, CheckoutFormEmits } from './CheckoutForm.types';
 
 const FORM_ID = 'checkout-form';
@@ -51,15 +51,6 @@ const getOptionalSuffix = (field: keyof CheckoutFormState): string => {
 
 const readableCountryName = computed(() =>
     model.value.country ? getCountryNameByCode(model.value.country) : undefined,
-);
-
-// Debug: track country selection changes.
-watch(
-    () => model.value.country,
-    (country) => {
-        // eslint-disable-next-line no-console
-        console.debug('[checkout] country changed', country);
-    },
 );
 </script>
 
@@ -165,7 +156,7 @@ watch(
 
                 <Expand>
                     <div v-if="showBillingDetails || isBillingInformationMandatory">
-                        <div class="flex gap-3 flex-col mt-2">
+                        <div class="mt-2 flex flex-col gap-3">
                             <Input
                                 v-model="model.addressLine1"
                                 name="address_line_1"
@@ -253,7 +244,7 @@ watch(
                     class="!flex"
                 >
                     <template #inline-label>
-                        <div class="flex flex-col grow">
+                        <div class="flex grow flex-col">
                             <Typography tag="span">{{
                                 $t({
                                     defaultMessage: 'Company purchase',
@@ -278,7 +269,7 @@ watch(
 
                 <Expand>
                     <div v-if="isCompanyPurchase">
-                        <div class="grid grid-cols-1 gap-3 mt-4">
+                        <div class="mt-4 grid grid-cols-1 gap-3">
                             <Input
                                 v-if="showVatIdInput"
                                 v-model="model.companyVatNumber"

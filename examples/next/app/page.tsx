@@ -1,36 +1,60 @@
-'use client'; // Ensure this file is treated as a client component
+'use client';
 
-import { useEffect } from 'react';
+import { createSolvimonCore } from '@solvimon/sdk/core';
+import { useEffect, useRef } from 'react';
 import styles from './page.module.css';
-import type { SolvimonAddPaymentMethodFormProps } from '@solvimon/sdk/solvimon-add-payment-method-form';
 
-declare module 'react' {
-    namespace JSX {
-        interface IntrinsicElements {
-            'solvimon-add-payment-method-form': SolvimonAddPaymentMethodFormProps;
-        }
-    }
-}
+const solvimon = createSolvimonCore({
+    environment: 'TEST',
+    locale: 'en-US',
+    logLevel: 'info',
+    branding: {
+        colors: {
+            primary: '#1d4ed8',
+            secondary: '#0f172a',
+        },
+    },
+});
 
 export default function Home() {
+    const paymentMethodFormContainer = useRef<HTMLDivElement | null>(null);
+
     useEffect(() => {
-        async function loadSolvimonSdk() {
-            const { defineSolvimonAddPaymentMethodForm } = await import(
-                '@solvimon/sdk/solvimon-add-payment-method-form'
-            );
-            defineSolvimonAddPaymentMethodForm();
+        if (!paymentMethodFormContainer.current) {
+            return;
         }
 
-        void loadSolvimonSdk();
+        const unmount = solvimon.createComponent('payment-method-form', {
+            container: paymentMethodFormContainer.current,
+            portalObject: {
+                object_type: 'PORTAL_URL',
+                id: 'purl_example',
+                type: 'CUSTOMER',
+                customer_id: 'cust_example',
+                token: 'replace-with-a-real-portal-token',
+                status: 'PUBLISHED',
+            },
+            configuration: {
+                variant: 'TOKENIZE',
+                successRedirectUrl: 'https://example.com/customer/payment-methods',
+            },
+        });
+
+        return () => {
+            unmount?.();
+        };
     }, []);
 
     return (
         <div className={styles.page}>
             <main className={styles.main}>
-                <solvimon-add-payment-method-form
-                    token="S3JZMVgyZEVhZkduaFZkcWhLMncxRTZLa2NTQ0x3cDkucHVybF9td0RlZUEwdUhvc3ZWT0FSZTQxcg=="
-                    environment={'DEV' as 'TEST'}
-                />
+                <p className={styles.eyebrow}>Published Package Demo</p>
+                <h1 className={styles.title}>Solvimon Payment Method Form</h1>
+                <p className={styles.copy}>
+                    This example mounts the published SDK component through{' '}
+                    <code>createSolvimonCore</code>.
+                </p>
+                <div ref={paymentMethodFormContainer} className={styles.sdkRoot} />
             </main>
         </div>
     );

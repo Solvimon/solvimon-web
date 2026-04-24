@@ -77,10 +77,10 @@ export function createPaymentMethodsService() {
             url: `${config.apiUrls.config}/portal/payment-method-options`,
             options: { method: 'POST' },
             data: {
-                ...(customerId ? { customer_id: customerId } : {}),
-                ...(country ? { country } : {}),
-                ...(subscriptionId ? { pricing_plan_subscription_id: subscriptionId } : {}),
-                ...(amount ? { amount: { currency: amount.currency, quantity: '9.99' } } : {}),
+                ...(customerId && { customer_id: customerId }),
+                ...(country && { country }),
+                ...(subscriptionId && { pricing_plan_subscription_id: subscriptionId }),
+                amount,
             },
         });
     }

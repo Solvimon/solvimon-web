@@ -21,12 +21,12 @@ describe('useService', () => {
 
     it('stores the raw response for non-collection services', async () => {
         const service = vi.fn().mockResolvedValue({ id: 'inv_1' });
-        const { data, fetch, apiStatus, isPending } = useService({
+        const { data, execute, apiStatus, isPending } = useService({
             initialValue: null as { id: string } | null,
             service,
         });
 
-        const promise = fetch();
+        const promise = execute();
 
         expect(isPending.value).toBe(true);
         expect(apiStatus.value).toBe(ApiStatus.Loading);
@@ -43,13 +43,13 @@ describe('useService', () => {
         const service = vi.fn().mockResolvedValue({
             data: [{ id: 'pay_1' }],
         });
-        const { data, fetch } = useService({
+        const { data, execute } = useService({
             initialValue: [] as Array<{ id: string }>,
             service,
             isCollection: true,
         });
 
-        await expect(fetch()).resolves.toStrictEqual([{ id: 'pay_1' }]);
+        await expect(execute()).resolves.toStrictEqual([{ id: 'pay_1' }]);
 
         expect(service).toHaveBeenCalledTimes(1);
         expect(data.value).toStrictEqual([{ id: 'pay_1' }]);
@@ -57,25 +57,25 @@ describe('useService', () => {
 
     it('supports omitting initialValue', async () => {
         const service = vi.fn().mockResolvedValue({ id: 'customer_1' });
-        const { data, fetch } = useService({
+        const { data, execute } = useService({
             service,
         });
 
         expect(data.value).toBeUndefined();
 
-        await expect(fetch()).resolves.toStrictEqual({ id: 'customer_1' });
+        await expect(execute()).resolves.toStrictEqual({ id: 'customer_1' });
 
         expect(data.value).toStrictEqual({ id: 'customer_1' });
     });
 
     it('sets error and failed status when the service throws an Error', async () => {
         const service = vi.fn().mockRejectedValue(new Error('Network error'));
-        const { error, fetch, apiStatus, isPending } = useService({
+        const { error, execute, apiStatus, isPending } = useService({
             initialValue: null as { id: string } | null,
             service,
         });
 
-        await expect(fetch()).rejects.toBeUndefined();
+        await expect(execute()).rejects.toBeUndefined();
 
         expect(error.value).toStrictEqual(new Error('Network error'));
         expect(apiStatus.value).toBe(ApiStatus.Failed);
@@ -84,11 +84,11 @@ describe('useService', () => {
 
     it('normalizes non-Error throws into an Error instance', async () => {
         const service = vi.fn().mockRejectedValue('boom');
-        const { error, fetch } = useService({
+        const { error, execute } = useService({
             service,
         });
 
-        await expect(fetch()).rejects.toBeUndefined();
+        await expect(execute()).rejects.toBeUndefined();
 
         expect(error.value).toBeInstanceOf(Error);
         expect(error.value?.message).toBe('Something went wrong while fetching data.');

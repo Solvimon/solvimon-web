@@ -1,34 +1,62 @@
 <script setup lang="ts">
-import { defineSolvimonCheckout } from '@solvimon/sdk/screens/checkout';
-import { computed } from 'vue';
+import { createSolvimonCore } from '@solvimon/sdk/core';
+import type { Environment } from '@solvimon/types';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 
-// Define the custom element
-defineSolvimonCheckout();
+const checkoutContainer = ref<HTMLDivElement | null>(null);
 
 const handleError = (error: Error) => {
     console.error(error);
 };
 
 const email = computed(() => {
-    return new URLSearchParams(window.location.search).get('email');
+    return new URLSearchParams(window.location.search).get('email') ?? undefined;
 });
 
 const country = computed(() => {
-    return new URLSearchParams(window.location.search).get('country');
+    return new URLSearchParams(window.location.search).get('country') ?? undefined;
+});
+
+const portalObject = {
+    object_type: 'PORTAL_URL',
+    id: 'purl_PwDmbS0v5xMRnNCvrp14',
+    type: 'INIT_PRICING_PLAN_SUBSCRIPTION',
+    pricing_plan_id: 'ppl_example',
+    token: 'WkM0ZHh1czVrTnBUWEhDbW9BQ3hJSmVMTHJONFFaNHEucHVybF9Qd0RtYlMwdjV4TVJuTkN2cnAxNA==',
+    status: 'PUBLISHED',
+};
+
+const solvimon = createSolvimonCore({
+    environment: 'DEV' as Environment,
+    locale: 'en-US',
+    logLevel: 'info',
+    onError: handleError,
+});
+
+let unmountCheckout: (() => void) | null = null;
+
+onMounted(() => {
+    if (!checkoutContainer.value) return;
+
+    unmountCheckout = solvimon.createScreen('checkout', {
+        container: checkoutContainer.value,
+        portalObject,
+        configuration: {
+            email: email.value,
+            countryCode: country.value ?? undefined,
+        },
+    });
+});
+
+onUnmounted(() => {
+    unmountCheckout?.();
 });
 </script>
 
 <template>
     <div class="app">
         <h1>Solvimon Checkout Test App</h1>
-        <solvimon-checkout
-            token="WkM0ZHh1czVrTnBUWEhDbW9BQ3hJSmVMTHJONFFaNHEucHVybF9Qd0RtYlMwdjV4TVJuTkN2cnAxNA=="
-            environment="CI"
-            :allowed-portal-types="['INIT_PRICING_PLAN_SUBSCRIPTION']"
-            :email="email"
-            :country-code="country"
-            @error="handleError"
-        />
+        <div ref="checkoutContainer" class="checkout-root" />
     </div>
 </template>
 
@@ -41,5 +69,9 @@ const country = computed(() => {
 
 h1 {
     margin-bottom: 2rem;
+}
+
+.checkout-root {
+    min-height: 320px;
 }
 </style>

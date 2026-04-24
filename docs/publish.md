@@ -50,8 +50,8 @@ To publish a new SDK version:
 3. Merge to `main`.
 4. Wait for the SDK pipeline to complete.
 5. Verify that:
-   - a tag named `sdk-v<version>` was created
-   - the package was published to the GitLab npm registry
+    - a tag named `sdk-v<version>` was created
+    - the package was published to the GitLab npm registry
 
 ## Bumping The Version
 
@@ -127,8 +127,8 @@ Consumers can install the SDK from the private GitLab npm registry by configurin
 Add this to the consumer project's `.npmrc`:
 
 ```ini
-@solvimon:registry=https://gitlab.com/api/v4/projects/<PROJECT_ID>/packages/npm/
-//gitlab.com/api/v4/projects/<PROJECT_ID>/packages/npm/:_authToken=${NPM_TOKEN}
+@solvimon:registry=https://gitlab.com/api/v4/projects/38958827/packages/npm/
+//gitlab.com/api/v4/projects/38958827/packages/npm/:_authToken=${NPM_TOKEN}
 always-auth=true
 ```
 

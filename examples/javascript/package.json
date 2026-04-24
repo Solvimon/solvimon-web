@@ -1,0 +1,17 @@
+{
+    "name": "sdk-javascript-example",
+    "version": "0.0.0",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "dev": "vite",
+        "build": "vite build",
+        "preview": "vite preview"
+    },
+    "dependencies": {
+        "@solvimon/sdk": "^0.1.0"
+    },
+    "devDependencies": {
+        "vite": "^6.4.2"
+    }
+}

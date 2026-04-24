@@ -49,7 +49,7 @@ const walletBalanceItems = computed<WalletBalanceListItem[]>(() =>
 );
 
 const { isLoading } = useLoadInitialData(
-    customer.fetch(),
+    customer.get.execute(),
     invoices.fetchInitial(),
     subscriptions.fetchInitial(),
     paymentMethods.fetchAll(),
@@ -62,8 +62,8 @@ const { isLoading } = useLoadInitialData(
     <ContentWithAsideLayout>
         <template #header>
             <SubscriptionsList
-                v-if="customer.data.value"
-                :customer="customer.data.value"
+                v-if="customer.customer.value"
+                :customer="customer.customer.value"
                 :subscriptions="subscriptions.items.value"
                 :payment-methods="paymentMethods.items.value"
                 :is-loading="isLoading"
@@ -93,9 +93,9 @@ const { isLoading } = useLoadInitialData(
             />
 
             <BillingInformation
-                v-if="customer.data.value"
+                v-if="customer.customer.value"
                 :is-loading="isLoading"
-                :customer="customer.data.value"
+                :customer="customer.customer.value"
                 :payment-methods="paymentMethods.items.value"
             />
         </template>

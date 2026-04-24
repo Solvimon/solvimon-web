@@ -3,10 +3,10 @@ import { useService } from '@/composables/useService';
 
 export function usePayments() {
     const { getPayments } = createPaymentsService();
-    const { data, fetch, error, apiStatus, isPending } = useService({
+    const { data, execute: get, error, apiStatus, isPending } = useService({
         service: getPayments,
         isCollection: true,
     });
 
-    return { data, fetch, error, apiStatus, isPending };
+    return { payments: data, get, error, apiStatus, isPending };
 }

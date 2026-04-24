@@ -1,11 +1,14 @@
 import type { Environment, PlatformBranding } from '@solvimon/types';
 import type { IntlMessages } from '@solvimon/ui';
 import type { SolvimonBillingInformationEntryProps } from '@/public/components/BillingInformation/BillingInformation.entry.types';
+import type { SolvimonBillingInformationFormEntryProps } from '@/public/components/BillingInformationForm/BillingInformationForm.entry.types';
 import type { SolvimonCustomerPaymentMethodsEntryProps } from '@/public/components/CustomerPaymentMethods/CustomerPaymentMethods.entry.types';
 import type { SolvimonInvoiceEntryProps } from '@/public/components/Invoice/Invoice.entry.types';
 import type { SolvimonInvoiceDetailsEntryProps } from '@/public/components/InvoiceDetails/InvoiceDetails.entry.types';
 import type { SolvimonInvoicesListEntryProps } from '@/public/components/InvoicesList/InvoicesList.entry.types';
+import type { SolvimonPaymentMethodFormEntryProps } from '@/public/components/PaymentMethodForm/PaymentMethodForm.entry.types';
 import type { SolvimonPaymentHistoryEntryProps } from '@/public/components/PaymentHistory/PaymentHistory.entry.types';
+import type { SolvimonSubscriptionSchedulesEntryProps } from '@/public/components/SubscriptionSchedules/SubscriptionSchedules.entry.types';
 import type { SolvimonSubscriptionsListEntryProps } from '@/public/components/SubscriptionsList/SubscriptionsList.entry.types';
 import type { SolvimonCheckoutEntryProps } from '@/public/screens/Checkout/Checkout.entry.types';
 import type { SolvimonCustomerOverviewEntryProps } from '@/public/screens/CustomerOverview/CustomerOverview.entry.types';
@@ -40,9 +43,12 @@ interface RegisteredComponentEntryPropsById {
     'invoice-details': SolvimonInvoiceDetailsEntryProps;
     'invoices-list': SolvimonInvoicesListEntryProps;
     'payment-history': SolvimonPaymentHistoryEntryProps;
+    'subscription-schedules': SolvimonSubscriptionSchedulesEntryProps;
     'subscriptions-list': SolvimonSubscriptionsListEntryProps;
     'customer-payment-methods': SolvimonCustomerPaymentMethodsEntryProps;
     'billing-information': SolvimonBillingInformationEntryProps;
+    'billing-information-form': SolvimonBillingInformationFormEntryProps;
+    'payment-method-form': SolvimonPaymentMethodFormEntryProps;
 }
 
 interface RegisteredScreenEntryPropsById {

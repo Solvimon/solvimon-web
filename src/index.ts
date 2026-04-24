@@ -18,10 +18,6 @@ export type {
 } from './public/core';
 
 export {
-    SolvimonAddPaymentMethodForm,
-    defineSolvimonAddPaymentMethodForm,
-} from './entries/SolvimonAddPaymentMethodForm/SolvimonAddPaymentMethodForm.ce';
-export {
     SolvimonCheckout,
     defineSolvimonCheckout,
 } from './public/screens/Checkout/Checkout.entry.ce';
@@ -34,6 +30,10 @@ export {
     SolvimonBillingInformation,
     defineSolvimonBillingInformation,
 } from './public/components/BillingInformation/BillingInformation.entry.ce';
+export {
+    SolvimonBillingInformationForm,
+    defineSolvimonBillingInformationForm,
+} from './public/components/BillingInformationForm/BillingInformationForm.entry.ce';
 export {
     SolvimonCustomerPaymentMethods,
     defineSolvimonCustomerPaymentMethods,
@@ -51,6 +51,14 @@ export {
     defineSolvimonPaymentHistory,
 } from './public/components/PaymentHistory/PaymentHistory.entry.ce';
 export {
+    SolvimonSubscriptionSchedules,
+    defineSolvimonSubscriptionSchedules,
+} from './public/components/SubscriptionSchedules/SubscriptionSchedules.entry.ce';
+export {
     SolvimonSubscriptionsList,
     defineSolvimonSubscriptionsList,
 } from './public/components/SubscriptionsList/SubscriptionsList.entry.ce';
+export {
+    SolvimonPaymentMethodForm,
+    defineSolvimonPaymentMethodForm,
+} from './public/components/PaymentMethodForm/PaymentMethodForm.entry.ce';

@@ -1,36 +1,61 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+This example shows how to mount the published `payment-method-form` SDK component in a Next.js app by using `createSolvimonCore` from `@solvimon/sdk/core`.
+
+The current example lives in [app/page.tsx](./app/page.tsx) and mounts the component into a `ref` container inside a client component.
+
+Before using it for real, replace the placeholder `portalObject` and token with values returned by your backend.
 
 ## Getting Started
 
-First, run the development server:
+Run the development server:
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:5173](http://localhost:5173) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Integration Pattern
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```tsx
+'use client';
 
-## Learn More
+import { createSolvimonCore } from '@solvimon/sdk/core';
+import { useEffect, useRef } from 'react';
 
-To learn more about Next.js, take a look at the following resources:
+const solvimon = createSolvimonCore({
+    environment: 'DEV',
+    locale: 'en-US',
+    logLevel: 'info',
+});
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+export default function Page() {
+    const container = useRef<HTMLDivElement | null>(null);
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+    useEffect(() => {
+        if (!container.current) return;
 
-## Deploy on Vercel
+        const unmount = solvimon.createComponent('payment-method-form', {
+            container: container.current,
+            portalObject: {
+                object_type: 'PORTAL_URL',
+                id: 'purl_example',
+                type: 'CUSTOMER',
+                customer_id: 'cust_example',
+                token: 'replace-with-a-real-portal-token',
+                status: 'PUBLISHED',
+            },
+            configuration: {
+                variant: 'TOKENIZE',
+                successRedirectUrl: 'https://example.com/customer/payment-methods',
+            },
+        });
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+        return () => unmount?.();
+    }, []);
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+    return <div ref={container} />;
+}
+```
+
+The example also imports Adyen’s stylesheet in [app/globals.css](./app/globals.css), because the payment method form depends on it.

@@ -1,3 +1,5 @@
+@import '@adyen/adyen-web/styles/adyen.css';
+
 :root {
     --background: #ffffff;
     --foreground: #171717;

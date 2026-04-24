@@ -79,6 +79,11 @@
             "import": "./dist/components/BillingInformation/BillingInformation.es.js",
             "require": "./dist/components/BillingInformation/BillingInformation.cjs.js"
         },
+        "./components/billing-information-form": {
+            "types": "./dist/components/BillingInformationForm/BillingInformationForm.ce.d.ts",
+            "import": "./dist/components/BillingInformationForm/BillingInformationForm.es.js",
+            "require": "./dist/components/BillingInformationForm/BillingInformationForm.cjs.js"
+        },
         "./components/invoice": {
             "types": "./dist/components/Invoice/Invoice.ce.d.ts",
             "import": "./dist/components/Invoice/Invoice.es.js",
@@ -99,10 +104,15 @@
             "import": "./dist/components/PaymentHistory/PaymentHistory.es.js",
             "require": "./dist/components/PaymentHistory/PaymentHistory.cjs.js"
         },
-        "./solvimon-add-payment-method-form": {
-            "types": "./dist/SolvimonAddPaymentMethodForm/SolvimonAddPaymentMethodForm.ce.d.ts",
-            "import": "./dist/SolvimonAddPaymentMethodForm/SolvimonAddPaymentMethodForm.es.js",
-            "require": "./dist/SolvimonAddPaymentMethodForm/SolvimonAddPaymentMethodForm.cjs.js"
+        "./components/subscription-schedules": {
+            "types": "./dist/components/SubscriptionSchedules/SubscriptionSchedules.ce.d.ts",
+            "import": "./dist/components/SubscriptionSchedules/SubscriptionSchedules.es.js",
+            "require": "./dist/components/SubscriptionSchedules/SubscriptionSchedules.cjs.js"
+        },
+        "./components/payment-method-form": {
+            "types": "./dist/components/PaymentMethodForm/PaymentMethodForm.ce.d.ts",
+            "import": "./dist/components/PaymentMethodForm/PaymentMethodForm.es.js",
+            "require": "./dist/components/PaymentMethodForm/PaymentMethodForm.cjs.js"
         }
     },
     "dependencies": {

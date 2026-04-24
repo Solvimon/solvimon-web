@@ -80,7 +80,6 @@ const localizedMessages = computed<IntlMessages>(() => ({
                                     :experimental-features="experimentalFeatures"
                                 >
                                     <PortalProvider
-                                        :token="portalObject.token"
                                         :allowed-portal-types="allowedPortalTypes"
                                         :portal-object="portalObject"
                                     >

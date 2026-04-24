@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Solvimon SDK JavaScript Example</title>
+    </head>
+    <body>
+        <main">
+            <section class="card">
+                <div id="sdk-root"></div>
+            </section>
+        </main>
+
+        <script type="module">
+            import { createSolvimonCore } from '@solvimon/sdk/core';
+
+            const container = document.getElementById('sdk-root');
+
+            if (!container) {
+                throw new Error('Missing #sdk-root container');
+            }
+
+            // Replace these placeholder values with a real checkout portal object from your backend.
+            const checkoutPortalObject = {
+                object_type: 'PORTAL_URL',
+                id: 'purl_example',
+                type: 'INIT_PRICING_PLAN_SUBSCRIPTION',
+                pricing_plan_id: 'ppl_example',
+                token: 'replace-with-a-real-portal-token',
+                status: 'PUBLISHED',
+            };
+
+            const solvimon = createSolvimonCore({
+                environment: 'TEST',
+                locale: 'en-US',
+                logLevel: 'info',
+                branding: {
+                    colors: {
+                        primary: '#1d4ed8',
+                        secondary: '#0f172a',
+                    },
+                },
+            });
+
+            const unmount = solvimon.createScreen('checkout', {
+                container,
+                portalObject: checkoutPortalObject,
+                configuration: {
+                    email: 'john@example.com',
+                    countryCode: 'NL',
+                },
+            });
+
+            window.addEventListener('beforeunload', () => {
+                unmount?.();
+            });
+        </script>
+    </body>
+</html>

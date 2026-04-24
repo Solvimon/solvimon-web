@@ -10,8 +10,8 @@ const invoice = useInvoice({ invoiceId: props.configuration.invoiceId });
 const payments = usePayments();
 
 const { isLoading } = useLoadInitialData(
-    invoice.fetch(),
-    payments.fetch(props.configuration.invoiceId),
+    invoice.get(),
+    payments.get(props.configuration.invoiceId),
 );
 </script>
 

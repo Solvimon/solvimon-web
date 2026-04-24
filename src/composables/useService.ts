@@ -23,7 +23,7 @@ type UseServiceState<
     TFetchResult = ServiceFetchResult<TService>,
 > = {
     data: Ref<TData>;
-    fetch: (...args: ServiceArgs<TService>) => Promise<TFetchResult>;
+    execute: (...args: ServiceArgs<TService>) => Promise<TFetchResult>;
     apiStatus: Ref<ApiStatus>;
     isPending: ComputedRef<boolean>;
     error: Ref<Error | null>;
@@ -94,7 +94,9 @@ export function useService<TService extends (...args: never[]) => Promise<unknow
     const error = ref<Error | null>(null);
     const isPending = computed(() => apiStatus.value === ApiStatus.Loading);
 
-    const fetch = async (...args: ServiceArgs<TService>): Promise<ServiceFetchResult<TService>> => {
+    const execute = async (
+        ...args: ServiceArgs<TService>
+    ): Promise<ServiceFetchResult<TService>> => {
         try {
             apiStatus.value = ApiStatus.Loading;
             error.value = null;
@@ -112,5 +114,5 @@ export function useService<TService extends (...args: never[]) => Promise<unknow
         }
     };
 
-    return { data, fetch, apiStatus, isPending, error };
+    return { data, execute, apiStatus, isPending, error };
 }

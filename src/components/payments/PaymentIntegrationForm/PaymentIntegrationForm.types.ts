@@ -4,7 +4,7 @@ import type {
     Customer,
     Invoice,
     PaymentMethodOptionsResponse,
-} from '@solvimon/types';
+} from '@solvimon/solvimon-types';
 import type { Error } from '@/types/errors';
 
 interface BasePaymentIntegrationFormProps {

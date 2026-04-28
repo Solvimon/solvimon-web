@@ -1,4 +1,4 @@
-import type { PaymentMethodOption, PaymentMethodOptionsResponse } from '@solvimon/types';
+import type { PaymentMethodOption, PaymentMethodOptionsResponse } from '@solvimon/solvimon-types';
 import type { RawPaymentMethod } from '@adyen/adyen-web';
 
 const EXPRESS_PAYMENT_METHOD_NAMES = ['Apple Pay'] as const;

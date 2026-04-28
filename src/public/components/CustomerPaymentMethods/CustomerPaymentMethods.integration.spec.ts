@@ -1,6 +1,6 @@
 import { mount } from '@vue/test-utils';
 import { defineComponent, h } from 'vue';
-import type { PaymentMethod, PaymentMethodOption } from '@solvimon/types';
+import type { PaymentMethod, PaymentMethodOption } from '@solvimon/solvimon-types';
 import CustomerPaymentMethods from './CustomerPaymentMethods.vue';
 
 const { mockDispatchAction } = vi.hoisted(() => ({

@@ -1,4 +1,4 @@
-import type { CountryCode } from '@solvimon/types';
+import type { CountryCode } from '@solvimon/solvimon-types';
 import type { CheckoutFormState } from './CheckoutForm.types';
 
 const DEFAULT_REQUIRED_FIELDS: (keyof CheckoutFormState)[] = ['email', 'country'];

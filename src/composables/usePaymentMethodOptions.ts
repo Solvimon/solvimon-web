@@ -1,4 +1,4 @@
-import type { PaymentMethodOptionsResponse } from '@solvimon/types';
+import type { PaymentMethodOptionsResponse } from '@solvimon/solvimon-types';
 import { useService } from './useService';
 import { createPaymentMethodsService } from '@/services/paymentMethods';
 import type {

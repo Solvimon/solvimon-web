@@ -4,7 +4,7 @@ import type {
     Amount,
     BillingPeriod,
     PaymentMethodOptionResponseEntry,
-} from '@solvimon/types';
+} from '@solvimon/solvimon-types';
 
 export interface ExpressPaymentMethodProps {
     amount: Amount;

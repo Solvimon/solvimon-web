@@ -6,7 +6,7 @@ import type {
     ApiSuccessCollectionResponse,
     PricingPlanSchedule,
     PricingPlanScheduleCustomization,
-} from '@solvimon/types';
+} from '@solvimon/solvimon-types';
 import { downloadFile, withPagination } from '@solvimon/ui';
 import { createRequestService } from './requests';
 import type { GetInvoicePreviewPayload } from './invoices.types';

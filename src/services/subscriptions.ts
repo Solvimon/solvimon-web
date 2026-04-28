@@ -1,4 +1,4 @@
-import type { ApiSuccessCollectionResponse, PricingPlanSubscription } from '@solvimon/types';
+import type { ApiSuccessCollectionResponse, PricingPlanSubscription } from '@solvimon/solvimon-types';
 import {
     serializeQueryParams,
     withExpand,

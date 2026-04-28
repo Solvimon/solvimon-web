@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import { ApiStatus } from '@solvimon/types';
+import { ApiStatus } from '@solvimon/solvimon-types';
 import { useIntl, type WalletBalanceListItem } from '@solvimon/ui';
 import type { CustomerOverviewProps } from './CustomerOverview.types';
 import { ContentWithAsideLayout } from '@/layouts';

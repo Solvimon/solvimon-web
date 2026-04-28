@@ -1,4 +1,4 @@
-import type { PricingExtended, PricingPlanScheduleInfoExpanded } from '@solvimon/types';
+import type { PricingExtended, PricingPlanScheduleInfoExpanded } from '@solvimon/solvimon-types';
 import { isEmpty } from 'lodash-es';
 
 export function getAllPricingsFromScheduleInfos(

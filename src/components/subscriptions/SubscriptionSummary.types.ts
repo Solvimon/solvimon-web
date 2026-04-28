@@ -1,4 +1,4 @@
-import type { Invoice, Pricing, TimePeriod } from '@solvimon/types';
+import type { Invoice, Pricing, TimePeriod } from '@solvimon/solvimon-types';
 import type { PricingPlanSubscriptionExpanded } from '@/types/subscription';
 
 export interface SubscriptionSummaryProps {

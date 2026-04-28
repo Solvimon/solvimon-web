@@ -1,5 +1,5 @@
 import { mount } from '@vue/test-utils';
-import type { Customer, PaymentMethod, PricingPlanSubscriptionExpanded } from '@solvimon/types';
+import type { Customer, PaymentMethod, PricingPlanSubscriptionExpanded } from '@solvimon/solvimon-types';
 import SubscriptionsList from './SubscriptionsList.vue';
 
 const { mockDispatchAction } = vi.hoisted(() => ({

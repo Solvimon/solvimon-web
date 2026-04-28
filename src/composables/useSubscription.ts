@@ -2,7 +2,7 @@ import type {
     PricingPlanScheduleWithPlanData,
     PricingPlanSubscription,
     PricingPlanSubscriptionExpanded,
-} from '@solvimon/types';
+} from '@solvimon/solvimon-types';
 import { useService } from '@/composables/useService';
 import { createSubscriptionsService } from '@/services/subscriptions';
 

@@ -1,4 +1,4 @@
-import type { PricingExtended, PricingPlanVersionExtended } from '@solvimon/types';
+import type { PricingExtended, PricingPlanVersionExtended } from '@solvimon/solvimon-types';
 
 export function getAllPricingsFromPricingPlanVersion(
     pricingPlanVersion: PricingPlanVersionExtended,

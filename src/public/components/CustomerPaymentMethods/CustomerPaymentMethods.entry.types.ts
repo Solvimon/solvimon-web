@@ -1,4 +1,4 @@
-import type { CustomerPortalUrl } from '@solvimon/types';
+import type { CustomerPortalUrl } from '@solvimon/solvimon-types';
 import type { CustomerPaymentMethodsProps } from './CustomerPaymentMethods.types';
 import type { EntryBaseProps } from '@/types/EntryBaseProps';
 

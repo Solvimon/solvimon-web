@@ -1,4 +1,4 @@
-import type { Pricing, PricingPlanSubscriptionExpanded } from '@solvimon/types';
+import type { Pricing, PricingPlanSubscriptionExpanded } from '@solvimon/solvimon-types';
 import { getPricingGroupsFromExtendedPricingPlanSubscription } from './subscription';
 import { getAllPricingsFromScheduleInfos } from './pricing';
 

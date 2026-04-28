@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { Invoice } from '@solvimon/types';
+import type { Invoice } from '@solvimon/solvimon-types';
 import { buildInvoiceCreditsBreakdown } from './InvoiceCreditsBreakdown.utils';
 
 const createInvoice = (): Invoice =>

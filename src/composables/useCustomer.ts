@@ -1,4 +1,4 @@
-import type { Customer } from '@solvimon/types';
+import type { Customer } from '@solvimon/solvimon-types';
 import { ref } from 'vue';
 import { createCustomerService } from '@/services/customer';
 import { useService } from '@/composables/useService';

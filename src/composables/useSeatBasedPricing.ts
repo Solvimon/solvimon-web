@@ -1,4 +1,4 @@
-import type { Amount, BillingPeriod, PricingExtended, PricingItemConfig } from '@solvimon/types';
+import type { Amount, BillingPeriod, PricingExtended, PricingItemConfig } from '@solvimon/solvimon-types';
 import { computed, type ComputedRef } from 'vue';
 import { getPricingItemByPricingConfigId } from '@/utils/pricingItem';
 

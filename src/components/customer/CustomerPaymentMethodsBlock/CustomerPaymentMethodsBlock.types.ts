@@ -1,4 +1,4 @@
-import type { PaymentMethod } from '@solvimon/types';
+import type { PaymentMethod } from '@solvimon/solvimon-types';
 
 export interface CustomerPaymentMethodsBlockProps {
     paymentMethods: PaymentMethod[];

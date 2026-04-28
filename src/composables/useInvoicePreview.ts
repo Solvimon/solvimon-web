@@ -6,8 +6,8 @@ import {
     type Pricing,
     type PricingPlanSchedule,
     type PricingPlanSubscriptionExpanded,
-} from '@solvimon/types';
-import type { TimePeriod } from '@solvimon/types';
+} from '@solvimon/solvimon-types';
+import type { TimePeriod } from '@solvimon/solvimon-types';
 import { computed, ref } from 'vue';
 import { convertDateRangeToTimePeriod } from '@solvimon/ui';
 import { taxId } from '@solvimon/ui/validators';

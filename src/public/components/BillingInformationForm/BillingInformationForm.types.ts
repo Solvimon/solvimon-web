@@ -1,4 +1,4 @@
-import type { Customer, FormFieldError } from '@solvimon/types';
+import type { Customer, FormFieldError } from '@solvimon/solvimon-types';
 
 export interface BillingInformationFormProps {
     customer: Customer;

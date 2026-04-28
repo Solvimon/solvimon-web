@@ -1,4 +1,4 @@
-import type { ApiSuccessCollectionResponse } from '@solvimon/types';
+import type { ApiSuccessCollectionResponse } from '@solvimon/solvimon-types';
 import { useErrorHandling } from '@solvimon/ui';
 import type {
     CollectionRequestParams,

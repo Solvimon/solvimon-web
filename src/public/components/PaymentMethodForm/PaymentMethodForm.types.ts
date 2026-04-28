@@ -3,7 +3,7 @@ import type {
     AuthorizePaymentPayload,
     Customer,
     PaymentMethodOptionsResponse,
-} from '@solvimon/types';
+} from '@solvimon/solvimon-types';
 import type { PaymentIntegrationFormProps } from '@/components/payments/PaymentIntegrationForm/PaymentIntegrationForm.types';
 
 interface PaymentMethodFormBaseConfiguration {

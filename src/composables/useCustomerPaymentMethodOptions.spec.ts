@@ -3,8 +3,8 @@ import type {
     Customer,
     PaymentMethodOption,
     PaymentMethodOptionsResponse,
-} from '@solvimon/types';
-import { ApiStatus } from '@solvimon/types';
+} from '@solvimon/solvimon-types';
+import { ApiStatus } from '@solvimon/solvimon-types';
 import { useCustomerPaymentMethodOptions } from './useCustomerPaymentMethodOptions';
 
 const mockGetPaymentMethodOptions =

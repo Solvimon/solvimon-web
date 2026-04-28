@@ -4,7 +4,7 @@ import type {
     PaymentAcceptor,
     PaymentDetailsResponse,
     AuthorizePaymentResponse,
-} from '@solvimon/types';
+} from '@solvimon/solvimon-types';
 import { createRequestService } from './requests';
 import { useConfig } from '@/components/providers/ConfigProvider/composables/useConfig';
 

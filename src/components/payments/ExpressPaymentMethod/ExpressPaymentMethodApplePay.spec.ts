@@ -1,6 +1,6 @@
 import { mount } from '@vue/test-utils';
 import { nextTick } from 'vue';
-import type { BillingPeriod } from '@solvimon/types';
+import type { BillingPeriod } from '@solvimon/solvimon-types';
 import type { ExpressPaymentMethodApplePayProps } from './ExpressPaymentMethodApplePay.types';
 import ExpressPaymentMethodApplePay from './ExpressPaymentMethodApplePay.vue';
 

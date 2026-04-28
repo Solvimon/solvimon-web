@@ -1,4 +1,4 @@
-import type { ApiErrorResponse } from '@solvimon/types';
+import type { ApiErrorResponse } from '@solvimon/solvimon-types';
 
 export const Headers = {
     AUTHORIZATION: 'Authorization',

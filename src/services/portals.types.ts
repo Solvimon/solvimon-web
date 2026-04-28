@@ -1,4 +1,4 @@
-import type { Customer, PricingPlanSubscription, QuoteVersion } from '@solvimon/types';
+import type { Customer, PricingPlanSubscription, QuoteVersion } from '@solvimon/solvimon-types';
 
 type PortalUrlType =
     | 'INVOICE'

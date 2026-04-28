@@ -1,4 +1,4 @@
-import type { CountryCode } from '@solvimon/types';
+import type { CountryCode } from '@solvimon/solvimon-types';
 import type { Error } from '@/types/errors';
 
 export interface CheckoutConfiguration {

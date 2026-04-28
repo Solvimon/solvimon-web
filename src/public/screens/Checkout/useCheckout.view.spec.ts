@@ -6,7 +6,7 @@ import type {
     Amount,
     Pricing,
     AuthorizePaymentPayload,
-} from '@solvimon/types';
+} from '@solvimon/solvimon-types';
 import type { CheckoutFormState } from '@/components/customer/CheckoutForm/CheckoutForm.types';
 import { useCheckoutView } from './useCheckout.view';
 

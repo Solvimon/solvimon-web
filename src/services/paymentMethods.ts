@@ -9,7 +9,7 @@ import type {
     PaymentMethodTokenizeAdyenPayload,
     PaymentMethodTokenizePayload,
     PaymentMethodTokenizeStripePayload,
-} from '@solvimon/types';
+} from '@solvimon/solvimon-types';
 import { withPagination } from '@solvimon/ui';
 import { createRequestService } from './requests';
 import type {

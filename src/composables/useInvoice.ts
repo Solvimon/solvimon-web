@@ -1,4 +1,4 @@
-import type { Invoice } from '@solvimon/types';
+import type { Invoice } from '@solvimon/solvimon-types';
 import { createInvoicesService } from '@/services/invoices';
 import { useService } from '@/composables/useService';
 

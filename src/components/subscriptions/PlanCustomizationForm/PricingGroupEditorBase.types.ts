@@ -1,4 +1,4 @@
-import type { BillingPeriod, Currency, Pricing, PricingExtended } from '@solvimon/types';
+import type { BillingPeriod, Currency, Pricing, PricingExtended } from '@solvimon/solvimon-types';
 
 export interface PricingGroupEditorBaseProps {
     modelValue: Pricing['id'][];

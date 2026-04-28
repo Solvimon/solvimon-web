@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Section, Typography, useIntl, Button } from '@solvimon/ui';
 import { computed } from 'vue';
-import type { PaymentMethod } from '@solvimon/types';
+import type { PaymentMethod } from '@solvimon/solvimon-types';
 import type { SubscriptionsListEmits, SubscriptionsListProps } from './SubscriptionsList.types';
 import SubscriptionsListItem from './SubscriptionsListItem.vue';
 

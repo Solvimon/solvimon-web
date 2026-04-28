@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { isValidCountryCode } from '@solvimon/ui';
-import type { CountryCode } from '@solvimon/types';
+import type { CountryCode } from '@solvimon/solvimon-types';
 import type { SolvimonCheckoutEmits, SolvimonCheckoutEntryProps } from './Checkout.entry.types';
 import { COMPONENT_NAME } from './Checkout.entry.ce';
 import Provider from '@/components/providers/Provider/Provider.vue';

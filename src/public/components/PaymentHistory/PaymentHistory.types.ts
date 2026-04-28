@@ -1,4 +1,4 @@
-import type { Customer, Invoice, Payment } from '@solvimon/types';
+import type { Customer, Invoice, Payment } from '@solvimon/solvimon-types';
 
 export interface PaymentHistoryConfiguration {
     invoiceId: Invoice['id'];

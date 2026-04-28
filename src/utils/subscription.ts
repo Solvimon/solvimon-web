@@ -2,7 +2,7 @@ import type {
     PricingExtended,
     PricingGroupExtended,
     PricingPlanSubscriptionExpanded,
-} from '@solvimon/types';
+} from '@solvimon/solvimon-types';
 import { getFirstPricingPlanScheduleOfType } from './pricingPlanSchedule';
 
 /**

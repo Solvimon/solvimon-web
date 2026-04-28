@@ -4,7 +4,7 @@ import type {
     PricingItemConfigExtended,
     PricingItemExtended,
     ProductItemExtended,
-} from '@solvimon/types';
+} from '@solvimon/solvimon-types';
 
 describe('pricingItem utils', () => {
     describe('getPricingItemByPricingConfigId', () => {

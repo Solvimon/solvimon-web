@@ -1,4 +1,4 @@
-import type { Token } from '@solvimon/types';
+import type { Token } from '@solvimon/solvimon-types';
 import { createRequestService } from './requests';
 import { useConfig } from '@/components/providers/ConfigProvider/composables/useConfig';
 

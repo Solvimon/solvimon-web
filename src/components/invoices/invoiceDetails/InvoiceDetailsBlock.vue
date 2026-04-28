@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Section, Typography, useIntl } from '@solvimon/ui';
-import type { Invoice } from '@solvimon/types';
+import type { Invoice } from '@solvimon/solvimon-types';
 
 defineProps<{
     invoice: Invoice;

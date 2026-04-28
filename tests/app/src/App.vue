@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { createSolvimonCore } from '@solvimon/sdk/core';
-import type { Environment } from '@solvimon/types';
+import type { Environment } from '@solvimon/solvimon-types';
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 
 const checkoutContainer = ref<HTMLDivElement | null>(null);

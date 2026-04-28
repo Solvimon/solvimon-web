@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Section, Toggle, useIntl, usePricingItem } from '@solvimon/ui';
 import { computed } from 'vue';
-import type { Pricing } from '@solvimon/types';
+import type { Pricing } from '@solvimon/solvimon-types';
 import type { AddonSingleEditorProps } from './AddonSingleEditor.types';
 import PricingGroupTitle from './PricingGroupTitle.vue';
 import PricingGroupContent from './PricingGroupContent.vue';

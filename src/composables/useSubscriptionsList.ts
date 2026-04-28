@@ -1,4 +1,4 @@
-import type { Customer, PricingPlanSubscriptionExpanded } from '@solvimon/types';
+import type { Customer, PricingPlanSubscriptionExpanded } from '@solvimon/solvimon-types';
 import { useIncrementalLoading } from '@/composables/useIncrementalLoading';
 import { createSubscriptionsService } from '@/services/subscriptions';
 

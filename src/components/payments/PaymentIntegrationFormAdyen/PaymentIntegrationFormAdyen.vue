@@ -6,7 +6,7 @@ import type {
     AuthorizePaymentPayload,
     AuthorizePaymentResponse,
     PaymentAcceptor,
-} from '@solvimon/types';
+} from '@solvimon/solvimon-types';
 import { useIntl } from '@solvimon/ui';
 import { isEqual } from 'lodash';
 import type {

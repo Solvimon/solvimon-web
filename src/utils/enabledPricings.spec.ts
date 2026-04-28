@@ -8,7 +8,7 @@ import type {
     PricingGroupExtended,
     PricingPlanSubscriptionExpanded,
     PricingPlanScheduleInfoExpanded,
-} from '@solvimon/types';
+} from '@solvimon/solvimon-types';
 import { getPricingGroupsFromExtendedPricingPlanSubscription } from './subscription';
 
 // Mock the subscription utility

@@ -1,4 +1,4 @@
-import type { PaymentMethod, PaymentMethodOption } from '@solvimon/types';
+import type { PaymentMethod, PaymentMethodOption } from '@solvimon/solvimon-types';
 
 export interface CustomerPaymentMethodsConfiguration {
     /**

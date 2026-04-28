@@ -1,5 +1,5 @@
-import type { Invoice, Payment } from '@solvimon/types';
-import { ApiStatus } from '@solvimon/types';
+import type { Invoice, Payment } from '@solvimon/solvimon-types';
+import { ApiStatus } from '@solvimon/solvimon-types';
 import { usePayments } from './usePayments';
 
 const mockGetPayments = vi.fn<(invoiceId: Invoice['id']) => Promise<{ data: Payment[] }>>();

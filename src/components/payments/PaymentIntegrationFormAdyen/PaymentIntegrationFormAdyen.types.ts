@@ -4,7 +4,7 @@ import type {
     Customer,
     Invoice,
     PaymentMethodOptionResponseEntry,
-} from '@solvimon/types';
+} from '@solvimon/solvimon-types';
 import type { Error } from '@/types/errors';
 
 export interface PaymentIntegrationFormAdyenProps {

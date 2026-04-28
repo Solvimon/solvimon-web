@@ -8,7 +8,7 @@ import {
     useTimePeriod,
     Expand,
 } from '@solvimon/ui';
-import type { ConfiguredMeterValue } from '@solvimon/types';
+import type { ConfiguredMeterValue } from '@solvimon/solvimon-types';
 import { computed, ref } from 'vue';
 import type { SeatsEditorItemProps } from './SeatsEditorItem.types';
 import TieredTable from './TieredTable.vue';

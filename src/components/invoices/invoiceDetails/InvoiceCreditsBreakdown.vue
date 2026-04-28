@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { CreditType, Invoice, InvoiceCreditQuantity, InvoicePeriod } from '@solvimon/types';
+import type { CreditType, Invoice, InvoiceCreditQuantity, InvoicePeriod } from '@solvimon/solvimon-types';
 import {
     DividerText,
     Icon,

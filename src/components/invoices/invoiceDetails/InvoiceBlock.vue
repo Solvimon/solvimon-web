@@ -2,7 +2,7 @@
 import { InvoiceSummary, InfoBlock, useIntl, Section } from '@solvimon/ui';
 import { computed } from 'vue';
 import { useWindowSize } from '@vueuse/core';
-import type { Invoice } from '@solvimon/types';
+import type { Invoice } from '@solvimon/solvimon-types';
 import InvoiceCreditsBreakdown from './InvoiceCreditsBreakdown.vue';
 
 defineProps<{

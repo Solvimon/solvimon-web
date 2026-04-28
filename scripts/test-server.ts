@@ -73,8 +73,8 @@ const server = http.createServer((req: IncomingMessage, res: ServerResponse) => 
         // Serve @solvimon/ui from its dist directory
         const uiPath = req.url.replace('/@solvimon/ui', '') || '/main.es.js';
         filePath = path.join(UI_DIST_DIR, uiPath);
-    } else if (req.url?.startsWith('/@solvimon/types')) {
-        // @solvimon/types is just TypeScript types, serve an empty module
+    } else if (req.url?.startsWith('//solvimon-types')) {
+        // /solvimon-types is just TypeScript types, serve an empty module
         // In practice, this won't be needed at runtime, but we handle it for completeness
         res.writeHead(200, { 'Content-Type': 'application/javascript' });
         res.end('export {};');

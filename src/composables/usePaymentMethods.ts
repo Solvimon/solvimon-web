@@ -1,4 +1,4 @@
-import type { PaymentMethod } from '@solvimon/types';
+import type { PaymentMethod } from '@solvimon/solvimon-types';
 import { useIncrementalLoading } from './useIncrementalLoading';
 import { createPaymentMethodsService } from '@/services/paymentMethods';
 

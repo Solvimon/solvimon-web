@@ -1,6 +1,6 @@
 import { mount } from '@vue/test-utils';
 import { defineComponent, h } from 'vue';
-import type { Customer } from '@solvimon/types';
+import type { Customer } from '@solvimon/solvimon-types';
 import BillingInformation from './BillingInformation.vue';
 
 const { mockDispatchAction } = vi.hoisted(() => ({

@@ -1,5 +1,5 @@
 import { mount } from '@vue/test-utils';
-import type { Invoice } from '@solvimon/types';
+import type { Invoice } from '@solvimon/solvimon-types';
 import InvoicesList from './InvoicesList.vue';
 
 const { mockDispatchAction } = vi.hoisted(() => ({

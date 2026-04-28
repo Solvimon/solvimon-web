@@ -1,5 +1,5 @@
-import type { PricingPlanSubscription } from '@solvimon/types';
-import { ApiStatus } from '@solvimon/types';
+import type { PricingPlanSubscription } from '@solvimon/solvimon-types';
+import { ApiStatus } from '@solvimon/solvimon-types';
 import type { PricingPlanSubscriptionExpanded } from '@/types/subscription';
 import { useSubscription } from './useSubscription';
 

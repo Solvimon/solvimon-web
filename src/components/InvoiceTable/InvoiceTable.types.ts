@@ -1,4 +1,4 @@
-import type { Invoice } from '@solvimon/types';
+import type { Invoice } from '@solvimon/solvimon-types';
 
 export interface InvoiceTableProps {
     invoices: Invoice[];

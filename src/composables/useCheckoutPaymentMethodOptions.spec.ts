@@ -2,7 +2,7 @@ import type {
     CountryCode,
     PaymentMethodOptionsResponse,
     PricingPlanSubscription,
-} from '@solvimon/types';
+} from '@solvimon/solvimon-types';
 import { usePaymentMethodOptions } from './useCheckoutPaymentMethodOptions';
 
 const mockGetPaymentMethodOptions =

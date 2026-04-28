@@ -1,4 +1,4 @@
-import type { ConfiguredMeterValue, CountryCode, Pricing } from '@solvimon/types';
+import type { ConfiguredMeterValue, CountryCode, Pricing } from '@solvimon/solvimon-types';
 import type { useCheckoutForm } from './useCheckoutForm';
 
 export interface CheckoutFormProps {

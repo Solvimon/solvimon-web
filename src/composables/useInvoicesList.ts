@@ -1,4 +1,4 @@
-import type { Customer, Invoice } from '@solvimon/types';
+import type { Customer, Invoice } from '@solvimon/solvimon-types';
 import { useIncrementalLoading } from '@/composables/useIncrementalLoading';
 import { createInvoicesService } from '@/services/invoices';
 

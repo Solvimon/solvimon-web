@@ -1,4 +1,4 @@
-import type { Customer, CustomerWalletBalancesResponse } from '@solvimon/types';
+import type { Customer, CustomerWalletBalancesResponse } from '@solvimon/solvimon-types';
 import { computed } from 'vue';
 import { createWalletsService } from '@/services/wallets';
 import { useService } from '@/composables/useService';

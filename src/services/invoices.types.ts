@@ -3,7 +3,7 @@ import type {
     PricingPlanSchedule,
     PricingPlanScheduleCustomization,
     PricingPlanSubscription,
-} from '@solvimon/types';
+} from '@solvimon/solvimon-types';
 
 export interface GetInvoicePreviewPayload {
     customer: Partial<Customer>;

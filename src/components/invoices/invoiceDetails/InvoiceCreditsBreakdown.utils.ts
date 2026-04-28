@@ -1,4 +1,4 @@
-import type { Invoice, InvoiceCreditQuantity, InvoicePeriod } from '@solvimon/types';
+import type { Invoice, InvoiceCreditQuantity, InvoicePeriod } from '@solvimon/solvimon-types';
 
 export type InvoiceCreditsBreakdownRow = {
     id: string;

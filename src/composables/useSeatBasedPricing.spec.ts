@@ -6,7 +6,7 @@ import type {
     PricingItemConfigExtended,
     PricingItemExtended,
     ProductItemExtended,
-} from '@solvimon/types';
+} from '@solvimon/solvimon-types';
 import { getPricingItemByPricingConfigId } from '@/utils/pricingItem';
 
 vi.mock('@/utils/pricingItem');

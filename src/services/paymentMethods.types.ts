@@ -1,4 +1,4 @@
-import type { Amount, Customer, PricingPlanSubscription } from '@solvimon/types';
+import type { Amount, Customer, PricingPlanSubscription } from '@solvimon/solvimon-types';
 
 export interface GetPaymentMethodsPayload {
     customerId: Customer['id'];

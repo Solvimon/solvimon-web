@@ -1,4 +1,4 @@
-import type { Band, BillingPeriod } from '@solvimon/types';
+import type { Band, BillingPeriod } from '@solvimon/solvimon-types';
 
 export interface TieredTableRowProps {
     band: Band;

@@ -14,7 +14,7 @@ import type {
     Amount,
     PaymentAcceptor,
     PaymentIntegration,
-} from '@solvimon/types';
+} from '@solvimon/solvimon-types';
 
 // Mock the errorTracking module
 vi.mock('./errorTracking', () => ({

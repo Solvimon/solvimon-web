@@ -6,7 +6,7 @@ import type {
     PricingPlanScheduleCustomization,
     PricingPlanScheduleInfo,
     PricingPlanScheduleInfoExpanded,
-} from '@solvimon/types';
+} from '@solvimon/solvimon-types';
 
 /**
  * Get the first pricing plan schedule of a given type.

@@ -1,4 +1,4 @@
-import type { ConfiguredMeterValue, PricingExtended } from '@solvimon/types';
+import type { ConfiguredMeterValue, PricingExtended } from '@solvimon/solvimon-types';
 
 export interface SeatsEditorProps {
     modelValue: ConfiguredMeterValue[];

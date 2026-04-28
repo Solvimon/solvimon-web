@@ -1,4 +1,4 @@
-import { ApiStatus } from '@solvimon/types';
+import { ApiStatus } from '@solvimon/solvimon-types';
 import { computed, ref } from 'vue';
 import type { ComputedRef, Ref } from 'vue';
 import { updateRefIfChanged } from '@/utils/ref';

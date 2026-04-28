@@ -1,4 +1,4 @@
-import type { CountryCode, PricingCurrencySettings } from '@solvimon/types';
+import type { CountryCode, PricingCurrencySettings } from '@solvimon/solvimon-types';
 
 // Generated from Unicode CLDR 48.1 (released 2026-01-30); single primary currency per country.
 

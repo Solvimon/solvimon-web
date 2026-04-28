@@ -1,4 +1,4 @@
-import type { Amount, Customer, PaymentMethodOption } from '@solvimon/types';
+import type { Amount, Customer, PaymentMethodOption } from '@solvimon/solvimon-types';
 import { createPaymentMethodsService } from '@/services/paymentMethods';
 import { useService } from '@/composables/useService';
 

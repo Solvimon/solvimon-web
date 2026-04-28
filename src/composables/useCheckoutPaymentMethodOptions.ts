@@ -3,7 +3,7 @@ import {
     type CountryCode,
     type PaymentMethodOptionsResponse,
     type PricingPlanSubscription,
-} from '@solvimon/types';
+} from '@solvimon/solvimon-types';
 import { ref } from 'vue';
 import { isEqual } from 'lodash';
 import { createPaymentMethodsService } from '@/services/paymentMethods';

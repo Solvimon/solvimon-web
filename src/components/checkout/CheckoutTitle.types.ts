@@ -1,4 +1,4 @@
-import type { Amount, BillingPeriod, CountryCode, TimePeriod } from '@solvimon/types';
+import type { Amount, BillingPeriod, CountryCode, TimePeriod } from '@solvimon/solvimon-types';
 
 export interface CheckoutTitleProps {
     trialPeriod?: TimePeriod;

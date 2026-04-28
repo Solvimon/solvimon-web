@@ -1,4 +1,4 @@
-import type { CheckoutPagePortalUrl } from '@solvimon/types';
+import type { CheckoutPagePortalUrl } from '@solvimon/solvimon-types';
 import type { EntryBaseEmits, EntryBaseProps } from '@/types/EntryBaseProps';
 import type { CheckoutProps } from '@/public/screens/Checkout/Checkout.types';
 

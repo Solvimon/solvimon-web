@@ -1,4 +1,4 @@
-import type { Customer } from '@solvimon/types';
+import type { Customer } from '@solvimon/solvimon-types';
 
 export interface BillingInformationConfiguration {
     showEditButton?: boolean;

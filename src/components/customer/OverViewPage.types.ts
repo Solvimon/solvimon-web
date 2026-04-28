@@ -3,7 +3,7 @@ import type {
     Invoice,
     PaymentMethod,
     PaymentMethodOptionsResponse,
-} from '@solvimon/types';
+} from '@solvimon/solvimon-types';
 import type { PricingPlanSubscriptionExpanded } from '@/types/subscription';
 
 export type BlockConfig<T> = {

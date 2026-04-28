@@ -1,4 +1,4 @@
-import { ApiStatus } from '@solvimon/types';
+import { ApiStatus } from '@solvimon/solvimon-types';
 import { useService } from './useService';
 
 describe('useService', () => {

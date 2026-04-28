@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import type { ConfiguredMeterValue } from '@solvimon/types';
+import type { ConfiguredMeterValue } from '@solvimon/solvimon-types';
 import { Section } from '@solvimon/ui';
 import type { SeatsEditorProps } from './SeatsEditor.types';
 import SeatsEditorItem from './SeatsEditorItem.vue';

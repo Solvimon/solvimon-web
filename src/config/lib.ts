@@ -1,4 +1,4 @@
-import type { Environment } from '@solvimon/types';
+import type { Environment } from '@solvimon/solvimon-types';
 import { betaConfig } from './config.beta';
 import { devConfig } from './config.dev';
 import { liveConfig } from './config.live';

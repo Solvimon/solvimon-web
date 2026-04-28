@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
-import type { BillingPeriod, AuthorizePaymentPayload, CountryCode } from '@solvimon/types';
+import type { BillingPeriod, AuthorizePaymentPayload, CountryCode } from '@solvimon/solvimon-types';
 import type { ApplePayConfiguration } from '@adyen/adyen-web';
 import type { ExpressPaymentMethodEmits } from './ExpressPaymentMethod.types';
 import type { ExpressPaymentMethodApplePayProps } from './ExpressPaymentMethodApplePay.types';

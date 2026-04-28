@@ -3,7 +3,7 @@ import { taxId } from '@solvimon/ui/validators';
 import { email, required, requiredIf } from '@vuelidate/validators';
 import { computed, onMounted, ref } from 'vue';
 import { watchDebounced } from '@vueuse/core';
-import type { CountryCode } from '@solvimon/types';
+import type { CountryCode } from '@solvimon/solvimon-types';
 import { cloneDeep } from 'lodash-es';
 import type { CheckoutFormState } from './CheckoutForm.types';
 import { getRequiredFieldsForCountry } from './CheckoutForm.lib';

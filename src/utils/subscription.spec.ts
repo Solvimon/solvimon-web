@@ -1,4 +1,4 @@
-import type { PricingPlanSubscriptionExpanded } from '@solvimon/types';
+import type { PricingPlanSubscriptionExpanded } from '@solvimon/solvimon-types';
 import { findPricingsByIds } from './subscription';
 
 describe('subscription utils', () => {

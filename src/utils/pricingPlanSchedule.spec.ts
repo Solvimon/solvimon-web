@@ -6,7 +6,7 @@ import type {
     ConfiguredMeterValue,
     EnabledPricing,
     PricingPlanScheduleInfoExpanded,
-} from '@solvimon/types';
+} from '@solvimon/solvimon-types';
 
 describe('pricingPlanSchedule utils', () => {
     describe('getFirstPricingPlanScheduleOfType', () => {

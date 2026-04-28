@@ -1,5 +1,5 @@
 import type { InjectionKey, Ref } from 'vue';
-import type { Environment } from '@solvimon/types';
+import type { Environment } from '@solvimon/solvimon-types';
 import type { LogEntry, Logger, LogLevel, LogSink, SerializedError } from './LoggerProvider.types';
 
 export const LOGGER_PROVIDER_INJECTION_KEY: InjectionKey<Logger> = Symbol('sdkLogger');

@@ -4,7 +4,7 @@ import type {
     Currency,
     Pricing,
     PricingPlanSubscriptionExpanded,
-} from '@solvimon/types';
+} from '@solvimon/solvimon-types';
 
 export interface PlanCustomizationEditorProps {
     subscription: PricingPlanSubscriptionExpanded;

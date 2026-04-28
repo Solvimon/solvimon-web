@@ -1,4 +1,4 @@
-import type { Customer } from '@solvimon/types';
+import type { Customer } from '@solvimon/solvimon-types';
 import { createRequestService } from './requests';
 import { useConfig } from '@/components/providers/ConfigProvider/composables/useConfig';
 

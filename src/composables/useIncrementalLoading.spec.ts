@@ -1,4 +1,4 @@
-import { ApiStatus } from '@solvimon/types';
+import { ApiStatus } from '@solvimon/solvimon-types';
 import { useIncrementalLoading } from './useIncrementalLoading';
 
 const mockGetPaginatedFullList = vi.fn();

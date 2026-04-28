@@ -3,7 +3,7 @@ import type {
     PricingCategoryExtended,
     PricingExtended,
     PricingPlanScheduleInfoExpanded,
-} from '@solvimon/types';
+} from '@solvimon/solvimon-types';
 
 describe('pricing utils', () => {
     describe('getAllPricingsFromScheduleInfos', () => {

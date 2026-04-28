@@ -3,7 +3,7 @@ import type {
     Amount,
     PaymentMethodOptionAdyen,
     PaymentMethodOptionResponseEntry,
-} from '@solvimon/types';
+} from '@solvimon/solvimon-types';
 import { trackSentryException } from './errorTracking';
 
 export const PAYMENT_ACCEPTOR_ID_QUERY_STRING = 'payment_acceptor_id';

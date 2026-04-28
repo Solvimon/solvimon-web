@@ -5,7 +5,7 @@ import type {
     PricingPlanSchedule,
     PricingPlanScheduleCustomization,
     PricingPlanSubscriptionExpanded,
-} from '@solvimon/types';
+} from '@solvimon/solvimon-types';
 import type { CheckoutFormState } from '@/components/customer/CheckoutForm/CheckoutForm.types';
 import { useInvoicePreview } from './useInvoicePreview';
 

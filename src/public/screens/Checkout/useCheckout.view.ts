@@ -10,7 +10,7 @@ import type {
     Invoice,
 } from '@solvimon/solvimon-types';
 import { computed, onMounted, ref, watch } from 'vue';
-import { taxId } from '@solvimon/ui/validators';
+import { taxId } from '@solvimon/solvimon-ui/validators';
 import { watchOnce } from '@vueuse/core';
 import { createSubscriptionsService } from '@/services/subscriptions';
 import { useInvoicePreview } from '@/composables/useInvoicePreview';

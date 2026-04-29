@@ -117,7 +117,7 @@ vi.mock('@/composables/useCheckoutPaymentMethodOptions', () => ({
     usePaymentMethodOptions: () => mockUsePaymentMethodOptions(),
 }));
 
-vi.mock('@solvimon/ui/validators', () => ({
+vi.mock('@solvimon/solvimon-ui/validators', () => ({
     taxId: {
         $validator: mockTaxIdValidator,
     },

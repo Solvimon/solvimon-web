@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { InvoiceSummary, InfoBlock, useIntl, Section } from '@solvimon/ui';
+import { InvoiceSummary, InfoBlock, useIntl, Section } from '@solvimon/solvimon-ui';
 import { computed } from 'vue';
 import { useWindowSize } from '@vueuse/core';
 import type { Invoice } from '@solvimon/solvimon-types';

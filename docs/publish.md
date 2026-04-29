@@ -96,7 +96,7 @@ These commands update `packages/sdk/package.json` only. They do not create a Git
 ## Notes
 
 - The SDK package is published to a private registry, but `packages/sdk/package.json` must remain publishable. That means it must not use `"private": true`.
-- The SDK bundle includes the internal `@solvimon/ui` and `/solvimon-types` packages, so consumers only need access to `@solvimon/sdk`.
+- The SDK bundle includes the internal `@solvimon/solvimon-ui` and `/solvimon-types` packages, so consumers only need access to `@solvimon/sdk`.
 - The publish job uses `CI_JOB_TOKEN` to authenticate against the GitLab package registry.
 - The auto-tag job uses dedicated CI variables to push tags back to the repository.
 - Local `npm publish` is blocked by a guard script. Publishing is only allowed from GitLab CI.
@@ -157,7 +157,7 @@ npm install @solvimon/sdk
 ### Notes For Consumers
 
 - Consumers need a token with package read access.
-- The SDK now bundles the internal `@solvimon/ui` and `/solvimon-types` packages, so consumers only need `@solvimon/sdk`.
+- The SDK now bundles the internal `@solvimon/solvimon-ui` and `/solvimon-types` packages, so consumers only need `@solvimon/sdk`.
 - Do not commit registry tokens to `.npmrc`. Use environment variables such as `NPM_TOKEN`.
 
 ## Troubleshooting

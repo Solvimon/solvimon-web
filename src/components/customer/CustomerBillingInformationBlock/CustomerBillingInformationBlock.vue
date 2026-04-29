@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Button, CustomerBillingInformation, useIntl, Section } from '@solvimon/ui';
+import { Button, CustomerBillingInformation, useIntl, Section } from '@solvimon/solvimon-ui';
 import { computed, ref, watch } from 'vue';
 import { ApiStatus, type Customer } from '@solvimon/solvimon-types';
 import type { CustomerBillingInformationBlockEmits } from './CustomerBillingInformationBlock.types';

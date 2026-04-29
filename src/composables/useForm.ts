@@ -1,7 +1,7 @@
 import { type ValidationArgs } from '@vuelidate/core';
 import { cloneDeep } from 'lodash-es';
 import { computed, ref, type Ref } from 'vue';
-import { useValidation, objectDiff } from '@solvimon/ui';
+import { useValidation, objectDiff } from '@solvimon/solvimon-ui';
 
 export default <
     T extends object,

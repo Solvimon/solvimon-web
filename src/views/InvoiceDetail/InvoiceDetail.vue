@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { InvoiceHeader, CustomerBillingInformation, useIntl } from '@solvimon/ui';
+import { InvoiceHeader, CustomerBillingInformation, useIntl } from '@solvimon/solvimon-ui';
 import { type InvoiceDetailProps } from './InvoiceDetail.types';
 import InvoiceBlock from '@/components/invoices/invoiceDetails/InvoiceBlock.vue';
 import InvoiceDetailsBlock from '@/components/invoices/invoiceDetails/InvoiceDetailsBlock.vue';

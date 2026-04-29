@@ -69,9 +69,9 @@ const server = http.createServer((req: IncomingMessage, res: ServerResponse) => 
             );
             return;
         }
-    } else if (req.url?.startsWith('/@solvimon/ui')) {
-        // Serve @solvimon/ui from its dist directory
-        const uiPath = req.url.replace('/@solvimon/ui', '') || '/main.es.js';
+    } else if (req.url?.startsWith('/@solvimon/solvimon-ui')) {
+        // Serve @solvimon/solvimon-ui from its dist directory
+        const uiPath = req.url.replace('/@solvimon/solvimon-ui', '') || '/main.es.js';
         filePath = path.join(UI_DIST_DIR, uiPath);
     } else if (req.url?.startsWith('//solvimon-types')) {
         // /solvimon-types is just TypeScript types, serve an empty module

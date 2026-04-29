@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Avatar, Typography, useIntl } from '@solvimon/ui';
+import { Avatar, Typography, useIntl } from '@solvimon/solvimon-ui';
 import { computed } from 'vue';
 import type { SubscriptionSummaryProps } from './SubscriptionSummary.types';
 import { findPricingsByIds } from '@/utils/subscription';

@@ -9,7 +9,7 @@ import {
     Typography,
     useIntl,
     useToggleList,
-} from '@solvimon/ui';
+} from '@solvimon/solvimon-ui';
 import { computed } from 'vue';
 import { buildInvoiceCreditsBreakdown } from './InvoiceCreditsBreakdown.utils';
 

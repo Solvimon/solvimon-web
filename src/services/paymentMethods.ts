@@ -10,7 +10,7 @@ import type {
     PaymentMethodTokenizePayload,
     PaymentMethodTokenizeStripePayload,
 } from '@solvimon/solvimon-types';
-import { withPagination } from '@solvimon/ui';
+import { withPagination } from '@solvimon/solvimon-ui';
 import { createRequestService } from './requests';
 import type {
     GetPaymentMethodOptionsByCustomerIdPayload,

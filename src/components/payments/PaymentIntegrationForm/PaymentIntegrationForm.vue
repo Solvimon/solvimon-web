@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-import { FormMessage, useIntl } from '@solvimon/ui';
+import { FormMessage, useIntl } from '@solvimon/solvimon-ui';
 import type {
     PaymentIntegrationFormEmits,
     PaymentIntegrationFormProps,

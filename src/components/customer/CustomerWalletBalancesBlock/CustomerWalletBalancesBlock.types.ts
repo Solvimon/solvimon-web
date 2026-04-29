@@ -1,4 +1,4 @@
-import type { WalletBalanceListItem } from '@solvimon/ui';
+import type { WalletBalanceListItem } from '@solvimon/solvimon-ui';
 
 export interface CustomerWalletBalancesBlockProps {
     walletBalances: WalletBalanceListItem[];

@@ -12,7 +12,7 @@ import {
     TableHeadRow,
     TableRow,
     useIntl,
-} from '@solvimon/ui';
+} from '@solvimon/solvimon-ui';
 import { computed } from 'vue';
 import type { InvoiceTableEmits, InvoiceTableProps } from './InvoiceTable.types';
 

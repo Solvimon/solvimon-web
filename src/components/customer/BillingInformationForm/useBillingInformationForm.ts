@@ -1,4 +1,4 @@
-import { isIndividual, isOrganization } from '@solvimon/ui';
+import { isIndividual, isOrganization } from '@solvimon/solvimon-ui';
 import { email, required } from '@vuelidate/validators';
 import type { Customer } from '@solvimon/solvimon-types';
 import type { BillingInformationFormState } from './BillingInformationForm.types';

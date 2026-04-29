@@ -3,7 +3,7 @@ import { useIncrementalLoading } from './useIncrementalLoading';
 
 const mockGetPaginatedFullList = vi.fn();
 
-vi.mock('@solvimon/ui', () => ({
+vi.mock('@solvimon/solvimon-ui', () => ({
     getPaginatedFullList: (...args: unknown[]) => mockGetPaginatedFullList(...args),
     isApiSuccessCollectionResponse: (response: unknown) =>
         response !== null &&

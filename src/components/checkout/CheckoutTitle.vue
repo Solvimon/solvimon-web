@@ -9,7 +9,7 @@ import {
     TrialChip,
     Typography,
     useIntl,
-} from '@solvimon/ui';
+} from '@solvimon/solvimon-ui';
 import type { CheckoutTitleProps } from './CheckoutTitle.types';
 
 defineProps<CheckoutTitleProps>();

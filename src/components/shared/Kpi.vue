@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Icon, Typography } from '@solvimon/ui';
+import { Icon, Typography } from '@solvimon/solvimon-ui';
 import type { KpiProps } from './Kpi.types';
 
 defineProps<KpiProps>();

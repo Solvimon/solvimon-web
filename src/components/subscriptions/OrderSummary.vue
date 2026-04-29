@@ -11,7 +11,7 @@ import {
     useIntl,
     useTimePeriod,
     type SelectExtendedOptionEntry,
-} from '@solvimon/ui';
+} from '@solvimon/solvimon-ui';
 import type { BillingPeriod, Pricing } from '@solvimon/solvimon-types';
 import { computed } from 'vue';
 import { breakpointsTailwind, useBreakpoints } from '@vueuse/core';

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Spinner } from '@solvimon/ui';
+import { Spinner } from '@solvimon/solvimon-ui';
 
 withDefaults(
     defineProps<{

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Section, useIntl } from '@solvimon/ui';
+import { Section, useIntl } from '@solvimon/solvimon-ui';
 import type { ConfiguredMeterValue, Pricing } from '@solvimon/solvimon-types';
 import { computed } from 'vue';
 import SeatsEditor from './SeatsEditor.vue';

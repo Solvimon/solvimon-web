@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Button, CustomerBillingInformation, Skeleton, useIntl } from '@solvimon/ui';
+import { Button, CustomerBillingInformation, Skeleton, useIntl } from '@solvimon/solvimon-ui';
 import type { BillingInformationEmits, BillingInformationProps } from './BillingInformation.types';
 import { useActionDispatchProvider } from '@/components/providers';
 

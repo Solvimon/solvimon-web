@@ -6,7 +6,7 @@ import {
     Typography,
     useIntl,
     useTimePeriod,
-} from '@solvimon/ui';
+} from '@solvimon/solvimon-ui';
 import { computed, onMounted, ref } from 'vue';
 import type { Address, BillingPeriod, CountryCode } from '@solvimon/solvimon-types';
 import type { CheckoutEmits, CheckoutProps } from './Checkout.types';

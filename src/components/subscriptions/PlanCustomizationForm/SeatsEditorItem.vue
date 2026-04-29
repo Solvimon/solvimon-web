@@ -7,7 +7,7 @@ import {
     Icon,
     useTimePeriod,
     Expand,
-} from '@solvimon/ui';
+} from '@solvimon/solvimon-ui';
 import type { ConfiguredMeterValue } from '@solvimon/solvimon-types';
 import { computed, ref } from 'vue';
 import type { SeatsEditorItemProps } from './SeatsEditorItem.types';

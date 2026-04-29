@@ -1,7 +1,7 @@
 import { join } from 'path';
 import { fileURLToPath } from 'url';
 import solvimonTailwindConfig from '@solvimon/tailwind-config';
-import uiPackageTailwindConfig from '@solvimon/ui/tailwind.config';
+import uiPackageTailwindConfig from '@solvimon/solvimon-ui/tailwind.config';
 
 /** @type {import('tailwindcss').Config} */
 
@@ -13,7 +13,7 @@ module.exports = {
     content: [
         'src/**/*.{vue,ts}',
         ...uiPackageTailwindConfig.content.map((contentPath) =>
-            join(__dirname, `../../node_modules/@solvimon/ui/${contentPath}`),
+            join(__dirname, `../../node_modules/@solvimon/solvimon-ui/${contentPath}`),
         ),
     ],
 };

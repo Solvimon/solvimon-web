@@ -1,5 +1,5 @@
 import type { Environment, PlatformBranding } from '@solvimon/solvimon-types';
-import type { IntlMessages } from '@solvimon/ui';
+import type { IntlMessages } from '@solvimon/solvimon-ui';
 import type { SolvimonBillingInformationEntryProps } from '@/public/components/BillingInformation/BillingInformation.entry.types';
 import type { SolvimonBillingInformationFormEntryProps } from '@/public/components/BillingInformationForm/BillingInformationForm.entry.types';
 import type { SolvimonCustomerPaymentMethodsEntryProps } from '@/public/components/CustomerPaymentMethods/CustomerPaymentMethods.entry.types';

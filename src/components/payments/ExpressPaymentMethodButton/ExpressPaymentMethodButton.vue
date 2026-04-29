@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Button } from '@solvimon/ui';
+import { Button } from '@solvimon/solvimon-ui';
 import { computed } from 'vue';
 import type { ExpressPaymentMethodButtonProps } from './ExpressPaymentMethodButton.types';
 

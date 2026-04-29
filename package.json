@@ -133,7 +133,7 @@
         "@solvimon/eslint-config": "^1.2.0",
         "@solvimon/tailwind-config": "^1.0.0",
         "@solvimon/solvimon-types": "^1.0.0",
-        "@solvimon/ui": "^1.0.0",
+        "@solvimon/solvimon-ui": "^1.0.0",
         "@tsconfig/node22": "^22.0.0",
         "@types/jsdom": "^21.1.7",
         "@types/node": "^22.10.2",

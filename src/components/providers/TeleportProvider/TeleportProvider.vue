@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { TooltipTeleportProvider, SearchSelectInputTeleportProvider } from '@solvimon/ui';
+import { TooltipTeleportProvider, SearchSelectInputTeleportProvider } from '@solvimon/solvimon-ui';
 </script>
 
 <template>

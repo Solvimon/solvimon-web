@@ -9,8 +9,8 @@ import {
 } from '@solvimon/solvimon-types';
 import type { TimePeriod } from '@solvimon/solvimon-types';
 import { computed, ref } from 'vue';
-import { convertDateRangeToTimePeriod } from '@solvimon/ui';
-import { taxId } from '@solvimon/ui/validators';
+import { convertDateRangeToTimePeriod } from '@solvimon/solvimon-ui';
+import { taxId } from '@solvimon/solvimon-ui/validators';
 import { isEqual } from 'lodash';
 import { createInvoicesService } from '@/services/invoices';
 import type { CheckoutFormState } from '@/components/customer/CheckoutForm/CheckoutForm.types';

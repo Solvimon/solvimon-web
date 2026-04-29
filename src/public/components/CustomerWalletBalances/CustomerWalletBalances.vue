@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ErrorNotification, useIntl } from '@solvimon/ui';
+import { ErrorNotification, useIntl } from '@solvimon/solvimon-ui';
 import type { CustomerWalletBalancesProps } from './CustomerWalletBalances.types';
 import CustomerWalletBalancesBlock from '@/components/customer/CustomerWalletBalancesBlock/CustomerWalletBalancesBlock.vue';
 import Skeleton from '@/components/shared/Skeleton.vue';

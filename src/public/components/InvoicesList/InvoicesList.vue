@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Section, useIntl } from '@solvimon/ui';
+import { Section, useIntl } from '@solvimon/solvimon-ui';
 import type { InvoicesListEmits, InvoicesListProps } from './InvoicesList.types';
 import InvoiceTable from '@/components/InvoiceTable/InvoiceTable.vue';
 import { useActionDispatchProvider } from '@/components/providers';

@@ -1,5 +1,5 @@
 import type { ApiSuccessCollectionResponse } from '@solvimon/solvimon-types';
-import { useErrorHandling } from '@solvimon/ui';
+import { useErrorHandling } from '@solvimon/solvimon-ui';
 import type {
     CollectionRequestParams,
     RequestOptions,

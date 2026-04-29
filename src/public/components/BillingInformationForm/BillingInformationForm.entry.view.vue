@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted } from 'vue';
-import { getApiError } from '@solvimon/ui';
+import { getApiError } from '@solvimon/solvimon-ui';
 import type { SolvimonBillingInformationFormEntryProps } from './BillingInformationForm.entry.types';
 import { useCustomer } from '@/composables/useCustomer';
 

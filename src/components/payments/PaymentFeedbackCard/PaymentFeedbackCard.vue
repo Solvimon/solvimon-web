@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Icon, Section, Typography } from '@solvimon/ui';
+import { Icon, Section, Typography } from '@solvimon/solvimon-ui';
 import type { PaymentFeedbackCardProps } from './PaymentFeedbackCard.types';
 
 withDefaults(defineProps<PaymentFeedbackCardProps>(), {

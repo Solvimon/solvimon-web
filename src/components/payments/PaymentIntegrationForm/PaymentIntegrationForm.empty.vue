@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Icon, Typography, useIntl } from '@solvimon/ui';
+import { Icon, Typography, useIntl } from '@solvimon/solvimon-ui';
 import Placeholder from '@/components/shared/Placeholder.vue';
 
 const { $t } = useIntl();

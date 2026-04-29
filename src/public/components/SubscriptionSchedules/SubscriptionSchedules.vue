@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { PricingPlanSchedules, Section, useIntl } from '@solvimon/ui';
+import { PricingPlanSchedules, Section, useIntl } from '@solvimon/solvimon-ui';
 import type { SubscriptionSchedulesProps } from './SubscriptionSchedules.types';
 
 defineProps<SubscriptionSchedulesProps>();

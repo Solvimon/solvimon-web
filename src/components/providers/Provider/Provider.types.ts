@@ -1,4 +1,4 @@
-import type { IntlProviderProps, BrandProviderProps } from '@solvimon/ui';
+import type { IntlProviderProps, BrandProviderProps } from '@solvimon/solvimon-ui';
 import type { HostElementProviderProps } from '@/components/providers/HostElementProvider/HostElementProvider.types';
 import type { LoggerProviderProps } from '@/components/providers/LoggerProvider/LoggerProvider.types';
 import type { ExperimentalFeatureProviderProps } from '@/components/providers/ExperimentalFeatureProvider/ExperimentalFeatureProvider.types';

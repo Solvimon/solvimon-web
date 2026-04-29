@@ -4,7 +4,7 @@ import {
     withExpand,
     withPagination,
     type WithPagination,
-} from '@solvimon/ui';
+} from '@solvimon/solvimon-ui';
 import { createRequestService } from './requests';
 import { useConfig } from '@/components/providers/ConfigProvider/composables/useConfig';
 import type { PricingPlanSubscriptionExpanded } from '@/types/subscription';

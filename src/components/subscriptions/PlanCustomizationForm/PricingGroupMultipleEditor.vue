@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { Section, useIntl, usePricingItem, useValidation } from '@solvimon/ui';
-import { CheckboxGroupExtended } from '@solvimon/ui';
+import { Section, useIntl, usePricingItem, useValidation } from '@solvimon/solvimon-ui';
+import { CheckboxGroupExtended } from '@solvimon/solvimon-ui';
 import { computed } from 'vue';
-import { containsAtLeastOneOf } from '@solvimon/ui/validators';
+import { containsAtLeastOneOf } from '@solvimon/solvimon-ui/validators';
 import PricingGroupTitle from './PricingGroupTitle.vue';
 import type { PricingGroupEditorBaseProps } from './PricingGroupEditorBase.types';
 import { getNameFromPricing } from '@/utils/pricing';

@@ -9,7 +9,7 @@ import {
     usePricingItem,
     type RadioGroupExtendedProps,
     type SelectExtendedOptionEntry,
-} from '@solvimon/ui';
+} from '@solvimon/solvimon-ui';
 import PricingGroupTitle from './PricingGroupTitle.vue';
 import type { PricingGroupEditorBaseProps } from './PricingGroupEditorBase.types';
 import { getNameFromPricing } from '@/utils/pricing';

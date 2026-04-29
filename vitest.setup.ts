@@ -1,7 +1,7 @@
 import { vi } from 'vitest';
 
-vi.mock('@solvimon/ui', async () => {
-    const actual = await vi.importActual<typeof import('@solvimon/ui')>('@solvimon/ui');
+vi.mock('@solvimon/solvimon-ui', async () => {
+    const actual = await vi.importActual<typeof import('@solvimon/solvimon-ui')>('@solvimon/solvimon-ui');
 
     return {
         ...actual,

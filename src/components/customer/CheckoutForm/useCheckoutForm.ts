@@ -1,5 +1,5 @@
-import { objectDiff, useValidation } from '@solvimon/ui';
-import { taxId } from '@solvimon/ui/validators';
+import { objectDiff, useValidation } from '@solvimon/solvimon-ui';
+import { taxId } from '@solvimon/solvimon-ui/validators';
 import { email, required, requiredIf } from '@vuelidate/validators';
 import { computed, onMounted, ref } from 'vue';
 import { watchDebounced } from '@vueuse/core';

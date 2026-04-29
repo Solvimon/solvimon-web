@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Typography } from '@solvimon/ui';
+import { Typography } from '@solvimon/solvimon-ui';
 </script>
 
 <template>

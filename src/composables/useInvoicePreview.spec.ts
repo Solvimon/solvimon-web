@@ -28,7 +28,7 @@ vi.mock('@/services/invoices', () => ({
     })),
 }));
 
-vi.mock('@solvimon/ui', () => ({
+vi.mock('@solvimon/solvimon-ui', () => ({
     convertDateRangeToTimePeriod: convertDateRangeToTimePeriodMock,
 }));
 

@@ -5,9 +5,9 @@ import {
     ErrorHandlingProvider,
     type IntlMessages,
     BrandProvider,
-} from '@solvimon/ui';
-import nlNlUiTranslations from '@solvimon/ui/translations/nl-NL';
-import enUsUiTranslations from '@solvimon/ui/translations/en-US';
+} from '@solvimon/solvimon-ui';
+import nlNlUiTranslations from '@solvimon/solvimon-ui/translations/nl-NL';
+import enUsUiTranslations from '@solvimon/solvimon-ui/translations/en-US';
 import { computed } from 'vue';
 import type { ProviderEmits, ProviderProps } from './Provider.types';
 import ActionDispatchProvider from '@/components/providers/ActionDispatchProvider/ActionDispatchProvider.vue';

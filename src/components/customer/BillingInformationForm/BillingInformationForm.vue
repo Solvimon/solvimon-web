@@ -7,7 +7,7 @@ import {
     Toggle,
     Typography,
     useIntl,
-} from '@solvimon/ui';
+} from '@solvimon/solvimon-ui';
 import { computed, ref, watch } from 'vue';
 import type { BillingInformationFormProps } from './BillingInformationForm.types';
 import { useBillingInformationForm } from './useBillingInformationForm';

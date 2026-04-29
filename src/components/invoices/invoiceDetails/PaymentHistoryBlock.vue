@@ -7,7 +7,7 @@ import {
     PaymentMethod,
     useIntl,
     Section,
-} from '@solvimon/ui';
+} from '@solvimon/solvimon-ui';
 import type { Customer, Payment } from '@solvimon/solvimon-types';
 
 const { $t, formatDate } = useIntl();

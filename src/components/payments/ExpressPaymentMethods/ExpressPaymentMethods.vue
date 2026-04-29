@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Typography, useIntl, DividerText } from '@solvimon/ui';
+import { Typography, useIntl, DividerText } from '@solvimon/solvimon-ui';
 import { computed, ref } from 'vue';
 import type { PaymentMethodOptionResponseEntry } from '@solvimon/solvimon-types';
 import type {

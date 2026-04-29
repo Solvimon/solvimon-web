@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue';
-import { Button, Icon, Input, Section, Typography, useIntl } from '@solvimon/ui';
+import { Button, Icon, Input, Section, Typography, useIntl } from '@solvimon/solvimon-ui';
 import { uniqueId } from 'lodash-es';
 import type {
     PromotionCodeSectionEmits,

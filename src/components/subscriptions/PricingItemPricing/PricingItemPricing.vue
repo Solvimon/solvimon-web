@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { formatAmount, Typography, useIntl, useTimePeriod } from '@solvimon/ui';
+import { formatAmount, Typography, useIntl, useTimePeriod } from '@solvimon/solvimon-ui';
 import { computed } from 'vue';
 import type { PricingItemPricingProps } from './PricingItemPricing.types';
 

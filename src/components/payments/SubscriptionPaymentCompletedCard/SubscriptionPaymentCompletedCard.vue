@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Typography, useIntl, Button } from '@solvimon/ui';
+import { Typography, useIntl, Button } from '@solvimon/solvimon-ui';
 import { onMounted } from 'vue';
 import type { SubscriptionPaymentCompletedCardProps } from './SubscriptionPaymentCompletedCard.types';
 import PaymentFeedbackCard from '@/components/payments/PaymentFeedbackCard/PaymentFeedbackCard.vue';

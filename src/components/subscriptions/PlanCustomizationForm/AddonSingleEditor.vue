@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Section, Toggle, useIntl, usePricingItem } from '@solvimon/ui';
+import { Section, Toggle, useIntl, usePricingItem } from '@solvimon/solvimon-ui';
 import { computed } from 'vue';
 import type { Pricing } from '@solvimon/solvimon-types';
 import type { AddonSingleEditorProps } from './AddonSingleEditor.types';

@@ -9,7 +9,7 @@ import {
     Toggle,
     Typography,
     useIntl,
-} from '@solvimon/ui';
+} from '@solvimon/solvimon-ui';
 import { computed, ref } from 'vue';
 import type { CheckoutFormState, CheckoutFormProps, CheckoutFormEmits } from './CheckoutForm.types';
 

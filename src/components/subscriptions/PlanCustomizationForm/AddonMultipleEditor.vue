@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { Pricing } from '@solvimon/solvimon-types';
 import { computed } from 'vue';
-import { Button, Section, useIntl, usePricingItem } from '@solvimon/ui';
+import { Button, Section, useIntl, usePricingItem } from '@solvimon/solvimon-ui';
 import PricingGroupTitle from './PricingGroupTitle.vue';
 import PricingGroupContent from './PricingGroupContent.vue';
 import type { PricingGroupEditorBaseProps } from './PricingGroupEditorBase.types';

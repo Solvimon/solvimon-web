@@ -3,7 +3,7 @@ import {
     type ApiCollectionResponse,
     type ApiSuccessCollectionResponse,
 } from '@solvimon/solvimon-types';
-import { getPaginatedFullList, isApiSuccessCollectionResponse } from '@solvimon/ui';
+import { getPaginatedFullList, isApiSuccessCollectionResponse } from '@solvimon/solvimon-ui';
 import { computed, ref } from 'vue';
 import { cloneDeep } from 'lodash-es';
 

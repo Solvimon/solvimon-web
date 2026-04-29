@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { WalletBalances, useIntl } from '@solvimon/ui';
+import { WalletBalances, useIntl } from '@solvimon/solvimon-ui';
 import type { CustomerWalletBalancesBlockProps } from './CustomerWalletBalancesBlock.types';
 
 defineProps<CustomerWalletBalancesBlockProps>();

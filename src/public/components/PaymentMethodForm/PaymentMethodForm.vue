@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { getCustomerCountry, Section, Skeleton, useIntl } from '@solvimon/ui';
+import { getCustomerCountry, Section, Skeleton, useIntl } from '@solvimon/solvimon-ui';
 import { computed } from 'vue';
 import type { Amount } from '@solvimon/solvimon-types';
 import type {

@@ -7,7 +7,7 @@ import type {
     AuthorizePaymentResponse,
     PaymentAcceptor,
 } from '@solvimon/solvimon-types';
-import { useIntl } from '@solvimon/ui';
+import { useIntl } from '@solvimon/solvimon-ui';
 import { isEqual } from 'lodash';
 import type {
     PaymentIntegrationFormAdyenEmits,

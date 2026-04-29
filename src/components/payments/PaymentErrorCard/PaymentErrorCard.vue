@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Button, Typography, useIntl } from '@solvimon/ui';
+import { Button, Typography, useIntl } from '@solvimon/solvimon-ui';
 import { computed } from 'vue';
 import type { PaymentErrorCardProps } from './PaymentErrorCard.types';
 import { ErrorMap } from './PaymentErrorCard.lib';

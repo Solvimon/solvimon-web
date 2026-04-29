@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Typography, useIntl } from '@solvimon/ui';
+import { Typography, useIntl } from '@solvimon/solvimon-ui';
 
 const { $t } = useIntl();
 

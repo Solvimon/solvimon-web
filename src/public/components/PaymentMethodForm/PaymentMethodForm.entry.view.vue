@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { getCustomerCountry } from '@solvimon/ui';
+import { getCustomerCountry } from '@solvimon/solvimon-ui';
 import type { SolvimonPaymentMethodFormEntryProps } from './PaymentMethodForm.entry.types';
 import { useLoadInitialData } from '@/composables/useLoadInitialData';
 import { useCustomer } from '@/composables/useCustomer';

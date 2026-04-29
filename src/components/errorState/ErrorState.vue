@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-import { Typography, Button, useIntl } from '@solvimon/ui';
+import { Typography, Button, useIntl } from '@solvimon/solvimon-ui';
 
 import type { ErrorStateProps, ErrorStateEmits } from './ErrorState.types';
 

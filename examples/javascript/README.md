@@ -1,22 +1,6 @@
 # JavaScript Example
 
-This example shows how to consume the published `@solvimon/sdk` package from plain JavaScript through the private GitLab npm registry.
-
-## Registry setup
-
-This folder already includes an `.npmrc` with:
-
-```ini
-@solvimon:registry=https://gitlab.com/api/v4/projects/38958827/packages/npm/
-//gitlab.com/api/v4/projects/38958827/packages/npm/:_authToken=${NPM_TOKEN}
-always-auth=true
-```
-
-Before installing, export a GitLab package registry token:
-
-```sh
-export NPM_TOKEN=your_gitlab_token
-```
+This example shows how to consume the published `@solvimon/solvimon-web` package from plain JavaScript through the public npm registry.
 
 ## Install
 
@@ -45,7 +29,7 @@ http://localhost:5173/html/wallets.html?individualToken=...&teamToken=...
 
 ## What this example does
 
-- imports `createSolvimonCore` from `@solvimon/sdk/core`
+- imports `createSolvimonCore` from `@solvimon/solvimon-web/core`
 - creates a reusable Solvimon core instance
 - mounts the published `checkout` screen into a DOM node
 - mounts the published `wallet-balances` component in `html/wallets.html`
@@ -60,7 +44,7 @@ In [index.html](./index.html), replace the placeholder `checkoutPortalObject` wi
 
 ```html
 <script type="module">
-    import { createSolvimonCore } from '@solvimon/sdk/core';
+    import { createSolvimonCore } from '@solvimon/solvimon-web/core';
 
     const solvimon = createSolvimonCore({
         environment: 'DEV',

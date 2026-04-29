@@ -9,7 +9,7 @@
         "lint": "next lint"
     },
     "dependencies": {
-        "@solvimon/sdk": "../..",
+        "@solvimon/solvimon-web": "../..",
         "react": "^19.0.0",
         "react-dom": "^19.0.0",
         "next": "15.1.6"

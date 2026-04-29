@@ -1,6 +1,6 @@
 'use client';
 
-import { createSolvimonCore } from '@solvimon/sdk/core';
+import { createSolvimonCore } from '@solvimon/solvimon-web/core';
 import { useEffect, useRef } from 'react';
 import styles from './page.module.css';
 

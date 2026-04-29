@@ -1,6 +1,6 @@
 # Vue
 
-This example shows how to mount the published `payment-method-form` SDK component in a Vue + Vite app by using `createSolvimonCore` from `@solvimon/sdk/core`.
+This example shows how to mount the published `payment-method-form` SDK component in a Vue + Vite app by using `createSolvimonCore` from `@solvimon/solvimon-web/core`.
 
 The current example lives in [src/App.vue](./src/App.vue) and mounts the component into a container `div` on `onMounted`.
 
@@ -28,7 +28,7 @@ npm run build
 
 ```vue
 <script setup lang="ts">
-import { createSolvimonCore } from '@solvimon/sdk/core';
+import { createSolvimonCore } from '@solvimon/solvimon-web/core';
 import { onMounted, onUnmounted, ref } from 'vue';
 
 const container = ref<HTMLDivElement | null>(null);

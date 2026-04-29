@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { createSolvimonCore } from '@solvimon/sdk/core';
+import { createSolvimonCore } from '@solvimon/solvimon-web/core';
 import type { Environment } from '@solvimon/solvimon-types';
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 

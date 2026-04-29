@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { createSolvimonCore } from '@solvimon/sdk/core';
+import { createSolvimonCore } from '@solvimon/solvimon-web/core';
 import { onMounted, onUnmounted, ref } from 'vue';
 
 const paymentMethodFormContainer = ref<HTMLDivElement | null>(null);

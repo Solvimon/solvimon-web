@@ -1,9 +1,9 @@
-# @solvimon/sdk
+# @solvimon/solvimon-web
 
 ## Getting started
 
 ```bash
-npm install @solvimon/sdk
+npm install @solvimon/solvimon-web
 ```
 
 Solvimon's SDK exports web components, that are framework agnostic. Each component requires at least:
@@ -18,7 +18,7 @@ It supports two ways of importing:
 ### `defineSolvimonAddPaymentMethodForm`
 
 ```tsx
-import { defineSolvimonAddPaymentMethodForm } from '@solvimon/sdk/solvimon-add-payment-method-form';
+import { defineSolvimonAddPaymentMethodForm } from '@solvimon/solvimon-web/solvimon-add-payment-method-form';
 
 defineSolvimonAddPaymentMethodForm();
 
@@ -36,7 +36,7 @@ export default function Home() {
 
 ```vue
 <script setup lang="ts">
-import { SolvimonAddPaymentMethodForm } from '@solvimon/sdk/solvimon-add-payment-method-form';
+import { SolvimonAddPaymentMethodForm } from '@solvimon/solvimon-web/solvimon-add-payment-method-form';
 
 if (customElements.get('solvimon-add-payment-method-form')) {
     customElements.define('solvimon-add-payment-method-form', SolvimonAddPaymentMethodForm);
@@ -62,7 +62,7 @@ export default function Home() {
     useEffect(() => {
         async function loadSolvimonSdkComponent() {
             const { defineSolvimonAddPaymentMethodForm } = await import(
-                '@solvimon/sdk/solvimon-add-payment-method-form'
+                '@solvimon/solvimon-web/solvimon-add-payment-method-form'
             );
             defineSolvimonAddPaymentMethodForm();
         }

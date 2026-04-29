@@ -1,4 +1,4 @@
-This example shows how to mount the published `payment-method-form` SDK component in a Next.js app by using `createSolvimonCore` from `@solvimon/sdk/core`.
+This example shows how to mount the published `payment-method-form` SDK component in a Next.js app by using `createSolvimonCore` from `@solvimon/solvimon-web/core`.
 
 The current example lives in [app/page.tsx](./app/page.tsx) and mounts the component into a `ref` container inside a client component.
 
@@ -20,7 +20,7 @@ Open [http://localhost:5173](http://localhost:5173) with your browser to see the
 ```tsx
 'use client';
 
-import { createSolvimonCore } from '@solvimon/sdk/core';
+import { createSolvimonCore } from '@solvimon/solvimon-web/core';
 import { useEffect, useRef } from 'react';
 
 const solvimon = createSolvimonCore({

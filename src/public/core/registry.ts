@@ -10,6 +10,7 @@ import PaymentHistoryEntry from '@/public/components/PaymentHistory/PaymentHisto
 import SubscriptionsListEntry from '@/public/components/SubscriptionsList/SubscriptionsList.entry.vue';
 import SubscriptionSchedulesEntry from '@/public/components/SubscriptionSchedules/SubscriptionSchedules.entry.vue';
 import CustomerPaymentMethodsEntry from '@/public/components/CustomerPaymentMethods/CustomerPaymentMethods.entry.vue';
+import WalletBalancesEntry from '@/public/components/WalletBalances/WalletBalances.entry.vue';
 import BillingInformationEntry from '@/public/components/BillingInformation/BillingInformation.entry.vue';
 import BillingInformationFormEntry from '@/public/components/BillingInformationForm/BillingInformationForm.entry.vue';
 
@@ -26,6 +27,7 @@ const COMPONENTS: Record<RegisteredComponentId, Component> = {
     'subscriptions-list': SubscriptionsListEntry,
     'subscription-schedules': SubscriptionSchedulesEntry,
     'customer-payment-methods': CustomerPaymentMethodsEntry,
+    'wallet-balances': WalletBalancesEntry,
     'billing-information': BillingInformationEntry,
     'billing-information-form': BillingInformationFormEntry,
     'payment-method-form': PaymentMethodForm,

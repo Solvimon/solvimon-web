@@ -39,6 +39,10 @@ export {
     defineSolvimonCustomerPaymentMethods,
 } from './public/components/CustomerPaymentMethods/CustomerPaymentMethods.entry.ce';
 export {
+    SolvimonWalletBalances,
+    defineSolvimonWalletBalances,
+} from './public/components/WalletBalances/WalletBalances.entry.ce';
+export {
     SolvimonInvoiceDetails,
     defineSolvimonInvoiceDetails,
 } from './public/components/InvoiceDetails/InvoiceDetails.entry.ce';

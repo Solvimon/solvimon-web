@@ -30,11 +30,25 @@ npm install
 npm run dev
 ```
 
+Wallet balances example:
+
+```txt
+http://localhost:5173/html/wallets.html
+```
+
+The wallet example uses the SDK `TEST` environment. Add customer portal tokens in
+`html/wallets.html`, or pass them as query params:
+
+```txt
+http://localhost:5173/html/wallets.html?individualToken=...&teamToken=...
+```
+
 ## What this example does
 
 - imports `createSolvimonCore` from `@solvimon/sdk/core`
 - creates a reusable Solvimon core instance
 - mounts the published `checkout` screen into a DOM node
+- mounts the published `wallet-balances` component in `html/wallets.html`
 - passes a `portalObject` directly to the component mount
 - passes checkout-specific `configuration`
 

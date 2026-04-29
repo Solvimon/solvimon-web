@@ -10,6 +10,7 @@ import type { SolvimonPaymentMethodFormEntryProps } from '@/public/components/Pa
 import type { SolvimonPaymentHistoryEntryProps } from '@/public/components/PaymentHistory/PaymentHistory.entry.types';
 import type { SolvimonSubscriptionSchedulesEntryProps } from '@/public/components/SubscriptionSchedules/SubscriptionSchedules.entry.types';
 import type { SolvimonSubscriptionsListEntryProps } from '@/public/components/SubscriptionsList/SubscriptionsList.entry.types';
+import type { SolvimonWalletBalancesEntryProps } from '@/public/components/WalletBalances/WalletBalances.entry.types';
 import type { SolvimonCheckoutEntryProps } from '@/public/screens/Checkout/Checkout.entry.types';
 import type { SolvimonCustomerOverviewEntryProps } from '@/public/screens/CustomerOverview/CustomerOverview.entry.types';
 
@@ -46,6 +47,7 @@ interface RegisteredComponentEntryPropsById {
     'subscription-schedules': SolvimonSubscriptionSchedulesEntryProps;
     'subscriptions-list': SolvimonSubscriptionsListEntryProps;
     'customer-payment-methods': SolvimonCustomerPaymentMethodsEntryProps;
+    'wallet-balances': SolvimonWalletBalancesEntryProps;
     'billing-information': SolvimonBillingInformationEntryProps;
     'billing-information-form': SolvimonBillingInformationFormEntryProps;
     'payment-method-form': SolvimonPaymentMethodFormEntryProps;

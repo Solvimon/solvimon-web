@@ -9,6 +9,7 @@ import { defineSolvimonPaymentHistory } from '@/public/components/PaymentHistory
 import { defineSolvimonSubscriptionsList } from '@/public/components/SubscriptionsList/SubscriptionsList.entry.ce';
 import { defineSolvimonSubscriptionSchedules } from '@/public/components/SubscriptionSchedules/SubscriptionSchedules.entry.ce';
 import { defineSolvimonCustomerPaymentMethods } from '@/public/components/CustomerPaymentMethods/CustomerPaymentMethods.entry.ce';
+import { defineSolvimonWalletBalances } from '@/public/components/WalletBalances/WalletBalances.entry.ce';
 import { defineSolvimonBillingInformation } from '@/public/components/BillingInformation/BillingInformation.entry.ce';
 import { defineSolvimonBillingInformationForm } from '@/public/components/BillingInformationForm/BillingInformationForm.entry.ce';
 import { getComponentName } from '@/utils/component';
@@ -28,6 +29,7 @@ const COMPONENT_DEFINERS: Record<RegisteredComponentId, DefineFn> = {
     'subscriptions-list': defineSolvimonSubscriptionsList,
     'subscription-schedules': defineSolvimonSubscriptionSchedules,
     'customer-payment-methods': defineSolvimonCustomerPaymentMethods,
+    'wallet-balances': defineSolvimonWalletBalances,
     'billing-information': defineSolvimonBillingInformation,
     'billing-information-form': defineSolvimonBillingInformationForm,
     'payment-method-form': defineSolvimonPaymentMethodForm,

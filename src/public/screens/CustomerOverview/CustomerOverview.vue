@@ -1,7 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue';
 import { ApiStatus } from '@solvimon/solvimon-types';
-import { useIntl, type WalletBalanceListItem } from '@solvimon/solvimon-ui';
 import type { CustomerOverviewProps } from './CustomerOverview.types';
 import { ContentWithAsideLayout } from '@/layouts';
 import InvoicesList from '@/public/components/InvoicesList/InvoicesList.vue';
@@ -17,6 +15,7 @@ import CustomerPaymentMethods from '@/public/components/CustomerPaymentMethods/C
 import { useCustomerPaymentMethodOptions } from '@/composables/useCustomerPaymentMethodOptions';
 import { useCustomerWalletBalances } from '@/composables/useCustomerWalletBalances';
 import CustomerWalletBalances from '@/public/components/CustomerWalletBalances/CustomerWalletBalances.vue';
+import { useWalletBalanceItems } from '@/composables/useWalletBalanceItems';
 
 defineProps<CustomerOverviewProps>();
 
@@ -30,23 +29,7 @@ const subscriptions = useSubscriptionsList({ customerId, batchSize: 2 });
 const paymentMethods = usePaymentMethods({ customerId });
 const customerPaymentMethodOptions = useCustomerPaymentMethodOptions({ customerId });
 const customerWalletBalances = useCustomerWalletBalances({ customerId });
-const { $t } = useIntl();
-
-const walletBalanceItems = computed<WalletBalanceListItem[]>(() =>
-    (customerWalletBalances.walletBalances.value?.wallet_balances ?? []).map((walletBalance) => ({
-        walletId: walletBalance.wallet_id,
-        title: $t({
-            defaultMessage: 'Balance',
-            description: 'Fallback wallet title on the customer overview page',
-            id: 'H5+NAX',
-        }),
-        balance: walletBalance.wallet_balance.open_balance,
-        balanceAt:
-            walletBalance.wallet_balance.balance_at ??
-            customerWalletBalances.walletBalances.value?.balance_at ??
-            null,
-    })),
-);
+const walletBalanceItems = useWalletBalanceItems(customerWalletBalances.walletBalances);
 
 const { isLoading } = useLoadInitialData(
     customer.get.execute(),

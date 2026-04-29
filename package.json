@@ -74,6 +74,11 @@
             "import": "./dist/components/CustomerPaymentMethods/CustomerPaymentMethods.es.js",
             "require": "./dist/components/CustomerPaymentMethods/CustomerPaymentMethods.cjs.js"
         },
+        "./components/wallet-balances": {
+            "types": "./dist/components/WalletBalances/WalletBalances.ce.d.ts",
+            "import": "./dist/components/WalletBalances/WalletBalances.es.js",
+            "require": "./dist/components/WalletBalances/WalletBalances.cjs.js"
+        },
         "./components/billing-information": {
             "types": "./dist/components/BillingInformation/BillingInformation.ce.d.ts",
             "import": "./dist/components/BillingInformation/BillingInformation.es.js",

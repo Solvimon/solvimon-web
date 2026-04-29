@@ -4,6 +4,8 @@ import type { Customer } from '@solvimon/solvimon-types';
 import type { BillingInformationFormState } from './BillingInformationForm.types';
 import useForm from '@/composables/useForm';
 
+const DEFAULT_TAX_IDENTIFIER_TYPE = 'GENERIC_TAX_ID';
+
 const DEFAULT_FORM_STATE: BillingInformationFormState = {
     type: 'INDIVIDUAL',
     email: '',
@@ -99,7 +101,7 @@ const mapCustomerToFormState = (customer: Customer): BillingInformationFormState
         city: address?.city ?? '',
         state: address?.state ?? '',
         companyLegalName: customer.organization.legal_name ?? '',
-        companyVatNumber: customer.organization.tax_id ?? '',
+        companyVatNumber: customer.organization.tax_ids?.[0]?.id ?? '',
     };
 };
 
@@ -110,7 +112,14 @@ const mapFormStateToCustomerPayload = (data: BillingInformationFormState): Parti
               email: data.email,
               organization: {
                   legal_name: data.companyLegalName ?? '',
-                  tax_id: data.companyVatNumber ?? '',
+                  tax_ids: data.companyVatNumber
+                      ? [
+                            {
+                                id: data.companyVatNumber,
+                                type: DEFAULT_TAX_IDENTIFIER_TYPE,
+                            },
+                        ]
+                      : undefined,
                   registered_address: {
                       line1: data.addressLine1,
                       line2: data.addressLine2 ?? '',

@@ -23,6 +23,8 @@ import {
 } from '@/utils/pricingPlanSchedule';
 import { withPreselectedEnabledPricings } from '@/utils/enabledPricings';
 
+const DEFAULT_TAX_IDENTIFIER_TYPE = 'GENERIC_TAX_ID';
+
 export function useCheckoutView({
     initialCountry,
     initialEmail,
@@ -270,7 +272,14 @@ export function useCheckoutView({
                                   ...{ legal_name: checkoutForm.form.value.companyLegalName ?? '' },
                                   ...(checkoutForm.form.value.companyVatNumber &&
                                   taxId.$validator(checkoutForm.form.value.companyVatNumber, {}, {})
-                                      ? { tax_id: checkoutForm.form.value.companyVatNumber }
+                                      ? {
+                                            tax_ids: [
+                                                {
+                                                    id: checkoutForm.form.value.companyVatNumber,
+                                                    type: DEFAULT_TAX_IDENTIFIER_TYPE,
+                                                },
+                                            ],
+                                        }
                                       : {}),
                               },
                           }),

@@ -815,7 +815,7 @@ describe('useCheckoutView', () => {
         });
     });
 
-    it('includes tax_id in organization context when VAT number is valid', () => {
+    it('includes tax_ids in organization context when VAT number is valid', () => {
         const subscriptionId = 'sub_123' as PricingPlanSubscription['id'];
 
         mockTaxIdValidator.mockReturnValue(true);
@@ -842,13 +842,13 @@ describe('useCheckoutView', () => {
         expect(
             context.init_pricing_plan_subscription.customer_details.organization?.legal_name,
         ).toBe('Acme Corp');
-        expect(context.init_pricing_plan_subscription.customer_details.organization?.tax_id).toBe(
-            'NL123456789B01',
-        );
+        expect(
+            context.init_pricing_plan_subscription.customer_details.organization?.tax_ids?.[0]?.id,
+        ).toBe('NL123456789B01');
         expect(mockTaxIdValidator).toHaveBeenCalledWith('NL123456789B01', {}, {});
     });
 
-    it('excludes tax_id in organization context when VAT number is invalid', () => {
+    it('excludes tax_ids in organization context when VAT number is invalid', () => {
         const subscriptionId = 'sub_123' as PricingPlanSubscription['id'];
 
         mockTaxIdValidator.mockReturnValue(false);
@@ -876,7 +876,7 @@ describe('useCheckoutView', () => {
             context.init_pricing_plan_subscription.customer_details.organization?.legal_name,
         ).toBe('Acme Corp');
         expect(
-            context.init_pricing_plan_subscription.customer_details.organization?.tax_id,
+            context.init_pricing_plan_subscription.customer_details.organization?.tax_ids,
         ).toBeUndefined();
     });
 });

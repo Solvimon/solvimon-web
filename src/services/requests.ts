@@ -62,7 +62,7 @@ export function createRequestService({ enableAccessCheck } = { enableAccessCheck
                 headers: getDefaultHeaders({
                     headers: options.headers,
                 }),
-                credentials: 'include',
+                credentials: 'omit',
                 body: data ? JSON.stringify(data) : undefined,
             });
 

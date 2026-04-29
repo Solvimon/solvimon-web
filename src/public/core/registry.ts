@@ -3,6 +3,7 @@ import type { RegisteredScreenId, RegisteredComponentId } from './types';
 import PaymentMethodForm from '@/public/components/PaymentMethodForm/PaymentMethodForm.entry.vue';
 import CustomerOverviewEntry from '@/public/screens/CustomerOverview/CustomerOverview.entry.vue';
 import CheckoutEntry from '@/public/screens/Checkout/Checkout.entry.vue';
+import UpgradeSubscriptionEntry from '@/public/screens/UpgradeSubscription/UpgradeSubscription.entry.vue';
 import InvoiceEntry from '@/public/components/Invoice/Invoice.entry.vue';
 import InvoiceDetailsEntry from '@/public/components/InvoiceDetails/InvoiceDetails.entry.vue';
 import InvoicesListEntry from '@/public/components/InvoicesList/InvoicesList.entry.vue';
@@ -17,6 +18,7 @@ import BillingInformationFormEntry from '@/public/components/BillingInformationF
 const SCREENS: Record<RegisteredScreenId, Component> = {
     'customer-overview': CustomerOverviewEntry,
     checkout: CheckoutEntry,
+    'upgrade-subscription': UpgradeSubscriptionEntry,
 };
 
 const COMPONENTS: Record<RegisteredComponentId, Component> = {

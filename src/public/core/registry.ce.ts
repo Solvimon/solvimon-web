@@ -2,6 +2,7 @@ import type { RegisteredScreenId, RegisteredComponentId } from './types';
 import { defineSolvimonPaymentMethodForm } from '@/public/components/PaymentMethodForm/PaymentMethodForm.entry.ce';
 import { defineSolvimonCustomerOverview } from '@/public/screens/CustomerOverview/CustomerOverview.entry.ce';
 import { defineSolvimonCheckout } from '@/public/screens/Checkout/Checkout.entry.ce';
+import { defineSolvimonUpgradeSubscription } from '@/public/screens/UpgradeSubscription/UpgradeSubscription.entry.ce';
 import { defineSolvimonInvoice } from '@/public/components/Invoice/Invoice.entry.ce';
 import { defineSolvimonInvoiceDetails } from '@/public/components/InvoiceDetails/InvoiceDetails.entry.ce';
 import { defineSolvimonInvoicesList } from '@/public/components/InvoicesList/InvoicesList.entry.ce';
@@ -19,6 +20,7 @@ type DefineFn = () => void;
 const SCREEN_DEFINERS: Record<RegisteredScreenId, DefineFn> = {
     'customer-overview': defineSolvimonCustomerOverview,
     checkout: defineSolvimonCheckout,
+    'upgrade-subscription': defineSolvimonUpgradeSubscription,
 };
 
 const COMPONENT_DEFINERS: Record<RegisteredComponentId, DefineFn> = {

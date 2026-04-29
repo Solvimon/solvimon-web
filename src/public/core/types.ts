@@ -13,6 +13,7 @@ import type { SolvimonSubscriptionsListEntryProps } from '@/public/components/Su
 import type { SolvimonWalletBalancesEntryProps } from '@/public/components/WalletBalances/WalletBalances.entry.types';
 import type { SolvimonCheckoutEntryProps } from '@/public/screens/Checkout/Checkout.entry.types';
 import type { SolvimonCustomerOverviewEntryProps } from '@/public/screens/CustomerOverview/CustomerOverview.entry.types';
+import type { SolvimonUpgradeSubscriptionEntryProps } from '@/public/screens/UpgradeSubscription/UpgradeSubscription.entry.types';
 
 /**
  * Shared configuration passed to all mounted Solvimon components and screens.
@@ -56,6 +57,7 @@ interface RegisteredComponentEntryPropsById {
 interface RegisteredScreenEntryPropsById {
     checkout: SolvimonCheckoutEntryProps;
     'customer-overview': SolvimonCustomerOverviewEntryProps;
+    'upgrade-subscription': SolvimonUpgradeSubscriptionEntryProps;
 }
 
 /**

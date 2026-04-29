@@ -25,6 +25,10 @@ export {
     SolvimonCustomerOverview,
     defineSolvimonCustomerOverview,
 } from './public/screens/CustomerOverview/CustomerOverview.entry.ce';
+export {
+    SolvimonUpgradeSubscription,
+    defineSolvimonUpgradeSubscription,
+} from './public/screens/UpgradeSubscription/UpgradeSubscription.entry.ce';
 
 export {
     SolvimonBillingInformation,

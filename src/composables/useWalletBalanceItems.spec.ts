@@ -2,7 +2,7 @@ import type { CustomerWalletBalancesResponse } from '@solvimon/solvimon-types';
 import { ref } from 'vue';
 import { useWalletBalanceItems } from './useWalletBalanceItems';
 
-vi.mock('@solvimon/ui', () => ({
+vi.mock('@solvimon/solvimon-ui', () => ({
     useIntl: () => ({
         $t: (message: { defaultMessage: string }) => message.defaultMessage,
     }),

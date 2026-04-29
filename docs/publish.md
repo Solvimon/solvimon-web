@@ -105,15 +105,15 @@ These commands update `packages/sdk/package.json` only. They do not create a Git
 
 The SDK auto-tag job does not use `CI_JOB_TOKEN` for Git pushes. Instead, configure these protected CI/CD variables in GitLab:
 
-- `SDK_RELEASE_USERNAME`
-- `SDK_RELEASE_TOKEN`
+- `RELEASE_BOT_USERNAME`
+- `RELEASE_BOT_TOKEN`
 
 Recommended setup:
 
 1. Create a project access token or bot token with permission to push tags to the repository.
 2. Give it at least repository write access.
-3. Add the token username as `SDK_RELEASE_USERNAME`.
-4. Add the token secret as `SDK_RELEASE_TOKEN`.
+3. Add the token username as `RELEASE_BOT_USERNAME`.
+4. Add the token secret as `RELEASE_BOT_TOKEN`.
 5. Mark both variables as masked and protected.
 
 The publish job can continue using `CI_JOB_TOKEN` for the npm registry publish itself.
@@ -166,6 +166,6 @@ If the SDK does not publish after merging a version bump:
 
 1. Check whether `packages/sdk/package.json` was actually changed in the merged commit.
 2. Check whether the version already has a tag like `sdk-v<version>`.
-3. Check whether `SDK_RELEASE_USERNAME` and `SDK_RELEASE_TOKEN` are configured in GitLab CI/CD variables.
+3. Check whether `RELEASE_BOT_USERNAME` and `RELEASE_BOT_TOKEN` are configured in GitLab CI/CD variables.
 4. Check the `publish:npm` job logs in the SDK pipeline.
 5. Check whether the version bump command updated `packages/sdk/package.json` to the expected version before merge.

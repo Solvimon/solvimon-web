@@ -27,8 +27,9 @@ export function usePaymentMethodOptions() {
                   country: payload.country,
               });
 
+    const initialValue: PaymentMethodOptionsResponse = [];
     const { data, execute: get, apiStatus, error, isPending } = useService({
-        initialValue: [] as PaymentMethodOptionsResponse,
+        initialValue,
         service,
     });
 

@@ -4,4 +4,10 @@ declare module '@adyen/adyen-web' {
     }
 }
 
+declare module '@adyen/adyen-web/auto' {
+    interface PaymentAction {
+        data?: Record<string, unknown>;
+    }
+}
+
 export {};

@@ -1,6 +1,7 @@
 import { type ValidationArgs } from '@vuelidate/core';
 import { cloneDeep } from 'lodash-es';
-import { computed, ref, type Ref } from 'vue';
+import { computed, shallowRef } from 'vue';
+import type { Ref } from 'vue';
 import { useValidation, objectDiff } from '@solvimon/solvimon-ui';
 
 export default <
@@ -9,7 +10,7 @@ export default <
 >({
     initialState,
 
-    validationRules = {} as V,
+    validationRules,
     nullifyEmptyValues = false,
     mode = 'shallow',
 }: {
@@ -22,18 +23,18 @@ export default <
      * Stores the initial form state.
      */
 
-    const initialFormState = ref<T>(cloneDeep(initialState)) as Ref<T>;
+    const initialFormState = shallowRef<T>(cloneDeep(initialState));
 
     /**
      * Stores the form values.
      */
 
-    const form = ref<T>(cloneDeep(initialState)) as Ref<T>;
+    const form = shallowRef<T>(cloneDeep(initialState));
 
     /**
      * Stores the form validation.
      */
-    const validation = useValidation(validationRules, form);
+    const validation = useValidation(validationRules ?? {}, form);
 
     const changes = computed(() =>
         objectDiff<T>({ from: initialFormState.value, to: form.value, mode, nullifyEmptyValues }),

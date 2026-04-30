@@ -1,0 +1,64 @@
+/* Make sure to load the inter font faces in your project */
+
+:root {
+    --color-primary-50: #eff6ff;
+    --color-primary-100: #dbeafe;
+    --color-primary-200: #bfdbfe;
+    --color-primary-300: #93c5fd;
+    --color-primary-400: #60a5fa;
+    --color-primary-500: #3b82f6;
+    --color-primary-600: #2563eb;
+    --color-primary-700: #1d4ed8;
+    --color-primary-800: #1e40af;
+    --color-primary-900: #1e3a8a;
+    --color-secondary-50: #f0f0ff;
+    --color-secondary-100: #e0e2ff;
+    --color-secondary-200: #c5c8ff;
+    --color-secondary-300: #adb2ff;
+    --color-secondary-400: #9198f8;
+    --color-secondary-500: #6b71d6;
+    --color-secondary-600: #4a51b4;
+    --color-secondary-700: #303692;
+    --color-secondary-800: #1b2070;
+    --color-secondary-900: #0c104e;
+}
+
+.icon {
+    font-family: 'md2-icons';
+    font-weight: normal;
+    font-style: normal;
+    font-size: 24px;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    -webkit-font-feature-settings: 'liga';
+    -webkit-font-smoothing: antialiased;
+}
+
+.font-regular {
+    font-family: 'regular';
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    html {
+        @apply text-gray-900;
+        @apply font-inter;
+        @apply text-base;
+        @apply subpixel-antialiased;
+        @apply bg-neutral-100;
+    }
+}
+
+@layer utilities {
+    .pause {
+        animation-play-state: paused;
+    }
+}

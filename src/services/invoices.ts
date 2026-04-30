@@ -98,7 +98,7 @@ export function createInvoicesService(): InvoicesService {
             url: `${config.apiUrls.transaction}/portal/invoices/${id}/pdf`,
             options: { headers: { 'Content-Type': 'application/pdf' } },
         }).then((response) => {
-            const newBlob = new Blob([response as BlobPart], {
+            const newBlob = new Blob([response], {
                 type: 'application/pdf',
             });
             downloadFile(newBlob, `invoice-${id}.pdf`);

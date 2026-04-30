@@ -61,9 +61,11 @@ export function useCheckoutForm({
 
     const handleFormChange = (newValue: CheckoutFormState, oldValue: CheckoutFormState) => {
         const changed = objectDiff({ from: oldValue, to: newValue });
-        const fieldName: keyof CheckoutFormState = Object.keys(
-            changed,
-        )[0] as keyof CheckoutFormState;
+        const fieldName = Object.keys(changed).find(isCheckoutFormStateKey);
+
+        if (!fieldName) {
+            return;
+        }
 
         /**
          * These fields are not required, but need to trigger the required field change event,
@@ -136,3 +138,7 @@ const getInitialState = (initialState: Partial<CheckoutFormState> = {}): Checkou
         ...initialState,
     };
 };
+
+function isCheckoutFormStateKey(key: string): key is keyof CheckoutFormState {
+    return key in getInitialState();
+}

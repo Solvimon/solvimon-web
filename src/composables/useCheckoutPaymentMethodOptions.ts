@@ -13,8 +13,9 @@ import { useService } from '@/composables/useService';
 export const usePaymentMethodOptions = () => {
     const cachedPayload = ref<GetPaymentMethodOptionsPayload>();
     const { getPaymentMethodOptions } = createPaymentMethodsService();
+    const initialValue: PaymentMethodOptionsResponse = [];
     const { data: paymentMethodOptions, execute, isPending } = useService({
-        initialValue: [] as PaymentMethodOptionsResponse,
+        initialValue,
         service: getPaymentMethodOptions,
     });
 

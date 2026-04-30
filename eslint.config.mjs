@@ -6,7 +6,6 @@ import formatjs from 'eslint-plugin-formatjs';
 import unusedImports from 'eslint-plugin-unused-imports';
 import noRelativeImportPaths from 'eslint-plugin-no-relative-import-paths';
 import importX from 'eslint-plugin-import-x';
-import { rules as localRules } from '@solvimon/eslint-config';
 
 export default defineConfigWithVueTs(
     globalIgnores([
@@ -18,7 +17,6 @@ export default defineConfigWithVueTs(
         '**/examples/**',
         '**/.nuxt/**',
         '**/.output/**',
-        '**/.turbo/**',
     ]),
 
     pluginVue.configs['flat/essential'],
@@ -40,12 +38,26 @@ export default defineConfigWithVueTs(
         plugins: {
             formatjs,
             'unused-imports': unusedImports,
-            'local-rules': { rules: localRules },
             'no-relative-import-paths': noRelativeImportPaths,
             'import-x': importX,
         },
 
         rules: {
+            quotes: ['warn', 'single', { avoidEscape: true }],
+            'no-else-return': 'warn',
+            'vue/component-name-in-template-casing': [
+                'error',
+                'PascalCase',
+                {
+                    registeredComponentsOnly: false,
+                },
+            ],
+            '@typescript-eslint/consistent-type-assertions': [
+                'error',
+                {
+                    assertionStyle: 'never',
+                },
+            ],
             '@typescript-eslint/no-floating-promises': 'error',
             // If you have unused vars, you can ignore them using the '_' prefix -> _error
             'no-unused-vars': 'off',

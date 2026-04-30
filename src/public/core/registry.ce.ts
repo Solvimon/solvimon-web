@@ -37,6 +37,14 @@ const COMPONENT_DEFINERS: Record<RegisteredComponentId, DefineFn> = {
     'payment-method-form': defineSolvimonPaymentMethodForm,
 };
 
+function isRegisteredScreenId(id: string): id is RegisteredScreenId {
+    return Object.hasOwn(SCREEN_DEFINERS, id);
+}
+
+function isRegisteredComponentId(id: string): id is RegisteredComponentId {
+    return Object.hasOwn(COMPONENT_DEFINERS, id);
+}
+
 export function getCustomElementTagName(viewId: string): string {
     return getComponentName(viewId);
 }
@@ -44,8 +52,8 @@ export function getCustomElementTagName(viewId: string): string {
 export function ensureCustomElementDefined(viewId: string, type: 'screen' | 'component'): void {
     const defineFn =
         type === 'screen'
-            ? SCREEN_DEFINERS[viewId as RegisteredScreenId]
-            : COMPONENT_DEFINERS[viewId as RegisteredComponentId];
+            ? isRegisteredScreenId(viewId) && SCREEN_DEFINERS[viewId]
+            : isRegisteredComponentId(viewId) && COMPONENT_DEFINERS[viewId];
     if (!defineFn) {
         throw new Error(
             `Solvimon: unknown ${type} id "${viewId}". Registered ${type}s: ${Object.keys(

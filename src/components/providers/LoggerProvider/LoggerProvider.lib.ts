@@ -29,24 +29,19 @@ export function createCustomElementLogSink(
 export function serializeError(err: unknown): SerializedError {
     if (!err) return undefined;
     if (err instanceof Error) {
-        // cause can be anything; keep it as-is (or omit if you prefer)
         return {
             name: err.name,
             message: err.message,
             stack: err.stack,
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            cause: (err as any).cause,
+            cause: err.cause,
         };
     }
     if (typeof err === 'object') {
-        // Try to preserve common shapes (Axios errors, etc.)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const anyErr = err as any;
         return {
-            name: anyErr.name,
-            message: anyErr.message ?? String(err),
-            stack: anyErr.stack,
-            cause: anyErr.cause,
+            name: 'name' in err && typeof err.name === 'string' ? err.name : undefined,
+            message: 'message' in err && typeof err.message === 'string' ? err.message : String(err),
+            stack: 'stack' in err && typeof err.stack === 'string' ? err.stack : undefined,
+            cause: 'cause' in err ? err.cause : undefined,
         };
     }
     return { message: String(err) };

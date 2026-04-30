@@ -14,7 +14,6 @@
     "exclude": ["src/**/__tests__/*", "src/**/*.stories.ts", "tests/playwright/**/*"],
     "compilerOptions": {
         "outDir": "dist",
-        "baseUrl": "./",
         "target": "esnext",
         "useDefineForClassFields": true,
         "module": "esnext",
@@ -26,13 +25,10 @@
         "esModuleInterop": true,
         "lib": ["esnext", "dom", "dom.iterable", "scripthost"],
         "skipLibCheck": true,
-        "ignoreDeprecations": "5.0",
         "types": ["vitest/globals"],
         "paths": {
             "@/*": ["./src/*"]
         },
-        "preserveValueImports": false,
-        "importsNotUsedAsValues": "remove",
         "verbatimModuleSyntax": true
     }
 }

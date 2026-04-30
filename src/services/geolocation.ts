@@ -6,7 +6,7 @@ export function createGeoLocationService() {
          * Get geolocation information from the user
          */
         getGeoLocation(): Promise<{ ip: string; country: CountryCode }> {
-            return fetch(`https://api.country.is/`).then((response) => response.json());
+            return fetch('https://api.country.is/').then((response) => response.json());
         },
     };
 }

@@ -15,6 +15,10 @@ type UsePromotionCodeArgs = {
     onApplyError?: () => void;
 };
 
+type FieldError = {
+    field?: unknown;
+};
+
 export function usePromotionCode({
     checkoutForm,
     updateInvoicePreviewOnBillingInformationChange,
@@ -23,7 +27,7 @@ export function usePromotionCode({
     onInvalidPromotionCode,
     onApplyError,
 }: UsePromotionCodeArgs) {
-    const isPromotionCodePending = ref(false);
+    const isPromotionCodePending = ref<boolean>(false);
     const promotionCodeErrorMessage = ref<string | null>(null);
 
     const setErrorMessage = (action: PromotionCodeAction, error: unknown) => {
@@ -35,12 +39,7 @@ export function usePromotionCode({
     };
 
     const isInvalidPromotionCodeError = (error: unknown) => {
-        return (
-            typeof error === 'object' &&
-            error !== null &&
-            'field' in error &&
-            (error as { field?: string }).field === 'promotion_codes'
-        );
+        return isFieldError(error) && error.field === 'promotion_codes';
     };
 
     const applyPromotionCode = async (code?: string | null) => {
@@ -107,4 +106,8 @@ export function usePromotionCode({
         isPromotionCodePending,
         promotionCodeErrorMessage,
     };
+}
+
+function isFieldError(error: unknown): error is FieldError {
+    return typeof error === 'object' && error !== null && 'field' in error;
 }

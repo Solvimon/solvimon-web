@@ -8,6 +8,8 @@ import type {
     SolvimonMountConfig,
 } from './types';
 
+type ElementProps = Record<string, unknown>;
+
 function resolveContainer(container: Element | string): Element {
     if (typeof container === 'string') {
         const el = document.querySelector(container);
@@ -21,26 +23,28 @@ function resolveContainer(container: Element | string): Element {
     return container;
 }
 
-function setElementProps(element: HTMLElement, props: Record<string, unknown>): void {
-    const el = element as unknown as Record<string, unknown>;
+function setElementProps(element: HTMLElement, props: ElementProps): void {
+    const definedProps: ElementProps = {};
 
     for (const [key, value] of Object.entries(props)) {
         if (value === undefined) continue;
-        el[key] = value;
+        definedProps[key] = value;
     }
+
+    Object.assign(element, definedProps);
 }
 
 function mountSolvimonElement(
     container: Element | string,
     id: RegisteredComponentId | RegisteredScreenId,
     type: 'component' | 'screen',
-    props: Record<string, unknown>,
+    props: ElementProps,
 ) {
     const parent = resolveContainer(container);
 
     ensureCustomElementDefined(id, type);
     const tagName = getCustomElementTagName(id);
-    const element = document.createElement(tagName) as HTMLElement;
+    const element = document.createElement(tagName);
 
     setElementProps(element, props);
     parent.appendChild(element);
@@ -56,12 +60,24 @@ function splitContainer<TConfiguration extends { container: Element | string }>(
     configuration: TConfiguration,
 ) {
     const { container, ...props } = configuration;
-    return { container, props };
+    return { container, props: Object.fromEntries(Object.entries(props)) };
 }
 
-export function createSolvimonCore<
-    TConfig extends SolvimonMountConfig = SolvimonMountConfig,
->(config = {} as TConfig): CoreConfiguration<TConfig> {
+function mergeElementProps(
+    config: SolvimonMountConfig,
+    props: Record<string, unknown>,
+): ElementProps {
+    return {
+        ...config,
+        ...props,
+    };
+}
+
+export function createSolvimonCore(): CoreConfiguration<SolvimonMountConfig>;
+export function createSolvimonCore<TConfig extends SolvimonMountConfig>(
+    config: TConfig,
+): CoreConfiguration<TConfig>;
+export function createSolvimonCore(config: SolvimonMountConfig = {}) {
     return {
         config,
         createComponent<TId extends RegisteredComponentId>(
@@ -74,7 +90,7 @@ export function createSolvimonCore<
                 container,
                 id,
                 'component',
-                { ...config, ...props } as Record<string, unknown>,
+                mergeElementProps(config, props),
             ).unmount;
         },
         createScreen<TId extends RegisteredScreenId>(
@@ -83,12 +99,8 @@ export function createSolvimonCore<
         ) {
             const { container, props } = splitContainer(configuration);
 
-            return mountSolvimonElement(
-                container,
-                id,
-                'screen',
-                { ...config, ...props } as Record<string, unknown>,
-            ).unmount;
+            return mountSolvimonElement(container, id, 'screen', mergeElementProps(config, props))
+                .unmount;
         },
     };
 }

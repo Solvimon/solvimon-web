@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, useSlots, Comment, Fragment, Text, type VNode } from 'vue';
+import { computed, useSlots, Comment, Fragment, Text, isVNode } from 'vue';
 import type { SkeletonProps } from './Skeleton.types';
 
 defineProps<SkeletonProps>();
@@ -22,8 +22,9 @@ const isVnodeEmpty = (node: unknown): boolean => {
         return node.every(isVnodeEmpty);
     }
 
-    // Must be a VNode at this point
-    const vnode = node as VNode;
+    if (!isVNode(node)) return false;
+
+    const vnode = node;
 
     // Comment nodes are empty
     if (vnode.type === Comment) {
@@ -67,20 +68,20 @@ const hasSlotContent = computed(() => {
     <slot v-if="hasSlotContent" name="default" />
     <template v-else>
         <template v-if="variant === 'title'">
-            <div v-bind="$attrs" class="rounded border border-gray-50 bg-gray-50/50 h-6 w-40" />
+            <div v-bind="$attrs" class="h-6 w-40 rounded border border-gray-50 bg-gray-50/50" />
         </template>
         <template v-else-if="variant === 'divider-text'">
             <div
                 v-bind="$attrs"
-                class="rounded border border-gray-50 bg-gray-50/50 h-4 w-12 mx-auto"
+                class="mx-auto h-4 w-12 rounded border border-gray-50 bg-gray-50/50"
             />
         </template>
         <template v-else-if="variant === 'section'">
             <div v-bind="$attrs">
-                <div class="rounded border border-gray-50 bg-gray-50/50 h-6 w-40" />
+                <div class="h-6 w-40 rounded border border-gray-50 bg-gray-50/50" />
                 <div
                     :class="[
-                        'rounded border border-gray-50 bg-gray-50/50 mt-1 md:mt-2',
+                        'mt-1 rounded border border-gray-50 bg-gray-50/50 md:mt-2',
                         $props.class,
                     ]"
                 />

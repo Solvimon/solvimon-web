@@ -48,7 +48,7 @@ export function createRequestService({ enableAccessCheck } = { enableAccessCheck
         data = undefined,
         options: rawOptions,
         query,
-    }: RequestParams): Promise<T | ApiSuccessCollectionResponse<T>> {
+    }: RequestParams): Promise<T | ApiSuccessCollectionResponse<T> | Blob | string> {
         const options = { ...defaultOptions, ...rawOptions };
 
         const fullUrl = new URL(url);
@@ -67,11 +67,11 @@ export function createRequestService({ enableAccessCheck } = { enableAccessCheck
             });
 
             if (response.headers.get('Content-Type') === 'application/pdf') {
-                return (await response.blob()) as T;
+                return response.blob();
             }
 
             if (!(response.headers.get('Content-Type') === 'application/json')) {
-                return (await response.text()) as T;
+                return response.text();
             }
 
             try {

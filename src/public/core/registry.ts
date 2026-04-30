@@ -35,18 +35,46 @@ const COMPONENTS: Record<RegisteredComponentId, Component> = {
     'payment-method-form': PaymentMethodForm,
 };
 
+const REGISTERED_SCREEN_IDS = [
+    'customer-overview',
+    'checkout',
+    'upgrade-subscription',
+] satisfies RegisteredScreenId[];
+
+const REGISTERED_COMPONENT_IDS = [
+    'invoice',
+    'invoice-details',
+    'invoices-list',
+    'payment-history',
+    'subscriptions-list',
+    'subscription-schedules',
+    'customer-payment-methods',
+    'wallet-balances',
+    'billing-information',
+    'billing-information-form',
+    'payment-method-form',
+] satisfies RegisteredComponentId[];
+
+function isRegisteredScreenId(id: string): id is RegisteredScreenId {
+    return Object.hasOwn(SCREENS, id);
+}
+
+function isRegisteredComponentId(id: string): id is RegisteredComponentId {
+    return Object.hasOwn(COMPONENTS, id);
+}
+
 export function getScreenComponent(id: string): Component | undefined {
-    return SCREENS[id as RegisteredScreenId];
+    return isRegisteredScreenId(id) ? SCREENS[id] : undefined;
 }
 
 export function getComponent(id: string): Component | undefined {
-    return COMPONENTS[id as RegisteredComponentId];
+    return isRegisteredComponentId(id) ? COMPONENTS[id] : undefined;
 }
 
 export function getRegisteredScreenIds(): RegisteredScreenId[] {
-    return Object.keys(SCREENS) as RegisteredScreenId[];
+    return [...REGISTERED_SCREEN_IDS];
 }
 
 export function getRegisteredComponentIds(): RegisteredComponentId[] {
-    return Object.keys(COMPONENTS) as RegisteredComponentId[];
+    return [...REGISTERED_COMPONENT_IDS];
 }

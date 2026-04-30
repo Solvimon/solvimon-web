@@ -7,7 +7,7 @@ import vueDevTools from 'vite-plugin-vue-devtools';
 import { glob } from 'glob';
 import dts from 'vite-plugin-dts';
 import string from 'vite-plugin-string';
-import type { ElementNode, AttributeNode, TemplateChildNode, RootNode } from '@vue/compiler-core';
+import type { TemplateChildNode, RootNode } from '@vue/compiler-core';
 
 function getLibEntries(
     basePath: string,
@@ -214,11 +214,9 @@ function removeAttributes(isProduction = false) {
             return;
         }
 
-        const elementNode = node as ElementNode;
-        elementNode.props = elementNode.props.filter((prop) => {
+        node.props = node.props.filter((prop) => {
             if (prop.type === 6) {
-                const attrNode = prop as AttributeNode;
-                return !ATTRIBUTES_TO_REMOVE.includes(attrNode.name);
+                return !ATTRIBUTES_TO_REMOVE.includes(prop.name);
             }
             return true;
         });

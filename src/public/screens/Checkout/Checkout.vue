@@ -3,6 +3,7 @@ import {
     Button,
     ErrorNotification,
     formatAmount,
+    isValidCountryCode,
     Typography,
     useIntl,
     useTimePeriod,
@@ -305,11 +306,13 @@ const expressPaymentMethodBillingInformation = computed(() => {
     };
 });
 
+const isCountryCode = (country: string): country is CountryCode => isValidCountryCode(country);
+
 const handleUpdateBillingInformation = (billingInformation: Partial<Address>) => {
     const { country, ...rest } = billingInformation;
     checkoutForm.updateInitialState({
         ...rest,
-        ...(country ? { country: country as CountryCode } : {}),
+        ...(country && isCountryCode(country) ? { country } : {}),
     });
 };
 

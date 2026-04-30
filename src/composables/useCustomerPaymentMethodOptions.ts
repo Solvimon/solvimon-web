@@ -10,8 +10,9 @@ export function useCustomerPaymentMethodOptions({
     amount?: Amount;
 }) {
     const { getPaymentMethodOptions } = createPaymentMethodsService();
+    const initialValue: PaymentMethodOption[] = [];
     const { data, execute, error, apiStatus, isPending } = useService({
-        initialValue: [] as PaymentMethodOption[],
+        initialValue,
         service: async () => {
             const response = await getPaymentMethodOptions({ customerId, amount });
             return response.flatMap((entry) => entry.options ?? []);

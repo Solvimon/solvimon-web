@@ -1,5 +1,5 @@
 import { ApiStatus } from '@solvimon/solvimon-types';
-import { computed, ref } from 'vue';
+import { computed, ref, shallowRef } from 'vue';
 import type { ComputedRef, Ref } from 'vue';
 import { updateRefIfChanged } from '@/utils/ref';
 
@@ -7,23 +7,14 @@ type CollectionResponse<TData> = {
     data: TData;
 };
 
-type ServiceArgs<TService> = TService extends (...args: infer TArgs) => Promise<unknown>
-    ? TArgs
-    : never;
-
 type ServiceResponseData<TResponse> =
     TResponse extends CollectionResponse<infer TData> ? TData : TResponse;
 
-type ServiceFetchResult<TService extends (...args: never[]) => Promise<unknown>> =
-    ServiceResponseData<Awaited<ReturnType<TService>>>;
+type Service<TArgs extends unknown[], TResponse> = (...args: TArgs) => Promise<TResponse>;
 
-type UseServiceState<
-    TData,
-    TService extends (...args: never[]) => Promise<unknown>,
-    TFetchResult = ServiceFetchResult<TService>,
-> = {
+type UseServiceState<TData, TArgs extends unknown[], TFetchResult = TData> = {
     data: Ref<TData>;
-    execute: (...args: ServiceArgs<TService>) => Promise<TFetchResult>;
+    execute: (...args: TArgs) => Promise<TFetchResult>;
     apiStatus: Ref<ApiStatus>;
     isPending: ComputedRef<boolean>;
     error: Ref<Error | null>;
@@ -35,76 +26,83 @@ function toError(error: unknown) {
 
 function isCollectionResponse<TData>(
     response: TData | CollectionResponse<TData>,
-    isCollection: boolean,
 ): response is CollectionResponse<TData> {
-    return isCollection;
+    return typeof response === 'object' && response !== null && 'data' in response;
 }
 
-export function useService<
-    TService extends (...args: never[]) => Promise<CollectionResponse<unknown>>,
->({
+function getCollectionResponseData<TData>(response: TData | CollectionResponse<TData>): TData {
+    if (!isCollectionResponse(response)) {
+        throw new Error('Expected collection response.');
+    }
+
+    return response.data;
+}
+
+function mapServiceResponse<TResponse>(
+    response: TResponse,
+    isCollection: boolean,
+): ServiceResponseData<TResponse>;
+function mapServiceResponse<TResponse>(response: TResponse, isCollection: boolean): unknown {
+    return isCollection ? getCollectionResponseData(response) : response;
+}
+
+export function useService<TArgs extends unknown[], TData>({
     initialValue,
     service,
     isCollection,
 }: {
-    initialValue: ServiceFetchResult<TService>;
-    service: TService;
+    initialValue: TData;
+    service: Service<TArgs, CollectionResponse<TData>>;
     isCollection: true;
-}): UseServiceState<ServiceFetchResult<TService>, TService>;
-export function useService<
-    TService extends (...args: never[]) => Promise<CollectionResponse<unknown>>,
->({
+}): UseServiceState<TData, TArgs>;
+export function useService<TArgs extends unknown[], TData>({
     initialValue,
     service,
     isCollection,
 }: {
     initialValue?: undefined;
-    service: TService;
+    service: Service<TArgs, CollectionResponse<TData>>;
     isCollection: true;
-}): UseServiceState<ServiceFetchResult<TService> | undefined, TService>;
-export function useService<TService extends (...args: never[]) => Promise<unknown>>({
+}): UseServiceState<TData | undefined, TArgs, TData>;
+export function useService<TArgs extends unknown[], TData>({
     initialValue,
     service,
     isCollection,
 }: {
-    initialValue: ServiceFetchResult<TService>;
-    service: TService;
+    initialValue: TData;
+    service: Service<TArgs, TData>;
     isCollection?: false;
-}): UseServiceState<ServiceFetchResult<TService>, TService>;
-export function useService<TService extends (...args: never[]) => Promise<unknown>>({
+}): UseServiceState<TData, TArgs>;
+export function useService<TArgs extends unknown[], TData>({
     initialValue,
     service,
     isCollection,
 }: {
     initialValue?: undefined;
-    service: TService;
+    service: Service<TArgs, TData>;
     isCollection?: false;
-}): UseServiceState<ServiceFetchResult<TService> | undefined, TService>;
-export function useService<TService extends (...args: never[]) => Promise<unknown>>({
+}): UseServiceState<TData | undefined, TArgs, TData>;
+export function useService<TArgs extends unknown[], TResponse>({
     initialValue,
     service,
     isCollection = false,
 }: {
-    initialValue?: ServiceFetchResult<TService>;
-    service: TService;
+    initialValue?: ServiceResponseData<TResponse>;
+    service: Service<TArgs, TResponse>;
     isCollection?: boolean;
 }) {
-    const data = ref<ServiceFetchResult<TService> | undefined>(initialValue);
+    const data: Ref<ServiceResponseData<TResponse> | undefined> = shallowRef(initialValue);
     const apiStatus = ref<ApiStatus>(ApiStatus.Initial);
     const error = ref<Error | null>(null);
     const isPending = computed(() => apiStatus.value === ApiStatus.Loading);
 
-    const execute = async (
-        ...args: ServiceArgs<TService>
-    ): Promise<ServiceFetchResult<TService>> => {
+    const execute = async (...args: TArgs): Promise<ServiceResponseData<TResponse>> => {
         try {
             apiStatus.value = ApiStatus.Loading;
             error.value = null;
             const response = await service(...args);
-            const mapped = (
-                isCollectionResponse(response, isCollection) ? response.data : response
-            ) as ServiceFetchResult<TService>;
-            updateRefIfChanged(data as Ref<ServiceFetchResult<TService> | undefined>, mapped);
+            const mapped = mapServiceResponse(response, isCollection);
+            updateRefIfChanged(data, mapped);
             apiStatus.value = ApiStatus.Done;
             return mapped;
         } catch (err) {

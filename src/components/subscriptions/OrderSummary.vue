@@ -33,6 +33,10 @@ const saveBadgeSize = computed(() => (isMobile.value ? 'sm' : 'xs'));
 
 const getBillingPeriodKey = (period: BillingPeriod) => `${period.type}:${period.value}`;
 
+const BILLING_PERIOD_TYPES: string[] = ['DAY', 'WEEK', 'MONTH', 'YEAR'];
+const isBillingPeriodType = (value: string): value is BillingPeriod['type'] =>
+    BILLING_PERIOD_TYPES.includes(value);
+
 // Billing period keys are serialized as "TYPE:VALUE" (e.g. "MONTH:3") and parse to { type: 'MONTH', value: 3 }.
 const parseBillingPeriodKey = (key?: string): BillingPeriod | undefined => {
     if (!key) {
@@ -40,10 +44,10 @@ const parseBillingPeriodKey = (key?: string): BillingPeriod | undefined => {
     }
     const [type, rawValue] = key.split(':');
     const numericValue = Number(rawValue);
-    if (!numericValue) {
+    if (!numericValue || !isBillingPeriodType(type)) {
         return undefined;
     }
-    return { type: type as BillingPeriod['type'], value: numericValue };
+    return { type, value: numericValue };
 };
 
 const selectedBillingPeriodKey = computed<string | undefined>({
@@ -56,7 +60,8 @@ const selectedBillingPeriodKey = computed<string | undefined>({
         const [type, rawValue] = value.split(':');
         const numericValue = Number(rawValue);
         if (!numericValue) return;
-        emit('billing-period-change', { type: type as BillingPeriod['type'], value: numericValue });
+        if (!isBillingPeriodType(type)) return;
+        emit('billing-period-change', { type, value: numericValue });
     },
 });
 

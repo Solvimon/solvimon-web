@@ -1,6 +1,8 @@
 import type {
     Invoice,
     InvoicePreview,
+    PaymentAcceptor,
+    PaymentIntegration,
     PaymentMethodOptionsResponse,
 } from '@solvimon/solvimon-types';
 import type {
@@ -176,7 +178,7 @@ const ITEM_PRICES_EUR: Record<string, number> = Object.fromEntries(
         .flatMap((p) => p.items)
         .filter(isOnDemandOneOffItem)
         .map((item) => {
-            const band = item.configs?.[0]?.bands?.[0] as MockBand | undefined;
+            const band: MockBand | undefined = item.configs?.[0]?.bands?.[0];
             const raw = band?.fixed_amount?.quantity ?? band?.amount?.quantity ?? '0';
             return [item.id, parseFloat(raw)] as const;
         }),
@@ -185,6 +187,25 @@ const ITEM_PRICES_EUR: Record<string, number> = Object.fromEntries(
 const VAT_RATE = 0.21;
 
 const eur = (amount: number) => ({ quantity: amount.toFixed(2), currency: 'EUR' as const });
+
+const mockPaymentAcceptor: PaymentAcceptor = {
+    id: 'paya_NwDeeN0vgXgeP1AyNx14',
+    object_type: 'PAYMENT_ACCEPTOR',
+    status: 'ACTIVE',
+    reference: 'mock-payment-acceptor',
+    name: 'Mock payment acceptor',
+    type: 'PAYMENT_GATEWAY',
+};
+
+const mockPaymentIntegration: PaymentIntegration = {
+    id: 'intg_zwDeeN0vgXgeM6APNW1g',
+    object_type: 'INTEGRATION',
+    reference: 'mock-payment-integration',
+    name: 'Mock payment integration',
+    description: 'Mock payment integration',
+    status: 'ACTIVE',
+    type: 'PAYMENT_GATEWAY',
+};
 
 /**
  * Simulates `POST /v1/portal/pricing-plan-schedules/{id}/preview-on-demand-pricing-items`.
@@ -196,6 +217,7 @@ export const getMockPreviewResponse = (selectedItemIds: string[]): InvoicePrevie
     const total = base + tax;
 
     return {
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         invoice: {
             tax_summary: {
                 base_amount: eur(base),
@@ -204,6 +226,7 @@ export const getMockPreviewResponse = (selectedItemIds: string[]): InvoicePrevie
                 country_code: 'NL',
             },
         } as unknown as Invoice,
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         first_invoice: {} as unknown as Invoice,
         invoice_infos: [],
     };
@@ -244,12 +267,8 @@ export const getMockOnDemandPricingItemsResponse = (
  */
 export const getMockPaymentMethodOptionsResponse = (): PaymentMethodOptionsResponse => [
     {
-        payment_acceptor: {
-            id: 'paya_NwDeeN0vgXgeP1AyNx14',
-        } as PaymentMethodOptionsResponse[number]['payment_acceptor'],
-        integration: {
-            id: 'intg_zwDeeN0vgXgeM6APNW1g',
-        } as PaymentMethodOptionsResponse[number]['integration'],
+        payment_acceptor: mockPaymentAcceptor,
+        integration: mockPaymentIntegration,
         options: [
             {
                 name: 'iDeal',

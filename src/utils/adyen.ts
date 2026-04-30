@@ -1,4 +1,4 @@
-import type { CoreConfiguration, PaymentAmountExtended, RawPaymentMethod } from '@adyen/adyen-web';
+import type { CoreConfiguration, PaymentAmount, RawPaymentMethod } from '@adyen/adyen-web';
 import type {
     Amount,
     PaymentMethodOptionAdyen,
@@ -18,7 +18,7 @@ export function getAdyenClientKeyFromPaymentMethodOptionsResponse(
 /**
  * Transforms a Solvimon amount to an Adyen amount.
  */
-export function transformToAdyenAmount(amount: Amount): PaymentAmountExtended {
+export function transformToAdyenAmount(amount: Amount): PaymentAmount {
     const formatter = new Intl.NumberFormat(undefined, {
         style: 'currency',
         currency: amount.currency,

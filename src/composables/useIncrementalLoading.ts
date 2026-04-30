@@ -1,11 +1,11 @@
-import {
-    ApiStatus,
-    type ApiCollectionResponse,
-    type ApiSuccessCollectionResponse,
-} from '@solvimon/solvimon-types';
+import { ApiStatus, type ApiCollectionResponse } from '@solvimon/solvimon-types';
 import { getPaginatedFullList, isApiSuccessCollectionResponse } from '@solvimon/solvimon-ui';
-import { computed, ref } from 'vue';
+import { computed, ref, shallowRef } from 'vue';
 import { cloneDeep } from 'lodash-es';
+
+function toError(error: unknown) {
+    return error instanceof Error ? error : new Error('Something went wrong while fetching data.');
+}
 
 export function useIncrementalLoading<T>({
     initialData = [],
@@ -14,7 +14,7 @@ export function useIncrementalLoading<T>({
     initialData?: T[];
     service: (page: number) => Promise<ApiCollectionResponse<T>>;
 }) {
-    const items = ref<T[]>(initialData);
+    const items = shallowRef<T[]>(initialData);
     const status = ref<ApiStatus>(ApiStatus.Initial);
     const error = ref<Error | null>(null);
     const page = ref<number>(1);
@@ -39,16 +39,14 @@ export function useIncrementalLoading<T>({
                 return;
             }
 
-            const successResponse = response as ApiSuccessCollectionResponse<T>;
-
             // Check if there is a next batch
-            hasNextBatch.value = !!successResponse.links?.next;
+            hasNextBatch.value = !!response.links?.next;
 
-            items.value = [...items.value, ...successResponse.data] as T[];
+            items.value = [...items.value, ...response.data];
             status.value = ApiStatus.Done;
             page.value = pageNumber;
         } catch (err) {
-            error.value = err as Error;
+            error.value = toError(err);
             status.value = ApiStatus.Failed;
         }
     };

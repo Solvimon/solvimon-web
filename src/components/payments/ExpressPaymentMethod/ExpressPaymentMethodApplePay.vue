@@ -1,7 +1,13 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
-import type { BillingPeriod, AuthorizePaymentPayload, CountryCode } from '@solvimon/solvimon-types';
-import type { ApplePayConfiguration } from '@adyen/adyen-web';
+import { isValidCountryCode } from '@solvimon/solvimon-ui';
+import type {
+    BillingPeriod,
+    AuthorizePaymentPayload,
+    Address,
+    CountryCode,
+} from '@solvimon/solvimon-types';
+import type { AddressData, ApplePayConfiguration } from '@adyen/adyen-web';
 import type { ExpressPaymentMethodEmits } from './ExpressPaymentMethod.types';
 import type { ExpressPaymentMethodApplePayProps } from './ExpressPaymentMethodApplePay.types';
 import ExpressPaymentMethodButton from '@/components/payments/ExpressPaymentMethodButton/ExpressPaymentMethodButton.vue';
@@ -81,8 +87,8 @@ const initApplePay = async () => {
                 ...(event.paymentMethod.billingContact?.locality && {
                     city: event.paymentMethod.billingContact.locality,
                 }),
-                ...(event.paymentMethod.billingContact?.countryCode && {
-                    country: event.paymentMethod.billingContact.countryCode as CountryCode,
+                ...(getCountryCode(event.paymentMethod.billingContact?.countryCode) && {
+                    country: getCountryCode(event.paymentMethod.billingContact?.countryCode),
                 }),
             });
 
@@ -114,51 +120,38 @@ const initApplePay = async () => {
                 // Transform payment data from Apple Pay authorizedEvent
                 // The authorizedEvent contains the payment data that needs to be sent to Adyen
                 const authorizedEvent = data.authorizedEvent;
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const eventData = authorizedEvent as any;
 
                 logger.info('APPLE_PAY_EVENT_DATA', 'Apple Pay event data structure', {
-                    eventData,
-                    hasPaymentMethod: !!eventData.paymentMethod,
-                    hasBrowserInfo: !!eventData.browserInfo,
-                    hasRiskData: !!eventData.riskData,
+                    eventData: authorizedEvent,
+                    hasPaymentMethod: !!authorizedEvent.payment.token.paymentMethod,
+                    hasBrowserInfo: !!authorizedEvent.payment.token.paymentData,
                     billingAddress: data.billingAddress,
                 });
 
                 // Extract billing information from multiple possible sources
                 // Try to get it from the authorizedEvent paymentMethod first, then from data.billingAddress
-                const billingContact =
-                    eventData.paymentMethod?.billingContact || eventData.payment?.billingContact;
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const billingAddress = data.billingAddress as any;
+                const billingContact = authorizedEvent.payment.billingContact;
+                const billingAddress = data.billingAddress;
 
                 if (billingContact) {
-                    emit('update-billing-information', {
-                        postal_code: billingContact.postalCode,
-                        city: billingContact.locality,
-                        country: billingContact.countryCode,
-                    });
+                    emit(
+                        'update-billing-information',
+                        getBillingInformationFromContact(billingContact),
+                    );
                 } else if (billingAddress) {
-                    emit('update-billing-information', {
-                        postal_code: billingAddress.postalCode,
-                        city: billingAddress.city,
-                        country: billingAddress.countryCode || billingAddress.country,
-                    });
-                }
-
-                // Check if required data exists
-                if (!eventData.paymentMethod) {
-                    logger.error('APPLE_PAY_ERROR', 'Apple Pay event data missing paymentMethod', {
-                        eventData,
-                    });
-                    actions.reject();
-                    return;
+                    emit(
+                        'update-billing-information',
+                        getBillingInformationFromAddress(billingAddress),
+                    );
                 }
 
                 const adyen: AuthorizePaymentPayload['adyen'] = {
-                    payment_method: transformObjectToAdyenObject(eventData.paymentMethod),
-                    browser_info: transformObjectToAdyenObject(eventData.browserInfo),
-                    risk_data: transformObjectToAdyenObject(eventData.riskData),
+                    payment_method: transformObjectToAdyenObject(
+                        authorizedEvent.payment.token.paymentMethod,
+                    ),
+                    browser_info: transformObjectToAdyenObject(
+                        authorizedEvent.payment.token.paymentData,
+                    ),
                 };
 
                 logger.info('APPLE_PAY_ADYEN_PAYLOAD', 'Adyen payload prepared', { adyen });
@@ -272,10 +265,31 @@ const getAppleIntervalConfigFromTimePeriod = (
             recurringPaymentIntervalUnit,
             recurringPaymentIntervalCount,
         };
-    } else {
-        // Log unsupported time period unit
-        return undefined;
     }
+    // Log unsupported time period unit
+    return undefined;
+};
+
+const getBillingInformationFromContact = (
+    contact: ApplePayJS.ApplePayPaymentContact,
+): Partial<Address> => ({
+    postal_code: contact.postalCode,
+    city: contact.locality,
+    country: contact.countryCode,
+});
+
+const getBillingInformationFromAddress = (address: Partial<AddressData>): Partial<Address> => ({
+    postal_code: address.postalCode,
+    city: address.city,
+    country: address.country,
+});
+
+const getCountryCode = (countryCode: string | undefined): CountryCode | undefined => {
+    return countryCode && isCountryCode(countryCode) ? countryCode : undefined;
+};
+
+const isCountryCode = (countryCode: string): countryCode is CountryCode => {
+    return isValidCountryCode(countryCode);
 };
 
 const handleClick = () => {
@@ -297,7 +311,7 @@ onMounted(() => {
 
 <template>
     <ExpressPaymentMethodButton v-if="isVisible" type="applepay" @click="handleClick" />
-    <div class="w-[1px] h-[1px] overflow-hidden opacity-0 absolute">
+    <div class="absolute h-[1px] w-[1px] overflow-hidden opacity-0">
         <div ref="applePayButtonRef"></div>
     </div>
 </template>

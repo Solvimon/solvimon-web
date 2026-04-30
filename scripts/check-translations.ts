@@ -13,6 +13,27 @@ const files = fs
     .readdirSync(translationsDir)
     .filter((file) => file.endsWith('.json') && file !== 'source.json');
 
+function parseTranslationFile(content: string, file: string): Record<string, string> {
+    const parsed: unknown = JSON.parse(content);
+
+    if (!isTranslationRecord(parsed)) {
+        throw new Error(
+            `Invalid translation file ${file}: expected a JSON object with string values`,
+        );
+    }
+
+    return parsed;
+}
+
+function isTranslationRecord(value: unknown): value is Record<string, string> {
+    return (
+        typeof value === 'object' &&
+        value !== null &&
+        !Array.isArray(value) &&
+        Object.values(value).every((translation) => typeof translation === 'string')
+    );
+}
+
 files.forEach((file) => {
     const localePath = path.normalize(path.join(translationsDir, file));
 
@@ -25,7 +46,7 @@ files.forEach((file) => {
 
     const localeContent = fs.readFileSync(localePath, 'utf-8');
 
-    const locale = JSON.parse(localeContent) as Record<string, string>;
+    const locale = parseTranslationFile(localeContent, file);
     const missingKeys = sourceKeys.filter((key) => !(key in locale));
 
     if (missingKeys.length > 0) {

@@ -10,8 +10,7 @@ onMounted(() => {
     const el = getCurrentInstance()?.vnode?.el;
     if (el && typeof el === 'object' && el instanceof Node) {
         const root = el.getRootNode();
-        hostRef.value =
-            root instanceof ShadowRoot ? (root.host as HTMLElement) : (el.parentElement ?? null);
+        hostRef.value = root instanceof ShadowRoot ? getHtmlHost(root) : (el.parentElement ?? null);
     } else {
         hostRef.value = null;
     }
@@ -22,6 +21,10 @@ onUnmounted(() => {
 });
 
 provide(HOST_ELEMENT_PROVIDER_INJECTION_KEY, { hostRef, customElementName });
+
+function getHtmlHost(root: ShadowRoot): HTMLElement | null {
+    return root.host instanceof HTMLElement ? root.host : null;
+}
 </script>
 
 <template>

@@ -12,5 +12,5 @@ export function useLogger(): Logger {
 
     // Safe fallback: no-op logger so internal code can call it without crashing.
     const noop = () => {};
-    return { debug: noop, info: noop, warn: noop, error: noop, capture: noop } as Logger;
+    return { debug: noop, info: noop, warn: noop, error: noop, capture: noop };
 }

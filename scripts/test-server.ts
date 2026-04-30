@@ -5,7 +5,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'node:url';
 import type { IncomingMessage, ServerResponse } from 'http';
-import { TEST_APP_HOST, TEST_APP_PORT } from 'global.config';
+import { TEST_APP_HOST, TEST_APP_PORT } from '../global.config';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

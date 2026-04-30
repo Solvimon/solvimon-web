@@ -1,4 +1,4 @@
-@import '@solvimon/tailwind-config/tailwind.css';
+@import '../../tailwind.css';
 
 @tailwind base;
 @tailwind components;

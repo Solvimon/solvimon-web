@@ -1,0 +1,16 @@
+{
+  "recommendations": [
+    "vue.volar",
+    "bradlc.vscode-tailwindcss",
+    "christian-kohler.npm-intellisense",
+    "dbaeumer.vscode-eslint",
+    "dkundel.vscode-new-file",
+    "eamodio.gitlens",
+    "esbenp.prettier-vscode",
+    "formulahendry.auto-rename-tag",
+    "Gruntfuggly.todo-tree",
+    "ms-vscode-remote.remote-containers",
+    "wix.vscode-import-cost",
+  ]
+}
+

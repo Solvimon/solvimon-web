@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { createSolvimonCore } from '@solvimon/solvimon-web/core';
-import type { Environment } from '@solvimon/solvimon-types';
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 
 const checkoutContainer = ref<HTMLDivElement | null>(null);
@@ -27,7 +26,7 @@ const portalObject = {
 };
 
 const solvimon = createSolvimonCore({
-    environment: 'DEV' as Environment,
+    environment: 'DEV' as const,
     locale: 'en-US',
     logLevel: 'info',
     onError: handleError,

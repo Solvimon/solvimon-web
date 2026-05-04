@@ -2,6 +2,7 @@
 import type { Pricing } from '@solvimon/solvimon-types';
 import { computed } from 'vue';
 import { Button, Section, useIntl, usePricingItem } from '@solvimon/solvimon-ui';
+import { toRef } from 'vue';
 import PricingGroupTitle from './PricingGroupTitle.vue';
 import PricingGroupContent from './PricingGroupContent.vue';
 import type { PricingGroupEditorBaseProps } from './PricingGroupEditorBase.types';
@@ -14,8 +15,8 @@ const model = defineModel<Pricing['id'][]>('modelValue', { required: true });
 
 const { $t } = useIntl();
 const { renderPricingForPricingItem } = usePricingItem({
-    currency: computed(() => props.currency),
-    billingPeriod: computed(() => props.billingPeriod),
+    currency: toRef(props, 'currency'),
+    billingPeriod: toRef(props, 'billingPeriod'),
 });
 
 const isSelected = (pricingId: Pricing['id']) => {

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Section, Toggle, useIntl, usePricingItem } from '@solvimon/solvimon-ui';
-import { computed } from 'vue';
+import { computed, toRef } from 'vue';
 import type { Pricing } from '@solvimon/solvimon-types';
 import type { AddonSingleEditorProps } from './AddonSingleEditor.types';
 import PricingGroupTitle from './PricingGroupTitle.vue';
@@ -12,8 +12,8 @@ const model = defineModel<Pricing['id'][]>('modelValue', { required: true });
 
 const { $t } = useIntl();
 const { renderPricingForPricingItem } = usePricingItem({
-    currency: computed(() => props.currency),
-    billingPeriod: computed(() => props.billingPeriod),
+    currency: toRef(props, 'currency'),
+    billingPeriod: toRef(props, 'billingPeriod'),
 });
 
 const groupPricingIds = props.pricings.map((pricing) => pricing.id);

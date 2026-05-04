@@ -10,6 +10,11 @@ export default mergeConfig(
             globals: true,
             exclude: [...configDefaults.exclude, 'tests/playwright/**', '**/config.test.ts'],
             root: fileURLToPath(new URL('./', import.meta.url)),
+            server: {
+                deps: {
+                    inline: ['@solvimon/solvimon-ui'],
+                },
+            },
         },
     }),
 );

@@ -361,9 +361,13 @@ describe('ExpressPaymentMethodApplePay', () => {
             const mockReject = vi.fn();
             const mockData = {
                 authorizedEvent: {
-                    paymentMethod: { test: 'data' },
-                    browserInfo: { test: 'browser' },
-                    riskData: { test: 'risk' },
+                    payment: {
+                        token: {
+                            paymentMethod: { test: 'data' },
+                            paymentData: { test: 'browser' },
+                        },
+                        billingContact: null,
+                    },
                 },
                 billingAddress: null,
             };
@@ -416,9 +420,13 @@ describe('ExpressPaymentMethodApplePay', () => {
             const mockReject = vi.fn();
             const mockData = {
                 authorizedEvent: {
-                    paymentMethod: { test: 'data' },
-                    browserInfo: { test: 'browser' },
-                    riskData: { test: 'risk' },
+                    payment: {
+                        token: {
+                            paymentMethod: { test: 'data' },
+                            paymentData: { test: 'browser' },
+                        },
+                        billingContact: null,
+                    },
                 },
                 billingAddress: null,
             };

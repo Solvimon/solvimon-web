@@ -123,3 +123,5 @@ The CI pipeline will run the test suite and, if it passes, publish the new versi
 | ------------------ | ----------------------------------------------------------- |
 | `NPM_TOKEN`        | npm access token with publish rights to the `@solvimon` org |
 | `GITLAB_NPM_TOKEN` | GitLab token for installing `@solvimon/*` dependencies      |
+
+Want to contribute? Check the [developer documentation](./docs/development/readme.md).

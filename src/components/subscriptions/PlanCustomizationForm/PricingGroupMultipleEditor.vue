@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Section, useIntl, usePricingItem, useValidation } from '@solvimon/solvimon-ui';
 import { CheckboxGroupExtended } from '@solvimon/solvimon-ui';
-import { computed } from 'vue';
+import { computed, toRef } from 'vue';
 import { containsAtLeastOneOf } from '@solvimon/solvimon-ui/validators';
 import PricingGroupTitle from './PricingGroupTitle.vue';
 import type { PricingGroupEditorBaseProps } from './PricingGroupEditorBase.types';
@@ -16,8 +16,8 @@ const model = defineModel<PricingGroupEditorBaseProps['modelValue']>('modelValue
 
 const { $t } = useIntl();
 const { renderPricingForPricingItem } = usePricingItem({
-    currency: computed(() => props.currency),
-    billingPeriod: computed(() => props.billingPeriod),
+    currency: toRef(props, 'currency'),
+    billingPeriod: toRef(props, 'billingPeriod'),
 });
 const { isMobileViewport } = useViewport();
 

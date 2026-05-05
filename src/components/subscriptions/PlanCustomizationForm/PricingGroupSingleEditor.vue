@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, toRef } from 'vue';
 import {
     PricingGroupRangeInput,
     RadioGroupExtended,
@@ -25,8 +25,8 @@ const model = defineModel<PricingGroupEditorBaseProps['modelValue']>('modelValue
 
 const { $t } = useIntl();
 const { renderPricingForPricingItem } = usePricingItem({
-    currency: computed(() => props.currency),
-    billingPeriod: computed(() => props.billingPeriod),
+    currency: toRef(props, 'currency'),
+    billingPeriod: toRef(props, 'billingPeriod'),
 });
 const { isMobileViewport } = useViewport();
 

@@ -80,7 +80,7 @@ watch(
                         description: 'The email address of the customer in the checkout form',
                     })
                 "
-                :error="validation.email?.$errors || apiError?.email"
+                :error="validation.value.email?.$errors || apiError?.email"
             />
 
             <CountrySelect

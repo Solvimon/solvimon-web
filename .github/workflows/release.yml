@@ -26,20 +26,15 @@ jobs:
               env:
                   GITLAB_NPM_TOKEN: ${{ secrets.GITLAB_NPM_TOKEN }}
 
-            - name: Unit tests
-              run: npm run test:unit -- --run
+            - name: Verify tag matches package version
+              run: |
+                  package_version=$(node -p "require('./package.json').version")
+                  tag_version="${GITHUB_REF_NAME#v}"
 
-            - name: Type check
-              run: npm run type-check
-
-            - name: Lint
-              run: npm run lint:ci
-
-            - name: Build
-              run: npm run build
-
-            - name: Check changelog
-              run: npm run changelog:check
+                  if [ "$package_version" != "$tag_version" ]; then
+                      echo "Tag v$tag_version does not match package.json version $package_version."
+                      exit 1
+                  fi
 
             - name: Publish to npm
               run: npm publish

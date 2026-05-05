@@ -101,7 +101,10 @@ Embeddable building blocks.
 
 ## Release pipeline
 
-Releases are published to [npm](https://www.npmjs.com/package/@solvimon/solvimon-web) automatically via GitHub Actions when a version tag is pushed.
+Releases are published to [npm](https://www.npmjs.com/package/@solvimon/solvimon-web)
+automatically via GitHub Actions. When a `package.json` version bump is merged
+to `main`, GitHub Actions creates a matching `v*` tag. The tag then triggers the
+publish workflow.
 
 ### Cutting a release
 
@@ -115,18 +118,21 @@ npm run version:major   # 0.1.0 → 1.0.0  (breaking changes)
 $EDITOR CHANGELOG.md
 npm run changelog:check
 
-# Push the commit and the tag
-git push --follow-tags
+# Push the release commit
+git push
 ```
 
-The CI pipeline will run the test suite and changelog check, and if both pass,
-publish the new version to npm.
+The release tag workflow checks that `package.json` changed version and that
+`CHANGELOG.md` contains notes for that version. It then creates a `v<version>`
+tag. The tag publish workflow verifies that the tag matches the package version
+before publishing to npm.
 
 ### Required GitHub secrets
 
-| Secret             | Description                                                 |
-| ------------------ | ----------------------------------------------------------- |
-| `NPM_TOKEN`        | npm access token with publish rights to the `@solvimon` org |
-| `GITLAB_NPM_TOKEN` | GitLab token for installing `@solvimon/*` dependencies      |
+| Secret                       | Description                                                          |
+| ---------------------------- | -------------------------------------------------------------------- |
+| `NPM_TOKEN`                  | npm access token with publish rights to the `@solvimon` org          |
+| `GITLAB_NPM_TOKEN`           | GitLab token for installing `@solvimon/*` dependencies               |
+| `SOLVIMON_WEB_RELEASE_TOKEN` | GitHub token with contents write access, used to create release tags |
 
 Want to contribute? Check the [developer documentation](./docs/development/readme.md).

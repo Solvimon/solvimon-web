@@ -3,7 +3,7 @@ import { defineCustomElement } from '@/utils/customElements';
 import { getComponentName } from '@/utils/component';
 
 export const SolvimonInvoicesList = defineCustomElement(SolvimonInvoicesListVue);
-export const COMPONENT_NAME = getComponentName('customer-overview');
+export const COMPONENT_NAME = getComponentName('invoices-list');
 
 export const defineSolvimonInvoicesList = () => {
     if (!customElements.get(COMPONENT_NAME)) {

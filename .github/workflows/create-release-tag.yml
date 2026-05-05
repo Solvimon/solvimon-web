@@ -1,0 +1,78 @@
+name: Create Release Tag
+
+on:
+    push:
+        branches:
+            - main
+        paths:
+            - package.json
+            - package-lock.json
+            - CHANGELOG.md
+
+permissions:
+    contents: read
+
+jobs:
+    create-release-tag:
+        name: Create release tag
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0
+
+            - name: Check package version change
+              id: version
+              run: |
+                  before_sha="${{ github.event.before }}"
+                  current_version=$(node -p "require('./package.json').version")
+
+                  if ! git cat-file -e "$before_sha:package.json" 2> /dev/null; then
+                      echo "changed=false" >> "$GITHUB_OUTPUT"
+                      echo "Could not read package.json from previous commit; skipping tag creation."
+                      exit 0
+                  fi
+
+                  previous_version=$(git show "$before_sha:package.json" | node -p "JSON.parse(require('fs').readFileSync(0, 'utf8')).version")
+
+                  echo "current=$current_version" >> "$GITHUB_OUTPUT"
+                  echo "previous=$previous_version" >> "$GITHUB_OUTPUT"
+
+                  if [ "$current_version" = "$previous_version" ]; then
+                      echo "changed=false" >> "$GITHUB_OUTPUT"
+                      echo "package.json version did not change; skipping tag creation."
+                  else
+                      echo "changed=true" >> "$GITHUB_OUTPUT"
+                      echo "package.json version changed from $previous_version to $current_version."
+                  fi
+
+            - name: Check changelog
+              if: steps.version.outputs.changed == 'true'
+              run: npm run changelog:check
+
+            - name: Check tag does not exist
+              if: steps.version.outputs.changed == 'true'
+              run: |
+                  tag_name="v${{ steps.version.outputs.current }}"
+
+                  if git ls-remote --exit-code --tags origin "refs/tags/$tag_name" > /dev/null 2>&1; then
+                      echo "Tag $tag_name already exists."
+                      exit 1
+                  fi
+
+            - name: Create release tag
+              if: steps.version.outputs.changed == 'true'
+              env:
+                  SOLVIMON_WEB_RELEASE_TOKEN: ${{ secrets.SOLVIMON_WEB_RELEASE_TOKEN }}
+              run: |
+                  tag_name="v${{ steps.version.outputs.current }}"
+
+                  if [ -z "$SOLVIMON_WEB_RELEASE_TOKEN" ]; then
+                      echo "SOLVIMON_WEB_RELEASE_TOKEN is required to create tags that trigger the release workflow."
+                      exit 1
+                  fi
+
+                  git config user.name "github-actions[bot]"
+                  git config user.email "github-actions[bot]@users.noreply.github.com"
+                  git tag "$tag_name" -m "Release $tag_name"
+                  git push "https://x-access-token:${SOLVIMON_WEB_RELEASE_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "refs/tags/$tag_name"

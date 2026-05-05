@@ -101,27 +101,8 @@ Embeddable building blocks.
 
 ## Release pipeline
 
-Releases are published to [npm](https://www.npmjs.com/package/@solvimon/solvimon-web) automatically via GitHub Actions when a version tag is pushed.
-
-### Cutting a release
-
-```bash
-# Bump the version (choose one)
-npm run version:patch   # 0.1.0 → 0.1.1  (bug fixes)
-npm run version:minor   # 0.1.0 → 0.2.0  (new features)
-npm run version:major   # 0.1.0 → 1.0.0  (breaking changes)
-
-# Push the commit and the tag
-git push --follow-tags
-```
-
-The CI pipeline will run the test suite and, if it passes, publish the new version to npm.
-
-### Required GitHub secrets
-
-| Secret             | Description                                                 |
-| ------------------ | ----------------------------------------------------------- |
-| `NPM_TOKEN`        | npm access token with publish rights to the `@solvimon` org |
-| `GITLAB_NPM_TOKEN` | GitLab token for installing `@solvimon/*` dependencies      |
+Releases are published to [npm](https://www.npmjs.com/package/@solvimon/solvimon-web)
+automatically via GitHub Actions. See the
+[publishing documentation](./docs/development/publish.md) for the release flow.
 
 Want to contribute? Check the [developer documentation](./docs/development/readme.md).

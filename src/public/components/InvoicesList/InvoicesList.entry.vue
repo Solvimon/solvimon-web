@@ -23,11 +23,11 @@ defineProps<SolvimonInvoicesListEntryProps>();
         @error="(error) => $emit('error', error)"
     >
         <InvoicesListView v-bind="$props">
-            <template #default="{ invoices }">
+            <template #default="{ invoices, isLoading }">
                 <InvoicesList
                     :configuration="configuration"
                     :invoices="invoices.items.value"
-                    :is-loading="invoices.isPending.value"
+                    :is-loading="isLoading"
                     :has-more-items="invoices.hasNextBatch.value"
                     @load-more="invoices.fetchMore"
                 />

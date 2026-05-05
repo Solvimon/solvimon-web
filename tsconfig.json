@@ -12,6 +12,9 @@
         "scripts/**/*.ts"
     ],
     "exclude": ["src/**/__tests__/*", "src/**/*.stories.ts", "tests/playwright/**/*"],
+    "vueCompilerOptions": {
+        "strictTemplates": true
+    },
     "compilerOptions": {
         "outDir": "dist",
         "target": "esnext",

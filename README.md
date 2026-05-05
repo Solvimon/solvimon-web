@@ -111,11 +111,16 @@ npm run version:patch   # 0.1.0 → 0.1.1  (bug fixes)
 npm run version:minor   # 0.1.0 → 0.2.0  (new features)
 npm run version:major   # 0.1.0 → 1.0.0  (breaking changes)
 
+# Add release notes for the new version
+$EDITOR CHANGELOG.md
+npm run changelog:check
+
 # Push the commit and the tag
 git push --follow-tags
 ```
 
-The CI pipeline will run the test suite and, if it passes, publish the new version to npm.
+The CI pipeline will run the test suite and changelog check, and if both pass,
+publish the new version to npm.
 
 ### Required GitHub secrets
 

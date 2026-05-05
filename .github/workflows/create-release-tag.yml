@@ -20,6 +20,7 @@ jobs:
             - uses: actions/checkout@v4
               with:
                   fetch-depth: 0
+                  token: ${{ secrets.SOLVIMON_WEB_RELEASE_TOKEN }}
 
             - name: Check package version change
               id: version
@@ -75,4 +76,4 @@ jobs:
                   git config user.name "github-actions[bot]"
                   git config user.email "github-actions[bot]@users.noreply.github.com"
                   git tag "$tag_name" -m "Release $tag_name"
-                  git push "https://x-access-token:${SOLVIMON_WEB_RELEASE_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "refs/tags/$tag_name"
+                  git push origin "refs/tags/$tag_name"

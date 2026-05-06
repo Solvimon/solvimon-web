@@ -39,7 +39,8 @@ onMounted(() => {
         </Typography>
         <Button
             v-if="redirectUrl"
-            :to="redirectUrl"
+            tag="a"
+            :href="redirectUrl"
             color="gray"
             variant="outline"
             size="xs"

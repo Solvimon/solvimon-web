@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { COMPONENT_NAME } from './CustomerPaymentMethods.entry.ce';
 import type { SolvimonCustomerPaymentMethodsEntryProps } from './CustomerPaymentMethods.entry.types';
-import { useCustomerPaymentMethodOptions } from '@/composables/useCustomerPaymentMethodOptions';
 import { useLoadInitialData } from '@/composables/useLoadInitialData';
 import { usePaymentMethods } from '@/composables/usePaymentMethods';
 import { Provider } from '@/components/providers';
@@ -16,12 +15,7 @@ const paymentMethods = usePaymentMethods({
     customerId,
     pageSize: props.configuration?.maxItems || DEFAULT_MAX_ITEMS,
 });
-const customerPaymentMethodOptions = useCustomerPaymentMethodOptions({ customerId });
-
-const { isLoading } = useLoadInitialData(
-    paymentMethods.fetchInitial(),
-    customerPaymentMethodOptions.fetch(),
-);
+const { isLoading } = useLoadInitialData(paymentMethods.fetchInitial());
 </script>
 
 <template>
@@ -41,7 +35,6 @@ const { isLoading } = useLoadInitialData(
         <slot
             name="default"
             :payment-methods="paymentMethods.items.value"
-            :payment-methods-options="customerPaymentMethodOptions.items.value"
             :is-loading="isLoading"
         />
     </Provider>

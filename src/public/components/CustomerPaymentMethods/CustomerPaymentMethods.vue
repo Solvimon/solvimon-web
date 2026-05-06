@@ -25,7 +25,6 @@ const { dispatchAction } = useActionDispatchProvider();
         v-else
         :is-loading="isLoading"
         :payment-methods="paymentMethods"
-        :payment-methods-options="paymentMethodsOptions"
         :show-view-all-button="configuration?.showViewAllButton"
         :show-add-button="configuration?.showAddButton"
         @view-all-payment-methods="dispatchAction({ action: 'view-all-payment-methods' })"

@@ -50,7 +50,6 @@ const { isLoading } = useLoadInitialData(
                 :subscriptions="subscriptions.items.value"
                 :payment-methods="paymentMethods.items.value"
                 :is-loading="isLoading"
-                :has-more-items="subscriptions.hasNextBatch.value"
                 @load-more="subscriptions.fetchMore"
             />
         </template>
@@ -72,14 +71,12 @@ const { isLoading } = useLoadInitialData(
             <CustomerPaymentMethods
                 :is-loading="isLoading"
                 :payment-methods="paymentMethods.items.value"
-                :payment-methods-options="customerPaymentMethodOptions.items.value"
             />
 
             <BillingInformation
                 v-if="customer.customer.value"
                 :is-loading="isLoading"
                 :customer="customer.customer.value"
-                :payment-methods="paymentMethods.items.value"
             />
         </template>
     </ContentWithAsideLayout>

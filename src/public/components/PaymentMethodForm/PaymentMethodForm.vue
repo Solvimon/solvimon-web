@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { getCustomerCountry, Section, Skeleton, useIntl } from '@solvimon/solvimon-ui';
+import { getCustomerCountry, Section, useIntl } from '@solvimon/solvimon-ui';
+import Skeleton from '@/components/shared/Skeleton.vue';
 import { computed } from 'vue';
 import type { Amount } from '@solvimon/solvimon-types';
 import type {

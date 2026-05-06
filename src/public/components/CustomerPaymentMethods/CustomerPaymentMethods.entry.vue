@@ -23,11 +23,10 @@ defineProps<SolvimonCustomerPaymentMethodsEntryProps>();
         @error="(error) => $emit('error', error)"
     >
         <CustomerPaymentMethodsView v-bind="$props">
-            <template #default="{ paymentMethods, paymentMethodsOptions, isLoading }">
+            <template #default="{ paymentMethods, isLoading }">
                 <CustomerPaymentMethods
                     :configuration="configuration"
                     :payment-methods="paymentMethods"
-                    :payment-methods-options="paymentMethodsOptions"
                     :is-loading="isLoading"
                 />
             </template>

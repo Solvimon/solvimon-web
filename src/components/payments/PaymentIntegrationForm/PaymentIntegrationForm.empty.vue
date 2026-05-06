@@ -6,7 +6,7 @@ const { $t } = useIntl();
 </script>
 
 <template>
-    <Placeholder :animated="false" class="h-40 flex items-center justify-center">
+    <Placeholder class="flex h-40 items-center justify-center">
         <div class="flex flex-col items-center gap-2">
             <Typography tag="span" shade="lighter"><Icon size="lg" icon="person_pin" /></Typography>
             <Typography tag="span" variant="body-xs" shade="lighter">

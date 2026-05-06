@@ -1,4 +1,4 @@
-import type { PaymentMethod, PaymentMethodOption } from '@solvimon/solvimon-types';
+import type { PaymentMethod } from '@solvimon/solvimon-types';
 
 export interface CustomerPaymentMethodsConfiguration {
     /**
@@ -19,7 +19,6 @@ export interface CustomerPaymentMethodsConfiguration {
 export interface CustomerPaymentMethodsProps {
     isLoading: boolean;
     paymentMethods: PaymentMethod[];
-    paymentMethodsOptions: PaymentMethodOption[];
     maxPaymentMethods?: number;
     configuration?: CustomerPaymentMethodsConfiguration;
 }

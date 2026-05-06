@@ -23,7 +23,7 @@ const { dispatchAction } = useActionDispatchProvider();
 <template>
     <Section
         no-border
-        spacing="none"
+        no-spacing
         content-background="none"
         :title="
             $t({

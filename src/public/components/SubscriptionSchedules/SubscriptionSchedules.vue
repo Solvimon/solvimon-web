@@ -10,7 +10,7 @@ const { $t } = useIntl();
 <template>
     <Section
         no-border
-        spacing="none"
+        no-spacing
         content-background="none"
         :title="
             $t({

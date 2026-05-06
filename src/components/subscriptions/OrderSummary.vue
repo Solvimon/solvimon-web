@@ -399,7 +399,6 @@ const handleBinaryBillingToggle = (checked: boolean) => {
                                     :model-value="
                                         selectedBillingPeriodKey === periodBounds.biggestPeriod
                                     "
-                                    show-suffix-label-in-input
                                     @update:model-value="handleBinaryBillingToggle"
                                 />
                             </template>

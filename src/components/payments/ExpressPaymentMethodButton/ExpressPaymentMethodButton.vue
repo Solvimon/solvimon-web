@@ -60,7 +60,6 @@ function handleClick() {
                     viewBox="0 0 105 43"
                     version="1.1"
                     xmlns="http://www.w3.org/2000/svg"
-                    xmlns:xlink="http://www.w3.org/1999/xlink"
                 >
                     <title>Apple Logo</title>
                     <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">

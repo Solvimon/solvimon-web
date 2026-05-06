@@ -1,17 +1,12 @@
 <script setup lang="ts">
 import { Spinner } from '@solvimon/solvimon-ui';
+import type { LoaderProps } from './Loader.types';
 
-withDefaults(
-    defineProps<{
-        size?: number;
-        withSpacing?: boolean;
-    }>(),
-    { size: 4, withSpacing: false },
-);
+withDefaults(defineProps<LoaderProps>(), { size: '4', withSpacing: false });
 </script>
 
 <template>
-    <div :class="['flex items-center justify-center h-[88px]', { 'p-3 pt-2': withSpacing }]">
-        <Spinner :spinner-size="size" />
+    <div :class="['flex h-[88px] items-center justify-center', { 'p-3 pt-2': withSpacing }]">
+        <Spinner :size="size" />
     </div>
 </template>

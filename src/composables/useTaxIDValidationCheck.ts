@@ -6,6 +6,9 @@ import { isEUCountry } from '@/utils/viesChecker';
 import { createRequestService } from '@/services/requests';
 
 export function useTaxIDValidationCheck(form: Ref<CheckoutFormState>) {
+    const request = createRequestService();
+    const config = useConfig();
+    
     const taxIdValidationData = ref<TaxIdValidationResult | undefined>(undefined);
 
     const taxId = computed(() => form.value.companyVatNumber?.trim() ?? '');
@@ -18,18 +21,13 @@ export function useTaxIDValidationCheck(form: Ref<CheckoutFormState>) {
         return isEUCountry(countryCode.value);
     });
 
-    const isTaxIDCheckEnabled = computed(() => {
-        return taxId.value && legalName.value && countryCode.value;
-    });
+    const isTaxIDCheckEnabled = computed(() => !!(taxId.value && legalName.value && countryCode.value));
 
     const showViesCheckNotice = computed(() => {
         return isSelectedCountryEU.value && taxId.value;
     });
 
-    async function runTaxIDCheck() {  
-        const request = createRequestService();
-        const config = useConfig();
-
+    async function runTaxIDCheck() {
         if (!isTaxIDCheckEnabled.value || !isSelectedCountryEU.value) {
             return;
         }

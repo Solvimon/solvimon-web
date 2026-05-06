@@ -12,6 +12,9 @@ import {
 } from '@solvimon/solvimon-ui';
 import { computed, ref } from 'vue';
 import type { CheckoutFormState, CheckoutFormProps, CheckoutFormEmits } from './CheckoutForm.types';
+import TaxIDCheckNotice from './TaxIDCheckNotice.vue';
+import { isEUCountry } from '@/utils/viesChecker';
+import { useTaxIDValidationCheck } from '@/composables/useTaxIDValidationCheck';
 
 const FORM_ID = 'checkout-form';
 
@@ -31,6 +34,8 @@ const companyPurchaseModel = computed({
 const isCompanyPurchase = computed(() => model.value.type === 'ORGANIZATION');
 
 const showVatIdInput = computed(() => model.value.country !== 'US');
+
+const { isTaxIDCheckEnabled, isTaxIDCheckPending, taxIdValidationData, runTaxIDCheck } = useTaxIDValidationCheck(model);
 
 const { $t } = useIntl();
 
@@ -69,12 +74,12 @@ const readableCountryName = computed(() =>
             >
                 <div class="grid grid-cols-1 gap-2">
                     <template v-if="readOnly">
-                        <Typography variant="body" tag="span" weight="semibold" no-spacing>{{
-                            model.email
-                        }}</Typography>
-                        <Typography variant="body-sm" tag="span" shade="lighter" no-spacing>{{
-                            readableCountryName
-                        }}</Typography>
+                        <Typography variant="body" tag="span" weight="semibold" no-spacing>
+                            {{ model.email }}
+                        </Typography>
+                        <Typography variant="body-sm" tag="span" shade="lighter" no-spacing>
+                            {{ readableCountryName }}
+                        </Typography>
                     </template>
                     <template v-else>
                         <Input
@@ -271,29 +276,6 @@ const readableCountryName = computed(() =>
                     <div v-if="isCompanyPurchase">
                         <div class="mt-4 grid grid-cols-1 gap-3">
                             <Input
-                                v-if="showVatIdInput"
-                                v-model="model.companyVatNumber"
-                                name="vat_number"
-                                :label="
-                                    $t({
-                                        defaultMessage: 'VAT number',
-                                        id: 'checkout.vat_number.label',
-                                        description:
-                                            'The label for the vat number in the checkout form',
-                                    })
-                                "
-                                :placeholder="
-                                    $t({
-                                        defaultMessage: 'VAT number...',
-                                        id: 'checkout.vat_number.placeholder',
-                                        description:
-                                            'The label for the vat number in the checkout form',
-                                    })
-                                "
-                                :error="validation.value.companyVatNumber.$errors"
-                            />
-
-                            <Input
                                 v-model="model.companyLegalName"
                                 required
                                 name="legal_name"
@@ -314,6 +296,59 @@ const readableCountryName = computed(() =>
                                     })
                                 "
                             />
+
+                            <Input
+                                v-if="showVatIdInput"
+                                v-model="model.companyVatNumber"
+                                name="vat_number"
+                                :label="
+                                    $t({
+                                        defaultMessage: 'VAT number',
+                                        id: 'checkout.vat_number.label',
+                                        description:
+                                            'The label for the vat number in the checkout form',
+                                    })
+                                "
+                                :placeholder="
+                                    $t({
+                                        defaultMessage: 'VAT number...',
+                                        id: 'checkout.vat_number.placeholder',
+                                        description:
+                                            'The label for the vat number in the checkout form',
+                                    })
+                                "
+                                :error="validation.value.companyVatNumber.$errors"
+                            >
+                            <template v-if="isEUCountry(model.country ?? '')" #suffix>
+                                    <Button
+                                        type="button"
+                                        size="sm"
+                                        color="green"
+                                        :disabled="
+                                            !isTaxIDCheckEnabled ||
+                                            isTaxIDCheckPending ||
+                                            validation.value.companyVatNumber.$invalid
+                                        "
+                                        @click="runTaxIDCheck"
+                                    >
+                                        {{
+                                            $t({
+                                                defaultMessage: 'Check',
+                                                id: 'checkout.vat_number.check_button.label',
+                                                description:
+                                                    'The label for the check button in the checkout form',
+                                            })
+                                        }}
+                                    </Button>
+                                </template>
+                            </Input>
+
+                            <div
+                                v-if="taxIdValidationData"
+                                :class="{ 'opacity-75': isTaxIDCheckPending }"
+                            >
+                                <TaxIDCheckNotice :tax-id-validation-result="taxIdValidationData" />
+                            </div>
                         </div>
                     </div>
                 </Expand>

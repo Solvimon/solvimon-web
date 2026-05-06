@@ -44,8 +44,8 @@ export function useTaxIDValidationCheck(form: Ref<CheckoutFormState>) {
                 },
             });
 
-            if (result) {
-                taxIdValidationData.value = result;
+            if (result?.data?.length) {
+                taxIdValidationData.value = result.data[0];
             } else {
                 taxIdValidationData.value = undefined;
             }

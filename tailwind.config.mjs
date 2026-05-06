@@ -1,30 +1,21 @@
-import { join } from 'path';
-import { fileURLToPath } from 'url';
 import defaultTheme from 'tailwindcss/defaultTheme';
-import solvimonTailwindConfig from './tailwind.config'
-import uiPackageTailwindConfig from '@solvimon/solvimon-ui/tailwind.config';
 
 /** @type {import('tailwindcss').Config} */
-
-// Recreate __dirname in ESM
-const __dirname = fileURLToPath(new URL('.', import.meta.url));
-
-module.exports = {
-    ...solvimonTailwindConfig,
+export default {
     content: [
+        // SDK source files
         'src/**/*.{vue,ts}',
-        ...uiPackageTailwindConfig.content.map((contentPath) =>
-            join(__dirname, `../../node_modules/@solvimon/solvimon-ui/${contentPath}`),
-        ),
+        // solvimon-ui ships compiled JS only (no Vue sources in dist), so scan the dist bundles
+        './node_modules/@solvimon/solvimon-ui/dist/*.{js,mjs}',
     ],
-        theme: {
+    theme: {
         extend: {
             fontSize: {
                 '2xs': ['0.65rem', '0.9rem'],
             },
-                fontFamily: {
-                    inter: ['inter', ...defaultTheme.fontFamily.sans],
-                },
+            fontFamily: {
+                inter: ['inter', ...defaultTheme.fontFamily.sans],
+            },
             colors: {
                 primary: {
                     50: 'var(--color-primary-50)',

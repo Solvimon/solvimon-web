@@ -1,9 +1,22 @@
-import type { CheckTaxIDPayload, Customer, TaxIdValidationResult } from '@solvimon/solvimon-types';
+import type { Customer, TaxIdValidationResult } from '@solvimon/solvimon-types';
+import type { TaxIdentifier } from '@solvimon/solvimon-types/types/TaxIdentifier';
+import type { CountryCode } from '@solvimon/solvimon-types';
 import { createRequestService } from './requests';
 import { useConfig } from '@/components/providers/ConfigProvider/composables/useConfig';
 
 interface TaxIdValidationResponse {
     data: TaxIdValidationResult[];
+}
+
+interface CheckTaxIDPayload {
+    type: 'ORGANIZATION';
+    organization: {
+        legal_name: string;
+        tax_ids: TaxIdentifier[];
+        registered_address: {
+            country: CountryCode;
+        };
+    };
 }
 
 interface CustomerService {

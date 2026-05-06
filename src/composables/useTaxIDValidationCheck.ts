@@ -1,14 +1,12 @@
 import { computed, ref, type Ref } from 'vue';
 import type { TaxIdValidationResult } from '@solvimon/solvimon-types';
 import type { CheckoutFormState } from '@/components/customer/CheckoutForm/CheckoutForm.types';
-import { useConfig } from '@/components/providers';
 import { isEUCountry } from '@/utils/viesChecker';
-import { createRequestService } from '@/services/requests';
+import { createCustomerService } from '@/services/customer';
 
 export function useTaxIDValidationCheck(form: Ref<CheckoutFormState>) {
-    const request = createRequestService();
-    const config = useConfig();
-    
+    const { checkTaxID } = createCustomerService();
+
     const taxIdValidationData = ref<TaxIdValidationResult | undefined>(undefined);
 
     const taxId = computed(() => form.value.companyVatNumber?.trim() ?? '');
@@ -35,17 +33,13 @@ export function useTaxIDValidationCheck(form: Ref<CheckoutFormState>) {
         isTaxIDCheckPending.value = true;
 
         try {
-            const result = await request<TaxIdValidationResult>({
-                url: `${config.apiUrls.config}/portal/customers/validate-tax-id`,
-                options: { method: 'POST' },
-                data: {
-                    type: 'ORGANIZATION',
-                    organization: {
-                        legal_name: legalName.value,
-                        tax_ids: [{ id: taxId.value, type: 'GENERIC_TAX_ID' }],
-                        registered_address: {
-                            country: countryCode.value,
-                        },
+            const result = await checkTaxID({
+                type: 'ORGANIZATION',
+                organization: {
+                    legal_name: legalName.value,
+                    tax_ids: [{ id: taxId.value, type: 'GENERIC_TAX_ID' }],
+                    registered_address: {
+                        country: countryCode.value,
                     },
                 },
             });

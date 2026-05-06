@@ -301,6 +301,7 @@ const readableCountryName = computed(() =>
                                 v-if="showVatIdInput"
                                 v-model="model.companyVatNumber"
                                 name="vat_number"
+                                input-class="focus:outline-none focus:ring-0"
                                 :label="
                                     $t({
                                         defaultMessage: 'VAT number',
@@ -318,8 +319,9 @@ const readableCountryName = computed(() =>
                                     })
                                 "
                                 :error="validation.value.companyVatNumber.$errors"
+                                suffix-class="px-2 border-l-0"
                             >
-                            <template v-if="isEUCountry(model.country ?? '')" #suffix>
+                                <template v-if="isEUCountry(model.country ?? '')" #suffix>
                                     <Button
                                         type="button"
                                         size="sm"

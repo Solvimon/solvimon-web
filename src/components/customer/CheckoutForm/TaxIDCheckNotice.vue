@@ -7,18 +7,10 @@ const props = defineProps<{
     taxIdValidationResult: TaxIdValidationResult;
 }>();
 
-const { formatMessage, formatDate } = useIntl();
+const { formatMessage } = useIntl();
 
 const isTaxIdValid = computed(() => {
     return props.taxIdValidationResult.valid === 'VALID';
-});
-
-const taxIdValidationDate = computed(() => {
-    return formatDate({
-        date: props.taxIdValidationResult?.validation_date || '',
-        offsetType: 'local',
-        format: 'date',
-    });
 });
 
 const taxIdValidationMessage = computed(() => {
@@ -40,7 +32,7 @@ const taxIdValidationMessage = computed(() => {
     <Alert :type="isTaxIdValid ? 'success' : 'danger'" :icon="false">
         <div class="flex items-center gap-2">
             <Typography variant="body-xs">
-                {{ `${taxIdValidationMessage} ${taxIdValidationDate}` }}
+                {{ taxIdValidationMessage }}
             </Typography>
         </div>
     </Alert>

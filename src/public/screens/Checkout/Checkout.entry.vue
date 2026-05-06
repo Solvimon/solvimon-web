@@ -57,10 +57,12 @@ const validEmail = getValidEmail(props.configuration?.email);
         @error="(error) => $emit('error', error)"
     >
         <Checkout
-            :avatar="branding?.emblem?.public_url"
-            :email="validEmail"
-            :country-code="validCountryCode"
-            :enabled-pricing-ids="configuration?.enabledPricingIds"
+            :configuration="{
+                avatar: branding?.emblem?.public_url,
+                email: validEmail,
+                countryCode: validCountryCode,
+                enabledPricingIds: configuration?.enabledPricingIds,
+            }"
             @ready="emit('ready')"
         >
             <template v-if="$slots['terms-and-conditions']" #terms-and-conditions

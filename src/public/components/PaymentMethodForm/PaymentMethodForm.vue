@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { getCustomerCountry, Section, useIntl } from '@solvimon/solvimon-ui';
-import Skeleton from '@/components/shared/Skeleton.vue';
 import { computed } from 'vue';
 import type { Amount } from '@solvimon/solvimon-types';
 import type {
     PaymentMethodFormConfiguration,
     PaymentMethodFormProps,
 } from './PaymentMethodForm.types';
+import Skeleton from '@/components/shared/Skeleton.vue';
 import PaymentIntegrationForm from '@/components/payments/PaymentIntegrationForm/PaymentIntegrationForm.vue';
 import type { PaymentIntegrationFormProps } from '@/components/payments/PaymentIntegrationForm/PaymentIntegrationForm.types';
 

@@ -11,12 +11,12 @@ export function useTaxIDValidationCheck(form: Ref<CheckoutFormState>) {
 
     const taxId = computed(() => form.value.companyVatNumber?.trim() ?? '');
     const legalName = computed(() => form.value.companyLegalName ?? '');
-    const countryCode = computed(() => form.value.country ?? '');
+    const countryCode = computed(() => form.value.country);
 
     const isTaxIDCheckPending = ref(false);
 
     const isSelectedCountryEU = computed(() => {
-        return isEUCountry(countryCode.value);
+        return isEUCountry(countryCode.value ?? '');
     });
 
     const isTaxIDCheckEnabled = computed(() => !!(taxId.value && legalName.value && countryCode.value));
@@ -26,7 +26,7 @@ export function useTaxIDValidationCheck(form: Ref<CheckoutFormState>) {
     });
 
     async function runTaxIDCheck() {
-        if (!isTaxIDCheckEnabled.value || !isSelectedCountryEU.value) {
+        if (!isTaxIDCheckEnabled.value || !isSelectedCountryEU.value || !countryCode.value) {
             return;
         }
 

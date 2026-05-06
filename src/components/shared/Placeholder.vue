@@ -49,8 +49,7 @@ onMounted(() => {
             v-if="!contentReady"
             ref="elementRef"
             :class="[
-                `absolute inset-0 bg-gray-100 rounded pointer-events-none
-        ${placeholderClass ?? ''}`,
+                `pointer-events-none absolute inset-0 rounded bg-gray-100 ${placeholderClass ?? ''}`,
                 { 'animated-gradient': animated },
             ]"
         />

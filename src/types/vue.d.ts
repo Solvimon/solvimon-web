@@ -1,4 +1,5 @@
 import 'vue';
+import '@vue/runtime-dom';
 
 // Allow common HTML attributes and event handlers on all components.
 // UI library components pass these through via $attrs but don't declare them
@@ -11,5 +12,11 @@ declare module 'vue' {
         href?: string;
         onKeydown?: (event: KeyboardEvent) => void;
         onBlur?: (event: FocusEvent) => void;
+    }
+}
+
+declare module '@vue/runtime-dom' {
+    interface HTMLAttributes {
+        'data-testid'?: string;
     }
 }

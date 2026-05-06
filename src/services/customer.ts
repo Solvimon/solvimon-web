@@ -1,10 +1,11 @@
-import type { Customer } from '@solvimon/solvimon-types';
+import type { CheckTaxIDPayload, Customer, TaxIdValidationResult } from '@solvimon/solvimon-types';
 import { createRequestService } from './requests';
 import { useConfig } from '@/components/providers/ConfigProvider/composables/useConfig';
 
 interface CustomerService {
     getCustomer: (customerId: Customer['id']) => Promise<Customer>;
     updateCustomer: (customerId: Customer['id'], payload: Partial<Customer>) => Promise<Customer>;
+    checkTaxID: (payload: CheckTaxIDPayload) => Promise<TaxIdValidationResult>;
 }
 
 export function createCustomerService(): CustomerService {
@@ -25,8 +26,17 @@ export function createCustomerService(): CustomerService {
         });
     }
 
+    function checkTaxID(payload: CheckTaxIDPayload) {
+        return request<TaxIdValidationResult>({
+            url: `${config.apiUrls.config}/portal/customers/validate-tax-id`,
+            options: { method: 'POST' },
+            data: payload,
+        });
+    }
+
     return {
         getCustomer,
         updateCustomer,
+        checkTaxID,
     };
 }

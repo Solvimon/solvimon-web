@@ -27,7 +27,7 @@
         "test:e2e": "playwright test",
         "test:e2e:ui": "playwright test --ui",
         "test:e2e:ci": "playwright test",
-        "test:ssl:generate": "tsx scripts/generate-ssl-cert.ts",
+        "test:ssl:generate": "node scripts/generate-ssl-cert.mjs",
         "version:bump": "node scripts/bump-version.mjs",
         "version:patch": "npm version patch --no-git-tag-version",
         "version:minor": "npm version minor --no-git-tag-version",

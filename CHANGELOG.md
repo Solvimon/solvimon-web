@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0-alpha.6] - 2026-05-07
+
+### Changed
+
+- Published a release pipeline test version. No package behavior changes are included in this release.
+
 ## [0.1.0-alpha.5] - 2026-05-06
 
 ### Fixed
@@ -41,7 +47,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial alpha release.
 
-[Unreleased]: https://github.com/Solvimon/solvimon-web/compare/v0.1.0-alpha.5...HEAD
+[Unreleased]: https://github.com/Solvimon/solvimon-web/compare/v0.1.0-alpha.6...HEAD
+[0.1.0-alpha.6]: https://github.com/Solvimon/solvimon-web/compare/v0.1.0-alpha.5...v0.1.0-alpha.6
 [0.1.0-alpha.5]: https://github.com/Solvimon/solvimon-web/compare/v0.1.0-alpha.4...v0.1.0-alpha.5
 [0.1.0-alpha.4]: https://github.com/Solvimon/solvimon-web/compare/v0.1.0-alpha.3...v0.1.0-alpha.4
 [0.1.0-alpha.3]: https://github.com/Solvimon/solvimon-web/releases/tag/v0.1.0-alpha.3

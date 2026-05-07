@@ -13,6 +13,7 @@
         "build": "vite build",
         "build:css": "tailwindcss -i ./src/assets/index.css -o ./.sdk/tailwind.css",
         "dev": "npm run watch",
+        "playground": "cd playground && npm run dev",
         "lint": "eslint . --fix",
         "lint:ci": "eslint . --ignore-pattern .eslintignore",
         "test:unit": "vitest",

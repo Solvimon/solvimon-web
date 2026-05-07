@@ -34,6 +34,7 @@
             "vue": ["./node_modules/vue/dist/vue.d.ts"],
             "vue/*": ["./node_modules/vue/*"]
         },
-        "verbatimModuleSyntax": true
+        "verbatimModuleSyntax": true,
+        "allowJs": true
     }
 }

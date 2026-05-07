@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import adyenCss from '@adyen/adyen-web/styles/adyen.css?inline';
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import type { CoreConfiguration, DropinConfiguration, PaymentAction } from '@adyen/adyen-web/auto';
 import type {
@@ -8,7 +7,7 @@ import type {
     PaymentAcceptor,
 } from '@solvimon/solvimon-types';
 import { useIntl } from '@solvimon/solvimon-ui';
-import { isEqual } from 'lodash';
+import { isEqual } from 'lodash-es';
 import type {
     PaymentIntegrationFormAdyenEmits,
     PaymentIntegrationFormAdyenProps,
@@ -136,8 +135,11 @@ async function mountDropIn() {
     try {
         await unmountDropIn();
 
-        // Dynamically import Adyen SDK to enable code splitting
-        const adyenModule = await import('@adyen/adyen-web/auto');
+        // Dynamically import Adyen SDK and styles to enable code splitting
+        const [adyenModule, { default: adyenCss }] = await Promise.all([
+            import('@adyen/adyen-web/auto'),
+            import('@adyen/adyen-web/styles/adyen.css?inline'),
+        ]);
         const { AdyenCheckout, Dropin } = adyenModule;
 
         const { checkoutConfig, dropInConfig } = await getConfiguration();
@@ -146,7 +148,7 @@ async function mountDropIn() {
 
         dropInInstance = new Dropin(checkoutInstance, dropInConfig).mount(dropInContainerRef.value);
 
-        injectStylesToShadowRoot();
+        injectStylesToShadowRoot(adyenCss);
     } catch (error) {
         logger.error(
             'PAYMENT_INTEGRATION_INITIALIZATION_FAILED',
@@ -166,7 +168,7 @@ async function unmountDropIn() {
     }
 }
 
-function injectStylesToShadowRoot() {
+function injectStylesToShadowRoot(adyenCss: string) {
     const root = dropInContainerRef.value?.getRootNode();
     if (root instanceof ShadowRoot) {
         // Inject default Adyen styles

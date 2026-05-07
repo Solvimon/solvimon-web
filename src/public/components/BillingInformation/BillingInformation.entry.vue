@@ -23,12 +23,8 @@ defineProps<SolvimonBillingInformationEntryProps>();
         @error="(error) => $emit('error', error)"
     >
         <BillingInformationView v-bind="$props">
-            <template #default="{ customer }">
-                <BillingInformation
-                    v-if="customer.customer.value"
-                    :is-loading="customer.get.isPending.value"
-                    :customer="customer.customer.value"
-                />
+            <template #default="{ customer, isLoading }">
+                <BillingInformation :is-loading="isLoading" :customer="customer.customer.value" />
             </template>
         </BillingInformationView>
     </Provider>

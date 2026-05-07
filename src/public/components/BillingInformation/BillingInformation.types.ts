@@ -5,7 +5,7 @@ export interface BillingInformationConfiguration {
 }
 
 export interface BillingInformationProps {
-    customer: Customer;
+    customer?: Customer;
     isLoading: boolean;
     configuration?: BillingInformationConfiguration;
 }

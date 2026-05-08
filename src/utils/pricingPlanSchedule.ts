@@ -33,7 +33,7 @@ export function getAllPricingsFromScheduleInfos({
 }
 
 export type PricingItemConfigMeta = {
-    currency: string;
+    currency?: string;
     billingPeriod?: BillingPeriod;
 };
 
@@ -48,6 +48,31 @@ export function getPricingItemConfigMetaById({
     categories.forEach((category) => {
         category.pricings?.forEach((pricing) => {
             pricing.items?.forEach((item) => {
+                item.billing_period_configs?.forEach((billingConfig) => {
+                    billingConfig.configs?.forEach((config) => {
+                        if (config.id) {
+                            const currency = config.bands?.find((band) => band.amount?.currency)
+                                ?.amount?.currency;
+
+                            metaById.set(config.id, {
+                                ...(currency && { currency }),
+                                billingPeriod: billingConfig.billing_period,
+                            });
+                        }
+                    });
+                });
+
+                item.configs?.forEach((config) => {
+                    if (config.id) {
+                        const currency = config.bands?.find((band) => band.amount?.currency)
+                            ?.amount?.currency;
+
+                        metaById.set(config.id, {
+                            ...(currency && { currency }),
+                        });
+                    }
+                });
+
                 item.pricing_currency_configs?.forEach((currencyConfig) => {
                     const currency = currencyConfig.currency;
 

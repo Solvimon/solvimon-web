@@ -11,3 +11,6 @@ tests/playwright/results.xml
 
 # ESLint
 .eslintcache
+
+# AI
+.claude

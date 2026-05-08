@@ -6,10 +6,10 @@ A local Storybook-style development environment for iterating on SDK screens and
 
 ## Setup
 
-Install dependencies once:
+Install dependencies once from the **repo root**:
 
 ```sh
-cd playground && npm install
+npm run playground:install
 ```
 
 ## Running
@@ -21,7 +21,7 @@ You need two terminals running from the **repo root**:
 npm run watch
 
 # Terminal 2 — starts the playground dev server
-npm run playground
+npm run playground:dev
 ```
 
 Then open [https://localhost:5173](https://localhost:5173) in your browser.
@@ -47,7 +47,7 @@ Add an entry to the appropriate array in `playground/src/registry.ts`:
 export const components: StoryEntry[] = [
     {
         kind: 'component',
-        id: 'my-component-name',      // matches the registered component ID
+        id: 'my-component-name', // matches the registered component ID
         label: 'My Component',
         description: 'What it does.',
         // Optional: shown in the configuration editor, re-applied on each mount

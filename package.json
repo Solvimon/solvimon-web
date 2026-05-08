@@ -9,7 +9,7 @@
     },
     "scripts": {
         "analyze": "vite-bundle-visualizer",
-        "prebuild": "npm run build:css && npm run type-check:declarations",
+        "prebuild": "npm run build:css && npm run type-check",
         "build": "vite build",
         "build:css": "tailwindcss -i ./src/assets/index.css -o ./.sdk/tailwind.css",
         "dev": "npm run watch",

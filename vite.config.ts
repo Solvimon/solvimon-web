@@ -97,6 +97,8 @@ export default defineConfig({
             rollupTypes: false,
             outDir: './dist',
             include: [
+                'env.d.ts',
+                'src/types/**/*.d.ts',
                 'src/index.ts',
                 'src/entries/**/*.ce.ts',
                 'src/public/screens/**/*.entry.ce.ts',

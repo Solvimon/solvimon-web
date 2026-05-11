@@ -1,14 +1,170 @@
 import {
     getFirstPricingPlanScheduleOfType,
+    getPricingItemConfigMetaById,
     getScheduleCustomizations,
 } from './pricingPlanSchedule';
 import type {
+    BillingPeriod,
     ConfiguredMeterValue,
     EnabledPricing,
+    PricingCategoryExtended,
+    PricingExtended,
+    PricingItemConfigExtended,
+    PricingItemExtended,
+    PricingPlanSchedule,
     PricingPlanScheduleInfoExpanded,
+    PricingPlanVersionExtended,
 } from '@solvimon/solvimon-types';
 
 describe('pricingPlanSchedule utils', () => {
+    describe('getPricingItemConfigMetaById', () => {
+        const monthlyBillingPeriod = {
+            type: 'MONTH',
+            value: 1,
+        } satisfies BillingPeriod;
+
+        const createConfig = ({
+            id,
+            currency,
+        }: {
+            id: string;
+            currency?: string;
+        }) =>
+            ({
+                object_type: 'PRICING_ITEM_CONFIG',
+                id,
+                type: 'FLAT',
+                order: 1,
+                billing_in_advance: false,
+                ...(currency && {
+                    bands: [
+                        {
+                            amount: {
+                                currency,
+                                quantity: '10',
+                            },
+                        },
+                    ],
+                }),
+            }) satisfies PricingItemConfigExtended;
+
+        const createItem = ({
+            billingPeriodConfigs,
+            configs,
+        }: {
+            billingPeriodConfigs?: PricingItemExtended['billing_period_configs'];
+            configs?: PricingItemExtended['configs'];
+        }) =>
+            ({
+                id: 'item-1',
+                product_item_ids: [],
+                billing_period_configs: billingPeriodConfigs,
+                configs,
+            }) satisfies PricingItemExtended;
+
+        const createPricingPlanScheduleInfo = ({
+            items,
+        }: {
+            items: PricingItemExtended[];
+        }) => {
+            const pricing = {
+                object_type: 'PRICING',
+                id: 'pricing-1',
+                product_ids: [],
+                items,
+            } satisfies PricingExtended;
+
+            const pricingCategory = {
+                product_category_id: 'category-1',
+                pricings: [pricing],
+            } satisfies PricingCategoryExtended;
+
+            const pricingPlanVersion = {
+                object_type: 'PRICING_PLAN_VERSION',
+                id: 'version-1',
+                pricing_plan_id: 'plan-1',
+                version: 1,
+                status: 'ACTIVE',
+                pricing_categories: [pricingCategory],
+                pricing_plan: {
+                    object_type: 'PRICING_PLAN',
+                    id: 'plan-1',
+                    reference: 'plan-reference',
+                    name: 'Plan',
+                    type: 'STANDARD',
+                    variant: 'DEFAULT',
+                },
+            } satisfies PricingPlanVersionExtended;
+
+            const pricingPlanSchedule = {
+                id: 'schedule-1',
+                type: 'DEFAULT',
+                start_at: '2024-01-01T00:00:00Z',
+                end_at: '2024-12-31T23:59:59Z',
+                pricing_plan_version_id: 'version-1',
+                pricing_plan_subscription_id: 'subscription-1',
+            } satisfies PricingPlanSchedule;
+
+            return {
+                id: 'schedule-1',
+                type: 'DEFAULT',
+                start_at: '2024-01-01T00:00:00Z',
+                end_at: '2024-12-31T23:59:59Z',
+                pricing_plan_version_id: 'version-1',
+                pricing_plan_version: pricingPlanVersion,
+                pricing_plan_schedule: pricingPlanSchedule,
+            } satisfies PricingPlanScheduleInfoExpanded;
+        };
+
+        it('should return config meta from billing period configs and item configs', () => {
+            const pricingPlanScheduleInfo = createPricingPlanScheduleInfo({
+                items: [
+                    createItem({
+                        billingPeriodConfigs: [
+                            {
+                                billing_period: monthlyBillingPeriod,
+                                configs: [
+                                    createConfig({
+                                        id: 'billing-config-with-currency',
+                                        currency: 'EUR',
+                                    }),
+                                    createConfig({
+                                        id: 'billing-config-without-currency',
+                                    }),
+                                ],
+                            },
+                        ],
+                        configs: [
+                            createConfig({
+                                id: 'item-config-with-currency',
+                                currency: 'USD',
+                            }),
+                            createConfig({
+                                id: 'item-config-without-currency',
+                            }),
+                        ],
+                    }),
+                ],
+            });
+
+            const result = getPricingItemConfigMetaById({
+                pricingPlanScheduleInfo,
+            });
+
+            expect(result.get('billing-config-with-currency')).toEqual({
+                currency: 'EUR',
+                billingPeriod: monthlyBillingPeriod,
+            });
+            expect(result.get('billing-config-without-currency')).toEqual({
+                billingPeriod: monthlyBillingPeriod,
+            });
+            expect(result.get('item-config-with-currency')).toEqual({
+                currency: 'USD',
+            });
+            expect(result.get('item-config-without-currency')).toEqual({});
+        });
+    });
+
     describe('getFirstPricingPlanScheduleOfType', () => {
         const createMockScheduleInfo = (
             id: string,

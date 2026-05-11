@@ -45,15 +45,22 @@ export function generateCoverageReport({ prPath, basePath, sha, baseRef }) {
                   : ['> [!CAUTION]', `> Line coverage **decreased** by **${diff.toFixed(2)}%**`];
     }
 
+    const notable = base !== null && Math.abs(pr.total.lines.pct - base.total.lines.pct) >= 0.01;
+
     return [
         '<!-- coverage-report -->',
         '## Coverage Report',
         '',
         ...summaryLines,
         '',
+        notable ? '<details open>' : '<details>',
+        '<summary>View metrics</summary>',
+        '',
         `| | Metric | \`${baseRef}\` | This PR | Delta |`,
         '|---|---|--:|--:|---|',
         ...rows,
+        '',
+        '</details>',
         '',
         `<sub>Measured at ${sha}</sub>`,
     ].join('\n');

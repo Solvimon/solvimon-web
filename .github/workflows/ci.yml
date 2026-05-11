@@ -43,6 +43,92 @@ jobs:
                   key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json') }}
             - run: npm run test:unit -- --run
 
+    coverage:
+        name: Coverage
+        needs: install
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+            - uses: actions/setup-node@v4
+              with:
+                  node-version-file: package.json
+            - uses: actions/cache/restore@v4
+              with:
+                  path: node_modules
+                  key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json') }}
+            - run: npm run test:coverage
+            - uses: actions/upload-artifact@v4
+              with:
+                  name: coverage-summary
+                  path: coverage/coverage-summary.json
+
+    coverage-report:
+        name: Coverage Report
+        needs: coverage
+        runs-on: ubuntu-latest
+        permissions:
+            pull-requests: write
+        steps:
+            - uses: actions/checkout@v4
+            - uses: actions/setup-node@v4
+              with:
+                  node-version-file: package.json
+            - uses: actions/cache/restore@v4
+              with:
+                  path: node_modules
+                  key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json') }}
+            - name: Download PR coverage
+              uses: actions/download-artifact@v4
+              with:
+                  name: coverage-summary
+                  path: /tmp/pr
+            - name: Authenticate GitLab npm registry
+              run: npm config set //gitlab.com/api/v4/projects/38958827/packages/npm/:_authToken ${{ secrets.GITLAB_NPM_TOKEN }}
+            - name: Checkout base branch
+              uses: actions/checkout@v4
+              with:
+                  ref: ${{ github.base_ref }}
+                  clean: false
+            - name: Run base coverage
+              run: npm run test:coverage
+              continue-on-error: true
+            - name: Generate coverage report
+              run: |
+                  node scripts/ci/coverage-report.mjs \
+                      --pr /tmp/pr/coverage-summary.json \
+                      --base coverage/coverage-summary.json \
+                      --sha ${{ github.sha }} \
+                      --base-ref ${{ github.base_ref }} \
+                      > /tmp/coverage-report.md
+            - name: Post coverage comment
+              uses: actions/github-script@v7
+              with:
+                  script: |
+                      const body = require('fs').readFileSync('/tmp/coverage-report.md', 'utf8');
+
+                      const { data: comments } = await github.rest.issues.listComments({
+                          owner: context.repo.owner,
+                          repo: context.repo.repo,
+                          issue_number: context.issue.number,
+                      });
+
+                      const existing = comments.find(c => c.body.includes('<!-- coverage-report -->'));
+                      if (existing) {
+                          await github.rest.issues.updateComment({
+                              owner: context.repo.owner,
+                              repo: context.repo.repo,
+                              comment_id: existing.id,
+                              body,
+                          });
+                      } else {
+                          await github.rest.issues.createComment({
+                              owner: context.repo.owner,
+                              repo: context.repo.repo,
+                              issue_number: context.issue.number,
+                              body,
+                          });
+                      }
+
     type-check:
         name: Type Check
         needs: install

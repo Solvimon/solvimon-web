@@ -140,4 +140,30 @@ describe('generateCoverageReport', () => {
 
         expect(report).toContain('> Line coverage unchanged');
     });
+
+    it('opens the details block when coverage changed', () => {
+        setup({ pr: makeSummary({ lines: 85 }), base: makeSummary({ lines: 80 }) });
+
+        const report = generateCoverageReport(defaultArgs);
+
+        expect(report).toContain('<details open>');
+    });
+
+    it('keeps the details block closed when coverage is unchanged', () => {
+        setup({ pr: makeSummary(), base: makeSummary() });
+
+        const report = generateCoverageReport(defaultArgs);
+
+        expect(report).toContain('<details>');
+        expect(report).not.toContain('<details open>');
+    });
+
+    it('keeps the details block closed when there is no base', () => {
+        setup({ pr: makeSummary() });
+
+        const report = generateCoverageReport(defaultArgs);
+
+        expect(report).toContain('<details>');
+        expect(report).not.toContain('<details open>');
+    });
 });

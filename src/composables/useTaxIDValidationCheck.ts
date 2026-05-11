@@ -1,7 +1,7 @@
 import { computed, ref, type Ref } from 'vue';
 import type { TaxIdValidationResult } from '@solvimon/solvimon-types';
+import { isEUCountry } from '@solvimon/solvimon-ui';
 import type { CheckoutFormState } from '@/components/customer/CheckoutForm/CheckoutForm.types';
-import { isEUCountry } from '@/utils/viesChecker';
 import { createCustomerService } from '@/services/customer';
 
 export function useTaxIDValidationCheck(form: Ref<CheckoutFormState>) {

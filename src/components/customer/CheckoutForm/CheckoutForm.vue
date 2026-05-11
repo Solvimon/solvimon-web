@@ -5,15 +5,17 @@ import {
     Expand,
     getCountryNameByCode,
     Input,
+    isValidCountryCode,
     Section,
     Toggle,
     Typography,
     useIntl,
 } from '@solvimon/solvimon-ui';
 import { computed, ref } from 'vue';
+import type { CountryCode } from '@solvimon/solvimon-types';
+import { isEUCountry } from '@solvimon/solvimon-ui';
 import type { CheckoutFormState, CheckoutFormProps, CheckoutFormEmits } from './CheckoutForm.types';
 import TaxIDCheckNotice from './TaxIDCheckNotice.vue';
-import { isEUCountry } from '@/utils/viesChecker';
 import { useTaxIDValidationCheck } from '@/composables/useTaxIDValidationCheck';
 
 const FORM_ID = 'checkout-form';
@@ -32,6 +34,13 @@ const companyPurchaseModel = computed({
 });
 
 const isCompanyPurchase = computed(() => model.value.type === 'ORGANIZATION');
+
+const country = computed<CountryCode | undefined>({
+    get: () => model.value.country,
+    set: (value) => {
+        model.value.country = value && isValidCountryCode(value) ? value : undefined;
+    },
+});
 
 const showVatIdInput = computed(() => model.value.country !== 'US');
 
@@ -108,7 +117,7 @@ const readableCountryName = computed(() =>
                         />
 
                         <CountrySelect
-                            v-model:single-model-value="model.country"
+                            v-model:single-model-value="country"
                             required
                             name="country"
                             :label="

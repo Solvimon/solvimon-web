@@ -15,6 +15,20 @@ export default mergeConfig(
                     inline: ['@solvimon/solvimon-ui'],
                 },
             },
+            coverage: {
+                provider: 'v8',
+                reporter: ['text', 'json-summary'],
+                reportsDirectory: './coverage',
+                include: ['src/**/*.ts', 'src/**/*.vue'],
+                exclude: [
+                    'src/**/*.d.ts',
+                    'src/**/*.spec.ts',
+                    'src/**/*.test.ts',
+                    'src/types/**',
+                    'src/entries/**',
+                    'src/index.ts',
+                ],
+            },
         },
     }),
 );

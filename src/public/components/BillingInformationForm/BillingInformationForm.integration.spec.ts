@@ -34,11 +34,10 @@ vi.mock('@/components/providers', async () => ({
 
 vi.mock('@solvimon/solvimon-ui', async () => {
     const actual = await vi.importActual<typeof import('@solvimon/solvimon-ui')>('@solvimon/solvimon-ui');
+    const { mockUseIntl } = await import('@/test-utils/useIntlMock');
     return {
         ...actual,
-        useIntl: () => ({
-            $t: (message: { defaultMessage: string }) => message.defaultMessage,
-        }),
+        useIntl: mockUseIntl,
         CountrySelect: defineComponent({
             name: 'CountrySelectStub',
             props: { singleModelValue: String, label: String },

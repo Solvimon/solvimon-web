@@ -1,4 +1,4 @@
-import { mount } from '@vue/test-utils';
+import { mount, flushPromises } from '@vue/test-utils';
 import { defineComponent, ref, h } from 'vue';
 import type { Invoice, Payment } from '@solvimon/solvimon-types';
 import InvoiceEntry from './Invoice.entry.vue';
@@ -87,7 +87,7 @@ describe('Invoice entry component', () => {
         configuration: defaultConfiguration,
     };
 
-    const mountComponent = ({
+    const mountComponent = async ({
         withInvoice = true,
         isLoading = false,
         paymentsData = payments,
@@ -117,12 +117,16 @@ describe('Invoice entry component', () => {
             isLoading: ref(isLoading),
         });
 
-        return mount(InvoiceEntry, {
+        const wrapper = mount(InvoiceEntry, {
             props: { ...defaultProps, configuration },
             global: {
                 stubs: { teleport: true },
             },
         });
+
+        await flushPromises();
+
+        return wrapper;
     };
 
     beforeEach(() => {
@@ -144,67 +148,67 @@ describe('Invoice entry component', () => {
         ).toThrow('Missing invoice id');
     });
 
-    it('requests the invoice using the invoice ID from the configuration', () => {
-        mountComponent();
+    it('requests the invoice using the invoice ID from the configuration', async () => {
+        await mountComponent();
 
         expect(mockUseInvoice).toHaveBeenCalledWith({ invoiceId });
     });
 
-    it('fetches the invoice data on mount', () => {
-        mountComponent();
+    it('fetches the invoice data on mount', async () => {
+        await mountComponent();
 
         expect(mockInvoiceGet).toHaveBeenCalledOnce();
     });
 
-    it('fetches payments for the configured invoice ID on mount', () => {
-        mountComponent();
+    it('fetches payments for the configured invoice ID on mount', async () => {
+        await mountComponent();
 
         expect(mockPaymentsGet).toHaveBeenCalledWith(invoiceId);
     });
 
-    it('does not render the invoice when data has not yet loaded', () => {
-        const wrapper = mountComponent({ withInvoice: false });
+    it('does not render the invoice when data has not yet loaded', async () => {
+        const wrapper = await mountComponent({ withInvoice: false });
 
         expect(wrapper.text()).toBe('');
     });
 
-    it('renders the invoice details section when data is loaded', () => {
-        const wrapper = mountComponent();
+    it('renders the invoice details section when data is loaded', async () => {
+        const wrapper = await mountComponent();
 
         expect(wrapper.text()).toContain('Invoice details');
         expect(wrapper.text()).toContain('Invoice date');
         expect(wrapper.text()).toContain('15/01/2024');
     });
 
-    it('renders the payment history section when enablePaymentAttempts is true and payments exist', () => {
-        const wrapper = mountComponent();
+    it('renders the payment history section when enablePaymentAttempts is true and payments exist', async () => {
+        const wrapper = await mountComponent();
 
         expect(wrapper.text()).toContain('Payment history');
         expect(wrapper.text()).toContain('Payment attempt');
     });
 
-    it('hides the payment history section when enablePaymentAttempts is false', () => {
-        const wrapper = mountComponent({
+    it('hides the payment history section when enablePaymentAttempts is false', async () => {
+        const wrapper = await mountComponent({
             configuration: { ...defaultConfiguration, enablePaymentAttempts: false },
         });
 
         expect(wrapper.text()).not.toContain('Payment history');
     });
 
-    it('hides the payment history section when there are no payments', () => {
-        const wrapper = mountComponent({ paymentsData: [] });
+    it('hides the payment history section when there are no payments', async () => {
+        const wrapper = await mountComponent({ paymentsData: [] });
 
         expect(wrapper.text()).not.toContain('Payment history');
     });
 
-    it('renders the customer billing information when enableCustomerBillingInformation is true', () => {
-        const wrapper = mountComponent();
+    it('renders the customer billing information when enableCustomerBillingInformation is true', async () => {
+        const wrapper = await mountComponent();
 
         expect(wrapper.text()).toContain('Your billing information');
     });
 
-    it('hides the customer billing information when enableCustomerBillingInformation is false', () => {
-        const wrapper = mountComponent({
+    it('hides the customer billing information when enableCustomerBillingInformation is false', async () => {
+        const wrapper = await mountComponent({
             configuration: { ...defaultConfiguration, enableCustomerBillingInformation: false },
         });
 

@@ -1,4 +1,4 @@
-import { getAllPricingsFromScheduleInfos } from './pricing';
+import { getAllPricingsFromScheduleInfos, getNameFromPricing } from './pricing';
 import type {
     PricingCategoryExtended,
     PricingExtended,
@@ -168,6 +168,31 @@ describe('pricing utils', () => {
             const result = getAllPricingsFromScheduleInfos(scheduleInfos);
 
             expect(result).toEqual([]);
+        });
+    });
+
+    describe('getNameFromPricing', () => {
+        it('returns pricing.name when it is non-empty', () => {
+            const pricing = { name: 'Monthly Plan' } as PricingExtended;
+            expect(getNameFromPricing(pricing)).toBe('Monthly Plan');
+        });
+
+        it('returns the first product name when pricing.name is empty', () => {
+            const pricing = {
+                name: '',
+                products: [{ name: 'Product A' }, { name: 'Product B' }],
+            } as unknown as PricingExtended;
+            expect(getNameFromPricing(pricing)).toBe('Product A');
+        });
+
+        it('returns undefined when both pricing.name is empty and there are no products', () => {
+            const pricing = { name: '' } as PricingExtended;
+            expect(getNameFromPricing(pricing)).toBeUndefined();
+        });
+
+        it('returns undefined when pricing.name is empty and products is an empty array', () => {
+            const pricing = { name: '', products: [] } as unknown as PricingExtended;
+            expect(getNameFromPricing(pricing)).toBeUndefined();
         });
     });
 });

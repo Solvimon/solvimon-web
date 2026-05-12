@@ -1,8 +1,9 @@
 import { mount } from '@vue/test-utils';
-import { defineComponent, ref } from 'vue';
+import { ref } from 'vue';
 import type { Invoice } from '@solvimon/solvimon-types';
 import InvoiceDetailsEntry from './InvoiceDetails.entry.vue';
 import type { SolvimonInvoiceDetailsEntryProps } from './InvoiceDetails.entry.types';
+import { createTestPortalObject } from '@/test-utils/portalObjectFixture';
 
 const { mockUseInvoiceData } = vi.hoisted(() => ({
     mockUseInvoiceData: vi.fn(),
@@ -18,17 +19,10 @@ vi.mock('@/composables/useInvoiceData', () => ({
     useInvoiceData: mockUseInvoiceData,
 }));
 
-vi.mock('@/components/providers', async () => ({
-    Provider: defineComponent({
-        inheritAttrs: false,
-        setup(_, { slots }) {
-            return () => slots.default?.();
-        },
-    }),
-    useActionDispatchProvider: () => ({
-        dispatchAction: vi.fn(),
-    }),
-}));
+vi.mock('@/components/providers', async () => {
+    const { createProviderMock } = await import('@/test-utils/providerMock');
+    return createProviderMock();
+});
 
 describe('InvoiceDetails entry component', () => {
     const invoiceId = 'inv_123' as Invoice['id'];
@@ -48,14 +42,7 @@ describe('InvoiceDetails entry component', () => {
         environment: 'TEST',
         locale: 'en-US',
         customElementName: 'solvimon-invoice-details',
-        portalObject: {
-            object_type: 'PORTAL_URL',
-            id: 'purl_example',
-            type: 'CUSTOMER',
-            customer_id: 'cus_123',
-            token: 'test-portal-token',
-            status: 'PUBLISHED',
-        } as unknown as SolvimonInvoiceDetailsEntryProps['portalObject'],
+        portalObject: createTestPortalObject(),
         configuration: { invoiceId },
     };
 

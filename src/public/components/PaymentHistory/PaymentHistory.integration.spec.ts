@@ -2,7 +2,7 @@ import { mount } from '@vue/test-utils';
 import { defineComponent, h, ref } from 'vue';
 import type { ApiSuccessCollectionResponse, Customer, Invoice, Payment } from '@solvimon/solvimon-types';
 import PaymentHistoryEntry from './PaymentHistory.entry.vue';
-import type { SolvimonPaymentHistoryEntryProps } from './PaymentHistory.entry.types';
+import { createTestPortalObject } from '@/test-utils/portalObjectFixture';
 
 const { mockUseInvoiceData } = vi.hoisted(() => ({
     mockUseInvoiceData: vi.fn(),
@@ -18,23 +18,14 @@ vi.mock('@/composables/useInvoiceData', () => ({
     useInvoiceData: mockUseInvoiceData,
 }));
 
-vi.mock('@/components/providers', async () => ({
-    Provider: defineComponent({
-        setup(_, { slots }) {
-            return () => slots.default?.();
-        },
-    }),
-    useActionDispatchProvider: () => ({
-        dispatchAction: vi.fn(),
-    }),
-}));
+vi.mock('@/components/providers', async () => {
+    const { createProviderMock } = await import('@/test-utils/providerMock');
+    return createProviderMock();
+});
 
 vi.mock('@solvimon/solvimon-ui', async () => {
-    const actual = await vi.importActual<typeof import('@solvimon/solvimon-ui')>('@solvimon/solvimon-ui');
-    const { mockUseIntl } = await import('@/test-utils/useIntlMock');
-    return {
-        ...actual,
-        useIntl: mockUseIntl,
+    const { createSolvimonUiMock } = await import('@/test-utils/solvimonUiMock');
+    return createSolvimonUiMock({
         PaymentMethod: defineComponent({
             name: 'PaymentMethodStub',
             props: { paymentMethod: { type: Object, required: true } },
@@ -42,7 +33,7 @@ vi.mock('@solvimon/solvimon-ui', async () => {
                 return () => h('div', { 'data-testid': 'payment-method-stub' }, [slots.description?.()]);
             },
         }),
-    };
+    });
 });
 
 describe('PaymentHistory entry component', () => {
@@ -91,14 +82,7 @@ describe('PaymentHistory entry component', () => {
                 environment: 'TEST',
                 locale: 'en-US',
                 customElementName: 'solvimon-payment-history',
-                portalObject: {
-                    object_type: 'PORTAL_URL',
-                    id: 'purl_example',
-                    type: 'CUSTOMER',
-                    customer_id: 'cust_example',
-                    token: 'test-portal-token',
-                    status: 'PUBLISHED',
-                } as unknown as SolvimonPaymentHistoryEntryProps['portalObject'],
+                portalObject: createTestPortalObject('cust_example'),
                 configuration: { invoiceId },
             },
             global: {

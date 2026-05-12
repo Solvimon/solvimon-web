@@ -1,9 +1,13 @@
 <script setup lang="ts">
+import { defineAsyncComponent } from 'vue';
 import { CustomerBillingInformation, InvoiceHeader, useIntl } from '@solvimon/solvimon-ui';
 import type { InvoiceProps } from './Invoice.types';
 import InvoiceBlock from '@/components/invoices/invoiceDetails/InvoiceBlock.vue';
 import InvoiceDetailsBlock from '@/components/invoices/invoiceDetails/InvoiceDetailsBlock.vue';
-import PaymentHistoryBlock from '@/components/invoices/invoiceDetails/PaymentHistoryBlock.vue';
+
+const PaymentHistoryBlock = defineAsyncComponent(
+    () => import('@/components/invoices/invoiceDetails/PaymentHistoryBlock.vue'),
+);
 
 defineProps<InvoiceProps>();
 

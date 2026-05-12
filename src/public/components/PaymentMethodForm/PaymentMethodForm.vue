@@ -90,7 +90,7 @@ const paymentIntegrationProps = computed<PaymentIntegrationFormProps>(() => {
 </script>
 
 <template>
-    <Skeleton v-if="isLoading" variant="section" class="min-h-[180px]" />
+    <Skeleton v-if="isLoading" variant="section" class="min-h-[180px]" data-testid="payment-method-form-skeleton" />
     <Section
         v-else
         no-border

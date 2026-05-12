@@ -1,6 +1,7 @@
 import {
     withPreselectedEnabledPricings,
     isSubscriptionWithEnabledPricings,
+    isSubscriptionWithAddonProducts,
 } from './enabledPricings';
 import type {
     Pricing,
@@ -10,10 +11,14 @@ import type {
     PricingPlanScheduleInfoExpanded,
 } from '@solvimon/solvimon-types';
 import { getPricingGroupsFromExtendedPricingPlanSubscription } from './subscription';
+import { getAllPricingsFromScheduleInfos } from './pricing';
 
-// Mock the subscription utility
 vi.mock('./subscription', () => ({
     getPricingGroupsFromExtendedPricingPlanSubscription: vi.fn(),
+}));
+
+vi.mock('./pricing', () => ({
+    getAllPricingsFromScheduleInfos: vi.fn(),
 }));
 
 describe('enabledPricings utils', () => {
@@ -353,6 +358,47 @@ describe('enabledPricings utils', () => {
             const result = isSubscriptionWithEnabledPricings(subscription);
 
             expect(result).toBe(true);
+        });
+    });
+
+    describe('isSubscriptionWithAddonProducts', () => {
+        const subscription = createMockSubscription();
+
+        beforeEach(() => {
+            vi.mocked(getPricingGroupsFromExtendedPricingPlanSubscription).mockReturnValue([]);
+            vi.mocked(getAllPricingsFromScheduleInfos).mockReturnValue([]);
+        });
+
+        it('returns false when there are no pricings and no pricing groups', () => {
+            expect(isSubscriptionWithAddonProducts(subscription)).toBe(false);
+        });
+
+        it('returns true when a pricing has product_type ADDON', () => {
+            vi.mocked(getAllPricingsFromScheduleInfos).mockReturnValue([
+                { product_type: 'ADDON' } as PricingExtended,
+                { product_type: 'DEFAULT' } as PricingExtended,
+            ]);
+
+            expect(isSubscriptionWithAddonProducts(subscription)).toBe(true);
+        });
+
+        it('returns true when a pricing group has object_type ADDON', () => {
+            vi.mocked(getPricingGroupsFromExtendedPricingPlanSubscription).mockReturnValue([
+                { object_type: 'ADDON' } as unknown as PricingGroupExtended,
+            ]);
+
+            expect(isSubscriptionWithAddonProducts(subscription)).toBe(true);
+        });
+
+        it('returns false when no pricings or groups are ADDON type', () => {
+            vi.mocked(getAllPricingsFromScheduleInfos).mockReturnValue([
+                { product_type: 'DEFAULT' } as PricingExtended,
+            ]);
+            vi.mocked(getPricingGroupsFromExtendedPricingPlanSubscription).mockReturnValue([
+                { object_type: 'PRICING_GROUP' } as unknown as PricingGroupExtended,
+            ]);
+
+            expect(isSubscriptionWithAddonProducts(subscription)).toBe(false);
         });
     });
 });

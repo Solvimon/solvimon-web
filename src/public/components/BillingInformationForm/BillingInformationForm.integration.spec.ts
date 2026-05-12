@@ -3,6 +3,7 @@ import { defineComponent, ref } from 'vue';
 import type { Customer } from '@solvimon/solvimon-types';
 import BillingInformationFormEntry from './BillingInformationForm.entry.vue';
 import type { SolvimonBillingInformationFormEntryProps } from './BillingInformationForm.entry.types';
+import { createTestPortalObject } from '@/test-utils/portalObjectFixture';
 
 const { mockUseCustomer, mockGetExecute, mockUpdateExecute } = vi.hoisted(() => ({
     mockUseCustomer: vi.fn(),
@@ -20,31 +21,21 @@ vi.mock('@/composables/useCustomer', () => ({
     useCustomer: mockUseCustomer,
 }));
 
-vi.mock('@/components/providers', async () => ({
-    Provider: defineComponent({
-        inheritAttrs: false,
-        setup(_, { slots }) {
-            return () => slots.default?.();
-        },
-    }),
-    useActionDispatchProvider: () => ({
-        dispatchAction: vi.fn(),
-    }),
-}));
+vi.mock('@/components/providers', async () => {
+    const { createProviderMock } = await import('@/test-utils/providerMock');
+    return createProviderMock();
+});
 
 vi.mock('@solvimon/solvimon-ui', async () => {
-    const actual = await vi.importActual<typeof import('@solvimon/solvimon-ui')>('@solvimon/solvimon-ui');
-    const { mockUseIntl } = await import('@/test-utils/useIntlMock');
-    return {
-        ...actual,
-        useIntl: mockUseIntl,
+    const { createSolvimonUiMock } = await import('@/test-utils/solvimonUiMock');
+    return createSolvimonUiMock({
         CountrySelect: defineComponent({
             name: 'CountrySelectStub',
             props: { singleModelValue: String, label: String },
             emits: ['update:singleModelValue'],
             template: '<select data-testid="country-select"></select>',
         }),
-    };
+    });
 });
 
 describe('BillingInformationForm entry component', () => {
@@ -69,14 +60,7 @@ describe('BillingInformationForm entry component', () => {
         environment: 'TEST',
         locale: 'en-US',
         customElementName: 'solvimon-billing-information-form',
-        portalObject: {
-            object_type: 'PORTAL_URL',
-            id: 'purl_example',
-            type: 'CUSTOMER',
-            customer_id: customerId,
-            token: 'test-portal-token',
-            status: 'PUBLISHED',
-        } as unknown as SolvimonBillingInformationFormEntryProps['portalObject'],
+        portalObject: createTestPortalObject(customerId),
     };
 
     const mountComponent = ({

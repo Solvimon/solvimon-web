@@ -14,11 +14,9 @@ vi.mock('@/components/providers', () => ({
 }));
 
 vi.mock('@solvimon/solvimon-ui', async () => {
-    const actual = await vi.importActual<typeof import('@solvimon/solvimon-ui')>('@solvimon/solvimon-ui');
+    const { createSolvimonUiMock } = await import('@/test-utils/solvimonUiMock');
     const { mockUseIntl } = await import('@/test-utils/useIntlMock');
-
-    return {
-        ...actual,
+    return createSolvimonUiMock({
         useIntl: () => ({
             ...mockUseIntl(),
             $t: (message: { defaultMessage: string }, values?: Record<string, string>) => {
@@ -42,7 +40,7 @@ vi.mock('@solvimon/solvimon-ui', async () => {
                     );
             },
         }),
-    };
+    });
 });
 
 describe('CustomerPaymentMethods component', () => {

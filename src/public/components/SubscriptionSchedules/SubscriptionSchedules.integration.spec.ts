@@ -6,6 +6,7 @@ import type {
 } from '@solvimon/solvimon-types';
 import SubscriptionSchedulesEntry from './SubscriptionSchedules.entry.vue';
 import type { SolvimonSubscriptionSchedulesEntryProps } from './SubscriptionSchedules.entry.types';
+import { createTestPortalObject } from '@/test-utils/portalObjectFixture';
 
 const { mockUseSubscription, mockUseLoadInitialData, mockGet, mockWithPlanData } = vi.hoisted(
     () => ({
@@ -30,24 +31,14 @@ vi.mock('@/composables/useLoadInitialData', () => ({
     useLoadInitialData: mockUseLoadInitialData,
 }));
 
-vi.mock('@/components/providers', async () => ({
-    Provider: defineComponent({
-        inheritAttrs: false,
-        setup(_, { slots }) {
-            return () => slots.default?.();
-        },
-    }),
-    useActionDispatchProvider: () => ({
-        dispatchAction: vi.fn(),
-    }),
-}));
+vi.mock('@/components/providers', async () => {
+    const { createProviderMock } = await import('@/test-utils/providerMock');
+    return createProviderMock();
+});
 
 vi.mock('@solvimon/solvimon-ui', async () => {
-    const actual = await vi.importActual<typeof import('@solvimon/solvimon-ui')>('@solvimon/solvimon-ui');
-    const { mockUseIntl } = await import('@/test-utils/useIntlMock');
-    return {
-        ...actual,
-        useIntl: mockUseIntl,
+    const { createSolvimonUiMock } = await import('@/test-utils/solvimonUiMock');
+    return createSolvimonUiMock({
         PricingPlanSchedules: defineComponent({
             name: 'PricingPlanSchedulesStub',
             props: { schedules: { type: Array, required: true } },
@@ -58,7 +49,7 @@ vi.mock('@solvimon/solvimon-ui', async () => {
                     ]);
             },
         }),
-    };
+    });
 });
 
 describe('SubscriptionSchedules entry component', () => {
@@ -81,14 +72,7 @@ describe('SubscriptionSchedules entry component', () => {
         environment: 'TEST',
         locale: 'en-US',
         customElementName: 'solvimon-subscription-schedules',
-        portalObject: {
-            object_type: 'PORTAL_URL',
-            id: 'purl_example',
-            type: 'CUSTOMER',
-            customer_id: 'cus_123',
-            token: 'test-portal-token',
-            status: 'PUBLISHED',
-        } as unknown as SolvimonSubscriptionSchedulesEntryProps['portalObject'],
+        portalObject: createTestPortalObject(),
         configuration: { subscriptionId },
     };
 

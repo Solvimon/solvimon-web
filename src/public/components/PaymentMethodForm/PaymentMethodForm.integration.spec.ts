@@ -1,8 +1,9 @@
 import { mount } from '@vue/test-utils';
-import { defineComponent, ref } from 'vue';
+import { ref } from 'vue';
 import type { Customer, PaymentMethodOptionsResponse } from '@solvimon/solvimon-types';
 import PaymentMethodFormEntry from './PaymentMethodForm.entry.vue';
 import type { SolvimonPaymentMethodFormEntryProps } from './PaymentMethodForm.entry.types';
+import { createTestPortalObject } from '@/test-utils/portalObjectFixture';
 
 const {
     mockUseCustomer,
@@ -36,17 +37,10 @@ vi.mock('@/composables/useLoadInitialData', () => ({
     useLoadInitialData: mockUseLoadInitialData,
 }));
 
-vi.mock('@/components/providers', async () => ({
-    Provider: defineComponent({
-        inheritAttrs: false,
-        setup(_, { slots }) {
-            return () => slots.default?.();
-        },
-    }),
-    useActionDispatchProvider: () => ({
-        dispatchAction: vi.fn(),
-    }),
-}));
+vi.mock('@/components/providers', async () => {
+    const { createProviderMock } = await import('@/test-utils/providerMock');
+    return createProviderMock();
+});
 
 describe('PaymentMethodForm entry component', () => {
     const customerId = 'cus_123' as Customer['id'];
@@ -64,14 +58,7 @@ describe('PaymentMethodForm entry component', () => {
         environment: 'TEST',
         locale: 'en-US',
         customElementName: 'solvimon-payment-method-form',
-        portalObject: {
-            object_type: 'PORTAL_URL',
-            id: 'purl_example',
-            type: 'CUSTOMER',
-            customer_id: customerId,
-            token: 'test-portal-token',
-            status: 'PUBLISHED',
-        } as unknown as SolvimonPaymentMethodFormEntryProps['portalObject'],
+        portalObject: createTestPortalObject(customerId),
     };
 
     const mountComponent = ({

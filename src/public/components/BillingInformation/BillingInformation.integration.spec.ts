@@ -14,12 +14,8 @@ vi.mock('@/components/providers', () => ({
 }));
 
 vi.mock('@solvimon/solvimon-ui', async () => {
-    const actual = await vi.importActual<typeof import('@solvimon/solvimon-ui')>('@solvimon/solvimon-ui');
-    const { mockUseIntl } = await import('@/test-utils/useIntlMock');
-
-    return {
-        ...actual,
-        useIntl: mockUseIntl,
+    const { createSolvimonUiMock } = await import('@/test-utils/solvimonUiMock');
+    return createSolvimonUiMock({
         CustomerBillingInformation: defineComponent({
             name: 'CustomerBillingInformationStub',
             props: {
@@ -38,7 +34,7 @@ vi.mock('@solvimon/solvimon-ui', async () => {
                     ]);
             },
         }),
-    };
+    });
 });
 
 describe('BillingInformation component', () => {

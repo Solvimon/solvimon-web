@@ -3,6 +3,7 @@ import { defineComponent, ref, h } from 'vue';
 import type { Invoice, Payment } from '@solvimon/solvimon-types';
 import InvoiceEntry from './Invoice.entry.vue';
 import type { SolvimonInvoiceEntryProps } from './Invoice.entry.types';
+import { createTestPortalObject } from '@/test-utils/portalObjectFixture';
 
 const { mockUseInvoice, mockUsePayments, mockUseLoadInitialData, mockDownloadInvoicePdf, mockInvoiceGet, mockPaymentsGet } =
     vi.hoisted(() => ({
@@ -24,25 +25,15 @@ vi.mock('@/composables/useInvoice', () => ({ useInvoice: mockUseInvoice }));
 vi.mock('@/composables/usePayments', () => ({ usePayments: mockUsePayments }));
 vi.mock('@/composables/useLoadInitialData', () => ({ useLoadInitialData: mockUseLoadInitialData }));
 
-vi.mock('@/components/providers', async () => ({
-    Provider: defineComponent({
-        inheritAttrs: false,
-        setup(_, { slots }) {
-            return () => slots.default?.();
-        },
-    }),
-    useActionDispatchProvider: () => ({
-        dispatchAction: vi.fn(),
-    }),
-}));
+vi.mock('@/components/providers', async () => {
+    const { createProviderMock } = await import('@/test-utils/providerMock');
+    return createProviderMock();
+});
 
 vi.mock('@solvimon/solvimon-ui', async () => {
-    const actual = await vi.importActual<typeof import('@solvimon/solvimon-ui')>('@solvimon/solvimon-ui');
-    const { mockUseIntl } = await import('@/test-utils/useIntlMock');
-    return {
-        ...actual,
-        useIntl: mockUseIntl,
-        // Stub library bundle components that require deep provider chains or complete invoice data
+    const { createSolvimonUiMock } = await import('@/test-utils/solvimonUiMock');
+    // Stub library bundle components that require deep provider chains or complete invoice data
+    return createSolvimonUiMock({
         InvoiceHeader: defineComponent({ template: '<div />' }),
         InvoiceSummary: defineComponent({ template: '<div />' }),
         CustomerBillingInformation: defineComponent({
@@ -52,7 +43,7 @@ vi.mock('@solvimon/solvimon-ui', async () => {
             },
         }),
         PaymentMethod: defineComponent({ template: '<div />' }),
-    };
+    });
 });
 
 describe('Invoice entry component', () => {
@@ -92,14 +83,7 @@ describe('Invoice entry component', () => {
         environment: 'TEST',
         locale: 'en-US',
         customElementName: 'solvimon-invoice',
-        portalObject: {
-            object_type: 'PORTAL_URL',
-            id: 'purl_example',
-            type: 'CUSTOMER',
-            customer_id: 'cus_123',
-            token: 'test-portal-token',
-            status: 'PUBLISHED',
-        } as unknown as SolvimonInvoiceEntryProps['portalObject'],
+        portalObject: createTestPortalObject(),
         configuration: defaultConfiguration,
     };
 

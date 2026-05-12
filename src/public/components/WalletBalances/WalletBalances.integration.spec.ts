@@ -4,6 +4,7 @@ import { ApiStatus } from '@solvimon/solvimon-types';
 import type { CustomerWalletBalancesResponse } from '@solvimon/solvimon-types';
 import WalletBalancesEntry from './WalletBalances.entry.vue';
 import type { SolvimonWalletBalancesEntryProps } from './WalletBalances.entry.types';
+import { createTestPortalObject } from '@/test-utils/portalObjectFixture';
 
 const { mockUseCustomerWalletBalances, mockUseLoadInitialData, mockFetch } = vi.hoisted(() => ({
     mockUseCustomerWalletBalances: vi.fn(),
@@ -25,25 +26,14 @@ vi.mock('@/composables/useLoadInitialData', () => ({
     useLoadInitialData: mockUseLoadInitialData,
 }));
 
-vi.mock('@/components/providers', async () => ({
-    Provider: defineComponent({
-        inheritAttrs: false,
-        setup(_, { slots }) {
-            return () => slots.default?.();
-        },
-    }),
-    useActionDispatchProvider: () => ({
-        dispatchAction: vi.fn(),
-    }),
-}));
+vi.mock('@/components/providers', async () => {
+    const { createProviderMock } = await import('@/test-utils/providerMock');
+    return createProviderMock();
+});
 
 vi.mock('@solvimon/solvimon-ui', async () => {
-    const actual =
-        await vi.importActual<typeof import('@solvimon/solvimon-ui')>('@solvimon/solvimon-ui');
-    const { mockUseIntl } = await import('@/test-utils/useIntlMock');
-    return {
-        ...actual,
-        useIntl: mockUseIntl,
+    const { createSolvimonUiMock } = await import('@/test-utils/solvimonUiMock');
+    return createSolvimonUiMock({
         ErrorNotification: defineComponent({
             name: 'ErrorNotificationStub',
             props: { title: String },
@@ -58,7 +48,7 @@ vi.mock('@solvimon/solvimon-ui', async () => {
                 return () => h('div', { 'data-testid': 'wallet-balances-stub' }, props.title);
             },
         }),
-    };
+    });
 });
 
 describe('WalletBalances entry component', () => {
@@ -81,14 +71,7 @@ describe('WalletBalances entry component', () => {
         environment: 'TEST',
         locale: 'en-US',
         customElementName: 'solvimon-wallet-balances',
-        portalObject: {
-            object_type: 'PORTAL_URL',
-            id: 'purl_example',
-            type: 'CUSTOMER',
-            customer_id: customerId,
-            token: 'test-portal-token',
-            status: 'PUBLISHED',
-        } as unknown as SolvimonWalletBalancesEntryProps['portalObject'],
+        portalObject: createTestPortalObject(customerId),
     };
 
     const mountComponent = ({

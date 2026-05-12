@@ -1,4 +1,5 @@
 import {
+    getAllPricingsFromScheduleInfos,
     getFirstPricingPlanScheduleOfType,
     getPricingItemConfigMetaById,
     getScheduleCustomizations,
@@ -435,6 +436,110 @@ describe('pricingPlanSchedule utils', () => {
             expect(result?.[0].seats_values?.[0]).not.toHaveProperty('start_at');
             expect(result?.[0].seats_values?.[0]).not.toHaveProperty('end_at');
             expect(result?.[0].seats_values?.[0]).not.toHaveProperty('set_start_at_to_now');
+        });
+    });
+
+    describe('getAllPricingsFromScheduleInfos', () => {
+        const makeInfo = (
+            categories: PricingCategoryExtended[] | undefined,
+        ): PricingPlanScheduleInfoExpanded =>
+            ({
+                pricing_plan_version: { pricing_categories: categories },
+            }) as unknown as PricingPlanScheduleInfoExpanded;
+
+        it('returns all pricings from categories', () => {
+            const info = makeInfo([
+                { product_category_id: 'cat-1', pricings: [{ id: 'p1' }, { id: 'p2' }] } as any,
+                { product_category_id: 'cat-2', pricings: [{ id: 'p3' }] } as any,
+            ]);
+
+            const result = getAllPricingsFromScheduleInfos({ pricingPlanScheduleInfo: info });
+
+            expect(result).toHaveLength(3);
+            expect(result.map((p) => p.id)).toEqual(['p1', 'p2', 'p3']);
+        });
+
+        it('returns empty array when pricing_categories is undefined', () => {
+            expect(
+                getAllPricingsFromScheduleInfos({ pricingPlanScheduleInfo: makeInfo(undefined) }),
+            ).toEqual([]);
+        });
+
+        it('returns empty array when all categories have no pricings', () => {
+            expect(
+                getAllPricingsFromScheduleInfos({
+                    pricingPlanScheduleInfo: makeInfo([
+                        { product_category_id: 'cat-1', pricings: undefined } as any,
+                    ]),
+                }),
+            ).toEqual([]);
+        });
+    });
+
+    describe('getPricingItemConfigMetaById — pricing_currency_configs branch', () => {
+        it('stores currency and billingPeriod from pricing_currency_configs billing_period_configs', () => {
+            const monthlyBillingPeriod: BillingPeriod = { type: 'MONTH', value: 1 };
+            const info: PricingPlanScheduleInfoExpanded = {
+                id: 'schedule-1',
+                type: 'DEFAULT',
+                start_at: '2024-01-01T00:00:00Z',
+                end_at: '2024-12-31T23:59:59Z',
+                pricing_plan_version_id: 'version-1',
+                pricing_plan_version: {
+                    object_type: 'PRICING_PLAN_VERSION',
+                    id: 'version-1',
+                    pricing_plan_id: 'plan-1',
+                    version: 1,
+                    status: 'ACTIVE',
+                    pricing_plan: { object_type: 'PRICING_PLAN', id: 'plan-1', reference: 'ref', name: 'Plan', type: 'STANDARD', variant: 'DEFAULT' },
+                    pricing_categories: [
+                        {
+                            product_category_id: 'cat-1',
+                            pricings: [
+                                {
+                                    object_type: 'PRICING',
+                                    id: 'pricing-1',
+                                    product_ids: [],
+                                    items: [
+                                        {
+                                            id: 'item-1',
+                                            product_item_ids: [],
+                                            pricing_currency_configs: [
+                                                {
+                                                    currency: 'EUR',
+                                                    billing_period_configs: [
+                                                        {
+                                                            billing_period: monthlyBillingPeriod,
+                                                            configs: [{ id: 'cc-bp-config-1' }],
+                                                        },
+                                                    ],
+                                                    configs: [{ id: 'cc-config-1' }],
+                                                },
+                                            ],
+                                        },
+                                    ],
+                                },
+                            ],
+                        },
+                    ],
+                } as any,
+                pricing_plan_schedule: {
+                    id: 'schedule-1',
+                    type: 'DEFAULT',
+                    start_at: '2024-01-01T00:00:00Z',
+                    end_at: '2024-12-31T23:59:59Z',
+                    pricing_plan_version_id: 'version-1',
+                    pricing_plan_subscription_id: 'subscription-1',
+                } as any,
+            };
+
+            const result = getPricingItemConfigMetaById({ pricingPlanScheduleInfo: info });
+
+            expect(result.get('cc-bp-config-1')).toEqual({
+                currency: 'EUR',
+                billingPeriod: monthlyBillingPeriod,
+            });
+            expect(result.get('cc-config-1')).toEqual({ currency: 'EUR' });
         });
     });
 });

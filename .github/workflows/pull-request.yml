@@ -1,0 +1,12 @@
+name: Auto Assign
+
+on:
+    pull_request:
+        types: [opened]
+
+jobs:
+    add-assignee:
+        runs-on: ubuntu-latest
+
+        steps:
+            - uses: toshimaru/auto-author-assign@v2

@@ -5,6 +5,9 @@ on:
         tags:
             - 'v*'
 
+permissions:
+    contents: write
+
 jobs:
     release:
         name: Publish to npm
@@ -41,3 +44,24 @@ jobs:
               env:
                   NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
                   NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+            - name: Extract changelog section
+              id: changelog
+              run: |
+                  version="${GITHUB_REF_NAME#v}"
+                  notes=$(awk -v ver="[$version]" '
+                    /^## \[/ { if (found) exit; if (index($0, ver)) found=1; next }
+                    found { print }
+                  ' CHANGELOG.md)
+                  echo "notes<<EOF" >> "$GITHUB_OUTPUT"
+                  echo "$notes" >> "$GITHUB_OUTPUT"
+                  echo "EOF" >> "$GITHUB_OUTPUT"
+
+            - name: Create GitHub Release
+              run: |
+                  gh release create "$GITHUB_REF_NAME" \
+                    --title "$GITHUB_REF_NAME" \
+                    --notes "${{ steps.changelog.outputs.notes }}" \
+                    --verify-tag
+              env:
+                  GH_TOKEN: ${{ github.token }}

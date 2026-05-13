@@ -14,49 +14,16 @@ vi.mock('@/components/providers', () => ({
 }));
 
 vi.mock('@solvimon/solvimon-ui', async () => {
-    const actual = await vi.importActual<typeof import('@solvimon/solvimon-ui')>('@solvimon/solvimon-ui');
-
-    return {
-        ...actual,
+    const { createSolvimonUiMock } = await import('@/test-utils/solvimonUiMock');
+    const { mockUseIntl } = await import('@/test-utils/useIntlMock');
+    return createSolvimonUiMock({
         useIntl: () => ({
-            $t: (
-                message: {
-                    defaultMessage: string;
-                },
-                values?: Record<string, string>,
-            ) => {
+            ...mockUseIntl(),
+            $t: (message: { defaultMessage: string }, values?: Record<string, string>) => {
                 if (values?.count && message.defaultMessage.includes('Payment method')) {
                     return values.count === '1' ? 'Payment method' : 'Payment methods';
                 }
-
                 return message.defaultMessage;
-            },
-            formatDate: ({
-                date,
-                format,
-                timezone,
-            }: {
-                date: Date | string;
-                format: 'date' | 'dateTime';
-                timezone?: string;
-            }) => {
-                const options: Intl.DateTimeFormatOptions =
-                    format === 'date'
-                        ? { day: '2-digit', month: '2-digit', year: 'numeric' }
-                        : {
-                              day: '2-digit',
-                              month: '2-digit',
-                              year: 'numeric',
-                              hour: '2-digit',
-                              minute: '2-digit',
-                              second: '2-digit',
-                              hour12: false,
-                          };
-
-                return new Intl.DateTimeFormat('en-GB', {
-                    ...options,
-                    ...(timezone ? { timeZone: timezone } : {}),
-                }).format(new Date(date));
             },
         }),
         PaymentMethod: defineComponent({
@@ -73,7 +40,7 @@ vi.mock('@solvimon/solvimon-ui', async () => {
                     );
             },
         }),
-    };
+    });
 });
 
 describe('CustomerPaymentMethods component', () => {

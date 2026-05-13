@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0-alpha.7] - 2026-05-13
+
+### Added
+
+- Added tax ID validation to the checkout form. A composable validates the customer's tax ID against the API and displays an inline notice when validation fails.
+- Added a playground with all screens and components for local iteration.
+- Added TypeScript declaration files to the build output.
+- Added a bundle size comparison bot that posts results as a PR comment on every pull request.
+- Added a coverage report step to the CI pipeline.
+- Added automatic GitHub Release creation with changelog notes on every release tag.
+
+### Changed
+
+- `BillingInformation` component now loads initial customer data on mount instead of requiring the parent to pass it in.
+- Lazy-load Adyen CSS to reduce the initial bundle size.
+- Switched to tree-shakable `lodash-es` named imports to reduce bundle size.
+- Improved the `watch` script to run JS and CSS builds in parallel.
+
+### Fixed
+
+- Fixed `Checkout` filtering seat quantity inputs by the active billing period only.
+- Fixed the email field in the billing information form not updating correctly.
+- Fixed security vulnerabilities reported by Dependabot.
+
 ## [0.1.0-alpha.6] - 2026-05-07
 
 ### Changed
@@ -47,7 +71,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial alpha release.
 
-[Unreleased]: https://github.com/Solvimon/solvimon-web/compare/v0.1.0-alpha.6...HEAD
+[Unreleased]: https://github.com/Solvimon/solvimon-web/compare/v0.1.0-alpha.7...HEAD
+[0.1.0-alpha.7]: https://github.com/Solvimon/solvimon-web/compare/v0.1.0-alpha.6...v0.1.0-alpha.7
 [0.1.0-alpha.6]: https://github.com/Solvimon/solvimon-web/compare/v0.1.0-alpha.5...v0.1.0-alpha.6
 [0.1.0-alpha.5]: https://github.com/Solvimon/solvimon-web/compare/v0.1.0-alpha.4...v0.1.0-alpha.5
 [0.1.0-alpha.4]: https://github.com/Solvimon/solvimon-web/compare/v0.1.0-alpha.3...v0.1.0-alpha.4

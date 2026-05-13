@@ -39,7 +39,8 @@
         "version:major": "npm version major --no-git-tag-version",
         "changelog:check": "node scripts/check-changelog.mjs",
         "publish:guard": "node scripts/publish-guard.mjs",
-        "prepublishOnly": "npm run publish:guard && npm run changelog:check && npm run build"
+        "prepublishOnly": "npm run publish:guard && npm run changelog:check && npm run build",
+        "prepare": "husky"
     },
     "files": [
         "dist"
@@ -143,6 +144,8 @@
         "vue": "^3.5.13"
     },
     "devDependencies": {
+        "@commitlint/cli": "^20.5.3",
+        "@commitlint/config-conventional": "^20.5.3",
         "@formatjs/cli": "^6.6.1",
         "@playwright/test": "^1.57.0",
         "@rushstack/eslint-patch": "^1.2.0",
@@ -171,6 +174,7 @@
         "eslint-plugin-unused-imports": "^4.1.4",
         "eslint-plugin-vue": "^9.33.0",
         "glob": "^11.0.1",
+        "husky": "^9.1.7",
         "jsdom": "^26.0.0",
         "npm-run-all2": "^7.0.2",
         "postcss": "^8.5.10",

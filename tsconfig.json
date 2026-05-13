@@ -9,7 +9,8 @@
         "vitest.setup.ts",
         "playwright.config.ts",
         "global.config.ts",
-        "scripts/**/*.ts"
+        "scripts/**/*.ts",
+        "commitlint.config.ts"
     ],
     "exclude": ["src/**/__tests__/*", "src/**/*.stories.ts", "tests/playwright/**/*"],
     "vueCompilerOptions": {

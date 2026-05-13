@@ -57,6 +57,29 @@ Fill in the PR template completely. A good PR description includes:
 - Sensitive areas (release workflows, CI configuration, auth-related code) follow CODEOWNERS and require approval from the designated owners
 - Branch protection is enforced via GitHub rulesets; do not bypass required status checks
 
+## Commit messages
+
+This project uses [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/). Every commit message must follow the format:
+
+```
+<type>(<scope>): <description>
+```
+
+Common types:
+
+| Type | When to use |
+|------|-------------|
+| `feat` | A new feature or capability |
+| `fix` | A bug fix |
+| `docs` | Documentation changes only |
+| `refactor` | Code change that neither fixes a bug nor adds a feature |
+| `test` | Adding or updating tests |
+| `chore` | Build process, tooling, or dependency changes |
+
+The scope is optional but encouraged — use the component or area being changed (e.g. `feat(checkout)`, `fix(invoice)`).
+
+Commit messages are used to generate the changelog entries in `CHANGELOG.md`. A clear, descriptive commit message makes it straightforward to write accurate release notes and helps reviewers understand what changed and why.
+
 ## Code conventions
 
 **TypeScript** — strict mode is enabled. Avoid `any`; use `unknown` and narrow where needed.

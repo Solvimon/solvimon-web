@@ -6,7 +6,7 @@ export default {
         // SDK source files
         'src/**/*.{vue,ts}',
         // solvimon-ui ships compiled JS only (no Vue sources in dist), so scan the dist bundles
-        './node_modules/@solvimon/solvimon-ui/dist/*.{js,mjs}',
+        './node_modules/@solvimon/solvimon-ui/dist/**/*.{js,mjs}',
     ],
     theme: {
         extend: {

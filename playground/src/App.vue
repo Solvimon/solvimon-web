@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 import { createSolvimonCore } from '@solvimon/solvimon-web/core';
-import { screens, components } from './registry';
+import { screens, components, allEntries } from './registry';
 import type { StoryEntry } from './registry';
 import StoryCanvas from './components/StoryCanvas.vue';
 
@@ -17,24 +17,43 @@ const solvimon = createSolvimonCore({
     },
 });
 
-const portalJson = ref('');
+const PORTAL_STORAGE_KEY = 'solvimon-playground:portal';
+
+const portalJson = ref(sessionStorage.getItem(PORTAL_STORAGE_KEY) ?? '');
 const portalError = ref('');
-const portalObject = ref<Record<string, unknown> | null>(null);
+const portalObject = ref<Record<string, unknown> | null>(
+    portalJson.value ? JSON.parse(portalJson.value) : null,
+);
 
 function applyPortal() {
     if (!portalJson.value.trim()) {
         portalObject.value = null;
+        sessionStorage.removeItem(PORTAL_STORAGE_KEY);
         return;
     }
     try {
         portalObject.value = JSON.parse(portalJson.value);
+        sessionStorage.setItem(PORTAL_STORAGE_KEY, portalJson.value);
         portalError.value = '';
     } catch {
         portalError.value = 'Invalid JSON';
     }
 }
 
-const activeEntry = ref<StoryEntry>(screens[0]);
+const ACTIVE_ENTRY_STORAGE_KEY = 'solvimon-playground:active-entry';
+
+function restoreActiveEntry(): StoryEntry {
+    const stored = sessionStorage.getItem(ACTIVE_ENTRY_STORAGE_KEY);
+    if (stored) {
+        const found = allEntries.find((e) => e.id === stored);
+        if (found) return found;
+    }
+    return screens[0];
+}
+
+const activeEntry = ref<StoryEntry>(restoreActiveEntry());
+
+watch(activeEntry, (entry) => sessionStorage.setItem(ACTIVE_ENTRY_STORAGE_KEY, entry.id));
 </script>
 
 <template>

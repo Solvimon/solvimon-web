@@ -14,3 +14,6 @@ tests/playwright/results.xml
 
 # AI
 .claude/settings.json
+
+# Scratch files
+/scratch.*

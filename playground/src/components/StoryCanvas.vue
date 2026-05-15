@@ -13,23 +13,27 @@ const props = defineProps<{
 // Configuration JSON editor
 // ---------------------------------------------------------------------------
 
-const configJson = ref(
-    props.entry.defaultConfiguration
-        ? JSON.stringify(props.entry.defaultConfiguration, null, 2)
-        : '',
-);
+function configStorageKey(entryId: string) {
+    return `solvimon-playground:config:${entryId}`;
+}
+
+function loadConfigJson(entry: typeof props.entry): string {
+    const stored = sessionStorage.getItem(configStorageKey(entry.id));
+    if (stored) return stored;
+    return entry.defaultConfiguration ? JSON.stringify(entry.defaultConfiguration, null, 2) : '';
+}
+
+const configJson = ref(loadConfigJson(props.entry));
 const configError = ref('');
 const appliedConfig = ref<Record<string, unknown> | undefined>(
-    props.entry.defaultConfiguration,
+    configJson.value ? JSON.parse(configJson.value) : undefined,
 );
 
 watch(
     () => props.entry,
     (entry) => {
-        configJson.value = entry.defaultConfiguration
-            ? JSON.stringify(entry.defaultConfiguration, null, 2)
-            : '';
-        appliedConfig.value = entry.defaultConfiguration;
+        configJson.value = loadConfigJson(entry);
+        appliedConfig.value = configJson.value ? JSON.parse(configJson.value) : undefined;
         configError.value = '';
     },
 );
@@ -37,11 +41,13 @@ watch(
 function applyConfig() {
     if (!configJson.value.trim()) {
         appliedConfig.value = undefined;
+        sessionStorage.removeItem(configStorageKey(props.entry.id));
         configError.value = '';
         return;
     }
     try {
         appliedConfig.value = JSON.parse(configJson.value);
+        sessionStorage.setItem(configStorageKey(props.entry.id), configJson.value);
         configError.value = '';
     } catch {
         configError.value = 'Invalid JSON';

@@ -375,21 +375,17 @@ const {
     updateInvoicePreviewOnBillingInformationChange,
     logger,
     formatErrorMessage: ({ action }) =>
-        $t(
-            action === 'apply'
-                ? {
-                      defaultMessage: 'Promotion code could not be applied. Please try again.',
-                      id: 'checkout.promotion_code.apply_failed',
-                      description:
-                          'Error message when applying a promotion code in checkout failed',
-                  }
-                : {
-                      defaultMessage: 'Promotion code could not be removed. Please try again.',
-                      id: 'checkout.promotion_code.remove_failed',
-                      description:
-                          'Error message when removing a promotion code in checkout failed',
-                  },
-        ),
+        action === 'apply'
+            ? $t({
+                  defaultMessage: 'Promotion code could not be applied. Please try again.',
+                  id: 'checkout.promotion_code.apply_failed',
+                  description: 'Error message when applying a promotion code in checkout failed',
+              })
+            : $t({
+                  defaultMessage: 'Promotion code could not be removed. Please try again.',
+                  id: 'checkout.promotion_code.remove_failed',
+                  description: 'Error message when removing a promotion code in checkout failed',
+              }),
     onInvalidPromotionCode: () => {
         promotionCode.value = null;
     },

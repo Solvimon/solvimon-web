@@ -116,6 +116,19 @@ export default defineConfigWithVueTs(
                     ],
                 },
             ],
+            'no-restricted-syntax': [
+                'error',
+                {
+                    selector: "CallExpression[callee.name='$t'] > ConditionalExpression",
+                    message:
+                        'Do not pass a conditional message descriptor to $t. Put the condition outside the $t calls so FormatJS can extract both messages.',
+                },
+                {
+                    selector: "CallExpression[callee.name='formatMessage'] > ConditionalExpression",
+                    message:
+                        'Do not pass a conditional message descriptor to formatMessage. Put the condition outside the formatMessage calls so FormatJS can extract both messages.',
+                },
+            ],
         },
     },
     // Override for test app files

@@ -17,29 +17,6 @@ const solvimon = createSolvimonCore({
     },
 });
 
-const PORTAL_STORAGE_KEY = 'solvimon-playground:portal';
-
-const portalJson = ref(sessionStorage.getItem(PORTAL_STORAGE_KEY) ?? '');
-const portalError = ref('');
-const portalObject = ref<Record<string, unknown> | null>(
-    portalJson.value ? JSON.parse(portalJson.value) : null,
-);
-
-function applyPortal() {
-    if (!portalJson.value.trim()) {
-        portalObject.value = null;
-        sessionStorage.removeItem(PORTAL_STORAGE_KEY);
-        return;
-    }
-    try {
-        portalObject.value = JSON.parse(portalJson.value);
-        sessionStorage.setItem(PORTAL_STORAGE_KEY, portalJson.value);
-        portalError.value = '';
-    } catch {
-        portalError.value = 'Invalid JSON';
-    }
-}
-
 const ACTIVE_ENTRY_STORAGE_KEY = 'solvimon-playground:active-entry';
 
 function restoreActiveEntry(): StoryEntry {
@@ -54,6 +31,41 @@ function restoreActiveEntry(): StoryEntry {
 const activeEntry = ref<StoryEntry>(restoreActiveEntry());
 
 watch(activeEntry, (entry) => sessionStorage.setItem(ACTIVE_ENTRY_STORAGE_KEY, entry.id));
+
+function portalStorageKey(entryId: string) {
+    return `solvimon-playground:portal:${entryId}`;
+}
+
+function loadPortalJson(entry: StoryEntry): string {
+    return sessionStorage.getItem(portalStorageKey(entry.id)) ?? '';
+}
+
+const portalJson = ref(loadPortalJson(activeEntry.value));
+const portalError = ref('');
+const portalObject = ref<Record<string, unknown> | null>(
+    portalJson.value ? JSON.parse(portalJson.value) : null,
+);
+
+watch(activeEntry, (entry) => {
+    portalJson.value = loadPortalJson(entry);
+    portalObject.value = portalJson.value ? JSON.parse(portalJson.value) : null;
+    portalError.value = '';
+});
+
+function applyPortal() {
+    if (!portalJson.value.trim()) {
+        portalObject.value = null;
+        sessionStorage.removeItem(portalStorageKey(activeEntry.value.id));
+        return;
+    }
+    try {
+        portalObject.value = JSON.parse(portalJson.value);
+        sessionStorage.setItem(portalStorageKey(activeEntry.value.id), portalJson.value);
+        portalError.value = '';
+    } catch {
+        portalError.value = 'Invalid JSON';
+    }
+}
 </script>
 
 <template>

@@ -49,7 +49,7 @@ export function generateCoverageReport({ prPath, basePath, sha, baseRef }) {
 
     return [
         '<!-- coverage-report -->',
-        '## Coverage Report',
+        '## Test Coverage Report',
         '',
         ...summaryLines,
         '',

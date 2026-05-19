@@ -69,7 +69,14 @@ const getCreditTypeLabel = (credits?: InvoiceCreditQuantity) => {
     return creditTypesById.value[credits.credit_type_id]?.name ?? credits.credit_type_id;
 };
 
-const formatQuantity = (quantity?: string) => (quantity ? formatNumber(Number(quantity)) : '-');
+const formatQuantity = (quantity?: string) =>
+    quantity
+        ? formatNumber(Number(quantity))
+        : formatMessage({
+              defaultMessage: '-',
+              id: 'empty_value_placeholder',
+              description: 'Placeholder shown when a wallet balance quantity is missing',
+          });
 
 const periodsWithCredits = computed(() =>
     buildInvoiceCreditsBreakdown({

@@ -387,6 +387,10 @@
     "defaultMessage": "Refresh",
     "description": "Label of the button in the error state that lets you retry your action"
   },
+  "empty_value_placeholder": {
+    "defaultMessage": "-",
+    "description": "Placeholder shown when a wallet balance quantity is missing"
+  },
   "invoice_credits.balance.table_header": {
     "defaultMessage": "Balance",
     "description": "Column header for the available wallet balance amount"

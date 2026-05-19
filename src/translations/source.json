@@ -1,24 +1,4 @@
 {
-  "4UjRe6": {
-    "defaultMessage": "Balance",
-    "description": "Column header for the available wallet balance amount"
-  },
-  "65I4e4": {
-    "defaultMessage": "Credit breakdown",
-    "description": "Column header for wallet balance credit type details"
-  },
-  "C8F4/r": {
-    "defaultMessage": "Remaining",
-    "description": "Column header for the remaining wallet credit amount"
-  },
-  "H5+NAX": {
-    "defaultMessage": "Balance",
-    "description": "Fallback wallet title in wallet balance components"
-  },
-  "K2fM1n": {
-    "defaultMessage": "Credits",
-    "description": "Fallback label for wallet balance credit types when no name is available"
-  },
   "addon_multiple_editor.add_to_subscription_button": {
     "defaultMessage": "Add to subscription",
     "description": "The button to add a pricing to the subscription"
@@ -403,21 +383,25 @@
     "defaultMessage": "{count,plural,one{Wallet} other{Wallets}}",
     "description": "Title for the wallets block on the customer overview page"
   },
-  "dHb0fN": {
-    "defaultMessage": "-",
-    "description": "Placeholder shown when a wallet balance quantity is missing"
-  },
-  "damFt1": {
-    "defaultMessage": "VAT number is valid.",
-    "description": "The message shown when the VAT number is valid"
-  },
   "empty_state.retry.button": {
     "defaultMessage": "Refresh",
     "description": "Label of the button in the error state that lets you retry your action"
   },
-  "gR9xe+": {
-    "defaultMessage": "VAT number is invalid.",
-    "description": "The message shown when the VAT number is invalid"
+  "invoice_credits.balance.table_header": {
+    "defaultMessage": "Balance",
+    "description": "Column header for the available wallet balance amount"
+  },
+  "invoice_credits.credit_breakdown.table_header": {
+    "defaultMessage": "Credit breakdown",
+    "description": "Column header for wallet balance credit type details"
+  },
+  "invoice_credits.remaining.table_header": {
+    "defaultMessage": "Remaining",
+    "description": "Column header for the remaining wallet credit amount"
+  },
+  "invoice_credits.used.table_header": {
+    "defaultMessage": "Used",
+    "description": "Column header for the used wallet credit amount"
   },
   "invoice_preview.taxes_not_determined_by_billing_information_tooltip": {
     "defaultMessage": "Will be determined by billing information",
@@ -450,14 +434,6 @@
   "invoices_list.title": {
     "defaultMessage": "Schedules",
     "description": "Invoices list title"
-  },
-  "j2d7b2": {
-    "defaultMessage": "Wallet balance",
-    "description": "Section header for invoice wallet balance details"
-  },
-  "kFCxC4": {
-    "defaultMessage": "Service period - {startAt} - {endAt}",
-    "description": "Heading shown above wallet balance details for an invoice period"
   },
   "on_demand_pricing_row.add_to_cart_button_label": {
     "defaultMessage": "Add to cart",
@@ -502,10 +478,6 @@
   "pricing_item_pricing.unsupported_pricing_error": {
     "defaultMessage": "Unsupported pricing",
     "description": "Text displayed when the pricing item pricing is unsupported"
-  },
-  "rUy4Lk": {
-    "defaultMessage": "Used",
-    "description": "Column header for the used wallet credit amount"
   },
   "sdk.invoice_details.customer_billing_information.title": {
     "defaultMessage": "Your billing information",
@@ -575,6 +547,14 @@
     "defaultMessage": "Payment successful",
     "description": "The title for when a payment has been successful"
   },
+  "tax_check.invalid_vat_number": {
+    "defaultMessage": "VAT number is invalid.",
+    "description": "The message shown when the VAT number is invalid"
+  },
+  "tax_check.valid_vat_number": {
+    "defaultMessage": "VAT number is valid.",
+    "description": "The message shown when the VAT number is valid"
+  },
   "upgrade_subscription.empty_state": {
     "defaultMessage": "No on-demand add-ons are available for this subscription.",
     "description": "Shown when there are no on-demand add-ons available for the subscription"
@@ -643,8 +623,24 @@
     "defaultMessage": "Payment successful",
     "description": "Title shown after a successful add-on purchase"
   },
+  "wallet_balance.credit_type_fallback_label": {
+    "defaultMessage": "Credits",
+    "description": "Fallback label for wallet balance credit types when no name is available"
+  },
+  "wallet_balance.details.header": {
+    "defaultMessage": "Wallet balance",
+    "description": "Section header for invoice wallet balance details"
+  },
   "wallet_balance.load_failed": {
     "defaultMessage": "Could not load wallet balances",
     "description": "Error shown when wallet balances fail to load"
+  },
+  "wallet_balance.service_period_heading": {
+    "defaultMessage": "Service period - {startAt} - {endAt}",
+    "description": "Heading shown above wallet balance details for an invoice period"
+  },
+  "wallet_balance.wallet_ballance_title": {
+    "defaultMessage": "Balance",
+    "description": "Fallback wallet title in wallet balance components"
   }
 }

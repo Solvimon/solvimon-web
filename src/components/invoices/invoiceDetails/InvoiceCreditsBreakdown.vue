@@ -1,5 +1,10 @@
 <script setup lang="ts">
-import type { CreditType, Invoice, InvoiceCreditQuantity, InvoicePeriod } from '@solvimon/solvimon-types';
+import type {
+    CreditType,
+    Invoice,
+    InvoiceCreditQuantity,
+    InvoicePeriod,
+} from '@solvimon/solvimon-types';
 import {
     DividerText,
     Icon,
@@ -33,7 +38,7 @@ const getPeriodTitle = (period: InvoicePeriod) =>
     formatMessage(
         {
             defaultMessage: 'Service period - {startAt} - {endAt}',
-            id: 'kFCxC4',
+            id: 'wallet_balance.service_period_heading',
             description: 'Heading shown above wallet balance details for an invoice period',
         },
         {
@@ -56,7 +61,7 @@ const getCreditTypeLabel = (credits?: InvoiceCreditQuantity) => {
     if (!credits?.credit_type_id) {
         return formatMessage({
             defaultMessage: 'Credits',
-            id: 'K2fM1n',
+            id: 'wallet_balance.credit_type_fallback_label',
             description: 'Fallback label for wallet balance credit types when no name is available',
         });
     }
@@ -64,14 +69,7 @@ const getCreditTypeLabel = (credits?: InvoiceCreditQuantity) => {
     return creditTypesById.value[credits.credit_type_id]?.name ?? credits.credit_type_id;
 };
 
-const formatQuantity = (quantity?: string) =>
-    quantity
-        ? formatNumber(Number(quantity))
-        : formatMessage({
-              defaultMessage: '-',
-              id: 'dHb0fN',
-              description: 'Placeholder shown when a wallet balance quantity is missing',
-          });
+const formatQuantity = (quantity?: string) => (quantity ? formatNumber(Number(quantity)) : '-');
 
 const periodsWithCredits = computed(() =>
     buildInvoiceCreditsBreakdown({
@@ -99,7 +97,7 @@ const periodsWithCredits = computed(() =>
                             {{
                                 $t({
                                     defaultMessage: 'Wallet balance',
-                                    id: 'j2d7b2',
+                                    id: 'wallet_balance.details.header',
                                     description:
                                         'Section header for invoice wallet balance details',
                                 })
@@ -140,7 +138,7 @@ const periodsWithCredits = computed(() =>
                                                 {{
                                                     $t({
                                                         defaultMessage: 'Credit breakdown',
-                                                        id: '65I4e4',
+                                                        id: 'invoice_credits.credit_breakdown.table_header',
                                                         description:
                                                             'Column header for wallet balance credit type details',
                                                     })
@@ -150,7 +148,7 @@ const periodsWithCredits = computed(() =>
                                                 {{
                                                     $t({
                                                         defaultMessage: 'Balance',
-                                                        id: '4UjRe6',
+                                                        id: 'invoice_credits.balance.table_header',
                                                         description:
                                                             'Column header for the available wallet balance amount',
                                                     })
@@ -160,7 +158,7 @@ const periodsWithCredits = computed(() =>
                                                 {{
                                                     $t({
                                                         defaultMessage: 'Used',
-                                                        id: 'rUy4Lk',
+                                                        id: 'invoice_credits.used.table_header',
                                                         description:
                                                             'Column header for the used wallet credit amount',
                                                     })
@@ -170,7 +168,7 @@ const periodsWithCredits = computed(() =>
                                                 {{
                                                     $t({
                                                         defaultMessage: 'Remaining',
-                                                        id: 'C8F4/r',
+                                                        id: 'invoice_credits.remaining.table_header',
                                                         description:
                                                             'Column header for the remaining wallet credit amount',
                                                     })

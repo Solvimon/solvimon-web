@@ -107,6 +107,7 @@
     "customer_overview.subscriptions_block.view_all_button_label": "View all",
     "customer_overview.wallet_balances_block.title": "{count,plural,one{Wallet} other{Wallets}}",
     "empty_state.retry.button": "Refresh",
+    "empty_value_placeholder": "-",
     "invoice_credits.balance.table_header": "Balance",
     "invoice_credits.credit_breakdown.table_header": "Credit breakdown",
     "invoice_credits.remaining.table_header": "Remaining",

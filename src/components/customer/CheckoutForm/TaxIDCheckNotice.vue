@@ -17,12 +17,12 @@ const taxIdValidationMessage = computed(() => {
     return isTaxIdValid.value
         ? formatMessage({
               defaultMessage: 'VAT number is valid.',
-              id: 'damFt1',
+              id: 'tax_check.valid_vat_number',
               description: 'The message shown when the VAT number is valid',
           })
         : formatMessage({
               defaultMessage: 'VAT number is invalid.',
-              id: 'gR9xe+',
+              id: 'tax_check.invalid_vat_number',
               description: 'The message shown when the VAT number is invalid',
           });
 });

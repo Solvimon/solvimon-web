@@ -18,7 +18,7 @@ export function useWalletBalanceItems(
                 title: $t({
                     defaultMessage: 'Balance',
                     description: 'Fallback wallet title in wallet balance components',
-                    id: 'H5+NAX',
+                    id: 'wallet_balance.wallet_ballance_title',
                 }),
                 balance: walletBalance.wallet_balance.open_balance,
                 balanceAt:

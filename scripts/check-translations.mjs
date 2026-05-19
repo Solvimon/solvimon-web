@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'path';
 import { fileURLToPath } from 'node:url';
+import { resolveSafePath } from './safe-path.mjs';
 
 export function isTranslationRecord(value) {
     return (
@@ -45,12 +46,12 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
 
     const files = supported
         .map((locale) => {
-            const filePath = path.normalize(path.join(translationsDir, `${locale}.json`));
-            if (!filePath.startsWith(translationsDir + path.sep)) {
+            try {
+                return resolveSafePath(`${locale}.json`, translationsDir);
+            } catch {
                 console.error(`⚠️ Skipping suspicious locale: ${locale}`);
                 return null;
             }
-            return filePath;
         })
         .filter(Boolean);
 

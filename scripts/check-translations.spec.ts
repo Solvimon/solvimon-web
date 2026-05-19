@@ -79,4 +79,25 @@ describe('checkTranslations', () => {
             'Invalid translation file nl.json',
         );
     });
+
+    it('returns empty missingKeys for all locales when source has no keys', () => {
+        const readFile = () => JSON.stringify({ greeting: 'Hallo' });
+        const results = checkTranslations([], ['nl.json', 'de.json'], readFile);
+        expect(results).toEqual([
+            { file: 'nl.json', missingKeys: [] },
+            { file: 'de.json', missingKeys: [] },
+        ]);
+    });
+
+    it('does not flag extra keys in a locale as missing', () => {
+        const readFile = () => JSON.stringify({ greeting: 'Hi', farewell: 'Bye', error: 'Oops', extra: 'Bonus' });
+        const results = checkTranslations(sourceKeys, ['en.json'], readFile);
+        expect(results[0].missingKeys).toEqual([]);
+    });
+
+    it('returns one result per locale file', () => {
+        const readFile = () => JSON.stringify({});
+        const results = checkTranslations(sourceKeys, ['a.json', 'b.json', 'c.json'], readFile);
+        expect(results).toHaveLength(3);
+    });
 });

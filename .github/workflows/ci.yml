@@ -182,6 +182,60 @@ jobs:
                   name: bundle-sizes
                   path: bundle-sizes.json
 
+    translations-report:
+        name: Translation Coverage Report
+        needs: install
+        runs-on: ubuntu-latest
+        permissions:
+            pull-requests: write
+        steps:
+            - uses: actions/checkout@v4
+            - uses: actions/setup-node@v4
+              with:
+                  node-version-file: package.json
+            - uses: actions/cache/restore@v4
+              with:
+                  path: node_modules
+                  key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json') }}
+            - name: Extract translations
+              run: npm run translations:extract
+            - name: Generate translations report
+              run: |
+                  node scripts/ci/translations-report.mjs \
+                      --translations-dir src/translations \
+                      --sha ${{ github.sha }} \
+                      > /tmp/translations-report.md
+            - name: Post translations comment
+              uses: actions/github-script@v7
+              with:
+                  script: |
+                      const body = require('fs').readFileSync('/tmp/translations-report.md', 'utf8');
+
+                      const { data: comments } = await github.rest.issues.listComments({
+                          owner: context.repo.owner,
+                          repo: context.repo.repo,
+                          issue_number: context.issue.number,
+                      });
+
+                      const existing = comments.find(c => c.body.includes('<!-- translations-report -->'));
+                      if (existing) {
+                          await github.rest.issues.updateComment({
+                              owner: context.repo.owner,
+                              repo: context.repo.repo,
+                              comment_id: existing.id,
+                              body,
+                          });
+                      } else {
+                          await github.rest.issues.createComment({
+                              owner: context.repo.owner,
+                              repo: context.repo.repo,
+                              issue_number: context.issue.number,
+                              body,
+                          });
+                      }
+            - name: Fail on missing translations
+              run: npm run translations:check
+
     bundle-size:
         name: Bundle Size
         needs: build

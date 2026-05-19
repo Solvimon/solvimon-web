@@ -51,12 +51,10 @@ version bump is merged to `main`.
 To publish a new SDK version:
 
 1. Make your SDK changes.
-2. Bump the version.
-3. Add release notes to `CHANGELOG.md`.
-4. Run `npm run changelog:check`.
-5. Open and merge a pull request to `main`.
-6. Wait for the release tag workflow and publish workflow to complete.
-7. Verify that:
+2. Run `/create-release` in Claude Code — it bumps the version, drafts the changelog, and tells you the commit message and files to stage.
+3. Commit and open a pull request to `main`.
+4. Wait for the release tag workflow and publish workflow to complete.
+5. Verify that:
     - a tag named `v<version>` was created
     - the package was published to npm
 

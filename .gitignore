@@ -13,4 +13,4 @@ tests/playwright/results.xml
 .eslintcache
 
 # AI
-.claude
+.claude/settings.json

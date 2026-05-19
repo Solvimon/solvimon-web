@@ -39,27 +39,33 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     const source = JSON.parse(fs.readFileSync(path.join(translationsDir, 'source.json'), 'utf-8'));
     const sourceKeys = Object.keys(source);
 
-    const files = fs
-        .readdirSync(translationsDir)
-        .filter((file) => file.endsWith('.json') && file !== 'source.json')
-        .filter((file) => {
-            const localePath = path.normalize(path.join(translationsDir, file));
-            if (!localePath.startsWith(translationsDir + path.sep)) {
-                console.error(`⚠️ Skipping suspicious file path: ${file}`);
-                return false;
+    const supported = JSON.parse(
+        fs.readFileSync(path.join(translationsDir, 'supported.json'), 'utf-8'),
+    );
+
+    const files = supported
+        .map((locale) => {
+            const filePath = path.normalize(path.join(translationsDir, `${locale}.json`));
+            if (!filePath.startsWith(translationsDir + path.sep)) {
+                console.error(`⚠️ Skipping suspicious locale: ${locale}`);
+                return null;
             }
-            return true;
+            return filePath;
         })
-        .map((file) => path.join(translationsDir, file));
+        .filter(Boolean);
 
     const results = checkTranslations(sourceKeys, files, (f) => fs.readFileSync(f, 'utf-8'));
 
+    let hasMissing = false;
     for (const { file, missingKeys } of results) {
         if (missingKeys.length > 0) {
+            hasMissing = true;
             console.log(`❌ Missing keys in ${path.basename(file)}:`);
             missingKeys.forEach((key) => console.log(`  - ${key}`));
         } else {
             console.log(`✅ ${path.basename(file)} is complete!`);
         }
     }
+
+    if (hasMissing) process.exit(1);
 }

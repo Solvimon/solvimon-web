@@ -1,6 +1,7 @@
 import { readFileSync, existsSync } from 'fs';
 import { fileURLToPath } from 'url';
 import path from 'path';
+import { resolveSafePath } from '../safe-path.mjs';
 
 export function generateTranslationsReport({ translationsDir, sha }) {
     const sourceKeys = Object.keys(
@@ -11,7 +12,13 @@ export function generateTranslationsReport({ translationsDir, sha }) {
     );
 
     const results = supported.map((locale) => {
-        const filePath = path.join(translationsDir, `${locale}.json`);
+        let filePath;
+        try {
+            filePath = resolveSafePath(`${locale}.json`, translationsDir);
+        } catch {
+            console.error(`⚠️ Skipping suspicious locale: ${locale}`);
+            return { locale, missingKeys: [] };
+        }
         let translations = {};
         if (existsSync(filePath)) {
             translations = JSON.parse(readFileSync(filePath, 'utf8'));

@@ -8,3 +8,4 @@ This section covers everything you need to develop and release the Solvimon Web 
 - [Playground](playground.md) — local Storybook-style environment for iterating on SDK screens and components in real time.
 - [Translations](translations.md) — how the i18n pipeline works, adding strings, generating locale files, and the CI check.
 - [Publishing](publish.md) — release flow, version bumping, changelog requirements, and GitHub Actions workflows.
+- [Dependabot](dependabot.md) — fixing security alerts, nested packages, and orphaned lock files.

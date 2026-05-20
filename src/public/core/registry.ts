@@ -4,6 +4,7 @@ import PaymentMethodForm from '@/public/components/PaymentMethodForm/PaymentMeth
 import CustomerOverviewEntry from '@/public/screens/CustomerOverview/CustomerOverview.entry.vue';
 import CheckoutEntry from '@/public/screens/Checkout/Checkout.entry.vue';
 import UpgradeSubscriptionEntry from '@/public/screens/UpgradeSubscription/UpgradeSubscription.entry.vue';
+import PayInvoiceEntry from '@/public/screens/PayInvoice/PayInvoice.entry.vue';
 import InvoiceEntry from '@/public/components/Invoice/Invoice.entry.vue';
 import InvoiceDetailsEntry from '@/public/components/InvoiceDetails/InvoiceDetails.entry.vue';
 import InvoicesListEntry from '@/public/components/InvoicesList/InvoicesList.entry.vue';
@@ -19,6 +20,7 @@ const SCREENS: Record<RegisteredScreenId, Component> = {
     'customer-overview': CustomerOverviewEntry,
     checkout: CheckoutEntry,
     'upgrade-subscription': UpgradeSubscriptionEntry,
+    'pay-invoice': PayInvoiceEntry,
 };
 
 const COMPONENTS: Record<RegisteredComponentId, Component> = {
@@ -39,6 +41,7 @@ const REGISTERED_SCREEN_IDS = [
     'customer-overview',
     'checkout',
     'upgrade-subscription',
+    'pay-invoice',
 ] satisfies RegisteredScreenId[];
 
 const REGISTERED_COMPONENT_IDS = [

@@ -332,7 +332,7 @@
     "description": "Subtitle when payments methods fail to load"
   },
   "customer_overview.billing_information_block.load_failed.title": {
-    "defaultMessage": "We can’t load your billing information",
+    "defaultMessage": "We can't load your billing information",
     "description": "Title when payments methods fail to load"
   },
   "customer_overview.billing_information_block.title": {
@@ -364,7 +364,7 @@
     "description": "The fallback name for when no subscription name can be determined"
   },
   "customer_overview.subscriptions_block.no_active_subscription_content": {
-    "defaultMessage": "There’s no active subscription to display.",
+    "defaultMessage": "There's no active subscription to display.",
     "description": "Text that is being displayed when there is no active subscription in the subscriptions block"
   },
   "customer_overview.subscriptions_block.no_active_subscription_title": {
@@ -450,6 +450,18 @@
   "on_demand_pricing_row.remove_button_label": {
     "defaultMessage": "Remove",
     "description": "Label for the remove button in an on-demand pricing row"
+  },
+  "pay_button.label.amount_and_payment_method": {
+    "defaultMessage": "Pay {amount} with {type}",
+    "description": "The label for the pay button when both the amount and the payment method are known"
+  },
+  "pay_button.label.amount_only": {
+    "defaultMessage": "Pay {amount}",
+    "description": "The label for the pay button when only the amount is known"
+  },
+  "pay_button.label.default": {
+    "defaultMessage": "Pay",
+    "description": "The default label for the pay button when no amount and payment method are known"
   },
   "payment_completed_card.redirect_message": {
     "defaultMessage": "You are being redirected...",

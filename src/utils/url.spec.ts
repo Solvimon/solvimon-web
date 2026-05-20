@@ -1,4 +1,4 @@
-import { getQueryParam, sanitizeUrl } from './url';
+import { getQueryParam, sanitizeUrl, safeUrlRedirect } from './url';
 
 describe('url utils', () => {
     describe('getQueryParam', () => {
@@ -79,6 +79,46 @@ describe('url utils', () => {
 
         it('returns an empty string for a non-URL string', () => {
             expect(sanitizeUrl('not a url')).toBe('');
+        });
+    });
+
+    describe('safeUrlRedirect', () => {
+        beforeEach(() => {
+            vi.spyOn(window.location, 'replace').mockImplementation(() => {});
+        });
+
+        afterEach(() => {
+            vi.restoreAllMocks();
+        });
+
+        it('redirects to a valid https URL', () => {
+            safeUrlRedirect('https://example.com/success');
+            expect(window.location.replace).toHaveBeenCalledWith('https://example.com/success');
+        });
+
+        it('redirects to a valid http URL', () => {
+            safeUrlRedirect('http://example.com');
+            expect(window.location.replace).toHaveBeenCalledWith('http://example.com');
+        });
+
+        it('does not redirect for a javascript: URI', () => {
+            safeUrlRedirect('javascript:alert(1)');
+            expect(window.location.replace).not.toHaveBeenCalled();
+        });
+
+        it('does not redirect for a data: URI', () => {
+            safeUrlRedirect('data:text/html,<script>alert(1)</script>');
+            expect(window.location.replace).not.toHaveBeenCalled();
+        });
+
+        it('does not redirect for a relative URL', () => {
+            safeUrlRedirect('/relative/path');
+            expect(window.location.replace).not.toHaveBeenCalled();
+        });
+
+        it('does not redirect for an empty string', () => {
+            safeUrlRedirect('');
+            expect(window.location.replace).not.toHaveBeenCalled();
         });
     });
 });

@@ -44,6 +44,7 @@ import { useViewport } from '@/composables/useViewport';
 import PromotionCodeSection from '@/components/checkout/PromotionCodeSection.vue';
 import { getFallbackTrialAndSubscriptionStartAndEndDates } from '@/utils/subscription';
 import SecurePaymentsKPI from '@/components/payments/SecurePaymentsKPI/SecurePaymentsKPI.vue';
+import { safeUrlRedirect } from '@/utils/url';
 
 const props = defineProps<CheckoutProps>();
 const emit = defineEmits<CheckoutEmits>();
@@ -397,9 +398,24 @@ const {
     },
 });
 
+const handleRedirect = () => {
+    if (!successRedirectUrl) return;
+    safeUrlRedirect(successRedirectUrl);
+};
+
 const handlePaymentSuccess = () => {
     isPaid.value = true;
     promotionCodeErrorMessage.value = null;
+
+    if (props.configuration?.onPaymentSuccess) {
+        props.configuration.onPaymentSuccess();
+        return;
+    }
+
+    if (successRedirectUrl) {
+        handleRedirect();
+        return;
+    }
 };
 
 const handleBillingPeriodChange = (billingPeriod: BillingPeriod) => {
@@ -489,7 +505,10 @@ onMounted(() => {
             />
 
             <!-- payment success notification -->
-            <SubscriptionPaymentCompletedCard v-if="isPaid" :redirect-url="successRedirectUrl" />
+            <SubscriptionPaymentCompletedCard
+                v-if="isPaid"
+                @continue-to-merchant="handleRedirect"
+            />
 
             <!-- customer information form -->
             <CheckoutForm
@@ -577,7 +596,6 @@ onMounted(() => {
                         :amount="amount"
                         variant="AUTHORIZE"
                         :payment-method-options="paymentMethodOptions ?? []"
-                        :success-redirect-url="successRedirectUrl"
                         :validate-on-submit="handleValidateOnSubmit"
                         force-store-payment-method
                         @payment-success="handlePaymentSuccess"

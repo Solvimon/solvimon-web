@@ -1,6 +1,3 @@
-export interface SubscriptionPaymentCompletedCardProps {
-    /**
-     * Optional URL to redirect to after the payment is completed.
-     */
-    redirectUrl?: string;
+export interface SubscriptionPaymentCompletedCardEmits {
+    (e: 'continue-to-merchant'): void;
 }

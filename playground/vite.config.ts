@@ -35,6 +35,7 @@ export default defineConfig({
         preserveSymlinks: true,
     },
     server: {
+        host: 'portal.local',
         port: 5175,
         fs: {
             allow: ['..'],

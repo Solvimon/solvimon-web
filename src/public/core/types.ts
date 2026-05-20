@@ -14,6 +14,7 @@ import type { SolvimonWalletBalancesEntryProps } from '@/public/components/Walle
 import type { SolvimonCheckoutEntryProps } from '@/public/screens/Checkout/Checkout.entry.types';
 import type { SolvimonCustomerOverviewEntryProps } from '@/public/screens/CustomerOverview/CustomerOverview.entry.types';
 import type { SolvimonUpgradeSubscriptionEntryProps } from '@/public/screens/UpgradeSubscription/UpgradeSubscription.entry.types';
+import type { SolvimonPayInvoiceEntryProps } from '@/public/screens/PayInvoice/PayInvoice.entry.types';
 
 /**
  * Shared configuration passed to all mounted Solvimon components and screens.
@@ -58,6 +59,7 @@ interface RegisteredScreenEntryPropsById {
     checkout: SolvimonCheckoutEntryProps;
     'customer-overview': SolvimonCustomerOverviewEntryProps;
     'upgrade-subscription': SolvimonUpgradeSubscriptionEntryProps;
+    'pay-invoice': SolvimonPayInvoiceEntryProps;
 }
 
 /**

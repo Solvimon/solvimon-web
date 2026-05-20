@@ -29,6 +29,10 @@ export {
     SolvimonUpgradeSubscription,
     defineSolvimonUpgradeSubscription,
 } from './public/screens/UpgradeSubscription/UpgradeSubscription.entry.ce';
+export {
+    SolvimonPayInvoice,
+    defineSolvimonPayInvoice,
+} from './public/screens/PayInvoice/PayInvoice.entry.ce';
 
 export {
     SolvimonBillingInformation,

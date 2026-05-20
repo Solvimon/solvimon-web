@@ -29,6 +29,13 @@ export const screens: StoryEntry[] = [
         description: 'Upgrade or change a customer subscription plan.',
         defaultConfiguration: { subscriptionId: '' },
     },
+    {
+        kind: 'screen',
+        id: 'pay-invoice',
+        label: 'Pay Invoice',
+        description: 'Payment flow for a specific invoice. Requires configuration.invoiceId.',
+        defaultConfiguration: { invoiceId: '' },
+    },
 ];
 
 export const components: StoryEntry[] = [

@@ -77,6 +77,11 @@
             "import": "./dist/screens/UpgradeSubscription/UpgradeSubscription.es.js",
             "require": "./dist/screens/UpgradeSubscription/UpgradeSubscription.cjs.js"
         },
+        "./screens/pay-invoice": {
+            "types": "./dist/screens/PayInvoice/PayInvoice.ce.d.ts",
+            "import": "./dist/screens/PayInvoice/PayInvoice.es.js",
+            "require": "./dist/screens/PayInvoice/PayInvoice.cjs.js"
+        },
         "./components/subscriptions-list": {
             "types": "./dist/components/SubscriptionsList/SubscriptionsList.ce.d.ts",
             "import": "./dist/components/SubscriptionsList/SubscriptionsList.es.js",

@@ -1,20 +1,11 @@
 <script setup lang="ts">
 import { Typography, useIntl, Button } from '@solvimon/solvimon-ui';
-import { onMounted } from 'vue';
-import type { SubscriptionPaymentCompletedCardProps } from './SubscriptionPaymentCompletedCard.types';
+import type { SubscriptionPaymentCompletedCardEmits } from './SubscriptionPaymentCompletedCard.types';
 import PaymentFeedbackCard from '@/components/payments/PaymentFeedbackCard/PaymentFeedbackCard.vue';
 
-const props = defineProps<SubscriptionPaymentCompletedCardProps>();
+defineEmits<SubscriptionPaymentCompletedCardEmits>();
 
 const { $t } = useIntl();
-
-onMounted(() => {
-    if (!props.redirectUrl) {
-        return;
-    }
-
-    window.location.replace(props.redirectUrl);
-});
 </script>
 
 <template>
@@ -38,13 +29,11 @@ onMounted(() => {
             }}
         </Typography>
         <Button
-            v-if="redirectUrl"
-            tag="a"
-            :href="redirectUrl"
             color="gray"
             variant="outline"
             size="xs"
             class="align-center"
+            @click="$emit('continue-to-merchant')"
         >
             {{
                 $t({

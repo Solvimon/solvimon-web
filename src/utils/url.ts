@@ -22,3 +22,12 @@ export function sanitizeUrl(url: string): string {
         return '';
     }
 }
+
+/**
+ * Redirects to the given URL only if it passes sanitization.
+ * Silently does nothing when the URL is unsafe or invalid.
+ */
+export function safeUrlRedirect(url: string): void {
+    const safe = sanitizeUrl(url);
+    if (safe) window.location.replace(safe);
+}

@@ -19,6 +19,13 @@ export interface CheckoutConfiguration {
      * Optional enabled pricing ids.
      */
     enabledPricingIds?: string[];
+    /**
+     * Optional callback function that is executed after a successful payment.
+     * This can be used to execute follow up functionality and/or doing a redirect.
+     * If you implement this callback, you are also responsible to manage a redirect
+     * yourself. This overrides the redirect url configured in Solvimon Desk.
+     */
+    onPaymentSuccess?: () => void;
 }
 
 export interface CheckoutProps {

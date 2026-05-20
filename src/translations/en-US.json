@@ -153,6 +153,8 @@
     "seats.tiered_pricing_label": "Tiered pricing",
     "seats.tiered_range_label": "{lower_bound} - {upper_bound} seats",
     "seats.tiered_unbounded_range_label": "> {lower_bound} seats",
+    "secure_payments_kpi.generic": "Secure and encrypted payments",
+    "secure_payments_kpi.specific_vendor": "Secure and encrypted payments by",
     "subscription_payment_completed_card.continue": "Continue to merchant",
     "subscription_payment_completed_card.thank_you_for_subscribing": "Thank you for subscribing.",
     "subscription_payment_completed_card.title": "Payment successful",

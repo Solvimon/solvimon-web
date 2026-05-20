@@ -15,7 +15,6 @@ import { useCheckoutView } from './useCheckout.view';
 import { usePromotionCode } from '@/composables/usePromotionCode';
 import { usePortal } from '@/components/providers/PortalProvider/composables/usePortal';
 import PaymentIntegrationForm from '@/components/payments/PaymentIntegrationForm/PaymentIntegrationForm.vue';
-import Kpi from '@/components/shared/Kpi.vue';
 import CheckoutForm from '@/components/customer/CheckoutForm/CheckoutForm.vue';
 import CheckoutTitle from '@/components/checkout/CheckoutTitle.vue';
 import { isInvoiceUsageBased } from '@/utils/invoice';
@@ -41,6 +40,7 @@ import { ContentWithAsideLayout } from '@/layouts';
 import { useViewport } from '@/composables/useViewport';
 import PromotionCodeSection from '@/components/checkout/PromotionCodeSection.vue';
 import { getFallbackTrialAndSubscriptionStartAndEndDates } from '@/utils/subscription';
+import SecurePaymentsKPI from '@/components/payments/SecurePaymentsKPI/SecurePaymentsKPI.vue';
 
 const props = defineProps<CheckoutProps>();
 const emit = defineEmits<CheckoutEmits>();
@@ -621,51 +621,37 @@ onMounted(() => {
             />
 
             <!-- pay button-->
-            <Skeleton v-if="!isPaid" class="min-h-[44px]">
-                <Button
-                    v-if="invoicePreview"
-                    type="button"
-                    size="lg"
-                    class="full-width"
-                    :disabled="isPromotionCodePending || paymentMethodOptions.length === 0"
-                    @click="handleSubmit"
-                >
-                    {{
-                        hasTrialPeriod
-                            ? $t({
-                                  defaultMessage: 'Start trial',
-                                  id: 'checkout.pay_and_subscribe_button_trial.label',
-                                  description:
-                                      'The label of the start trial button in the checkout form',
-                              })
-                            : $t({
-                                  defaultMessage: 'Pay and subscribe',
-                                  id: 'checkout.pay_and_subscribe_button.label',
-                                  description:
-                                      'The label of the pay and subscribe button in the checkout form',
-                              })
-                    }}
-                </Button>
-            </Skeleton>
+            <div class="flex flex-col gap-2">
+                <Skeleton v-if="!isPaid" class="min-h-[44px]">
+                    <Button
+                        v-if="invoicePreview"
+                        type="button"
+                        size="lg"
+                        class="w-full"
+                        :disabled="isPromotionCodePending || paymentMethodOptions.length === 0"
+                        @click="handleSubmit"
+                    >
+                        {{
+                            hasTrialPeriod
+                                ? $t({
+                                      defaultMessage: 'Start trial',
+                                      id: 'checkout.pay_and_subscribe_button_trial.label',
+                                      description:
+                                          'The label of the start trial button in the checkout form',
+                                  })
+                                : $t({
+                                      defaultMessage: 'Pay and subscribe',
+                                      id: 'checkout.pay_and_subscribe_button.label',
+                                      description:
+                                          'The label of the pay and subscribe button in the checkout form',
+                                  })
+                        }}
+                    </Button>
+                </Skeleton>
 
-            <!-- kpis-->
-            <Typography
-                tag="div"
-                variant="body-sm"
-                shade="lighter"
-                class="flex grow justify-center"
-            >
-                <Kpi
-                    icon="lock"
-                    :kpi="
-                        $t({
-                            defaultMessage: 'Secure and encrypted payments',
-                            id: 'checkout.kpi.encrypted_payments.label',
-                            description: 'The encrypted payments KPI shown in the checkout',
-                        })
-                    "
-                />
-            </Typography>
+                <!-- kpis-->
+                <SecurePaymentsKPI :payment-method-options="paymentMethodOptions" />
+            </div>
         </template>
     </ContentWithAsideLayout>
 </template>

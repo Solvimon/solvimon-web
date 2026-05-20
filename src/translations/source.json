@@ -539,6 +539,14 @@
     "defaultMessage": "> {lower_bound} seats",
     "description": "The label showing the unbounded seat count range (greater than) for a tiered pricing tier"
   },
+  "secure_payments_kpi.generic": {
+    "defaultMessage": "Secure and encrypted payments",
+    "description": "Secure encrypted payments KPI"
+  },
+  "secure_payments_kpi.specific_vendor": {
+    "defaultMessage": "Secure and encrypted payments by",
+    "description": "Secure encrypted payments KPI for a specific vendor, followed by a vendor logo"
+  },
   "subscription_payment_completed_card.continue": {
     "defaultMessage": "Continue to merchant",
     "description": "The text for the continue button"

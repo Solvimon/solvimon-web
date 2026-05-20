@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { FormMessage, useIntl } from '@solvimon/solvimon-ui';
+import type { PaymentGatewayVariant } from '@solvimon/solvimon-types';
 import type {
     PaymentIntegrationFormEmits,
     PaymentIntegrationFormProps,
@@ -13,13 +14,19 @@ defineExpose({ submit });
 
 const { $t } = useIntl();
 
-const selectedIntegration = ref();
+const selectedIntegration = ref<PaymentGatewayVariant>();
 const integrationRefs = ref(new Map());
 const showIntegrationError = ref(false);
 
-function handleSelect(type: string) {
-    selectedIntegration.value = type;
+function handleSelect({
+    paymentGatewayVariant,
+    paymentMethodType,
+}: {
+    paymentGatewayVariant: PaymentGatewayVariant;
+    paymentMethodType: string;
+}) {
     showIntegrationError.value = false;
+    emit('select', { paymentGatewayVariant, paymentMethodType });
 }
 
 function submit() {
@@ -30,14 +37,6 @@ function submit() {
 
     integrationRefs.value.get(selectedIntegration.value)?.submit();
 }
-
-const handlePaymentSuccess = () => {
-    if (props.successRedirectUrl) {
-        window.location.href = props.successRedirectUrl;
-    }
-
-    emit('payment-success');
-};
 </script>
 
 <template>
@@ -47,7 +46,13 @@ const handlePaymentSuccess = () => {
     >
         <PaymentIntegrationFormAdyen
             v-if="paymentMethodOption.integration.payment_gateway?.variant === 'ADYEN'"
-            :ref="(el) => integrationRefs.set('PAYMENT_GATEWAY_ADYEN', el)"
+            :ref="
+                (el) =>
+                    integrationRefs.set(
+                        paymentMethodOption.integration.payment_gateway!.variant,
+                        el,
+                    )
+            "
             :context="context"
             :payment-method-option-response-entry="paymentMethodOption"
             :country-code="countryCode"
@@ -55,13 +60,22 @@ const handlePaymentSuccess = () => {
             :variant="variant"
             :amount="amount"
             :invoice-id="invoiceId"
-            :selected="selectedIntegration === 'PAYMENT_GATEWAY_ADYEN'"
+            :selected="
+                selectedIntegration === paymentMethodOption.integration.payment_gateway.variant
+            "
             :validate-on-submit="validateOnSubmit"
             :force-store-payment-method="forceStorePaymentMethod"
-            @select="() => handleSelect('PAYMENT_GATEWAY_ADYEN')"
-            @payment-failed="(args) => $emit('payment-failed', args)"
-            @payment-success="handlePaymentSuccess"
-            @ready="emit('ready')"
+            @select="
+                ({ paymentMethodType }) =>
+                    handleSelect({
+                        paymentGatewayVariant:
+                            paymentMethodOption.integration.payment_gateway!.variant,
+                        paymentMethodType,
+                    })
+            "
+            @payment-failed="$emit('payment-failed', $event)"
+            @payment-success="$emit('payment-success')"
+            @ready="$emit('ready')"
         />
     </template>
     <FormMessage v-if="showIntegrationError" variant="error" class="mt-2">{{

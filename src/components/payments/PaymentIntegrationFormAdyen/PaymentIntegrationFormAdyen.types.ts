@@ -14,7 +14,6 @@ export interface PaymentIntegrationFormAdyenProps {
     paymentMethodOptionResponseEntry: PaymentMethodOptionResponseEntry;
     variant: 'TOKENIZE' | 'AUTHORIZE';
     selected: boolean;
-    onSelect?: () => void;
     amount: Amount;
     validateOnSubmit?: () => Promise<boolean>;
     context: AuthorizePaymentPayload['context'];
@@ -25,7 +24,7 @@ export interface PaymentIntegrationFormAdyenEmits {
     /**
      * Emitted when a payment method is selected.
      */
-    (e: 'select'): void;
+    (e: 'select', payload: { paymentMethodType: string }): void;
     /**
      * Emitted when a payment fails.
      */

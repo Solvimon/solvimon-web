@@ -1,7 +1,6 @@
 import { ApiStatus, type ApiCollectionResponse } from '@solvimon/solvimon-types';
 import { getPaginatedFullList, isApiSuccessCollectionResponse } from '@solvimon/solvimon-ui';
 import { computed, ref, shallowRef } from 'vue';
-import { cloneDeep } from 'lodash-es';
 
 function toError(error: unknown) {
     return error instanceof Error ? error : new Error('Something went wrong while fetching data.');
@@ -73,7 +72,7 @@ export function useIncrementalLoading<T>({
         return await loadPage(page.value + 1);
     };
 
-    const nonMutableItems = computed(() => cloneDeep(items.value));
+    const nonMutableItems = computed(() => structuredClone(items.value));
 
     const fetchInitial = async () => {
         return await loadPage(1);

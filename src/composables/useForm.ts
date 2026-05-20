@@ -1,5 +1,4 @@
 import { type ValidationArgs } from '@vuelidate/core';
-import { cloneDeep } from 'lodash-es';
 import { computed, shallowRef } from 'vue';
 import type { Ref } from 'vue';
 import { useValidation, objectDiff } from '@solvimon/solvimon-ui';
@@ -23,13 +22,13 @@ export default <
      * Stores the initial form state.
      */
 
-    const initialFormState = shallowRef<T>(cloneDeep(initialState));
+    const initialFormState = shallowRef<T>(structuredClone(initialState));
 
     /**
      * Stores the form values.
      */
 
-    const form = shallowRef<T>(cloneDeep(initialState));
+    const form = shallowRef<T>(structuredClone(initialState));
 
     /**
      * Stores the form validation.
@@ -56,8 +55,8 @@ export default <
      * - `hasChanges` becomes `false`
      */
     const updateInitialState = (state: T) => {
-        form.value = cloneDeep(state);
-        initialFormState.value = cloneDeep(state);
+        form.value = structuredClone(state);
+        initialFormState.value = structuredClone(state);
     };
 
     /**
@@ -65,7 +64,7 @@ export default <
      * when a form keeps mounted after closing or submitting.
      */
     const reset = () => {
-        form.value = cloneDeep(initialState);
+        form.value = structuredClone(initialState);
         validation.value.$reset();
     };
 

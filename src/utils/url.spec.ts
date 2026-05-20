@@ -1,4 +1,4 @@
-import { getQueryParam } from './url';
+import { getQueryParam, sanitizeUrl } from './url';
 
 describe('url utils', () => {
     describe('getQueryParam', () => {
@@ -45,6 +45,40 @@ describe('url utils', () => {
                 writable: true,
                 value: { ...window.location, search: originalSearch },
             });
+        });
+    });
+
+    describe('sanitizeUrl', () => {
+        it('passes through a valid https URL', () => {
+            expect(sanitizeUrl('https://example.com/path?q=1')).toBe('https://example.com/path?q=1');
+        });
+
+        it('passes through a valid http URL', () => {
+            expect(sanitizeUrl('http://example.com')).toBe('http://example.com');
+        });
+
+        it('returns an empty string for a javascript: URI', () => {
+            expect(sanitizeUrl('javascript:alert(1)')).toBe('');
+        });
+
+        it('returns an empty string for a data: URI', () => {
+            expect(sanitizeUrl('data:text/html,<script>alert(1)</script>')).toBe('');
+        });
+
+        it('returns an empty string for a vbscript: URI', () => {
+            expect(sanitizeUrl('vbscript:msgbox(1)')).toBe('');
+        });
+
+        it('returns an empty string for a relative URL', () => {
+            expect(sanitizeUrl('/relative/path')).toBe('');
+        });
+
+        it('returns an empty string for an empty string', () => {
+            expect(sanitizeUrl('')).toBe('');
+        });
+
+        it('returns an empty string for a non-URL string', () => {
+            expect(sanitizeUrl('not a url')).toBe('');
         });
     });
 });

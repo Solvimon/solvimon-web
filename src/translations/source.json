@@ -127,10 +127,6 @@
     "defaultMessage": "+ Usage",
     "description": "The message shown for the usage based invoice preview"
   },
-  "checkout.kpi.encrypted_payments.label": {
-    "defaultMessage": "Secure and encrypted payments",
-    "description": "The encrypted payments KPI shown in the checkout"
-  },
   "checkout.last_name.label": {
     "defaultMessage": "Last name",
     "description": "The last name of the customer in the checkout form"
@@ -332,7 +328,7 @@
     "description": "Subtitle when payments methods fail to load"
   },
   "customer_overview.billing_information_block.load_failed.title": {
-    "defaultMessage": "We can't load your billing information",
+    "defaultMessage": "We can’t load your billing information",
     "description": "Title when payments methods fail to load"
   },
   "customer_overview.billing_information_block.title": {
@@ -364,7 +360,7 @@
     "description": "The fallback name for when no subscription name can be determined"
   },
   "customer_overview.subscriptions_block.no_active_subscription_content": {
-    "defaultMessage": "There's no active subscription to display.",
+    "defaultMessage": "There’s no active subscription to display.",
     "description": "Text that is being displayed when there is no active subscription in the subscriptions block"
   },
   "customer_overview.subscriptions_block.no_active_subscription_title": {
@@ -462,6 +458,22 @@
   "pay_button.label.default": {
     "defaultMessage": "Pay",
     "description": "The default label for the pay button when no amount and payment method are known"
+  },
+  "pay_invoice.error.description": {
+    "defaultMessage": "Please try again or contact support.",
+    "description": "Body text shown when the invoice payment fails to load"
+  },
+  "pay_invoice.error.title": {
+    "defaultMessage": "Something went wrong",
+    "description": "Title shown when the invoice payment fails to load"
+  },
+  "pay_invoice.paid.title": {
+    "defaultMessage": "Thank you for your payment!",
+    "description": "Title shown when the invoice has already been paid"
+  },
+  "pay_invoice.payment_methods.title": {
+    "defaultMessage": "Payment methods",
+    "description": "Section title for the payment method selector on the pay invoice screen"
   },
   "payment_completed_card.redirect_message": {
     "defaultMessage": "You are being redirected...",

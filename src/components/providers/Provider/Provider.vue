@@ -6,9 +6,7 @@ import {
     type IntlMessages,
     BrandProvider,
 } from '@solvimon/solvimon-ui';
-import nlNlUiTranslations from '@solvimon/solvimon-ui/translations/nl-NL';
-import enUsUiTranslations from '@solvimon/solvimon-ui/translations/en-US';
-import { computed } from 'vue';
+import { computed, ref, watch } from 'vue';
 import type { ProviderEmits, ProviderProps } from './Provider.types';
 import ActionDispatchProvider from '@/components/providers/ActionDispatchProvider/ActionDispatchProvider.vue';
 import LoggerProvider from '@/components/providers/LoggerProvider/LoggerProvider.vue';
@@ -16,12 +14,12 @@ import ExperimentalFeatureProvider from '@/components/providers/ExperimentalFeat
 import TeleportProvider from '@/components/providers/TeleportProvider/TeleportProvider.vue';
 import { trackSentryException } from '@/utils/errorTracking';
 import AuthProvider from '@/components/providers/AuthProvider/AuthProvider.vue';
-import nlNlSdkTranslations from '@/translations/nl-NL.json';
-import enUsSdkTranslations from '@/translations/en-US.json';
 import ConfigProvider from '@/components/providers/ConfigProvider/ConfigProvider.vue';
 import HostElementProvider from '@/components/providers/HostElementProvider/HostElementProvider.vue';
 import PortalProvider from '@/components/providers/PortalProvider/PortalProvider.vue';
+import supportedLocales from '@/translations/supported.json';
 
+const supportedLocaleSet: ReadonlySet<string> = new Set(supportedLocales);
 const props = defineProps<ProviderProps>();
 defineEmits<ProviderEmits>();
 
@@ -37,28 +35,39 @@ if (!props.customElementName) {
     throw new Error('customElementName is required');
 }
 
-const defaultMessages: Record<string, IntlMessages> = {
-    'nl-NL': {
-        ...nlNlUiTranslations,
-        ...nlNlSdkTranslations,
-    },
-    'en-US': {
-        ...enUsUiTranslations,
-        ...enUsSdkTranslations,
-    },
-};
-
-const localizedDefaultMessages = computed<IntlMessages>(() => {
-    if (!props.locale || !(props.locale in defaultMessages)) {
-        return defaultMessages['en-US'];
+async function loadLocaleMessages(locale: string): Promise<IntlMessages> {
+    if (locale === 'nl-NL') {
+        const [{ default: ui }, { default: sdk }] = await Promise.all([
+            import('@solvimon/solvimon-ui/translations/nl-NL'),
+            import('@/translations/nl-NL.json'),
+        ]);
+        return { ...ui, ...sdk };
     }
+    const [{ default: ui }, { default: sdk }] = await Promise.all([
+        import('@solvimon/solvimon-ui/translations/en-US'),
+        import('@/translations/en-US.json'),
+    ]);
+    return { ...ui, ...sdk };
+}
 
-    const localizedMessages = defaultMessages[props.locale];
-    return localizedMessages;
-});
+const effectiveLocale = computed(() =>
+    props.locale && supportedLocaleSet.has(props.locale)
+        ? props.locale
+        : 'en-US',
+);
+
+const baseMessages = ref<IntlMessages>({});
+
+watch(
+    effectiveLocale,
+    async (locale) => {
+        baseMessages.value = await loadLocaleMessages(locale);
+    },
+    { immediate: true },
+);
 
 const localizedMessages = computed<IntlMessages>(() => ({
-    ...localizedDefaultMessages.value,
+    ...baseMessages.value,
     ...props.messages,
 }));
 </script>

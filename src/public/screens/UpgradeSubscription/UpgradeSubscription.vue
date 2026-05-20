@@ -11,11 +11,11 @@ import {
 } from '@solvimon/solvimon-ui';
 import type { Invoice } from '@solvimon/solvimon-types';
 import type { UpgradeSubscriptionProps } from './UpgradeSubscription.types';
-import type { OnDemandPricing } from '@/components/subscriptions/UpgradeSubscription/UpgradeSubscription.types';
 import {
     getMockOnDemandPricingItemsResponse,
     getMockPreviewResponse,
 } from './UpgradeSubscription.mocks';
+import type { OnDemandPricing } from '@/components/subscriptions/UpgradeSubscription/UpgradeSubscription.types';
 import UpgradeOrderSummary from '@/components/subscriptions/UpgradeOrderSummary.vue';
 import OnDemandPricingList from '@/components/subscriptions/OnDemandPricingList.vue';
 import PaymentMethodPicker from '@/components/subscriptions/PaymentMethodPicker.vue';

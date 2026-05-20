@@ -4,7 +4,6 @@ import { email, required, requiredIf } from '@vuelidate/validators';
 import { computed, onMounted, ref } from 'vue';
 import { watchDebounced } from '@vueuse/core';
 import type { CountryCode } from '@solvimon/solvimon-types';
-import { cloneDeep } from 'lodash-es';
 import type { CheckoutFormState } from './CheckoutForm.types';
 import { getRequiredFieldsForCountry } from './CheckoutForm.lib';
 import { createGeoLocationService } from '@/services/geolocation';
@@ -23,7 +22,7 @@ export function useCheckoutForm({
         const newState = getInitialState({ ...form.value, ...state });
 
         form.value = newState;
-        initialFormState.value = cloneDeep(newState);
+        initialFormState.value = structuredClone(newState);
     };
 
     const requiredFields = computed<(keyof CheckoutFormState)[]>(() =>
@@ -105,7 +104,7 @@ export function useCheckoutForm({
         await getCountryFromGeoLocationService(initialState?.country);
     });
 
-    watchDebounced(() => cloneDeep(form.value), handleFormChange, {
+    watchDebounced(() => structuredClone(form.value), handleFormChange, {
         debounce: 200,
     });
 

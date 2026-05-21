@@ -1,5 +1,5 @@
-import { watchDebounced } from '@vueuse/core';
 import { onMounted, ref, type Ref } from 'vue';
+import { useWatchDebounced } from '@/composables/useWatchDebounced';
 
 export const useData = <T, V extends string | undefined>({
     getData,
@@ -25,18 +25,12 @@ export const useData = <T, V extends string | undefined>({
         }
     };
 
+    if (watchValue) {
+        useWatchDebounced(watchValue, () => void handleGetData(), { debounce });
+    }
+
     onMounted(async () => {
         void handleGetData();
-
-        if (watchValue) {
-            watchDebounced(
-                watchValue,
-                () => {
-                    void handleGetData();
-                },
-                { debounce },
-            );
-        }
     });
 
     return { data, isPending };

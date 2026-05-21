@@ -2,10 +2,10 @@ import { objectDiff, useValidation } from '@solvimon/solvimon-ui';
 import { taxId } from '@solvimon/solvimon-ui/validators';
 import { email, required, requiredIf } from '@vuelidate/validators';
 import { computed, onMounted, ref } from 'vue';
-import { watchDebounced } from '@vueuse/core';
 import type { CountryCode } from '@solvimon/solvimon-types';
 import type { CheckoutFormState } from './CheckoutForm.types';
 import { getRequiredFieldsForCountry } from './CheckoutForm.lib';
+import { useWatchDebounced } from '@/composables/useWatchDebounced';
 import { createGeoLocationService } from '@/services/geolocation';
 
 export function useCheckoutForm({
@@ -104,9 +104,7 @@ export function useCheckoutForm({
         await getCountryFromGeoLocationService(initialState?.country);
     });
 
-    watchDebounced(() => structuredClone(form.value), handleFormChange, {
-        debounce: 200,
-    });
+    useWatchDebounced(() => structuredClone(form.value), handleFormChange, { debounce: 200 });
 
     return {
         form,

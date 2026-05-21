@@ -20,7 +20,7 @@ export function useSeatBasedPricing({
     pricing: {
         amount?: Amount;
         tiered?: {
-            bands: PricingItemConfig['bands'];
+            bands: NonNullable<PricingItemConfig['details']>['bands'];
         };
     };
 }> {
@@ -40,8 +40,8 @@ export function useSeatBasedPricing({
                 description: productItem?.description,
             },
             pricing: {
-                ...(config?.type === 'FLAT' && { amount: config.bands?.[0]?.amount }),
-                ...(config?.type === 'TIERED' && { tiered: { bands: config.bands } }),
+                ...(config?.details?.pricing_type === 'FLAT' && { amount: config.details?.bands?.[0]?.amount }),
+                ...(config?.details?.pricing_type === 'TIERED' && { tiered: { bands: config.details?.bands } }),
             },
         };
     });

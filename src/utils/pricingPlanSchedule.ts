@@ -51,7 +51,7 @@ export function getPricingItemConfigMetaById({
                 item.billing_period_configs?.forEach((billingConfig) => {
                     billingConfig.configs?.forEach((config) => {
                         if (config.id) {
-                            const currency = config.bands?.find((band) => band.amount?.currency)
+                            const currency = config.details?.bands?.find((band) => band.amount?.currency)
                                 ?.amount?.currency;
 
                             metaById.set(config.id, {
@@ -64,7 +64,7 @@ export function getPricingItemConfigMetaById({
 
                 item.configs?.forEach((config) => {
                     if (config.id) {
-                        const currency = config.bands?.find((band) => band.amount?.currency)
+                        const currency = config.details?.bands?.find((band) => band.amount?.currency)
                             ?.amount?.currency;
 
                         metaById.set(config.id, {

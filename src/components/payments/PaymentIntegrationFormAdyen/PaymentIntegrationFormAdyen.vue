@@ -94,6 +94,7 @@ async function getConfiguration(): Promise<{
             ),
             environment: getAdyenEnvironmentFromPaymentMethodOptionsResponse(
                 props.paymentMethodOptionResponseEntry,
+                logger,
             ),
             locale,
             translations: getOverriddenTranslations(props.variant),

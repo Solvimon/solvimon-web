@@ -40,6 +40,7 @@ const initApplePay = async () => {
             locale: props.locale,
             countryCode: props.countryCode,
             paymentMethodOptionResponse: props.paymentMethodOptionsResponse,
+            logger,
         }),
     );
 

@@ -80,17 +80,14 @@ export function createReturnUrl({
  * If no environment is set, or the environment is not supported, it defaults to live.
  */
 export function getAdyenEnvironmentFromPaymentMethodOptionsResponse(
-    paymentMethodsOptionsResponse?: PaymentMethodOptionResponseEntry,
-    logger?: Logger,
+    paymentMethodsOptionsResponse: PaymentMethodOptionResponseEntry | undefined,
+    logger: Logger,
 ): CoreConfiguration['environment'] {
     const environment =
         paymentMethodsOptionsResponse?.integration.payment_gateway?.adyen?.environment;
 
     if (!environment) {
-        logger?.warn(
-            'ADYEN_INVALID_CONFIGURATION',
-            'No environment set for adyen advanced flow, defaulted to live',
-        );
+        logger.warn('ADYEN_INVALID_CONFIGURATION', 'No environment set for adyen advanced flow, defaulted to live');
         return 'live';
     }
 
@@ -108,10 +105,7 @@ export function getAdyenEnvironmentFromPaymentMethodOptionsResponse(
         case 'LIVE':
             return 'live';
         default:
-            logger?.warn(
-                'ADYEN_INVALID_CONFIGURATION',
-                `Unsupported environment "${environment}" for adyen advanced flow, defaulted to "live"`,
-            );
+            logger.warn('ADYEN_INVALID_CONFIGURATION', `Unsupported environment "${environment}" for adyen advanced flow, defaulted to "live"`);
             return 'live';
     }
 }
@@ -130,7 +124,7 @@ export function getAdyenExpressCheckoutConfiguration({
     countryCode: CoreConfiguration['countryCode'];
     locale: CoreConfiguration['locale'];
     paymentMethodOptionResponse: PaymentMethodOptionResponseEntry;
-    logger?: Logger;
+    logger: Logger;
 }): CoreConfiguration {
     return {
         ...(amount ? { amount: transformToAdyenAmount(amount) } : {}),

@@ -397,6 +397,8 @@ describe('adyen utils', () => {
     });
 
     describe('getAdyenEnvironmentFromPaymentMethodOptionsResponse', () => {
+        const noop = () => {};
+        const noopLogger = { debug: noop, info: noop, warn: noop, error: noop, capture: noop };
         it('should return test for TEST environment', () => {
             const paymentMethodOptionResponse: PaymentMethodOptionResponseEntry = {
                 payment_acceptor: createMockPaymentAcceptor(),
@@ -417,6 +419,7 @@ describe('adyen utils', () => {
 
             const result = getAdyenEnvironmentFromPaymentMethodOptionsResponse(
                 paymentMethodOptionResponse,
+                noopLogger,
             );
 
             expect(result).toBe('test');
@@ -442,6 +445,7 @@ describe('adyen utils', () => {
 
             const result = getAdyenEnvironmentFromPaymentMethodOptionsResponse(
                 paymentMethodOptionResponse,
+                noopLogger,
             );
 
             expect(result).toBe('live');
@@ -467,6 +471,7 @@ describe('adyen utils', () => {
 
             const result = getAdyenEnvironmentFromPaymentMethodOptionsResponse(
                 paymentMethodOptionResponse,
+                noopLogger,
             );
 
             expect(result).toBe('live-in');
@@ -492,6 +497,7 @@ describe('adyen utils', () => {
 
             const result = getAdyenEnvironmentFromPaymentMethodOptionsResponse(
                 paymentMethodOptionResponse,
+                noopLogger,
             );
 
             expect(result).toBe('live-au');
@@ -517,6 +523,7 @@ describe('adyen utils', () => {
 
             const result = getAdyenEnvironmentFromPaymentMethodOptionsResponse(
                 paymentMethodOptionResponse,
+                noopLogger,
             );
 
             expect(result).toBe('live-us');
@@ -542,6 +549,7 @@ describe('adyen utils', () => {
 
             const result = getAdyenEnvironmentFromPaymentMethodOptionsResponse(
                 paymentMethodOptionResponse,
+                noopLogger,
             );
 
             expect(result).toBe('live-apse');
@@ -567,13 +575,14 @@ describe('adyen utils', () => {
 
             const result = getAdyenEnvironmentFromPaymentMethodOptionsResponse(
                 paymentMethodOptionResponse,
+                noopLogger,
             );
 
             expect(result).toBe('live');
         });
 
         it('should default to live when paymentMethodOptionResponse is undefined', () => {
-            const result = getAdyenEnvironmentFromPaymentMethodOptionsResponse(undefined);
+            const result = getAdyenEnvironmentFromPaymentMethodOptionsResponse(undefined, noopLogger);
 
             expect(result).toBe('live');
         });
@@ -598,6 +607,7 @@ describe('adyen utils', () => {
 
             const result = getAdyenEnvironmentFromPaymentMethodOptionsResponse(
                 paymentMethodOptionResponse,
+                noopLogger,
             );
 
             expect(result).toBe('live');
@@ -605,6 +615,9 @@ describe('adyen utils', () => {
     });
 
     describe('getAdyenExpressCheckoutConfiguration', () => {
+        const noop = () => {};
+        const noopLogger = { debug: noop, info: noop, warn: noop, error: noop, capture: noop };
+
         it('should return complete configuration', () => {
             const amount: Amount = {
                 quantity: '10.50',
@@ -643,6 +656,7 @@ describe('adyen utils', () => {
                 countryCode: 'US',
                 locale: 'en-US',
                 paymentMethodOptionResponse,
+                logger: noopLogger,
             });
 
             expect(result).toEqual({
@@ -687,6 +701,7 @@ describe('adyen utils', () => {
                 countryCode: 'US',
                 locale: 'en-US',
                 paymentMethodOptionResponse,
+                logger: noopLogger,
             });
 
             expect(result.clientKey).toBeUndefined();

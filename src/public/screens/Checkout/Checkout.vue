@@ -8,13 +8,16 @@ import {
     useIntl,
     useTimePeriod,
 } from '@solvimon/solvimon-ui';
-import { computed, onMounted, ref } from 'vue';
+import { computed, defineAsyncComponent, onMounted, ref } from 'vue';
 import type { Address, BillingPeriod, CountryCode } from '@solvimon/solvimon-types';
 import type { CheckoutEmits, CheckoutProps } from './Checkout.types';
 import { useCheckoutView } from './useCheckout.view';
 import { usePromotionCode } from '@/composables/usePromotionCode';
 import { usePortal } from '@/components/providers/PortalProvider/composables/usePortal';
-import PaymentIntegrationForm from '@/components/payments/PaymentIntegrationForm/PaymentIntegrationForm.vue';
+
+const PaymentIntegrationForm = defineAsyncComponent(
+    () => import('@/components/payments/PaymentIntegrationForm/PaymentIntegrationForm.vue'),
+);
 import CheckoutForm from '@/components/customer/CheckoutForm/CheckoutForm.vue';
 import CheckoutTitle from '@/components/checkout/CheckoutTitle.vue';
 import { isInvoiceUsageBased } from '@/utils/invoice';

@@ -37,16 +37,19 @@ describe('pricingPlanSchedule utils', () => {
                 type: 'FLAT',
                 order: 1,
                 billing_in_advance: false,
-                ...(currency && {
-                    bands: [
-                        {
-                            amount: {
-                                currency,
-                                quantity: '10',
+                details: {
+                    pricing_type: 'FLAT',
+                    ...(currency && {
+                        bands: [
+                            {
+                                amount: {
+                                    currency,
+                                    quantity: '10',
+                                },
                             },
-                        },
-                    ],
-                }),
+                        ],
+                    }),
+                },
             }) satisfies PricingItemConfigExtended;
 
         const createItem = ({

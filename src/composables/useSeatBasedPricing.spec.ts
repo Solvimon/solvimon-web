@@ -23,16 +23,18 @@ describe('useSeatBasedPricing', () => {
         type: 'FLAT' | 'TIERED' = 'FLAT',
         billingPeriod?: BillingPeriod,
         billingInAdvance = false,
-        bands?: PricingItemConfigExtended['bands'],
+        bands?: NonNullable<PricingItemConfigExtended['details']>['bands'],
     ): PricingItemConfigExtended =>
         ({
             object_type: 'PRICING_ITEM_CONFIG',
             id,
-            type,
             order: 0,
             billing_in_advance: billingInAdvance,
             billing_period: billingPeriod,
-            bands,
+            details: {
+                pricing_type: type,
+                bands,
+            },
         }) as PricingItemConfigExtended;
 
     const createMockProductItem = (name?: string, description?: string): ProductItemExtended =>
@@ -123,7 +125,7 @@ describe('useSeatBasedPricing', () => {
         const amount: Amount = { quantity: '100', currency: 'USD' };
         const config = createMockConfig('config-1', 'FLAT', undefined, false, [
             { amount },
-        ] as PricingItemConfigExtended['bands']);
+        ] as NonNullable<PricingItemConfigExtended['details']>['bands']);
         mockGetPricingItemByPricingConfigId.mockReturnValue({
             config,
             productItem: undefined,
@@ -176,7 +178,7 @@ describe('useSeatBasedPricing', () => {
         const bands = [
             { tier_top_bound: { number: '10' }, amount: { quantity: '50', currency: 'USD' } },
             { tier_top_bound: { number: '20' }, amount: { quantity: '40', currency: 'USD' } },
-        ] as PricingItemConfigExtended['bands'];
+        ] as NonNullable<PricingItemConfigExtended['details']>['bands'];
         const config = createMockConfig('config-1', 'TIERED', undefined, false, bands);
         mockGetPricingItemByPricingConfigId.mockReturnValue({
             config,
@@ -233,7 +235,7 @@ describe('useSeatBasedPricing', () => {
         const amount: Amount = { quantity: '1000', currency: 'EUR' };
         const config = createMockConfig('config-1', 'FLAT', billingPeriod, true, [
             { amount },
-        ] as PricingItemConfigExtended['bands']);
+        ] as NonNullable<PricingItemConfigExtended['details']>['bands']);
         const productItem = createMockProductItem('Premium Seats', 'Premium seat pricing');
 
         mockGetPricingItemByPricingConfigId.mockReturnValue({

@@ -53,7 +53,7 @@ export function createLogger(
     opts?: { logLevel?: LogLevel; customElementName?: string; environment?: Environment },
 ): Logger {
     const order: Record<LogLevel, number> = { debug: 10, info: 20, warn: 30, error: 40 };
-    const min = opts?.logLevel ?? 'info';
+    const min = opts?.logLevel ?? 'warn';
 
     const emit = (
         level: LogLevel,

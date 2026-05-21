@@ -84,21 +84,21 @@ describe('createLogger', () => {
     });
 
     describe('log level filtering', () => {
-        it('emits entries at or above the configured minLevel', () => {
-            const logger = createLogger(sink, { minLevel: 'warn' });
+        it('emits entries at or above the configured logLevel', () => {
+            const logger = createLogger(sink, { logLevel: 'warn' });
             logger.warn('ADYEN_INVALID_CONFIGURATION', 'msg');
             logger.error('INTEGRATION_ERROR', 'msg');
             expect(sink).toHaveBeenCalledTimes(2);
         });
 
-        it('suppresses entries below the configured minLevel', () => {
-            const logger = createLogger(sink, { minLevel: 'warn' });
+        it('suppresses entries below the configured logLevel', () => {
+            const logger = createLogger(sink, { logLevel: 'warn' });
             logger.debug('DEBUG_CODE', 'msg');
             logger.info('INFO_CODE', 'msg');
             expect(sink).not.toHaveBeenCalled();
         });
 
-        it('defaults to info level when minLevel is not set', () => {
+        it('defaults to info level when logLevel is not set', () => {
             const logger = createLogger(sink);
             logger.debug('DEBUG_CODE', 'msg');
             expect(sink).not.toHaveBeenCalled();

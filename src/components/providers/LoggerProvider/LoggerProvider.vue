@@ -15,7 +15,7 @@ const props = withDefaults(defineProps<LoggerProviderProps>(), {
 const { customElementName, hostRef } = useHostElementProvider();
 const { environment } = useConfig();
 const logger = createLogger(createCustomElementLogSink(props.onLog, hostRef), {
-    minLevel: props.logLevel,
+    logLevel: props.logLevel,
     customElementName,
     environment,
 });

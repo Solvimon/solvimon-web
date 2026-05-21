@@ -14,10 +14,10 @@ import {
 } from '@solvimon/solvimon-ui';
 import type { BillingPeriod, Pricing } from '@solvimon/solvimon-types';
 import { computed } from 'vue';
-import { breakpointsTailwind, useBreakpoints } from '@vueuse/core';
 import SubscriptionSummary from './SubscriptionSummary.vue';
 import type { OrderSummaryProps } from './OrderSummary.types';
 import PricingGroupContent from '@/components/subscriptions/PlanCustomizationForm/PricingGroupContent.vue';
+import { useViewport } from '@/composables/useViewport';
 import { getFirstPricingPlanScheduleOfType } from '@/utils/pricingPlanSchedule';
 
 const props = defineProps<OrderSummaryProps>();
@@ -27,9 +27,8 @@ const emit = defineEmits<{
 
 const { $t } = useIntl();
 const { map, formatTimePeriod } = useTimePeriod();
-const breakpoints = useBreakpoints(breakpointsTailwind);
-const isMobile = breakpoints.smaller('md');
-const saveBadgeSize = computed(() => (isMobile.value ? 'sm' : 'xs'));
+const { isMobileViewport } = useViewport();
+const saveBadgeSize = computed(() => (isMobileViewport.value ? 'sm' : 'xs'));
 
 const getBillingPeriodKey = (period: BillingPeriod) => `${period.type}:${period.value}`;
 

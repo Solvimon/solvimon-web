@@ -98,18 +98,19 @@ describe('createLogger', () => {
             expect(sink).not.toHaveBeenCalled();
         });
 
-        it('defaults to info level when logLevel is not set', () => {
+        it('defaults to warn level when logLevel is not set', () => {
             const logger = createLogger(sink);
             logger.debug('DEBUG_CODE', 'msg');
-            expect(sink).not.toHaveBeenCalled();
             logger.info('INFO_CODE', 'msg');
+            expect(sink).not.toHaveBeenCalled();
+            logger.warn('WARN_CODE', 'msg');
             expect(sink).toHaveBeenCalledTimes(1);
         });
     });
 
     describe('log entry shape', () => {
         it('includes schemaVersion, level, code, message, and ISO timestamp', () => {
-            const logger = createLogger(sink);
+            const logger = createLogger(sink, { logLevel: 'info' });
             logger.info('INFO_CODE', 'hello');
             const entry = lastEntry();
             expect(entry.schemaVersion).toBe(1);
@@ -165,7 +166,7 @@ describe('createLogger', () => {
     describe('context enrichment', () => {
         it('adds componentName and environment to every entry', () => {
             const logger = createLogger(sink, { customElementName: 'solvimon-checkout', environment: 'LIVE' });
-            logger.info('INFO_CODE', 'msg');
+            logger.warn('WARN_CODE', 'msg');
             const ctx = lastEntry().context as Record<string, unknown>;
             expect(ctx.componentName).toBe('solvimon-checkout');
             expect(ctx.environment).toBe('LIVE');

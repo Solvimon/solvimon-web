@@ -7,7 +7,7 @@ export type SerializedError =
 export type LogEntry = {
     schemaVersion: 1;
     level: LogLevel;
-    code: string; // stable, consumer-filterable
+    code: ErrorCode | WarnCode | string; // stable, consumer-filterable
     message: string; // human readable
     timestamp: string; // ISO
     context?: Record<string, unknown>;
@@ -20,7 +20,7 @@ export type LogSink = (entry: LogEntry) => void;
 export type Logger = {
     debug: (code: string, message: string, context?: Record<string, unknown>) => void;
     info: (code: string, message: string, context?: Record<string, unknown>) => void;
-    warn: (code: string, message: string, context?: Record<string, unknown>, err?: unknown) => void;
+    warn: (code: WarnCode, message: string, context?: Record<string, unknown>, err?: unknown) => void;
     error: (
         code: ErrorCode,
         message: string,
@@ -29,7 +29,7 @@ export type Logger = {
     ) => void;
     capture: (
         err: unknown,
-        context?: Record<string, unknown> & { code?: string; message?: string },
+        context?: Record<string, unknown> & { code?: ErrorCode; message?: string },
     ) => void;
 };
 
@@ -44,7 +44,12 @@ export interface LoggerProviderProps {
     onLog?: LogSink;
 }
 
+export type WarnCode =
+    | 'ADYEN_INVALID_CONFIGURATION'
+    | 'APPLE_PAY_ACTION_REQUIRED';
+
 export type ErrorCode =
+    | 'UNHANDLED_ERROR'
     | 'RESOURCE_REVOKED'
     | 'INVALID_EMAIL'
     | 'INVALID_COUNTRY_CODE'
@@ -58,4 +63,6 @@ export type ErrorCode =
     | 'EXPRESS_CHECKOUT_GOOGLE_PAY_ERROR'
     | 'EXPRESS_CHECKOUT_PAYPAL_ERROR'
     | 'APPLE_PAY_ERROR'
-    | 'APPLE_PAY_AUTHORIZATION_FAILED';
+    | 'APPLE_PAY_AUTHORIZATION_FAILED'
+    | 'PROMOTION_CODE_APPLY_FAILED'
+    | 'PROMOTION_CODE_REMOVE_FAILED';

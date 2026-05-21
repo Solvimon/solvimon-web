@@ -269,6 +269,14 @@ jobs:
                   ref: ${{ github.base_ref }}
                   clean: false
 
+            - name: Authenticate GitLab npm registry
+              run: npm config set //gitlab.com/api/v4/projects/38958827/packages/npm/:_authToken ${{ secrets.GITLAB_NPM_TOKEN }}
+
+            - name: Install base branch dependencies
+              run: npm ci
+              env:
+                  GITLAB_NPM_TOKEN: ${{ secrets.GITLAB_NPM_TOKEN }}
+
             - name: Build base branch
               run: rm -rf dist && npm run build
 

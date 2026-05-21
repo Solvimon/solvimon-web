@@ -12,6 +12,7 @@ import { computed, ref } from 'vue';
 import { convertDateRangeToTimePeriod } from '@solvimon/solvimon-ui';
 import { taxId } from '@solvimon/solvimon-ui/validators';
 import { isEqual } from '@/utils/comparison';
+import { useLogger } from '@/components/providers/LoggerProvider/composables/useLogger';
 import { createInvoicesService } from '@/services/invoices';
 import type { CheckoutFormState } from '@/components/customer/CheckoutForm/CheckoutForm.types';
 import {
@@ -26,6 +27,7 @@ const EMPTY_COUNTRY = 'NL';
 
 export const useInvoicePreview = () => {
     const { getInvoicePreview } = createInvoicesService();
+    const logger = useLogger();
 
     const trialPeriod = ref<TimePeriod>();
     const trialInvoicePreview = ref<Invoice>();
@@ -221,6 +223,7 @@ export const useInvoicePreview = () => {
             invoicePreview.value = updatedPreviews[selectedPeriodKey];
         } catch (error) {
             status.value = ApiStatus.Failed;
+            logger.error('INVOICE_PREVIEW_FAILED', 'Failed to load invoice preview', {}, error);
             throw error;
         } finally {
             status.value = ApiStatus.Done;

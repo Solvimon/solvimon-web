@@ -5,6 +5,7 @@ import { ApiStatus, type Customer } from '@solvimon/solvimon-types';
 import type { CustomerBillingInformationBlockEmits } from './CustomerBillingInformationBlock.types';
 import { usePortal } from '@/components/providers/PortalProvider/composables/usePortal';
 import { createCustomerService } from '@/services/customer';
+import { useLogger } from '@/components/providers';
 
 import ErrorState from '@/components/errorState/ErrorState.vue';
 import Loader from '@/components/shared/Loader.vue';
@@ -15,6 +16,7 @@ const portal = usePortal();
 
 const { getCustomer } = createCustomerService();
 const { $t } = useIntl();
+const logger = useLogger();
 
 const apiStatus = ref<ApiStatus>(ApiStatus.Initial);
 
@@ -31,8 +33,9 @@ const fetchCustomer = async (id: Customer['id']): Promise<void> => {
         const response = await getCustomer(id);
         billingInformation.value = { show: true, data: response };
         apiStatus.value = ApiStatus.Done;
-    } catch (_error) {
+    } catch (error) {
         apiStatus.value = ApiStatus.Failed;
+        logger.error('CUSTOMER_FETCH_FAILED', 'Failed to fetch customer billing information', {}, error);
     }
 };
 

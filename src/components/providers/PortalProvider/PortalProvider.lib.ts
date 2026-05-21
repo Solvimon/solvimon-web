@@ -1,6 +1,7 @@
 import { type InjectionKey, onMounted, ref } from 'vue';
 import { parseToken } from '@/utils/token';
 import { createPortalsService } from '@/services/portals';
+import { useLogger } from '@/components/providers/LoggerProvider/composables/useLogger';
 import type { PortalUrl } from '@/services/portals.types';
 
 export const PORTAL_INJECTION_KEY: InjectionKey<ReturnType<typeof getPortal>> =
@@ -14,6 +15,7 @@ export const getPortal = ({
     allowedPortalTypes?: PortalUrl['type'][];
 }) => {
     const { getPortalUrl } = createPortalsService();
+    const logger = useLogger();
 
     const portal = ref<PortalUrl>();
     const parsedToken = parseToken(token);
@@ -37,8 +39,7 @@ export const getPortal = ({
                 throw Error(`Incorrect portal url types: ${portal.value.type}`);
             }
         } catch (err) {
-            // eslint-disable-next-line no-console
-            console.log(err);
+            logger.error('RESOURCE_REVOKED', 'Failed to load portal resource', {}, err);
         }
     };
 

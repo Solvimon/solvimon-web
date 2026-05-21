@@ -71,8 +71,7 @@ function submit() {
     try {
         dropInInstance?.submit();
     } catch (error) {
-        // eslint-disable-next-line no-console
-        console.error(error);
+        logger.error('ADYEN_SUBMIT_FAILED', 'Failed to submit Adyen drop-in', {}, error);
     }
 }
 
@@ -501,7 +500,9 @@ function handleOnSubmit(
                     });
             }
         })
-        .catch(() => {});
+        .catch((error) => {
+            logger.error('INTEGRATION_ERROR', 'Unhandled error in payment submission flow', {}, error);
+        });
 }
 
 function handleActionRequiredPaymentAction(

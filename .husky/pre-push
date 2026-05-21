@@ -1,0 +1,8 @@
+# GUI git clients (Fork, GitKraken, etc.) don't load the user's shell profile,
+# so nvm-managed node isn't on PATH. Source nvm explicitly to fix this.
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+
+if [ "$LINT_ON_PUSH" = "1" ]; then
+    npm run lint
+fi

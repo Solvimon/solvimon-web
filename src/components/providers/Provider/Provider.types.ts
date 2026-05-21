@@ -1,16 +1,17 @@
-import type { IntlProviderProps, BrandProviderProps } from '@solvimon/solvimon-ui';
+import type { BrandProviderProps } from '@solvimon/solvimon-ui';
 import type { HostElementProviderProps } from '@/components/providers/HostElementProvider/HostElementProvider.types';
 import type { LoggerProviderProps } from '@/components/providers/LoggerProvider/LoggerProvider.types';
 import type { ExperimentalFeatureProviderProps } from '@/components/providers/ExperimentalFeatureProvider/ExperimentalFeatureProvider.types';
 import type { PortalProviderProps } from '@/components/providers/PortalProvider/PortalProvider.types';
 import type { AuthProviderProps } from '@/components/providers/AuthProvider';
 import type { ConfigProviderProps } from '@/components/providers/ConfigProvider/ConfigProvider.types';
+import type { TranslationProviderProps } from '@/components/providers/TranslationProvider/TranslationProvider.types';
 
 export interface RequiredProviderProps
     extends
         Omit<AuthProviderProps, 'token'>,
         ConfigProviderProps,
-        IntlProviderProps,
+        TranslationProviderProps,
         BrandProviderProps,
         ExperimentalFeatureProviderProps,
         LoggerProviderProps,

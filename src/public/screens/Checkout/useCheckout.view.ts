@@ -11,7 +11,6 @@ import type {
 } from '@solvimon/solvimon-types';
 import { computed, onMounted, ref, watch } from 'vue';
 import { taxId } from '@solvimon/solvimon-ui/validators';
-import { watchOnce } from '@vueuse/core';
 import { createSubscriptionsService } from '@/services/subscriptions';
 import { useInvoicePreview } from '@/composables/useInvoicePreview';
 import { useCheckoutForm } from '@/components/customer/CheckoutForm/useCheckoutForm';
@@ -322,7 +321,7 @@ export function useCheckoutView({
         }
     });
 
-    watchOnce(shouldLoadPaymentMethodOptions, (shouldLoad) => {
+    watch(shouldLoadPaymentMethodOptions, (shouldLoad) => {
         if (shouldLoad) {
             void loadPaymentMethodOptions({
                 subscriptionId: subscription.value!.id,
@@ -330,7 +329,7 @@ export function useCheckoutView({
                 amount: amount.value,
             });
         }
-    });
+    }, { once: true });
 
     return {
         invoicePreview: invoicePreview.invoicePreview,

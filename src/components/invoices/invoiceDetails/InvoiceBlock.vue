@@ -1,17 +1,16 @@
 <script setup lang="ts">
 import { InvoiceSummary, InfoBlock, useIntl, Section } from '@solvimon/solvimon-ui';
-import { computed } from 'vue';
-import { useWindowSize } from '@vueuse/core';
 import type { Invoice } from '@solvimon/solvimon-types';
 import InvoiceCreditsBreakdown from './InvoiceCreditsBreakdown.vue';
+import { useViewport } from '@/composables/useViewport';
 
 defineProps<{
     invoice: Invoice;
 }>();
+
 const { $t } = useIntl();
 
-const { width } = useWindowSize();
-const isSmallScreen = computed(() => width.value <= 768);
+const { isMobileViewport: isSmallScreen } = useViewport();
 </script>
 
 <template>
@@ -30,7 +29,7 @@ const isSmallScreen = computed(() => width.value <= 768);
                 v-if="isSmallScreen"
                 variant="default"
                 has-icon
-                class="justify-center bg-gray-50 border-gray-100 text-gray-800 font-semibold"
+                class="justify-center border-gray-100 bg-gray-50 font-semibold text-gray-800"
                 >{{
                     $t({
                         defaultMessage: 'Download the PDF for a full breakdown',
@@ -42,7 +41,6 @@ const isSmallScreen = computed(() => width.value <= 768);
             <InvoiceSummary :invoice="invoice" :is-expandable="!isSmallScreen">
                 <template #logo> <slot name="logo" /> </template
             ></InvoiceSummary>
-            <InvoiceCreditsBreakdown :invoice="invoice" />
-        </div
+            <InvoiceCreditsBreakdown :invoice="invoice" /></div
     ></Section>
 </template>

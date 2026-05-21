@@ -39,7 +39,8 @@ export function serializeError(err: unknown): SerializedError {
     if (typeof err === 'object') {
         return {
             name: 'name' in err && typeof err.name === 'string' ? err.name : undefined,
-            message: 'message' in err && typeof err.message === 'string' ? err.message : String(err),
+            message:
+                'message' in err && typeof err.message === 'string' ? err.message : String(err),
             stack: 'stack' in err && typeof err.stack === 'string' ? err.stack : undefined,
             cause: 'cause' in err ? err.cause : undefined,
         };
@@ -125,10 +126,13 @@ export function createLoggingContext(
     customElementName?: string,
     environment?: Environment,
 ): Record<string, unknown> {
+    // Intentionally don't include query string, since that probably contains user specific data.
+    const url = window.location.origin + window.location.pathname;
+
     return {
         componentName: customElementName,
         environment,
-        url: window.location.href,
+        url,
         ...context,
     };
 }

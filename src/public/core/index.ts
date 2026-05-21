@@ -24,4 +24,5 @@ export type {
     LogLevel,
     LogSink,
     ErrorCode,
+    WarnCode,
 } from '@/components/providers/LoggerProvider/LoggerProvider.types';

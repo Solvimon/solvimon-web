@@ -103,7 +103,7 @@ describe('createLogger', () => {
             logger.debug('DEBUG_CODE', 'msg');
             logger.info('INFO_CODE', 'msg');
             expect(sink).not.toHaveBeenCalled();
-            logger.warn('WARN_CODE', 'msg');
+            logger.warn('ADYEN_INVALID_CONFIGURATION', 'msg');
             expect(sink).toHaveBeenCalledTimes(1);
         });
     });
@@ -166,7 +166,7 @@ describe('createLogger', () => {
     describe('context enrichment', () => {
         it('adds componentName and environment to every entry', () => {
             const logger = createLogger(sink, { customElementName: 'solvimon-checkout', environment: 'LIVE' });
-            logger.warn('WARN_CODE', 'msg');
+            logger.warn('ADYEN_INVALID_CONFIGURATION', 'msg');
             const ctx = lastEntry().context as Record<string, unknown>;
             expect(ctx.componentName).toBe('solvimon-checkout');
             expect(ctx.environment).toBe('LIVE');

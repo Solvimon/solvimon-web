@@ -28,6 +28,7 @@
         "translations:extract": "formatjs extract 'src/**/*.{ts,vue}*' --ignore='**/*.d.ts' --out-file 'src/translations/source.json' --flatten --additional-function-names '$t'",
         "translations:compile": "formatjs compile 'src/translations/source.json' --out-file 'src/translations/locales/en-US.json'",
         "translations:check": "node ./scripts/check-translations.mjs",
+        "logs:list": "node ./scripts/list-log-codes.mjs",
         "test:e2e:run-app": "node scripts/start-test-app.mjs",
         "test:e2e": "playwright test",
         "test:e2e:ui": "playwright test --ui",

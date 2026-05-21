@@ -127,6 +127,36 @@ export default defineConfigWithVueTs(
                     message:
                         'Do not pass a conditional message descriptor to formatMessage. Put the condition outside the formatMessage calls so FormatJS can extract both messages.',
                 },
+                /**
+                 * Lint rules for the logger to make sure static extraction keeps working.
+                 */
+                {
+                    selector:
+                        "VariableDeclarator[id.type='ObjectPattern']:matches([init.name='logger'], [init.callee.name='useLogger'])",
+                    message:
+                        "Do not destructure the logger. Use 'const logger = useLogger()' and call logger.method() directly so log codes can be statically extracted.",
+                },
+                {
+                    selector: "MemberExpression[optional=true][object.name='logger']",
+                    message:
+                        "Use logger.method() without optional chaining. Guard with 'if (logger)' if logger may be undefined.",
+                },
+                {
+                    selector: "MemberExpression[computed=true][object.name='logger']",
+                    message: "Use logger.method() with dot notation only, not logger['method']().",
+                },
+                {
+                    selector:
+                        "CallExpression[callee.type='MemberExpression'][callee.object.name='logger'][callee.property.name=/^(error|warn|info|debug)$/]:not([arguments.0.type='Literal'])",
+                    message:
+                        'The log code (first argument) must be a plain string literal so npm run logs:list can extract it.',
+                },
+                {
+                    selector:
+                        "CallExpression[callee.type='MemberExpression'][callee.object.name='logger'][callee.property.name=/^(error|warn|info|debug)$/]:not([arguments.1.type='Literal']):not([arguments.1.type='TemplateLiteral'])",
+                    message:
+                        'The log message (second argument) must be a string or template literal so npm run logs:list can extract it.',
+                },
             ],
         },
     },

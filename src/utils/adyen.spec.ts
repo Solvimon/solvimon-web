@@ -16,11 +16,6 @@ import type {
     PaymentIntegration,
 } from '@solvimon/solvimon-types';
 
-// Mock the errorTracking module
-vi.mock('./errorTracking', () => ({
-    trackSentryException: vi.fn(),
-}));
-
 // Helper function to create a minimal PaymentAcceptor
 function createMockPaymentAcceptor(overrides: Partial<PaymentAcceptor> = {}): PaymentAcceptor {
     return {

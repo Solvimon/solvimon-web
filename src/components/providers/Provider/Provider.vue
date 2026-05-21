@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { ErrorHandlingProvider, BrandProvider } from '@solvimon/solvimon-ui';
+import { BrandProvider } from '@solvimon/solvimon-ui';
 import type { ProviderEmits, ProviderProps } from './Provider.types';
 import CssOverridesProvider from '@/components/providers/CssOverridesProvider/CssOverridesProvider.vue';
 import ActionDispatchProvider from '@/components/providers/ActionDispatchProvider/ActionDispatchProvider.vue';
 import LoggerProvider from '@/components/providers/LoggerProvider/LoggerProvider.vue';
 import ExperimentalFeatureProvider from '@/components/providers/ExperimentalFeatureProvider/ExperimentalFeatureProvider.vue';
 import TeleportProvider from '@/components/providers/TeleportProvider/TeleportProvider.vue';
-import { trackSentryException } from '@/utils/errorTracking';
+import ErrorBoundary from '@/components/providers/ErrorBoundary/ErrorBoundary.vue';
 import AuthProvider from '@/components/providers/AuthProvider/AuthProvider.vue';
 import ConfigProvider from '@/components/providers/ConfigProvider/ConfigProvider.vue';
 import HostElementProvider from '@/components/providers/HostElementProvider/HostElementProvider.vue';
@@ -33,15 +33,15 @@ if (!props.customElementName) {
     <HostElementProvider :custom-element-name="props.customElementName">
         <CssOverridesProvider :css-overrides="props.cssOverrides">
             <ActionDispatchProvider>
-                <ErrorHandlingProvider @error="trackSentryException">
-                    <TeleportProvider>
-                        <BrandProvider
-                            :primary-color="primaryColor"
-                            :secondary-color="secondaryColor"
-                            is-shadow-root
-                        />
-                        <ConfigProvider v-if="environment" :environment="environment">
-                            <LoggerProvider :log-level="props.logLevel" :on-log="props.onLog">
+                <TeleportProvider>
+                    <BrandProvider
+                        :primary-color="primaryColor"
+                        :secondary-color="secondaryColor"
+                        is-shadow-root
+                    />
+                    <ConfigProvider v-if="environment" :environment="environment">
+                        <LoggerProvider :log-level="props.logLevel" :on-log="props.onLog">
+                            <ErrorBoundary>
                                 <AuthProvider :token="portalObject.token">
                                     <ExperimentalFeatureProvider
                                         :experimental-features="experimentalFeatures"
@@ -60,10 +60,10 @@ if (!props.customElementName) {
                                         </PortalProvider>
                                     </ExperimentalFeatureProvider>
                                 </AuthProvider>
-                            </LoggerProvider>
-                        </ConfigProvider>
-                    </TeleportProvider>
-                </ErrorHandlingProvider>
+                            </ErrorBoundary>
+                        </LoggerProvider>
+                    </ConfigProvider>
+                </TeleportProvider>
             </ActionDispatchProvider>
         </CssOverridesProvider>
     </HostElementProvider>

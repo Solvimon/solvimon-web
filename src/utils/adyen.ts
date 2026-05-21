@@ -4,7 +4,7 @@ import type {
     PaymentMethodOptionAdyen,
     PaymentMethodOptionResponseEntry,
 } from '@solvimon/solvimon-types';
-import { trackSentryException } from './errorTracking';
+import type { Logger } from '@/components/providers/LoggerProvider/LoggerProvider.types';
 
 export const PAYMENT_ACCEPTOR_ID_QUERY_STRING = 'payment_acceptor_id';
 export const REDIRECT_RESULT_QUERY_STRING = 'redirectResult';
@@ -81,14 +81,16 @@ export function createReturnUrl({
  */
 export function getAdyenEnvironmentFromPaymentMethodOptionsResponse(
     paymentMethodsOptionsResponse?: PaymentMethodOptionResponseEntry,
+    logger?: Logger,
 ): CoreConfiguration['environment'] {
     const environment =
         paymentMethodsOptionsResponse?.integration.payment_gateway?.adyen?.environment;
 
     if (!environment) {
-        trackSentryException(undefined, {
-            Message: 'No environment set for adyen advanced flow, defaulted to live',
-        });
+        logger?.warn(
+            'ADYEN_INVALID_CONFIGURATION',
+            'No environment set for adyen advanced flow, defaulted to live',
+        );
         return 'live';
     }
 
@@ -106,9 +108,10 @@ export function getAdyenEnvironmentFromPaymentMethodOptionsResponse(
         case 'LIVE':
             return 'live';
         default:
-            trackSentryException(undefined, {
-                Message: `Unsupported environment "${environment}" for adyen advanced flow, defaulted to "live"`,
-            });
+            logger?.warn(
+                'ADYEN_INVALID_CONFIGURATION',
+                `Unsupported environment "${environment}" for adyen advanced flow, defaulted to "live"`,
+            );
             return 'live';
     }
 }
@@ -121,11 +124,13 @@ export function getAdyenExpressCheckoutConfiguration({
     countryCode,
     locale,
     paymentMethodOptionResponse,
+    logger,
 }: {
     amount?: Amount;
     countryCode: CoreConfiguration['countryCode'];
     locale: CoreConfiguration['locale'];
     paymentMethodOptionResponse: PaymentMethodOptionResponseEntry;
+    logger?: Logger;
 }): CoreConfiguration {
     return {
         ...(amount ? { amount: transformToAdyenAmount(amount) } : {}),
@@ -134,6 +139,7 @@ export function getAdyenExpressCheckoutConfiguration({
         countryCode,
         environment: getAdyenEnvironmentFromPaymentMethodOptionsResponse(
             paymentMethodOptionResponse,
+            logger,
         ),
         locale,
         paymentMethodsResponse: {

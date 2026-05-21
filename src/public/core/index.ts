@@ -19,3 +19,9 @@ export type {
     RegisteredComponentId,
 } from './types';
 export type { ActionRequestDetail, RequestActionEvent } from './action-request.types';
+export type {
+    LogEntry,
+    LogLevel,
+    LogSink,
+    ErrorCode,
+} from '@/components/providers/LoggerProvider/LoggerProvider.types';

@@ -51,3 +51,25 @@ npm view @solvimon/solvimon-ui version --registry=https://gitlab.com/api/v4/proj
 ```
 
 The `.env` file contains secrets and must not be committed.
+
+## Opt-in lint on push
+
+A pre-push git hook runs `npm run lint` before each push when the `LINT_ON_PUSH`
+environment variable is set to `1`. This catches lint errors locally before they
+reach CI.
+
+To enable it, add the following to your `.env` file:
+
+```dotenv
+LINT_ON_PUSH=1
+```
+
+If you use `direnv` (see above), this variable is exported automatically when
+you enter the project directory, so the hook picks it up without any extra steps.
+
+To push without running the hook in a one-off case, unset the variable for
+that command:
+
+```sh
+LINT_ON_PUSH=0 git push
+```

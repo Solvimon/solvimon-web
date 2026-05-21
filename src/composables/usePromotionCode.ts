@@ -1,6 +1,6 @@
 import { ref } from 'vue';
 import type { CheckoutFormState } from '@/components/customer/CheckoutForm/CheckoutForm.types';
-import type { Logger } from '@/components/providers/LoggerProvider/LoggerProvider.types';
+import { useLogger } from '@/components/providers/LoggerProvider/composables/useLogger';
 
 type PromotionCodeAction = 'apply' | 'remove';
 
@@ -9,7 +9,6 @@ type UsePromotionCodeArgs = {
     updateInvoicePreviewOnBillingInformationChange: (
         formState: Partial<CheckoutFormState>,
     ) => Promise<unknown>;
-    logger?: Logger;
     formatErrorMessage?: (args: { action: PromotionCodeAction; error: unknown }) => string;
     onInvalidPromotionCode?: () => void;
     onApplyError?: () => void;
@@ -22,11 +21,11 @@ type FieldError = {
 export function usePromotionCode({
     checkoutForm,
     updateInvoicePreviewOnBillingInformationChange,
-    logger,
     formatErrorMessage,
     onInvalidPromotionCode,
     onApplyError,
 }: UsePromotionCodeArgs) {
+    const logger = useLogger();
     const isPromotionCodePending = ref<boolean>(false);
     const promotionCodeErrorMessage = ref<string | null>(null);
 
@@ -57,7 +56,7 @@ export function usePromotionCode({
                 promotionCode: normalizedCode,
             });
         } catch (error) {
-            logger?.capture(error, {
+            logger.capture(error, {
                 code: 'PROMOTION_CODE_APPLY_FAILED',
                 message: 'Failed to apply promotion code',
             });
@@ -88,7 +87,7 @@ export function usePromotionCode({
         try {
             await updateInvoicePreviewOnBillingInformationChange({});
         } catch (error) {
-            logger?.capture(error, {
+            logger.capture(error, {
                 code: 'PROMOTION_CODE_REMOVE_FAILED',
                 message: 'Failed to remove promotion code',
             });

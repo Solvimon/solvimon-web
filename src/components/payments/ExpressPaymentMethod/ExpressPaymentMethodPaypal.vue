@@ -24,6 +24,7 @@ const initPaypal = async () => {
             amount: props.amount,
             countryCode: props.countryCode,
             paymentMethodOptionResponse: props.paymentMethodOptionsResponse,
+            logger,
         }),
     );
 

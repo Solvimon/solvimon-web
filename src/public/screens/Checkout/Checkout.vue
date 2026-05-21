@@ -377,7 +377,6 @@ const {
 } = usePromotionCode({
     checkoutForm,
     updateInvoicePreviewOnBillingInformationChange,
-    logger,
     formatErrorMessage: ({ action }) =>
         action === 'apply'
             ? $t({

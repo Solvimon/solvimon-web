@@ -24,6 +24,7 @@ const initGooglePay = async () => {
             amount: props.amount,
             countryCode: props.countryCode,
             paymentMethodOptionResponse: props.paymentMethodOptionsResponse,
+            logger,
         }),
     );
 

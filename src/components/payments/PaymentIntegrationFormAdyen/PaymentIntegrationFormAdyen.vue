@@ -7,12 +7,12 @@ import type {
     PaymentAcceptor,
 } from '@solvimon/solvimon-types';
 import { useIntl } from '@solvimon/solvimon-ui';
-import { isEqual } from 'lodash-es';
 import type {
     PaymentIntegrationFormAdyenEmits,
     PaymentIntegrationFormAdyenProps,
 } from './PaymentIntegrationFormAdyen.types';
 import { getOverriddenTranslations } from './PaymentIntegrationFormAdyen.lib';
+import { isEqual } from '@/utils/comparison';
 import PaymentCompletedCard from '@/components/payments/PaymentCompletedCard/PaymentCompletedCard.vue';
 import PaymentErrorCard from '@/components/payments/PaymentErrorCard/PaymentErrorCard.vue';
 import type { Error } from '@/types/errors';

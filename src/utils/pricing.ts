@@ -1,5 +1,5 @@
 import type { PricingExtended, PricingPlanScheduleInfoExpanded } from '@solvimon/solvimon-types';
-import { isEmpty } from 'lodash-es';
+import { isEmpty } from '@/utils/comparison';
 
 export function getAllPricingsFromScheduleInfos(
     scheduleInfos: PricingPlanScheduleInfoExpanded[],

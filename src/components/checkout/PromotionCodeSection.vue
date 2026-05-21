@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue';
 import { Button, Icon, Input, Section, Typography, useIntl } from '@solvimon/solvimon-ui';
-import { uniqueId } from 'lodash-es';
 import type {
     PromotionCodeSectionEmits,
     PromotionCodeSectionProps,
 } from './PromotionCodeSection.types';
+import { uniqueId } from '@/utils/uniqueId';
 
 const { $t } = useIntl();
 
@@ -139,7 +139,7 @@ watch(
 </script>
 
 <template>
-    <Section v-if="!isApplied" no-spacing class="w-full relative">
+    <Section v-if="!isApplied" no-spacing class="relative w-full">
         <button
             ref="toggleRef"
             type="button"
@@ -150,9 +150,9 @@ watch(
             @click="toggleExpanded"
         >
             <div
-                class="flex flex-row items-center justify-between w-full gap-3 px-3 py-2 cursor-pointer"
+                class="flex w-full cursor-pointer flex-row items-center justify-between gap-3 px-3 py-2"
             >
-                <div class="flex flex-row gap-2 items-center">
+                <div class="flex flex-row items-center gap-2">
                     <Icon icon="local_activity" />
                     <Typography :id="labelId" variant="body-sm">
                         {{
@@ -174,7 +174,7 @@ watch(
             ref="panelRef"
             role="region"
             :aria-labelledby="labelId"
-            class="w-full border-t px-3 py-2 flex flex-row gap-2 items-center overflow-hidden"
+            class="flex w-full flex-row items-center gap-2 overflow-hidden border-t px-3 py-2"
             @keydown.esc.prevent="collapseExpanded"
         >
             <Input
@@ -214,17 +214,17 @@ watch(
         </div>
     </Section>
 
-    <Section v-else no-border no-spacing content-background="none" class="w-full relative">
+    <Section v-else no-border no-spacing content-background="none" class="relative w-full">
         <button
             type="button"
-            class="w-full bg-white border border-primary-900 rounded"
+            class="w-full rounded border border-primary-900 bg-white"
             :aria-label="removeAriaLabel"
             @click="removeCode"
         >
             <div
-                class="flex flex-row items-center justify-between w-full gap-3 px-3 py-2 cursor-pointer"
+                class="flex w-full cursor-pointer flex-row items-center justify-between gap-3 px-3 py-2"
             >
-                <div class="flex flex-row gap-2 items-center">
+                <div class="flex flex-row items-center gap-2">
                     <Icon icon="local_activity" />
                     <Typography variant="body-sm" class="font-semibold">
                         {{ appliedLabel }}

@@ -5,7 +5,7 @@ import {
     type PricingPlanSubscription,
 } from '@solvimon/solvimon-types';
 import { ref } from 'vue';
-import { isEqual } from 'lodash-es';
+import { isEqual } from '@/utils/comparison';
 import { createPaymentMethodsService } from '@/services/paymentMethods';
 import type { GetPaymentMethodOptionsPayload } from '@/services/paymentMethods.types';
 import { useService } from '@/composables/useService';

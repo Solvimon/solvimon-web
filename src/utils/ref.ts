@@ -1,5 +1,5 @@
-import { isEqual } from 'lodash-es';
 import type { Ref } from 'vue';
+import { isEqual } from '@/utils/comparison';
 
 /**
  * Utility function to update a ref if the value is different from the current value,

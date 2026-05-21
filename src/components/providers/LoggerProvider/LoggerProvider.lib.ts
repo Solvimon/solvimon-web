@@ -50,10 +50,10 @@ export function serializeError(err: unknown): SerializedError {
 
 export function createLogger(
     sink: LogSink,
-    opts?: { minLevel?: LogLevel; customElementName?: string; environment?: Environment },
+    opts?: { logLevel?: LogLevel; customElementName?: string; environment?: Environment },
 ): Logger {
     const order: Record<LogLevel, number> = { debug: 10, info: 20, warn: 30, error: 40 };
-    const min = opts?.minLevel ?? 'info';
+    const min = opts?.logLevel ?? 'info';
 
     const emit = (
         level: LogLevel,

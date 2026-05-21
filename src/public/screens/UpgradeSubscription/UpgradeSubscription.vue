@@ -21,7 +21,7 @@ import OnDemandPricingList from '@/components/subscriptions/OnDemandPricingList.
 import PaymentMethodPicker from '@/components/subscriptions/PaymentMethodPicker.vue';
 import { ContentWithAsideLayout } from '@/layouts';
 import Kpi from '@/components/shared/Kpi.vue';
-import { useActionDispatchProvider, usePortal } from '@/components/providers';
+import { useActionDispatchProvider, usePortal, useLogger } from '@/components/providers';
 import { createPricingPlanSchedulesService } from '@/services/pricingPlanSchedules';
 
 const props = defineProps<UpgradeSubscriptionProps>();
@@ -29,6 +29,7 @@ const { $t } = useIntl();
 const { dispatchAction } = useActionDispatchProvider();
 const { chargeOnDemandPricingItems } = createPricingPlanSchedulesService();
 const portal = usePortal();
+const logger = useLogger();
 
 const customerId = computed(() => portal.value.customer_id);
 
@@ -130,7 +131,8 @@ const handlePurchase = async () => {
             // New payment method: invoice created, payment still needed — hand off to invoice-pay.
             dispatchAction({ action: 'pay-invoice', data: { invoiceId: invoice.id } });
         }
-    } catch {
+    } catch (error) {
+        logger.error('PURCHASE_FAILED', 'Failed to complete upgrade subscription purchase', {}, error);
         purchaseError.value = $t({
             defaultMessage: 'Something went wrong. Please try again.',
             id: 'upgrade_subscription.purchase_error',

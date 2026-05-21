@@ -7,6 +7,7 @@ import type {
     SingleRequestParams,
     GetDefaultHeaders,
 } from './requests.types';
+import { useLogger } from '@/components/providers/LoggerProvider/composables/useLogger';
 import { Headers } from '@/services/requests.lib';
 import { useAuth } from '@/components/providers/AuthProvider';
 
@@ -16,6 +17,7 @@ const defaultOptions: RequestOptions = {
 
 export function createRequestService({ enableAccessCheck } = { enableAccessCheck: true }) {
     const { onError } = useErrorHandling();
+    const logger = useLogger();
     const authHeaders = enableAccessCheck
         ? { [Headers.AUTHORIZATION]: `Bearer ${useAuth().accessToken.value}` }
         : {};
@@ -89,9 +91,7 @@ export function createRequestService({ enableAccessCheck } = { enableAccessCheck
 
                 return json;
             } catch (error) {
-                // Log to console, to make debugging easier. Also for back-end devs
-                // eslint-disable-next-line no-console
-                console.error(error);
+                logger.error('REQUEST_PARSE_FAILED', 'Failed to parse JSON response', {}, error);
                 onError?.(new Error('Failed to parse JSON response', { cause: error }));
 
                 throw {

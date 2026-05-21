@@ -215,8 +215,7 @@ const initApplePay = async () => {
     });
 
     if (!applePayButtonRef.value) {
-        // eslint-disable-next-line no-console
-        console.warn('Apple Pay button not found');
+        logger.error('APPLE_PAY_ERROR', 'Apple Pay button ref not found');
         return;
     }
 
@@ -225,8 +224,7 @@ const initApplePay = async () => {
         applePay.mount(applePayButtonRef.value);
         emit('ready');
     } catch (e) {
-        // eslint-disable-next-line no-console
-        console.warn('Apple Pay not available', e);
+        logger.error('APPLE_PAY_ERROR', 'Apple Pay not available on this device', {}, e);
     }
 };
 

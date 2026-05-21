@@ -1,5 +1,5 @@
 import { onBeforeUnmount, ref, type InjectionKey, onMounted } from 'vue';
-import { trackSentryException } from '@/utils/errorTracking';
+import { useLogger } from '@/components/providers/LoggerProvider/composables/useLogger';
 import { getAccessTokenParsed } from '@/utils/accessToken';
 import { createTokensService } from '@/services/tokens';
 import { parseToken } from '@/utils/token';
@@ -10,14 +10,15 @@ export const getAuth = (token: string) => {
     const accessToken = ref<string>();
     const refreshInterval = ref<ReturnType<typeof setInterval>>();
     const { getAccessToken, refreshAccessToken } = createTokensService();
+    const logger = useLogger();
 
     const getToken = async () => {
         const { tokenUserName } = parseToken(token);
 
         try {
             accessToken.value = (await getAccessToken(tokenUserName)).access_token;
-        } catch (_err) {
-            trackSentryException();
+        } catch (err) {
+            logger.error('INVALID_TOKEN', 'Failed to fetch access token', {}, err);
         }
     };
     const refreshToken = () => {

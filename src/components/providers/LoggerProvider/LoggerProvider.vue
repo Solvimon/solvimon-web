@@ -10,7 +10,6 @@ import { useHostElementProvider } from '@/components/providers/HostElementProvid
 import { useConfig } from '@/components/providers/ConfigProvider/composables/useConfig';
 
 const props = withDefaults(defineProps<LoggerProviderProps>(), {
-    minLevel: 'error',
     onLog: () => {},
 });
 const { customElementName, hostRef } = useHostElementProvider();

@@ -1,5 +1,6 @@
 import type { Environment, PlatformBranding } from '@solvimon/solvimon-types';
 import type { IntlMessages } from '@solvimon/solvimon-ui';
+import type { LogLevel, LogSink } from '@/components/providers/LoggerProvider/LoggerProvider.types';
 import type { SolvimonBillingInformationEntryProps } from '@/public/components/BillingInformation/BillingInformation.entry.types';
 import type { SolvimonBillingInformationFormEntryProps } from '@/public/components/BillingInformationForm/BillingInformationForm.entry.types';
 import type { SolvimonCustomerPaymentMethodsEntryProps } from '@/public/components/CustomerPaymentMethods/CustomerPaymentMethods.entry.types';
@@ -26,8 +27,8 @@ export interface SharedSolvimonMountConfig {
     dateLocale?: string;
     messages?: IntlMessages;
     experimentalFeatures?: unknown[];
-    logLevel?: 'debug' | 'info' | 'warn' | 'error';
-    onLog?: (entry: unknown) => void;
+    logLevel?: LogLevel;
+    onLog?: LogSink;
     branding?: PlatformBranding;
     cssOverrides?: string | string[];
 }

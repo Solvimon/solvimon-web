@@ -65,14 +65,7 @@ function submit() {
             "
             :validate-on-submit="validateOnSubmit"
             :force-store-payment-method="forceStorePaymentMethod"
-            @select="
-                ({ paymentMethodType }) =>
-                    handleSelect({
-                        paymentGatewayVariant:
-                            paymentMethodOption.integration.payment_gateway!.variant,
-                        paymentMethodType,
-                    })
-            "
+            @select="handleSelect"
             @payment-failed="$emit('payment-failed', $event)"
             @payment-success="$emit('payment-success')"
             @ready="$emit('ready')"

@@ -124,7 +124,8 @@ async function getConfiguration(): Promise<{
             },
             openFirstPaymentMethod: props.selected,
             onSelect: ({ props: { type } }) => {
-                emit('select', { paymentMethodType: type! });
+                if (!type) return;
+                emit('select', { paymentMethodType: type, paymentGatewayVariant: 'ADYEN' });
             },
             onReady: () => emit('ready'),
         },

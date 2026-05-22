@@ -3,6 +3,7 @@ import type {
     AuthorizePaymentPayload,
     Customer,
     Invoice,
+    PaymentGatewayVariant,
     PaymentMethodOptionResponseEntry,
 } from '@solvimon/solvimon-types';
 import type { Error } from '@/types/errors';
@@ -24,7 +25,10 @@ export interface PaymentIntegrationFormAdyenEmits {
     /**
      * Emitted when a payment method is selected.
      */
-    (e: 'select', payload: { paymentMethodType: string }): void;
+    (
+        e: 'select',
+        payload: { paymentMethodType: string; paymentGatewayVariant: PaymentGatewayVariant },
+    ): void;
     /**
      * Emitted when a payment fails.
      */

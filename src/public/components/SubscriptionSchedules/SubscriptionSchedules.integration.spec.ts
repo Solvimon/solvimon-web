@@ -71,7 +71,6 @@ describe('SubscriptionSchedules entry component', () => {
     const defaultProps: SolvimonSubscriptionSchedulesEntryProps = {
         environment: 'TEST',
         locale: 'en-US',
-        customElementName: 'solvimon-subscription-schedules',
         portalObject: createTestPortalObject(),
         configuration: { subscriptionId },
     };

@@ -70,7 +70,6 @@ describe('WalletBalances entry component', () => {
     const defaultProps: SolvimonWalletBalancesEntryProps = {
         environment: 'TEST',
         locale: 'en-US',
-        customElementName: 'solvimon-wallet-balances',
         portalObject: createTestPortalObject(customerId),
     };
 

@@ -59,7 +59,6 @@ describe('BillingInformationForm entry component', () => {
     const defaultProps: SolvimonBillingInformationFormEntryProps = {
         environment: 'TEST',
         locale: 'en-US',
-        customElementName: 'solvimon-billing-information-form',
         portalObject: createTestPortalObject(customerId),
     };
 

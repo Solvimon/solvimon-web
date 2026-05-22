@@ -82,7 +82,6 @@ describe('Invoice entry component', () => {
     const defaultProps: SolvimonInvoiceEntryProps = {
         environment: 'TEST',
         locale: 'en-US',
-        customElementName: 'solvimon-invoice',
         portalObject: createTestPortalObject(),
         configuration: defaultConfiguration,
     };

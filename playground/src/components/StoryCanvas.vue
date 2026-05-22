@@ -25,16 +25,29 @@ function loadConfigJson(entry: typeof props.entry): string {
 
 const configJson = ref(loadConfigJson(props.entry));
 const configError = ref('');
-const appliedConfig = ref<Record<string, unknown> | undefined>(
-    configJson.value ? JSON.parse(configJson.value) : undefined,
-);
+
+function parseConfigJson(json: string): Record<string, unknown> | undefined {
+    if (!json.trim()) {
+        configError.value = '';
+        return undefined;
+    }
+
+    try {
+        configError.value = '';
+        return JSON.parse(json);
+    } catch {
+        configError.value = 'Invalid JSON';
+        return undefined;
+    }
+}
+
+const appliedConfig = ref<Record<string, unknown> | undefined>(parseConfigJson(configJson.value));
 
 watch(
     () => props.entry,
     (entry) => {
         configJson.value = loadConfigJson(entry);
-        appliedConfig.value = configJson.value ? JSON.parse(configJson.value) : undefined;
-        configError.value = '';
+        appliedConfig.value = parseConfigJson(configJson.value);
     },
 );
 
@@ -45,12 +58,10 @@ function applyConfig() {
         configError.value = '';
         return;
     }
-    try {
-        appliedConfig.value = JSON.parse(configJson.value);
+    const parsedConfig = parseConfigJson(configJson.value);
+    if (parsedConfig) {
+        appliedConfig.value = parsedConfig;
         sessionStorage.setItem(configStorageKey(props.entry.id), configJson.value);
-        configError.value = '';
-    } catch {
-        configError.value = 'Invalid JSON';
     }
 }
 

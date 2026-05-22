@@ -77,6 +77,11 @@ export default defineConfig({
                 globals: {
                     vue: 'Vue',
                 },
+                manualChunks(id) {
+                    if (id.includes('node_modules/@solvimon/solvimon-ui')) {
+                        return 'vendor-ui';
+                    }
+                },
             },
         },
     },

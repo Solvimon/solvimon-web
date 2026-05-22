@@ -138,10 +138,13 @@
             "require": "./dist/components/PaymentMethodForm/PaymentMethodForm.cjs.js"
         }
     },
+    "sideEffects": false,
+    "peerDependencies": {
+        "vue": ">=3.5.0"
+    },
     "dependencies": {
         "@adyen/adyen-web": "^6.14.0",
-        "jwt-decode": "^4.0.0",
-        "vue": "^3.5.13"
+        "jwt-decode": "^4.0.0"
     },
     "devDependencies": {
         "@commitlint/cli": "^20.5.3",

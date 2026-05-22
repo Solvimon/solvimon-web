@@ -12,7 +12,7 @@ const mockApplePayInstance = {
 const mockApplePay = vi.fn().mockReturnValue(mockApplePayInstance);
 const mockAdyenCheckout = vi.fn().mockResolvedValue({});
 
-vi.mock('@adyen/adyen-web/auto', () => ({
+vi.mock('@adyen/adyen-web', () => ({
     AdyenCheckout: mockAdyenCheckout,
     ApplePay: mockApplePay,
 }));

@@ -4,6 +4,7 @@ import { computed, ref, watch } from 'vue';
 import type { TranslationProviderProps } from './TranslationProvider.types';
 import { loadLocaleMessages, supportedLocaleSet } from './TranslationProvider.lib';
 import { useLogger } from '@/components/providers/LoggerProvider/composables/useLogger';
+import { createLatestGuard } from '@/utils/async';
 
 const props = defineProps<TranslationProviderProps>();
 
@@ -15,9 +16,19 @@ const effectiveLocale = computed(() =>
 
 const baseMessages = ref<IntlMessages>({});
 
-watch(effectiveLocale, async (locale) => {
-    baseMessages.value = await loadLocaleMessages(locale, logger);
-}, { immediate: true });
+const latestLocaleLoad = createLatestGuard();
+
+watch(
+    effectiveLocale,
+    async (locale) => {
+        const isLatest = latestLocaleLoad();
+        const messages = await loadLocaleMessages(locale, logger);
+        if (isLatest()) {
+            baseMessages.value = messages;
+        }
+    },
+    { immediate: true },
+);
 
 const localizedMessages = computed<IntlMessages>(() => ({
     ...baseMessages.value,

@@ -47,8 +47,6 @@ This repository contains several nested packages with their own lock files:
 | Path | Purpose |
 |---|---|
 | `package-lock.json` | Root SDK package |
-| `examples/vue/package-lock.json` | Vue example app |
-| `examples/next/package-lock.json` | Next.js example app |
 | `tests/app/package-lock.json` | Test application |
 
 Dependabot scans each lock file independently. When running `/fix-dependabot`, check the alert's **manifest path** in the summary — if the alert is in a nested package, `npm audit fix` must be run from that package's directory, not the root.

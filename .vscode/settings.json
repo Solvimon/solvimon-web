@@ -6,5 +6,5 @@
     "editor.defaultFormatter": "esbenp.prettier-vscode",
     "eslint.validate": ["javascript", "javascriptreact", "typescript", "typescriptreact", "vue"],
     "js/ts.tsdk.path": "./node_modules/typescript/lib",
-    "cSpell.words": ["Solvimon"]
+    "cSpell.words": ["Solvimon", "adyen"]
 }

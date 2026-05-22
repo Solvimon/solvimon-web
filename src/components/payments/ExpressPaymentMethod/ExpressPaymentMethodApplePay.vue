@@ -18,6 +18,7 @@ import {
 } from '@/utils/adyen';
 import { useLogger } from '@/components/providers';
 import { createPaymentsService } from '@/services/payments';
+import { loadAdyen } from '@/utils/adyenLoader';
 
 const PAYMENT_GATEWAY_VARIANT_ADYEN = 'ADYEN';
 
@@ -32,7 +33,7 @@ const { authorizePayment } = createPaymentsService();
 const paymentAcceptorId = props.paymentMethodOptionsResponse.payment_acceptor.id;
 
 const initApplePay = async () => {
-    const { AdyenCheckout, ApplePay } = await import('@adyen/adyen-web/auto');
+    const { AdyenCheckout, ApplePay } = await loadAdyen();
 
     const checkout = await AdyenCheckout(
         getAdyenExpressCheckoutConfiguration({

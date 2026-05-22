@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
-import type { CoreConfiguration, DropinConfiguration, PaymentAction } from '@adyen/adyen-web/auto';
+import type { CoreConfiguration, DropinConfiguration, PaymentAction } from '@adyen/adyen-web';
 import type {
     AuthorizePaymentPayload,
     AuthorizePaymentResponse,
@@ -144,13 +144,56 @@ async function mountDropIn() {
             loadAdyen(),
             import('@adyen/adyen-web/styles/adyen.css?inline'),
         ]);
-        const { AdyenCheckout, Dropin } = adyenModule;
+        const {
+            AdyenCheckout,
+            Dropin,
+            Card,
+            Bancontact,
+            Ach,
+            AmazonPay,
+            ApplePay,
+            BcmcMobile,
+            BacsDirectDebit,
+            CashAppPay,
+            EPS,
+            GooglePay,
+            Klarna,
+            PayByBank,
+            PayPal,
+            SepaDirectDebit,
+            Trustly,
+            Twint,
+            PayByBankUS,
+            Redirect,
+        } = adyenModule;
 
         const { checkoutConfig, dropInConfig } = await getConfiguration();
 
         checkoutInstance = await AdyenCheckout(checkoutConfig);
 
-        dropInInstance = new Dropin(checkoutInstance, dropInConfig).mount(dropInContainerRef.value);
+        dropInInstance = new Dropin(checkoutInstance, {
+            ...dropInConfig,
+            paymentMethodComponents: [
+                Card,
+                Bancontact,
+                Ach,
+                AmazonPay,
+                ApplePay,
+                BcmcMobile,
+                BacsDirectDebit,
+                CashAppPay,
+                EPS,
+                GooglePay,
+                Klarna,
+                PayByBank,
+                PayPal,
+                SepaDirectDebit,
+                Trustly,
+                Twint,
+                PayByBankUS,
+                Redirect,
+            ],
+        }).mount(dropInContainerRef.value);
 
         injectStylesToShadowRoot(adyenCss);
     } catch (error) {

@@ -70,7 +70,7 @@ onMounted(() => {
 
 <template>
     <ExpressPaymentMethodButton v-if="isVisible" type="googlepay" @click="handleClick" />
-    <div class="w-[1px] h-[1px] overflow-hidden opacity-0 absolute">
+    <div class="absolute h-[1px] w-[1px] overflow-hidden opacity-0">
         <div ref="googlePayButtonRef"></div>
     </div>
 </template>

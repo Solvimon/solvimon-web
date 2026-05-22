@@ -57,7 +57,6 @@ describe('PaymentMethodForm entry component', () => {
     const defaultProps: SolvimonPaymentMethodFormEntryProps = {
         environment: 'TEST',
         locale: 'en-US',
-        customElementName: 'solvimon-payment-method-form',
         portalObject: createTestPortalObject(customerId),
     };
 

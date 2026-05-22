@@ -138,6 +138,7 @@
             "require": "./dist/components/PaymentMethodForm/PaymentMethodForm.cjs.js"
         }
     },
+    "sideEffects": false,
     "peerDependencies": {
         "vue": ">=3.5.0"
     },

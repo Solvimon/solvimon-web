@@ -139,9 +139,9 @@ async function mountDropIn() {
         await unmountDropIn();
 
         // Dynamically import Adyen SDK and styles to enable code splitting
-        const [adyenModule, { default: adyenCss }] = await Promise.all([
+        const [adyenModule, { default: adyenCssUrl }] = await Promise.all([
             import('@adyen/adyen-web'),
-            import('@adyen/adyen-web/styles/adyen.css?inline'),
+            import('@adyen/adyen-web/styles/adyen.css?url'),
         ]);
         const {
             AdyenCheckout,
@@ -194,7 +194,7 @@ async function mountDropIn() {
             ],
         }).mount(dropInContainerRef.value);
 
-        injectStylesToShadowRoot(adyenCss);
+        injectStylesToShadowRoot(adyenCssUrl);
     } catch (error) {
         logger.error(
             'PAYMENT_INTEGRATION_INITIALIZATION_FAILED',
@@ -214,12 +214,18 @@ async function unmountDropIn() {
     }
 }
 
-function injectStylesToShadowRoot(adyenCss: string) {
+function injectStylesToShadowRoot(adyenCssUrl: string) {
     const root = dropInContainerRef.value?.getRootNode();
     if (root instanceof ShadowRoot) {
-        // Inject default Adyen styles
+        // Inject Adyen default styles via link so the browser can cache the file
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = adyenCssUrl;
+        root.appendChild(link);
+
+        // Inject custom overrides as an inline style
         const style = document.createElement('style');
-        style.textContent = `${adyenCss}
+        style.textContent = `
             :host {
                 --adyen-sdk-color-background-secondary: transparent;
                 --adyen-sdk-color-background-primary: rgb(243 244 246 / 0.5);

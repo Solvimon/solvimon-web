@@ -41,7 +41,7 @@ vi.mock('@adyen/adyen-web', () => ({
     Redirect: vi.fn(),
 }));
 
-vi.mock('@adyen/adyen-web/styles/adyen.css?inline', () => ({ default: '' }));
+vi.mock('@adyen/adyen-web/styles/adyen.css?url', () => ({ default: '' }));
 
 // ─── Service mocks ────────────────────────────────────────────────────────────
 

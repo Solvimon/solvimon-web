@@ -32,7 +32,6 @@ import {
 import { useExperimentalFeature } from '@/components/providers/ExperimentalFeatureProvider/composables/useExperimentalFeature';
 import { filterOutExpressPaymentMethods } from '@/utils/paymentMethods';
 import { useLogger } from '@/components/providers';
-import { loadAdyen } from '@/utils/adyenLoader';
 
 /**
  * The Adyen instances should be stored in plain objects to avoid issues with Vue's reactivity system.
@@ -141,7 +140,7 @@ async function mountDropIn() {
 
         // Dynamically import Adyen SDK and styles to enable code splitting
         const [adyenModule, { default: adyenCss }] = await Promise.all([
-            loadAdyen(),
+            import('@adyen/adyen-web'),
             import('@adyen/adyen-web/styles/adyen.css?inline'),
         ]);
         const {

@@ -42,14 +42,27 @@ function loadPortalJson(entry: StoryEntry): string {
 
 const portalJson = ref(loadPortalJson(activeEntry.value));
 const portalError = ref('');
-const portalObject = ref<Record<string, unknown> | null>(
-    portalJson.value ? JSON.parse(portalJson.value) : null,
-);
+
+function parsePortalJson(json: string): Record<string, unknown> | null {
+    if (!json.trim()) {
+        portalError.value = '';
+        return null;
+    }
+
+    try {
+        portalError.value = '';
+        return JSON.parse(json);
+    } catch {
+        portalError.value = 'Invalid JSON';
+        return null;
+    }
+}
+
+const portalObject = ref<Record<string, unknown> | null>(parsePortalJson(portalJson.value));
 
 watch(activeEntry, (entry) => {
     portalJson.value = loadPortalJson(entry);
-    portalObject.value = portalJson.value ? JSON.parse(portalJson.value) : null;
-    portalError.value = '';
+    portalObject.value = parsePortalJson(portalJson.value);
 });
 
 function applyPortal() {
@@ -58,12 +71,10 @@ function applyPortal() {
         sessionStorage.removeItem(portalStorageKey(activeEntry.value.id));
         return;
     }
-    try {
-        portalObject.value = JSON.parse(portalJson.value);
+    const parsedPortalObject = parsePortalJson(portalJson.value);
+    if (parsedPortalObject) {
+        portalObject.value = parsedPortalObject;
         sessionStorage.setItem(portalStorageKey(activeEntry.value.id), portalJson.value);
-        portalError.value = '';
-    } catch {
-        portalError.value = 'Invalid JSON';
     }
 }
 </script>

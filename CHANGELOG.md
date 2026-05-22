@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0-alpha.8] - 2026-05-22
+
+### Added
+
+- Added a pay-invoice screen for processing outstanding invoice payments.
+- Added a `PayButton` component for triggering payment actions inline.
+- Added a new details object to the payment response for richer post-payment data.
+- Added a payments-by-Adyen KPI metric to the billing overview.
+
+### Changed
+
+- Adyen payment integration is now lazy-loaded, reducing the initial bundle size.
+- `PaymentHistoryBlock` inside the Invoice component is now lazy-loaded, reducing the initial bundle size.
+- Translations are dynamically loaded at runtime instead of being bundled upfront.
+- Replaced `lodash` `cloneDeep` with native `structuredClone` and removed the `lodash` runtime dependency.
+- Improved JSON parsing robustness in API response handling.
+- Refactored payment method selection flow and checkout redirect handling.
+
+### Fixed
+
+- Fixed XSS vulnerability in checkout redirect handling by sanitizing redirect URLs before navigation.
+- Fixed security vulnerability in `js-cookie` (CVE-2026-46625, prototype hijack via `assign()`).
+
 ## [0.1.0-alpha.7] - 2026-05-13
 
 ### Added

@@ -18,9 +18,27 @@ const { mockAdyenCheckout, MockDropIn } = vi.hoisted(() => {
     return { mockAdyenCheckout, MockDropIn };
 });
 
-vi.mock('@adyen/adyen-web/auto', () => ({
+vi.mock('@adyen/adyen-web', () => ({
     AdyenCheckout: mockAdyenCheckout,
     Dropin: MockDropIn,
+    Card: vi.fn(),
+    Bancontact: vi.fn(),
+    Ach: vi.fn(),
+    AmazonPay: vi.fn(),
+    ApplePay: vi.fn(),
+    BcmcMobile: vi.fn(),
+    BacsDirectDebit: vi.fn(),
+    CashAppPay: vi.fn(),
+    EPS: vi.fn(),
+    GooglePay: vi.fn(),
+    Klarna: vi.fn(),
+    PayByBank: vi.fn(),
+    PayPal: vi.fn(),
+    SepaDirectDebit: vi.fn(),
+    Trustly: vi.fn(),
+    Twint: vi.fn(),
+    PayByBankUS: vi.fn(),
+    Redirect: vi.fn(),
 }));
 
 vi.mock('@adyen/adyen-web/styles/adyen.css?inline', () => ({ default: '' }));

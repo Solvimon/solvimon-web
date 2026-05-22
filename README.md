@@ -99,6 +99,66 @@ Embeddable building blocks.
 | `@solvimon/solvimon-web/components/subscriptions-list`       | `<solvimon-subscriptions-list>`       |
 | `@solvimon/solvimon-web/components/wallet-balances`          | `<solvimon-wallet-balances>`          |
 
+## Supported Adyen payment methods
+
+### Cards
+
+- American Express
+- Bancontact
+- Carnet
+- Cartes Bancaires
+- China UnionPay
+- Dankort
+- Diners Club
+- Discover
+- EFTPOS
+- Elo
+- Girocard
+- Hipercard
+- JCB
+- Maestro
+- Mastercard
+- NYCE
+- Pulse
+- Star
+- UnionPay
+- V Pay
+- Visa
+
+### Digital wallets
+
+- Amazon Pay
+- Apple Pay
+- Bancontact Mobile
+- Cash App Pay
+- DANA
+- GCash
+- Google Pay
+- GoPay
+- KakaoPay
+- MOMO
+- PayPal
+- TWINT
+
+### Direct debit
+
+- ACH (US)
+- Bacs Direct Debit (UK)
+- SEPA Direct Debit
+- Pay by Bank (US)
+
+### Online banking
+
+- EPS
+- iDEAL
+- Pay by Bank
+- Trustly
+
+### Buy now, pay later
+
+- Klarna
+- Zip
+
 ## Release pipeline
 
 Releases are published to [npm](https://www.npmjs.com/package/@solvimon/solvimon-web)

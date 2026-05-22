@@ -14,7 +14,6 @@ export default defineConfigWithVueTs(
         '**/__tests__/*.{ts,js}',
         '**/dist/**',
         '**/node_modules/**',
-        '**/examples/**',
         '**/.nuxt/**',
         '**/.output/**',
     ]),

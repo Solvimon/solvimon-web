@@ -1,12 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { Logger } from '@/components/providers/LoggerProvider/LoggerProvider.types';
-import { loadLocaleMessages, supportedLocaleSet } from './TranslationProvider.lib';
+import {
+    DEFAULT_LOCALE,
+    isSupportedLocale,
+    loadLocaleMessages,
+    supportedLocaleSet,
+} from './TranslationProvider.lib';
 
 vi.mock('@solvimon/solvimon-ui/translations/en-US', () => ({
     default: { greeting: 'Hello', farewell: 'Goodbye' },
 }));
 
-vi.mock('@/translations/en-US.json', () => ({
+vi.mock('@/translations/locales/en-US.json', () => ({
     default: { farewell: 'Bye', appName: 'Solvimon' },
 }));
 
@@ -18,6 +23,12 @@ const makeLogger = (): Logger => ({
     capture: vi.fn(),
 });
 
+describe('DEFAULT_LOCALE', () => {
+    it('is en-US', () => {
+        expect(DEFAULT_LOCALE).toBe('en-US');
+    });
+});
+
 describe('supportedLocaleSet', () => {
     it('contains all supported locales', () => {
         expect(supportedLocaleSet.has('en-US')).toBe(true);
@@ -27,6 +38,18 @@ describe('supportedLocaleSet', () => {
     it('does not contain unsupported locales', () => {
         expect(supportedLocaleSet.has('zz-ZZ')).toBe(false);
         expect(supportedLocaleSet.has('')).toBe(false);
+    });
+});
+
+describe('isSupportedLocale', () => {
+    it('returns true for supported locales', () => {
+        expect(isSupportedLocale('en-US')).toBe(true);
+        expect(isSupportedLocale('nl-NL')).toBe(true);
+    });
+
+    it('returns false for unsupported locales', () => {
+        expect(isSupportedLocale('zz-ZZ')).toBe(false);
+        expect(isSupportedLocale('')).toBe(false);
     });
 });
 
@@ -51,12 +74,12 @@ describe('loadLocaleMessages', () => {
         expect(logger.warn).not.toHaveBeenCalled();
     });
 
-    it('returns an empty object when locale files cannot be loaded', async () => {
+    it('returns an empty object for an unsupported locale', async () => {
         const messages = await loadLocaleMessages('zz-ZZ', logger);
         expect(messages).toEqual({});
     });
 
-    it('logs TRANSLATION_LOAD_FAILED when locale files cannot be loaded', async () => {
+    it('logs TRANSLATION_LOAD_FAILED for an unsupported locale', async () => {
         await loadLocaleMessages('zz-ZZ', logger);
         expect(logger.warn).toHaveBeenCalledWith(
             'TRANSLATION_LOAD_FAILED',

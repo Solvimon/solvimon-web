@@ -2,19 +2,18 @@ import { readFileSync, existsSync } from 'fs';
 import { fileURLToPath } from 'url';
 import path from 'path';
 import { resolveSafePath } from '../safe-path.mjs';
+import { SUPPORTED_LOCALES } from '../../src/translations/supported.js';
 
-export function generateTranslationsReport({ translationsDir, sha }) {
+export function generateTranslationsReport({ translationsDir, supported, sha }) {
     const sourceKeys = Object.keys(
         JSON.parse(readFileSync(path.join(translationsDir, 'source.json'), 'utf8')),
     );
-    const supported = JSON.parse(
-        readFileSync(path.join(translationsDir, 'supported.json'), 'utf8'),
-    );
 
+    const localesDir = path.join(translationsDir, 'locales');
     const results = supported.map((locale) => {
         let filePath;
         try {
-            filePath = resolveSafePath(`${locale}.json`, translationsDir);
+            filePath = resolveSafePath(`${locale}.json`, localesDir);
         } catch {
             console.error(`⚠️ Skipping suspicious locale: ${locale}`);
             return { locale, missingKeys: [] };
@@ -77,6 +76,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     console.log(
         generateTranslationsReport({
             translationsDir: get('--translations-dir'),
+            supported: SUPPORTED_LOCALES,
             sha: get('--sha'),
         }),
     );

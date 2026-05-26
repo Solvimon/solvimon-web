@@ -2,7 +2,7 @@
 import { IconSpriteProvider, IntlProvider, type IntlMessages } from '@solvimon/solvimon-ui';
 import { computed, ref, watch } from 'vue';
 import type { TranslationProviderProps } from './TranslationProvider.types';
-import { loadLocaleMessages, supportedLocaleSet } from './TranslationProvider.lib';
+import { DEFAULT_LOCALE, isSupportedLocale, loadLocaleMessages } from './TranslationProvider.lib';
 import { useLogger } from '@/components/providers/LoggerProvider/composables/useLogger';
 import { createLatestGuard } from '@/utils/async';
 
@@ -11,7 +11,7 @@ const props = defineProps<TranslationProviderProps>();
 const logger = useLogger();
 
 const effectiveLocale = computed(() =>
-    props.locale && supportedLocaleSet.has(props.locale) ? props.locale : 'en-US',
+    props.locale && isSupportedLocale(props.locale) ? props.locale : DEFAULT_LOCALE,
 );
 
 const baseMessages = ref<IntlMessages>({});
@@ -39,7 +39,7 @@ const localizedMessages = computed<IntlMessages>(() => ({
 <template>
     <IconSpriteProvider>
         <IntlProvider
-            :locale="locale"
+            :locale="effectiveLocale"
             :date-locale="dateLocale"
             :messages="localizedMessages"
             :show-timezones="false"

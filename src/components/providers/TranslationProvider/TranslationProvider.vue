@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { IconSpriteProvider, IntlProvider, type IntlMessages } from '@solvimon/solvimon-ui';
-import { computed, ref, watch } from 'vue';
+import { computed } from 'vue';
 import type { TranslationProviderProps } from './TranslationProvider.types';
 import { DEFAULT_LOCALE, isSupportedLocale, loadLocaleMessages } from './TranslationProvider.lib';
 import { useLogger } from '@/components/providers/LoggerProvider/composables/useLogger';
-import { createLatestGuard } from '@/utils/async';
+import { useWatchAsync } from '@/composables/useWatchAsync';
 
 const props = defineProps<TranslationProviderProps>();
 
@@ -14,20 +14,10 @@ const effectiveLocale = computed(() =>
     props.locale && isSupportedLocale(props.locale) ? props.locale : DEFAULT_LOCALE,
 );
 
-const baseMessages = ref<IntlMessages>({});
-
-const latestLocaleLoad = createLatestGuard();
-
-watch(
+const { data: baseMessages, version: intlKey } = useWatchAsync<string, IntlMessages>(
     effectiveLocale,
-    async (locale) => {
-        const isLatest = latestLocaleLoad();
-        const messages = await loadLocaleMessages(locale, logger);
-        if (isLatest()) {
-            baseMessages.value = messages;
-        }
-    },
-    { immediate: true },
+    (locale) => loadLocaleMessages(locale, logger),
+    {},
 );
 
 const localizedMessages = computed<IntlMessages>(() => ({
@@ -39,6 +29,7 @@ const localizedMessages = computed<IntlMessages>(() => ({
 <template>
     <IconSpriteProvider>
         <IntlProvider
+            :key="intlKey"
             :locale="effectiveLocale"
             :date-locale="dateLocale"
             :messages="localizedMessages"

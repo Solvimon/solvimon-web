@@ -22,11 +22,18 @@ const UI_LOCALE_IMPORTS: Record<SupportedLocale, LocaleLoader> = {
 };
 
 export async function loadLocaleMessages(locale: string, logger: Logger): Promise<IntlMessages> {
-    try {
-        if (!isSupportedLocale(locale)) {
-            throw new Error(`Unsupported locale "${locale}"`);
-        }
+    if (!isSupportedLocale(locale)) {
+        const err = new Error(`No import registered for locale "${locale}"`);
+        logger.warn(
+            'TRANSLATION_LOAD_FAILED',
+            `Failed to load translations for locale "${locale}"`,
+            {},
+            err,
+        );
+        return {};
+    }
 
+    try {
         const [{ default: ui }, { default: local }] = await Promise.all([
             UI_LOCALE_IMPORTS[locale](),
             APP_LOCALE_IMPORTS[locale](),

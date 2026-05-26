@@ -26,7 +26,7 @@
         "watch:js": "vite build --watch",
         "watch:css": "npm run build:css -- --watch",
         "translations:extract": "formatjs extract 'src/**/*.{ts,vue}*' --ignore='**/*.d.ts' --out-file 'src/translations/source.json' --flatten --additional-function-names '$t'",
-        "translations:compile": "formatjs compile 'src/translations/source.json' --out-file 'src/translations/en-US.json'",
+        "translations:compile": "formatjs compile 'src/translations/source.json' --out-file 'src/translations/locales/en-US.json'",
         "translations:check": "node ./scripts/check-translations.mjs",
         "test:e2e:run-app": "node scripts/start-test-app.mjs",
         "test:e2e": "playwright test",

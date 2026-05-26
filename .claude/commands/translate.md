@@ -4,10 +4,10 @@ Generate missing translations for all locales (or a specific one if $ARGUMENTS i
 
 1. Run `npm run translations:extract` to regenerate `src/translations/source.json` from the current source code.
 
-2. Read `src/translations/source.json` and `src/translations/supported.json`.
+2. Read `src/translations/source.json` and get the supported locales from `SUPPORTED_LOCALES` in `src/translations/supported.js`.
 
-3. For each locale in `supported.json` (or only the locale in $ARGUMENTS if provided):
-   - Read `src/translations/<locale>.json` (treat as empty if it doesn't exist)
+3. For each locale in `SUPPORTED_LOCALES` (or only the locale in $ARGUMENTS if provided):
+   - Read `src/translations/locales/<locale>.json` (treat as empty if it doesn't exist)
    - Identify every key in `source.json` that is absent from the locale file
 
 4. For each missing key, produce a translation:
@@ -17,7 +17,7 @@ Generate missing translations for all locales (or a specific one if $ARGUMENTS i
    - Look at the existing entries in the target locale file to match style and register
    - Preserve ICU MessageFormat syntax exactly: `{variable}`, `{date, date, long}`, `{amount, number}`, plural/select blocks, etc. — only translate the human-readable text around them
 
-5. Write the updated locale file, merging the new keys into the existing ones. Keep the existing entries unchanged and add the new ones in alphabetical key order.
+5. Write the updated locale file at `src/translations/locales/<locale>.json`, merging the new keys into the existing ones. Keep the existing entries unchanged and add the new ones in alphabetical key order.
 
 6. Run `npm run translations:check` to confirm no keys are still missing. If any remain, investigate and fix before finishing.
 

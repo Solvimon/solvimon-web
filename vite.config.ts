@@ -6,7 +6,6 @@ import vue from '@vitejs/plugin-vue';
 import vueDevTools from 'vite-plugin-vue-devtools';
 import { glob } from 'glob';
 import dts from 'vite-plugin-dts';
-import string from 'vite-plugin-string';
 import type { TemplateChildNode, RootNode } from '@vue/compiler-core';
 
 function getLibEntries(
@@ -93,9 +92,6 @@ export default defineConfig({
                     nodeTransforms: [removeAttributes(process.env.ENVIRONMENT === 'LIVE')],
                 },
             },
-        }),
-        string({
-            include: ['**/*.css'],
         }),
         vueDevTools(),
         dts({

@@ -22,7 +22,7 @@ function setup({
     supported.forEach((locale) => {
         mockReadFileSync.mockReturnValueOnce(JSON.stringify(locales[locale] ?? {}) as never);
     });
-    return supported;
+    return { supported };
 }
 
 const defaultArgs = { translationsDir: '/fake/translations', sha: 'abc1234' };
@@ -31,13 +31,13 @@ describe('generateTranslationsReport', () => {
     beforeEach(() => vi.clearAllMocks());
 
     it('includes the translations-report marker', () => {
-        const supported = setup({ source: {}, supported: ['en-US'], locales: { 'en-US': {} } });
+        const { supported } = setup({ source: {}, supported: ['en-US'], locales: { 'en-US': {} } });
 
         expect(generateTranslationsReport({ ...defaultArgs, supported })).toContain('<!-- translations-report -->');
     });
 
     it('shows NOTE when all locales are complete', () => {
-        const supported = setup({
+        const { supported } = setup({
             source: { greeting: 'Hello', farewell: 'Bye' },
             supported: ['en-US', 'nl-NL'],
             locales: {
@@ -53,7 +53,7 @@ describe('generateTranslationsReport', () => {
     });
 
     it('shows CAUTION when one locale has missing keys', () => {
-        const supported = setup({
+        const { supported } = setup({
             source: { greeting: 'Hello', farewell: 'Bye' },
             supported: ['en-US', 'nl-NL'],
             locales: {
@@ -69,7 +69,7 @@ describe('generateTranslationsReport', () => {
     });
 
     it('uses plural form when multiple locales have missing keys', () => {
-        const supported = setup({
+        const { supported } = setup({
             source: { greeting: 'Hello' },
             supported: ['en-US', 'nl-NL'],
             locales: { 'en-US': {}, 'nl-NL': {} },
@@ -81,7 +81,7 @@ describe('generateTranslationsReport', () => {
     });
 
     it('lists missing keys in a details block', () => {
-        const supported = setup({
+        const { supported } = setup({
             source: { greeting: 'Hello', farewell: 'Bye' },
             supported: ['nl-NL'],
             locales: { 'nl-NL': { greeting: 'Hallo' } },
@@ -94,7 +94,7 @@ describe('generateTranslationsReport', () => {
     });
 
     it('shows complete locale in a closed details block', () => {
-        const supported = setup({
+        const { supported } = setup({
             source: { greeting: 'Hello' },
             supported: ['en-US'],
             locales: { 'en-US': { greeting: 'Hello' } },
@@ -108,7 +108,7 @@ describe('generateTranslationsReport', () => {
     });
 
     it('uses plural "keys" for multiple missing keys', () => {
-        const supported = setup({
+        const { supported } = setup({
             source: { a: 'A', b: 'B', c: 'C' },
             supported: ['nl-NL'],
             locales: { 'nl-NL': { a: 'AA' } },
@@ -118,7 +118,7 @@ describe('generateTranslationsReport', () => {
     });
 
     it('uses singular "key" for exactly one missing key', () => {
-        const supported = setup({
+        const { supported } = setup({
             source: { a: 'A', b: 'B' },
             supported: ['nl-NL'],
             locales: { 'nl-NL': { a: 'AA' } },
@@ -140,7 +140,7 @@ describe('generateTranslationsReport', () => {
     });
 
     it('includes the SHA in the footer', () => {
-        const supported = setup({ source: {}, supported: ['en-US'], locales: { 'en-US': {} } });
+        const { supported } = setup({ source: {}, supported: ['en-US'], locales: { 'en-US': {} } });
 
         expect(generateTranslationsReport({ ...defaultArgs, supported, sha: 'deadbeef' })).toContain(
             'Measured at deadbeef',
@@ -148,7 +148,7 @@ describe('generateTranslationsReport', () => {
     });
 
     it('shows NOTE when source has no keys', () => {
-        const supported = setup({ source: {}, supported: ['en-US', 'nl-NL'], locales: { 'en-US': {}, 'nl-NL': {} } });
+        const { supported } = setup({ source: {}, supported: ['en-US', 'nl-NL'], locales: { 'en-US': {}, 'nl-NL': {} } });
 
         expect(generateTranslationsReport({ ...defaultArgs, supported })).toContain('> [!NOTE]');
     });

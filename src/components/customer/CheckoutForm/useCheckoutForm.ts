@@ -1,7 +1,7 @@
 import { objectDiff, useValidation } from '@solvimon/solvimon-ui';
 import { taxId } from '@solvimon/solvimon-ui/validators';
 import { email, required, requiredIf } from '@vuelidate/validators';
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, toRaw } from 'vue';
 import type { CountryCode } from '@solvimon/solvimon-types';
 import type { CheckoutFormState } from './CheckoutForm.types';
 import { getRequiredFieldsForCountry } from './CheckoutForm.lib';
@@ -22,7 +22,7 @@ export function useCheckoutForm({
         const newState = getInitialState({ ...form.value, ...state });
 
         form.value = newState;
-        initialFormState.value = structuredClone(newState);
+        initialFormState.value = structuredClone(toRaw(newState));
     };
 
     const requiredFields = computed<(keyof CheckoutFormState)[]>(() =>
@@ -104,7 +104,7 @@ export function useCheckoutForm({
         await getCountryFromGeoLocationService(initialState?.country);
     });
 
-    useWatchDebounced(() => structuredClone(form.value), handleFormChange, { debounce: 200 });
+    useWatchDebounced(() => structuredClone(toRaw(form.value)), handleFormChange, { debounce: 200 });
 
     return {
         form,

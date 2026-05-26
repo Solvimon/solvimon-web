@@ -1,21 +1,29 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { createSolvimonCore } from '@solvimon/solvimon-web/core';
 import { screens, components, allEntries } from './registry';
 import type { StoryEntry } from './registry';
 import StoryCanvas from './components/StoryCanvas.vue';
+import { SUPPORTED_LOCALES } from '@/translations/supported';
 
-const solvimon = createSolvimonCore({
-    environment: 'TEST',
-    locale: 'en-US',
-    logLevel: 'info',
-    branding: {
-        colors: {
-            primary: '#1d4ed8',
-            secondary: '#0f172a',
+const LOCALE_STORAGE_KEY = 'solvimon-playground:locale';
+
+const locale = ref(sessionStorage.getItem(LOCALE_STORAGE_KEY) ?? SUPPORTED_LOCALES[0]);
+watch(locale, (value) => sessionStorage.setItem(LOCALE_STORAGE_KEY, value));
+
+const solvimon = computed(() =>
+    createSolvimonCore({
+        environment: 'TEST',
+        locale: locale.value,
+        logLevel: 'info',
+        branding: {
+            colors: {
+                primary: '#1d4ed8',
+                secondary: '#0f172a',
+            },
         },
-    },
-});
+    }),
+);
 
 const ACTIVE_ENTRY_STORAGE_KEY = 'solvimon-playground:active-entry';
 
@@ -116,6 +124,16 @@ function applyPortal() {
                 </div>
             </nav>
 
+            <!-- Locale switcher -->
+            <div class="portal-section">
+                <p class="portal-label">Locale</p>
+                <select v-model="locale" class="locale-select">
+                    <option v-for="loc in SUPPORTED_LOCALES" :key="loc" :value="loc">
+                        {{ loc }}
+                    </option>
+                </select>
+            </div>
+
             <!-- Portal object -->
             <div class="portal-section">
                 <p class="portal-label">Portal object</p>
@@ -137,7 +155,7 @@ function applyPortal() {
         <!-- Main canvas -->
         <main class="main">
             <StoryCanvas
-                :key="activeEntry.id"
+                :key="`${activeEntry.id}-${locale}`"
                 :entry="activeEntry"
                 :portal-object="portalObject"
                 :solvimon="solvimon"
@@ -239,6 +257,18 @@ function applyPortal() {
     background: #eff6ff;
     color: #1d4ed8;
     font-weight: 600;
+}
+
+.locale-select {
+    width: 100%;
+    padding: 5px 8px;
+    border: 1px solid #e2e8f0;
+    border-radius: 7px;
+    background: transparent;
+    color: #475569;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
 }
 
 /* Portal section */

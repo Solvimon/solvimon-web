@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue';
 import { Button, Icon, Input, Section, Typography, useIntl } from '@solvimon/solvimon-ui';
+import { uniqueId } from '@solvimon/solvimon-ui';
 import type {
     PromotionCodeSectionEmits,
     PromotionCodeSectionProps,
 } from './PromotionCodeSection.types';
-import { uniqueId } from '@/utils/uniqueId';
 
 const { $t } = useIntl();
 

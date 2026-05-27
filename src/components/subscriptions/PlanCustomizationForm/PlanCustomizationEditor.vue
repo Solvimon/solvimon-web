@@ -44,6 +44,7 @@ const pricingGroups = computed(() =>
 
 <template>
     <Section
+        class="sv-plan-customization"
         :title="
             $t({
                 defaultMessage: 'Customize plan',
@@ -55,10 +56,11 @@ const pricingGroups = computed(() =>
         no-border
         content-background="none"
     >
-        <div class="grid grid-cols-1 gap-1">
+        <div class="sv-plan-customization__body grid grid-cols-1 gap-1">
             <!-- seats-->
             <SeatsEditor
                 v-model="seatsModel"
+                class="sv-plan-customization__seats"
                 :initial-seats-values="initialSeatsValues"
                 :pricings="pricings"
             />
@@ -71,6 +73,7 @@ const pricingGroups = computed(() =>
                         pricingGroup.selection_constraint === 'EXACTLY_ONE'
                     "
                     v-model="enabledPricingIdsModel"
+                    class="sv-plan-customization__group"
                     :group-name="pricingGroup.name"
                     :pricings="pricingGroup.pricings"
                     :billing-period="billingPeriod"
@@ -83,6 +86,7 @@ const pricingGroups = computed(() =>
                         pricingGroup.selection_constraint === 'AT_MOST_ONE'
                     "
                     v-model="enabledPricingIdsModel"
+                    class="sv-plan-customization__group"
                     :group-name="pricingGroup.name"
                     :pricings="pricingGroup.pricings"
                     :constraint="pricingGroup.selection_constraint"
@@ -96,6 +100,7 @@ const pricingGroups = computed(() =>
                         pricingGroup.selection_constraint === 'ANY'
                     "
                     v-model="enabledPricingIdsModel"
+                    class="sv-plan-customization__group"
                     :pricings="pricingGroup.pricings"
                     :group-name="pricingGroup.name"
                     :billing-period="billingPeriod"
@@ -106,6 +111,7 @@ const pricingGroups = computed(() =>
             <!-- product level addons -->
             <AddonMultipleEditor
                 v-model="enabledPricingIdsModel"
+                class="sv-plan-customization__group"
                 :pricings="addonPricings"
                 :billing-period="billingPeriod"
                 :currency="currency"

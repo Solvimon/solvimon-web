@@ -22,6 +22,7 @@ const hasPaymentMethods = computed<boolean>(() => props.paymentMethods.length > 
 
 <template>
     <Section
+        class="sv-payment-methods"
         no-spacing
         no-border
         :title="
@@ -42,6 +43,7 @@ const hasPaymentMethods = computed<boolean>(() => props.paymentMethods.length > 
                 variant="ghost"
                 color="gray"
                 icon-suffix="arrow_right_alt"
+                class="sv-action sv-action--ghost sv-payment-methods__view-all"
                 type="button"
                 @click="$emit('view-all-payment-methods')"
                 >{{
@@ -55,13 +57,25 @@ const hasPaymentMethods = computed<boolean>(() => props.paymentMethods.length > 
             >
         </template>
 
-        <div v-if="hasPaymentMethods" class="flex flex-col gap-2">
-            <Section v-for="paymentMethod in paymentMethods" :key="paymentMethod.id">
-                <PaymentMethod :payment-method="paymentMethod" />
+        <div v-if="hasPaymentMethods" class="sv-payment-methods__list flex flex-col gap-2">
+            <Section
+                v-for="paymentMethod in paymentMethods"
+                :key="paymentMethod.id"
+                class="sv-payment-methods__item"
+            >
+                <PaymentMethod
+                    class="sv-payment-methods__item-content"
+                    :payment-method="paymentMethod"
+                />
             </Section>
         </div>
-        <Section v-else>
-            <Typography variant="body-sm" shade="lighter" no-spacing>{{
+        <Section v-else class="sv-empty-state sv-payment-methods__empty">
+            <Typography
+                variant="body-sm"
+                shade="lighter"
+                no-spacing
+                class="sv-payment-methods__empty-message"
+            >{{
                 $t({
                     defaultMessage: 'Add a payment method for recurring invoice payments.',
                     description:
@@ -71,7 +85,7 @@ const hasPaymentMethods = computed<boolean>(() => props.paymentMethods.length > 
             }}</Typography>
             <Button
                 v-if="showAddButton"
-                class="mt-4 w-full"
+                class="sv-action sv-action--secondary sv-action--full-width sv-payment-methods__add mt-4 w-full"
                 variant="outline"
                 color="gray"
                 icon-prefix="add"

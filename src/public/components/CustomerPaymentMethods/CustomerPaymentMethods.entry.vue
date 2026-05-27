@@ -20,6 +20,7 @@ defineProps<SolvimonCustomerPaymentMethodsEntryProps>();
         :experimental-features="experimentalFeatures"
         :log-level="logLevel"
         :on-log="onLog"
+        :css-overrides="cssOverrides"
         @error="(error) => $emit('error', error)"
     >
         <CustomerPaymentMethodsView v-bind="$props">

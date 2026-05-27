@@ -11,6 +11,7 @@ const { $t, formatDate } = useIntl();
 
 <template>
     <Section
+        class="sv-invoice-details"
         :title="
             $t({
                 defaultMessage: 'Invoice details',
@@ -19,9 +20,9 @@ const { $t, formatDate } = useIntl();
             })
         "
     >
-        <div v-if="invoice" class="flex flex-col gap-2">
-            <div>
-                <Typography variant="caps-heading">
+        <div v-if="invoice" class="sv-invoice-details__body flex flex-col gap-2">
+            <div class="sv-invoice-details__row">
+                <Typography variant="caps-heading" class="sv-invoice-details__label">
                     {{
                         $t({
                             defaultMessage: 'Invoice date',
@@ -31,7 +32,11 @@ const { $t, formatDate } = useIntl();
                         })
                     }}
                 </Typography>
-                <Typography v-if="invoice.invoice_date" variant="body-xs">{{
+                <Typography
+                    v-if="invoice.invoice_date"
+                    variant="body-xs"
+                    class="sv-invoice-details__value"
+                >{{
                     formatDate({
                         date: invoice.invoice_date,
                         format: 'date',
@@ -40,8 +45,8 @@ const { $t, formatDate } = useIntl();
                     })
                 }}</Typography>
             </div>
-            <div>
-                <Typography variant="caps-heading">
+            <div class="sv-invoice-details__row">
+                <Typography variant="caps-heading" class="sv-invoice-details__label">
                     {{
                         $t({
                             defaultMessage: 'Due date',
@@ -51,7 +56,11 @@ const { $t, formatDate } = useIntl();
                         })
                     }}
                 </Typography>
-                <Typography v-if="invoice.due_date" variant="body-xs">{{
+                <Typography
+                    v-if="invoice.due_date"
+                    variant="body-xs"
+                    class="sv-invoice-details__value"
+                >{{
                     formatDate({
                         date: invoice.due_date,
                         format: 'date',

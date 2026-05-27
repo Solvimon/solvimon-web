@@ -27,11 +27,11 @@ const showLoadMoreButton = computed(() => props.hasMoreItems);
 </script>
 
 <template>
-    <div class="grid-cols-1 gap-4">
+    <div class="sv-table sv-invoices-list__table grid-cols-1 gap-4">
         <Table striped no-border rounded hoverable stripe-class="group-odd:bg-gray-50/50">
             <TableHead>
-                <TableHeadRow>
-                    <TableHeadCell>
+                <TableHeadRow class="sv-table__head">
+                    <TableHeadCell class="sv-table__cell sv-invoices-list__cell--invoice">
                         {{
                             $t({
                                 defaultMessage: 'Invoice',
@@ -41,7 +41,9 @@ const showLoadMoreButton = computed(() => props.hasMoreItems);
                             })
                         }}
                     </TableHeadCell>
-                    <TableHeadCell class="hidden md:table-cell">
+                    <TableHeadCell
+                        class="sv-table__cell sv-invoices-list__cell--date hidden md:table-cell"
+                    >
                         {{
                             $t({
                                 defaultMessage: 'Date',
@@ -51,7 +53,7 @@ const showLoadMoreButton = computed(() => props.hasMoreItems);
                             })
                         }}
                     </TableHeadCell>
-                    <TableHeadCell>
+                    <TableHeadCell class="sv-table__cell sv-invoices-list__cell--amount">
                         {{
                             $t({
                                 defaultMessage: 'Amount',
@@ -61,7 +63,9 @@ const showLoadMoreButton = computed(() => props.hasMoreItems);
                             })
                         }}
                     </TableHeadCell>
-                    <TableHeadCell class="text-right">
+                    <TableHeadCell
+                        class="sv-table__cell sv-invoices-list__cell--status text-right"
+                    >
                         {{
                             $t({
                                 defaultMessage: 'Status',
@@ -74,15 +78,18 @@ const showLoadMoreButton = computed(() => props.hasMoreItems);
                 </TableHeadRow>
             </TableHead>
             <TableBody>
-                <TableRow v-for="invoice in invoices" :key="invoice.id">
+                <TableRow v-for="invoice in invoices" :key="invoice.id" class="sv-table__row sv-invoices-list__row">
                     <template v-if="showViewButton" #link>
                         <button
                             type="button"
-                            class="absolute inset-0 h-full w-full"
+                            class="sv-invoices-list__row-action absolute inset-0 h-full w-full"
                             @click="$emit('view-invoice', { invoiceId: invoice.id })"
                         />
                     </template>
-                    <TableCell has-padding class="h-14">
+                    <TableCell
+                        has-padding
+                        class="sv-table__cell sv-invoices-list__cell sv-invoices-list__cell--invoice h-14"
+                    >
                         <div class="flex flex-col">
                             <Typography tag="span" variant="body-sm" class="md:hidden">
                                 {{
@@ -99,7 +106,9 @@ const showLoadMoreButton = computed(() => props.hasMoreItems);
                             >
                         </div>
                     </TableCell>
-                    <TableCell class="hidden h-14 md:table-cell">
+                    <TableCell
+                        class="sv-table__cell sv-invoices-list__cell sv-invoices-list__cell--date hidden h-14 md:table-cell"
+                    >
                         {{
                             formatDate({
                                 date: invoice.invoice_date,
@@ -109,11 +118,14 @@ const showLoadMoreButton = computed(() => props.hasMoreItems);
                             })
                         }}
                     </TableCell>
-                    <TableCell class="h-14"
+                    <TableCell
+                        class="sv-table__cell sv-invoices-list__cell sv-invoices-list__cell--amount h-14"
                         ><Typography tag="span" weight="semibold">
                             <Amount :value="invoice.invoice_amount_including_tax" /> </Typography
                     ></TableCell>
-                    <TableCell class="h-14 text-right">
+                    <TableCell
+                        class="sv-table__cell sv-invoices-list__cell sv-invoices-list__cell--status h-14 text-right"
+                    >
                         <Chip v-if="invoice.paid" color="green">
                             {{
                                 $t({
@@ -128,6 +140,7 @@ const showLoadMoreButton = computed(() => props.hasMoreItems);
                             variant="outline"
                             color="gray"
                             size="sm"
+                            class="sv-action sv-action--secondary sv-invoices-list__pay"
                             type="button"
                             @click.stop="$emit('pay-invoice', { invoiceId: invoice.id })"
                             >{{
@@ -142,13 +155,13 @@ const showLoadMoreButton = computed(() => props.hasMoreItems);
                 </TableRow>
             </TableBody>
         </Table>
-        <div class="mt-2 flex items-center justify-center">
+        <div class="sv-invoices-list__load-more mt-2 flex items-center justify-center">
             <Button
                 v-if="showLoadMoreButton"
                 variant="outline"
                 color="gray"
                 size="sm"
-                class="w-full"
+                class="sv-action sv-action--secondary sv-action--full-width w-full"
                 :loading="isLoading"
                 @click="$emit('load-more')"
             >

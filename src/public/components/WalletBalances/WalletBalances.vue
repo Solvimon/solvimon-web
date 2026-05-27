@@ -7,6 +7,7 @@ defineProps<WalletBalancesProps>();
 
 <template>
     <CustomerWalletBalances
+        class="sv-wallet-balances sv-root sv-component"
         :has-error="hasError"
         :is-loading="isLoading"
         :wallet-balances="walletBalances"

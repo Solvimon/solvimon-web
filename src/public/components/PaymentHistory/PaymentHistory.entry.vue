@@ -24,6 +24,7 @@ if (!props.configuration?.invoiceId) {
         :experimental-features="experimentalFeatures"
         :log-level="logLevel"
         :on-log="onLog"
+        :css-overrides="cssOverrides"
         @error="(error) => $emit('error', error)"
     >
         <PaymentHistoryEntryView v-bind="$props">

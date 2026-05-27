@@ -29,6 +29,7 @@ const isViewAllButtonVisible = computed<boolean>(() => props.showViewAllButton);
 
 <template>
     <Section
+        class="sv-subscriptions-list"
         no-spacing
         no-border
         :title="
@@ -49,6 +50,7 @@ const isViewAllButtonVisible = computed<boolean>(() => props.showViewAllButton);
                 variant="ghost"
                 color="gray"
                 icon-suffix="arrow_right_alt"
+                class="sv-action sv-action--ghost sv-subscriptions-list__view-all"
                 type="button"
                 @click="$emit('view-all-subscriptions')"
                 >{{
@@ -61,7 +63,7 @@ const isViewAllButtonVisible = computed<boolean>(() => props.showViewAllButton);
             >
         </template>
 
-        <Section v-if="!hasSubscriptions">
+        <Section v-if="!hasSubscriptions" class="sv-empty-state sv-subscriptions-list__empty">
             <Typography tag="h3" variant="heading-3">
                 {{
                     $t({
@@ -83,7 +85,7 @@ const isViewAllButtonVisible = computed<boolean>(() => props.showViewAllButton);
                 }}</Typography
             >
         </Section>
-        <div v-else class="grid grid-cols-1 gap-4">
+        <div v-else class="sv-subscriptions-list__items grid grid-cols-1 gap-4">
             <SubscriptionsListItem
                 v-for="subscription in subscriptions"
                 :key="subscription.id"

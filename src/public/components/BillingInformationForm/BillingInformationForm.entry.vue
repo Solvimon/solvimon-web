@@ -24,6 +24,7 @@ defineEmits<SolvimonBillingInformationFormEntryEmits>();
         :experimental-features="experimentalFeatures"
         :log-level="logLevel"
         :on-log="onLog"
+        :css-overrides="cssOverrides"
         @error="(error) => $emit('error', error)"
     >
         <BillingInformationFormEntryView v-bind="$props">

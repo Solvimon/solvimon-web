@@ -29,6 +29,7 @@ export interface SharedSolvimonMountConfig {
     logLevel?: 'debug' | 'info' | 'warn' | 'error';
     onLog?: (entry: unknown) => void;
     branding?: PlatformBranding;
+    cssOverrides?: string | string[];
 }
 
 export type SolvimonMountConfig = SharedSolvimonMountConfig;

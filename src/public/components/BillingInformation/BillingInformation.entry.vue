@@ -20,6 +20,7 @@ defineProps<SolvimonBillingInformationEntryProps>();
         :experimental-features="experimentalFeatures"
         :log-level="logLevel"
         :on-log="onLog"
+        :css-overrides="cssOverrides"
         @error="(error) => $emit('error', error)"
     >
         <BillingInformationView v-bind="$props">

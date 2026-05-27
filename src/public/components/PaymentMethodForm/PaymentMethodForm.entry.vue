@@ -20,6 +20,7 @@ const props = defineProps<SolvimonPaymentMethodFormEntryProps>();
         :experimental-features="experimentalFeatures"
         :log-level="logLevel"
         :on-log="onLog"
+        :css-overrides="cssOverrides"
         @error="(error: Error) => $emit('error', error)"
     >
         <PaymentMethodFormEntryView v-bind="props">

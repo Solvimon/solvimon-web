@@ -145,18 +145,34 @@ const handlePurchase = async () => {
 
 <template>
     <!-- Success state -->
-    <div v-if="isPurchased" class="flex h-full items-center justify-center p-8">
-        <Section>
-            <div class="flex flex-col items-center py-10">
-                <Icon icon="check_circle" class="text-green-400" size="lg" />
-                <Typography variant="heading-3" tag="span" class="mt-2">{{
+    <div
+        v-if="isPurchased"
+        class="sv-upgrade-subscription sv-root sv-screen sv-upgrade-subscription--purchased flex h-full items-center justify-center p-8"
+    >
+        <Section class="sv-upgrade-subscription__success">
+            <div class="sv-upgrade-subscription__success-body flex flex-col items-center py-10">
+                <Icon
+                    icon="check_circle"
+                    class="sv-upgrade-subscription__success-icon text-green-400"
+                    size="lg"
+                />
+                <Typography
+                    variant="heading-3"
+                    tag="span"
+                    class="sv-upgrade-subscription__success-title mt-2"
+                >{{
                     $t({
                         defaultMessage: 'Payment successful',
                         id: 'upgrade_subscription.success.title',
                         description: 'Title shown after a successful add-on purchase',
                     })
                 }}</Typography>
-                <Typography variant="body-sm" shade="lighter" tag="span" class="mt-1">{{
+                <Typography
+                    variant="body-sm"
+                    shade="lighter"
+                    tag="span"
+                    class="sv-upgrade-subscription__success-message mt-1"
+                >{{
                     $t({
                         defaultMessage: 'Your add-ons have been activated.',
                         id: 'upgrade_subscription.success.subtitle',
@@ -168,15 +184,21 @@ const handlePurchase = async () => {
     </div>
 
     <!-- Main flow -->
-    <ContentWithAsideLayout v-else>
+    <ContentWithAsideLayout v-else class="sv-upgrade-subscription sv-root sv-screen">
         <template #content>
             <OnDemandPricingList
                 v-if="categories.length > 0"
+                class="sv-upgrade-subscription__pricing-list"
                 :categories="categories"
                 :selected-pricing-ids="selectedPricingIds"
                 @toggle="handleToggle"
             />
-            <Typography v-else variant="body-sm" shade="lighter" class="p-4">{{
+            <Typography
+                v-else
+                variant="body-sm"
+                shade="lighter"
+                class="sv-upgrade-subscription__empty-state p-4"
+            >{{
                 $t({
                     defaultMessage: 'No on-demand add-ons are available for this subscription.',
                     id: 'upgrade_subscription.empty_state',
@@ -188,6 +210,7 @@ const handlePurchase = async () => {
             <Divider spacing="sm" />
 
             <PaymentMethodPicker
+                class="sv-upgrade-subscription__payment-method-picker"
                 :customer-id="customerId"
                 :subscription-id="configuration.subscriptionId"
                 :selected-id="selectedPaymentMethodId"
@@ -197,16 +220,21 @@ const handlePurchase = async () => {
 
         <template #aside>
             <UpgradeOrderSummary
+                class="sv-upgrade-subscription__order-summary"
                 :selected-pricings="selectedPricings"
                 :invoice="previewInvoice"
                 :is-pending="isPreviewPending"
             />
 
-            <ErrorNotification v-if="purchaseError" :title="purchaseError" />
+            <ErrorNotification
+                v-if="purchaseError"
+                class="sv-upgrade-subscription__error"
+                :title="purchaseError"
+            />
 
             <Button
                 size="lg"
-                class="full-width"
+                class="sv-action sv-action--primary sv-action--full-width sv-upgrade-subscription__purchase full-width"
                 type="button"
                 :disabled="!canPurchase || isPurchasePending"
                 :loading="isPurchasePending"
@@ -226,7 +254,7 @@ const handlePurchase = async () => {
                 tag="div"
                 variant="body-sm"
                 shade="lighter"
-                class="flex grow justify-center"
+                class="sv-upgrade-subscription__trust-indicator flex grow justify-center"
             >
                 <Kpi
                     icon="lock"

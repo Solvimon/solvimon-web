@@ -10,8 +10,8 @@ defineProps<InvoiceDetailsProps>();
     <Skeleton
         v-if="isLoading"
         variant="section"
-        class="min-h-[100px]"
+        class="sv-invoice-details sv-root sv-component sv-loading min-h-[100px]"
         data-testid="invoice-details-skeleton"
     />
-    <InvoiceDetailsBlock v-else :invoice="invoice" />
+    <InvoiceDetailsBlock v-else class="sv-invoice-details sv-root sv-component" :invoice="invoice" />
 </template>

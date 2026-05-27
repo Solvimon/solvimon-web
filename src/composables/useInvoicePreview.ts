@@ -11,7 +11,7 @@ import type { TimePeriod } from '@solvimon/solvimon-types';
 import { computed, ref } from 'vue';
 import { convertDateRangeToTimePeriod } from '@solvimon/solvimon-ui';
 import { taxId } from '@solvimon/solvimon-ui/validators';
-import { isEqual } from '@/utils/comparison';
+import { isEqual } from '@solvimon/solvimon-ui';
 import { useLogger } from '@/components/providers/LoggerProvider/composables/useLogger';
 import { createInvoicesService } from '@/services/invoices';
 import type { CheckoutFormState } from '@/components/customer/CheckoutForm/CheckoutForm.types';

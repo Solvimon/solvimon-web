@@ -1,17 +1,6 @@
 import { ApiStatus } from '@solvimon/solvimon-types';
 import { useIncrementalLoading } from './useIncrementalLoading';
 
-const mockGetPaginatedFullList = vi.fn();
-
-vi.mock('@solvimon/solvimon-ui', () => ({
-    getPaginatedFullList: (...args: unknown[]) => mockGetPaginatedFullList(...args),
-    isApiSuccessCollectionResponse: (response: unknown) =>
-        response !== null &&
-        typeof response === 'object' &&
-        'data' in response &&
-        'links' in response,
-}));
-
 describe('useIncrementalLoading', () => {
     const createSuccessResponse = <T>(
         data: T[],
@@ -129,14 +118,7 @@ describe('useIncrementalLoading', () => {
 
     it('fetchAll loads full list via getPaginatedFullList and replaces items', async () => {
         const fullData = [{ id: 'a' }, { id: 'b' }];
-        mockGetPaginatedFullList.mockResolvedValue({
-            data: fullData,
-            page: 1,
-            limit: 10,
-            links: { current: '/', next: undefined, previous: undefined },
-        });
-
-        const service = vi.fn();
+        const service = vi.fn().mockResolvedValue(createSuccessResponse(fullData, 1, false));
         const { items, fetchAll, isPending } = useIncrementalLoading<{ id: string }>({
             initialData: [{ id: 'initial' }],
             service,
@@ -144,7 +126,7 @@ describe('useIncrementalLoading', () => {
 
         await fetchAll();
 
-        expect(mockGetPaginatedFullList).toHaveBeenCalledTimes(1);
+        expect(service).toHaveBeenCalledTimes(1);
         expect(items.value).toStrictEqual([{ id: 'a' }, { id: 'b' }]);
         expect(isPending.value).toBe(false);
     });

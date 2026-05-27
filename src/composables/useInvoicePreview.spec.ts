@@ -9,7 +9,7 @@ import type {
 import type { CheckoutFormState } from '@/components/customer/CheckoutForm/CheckoutForm.types';
 import { useInvoicePreview } from './useInvoicePreview';
 
-const { mockGetInvoicePreview, convertDateRangeToTimePeriodMock } = vi.hoisted(() => ({
+const { mockGetInvoicePreview } = vi.hoisted(() => ({
     mockGetInvoicePreview:
         vi.fn<
             (args: {
@@ -19,7 +19,6 @@ const { mockGetInvoicePreview, convertDateRangeToTimePeriodMock } = vi.hoisted((
                 customer: unknown;
             }) => Promise<InvoicePreview>
         >(),
-    convertDateRangeToTimePeriodMock: vi.fn(),
 }));
 
 vi.mock('@/services/invoices', () => ({
@@ -28,14 +27,10 @@ vi.mock('@/services/invoices', () => ({
     })),
 }));
 
-vi.mock('@solvimon/solvimon-ui', () => ({
-    convertDateRangeToTimePeriod: convertDateRangeToTimePeriodMock,
-}));
 
 describe('useInvoicePreview', () => {
     beforeEach(() => {
         mockGetInvoicePreview.mockReset();
-        convertDateRangeToTimePeriodMock.mockReset();
     });
 
     afterEach(() => {
@@ -92,10 +87,7 @@ describe('useInvoicePreview', () => {
             ],
         } as unknown as InvoicePreview;
 
-        const mockedTrialPeriod = { start: '2024-01-01', end: '2024-01-10' };
-
         mockGetInvoicePreview.mockResolvedValue(invoicePreviewResponse);
-        convertDateRangeToTimePeriodMock.mockReturnValue(mockedTrialPeriod);
 
         const { loadInvoicePreview, trialInvoicePreview, trialPeriod, invoicePreview } =
             useInvoicePreview();
@@ -133,12 +125,8 @@ describe('useInvoicePreview', () => {
             },
         });
 
-        expect(convertDateRangeToTimePeriodMock).toHaveBeenCalledWith(
-            new Date('2024-01-01T00:00:00.000Z'),
-            new Date('2024-01-10T00:00:00.000Z'),
-        );
         expect(trialInvoicePreview.value).toEqual(trialInvoice);
-        expect(trialPeriod.value).toEqual(mockedTrialPeriod);
+        expect(trialPeriod.value).toEqual({ type: 'DAY', value: 9 });
         expect(invoicePreview.value).toEqual(defaultInvoice);
     });
 

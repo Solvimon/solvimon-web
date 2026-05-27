@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { BrandProvider } from '@solvimon/solvimon-ui';
+import { BrandProvider, IconSpriteProvider } from '@solvimon/solvimon-ui';
 import type { ProviderEmits, ProviderProps } from './Provider.types';
 import CssOverridesProvider from '@/components/providers/CssOverridesProvider/CssOverridesProvider.vue';
 import ActionDispatchProvider from '@/components/providers/ActionDispatchProvider/ActionDispatchProvider.vue';
@@ -50,13 +50,15 @@ if (!props.customElementName) {
                                             :allowed-portal-types="allowedPortalTypes"
                                             :portal-object="portalObject"
                                         >
-                                            <TranslationProvider
-                                                :locale="locale"
-                                                :date-locale="dateLocale"
-                                                :messages="messages"
-                                            >
-                                                <slot />
-                                            </TranslationProvider>
+                                            <IconSpriteProvider>
+                                                <TranslationProvider
+                                                    :locale="locale"
+                                                    :date-locale="dateLocale"
+                                                    :messages="messages"
+                                                >
+                                                    <slot />
+                                                </TranslationProvider>
+                                            </IconSpriteProvider>
                                         </PortalProvider>
                                     </ExperimentalFeatureProvider>
                                 </AuthProvider>

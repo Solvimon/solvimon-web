@@ -1,5 +1,5 @@
 import type { PricingExtended, PricingPlanScheduleInfoExpanded } from '@solvimon/solvimon-types';
-import { isEmpty } from '@/utils/comparison';
+import { isEmpty } from '@solvimon/solvimon-ui';
 
 export function getAllPricingsFromScheduleInfos(
     scheduleInfos: PricingPlanScheduleInfoExpanded[],

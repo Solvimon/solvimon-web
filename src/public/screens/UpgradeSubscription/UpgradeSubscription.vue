@@ -162,25 +162,27 @@ const handlePurchase = async () => {
                     variant="heading-3"
                     tag="span"
                     class="sv-upgrade-subscription__success-title mt-2"
-                >{{
-                    $t({
-                        defaultMessage: 'Payment successful',
-                        id: 'upgrade_subscription.success.title',
-                        description: 'Title shown after a successful add-on purchase',
-                    })
-                }}</Typography>
+                    >{{
+                        $t({
+                            defaultMessage: 'Payment successful',
+                            id: 'upgrade_subscription.success.title',
+                            description: 'Title shown after a successful add-on purchase',
+                        })
+                    }}
+                </Typography>
                 <Typography
                     variant="body-sm"
                     shade="lighter"
                     tag="span"
                     class="sv-upgrade-subscription__success-message mt-1"
-                >{{
-                    $t({
-                        defaultMessage: 'Your add-ons have been activated.',
-                        id: 'upgrade_subscription.success.subtitle',
-                        description: 'Subtitle shown after a successful add-on purchase',
-                    })
-                }}</Typography>
+                    >{{
+                        $t({
+                            defaultMessage: 'Your add-ons have been activated.',
+                            id: 'upgrade_subscription.success.subtitle',
+                            description: 'Subtitle shown after a successful add-on purchase',
+                        })
+                    }}
+                </Typography>
             </div>
         </Section>
     </div>
@@ -200,14 +202,15 @@ const handlePurchase = async () => {
                 variant="body-sm"
                 shade="lighter"
                 class="sv-upgrade-subscription__empty-state p-4"
-            >{{
-                $t({
-                    defaultMessage: 'No on-demand add-ons are available for this subscription.',
-                    id: 'upgrade_subscription.empty_state',
-                    description:
-                        'Shown when there are no on-demand add-ons available for the subscription',
-                })
-            }}</Typography>
+                >{{
+                    $t({
+                        defaultMessage: 'No on-demand add-ons are available for this subscription.',
+                        id: 'upgrade_subscription.empty_state',
+                        description:
+                            'Shown when there are no on-demand add-ons available for the subscription',
+                    })
+                }}
+            </Typography>
 
             <Divider spacing="sm" />
 
@@ -230,7 +233,7 @@ const handlePurchase = async () => {
 
             <ErrorNotification
                 v-if="purchaseError"
-                class="sv-upgrade-subscription__error"
+                class="sv-upgrade-subscription__error sv-error"
                 :title="purchaseError"
             />
 

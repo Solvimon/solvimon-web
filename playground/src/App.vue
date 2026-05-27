@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
+import { ref, watch } from 'vue';
 import { createSolvimonCore } from '@solvimon/solvimon-web/core';
 import { screens, components, allEntries } from './registry';
 import type { StoryEntry } from './registry';
@@ -11,19 +11,22 @@ const LOCALE_STORAGE_KEY = 'solvimon-playground:locale';
 const locale = ref(sessionStorage.getItem(LOCALE_STORAGE_KEY) ?? SUPPORTED_LOCALES[0]);
 watch(locale, (value) => sessionStorage.setItem(LOCALE_STORAGE_KEY, value));
 
-const solvimon = computed(() =>
-    createSolvimonCore({
-        environment: 'TEST',
-        locale: locale.value,
-        logLevel: 'info',
-        branding: {
-            colors: {
-                primary: '#1d4ed8',
-                secondary: '#0f172a',
-            },
+const solvimonConfig = {
+    environment: 'TEST' as const,
+    logLevel: 'info' as const,
+    branding: {
+        colors: {
+            primary: '#1d4ed8',
+            secondary: '#0f172a',
         },
-    }),
-);
+    },
+};
+
+const solvimon = ref(createSolvimonCore({ ...solvimonConfig, locale: locale.value }));
+
+watch(locale, (newLocale) => {
+    solvimon.value = createSolvimonCore({ ...solvimonConfig, locale: newLocale });
+});
 
 const ACTIVE_ENTRY_STORAGE_KEY = 'solvimon-playground:active-entry';
 

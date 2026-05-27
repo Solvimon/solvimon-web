@@ -42,10 +42,11 @@ const { isLoading } = useLoadInitialData(
 </script>
 
 <template>
-    <ContentWithAsideLayout>
+    <ContentWithAsideLayout class="sv-customer-overview sv-root sv-screen">
         <template #header>
             <SubscriptionsList
                 v-if="customer.customer.value"
+                class="sv-customer-overview__subscriptions"
                 :customer="customer.customer.value"
                 :subscriptions="subscriptions.items.value"
                 :payment-methods="paymentMethods.items.value"
@@ -55,6 +56,7 @@ const { isLoading } = useLoadInitialData(
         </template>
         <template #content>
             <InvoicesList
+                class="sv-customer-overview__invoices"
                 :invoices="invoices.items.value"
                 :has-more-items="invoices.hasNextBatch.value"
                 :is-loading="isLoading"
@@ -63,18 +65,21 @@ const { isLoading } = useLoadInitialData(
         </template>
         <template #aside>
             <CustomerWalletBalances
+                class="sv-customer-overview__wallet-balances"
                 :has-error="customerWalletBalances.apiStatus.value === ApiStatus.Failed"
                 :is-loading="isLoading"
                 :wallet-balances="walletBalanceItems"
             />
 
             <CustomerPaymentMethods
+                class="sv-customer-overview__payment-methods"
                 :is-loading="isLoading"
                 :payment-methods="paymentMethods.items.value"
             />
 
             <BillingInformation
                 v-if="customer.customer.value"
+                class="sv-customer-overview__billing-information"
                 :is-loading="isLoading"
                 :customer="customer.customer.value"
             />

@@ -14,11 +14,12 @@ const { dispatchAction } = useActionDispatchProvider();
     <Skeleton
         v-if="isLoading"
         variant="section"
-        class="min-h-[100px]"
+        class="sv-subscriptions-list sv-root sv-component sv-loading min-h-[100px]"
         data-testid="subscriptions-list-skeleton"
     />
     <SubscriptionsList
         v-else-if="customer"
+        class="sv-subscriptions-list sv-root sv-component"
         :customer="customer"
         :subscriptions="subscriptions"
         :payment-methods="paymentMethods"

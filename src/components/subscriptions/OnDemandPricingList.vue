@@ -20,27 +20,33 @@ const sortedCategories = computed(() =>
 
 <template>
     <template v-for="category in sortedCategories" :key="category.id ?? category.display_order">
-        <div class="flex flex-col gap-2">
-            <Typography variant="heading-3" tag="h2">{{
+        <div class="sv-pricing-list__category flex flex-col gap-2">
+            <Typography variant="heading-3" tag="h2" class="sv-pricing-list__category-title">{{
                 category.product_category?.name ?? category.name
             }}</Typography>
 
-            <div class="grid grid-cols-1 gap-1">
+            <div class="sv-pricing-list__items grid grid-cols-1 gap-1">
                 <OnDemandPricingRow
                     v-for="pricing in category.pricings"
                     :key="pricing.id"
+                    class="sv-pricing-list__row"
                     :pricing="pricing"
                     :selected="selectedPricingIds.includes(pricing.id)"
                     @toggle="emit('toggle', $event)"
                 />
 
                 <template v-for="group in category.pricing_groups" :key="group.id">
-                    <Typography variant="body-sm" weight="semibold" class="mt-2">{{
+                    <Typography
+                        variant="body-sm"
+                        weight="semibold"
+                        class="sv-pricing-list__group-title mt-2"
+                    >{{
                         group.name
                     }}</Typography>
                     <OnDemandPricingRow
                         v-for="pricing in group.pricings"
                         :key="pricing.id"
+                        class="sv-pricing-list__row"
                         :pricing="pricing"
                         :selected="selectedPricingIds.includes(pricing.id)"
                         @toggle="emit('toggle', $event)"

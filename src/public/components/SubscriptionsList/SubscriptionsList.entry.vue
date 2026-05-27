@@ -20,6 +20,7 @@ defineProps<SolvimonSubscriptionsListEntryProps>();
         :experimental-features="experimentalFeatures"
         :log-level="logLevel"
         :on-log="onLog"
+        :css-overrides="cssOverrides"
         @error="(error) => $emit('error', error)"
     >
         <SubscriptionsListView v-bind="$props">

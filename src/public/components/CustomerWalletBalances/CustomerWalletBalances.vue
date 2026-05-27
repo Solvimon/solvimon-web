@@ -13,11 +13,12 @@ const { $t } = useIntl();
     <Skeleton
         v-if="isLoading"
         variant="section"
-        class="min-h-48"
+        class="sv-wallet-balances sv-root sv-component sv-loading min-h-48"
         data-testid="customer-wallet-balances-skeleton"
     />
     <ErrorNotification
         v-else-if="hasError"
+        class="sv-wallet-balances sv-root sv-component sv-error"
         :title="
             $t({
                 defaultMessage: 'Could not load wallet balances',
@@ -28,6 +29,7 @@ const { $t } = useIntl();
     />
     <CustomerWalletBalancesBlock
         v-else-if="walletBalances.length > 0"
+        class="sv-wallet-balances sv-root sv-component"
         :wallet-balances="walletBalances"
     />
 </template>

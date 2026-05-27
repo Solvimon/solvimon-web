@@ -22,19 +22,26 @@ const pricingItemId = computed(() => props.pricing.items?.[0]?.id);
 
 <template>
     <div
-        class="flex items-center justify-between gap-3 border-b p-1.5 transition-colors last:border-b-0"
+        class="sv-pricing-list__row flex items-center justify-between gap-3 border-b p-1.5 transition-colors last:border-b-0"
         :class="
             selected
-                ? 'border-primary/80 bg-white shadow-[inset_0_0_0_1px_var(--sm-color-primary)]'
+                ? 'sv-pricing-list__row--selected border-primary/80 bg-white shadow-[inset_0_0_0_1px_var(--sm-color-primary)]'
                 : 'border-gray-200 bg-white'
         "
     >
-        <div class="min-w-0 flex-1">
-            <Typography variant="body-sm" weight="semibold">{{ title }}</Typography>
-            <Typography v-if="description" variant="body-xs" shade="lighter">{{
+        <div class="sv-pricing-list__content min-w-0 flex-1">
+            <Typography variant="body-sm" weight="semibold" class="sv-pricing-list__name">{{
+                title
+            }}</Typography>
+            <Typography
+                v-if="description"
+                variant="body-xs"
+                shade="lighter"
+                class="sv-pricing-list__description"
+            >{{
                 description
             }}</Typography>
-            <div class="mt-0.5 flex items-center gap-1">
+            <div class="sv-pricing-list__price mt-0.5 flex items-center gap-1">
                 <Typography v-if="price" variant="body-sm" shade="lighter">{{
                     formatAmount(price)
                 }}</Typography>
@@ -54,6 +61,7 @@ const pricingItemId = computed(() => props.pricing.items?.[0]?.id);
             :variant="selected ? 'outline' : undefined"
             :color="selected ? 'gray' : 'primary'"
             :icon-prefix="selected ? 'remove_shopping_cart' : 'shopping_cart'"
+            class="sv-action sv-pricing-list__action"
             type="button"
             @click="emit('toggle-item', pricingItemId)"
         >

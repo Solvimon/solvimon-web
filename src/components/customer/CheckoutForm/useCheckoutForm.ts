@@ -104,7 +104,9 @@ export function useCheckoutForm({
         await getCountryFromGeoLocationService(initialState?.country);
     });
 
-    useWatchDebounced(() => structuredClone(toRaw(form.value)), handleFormChange, { debounce: 200 });
+    useWatchDebounced(() => structuredClone(toRaw(form.value)), handleFormChange, {
+        debounce: 200,
+    });
 
     return {
         form,

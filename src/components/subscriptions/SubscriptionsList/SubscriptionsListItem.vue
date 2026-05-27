@@ -64,10 +64,10 @@ const isDetailButtonVisible = computed<boolean>(() => props.showViewSubscription
 </script>
 
 <template>
-    <Section>
-        <div class="flex flex-col gap-4 md:flex-row">
-            <div class="grow">
-                <Typography tag="h3" variant="heading-2">
+    <Section class="sv-subscriptions-list__item">
+        <div class="sv-subscriptions-list__item-body flex flex-col gap-4 md:flex-row">
+            <div class="sv-subscriptions-list__item-content grow">
+                <Typography tag="h3" variant="heading-2" class="sv-subscriptions-list__item-title">
                     {{ subscriptionName }}
                 </Typography>
                 <Typography
@@ -75,15 +75,17 @@ const isDetailButtonVisible = computed<boolean>(() => props.showViewSubscription
                     variant="body-sm"
                     tag="span"
                     shade="lighter"
+                    class="sv-subscriptions-list__item-description"
                     >{{ subscriptionDescription }}</Typography
                 >
-                <div class="mt-4 flex items-center gap-6">
+                <div class="sv-subscriptions-list__item-meta mt-4 flex items-center gap-6">
                     <PaymentMethod
                         v-if="paymentMethod"
                         variant="condensed"
+                        class="sv-payment-methods__item"
                         :payment-method="paymentMethod"
                     />
-                    <div v-if="subscription.next_invoice" class="flex gap-1">
+                    <div v-if="subscription.next_invoice" class="sv-subscriptions-list__item-next-invoice flex gap-1">
                         <Typography tag="span" variant="body-xs" shade="light" weight="semibold">
                             {{
                                 $t({
@@ -104,11 +106,11 @@ const isDetailButtonVisible = computed<boolean>(() => props.showViewSubscription
                     </div>
                 </div>
             </div>
-            <div class="flex flex-col items-center gap-2 md:flex-row">
+            <div class="sv-subscriptions-list__item-actions flex flex-col items-center gap-2 md:flex-row">
                 <Button
                     v-if="isDetailButtonVisible"
                     color="primary"
-                    class="w-full md:w-auto"
+                    class="sv-action sv-action--primary sv-subscriptions-list__item-details w-full md:w-auto"
                     type="button"
                     @click="$emit('view-subscription-details', { subscriptionId: subscription.id })"
                 >
@@ -125,7 +127,7 @@ const isDetailButtonVisible = computed<boolean>(() => props.showViewSubscription
                     v-if="isCancelButtonVisible"
                     variant="outline"
                     color="gray"
-                    class="w-full md:w-auto"
+                    class="sv-action sv-action--secondary sv-subscriptions-list__item-cancel w-full md:w-auto"
                     type="button"
                     @click="$emit('cancel-subscription', { subscriptionId: subscription.id })"
                 >
@@ -142,7 +144,7 @@ const isDetailButtonVisible = computed<boolean>(() => props.showViewSubscription
                     v-else-if="isRenewButtonVisible"
                     variant="outline"
                     color="gray"
-                    class="w-full md:w-auto"
+                    class="sv-action sv-action--secondary sv-subscriptions-list__item-renew w-full md:w-auto"
                     type="button"
                     @click="$emit('renew-subscription', { subscriptionId: subscription.id })"
                 >

@@ -15,6 +15,7 @@ const { isMobileViewport: isSmallScreen } = useViewport();
 
 <template>
     <Section
+        class="sv-invoice__summary grow"
         :title="
             $t({
                 defaultMessage: 'Invoice',
@@ -22,14 +23,13 @@ const { isMobileViewport: isSmallScreen } = useViewport();
                 id: 'sdk.invoice_details.invoice.title',
             })
         "
-        class="grow"
     >
-        <div :class="{ 'p-6 pt-2': !isSmallScreen }">
+        <div class="sv-invoice__summary-body" :class="{ 'p-6 pt-2': !isSmallScreen }">
             <InfoBlock
                 v-if="isSmallScreen"
                 variant="default"
                 has-icon
-                class="justify-center border-gray-100 bg-gray-50 font-semibold text-gray-800"
+                class="sv-invoice__download-hint justify-center border-gray-100 bg-gray-50 font-semibold text-gray-800"
                 >{{
                     $t({
                         defaultMessage: 'Download the PDF for a full breakdown',
@@ -38,9 +38,14 @@ const { isMobileViewport: isSmallScreen } = useViewport();
                     })
                 }}</InfoBlock
             >
-            <InvoiceSummary :invoice="invoice" :is-expandable="!isSmallScreen">
+            <InvoiceSummary
+                class="sv-invoice__summary-content"
+                :invoice="invoice"
+                :is-expandable="!isSmallScreen"
+            >
                 <template #logo> <slot name="logo" /> </template
             ></InvoiceSummary>
-            <InvoiceCreditsBreakdown :invoice="invoice" /></div
+            <InvoiceCreditsBreakdown class="sv-invoice__credits-breakdown" :invoice="invoice" />
+        </div
     ></Section>
 </template>

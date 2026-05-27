@@ -76,10 +76,13 @@ onMounted(async () => {
 </script>
 
 <template>
-    <div class="flex flex-col gap-4">
+    <div class="sv-payment-method-picker flex flex-col gap-4">
         <!-- Saved payment methods -->
-        <div v-if="savedMethods.length > 0" class="flex flex-col gap-2">
-            <Typography variant="heading-3" tag="h2">{{
+        <div
+            v-if="savedMethods.length > 0"
+            class="sv-payment-method-picker__saved flex flex-col gap-2"
+        >
+            <Typography variant="heading-3" tag="h2" class="sv-payment-method-picker__title">{{
                 $t({
                     defaultMessage: 'Saved payment methods',
                     id: 'upgrade_subscription.payment_picker.saved_title',
@@ -87,23 +90,29 @@ onMounted(async () => {
                         'Heading for the saved payment methods section in the upgrade subscription payment picker',
                 })
             }}</Typography>
-            <div class="flex flex-col gap-1">
+            <div class="sv-payment-method-picker__options flex flex-col gap-1">
                 <Section
                     v-for="method in savedMethods"
                     :key="method.id"
                     :content-background="selectedId === method.id ? 'none' : 'gray'"
-                    :class="{ '!bg-white': selectedId === method.id }"
-                    class="cursor-pointer"
+                    :class="{ 'sv-payment-method-picker__option--selected !bg-white': selectedId === method.id }"
+                    class="sv-payment-method-picker__option cursor-pointer"
                     @click="emit('select', method.id)"
                 >
-                    <PaymentMethod :payment-method="method" />
+                    <PaymentMethod
+                        class="sv-payment-method-picker__option-content"
+                        :payment-method="method"
+                    />
                 </Section>
             </div>
         </div>
 
         <!-- All payment methods (new) -->
-        <div v-if="newOptions.length > 0" class="flex flex-col gap-2">
-            <Typography variant="heading-3" tag="h2">{{
+        <div
+            v-if="newOptions.length > 0"
+            class="sv-payment-method-picker__new flex flex-col gap-2"
+        >
+            <Typography variant="heading-3" tag="h2" class="sv-payment-method-picker__title">{{
                 $t({
                     defaultMessage: 'All payment methods',
                     id: 'upgrade_subscription.payment_picker.all_title',
@@ -111,20 +120,23 @@ onMounted(async () => {
                         'Heading for the all payment methods section in the upgrade subscription payment picker',
                 })
             }}</Typography>
-            <div class="flex flex-col gap-1">
+            <div class="sv-payment-method-picker__options flex flex-col gap-1">
                 <Section
                     v-for="option in newOptions"
                     :key="option.adyen.type"
                     :content-background="selectedId === option.adyen.type ? 'none' : 'gray'"
-                    :class="{ '!bg-white': selectedId === option.adyen.type }"
-                    class="cursor-pointer"
+                    :class="{
+                        'sv-payment-method-picker__option--selected !bg-white':
+                            selectedId === option.adyen.type,
+                    }"
+                    class="sv-payment-method-picker__option cursor-pointer"
                     @click="emit('select', option.adyen.type)"
                 >
-                    <div class="flex items-center gap-3">
+                    <div class="sv-payment-method-picker__option-content flex items-center gap-3">
                         <!-- Card brands for scheme: show recognised brands side by side -->
                         <div
                             v-if="option.adyen.type === 'scheme'"
-                            class="flex h-9 w-9 shrink-0 items-center gap-0.5"
+                            class="sv-payment-method-picker__option-icon flex h-9 w-9 shrink-0 items-center gap-0.5"
                         >
                             <img
                                 v-for="brand in displayBrands(option.adyen.brands)"
@@ -138,7 +150,7 @@ onMounted(async () => {
                         <!-- Single logo for all other payment types -->
                         <div
                             v-else
-                            class="flex h-9 w-9 shrink-0 items-center justify-center overflow-clip rounded"
+                            class="sv-payment-method-picker__option-icon flex h-9 w-9 shrink-0 items-center justify-center overflow-clip rounded"
                         >
                             <img
                                 :src="adyenLogoUrl(option.adyen.type)"
@@ -147,17 +159,17 @@ onMounted(async () => {
                             />
                         </div>
 
-                        <Typography variant="body-sm">{{ option.name }}</Typography>
+                        <Typography variant="body-sm" class="sv-payment-method-picker__option-label">{{ option.name }}</Typography>
                     </div>
                 </Section>
             </div>
         </div>
 
         <!-- Loading skeleton placeholder -->
-        <div v-if="isPending" class="flex flex-col gap-1">
-            <div class="h-[52px] animate-pulse rounded-md bg-gray-100" />
-            <div class="h-[52px] animate-pulse rounded-md bg-gray-100" />
-            <div class="h-[52px] animate-pulse rounded-md bg-gray-100" />
+        <div v-if="isPending" class="sv-payment-method-picker__loading flex flex-col gap-1">
+            <div class="sv-skeleton h-[52px] animate-pulse rounded-md bg-gray-100" />
+            <div class="sv-skeleton h-[52px] animate-pulse rounded-md bg-gray-100" />
+            <div class="sv-skeleton h-[52px] animate-pulse rounded-md bg-gray-100" />
         </div>
     </div>
 </template>

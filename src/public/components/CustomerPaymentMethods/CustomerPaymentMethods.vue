@@ -18,11 +18,12 @@ const { dispatchAction } = useActionDispatchProvider();
     <Skeleton
         v-if="isLoading"
         variant="section"
-        class="h-72"
+        class="sv-payment-methods sv-root sv-component sv-loading h-72"
         data-testid="customer-payment-methods-skeleton"
     />
     <CustomerPaymentMethodsBlock
         v-else
+        class="sv-payment-methods sv-root sv-component"
         :is-loading="isLoading"
         :payment-methods="paymentMethods"
         :show-view-all-button="configuration?.showViewAllButton"

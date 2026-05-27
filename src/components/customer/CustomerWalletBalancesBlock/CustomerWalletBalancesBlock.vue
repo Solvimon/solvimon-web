@@ -9,6 +9,7 @@ const { $t } = useIntl();
 
 <template>
     <WalletBalances
+        class="sv-wallet-balances"
         :items="walletBalances"
         :title="
             $t(

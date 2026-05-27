@@ -19,8 +19,8 @@ const getPrice = (pricing: OnDemandPricing) =>
 </script>
 
 <template>
-    <Section>
-        <Typography variant="heading-3" tag="h2" class="mb-3">{{
+    <Section class="sv-order-summary sv-upgrade-subscription__order-summary">
+        <Typography variant="heading-3" tag="h2" class="sv-order-summary__title mb-3">{{
             $t({
                 defaultMessage: 'Order summary',
                 id: 'upgrade_subscription.order_summary.title',
@@ -28,7 +28,7 @@ const getPrice = (pricing: OnDemandPricing) =>
             })
         }}</Typography>
 
-        <Typography v-if="isEmpty" variant="body-sm" shade="lighter">{{
+        <Typography v-if="isEmpty" variant="body-sm" shade="lighter" class="sv-order-summary__empty">{{
             $t({
                 defaultMessage: 'Select add-ons to see pricing.',
                 id: 'upgrade_subscription.order_summary.empty_state',
@@ -38,17 +38,21 @@ const getPrice = (pricing: OnDemandPricing) =>
 
         <template v-else>
             <!-- Line items -->
-            <div class="mb-3 flex flex-col gap-2">
+            <div class="sv-order-summary__items mb-3 flex flex-col gap-2">
                 <div
                     v-for="pricing in selectedPricings"
                     :key="pricing.id"
-                    class="flex items-center justify-between"
+                    class="sv-order-summary__item flex items-center justify-between"
                 >
                     <div>
-                        <Typography variant="body-sm">{{
+                        <Typography variant="body-sm" class="sv-order-summary__item-name">{{
                             pricing.name ?? pricing.products?.[0]?.name
                         }}</Typography>
-                        <Typography variant="body-xs" shade="lighter">{{
+                        <Typography
+                            variant="body-xs"
+                            shade="lighter"
+                            class="sv-order-summary__item-meta"
+                        >{{
                             $t({
                                 defaultMessage: 'one-off',
                                 id: 'upgrade_subscription.order_summary.one_off_label',
@@ -57,7 +61,11 @@ const getPrice = (pricing: OnDemandPricing) =>
                             })
                         }}</Typography>
                     </div>
-                    <Typography v-if="getPrice(pricing)" variant="body-sm">{{
+                    <Typography
+                        v-if="getPrice(pricing)"
+                        variant="body-sm"
+                        class="sv-order-summary__item-price"
+                    >{{
                         formatAmount(getPrice(pricing)!)
                     }}</Typography>
                 </div>
@@ -65,8 +73,8 @@ const getPrice = (pricing: OnDemandPricing) =>
 
             <!-- Tax breakdown (from preview invoice) -->
             <template v-if="invoice?.tax_summary">
-                <div class="flex flex-col gap-1 border-t pt-3">
-                    <div class="flex items-center justify-between">
+                <div class="sv-order-summary__tax flex flex-col gap-1 border-t pt-3">
+                    <div class="sv-order-summary__subtotal flex items-center justify-between">
                         <Typography variant="body-sm" shade="lighter">{{
                             $t({
                                 defaultMessage: 'Total excluding taxes',
@@ -78,7 +86,7 @@ const getPrice = (pricing: OnDemandPricing) =>
                             formatAmount(invoice.tax_summary.base_amount)
                         }}</Typography>
                     </div>
-                    <div class="flex items-center justify-between">
+                    <div class="sv-order-summary__tax-row flex items-center justify-between">
                         <Typography variant="body-sm" shade="lighter">{{
                             $t({
                                 defaultMessage: 'Taxes',
@@ -91,7 +99,7 @@ const getPrice = (pricing: OnDemandPricing) =>
                         }}</Typography>
                     </div>
                 </div>
-                <div class="flex items-center justify-between border-t pt-3">
+                <div class="sv-order-summary__total flex items-center justify-between border-t pt-3">
                     <Typography variant="body-sm" weight="semibold">{{
                         $t({
                             defaultMessage: 'Total due today',

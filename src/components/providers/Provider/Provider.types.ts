@@ -6,6 +6,7 @@ import type { PortalProviderProps } from '@/components/providers/PortalProvider/
 import type { AuthProviderProps } from '@/components/providers/AuthProvider';
 import type { ConfigProviderProps } from '@/components/providers/ConfigProvider/ConfigProvider.types';
 import type { TranslationProviderProps } from '@/components/providers/TranslationProvider/TranslationProvider.types';
+import type { CssOverridesProviderProps } from '@/components/providers/CssOverridesProvider/CssOverridesProvider.types';
 
 export interface RequiredProviderProps
     extends
@@ -16,7 +17,8 @@ export interface RequiredProviderProps
         ExperimentalFeatureProviderProps,
         LoggerProviderProps,
         Pick<PortalProviderProps, 'allowedPortalTypes' | 'portalObject'>,
-        HostElementProviderProps {}
+        HostElementProviderProps,
+        CssOverridesProviderProps {}
 export interface ProviderEmits {
     (e: 'error', error: Error): void;
 }

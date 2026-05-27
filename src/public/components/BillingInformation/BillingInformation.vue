@@ -19,16 +19,22 @@ const { dispatchAction } = useActionDispatchProvider();
     <Skeleton
         v-if="isLoading"
         variant="section"
-        class="min-h-[100px]"
+        class="sv-billing-information sv-root sv-component sv-loading min-h-[100px]"
         data-testid="billing-information-skeleton"
     />
-    <CustomerBillingInformation v-else :customer="customer" :fallback-to-reference="false">
+    <CustomerBillingInformation
+        v-else
+        class="sv-billing-information sv-root sv-component"
+        :customer="customer"
+        :fallback-to-reference="false"
+    >
         <template v-if="configuration.showEditButton" #settings>
             <Button
                 size="sm"
                 variant="ghost"
                 color="gray"
                 icon-prefix="edit"
+                class="sv-action sv-action--ghost sv-billing-information__edit"
                 @click="dispatchAction({ action: 'edit-billing-information' })"
                 >{{
                     $t({

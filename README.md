@@ -69,6 +69,31 @@ export default function Page() {
 }
 ```
 
+## CSS overrides
+
+Solvimon components render inside shadow DOM, so CSS from the host page cannot style them directly. Pass `cssOverrides` to `createSolvimonCore` to inject customer CSS into each SDK shadow root.
+
+```ts
+import { createSolvimonCore } from '@solvimon/solvimon-web/core';
+
+const solvimon = createSolvimonCore({
+    environment: 'TEST',
+    cssOverrides: `
+        .sv-root {
+            font-family: Inter, sans-serif;
+        }
+
+        .sv-checkout__submit {
+            border-radius: 24px !important;
+        }
+    `,
+});
+```
+
+Use the public `sv-*` classes as styling hooks. Do not rely on internal Tailwind utility classes, because those can change.
+
+For more details, see [`@solvimon/solvimon-web/core`](./src/public/core/README.md).
+
 ## Available components
 
 ### Screens

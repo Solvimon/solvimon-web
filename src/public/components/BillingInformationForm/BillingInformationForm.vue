@@ -7,6 +7,7 @@ defineProps<BillingInformationFormProps>();
 
 <template>
     <InternalBillingInformationForm
+        class="sv-billing-form sv-root sv-component"
         :customer="customer"
         :update-customer="updateCustomer"
         :is-loading="isLoading"

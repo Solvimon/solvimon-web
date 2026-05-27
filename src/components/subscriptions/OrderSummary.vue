@@ -341,6 +341,7 @@ const handleBinaryBillingToggle = (checked: boolean) => {
 
 <template>
     <Section
+        class="sv-order-summary"
         no-border
         no-spacing
         content-background="none"
@@ -355,9 +356,9 @@ const handleBinaryBillingToggle = (checked: boolean) => {
                   })
         "
     >
-        <div class="grid grid-cols-1 gap-1">
+        <div class="sv-order-summary__body grid grid-cols-1 gap-1">
             <!-- subscription summary -->
-            <Section no-spacing>
+            <Section no-spacing class="sv-order-summary__subscription">
                 <SubscriptionSummary
                     v-if="subscription"
                     :avatar="avatar"
@@ -379,7 +380,7 @@ const handleBinaryBillingToggle = (checked: boolean) => {
                 "
             >
                 <div class="px-3 py-2">
-                    <div class="flex flex-col gap-3">
+                    <div class="sv-order-summary__billing-period flex flex-col gap-3">
                         <PricingGroupContent
                             v-if="highOption"
                             :name="highOption.label"
@@ -410,6 +411,7 @@ const handleBinaryBillingToggle = (checked: boolean) => {
             <SelectExtended
                 v-else-if="billingPeriodOptions.length > 2"
                 v-model:single-model-value="selectedBillingPeriodKey"
+                class="sv-order-summary__billing-period"
                 :options="billingPeriodOptions"
                 size="xl"
                 has-large-dropdown
@@ -418,7 +420,7 @@ const handleBinaryBillingToggle = (checked: boolean) => {
             />
 
             <!-- usage based -->
-            <Section v-if="isUsageBased" no-spacing>
+            <Section v-if="isUsageBased" no-spacing class="sv-order-summary__usage">
                 <div class="px-3 py-2">
                     <Typography no-spacing variant="body-sm" shade="lighter">
                         {{
@@ -434,16 +436,15 @@ const handleBinaryBillingToggle = (checked: boolean) => {
             </Section>
 
             <!-- invoice groups preview -->
-            <InvoicePreviewGroups
-                v-if="invoice && variant !== 'products-inline'"
-                :invoice="invoice"
-                :wrapper-component="Section"
-            />
+            <div v-if="invoice && variant !== 'products-inline'" class="sv-order-summary__items">
+                <InvoicePreviewGroups :invoice="invoice" :wrapper-component="Section" />
+            </div>
 
             <!-- invoice totals preview -->
-            <Section>
+            <Section class="sv-order-summary__totals">
                 <InvoicePreview
                     v-if="invoice"
+                    class="sv-order-summary__invoice-preview"
                     :variant="variant === 'products-inline' ? 'default' : 'without-products'"
                     :invoice="invoice"
                     :trial-invoice="trialInvoice"
@@ -452,7 +453,7 @@ const handleBinaryBillingToggle = (checked: boolean) => {
                     :is-preview-without-taxes="!countryCode"
                     is-customer-facing
                 />
-                <Typography v-else variant="body-sm" shade="lighter"
+                <Typography v-else variant="body-sm" shade="lighter" class="sv-order-summary__empty"
                     >{{
                         $t({
                             defaultMessage: 'Please select a country first',

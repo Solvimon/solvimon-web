@@ -9,6 +9,7 @@ const { $t } = useIntl();
 
 <template>
     <Section
+        class="sv-subscription-schedules sv-root sv-component"
         no-border
         no-spacing
         content-background="none"
@@ -20,6 +21,6 @@ const { $t } = useIntl();
             })
         "
     >
-        <PricingPlanSchedules :schedules="schedulesData" />
+        <PricingPlanSchedules class="sv-subscription-schedules__list" :schedules="schedulesData" />
     </Section>
 </template>

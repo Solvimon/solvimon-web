@@ -22,6 +22,7 @@ const { dispatchAction } = useActionDispatchProvider();
 
 <template>
     <Section
+        class="sv-invoices-list sv-root sv-component"
         no-border
         no-spacing
         content-background="none"
@@ -34,6 +35,7 @@ const { dispatchAction } = useActionDispatchProvider();
         "
     >
         <InvoiceTable
+            class="sv-invoices-list__table"
             :configuration="configuration"
             :has-more-items="hasMoreItems"
             :invoices="invoices"

@@ -5,7 +5,7 @@ import {
     type PricingPlanSubscription,
 } from '@solvimon/solvimon-types';
 import { ref } from 'vue';
-import { isEqual } from '@/utils/comparison';
+import { isEqual } from '@solvimon/solvimon-ui';
 import { createPaymentMethodsService } from '@/services/paymentMethods';
 import type { GetPaymentMethodOptionsPayload } from '@/services/paymentMethods.types';
 import { useService } from '@/composables/useService';
@@ -14,7 +14,11 @@ export const usePaymentMethodOptions = () => {
     const cachedPayload = ref<GetPaymentMethodOptionsPayload>();
     const { getPaymentMethodOptions } = createPaymentMethodsService();
     const initialValue: PaymentMethodOptionsResponse = [];
-    const { data: paymentMethodOptions, execute, isPending } = useService({
+    const {
+        data: paymentMethodOptions,
+        execute,
+        isPending,
+    } = useService({
         initialValue,
         service: getPaymentMethodOptions,
     });

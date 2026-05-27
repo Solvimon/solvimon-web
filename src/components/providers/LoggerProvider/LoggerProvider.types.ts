@@ -46,7 +46,8 @@ export interface LoggerProviderProps {
 
 export type WarnCode =
     | 'ADYEN_INVALID_CONFIGURATION'
-    | 'APPLE_PAY_ACTION_REQUIRED';
+    | 'APPLE_PAY_ACTION_REQUIRED'
+    | 'TRANSLATION_LOAD_FAILED';
 
 export type ErrorCode =
     | 'UNHANDLED_ERROR'

@@ -6,8 +6,9 @@ import { useHostElementProvider } from '@/components/providers/HostElementProvid
 const props = defineProps<CssOverridesProviderProps>();
 const { hostRef } = useHostElementProvider();
 
-// Consumers can pass one CSS string or multiple CSS strings. We normalize that into one block.
-const cssText = computed(() => {
+// A customer can pass one CSS string or a list of CSS strings.
+// We turn that into one clean CSS block before injecting it.
+const normalizedCssOverrides = computed(() => {
     if (!props.cssOverrides) {
         return '';
     }
@@ -19,29 +20,14 @@ const cssText = computed(() => {
 
 let styleElement: HTMLStyleElement | undefined;
 
-// Remove the injected style tag when there is no CSS anymore or when this provider unmounts.
+// Remove our injected style tag when overrides are cleared or the SDK component unmounts.
 const removeStyleElement = () => {
     styleElement?.remove();
     styleElement = undefined;
 };
 
-watchEffect(() => {
-    // Customer CSS must be added inside the SDK shadow root, otherwise it cannot reach our UI.
-    // This only works while our custom elements use an open shadow root.
-    const root = hostRef.value?.shadowRoot;
-    const css = cssText.value;
-
-    // The SDK renders in shadow DOM, so overrides need to be placed inside that shadow root.
-    if (!root) {
-        return;
-    }
-
-    if (!css) {
-        removeStyleElement();
-        return;
-    }
-
-    // Append after the SDK styles so customer overrides win by normal CSS order.
+// Create the style tag once per shadow root and reuse it when the CSS changes.
+const getStyleElement = (root: ShadowRoot) => {
     if (!styleElement || styleElement.getRootNode() !== root) {
         removeStyleElement();
         styleElement = document.createElement('style');
@@ -49,7 +35,21 @@ watchEffect(() => {
         root.appendChild(styleElement);
     }
 
-    styleElement.textContent = css;
+    return styleElement;
+};
+
+watchEffect(() => {
+    // The SDK UI lives inside the custom element's shadow root.
+    // Customer CSS must be injected there, otherwise it cannot style our components.
+    const root = hostRef.value?.shadowRoot;
+    const css = normalizedCssOverrides.value;
+
+    if (!root || !css) {
+        removeStyleElement();
+        return;
+    }
+
+    getStyleElement(root).textContent = css;
 });
 
 onUnmounted(removeStyleElement);

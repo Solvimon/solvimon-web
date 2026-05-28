@@ -40,7 +40,9 @@ jobs:
                   fi
 
             - name: Publish to npm
-              run: npm publish --registry https://registry.npmjs.org/
+              run: |
+                  npm config set @solvimon:registry https://registry.npmjs.org/
+                  npm publish
               env:
                   NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
                   NPM_TOKEN: ${{ secrets.NPM_TOKEN }}

@@ -60,10 +60,11 @@ jobs:
                   echo "EOF" >> "$GITHUB_OUTPUT"
 
             - name: Create GitHub Release
+              env:
+                  GH_TOKEN: ${{ github.token }}
+                  RELEASE_NOTES: ${{ steps.changelog.outputs.notes }}
               run: |
                   gh release create "$GITHUB_REF_NAME" \
                     --title "$GITHUB_REF_NAME" \
-                    --notes "${{ steps.changelog.outputs.notes }}" \
+                    --notes "$RELEASE_NOTES" \
                     --verify-tag
-              env:
-                  GH_TOKEN: ${{ github.token }}

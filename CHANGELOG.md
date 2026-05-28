@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0-alpha.9] - 2026-05-28
+
+### Added
+
+- Added structured error and warning logging with log-level control via the `logLevel` prop.
+- Added `useWatchAsync` composable for watching async operations with reactive loading state.
+- Added support for custom CSS class overrides on SDK components.
+- Added comprehensive SDK documentation for error codes, warnings, and component usage.
+
+### Changed
+
+- Logger now emits structured log lines instead of raw `console` calls, making it easier to integrate with external log collectors.
+- Default log level changed from `info` to `warn` to reduce noise in production.
+- Adyen CSS is now loaded lazily via a `<link>` tag injected into the shadow root, avoiding a blocking stylesheet request on page load.
+
+### Fixed
+
+- Fixed translation loading when used with the async guard pattern.
+- Fixed a structured-clone bug that caused computed objects to be incorrectly shared across instances.
+
 ## [0.1.0-alpha.8] - 2026-05-22
 
 ### Added
@@ -94,7 +114,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial alpha release.
 
-[Unreleased]: https://github.com/Solvimon/solvimon-web/compare/v0.1.0-alpha.7...HEAD
+[Unreleased]: https://github.com/Solvimon/solvimon-web/compare/v0.1.0-alpha.9...HEAD
+[0.1.0-alpha.9]: https://github.com/Solvimon/solvimon-web/compare/v0.1.0-alpha.8...v0.1.0-alpha.9
+[0.1.0-alpha.8]: https://github.com/Solvimon/solvimon-web/compare/v0.1.0-alpha.7...v0.1.0-alpha.8
 [0.1.0-alpha.7]: https://github.com/Solvimon/solvimon-web/compare/v0.1.0-alpha.6...v0.1.0-alpha.7
 [0.1.0-alpha.6]: https://github.com/Solvimon/solvimon-web/compare/v0.1.0-alpha.5...v0.1.0-alpha.6
 [0.1.0-alpha.5]: https://github.com/Solvimon/solvimon-web/compare/v0.1.0-alpha.4...v0.1.0-alpha.5

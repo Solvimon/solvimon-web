@@ -26,6 +26,7 @@ function handleSelect({
     paymentMethodType: string;
 }) {
     showIntegrationError.value = false;
+    selectedIntegration.value = paymentGatewayVariant;
     emit('select', { paymentGatewayVariant, paymentMethodType });
 }
 

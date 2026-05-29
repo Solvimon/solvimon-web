@@ -138,9 +138,9 @@ async function mountDropIn() {
         await unmountDropIn();
 
         // Dynamically import Adyen SDK and styles to enable code splitting
-        const [adyenModule, { default: adyenCssUrl }] = await Promise.all([
+        const [adyenModule, { default: adyenCss }] = await Promise.all([
             import('@adyen/adyen-web'),
-            import('@adyen/adyen-web/styles/adyen.css?url'),
+            import('@adyen/adyen-web/styles/adyen.css?inline'),
         ]);
         const {
             AdyenCheckout,
@@ -193,7 +193,7 @@ async function mountDropIn() {
             ],
         }).mount(dropInContainerRef.value);
 
-        injectStylesToShadowRoot(adyenCssUrl);
+        injectStylesToShadowRoot(adyenCss);
     } catch (error) {
         logger.error(
             'PAYMENT_INTEGRATION_INITIALIZATION_FAILED',
@@ -213,14 +213,12 @@ async function unmountDropIn() {
     }
 }
 
-function injectStylesToShadowRoot(adyenCssUrl: string) {
+function injectStylesToShadowRoot(adyenCss: string) {
     const root = dropInContainerRef.value?.getRootNode();
     if (root instanceof ShadowRoot) {
-        // Inject Adyen default styles via link so the browser can cache the file
-        const link = document.createElement('link');
-        link.rel = 'stylesheet';
-        link.href = adyenCssUrl;
-        root.appendChild(link);
+        const adyenStyle = document.createElement('style');
+        adyenStyle.textContent = adyenCss;
+        root.appendChild(adyenStyle);
 
         // Inject custom overrides as an inline style
         const style = document.createElement('style');

@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0-alpha.10] - 2026-05-29
+
+### Changed
+
+- Adyen CSS is now inlined into the bundle instead of loaded via a `<link>` tag, fixing a MIME-type error in consumer apps that don't serve static assets from the SDK.
+
 ## [0.1.0-alpha.9] - 2026-05-28
 
 ### Added

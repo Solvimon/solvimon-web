@@ -8,7 +8,7 @@ on:
             - package.json
 
 permissions:
-    contents: read
+    contents: write
 
 jobs:
     create-release-tag:
@@ -60,17 +60,60 @@ jobs:
 
             - name: Create release tag
               if: steps.version.outputs.changed == 'true'
-              env:
-                  SOLVIMON_WEB_RELEASE_TOKEN: ${{ secrets.SOLVIMON_WEB_RELEASE_TOKEN }}
               run: |
                   tag_name="v${{ steps.version.outputs.current }}"
-
-                  if [ -z "$SOLVIMON_WEB_RELEASE_TOKEN" ]; then
-                      echo "SOLVIMON_WEB_RELEASE_TOKEN is required to create tags that trigger the release workflow."
-                      exit 1
-                  fi
 
                   git config user.name "github-actions[bot]"
                   git config user.email "github-actions[bot]@users.noreply.github.com"
                   git tag "$tag_name" -m "Release $tag_name"
-                  git push "https://x-access-token:${SOLVIMON_WEB_RELEASE_TOKEN}@github.com/${{ github.repository }}.git" "refs/tags/$tag_name"
+                  git push origin "refs/tags/$tag_name"
+
+            - uses: actions/setup-node@v6
+              if: steps.version.outputs.changed == 'true'
+              with:
+                  node-version-file: package.json
+                  cache: npm
+                  registry-url: https://registry.npmjs.org/
+
+            - name: Authenticate GitLab npm registry
+              if: steps.version.outputs.changed == 'true'
+              run: npm config set //gitlab.com/api/v4/projects/38958827/packages/npm/:_authToken ${{ secrets.GITLAB_NPM_TOKEN }}
+
+            - name: Install dependencies
+              if: steps.version.outputs.changed == 'true'
+              run: npm ci
+              env:
+                  GITLAB_NPM_TOKEN: ${{ secrets.GITLAB_NPM_TOKEN }}
+
+            - name: Publish to npm
+              if: steps.version.outputs.changed == 'true'
+              run: |
+                  npm config delete --location project @solvimon:registry
+                  npm publish
+              env:
+                  NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+                  NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+            - name: Extract changelog section
+              if: steps.version.outputs.changed == 'true'
+              id: changelog
+              run: |
+                  version="${{ steps.version.outputs.current }}"
+                  notes=$(awk -v ver="[$version]" '
+                    /^## \[/ { if (found) exit; if (index($0, ver)) found=1; next }
+                    found { print }
+                  ' CHANGELOG.md)
+                  echo "notes<<EOF" >> "$GITHUB_OUTPUT"
+                  echo "$notes" >> "$GITHUB_OUTPUT"
+                  echo "EOF" >> "$GITHUB_OUTPUT"
+
+            - name: Create GitHub Release
+              if: steps.version.outputs.changed == 'true'
+              env:
+                  GH_TOKEN: ${{ github.token }}
+                  RELEASE_NOTES: ${{ steps.changelog.outputs.notes }}
+              run: |
+                  gh release create "v${{ steps.version.outputs.current }}" \
+                    --title "v${{ steps.version.outputs.current }}" \
+                    --notes "$RELEASE_NOTES" \
+                    --verify-tag

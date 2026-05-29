@@ -255,15 +255,12 @@ describe('PayInvoice', () => {
         expect(wrapper.find('button').attributes('disabled')).toBeUndefined();
     });
 
-    it('shows "Select a payment method" error when the pay button is clicked', async () => {
+    it('shows "Select a payment method" error when submitted without selecting a payment method', async () => {
         const wrapper = mountComponent();
         await waitForAdyenMount();
 
-        const [, dropInConfig] = MockDropIn.mock.calls[0];
-        dropInConfig.onSelect({ props: { type: 'scheme' } });
+        await wrapper.findComponent({ name: 'PaymentIntegrationForm' }).vm.submit();
         await nextTick();
-
-        await wrapper.find('button').trigger('click');
 
         expect(wrapper.text()).toContain('Select a payment method');
     });

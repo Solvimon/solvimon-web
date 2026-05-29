@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0-alpha.12] - 2026-05-29
+
+### Fixed
+
+- Fixed the payment button remaining disabled after selecting a payment method in the drop-in.
+
 ## [0.1.0-alpha.11] - 2026-05-29
 
 ### Fixed

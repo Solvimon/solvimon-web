@@ -371,16 +371,6 @@ function handleOnSubmit(
                     .then((paymentResult) => {
                         const paymentMethodType = state.data.paymentMethod.type;
 
-                        if (['FAILURE', 'REFUSED'].includes(paymentResult.status)) {
-                            logger.error(
-                                'PAYMENT_AUTHORIZATION_FAILED',
-                                `Failed payment authorization for payment acceptor with id ${paymentAcceptorId}`,
-                                { error: paymentResult },
-                            );
-                            actions.resolve({ resultCode: 'Error' });
-                            return;
-                        }
-
                         if (
                             paymentResult.status === 'ACTION_REQUIRED' &&
                             paymentResult.action.payment_gateway_variant ===
@@ -409,8 +399,18 @@ function handleOnSubmit(
                             return;
                         }
 
-                        showPaymentSuccess.value = true;
-                        actions.resolve({ resultCode: 'Authorised' });
+                        if (paymentResult.payment.result === 'AUTHORIZED') {
+                            showPaymentSuccess.value = true;
+                            actions.resolve({ resultCode: 'Authorised' });
+                            return;
+                        }
+
+                        logger.error(
+                            'PAYMENT_AUTHORIZATION_FAILED',
+                            `Failed payment authorization for payment acceptor with id ${paymentAcceptorId}`,
+                            { error: paymentResult },
+                        );
+                        actions.resolve({ resultCode: 'Error' });
                     })
                     .catch((error) => {
                         logger.error(
@@ -447,16 +447,6 @@ function handleOnSubmit(
                     .then((paymentResult) => {
                         const paymentMethodType = state.data.paymentMethod.type;
 
-                        if (['FAILURE', 'REFUSED'].includes(paymentResult.status)) {
-                            logger.error(
-                                'TOKENIZATION_FAILED',
-                                `Tokenization failed for payment acceptor with id ${paymentAcceptorId}`,
-                                { error: paymentResult },
-                            );
-                            actions.resolve({ resultCode: 'Error' });
-                            return;
-                        }
-
                         if (
                             paymentResult.status === 'ACTION_REQUIRED' &&
                             paymentResult.action.payment_gateway_variant ===
@@ -485,8 +475,18 @@ function handleOnSubmit(
                             return;
                         }
 
-                        showPaymentSuccess.value = true;
-                        actions.resolve({ resultCode: 'Authorised' });
+                        if (paymentResult.payment.result === 'AUTHORIZED') {
+                            showPaymentSuccess.value = true;
+                            actions.resolve({ resultCode: 'Authorised' });
+                            return;
+                        }
+
+                        logger.error(
+                            'TOKENIZATION_FAILED',
+                            `Tokenization failed for payment acceptor with id ${paymentAcceptorId}`,
+                            { error: paymentResult },
+                        );
+                        actions.resolve({ resultCode: 'Error' });
                     })
                     .catch((error) => {
                         logger.error(

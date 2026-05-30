@@ -88,6 +88,25 @@ describe('useWatchDebounced', () => {
         expect(callback).toHaveBeenNthCalledWith(2, 2, 1);
     });
 
+    it('triggers the callback when a nested property changes with deep: true', async () => {
+        const callback = vi.fn();
+        const source = ref({ count: 0 });
+
+        const Wrapper = defineComponent({
+            setup() {
+                useWatchDebounced(() => source.value, callback, { debounce: 200, deep: true });
+            },
+            render: () => h('div'),
+        });
+        mount(Wrapper);
+
+        source.value.count = 1;
+        await nextTick();
+        vi.advanceTimersByTime(200);
+
+        expect(callback).toHaveBeenCalledOnce();
+    });
+
     it('does not call the callback after the component is unmounted', async () => {
         const callback = vi.fn();
         const source = ref(0);

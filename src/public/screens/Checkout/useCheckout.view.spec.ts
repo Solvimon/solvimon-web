@@ -128,6 +128,7 @@ vi.mock('@/utils/pricingPlanSchedule', () => ({
     getScheduleCustomizations: mockGetScheduleCustomizations,
 }));
 
+
 describe('useCheckoutView', () => {
     const mockSubscription: PricingPlanSubscriptionExpanded = {
         id: 'sub_123' as PricingPlanSubscription['id'],

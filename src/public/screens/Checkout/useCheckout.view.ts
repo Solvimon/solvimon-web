@@ -321,15 +321,19 @@ export function useCheckoutView({
         }
     });
 
-    watch(shouldLoadPaymentMethodOptions, (shouldLoad) => {
-        if (shouldLoad) {
-            void loadPaymentMethodOptions({
-                subscriptionId: subscription.value!.id,
-                country: checkoutForm.form.value.country!,
-                amount: amount.value,
-            });
-        }
-    }, { once: true });
+    watch(
+        shouldLoadPaymentMethodOptions,
+        (shouldLoad) => {
+            if (shouldLoad) {
+                void loadPaymentMethodOptions({
+                    subscriptionId: subscription.value!.id,
+                    country: checkoutForm.form.value.country!,
+                    amount: amount.value,
+                });
+            }
+        },
+        { once: true },
+    );
 
     return {
         invoicePreview: invoicePreview.invoicePreview,

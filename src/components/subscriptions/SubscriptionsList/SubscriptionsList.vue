@@ -11,6 +11,7 @@ const props = withDefaults(defineProps<SubscriptionsListProps>(), {
     showViewDetailsButton: true,
     showCancelButton: true,
     showRenewButton: true,
+    showUpgradeButton: true,
 });
 defineEmits<SubscriptionsListEmits>();
 
@@ -95,9 +96,11 @@ const isViewAllButtonVisible = computed<boolean>(() => props.showViewAllButton);
                 :show-view-subscription-details-button="showViewDetailsButton"
                 :show-cancel-subscription-button="showCancelButton"
                 :show-renew-subscription-button="showRenewButton"
+                :show-upgrade-subscription-button="showUpgradeButton"
                 @view-subscription-details="$emit('view-subscription-details', $event)"
                 @cancel-subscription="$emit('cancel-subscription', $event)"
                 @renew-subscription="$emit('renew-subscription', $event)"
+                @upgrade-subscription="$emit('upgrade-subscription', $event)"
             />
         </div>
     </Section>

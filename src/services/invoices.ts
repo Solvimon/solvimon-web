@@ -12,6 +12,12 @@ import { createRequestService } from './requests';
 import type { GetInvoicePreviewPayload } from './invoices.types';
 import { useConfig } from '@/components/providers/ConfigProvider/composables/useConfig';
 
+interface ChargeOnDemandPricingItemsPreviewPayload {
+    pricingPlanScheduleId: PricingPlanSchedule['id'];
+    pricingItemIds: string[];
+    startAt?: string;
+}
+
 interface InvoicesService {
     getInvoice: (invoiceId: Invoice['id']) => Promise<Invoice>;
     getInvoices: (args: {
@@ -31,6 +37,9 @@ interface InvoicesService {
         startAt?: PricingPlanSchedule['start_at'];
         customizations?: PricingPlanScheduleCustomization[];
     }) => Promise<InvoicePreview>;
+    previewChargeOnDemandPricingItems: (
+        args: ChargeOnDemandPricingItemsPreviewPayload,
+    ) => Promise<Invoice>;
 }
 
 export function createInvoicesService(): InvoicesService {
@@ -133,10 +142,30 @@ export function createInvoicesService(): InvoicesService {
         });
     }
 
+    function previewChargeOnDemandPricingItems({
+        pricingPlanScheduleId,
+        pricingItemIds,
+        startAt,
+    }: ChargeOnDemandPricingItemsPreviewPayload) {
+        return request<Invoice>({
+            url: `${config.apiUrls.transaction}/portal/invoices/charge-on-demand-pricing-items`,
+            options: { method: 'POST' },
+            data: {
+                pricing_plan_schedule_id: pricingPlanScheduleId,
+                pricing_items: pricingItemIds.map((pricingItemId) => ({
+                    pricing_item_id: pricingItemId,
+                })),
+                ...(startAt ? { start_at: startAt } : {}),
+                preview: true,
+            },
+        });
+    }
+
     return {
         getInvoice,
         getInvoices,
         getInvoicePdf,
         getInvoicePreview,
+        previewChargeOnDemandPricingItems,
     };
 }

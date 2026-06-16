@@ -28,6 +28,7 @@ const { dispatchAction } = useActionDispatchProvider();
         :show-view-details-button="configuration?.showViewDetailsButton"
         :show-cancel-button="configuration?.showCancelButton"
         :show-renew-button="configuration?.showRenewButton"
+        :show-upgrade-button="configuration?.showUpgradeButton"
         @view-subscription-details="
             dispatchAction({
                 action: 'view-subscription-details',
@@ -44,6 +45,12 @@ const { dispatchAction } = useActionDispatchProvider();
         @renew-subscription="
             dispatchAction({
                 action: 'renew-subscription',
+                data: { subscriptionId: $event.subscriptionId },
+            })
+        "
+        @upgrade-subscription="
+            dispatchAction({
+                action: 'upgrade-subscription',
                 data: { subscriptionId: $event.subscriptionId },
             })
         "

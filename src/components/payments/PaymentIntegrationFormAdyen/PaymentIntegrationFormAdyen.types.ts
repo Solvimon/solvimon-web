@@ -1,11 +1,11 @@
 import type {
     Amount,
-    AuthorizePaymentPayload,
     Customer,
     Invoice,
     PaymentGatewayVariant,
     PaymentMethodOptionResponseEntry,
 } from '@solvimon/solvimon-types';
+import type { PaymentAuthorizationContext } from '@/components/payments/PaymentIntegrationForm/PaymentIntegrationForm.types';
 import type { Error } from '@/types/errors';
 
 export interface PaymentIntegrationFormAdyenProps {
@@ -17,7 +17,7 @@ export interface PaymentIntegrationFormAdyenProps {
     selected: boolean;
     amount: Amount;
     validateOnSubmit?: () => Promise<boolean>;
-    context: AuthorizePaymentPayload['context'];
+    context: PaymentAuthorizationContext;
     forceStorePaymentMethod?: boolean;
 }
 

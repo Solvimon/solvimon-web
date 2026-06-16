@@ -7,6 +7,7 @@ import PricingGroupContent from '@/components/subscriptions/PlanCustomizationFor
 const props = defineProps<{
     pricing: OnDemandPricing;
     selected: boolean;
+    loading?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -15,8 +16,18 @@ const emit = defineEmits<{
 
 const { $t } = useIntl();
 
-const title = computed(() => props.pricing.name ?? props.pricing.products?.[0]?.name ?? '—');
-const price = computed(() => props.pricing.items?.[0]?.configs?.[0]?.bands?.[0]?.fixed_amount);
+const title = computed(
+    () =>
+        props.pricing.name ??
+        props.pricing.items?.[0]?.product_items?.[0]?.name ??
+        props.pricing.products?.[0]?.name ??
+        '—',
+);
+const price = computed(() => {
+    const band = props.pricing.items?.[0]?.configs?.[0]?.bands?.[0];
+    // Backend uses fixed_amount for FIXED pricing and amount for FLAT pricing.
+    return band?.fixed_amount ?? band?.amount;
+});
 const description = computed(() =>
     price.value
         ? `${formatAmount(price.value)} ${$t({
@@ -29,7 +40,14 @@ const description = computed(() =>
 </script>
 
 <template>
-    <Section :content-background="selected ? 'none' : 'gray'" :class="{ '!bg-white': selected }">
+    <Section
+        :content-background="selected ? 'none' : 'gray'"
+        :content-classes="
+            selected
+                ? '!border-primary-600 ring-1 ring-primary-600'
+                : undefined
+        "
+    >
         <PricingGroupContent :name="title" :description="description">
             <template #default>
                 <Button
@@ -38,6 +56,7 @@ const description = computed(() =>
                     variant="outline"
                     size="sm"
                     icon-prefix="remove_shopping_cart"
+                    :loading="loading"
                     @click="emit('toggle', pricing.id)"
                 >
                     {{
@@ -53,6 +72,7 @@ const description = computed(() =>
                     color="primary"
                     size="sm"
                     icon-prefix="add"
+                    :loading="loading"
                     @click="emit('toggle', pricing.id)"
                 >
                     {{

@@ -37,6 +37,11 @@ export interface ActionRequestDetailRenewSubscription extends ActionRequestDetai
     data: { subscriptionId: string };
 }
 
+export interface ActionRequestDetailUpgradeSubscription extends ActionRequestDetailBase {
+    action: 'upgrade-subscription';
+    data: { subscriptionId: string };
+}
+
 export interface ActionRequestDetailViewAllPaymentMethods extends ActionRequestDetailBase {
     action: 'view-all-payment-methods';
 }
@@ -49,6 +54,10 @@ export interface ActionRequestDetailEditBillingInformation extends ActionRequest
     action: 'edit-billing-information';
 }
 
+export interface ActionRequestDetailNavigateToCustomerOverview extends ActionRequestDetailBase {
+    action: 'navigate-to-customer-overview';
+}
+
 export type ActionRequestDetail =
     | ActionRequestDetailViewInvoice
     | ActionRequestDetailPayInvoice
@@ -56,8 +65,10 @@ export type ActionRequestDetail =
     | ActionRequestDetailViewAllSubscriptions
     | ActionRequestDetailCancelSubscription
     | ActionRequestDetailRenewSubscription
+    | ActionRequestDetailUpgradeSubscription
     | ActionRequestDetailViewAllPaymentMethods
     | ActionRequestDetailAddPaymentMethod
-    | ActionRequestDetailEditBillingInformation;
+    | ActionRequestDetailEditBillingInformation
+    | ActionRequestDetailNavigateToCustomerOverview;
 
 export type RequestActionEvent = CustomEvent<RequestAction>;

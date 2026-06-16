@@ -1,6 +1,7 @@
 import type { Invoice } from '@solvimon/solvimon-types';
 import { createRequestService } from './requests';
 import { useConfig } from '@/components/providers/ConfigProvider/composables/useConfig';
+import type { OnDemandPricingItemsResponse } from '@/components/subscriptions/UpgradeSubscription/UpgradeSubscription.types';
 
 export interface ChargeOnDemandPricingItemsPayload {
     scheduleId: string;
@@ -17,9 +18,26 @@ export interface ChargeOnDemandPricingItemsPayload {
     paymentMethodId?: string;
 }
 
+export interface GetOnDemandPricingItemsPayload {
+    scheduleId: string;
+}
+
 export function createPricingPlanSchedulesService() {
     const request = createRequestService();
     const config = useConfig();
+
+    /**
+     * GET /v1/portal/pricing-plan-schedules/{id}/on-demand-pricing-items
+     *
+     * Returns on-demand add-ons available for the pricing plan schedule.
+     */
+    function getOnDemandPricingItems({
+        scheduleId,
+    }: GetOnDemandPricingItemsPayload): Promise<OnDemandPricingItemsResponse> {
+        return request<OnDemandPricingItemsResponse>({
+            url: `${config.apiUrls.config}/portal/pricing-plan-schedules/${scheduleId}/on-demand-pricing-items`,
+        });
+    }
 
     /**
      * POST /v1/portal/pricing-plan-schedules/{id}/charge-on-demand-pricing-items
@@ -48,5 +66,8 @@ export function createPricingPlanSchedulesService() {
         });
     }
 
-    return { chargeOnDemandPricingItems };
+    return {
+        chargeOnDemandPricingItems,
+        getOnDemandPricingItems,
+    };
 }

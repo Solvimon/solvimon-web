@@ -7,8 +7,13 @@ import type {
 } from '@solvimon/solvimon-types';
 import { createRequestService } from './requests';
 import { useConfig } from '@/components/providers/ConfigProvider/composables/useConfig';
+import type { PaymentAuthorizationContext } from '@/components/payments/PaymentIntegrationForm/PaymentIntegrationForm.types';
 
 const BASE_URL = '/portal/payments';
+
+type AuthorizePaymentRequestPayload = Omit<AuthorizePaymentPayload, 'context'> & {
+    context?: PaymentAuthorizationContext;
+};
 
 export const createPaymentsService = () => {
     const request = createRequestService();
@@ -58,7 +63,7 @@ export const createPaymentsService = () => {
     /**
      * Authorize a payment.
      */
-    function authorizePayment(data: AuthorizePaymentPayload) {
+    function authorizePayment(data: AuthorizePaymentRequestPayload) {
         return request<AuthorizePaymentResponse>({
             url: `${config.apiUrls.transaction}${BASE_URL}/authorize`,
             options: {

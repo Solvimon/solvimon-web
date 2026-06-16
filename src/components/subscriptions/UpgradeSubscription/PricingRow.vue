@@ -25,7 +25,7 @@ const pricingItemId = computed(() => props.pricing.items?.[0]?.id);
         class="sv-pricing-list__row flex items-center justify-between gap-3 border-b p-1.5 transition-colors last:border-b-0"
         :class="
             selected
-                ? 'sv-pricing-list__row--selected border-primary/80 bg-white shadow-[inset_0_0_0_1px_var(--sm-color-primary)]'
+                ? 'sv-pricing-list__row--selected border-primary-600 bg-white ring-1 ring-primary-600'
                 : 'border-gray-200 bg-white'
         "
     >

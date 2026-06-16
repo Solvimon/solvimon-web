@@ -309,7 +309,7 @@
   },
   "customer.subscriptions_block.cancel_button_label": {
     "defaultMessage": "Cancel subscription",
-    "description": "The label for the cancel subscription button in the subscriptions block"
+    "description": "Aria label for the cancel subscription icon button"
   },
   "customer.subscriptions_block.next_billing_date": {
     "defaultMessage": "Next billing date",
@@ -322,6 +322,10 @@
   "customer.subscriptions_block.show_details_button_label": {
     "defaultMessage": "Subscription details",
     "description": "The label for the subscription details button in the subscriptions block"
+  },
+  "customer.subscriptions_block.upgrade_button_label": {
+    "defaultMessage": "Upgrade subscription",
+    "description": "The label for the upgrade subscription button in the subscriptions block"
   },
   "customer_overview.billing_information_block.load_failed.subtitle": {
     "defaultMessage": "Please refresh or contact support.",
@@ -434,6 +438,10 @@
   "invoices_list.title": {
     "defaultMessage": "Schedules",
     "description": "Invoices list title"
+  },
+  "on_demand_pricing_list.category_fallback_title": {
+    "defaultMessage": "Items",
+    "description": "Fallback title for the selectable pricing items when no product category name is available"
   },
   "on_demand_pricing_row.add_to_cart_button_label": {
     "defaultMessage": "Add to cart",
@@ -592,36 +600,48 @@
     "description": "The message shown when the VAT number is valid"
   },
   "upgrade_subscription.empty_state": {
-    "defaultMessage": "No on-demand add-ons are available for this subscription.",
-    "description": "Shown when there are no on-demand add-ons available for the subscription"
+    "defaultMessage": "No one-off items are available for this subscription.",
+    "description": "Shown when there are no one-off items available for the subscription"
   },
-  "upgrade_subscription.kpi.encrypted_payments.label": {
-    "defaultMessage": "Secure and encrypted payments",
-    "description": "The encrypted payments KPI shown on the upgrade subscription page"
+  "upgrade_subscription.load_error": {
+    "defaultMessage": "Unable to load items. Please try again later.",
+    "description": "Error message shown when the one-off items cannot be loaded on the upgrade subscription page"
   },
   "upgrade_subscription.order_summary.empty_state": {
-    "defaultMessage": "Select add-ons to see pricing.",
-    "description": "Placeholder shown when no add-ons are selected in the order summary"
+    "defaultMessage": "Select your items",
+    "description": "Placeholder shown when no items are selected in the order summary"
+  },
+  "upgrade_subscription.order_summary.item_count": {
+    "defaultMessage": "{count} items",
+    "description": "Subtitle shown below the product name when multiple one-off items are selected"
   },
   "upgrade_subscription.order_summary.one_off_label": {
     "defaultMessage": "one-off",
     "description": "One-off payment label next to a line item in order summary"
   },
-  "upgrade_subscription.order_summary.subtotal_label": {
-    "defaultMessage": "Total excluding taxes",
-    "description": "Subtotal before tax label in order summary"
+  "upgrade_subscription.order_summary.selected_item_count": {
+    "defaultMessage": "{count} items",
+    "description": "Temporary order summary subtitle shown while the invoice preview is loading"
   },
-  "upgrade_subscription.order_summary.taxes_label": {
-    "defaultMessage": "Taxes",
-    "description": "Tax amount label in order summary"
+  "upgrade_subscription.order_summary.selected_items_title": {
+    "defaultMessage": "Selected items",
+    "description": "Temporary order summary title shown while the invoice preview is loading"
   },
   "upgrade_subscription.order_summary.title": {
     "defaultMessage": "Order summary",
     "description": "Title for the order summary section on the upgrade subscription page"
   },
-  "upgrade_subscription.order_summary.total_label": {
-    "defaultMessage": "Total due today",
-    "description": "Total amount due today label in order summary"
+  "upgrade_subscription.payment_method_block.no_payment_methods_available_message": {
+    "defaultMessage": "There are no available payment methods. Please contact support for more information.",
+    "description": "The message shown when there are no available payment methods"
+  },
+  "upgrade_subscription.payment_method_block.no_payment_methods_available_title": {
+    "defaultMessage": "No payment methods available",
+    "description": "The title shown when there are no available payment methods"
+  },
+  "upgrade_subscription.payment_method_block.title": {
+    "defaultMessage": "Payment method",
+    "description": "The title of the payment method block in the upgrade subscription flow"
   },
   "upgrade_subscription.payment_picker.all_title": {
     "defaultMessage": "All payment methods",
@@ -630,6 +650,10 @@
   "upgrade_subscription.payment_picker.saved_title": {
     "defaultMessage": "Saved payment methods",
     "description": "Heading for the saved payment methods section in the upgrade subscription payment picker"
+  },
+  "upgrade_subscription.preview_error": {
+    "defaultMessage": "Unable to calculate the total. Please try again.",
+    "description": "Error message shown when the upgrade subscription invoice preview cannot be loaded"
   },
   "upgrade_subscription.pricing_row.add_button_label": {
     "defaultMessage": "Add to cart",
@@ -651,13 +675,21 @@
     "defaultMessage": "Something went wrong. Please try again.",
     "description": "Error message shown when the purchase call fails on the upgrade subscription page"
   },
+  "upgrade_subscription.success.redirect": {
+    "defaultMessage": "You will be redirected shortly…",
+    "description": "Shown below the success message while the redirect timer is running"
+  },
   "upgrade_subscription.success.subtitle": {
-    "defaultMessage": "Your add-ons have been activated.",
-    "description": "Subtitle shown after a successful add-on purchase"
+    "defaultMessage": "Your purchase has been completed.",
+    "description": "Subtitle shown after a successful upgrade purchase"
   },
   "upgrade_subscription.success.title": {
     "defaultMessage": "Payment successful",
-    "description": "Title shown after a successful add-on purchase"
+    "description": "Title shown after a successful upgrade purchase"
+  },
+  "upgrade_subscription.title": {
+    "defaultMessage": "Upgrade subscription",
+    "description": "Title for the upgrade subscription page"
   },
   "wallet_balance.credit_type_fallback_label": {
     "defaultMessage": "Credits",

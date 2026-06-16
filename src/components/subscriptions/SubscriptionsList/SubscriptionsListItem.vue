@@ -20,7 +20,7 @@ const props = withDefaults(defineProps<SubscriptionsListItemProps>(), {
     showRenewSubscriptionButton: true,
     showUpgradeSubscriptionButton: true,
 });
-const emit = defineEmits<SubscriptionsListItemEmits>();
+defineEmits<SubscriptionsListItemEmits>();
 
 const { $t } = useIntl();
 const { formatDate } = useIntl();
@@ -125,7 +125,7 @@ const isDetailButtonVisible = computed<boolean>(() => props.showViewSubscription
                     color="primary"
                     class="sv-action sv-action--primary sv-subscriptions-list__item-details w-full md:w-auto"
                     type="button"
-                    @click="emit('view-subscription-details', { subscriptionId: subscription.id })"
+                    @click="$emit('view-subscription-details', { subscriptionId: subscription.id })"
                 >
                     {{
                         $t({
@@ -142,7 +142,7 @@ const isDetailButtonVisible = computed<boolean>(() => props.showViewSubscription
                     color="gray"
                     class="sv-action sv-action--secondary sv-subscriptions-list__item-upgrade w-full md:w-auto"
                     type="button"
-                    @click="emit('upgrade-subscription', { subscriptionId: subscription.id })"
+                    @click="$emit('upgrade-subscription', { subscriptionId: subscription.id })"
                 >
                     {{
                         $t({
@@ -168,7 +168,7 @@ const isDetailButtonVisible = computed<boolean>(() => props.showViewSubscription
                             id: 'customer.subscriptions_block.cancel_button_label',
                         })
                     "
-                    @click="emit('cancel-subscription', { subscriptionId: subscription.id })"
+                    @click="$emit('cancel-subscription', { subscriptionId: subscription.id })"
                 />
                 <Button
                     v-if="isRenewButtonVisible"
@@ -176,7 +176,7 @@ const isDetailButtonVisible = computed<boolean>(() => props.showViewSubscription
                     color="gray"
                     class="sv-action sv-action--secondary sv-subscriptions-list__item-renew w-full md:w-auto"
                     type="button"
-                    @click="emit('renew-subscription', { subscriptionId: subscription.id })"
+                    @click="$emit('renew-subscription', { subscriptionId: subscription.id })"
                 >
                     {{
                         $t({

@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref, watch, onUnmounted } from 'vue';
+import { ref, watch, onMounted, onUnmounted } from 'vue';
+import type { ActionRequestDetail } from '@solvimon/solvimon-web/core';
 import type { StoryEntry } from '../registry';
 
 const props = defineProps<{
@@ -99,6 +100,39 @@ watch([() => props.entry, () => props.portalObject, appliedConfig, container], m
 });
 
 onUnmounted(() => unmount?.());
+
+// ---------------------------------------------------------------------------
+// Action log
+// ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// Action log — captures action-request events fired by SDK components so
+// playground users can see what actions their integration would need to handle
+// (e.g. navigate-to-customer-overview, upgrade-subscription). Capped at 20
+// entries to avoid unbounded growth during a session.
+// ---------------------------------------------------------------------------
+type ActionLogEntry = { id: number; action: string; data: string; ts: string };
+const actionLog = ref<ActionLogEntry[]>([]);
+let actionLogId = 0;
+
+function isActionRequestEvent(event: Event): event is CustomEvent<ActionRequestDetail> {
+    return event instanceof CustomEvent;
+}
+
+function handleActionRequest(event: Event) {
+    if (!isActionRequestEvent(event)) return;
+    const detail = event.detail;
+    actionLog.value.unshift({
+        id: ++actionLogId,
+        action: detail.action,
+        data: 'data' in detail ? JSON.stringify(detail.data) : '—',
+        ts: new Date().toLocaleTimeString(),
+    });
+    if (actionLog.value.length > 20) actionLog.value.pop();
+}
+
+onMounted(() => document.addEventListener('action-request', handleActionRequest));
+onUnmounted(() => document.removeEventListener('action-request', handleActionRequest));
 </script>
 
 <template>
@@ -117,6 +151,17 @@ onUnmounted(() => unmount?.());
             </div>
             <div v-else ref="container" class="mount-root" />
         </div>
+
+        <aside v-if="actionLog.length > 0" class="action-log-panel">
+            <p class="config-panel-label">Action log</p>
+            <div class="action-log-entries">
+                <div v-for="entry in actionLog" :key="entry.id" class="action-log-entry">
+                    <span class="action-log-ts">{{ entry.ts }}</span>
+                    <span class="action-log-action">{{ entry.action }}</span>
+                    <span class="action-log-data">{{ entry.data }}</span>
+                </div>
+            </div>
+        </aside>
 
         <aside v-if="entry.defaultConfiguration !== undefined" class="config-panel">
             <p class="config-panel-label">Configuration</p>
@@ -260,5 +305,46 @@ onUnmounted(() => unmount?.());
 
 .apply-btn:hover {
     background: #1e40af;
+}
+
+/* Action log */
+.action-log-panel {
+    border-top: 1px solid #e2e8f0;
+    padding: 12px 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    background: #f8fafc;
+}
+
+.action-log-entries {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    max-height: 120px;
+    overflow-y: auto;
+}
+
+.action-log-entry {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    font-family: 'Fira Code', 'Cascadia Code', monospace;
+    font-size: 12px;
+}
+
+.action-log-ts {
+    color: #94a3b8;
+    flex-shrink: 0;
+}
+
+.action-log-action {
+    color: #1d4ed8;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+.action-log-data {
+    color: #475569;
 }
 </style>

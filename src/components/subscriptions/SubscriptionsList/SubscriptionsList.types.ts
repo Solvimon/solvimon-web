@@ -9,6 +9,7 @@ export interface SubscriptionsListProps {
     showViewDetailsButton?: boolean;
     showCancelButton?: boolean;
     showRenewButton?: boolean;
+    showUpgradeButton?: boolean;
 }
 
 export interface SubscriptionsListEmits {
@@ -16,5 +17,6 @@ export interface SubscriptionsListEmits {
     (e: 'view-all-subscriptions'): void;
     (e: 'cancel-subscription', payload: { subscriptionId: string }): void;
     (e: 'renew-subscription', payload: { subscriptionId: string }): void;
+    (e: 'upgrade-subscription', payload: { subscriptionId: string }): void;
     (e: 'load-more'): void;
 }

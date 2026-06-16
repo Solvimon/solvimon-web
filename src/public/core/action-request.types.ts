@@ -40,6 +40,11 @@ export interface ActionRequestDetailRenewSubscription extends ActionRequestDetai
     data: { subscriptionId: string };
 }
 
+export interface ActionRequestDetailUpgradeSubscription extends ActionRequestDetailBase {
+    action: 'upgrade-subscription';
+    data: { subscriptionId: string };
+}
+
 export interface ActionRequestDetailEditBillingInformation extends ActionRequestDetailBase {
     action: 'edit-billing-information';
 }
@@ -52,6 +57,10 @@ export interface ActionRequestDetailAddPaymentMethod extends ActionRequestDetail
     action: 'add-payment-method';
 }
 
+export interface ActionRequestDetailNavigateToCustomerOverview extends ActionRequestDetailBase {
+    action: 'navigate-to-customer-overview';
+}
+
 export type ActionRequestDetail =
     | ActionRequestDetailViewInvoice
     | ActionRequestDetailPayInvoice
@@ -59,9 +68,11 @@ export type ActionRequestDetail =
     | ActionRequestDetailViewAllSubscriptions
     | ActionRequestDetailCancelSubscription
     | ActionRequestDetailRenewSubscription
+    | ActionRequestDetailUpgradeSubscription
     | ActionRequestDetailEditBillingInformation
     | ActionRequestDetailViewAllPaymentMethods
-    | ActionRequestDetailAddPaymentMethod;
+    | ActionRequestDetailAddPaymentMethod
+    | ActionRequestDetailNavigateToCustomerOverview;
 
 /**
  * Type for the 'action-request' custom event. Use when listening for action-request on document or container.

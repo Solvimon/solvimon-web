@@ -6,6 +6,7 @@ export type SubscriptionsListConfiguration = {
     showViewDetailsButton?: boolean;
     showCancelButton?: boolean;
     showRenewButton?: boolean;
+    showUpgradeButton?: boolean;
 };
 
 export interface SubscriptionsListProps {

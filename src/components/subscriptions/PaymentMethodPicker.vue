@@ -5,7 +5,6 @@ import type {
     PaymentMethod as PaymentMethodType,
     PaymentMethodOptionsResponse,
 } from '@solvimon/solvimon-types';
-import { getMockPaymentMethodOptionsResponse } from '@/public/screens/UpgradeSubscription/UpgradeSubscription.mocks';
 import { createPaymentMethodsService } from '@/services/paymentMethods';
 
 const props = defineProps<{
@@ -21,7 +20,7 @@ const emit = defineEmits<{
 const { $t } = useIntl();
 
 // Must be called in setup scope — inject() is not available after component mount.
-const { getPaymentMethods } = createPaymentMethodsService();
+const { getPaymentMethods, getPaymentMethodOptions } = createPaymentMethodsService();
 
 const savedMethods = ref<PaymentMethodType[]>([]);
 const paymentMethodOptions = ref<PaymentMethodOptionsResponse>([]);
@@ -65,10 +64,11 @@ onMounted(async () => {
             customerId: props.customerId,
             pagination: { page: 1, pageSize: 50 },
         });
+        const optionsResponse = await getPaymentMethodOptions({
+            customerId: props.customerId,
+        });
         savedMethods.value = savedResponse.data;
-        // TODO: Replace with real service call:
-        // getPaymentMethodOptions({ subscriptionId: props.subscriptionId, country, amount })
-        paymentMethodOptions.value = getMockPaymentMethodOptionsResponse();
+        paymentMethodOptions.value = optionsResponse;
     } finally {
         isPending.value = false;
     }

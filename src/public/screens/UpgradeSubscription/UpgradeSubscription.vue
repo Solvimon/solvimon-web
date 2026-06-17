@@ -72,11 +72,19 @@ const getActiveSchedule = async () => {
         expanded: true,
     });
     const schedules = subscription.pricing_plan_schedule_infos ?? [];
-    const activeSchedule =
-        schedules.find((schedule) => {
-            const startAt = Date.parse(schedule.start_at);
-            return Number.isFinite(startAt) && startAt <= Date.now();
-        }) ?? schedules[0];
+    const sortedSchedules = [...schedules].sort(
+        (a, b) => Date.parse(b.start_at) - Date.parse(a.start_at),
+    );
+    const now = Date.now();
+    const activeSchedule = sortedSchedules.find((schedule) => {
+        const scheduleType = schedule.pricing_plan_schedule?.type ?? schedule.type;
+        const startAt = Date.parse(schedule.start_at);
+        const endAt = schedule.end_at ? Date.parse(schedule.end_at) : undefined;
+        const hasStarted = Number.isFinite(startAt) && startAt <= now;
+        const hasNotEnded = endAt === undefined || !Number.isFinite(endAt) || endAt > now;
+
+        return scheduleType === 'DEFAULT' && hasStarted && hasNotEnded;
+    });
 
     if (!activeSchedule?.id) {
         throw new Error('No pricing plan schedule found for subscription');

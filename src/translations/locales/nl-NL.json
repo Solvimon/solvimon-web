@@ -190,6 +190,7 @@
     "upgrade_subscription.pricing_row.remove_button_label": "Verwijderen",
     "upgrade_subscription.purchase_button.label": "Kopen",
     "upgrade_subscription.purchase_error": "Er is iets misgegaan. Probeer het opnieuw.",
+    "upgrade_subscription.success.redirect": "Je wordt zo doorgestuurd",
     "upgrade_subscription.success.subtitle": "Je aankoop is voltooid.",
     "upgrade_subscription.success.title": "Betaling geslaagd",
     "upgrade_subscription.title": "Abonnement upgraden",

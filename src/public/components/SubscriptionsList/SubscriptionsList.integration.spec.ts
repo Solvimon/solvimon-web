@@ -99,6 +99,14 @@ describe('SubscriptionsList component', () => {
         return button!;
     };
 
+    const getCancelButton = (wrapper: ReturnType<typeof mountComponent>) => {
+        const button = wrapper.find('.sv-subscriptions-list__item-cancel');
+
+        expect(button.exists()).toBe(true);
+
+        return button;
+    };
+
     beforeEach(() => {
         vi.clearAllMocks();
     });
@@ -265,7 +273,7 @@ describe('SubscriptionsList component', () => {
                 },
             });
 
-            expect(wrapper.text()).toContain('Cancel subscription');
+            expect(getCancelButton(wrapper).attributes('aria-label')).toBe('Cancel subscription');
         });
 
         it('dispatches the cancel subscription action when clicked', async () => {
@@ -273,7 +281,7 @@ describe('SubscriptionsList component', () => {
                 subscriptions: [createSubscription({ id: 'sub_cancel', inactivePeriods: [] })],
             });
 
-            await getButtonByText(wrapper, 'Cancel subscription').trigger('click');
+            await getCancelButton(wrapper).trigger('click');
 
             expect(mockDispatchAction).toHaveBeenCalledWith({
                 action: 'cancel-subscription',

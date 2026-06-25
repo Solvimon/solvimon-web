@@ -145,6 +145,7 @@
     },
     "dependencies": {
         "@adyen/adyen-web": "^6.14.0",
+        "@stripe/stripe-js": "^9.8.0",
         "jwt-decode": "^4.0.0"
     },
     "devDependencies": {
@@ -153,8 +154,8 @@
         "@formatjs/cli": "^6.6.1",
         "@playwright/test": "^1.57.0",
         "@rushstack/eslint-patch": "^1.2.0",
-        "@solvimon/solvimon-types": "^1.0.0",
-        "@solvimon/solvimon-ui": "^1.1.6",
+        "@solvimon/solvimon-types": "^1.0.1",
+        "@solvimon/solvimon-ui": "^1.2.2",
         "@tsconfig/node22": "^22.0.0",
         "@types/jsdom": "^21.1.7",
         "@types/node": "^22.10.2",

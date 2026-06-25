@@ -304,10 +304,13 @@ export function useCheckoutView({
                 return;
             }
 
-            void loadPaymentMethodOptions({
+            loadPaymentMethodOptions({
                 subscriptionId: subscription.value.id,
                 country,
                 amount: amountValue,
+            }).catch((err) => {
+                // eslint-disable-next-line
+                console.log(err);
             });
         },
     );
@@ -321,15 +324,19 @@ export function useCheckoutView({
         }
     });
 
-    watch(shouldLoadPaymentMethodOptions, (shouldLoad) => {
-        if (shouldLoad) {
-            void loadPaymentMethodOptions({
-                subscriptionId: subscription.value!.id,
-                country: checkoutForm.form.value.country!,
-                amount: amount.value,
-            });
-        }
-    }, { once: true });
+    watch(
+        shouldLoadPaymentMethodOptions,
+        (shouldLoad) => {
+            if (shouldLoad) {
+                void loadPaymentMethodOptions({
+                    subscriptionId: subscription.value!.id,
+                    country: checkoutForm.form.value.country!,
+                    amount: amount.value,
+                });
+            }
+        },
+        { once: true },
+    );
 
     return {
         invoicePreview: invoicePreview.invoicePreview,

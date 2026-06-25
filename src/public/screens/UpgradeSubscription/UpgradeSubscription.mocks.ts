@@ -205,6 +205,7 @@ const mockPaymentIntegration: PaymentIntegration = {
     description: 'Mock payment integration',
     status: 'ACTIVE',
     type: 'PAYMENT_GATEWAY',
+    payment_gateway: { variant: 'ADYEN' },
 };
 
 /**

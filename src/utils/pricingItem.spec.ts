@@ -12,7 +12,7 @@ describe('pricingItem utils', () => {
             ({
                 object_type: 'PRICING_ITEM_CONFIG',
                 id,
-                type: 'FLAT',
+                details: {},
                 order: 0,
                 billing_in_advance: false,
             }) as PricingItemConfigExtended;

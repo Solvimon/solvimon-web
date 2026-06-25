@@ -31,7 +31,9 @@ const isPending = ref(false);
  * The unique key per option is `adyen.type` (e.g. "ideal", "scheme", "paypal").
  */
 const newOptions = computed(() =>
-    paymentMethodOptions.value.flatMap((entry) => entry.options ?? []),
+    paymentMethodOptions.value
+        .flatMap((entry) => entry.options ?? [])
+        .filter((option) => option.payment_gateway_variant === 'ADYEN'),
 );
 
 /**

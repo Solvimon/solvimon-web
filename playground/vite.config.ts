@@ -1,8 +1,21 @@
 import { fileURLToPath, URL } from 'node:url';
+import fs from 'fs';
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import vueDevTools from 'vite-plugin-vue-devtools';
-import basicSsl from '@vitejs/plugin-basic-ssl';
+
+
+const SSL_CERT_DIR = './.cert';
+const SSL_CERT_FILE = `${SSL_CERT_DIR}/cert.pem`;
+const SSL_KEY_FILE = `${SSL_CERT_DIR}/dev.pem`;
+
+const HTTPS_CONFIG =
+    fs.existsSync(SSL_CERT_FILE) && fs.existsSync(SSL_KEY_FILE)
+        ? {
+              cert: SSL_CERT_FILE,
+              key: SSL_KEY_FILE,
+          }
+        : false;
 
 export default defineConfig({
     plugins: [
@@ -14,7 +27,6 @@ export default defineConfig({
             },
         }),
         vueDevTools(),
-        basicSsl(),
     ],
     resolve: {
         alias: [
@@ -37,6 +49,7 @@ export default defineConfig({
     server: {
         host: 'portal.local',
         port: 5175,
+        https: HTTPS_CONFIG || undefined,
         fs: {
             allow: ['..'],
         },

@@ -7,25 +7,49 @@ import StoryCanvas from './components/StoryCanvas.vue';
 import { SUPPORTED_LOCALES } from '@/translations/supported';
 
 const LOCALE_STORAGE_KEY = 'solvimon-playground:locale';
+const ENVIRONMENT_STORAGE_KEY = 'solvimon-playground:environment';
+
+type Environment = 'CI' | 'LIVE' | 'TEST' | 'BETA' | 'DEV';
+const ENVIRONMENTS: Array<'LIVE' | 'TEST' | 'DEV'> = ['LIVE', 'TEST', 'DEV'];
+
+function parseEnvironment(value: string | null): Environment {
+    if (value === 'LIVE' || value === 'TEST' || value === 'DEV') {
+        return value;
+    }
+    return 'TEST';
+}
 
 const locale = ref(sessionStorage.getItem(LOCALE_STORAGE_KEY) ?? SUPPORTED_LOCALES[0]);
 watch(locale, (value) => sessionStorage.setItem(LOCALE_STORAGE_KEY, value));
 
-const solvimonConfig = {
-    environment: 'TEST' as const,
-    logLevel: 'info' as const,
-    branding: {
-        colors: {
-            primary: '#1d4ed8',
-            secondary: '#0f172a',
-        },
+const environment = ref<Environment>(
+    parseEnvironment(sessionStorage.getItem(ENVIRONMENT_STORAGE_KEY)),
+);
+watch(environment, (value) => sessionStorage.setItem(ENVIRONMENT_STORAGE_KEY, value));
+
+const branding = {
+    colors: {
+        primary: '#1d4ed8',
+        secondary: '#0f172a',
     },
 };
 
-const solvimon = ref(createSolvimonCore({ ...solvimonConfig, locale: locale.value }));
+const solvimon = ref(
+    createSolvimonCore({
+        environment: environment.value,
+        logLevel: 'info',
+        branding,
+        locale: locale.value,
+    }),
+);
 
-watch(locale, (newLocale) => {
-    solvimon.value = createSolvimonCore({ ...solvimonConfig, locale: newLocale });
+watch([locale, environment], ([newLocale, newEnvironment]) => {
+    solvimon.value = createSolvimonCore({
+        environment: newEnvironment,
+        logLevel: 'info',
+        branding,
+        locale: newLocale,
+    });
 });
 
 const ACTIVE_ENTRY_STORAGE_KEY = 'solvimon-playground:active-entry';
@@ -133,6 +157,16 @@ function applyPortal() {
                 <select v-model="locale" class="locale-select">
                     <option v-for="loc in SUPPORTED_LOCALES" :key="loc" :value="loc">
                         {{ loc }}
+                    </option>
+                </select>
+            </div>
+
+            <!-- Environment switcher -->
+            <div class="portal-section">
+                <p class="portal-label">Environment</p>
+                <select v-model="environment" class="locale-select">
+                    <option v-for="env in ENVIRONMENTS" :key="env" :value="env">
+                        {{ env }}
                     </option>
                 </select>
             </div>

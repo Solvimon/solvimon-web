@@ -40,9 +40,11 @@ export function mapAdyenPaymentMethods(
     paymentMethodOptionResponse: PaymentMethodOptionResponseEntry,
 ): RawPaymentMethod[] {
     return (
-        paymentMethodOptionResponse.options?.flatMap((adyenPaymentMethodOption) =>
-            mapAdyenPaymentMethod(adyenPaymentMethodOption.adyen),
-        ) ?? []
+        paymentMethodOptionResponse.options
+            ?.filter((option): option is PaymentMethodOptionAdyen => option.payment_gateway_variant === 'ADYEN')
+            .flatMap((adyenPaymentMethodOption) =>
+                mapAdyenPaymentMethod(adyenPaymentMethodOption.adyen),
+            ) ?? []
     );
 }
 

@@ -14,7 +14,7 @@ const { formatTimePeriod } = useTimePeriod();
 const { $t } = useIntl();
 
 const amount = computed(() => pricingItem.configs?.[0]?.details?.bands?.[0]?.amount);
-const billingPeriod = computed(() => pricingItem.configs?.[0]?.billing_period);
+const billingPeriod = computed(() => pricingItem.configs?.[0]?.billing_period_configs?.[0]?.billing_period);
 </script>
 
 <template>

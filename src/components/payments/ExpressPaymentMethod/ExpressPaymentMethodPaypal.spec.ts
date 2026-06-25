@@ -71,6 +71,7 @@ describe('ExpressPaymentMethodPaypal', () => {
                         merchant_accounts: ['test-merchant-account'],
                         public_key: 'test-key',
                         live_prefix: 'test-prefix',
+                        ownership: 'PLATFORM',
                     },
                 },
             },

@@ -32,7 +32,7 @@ export function useSeatBasedPricing({
 
         return {
             billing: {
-                period: config?.billing_period,
+                period: config?.billing_period_configs?.[0]?.billing_period,
                 billedInAdvance: config?.billing_in_advance,
             },
             product: {

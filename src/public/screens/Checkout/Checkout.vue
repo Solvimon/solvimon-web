@@ -14,10 +14,6 @@ import type { CheckoutEmits, CheckoutProps } from './Checkout.types';
 import { useCheckoutView } from './useCheckout.view';
 import { usePromotionCode } from '@/composables/usePromotionCode';
 import { usePortal } from '@/components/providers/PortalProvider/composables/usePortal';
-
-const PaymentIntegrationForm = defineAsyncComponent(
-    () => import('@/components/payments/PaymentIntegrationForm/PaymentIntegrationForm.vue'),
-);
 import CheckoutForm from '@/components/customer/CheckoutForm/CheckoutForm.vue';
 import CheckoutTitle from '@/components/checkout/CheckoutTitle.vue';
 import { isInvoiceUsageBased } from '@/utils/invoice';
@@ -45,6 +41,10 @@ import PromotionCodeSection from '@/components/checkout/PromotionCodeSection.vue
 import { getFallbackTrialAndSubscriptionStartAndEndDates } from '@/utils/subscription';
 import SecurePaymentsKPI from '@/components/payments/SecurePaymentsKPI/SecurePaymentsKPI.vue';
 import { safeUrlRedirect } from '@/utils/url';
+
+const PaymentIntegrationForm = defineAsyncComponent(
+    () => import('@/components/payments/PaymentIntegrationForm/PaymentIntegrationForm.vue'),
+);
 
 const props = defineProps<CheckoutProps>();
 const emit = defineEmits<CheckoutEmits>();

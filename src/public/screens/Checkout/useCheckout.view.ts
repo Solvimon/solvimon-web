@@ -304,10 +304,13 @@ export function useCheckoutView({
                 return;
             }
 
-            void loadPaymentMethodOptions({
+            loadPaymentMethodOptions({
                 subscriptionId: subscription.value.id,
                 country,
                 amount: amountValue,
+            }).catch((err) => {
+                // eslint-disable-next-line
+                console.log(err);
             });
         },
     );

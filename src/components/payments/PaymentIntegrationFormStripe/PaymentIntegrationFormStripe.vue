@@ -8,31 +8,15 @@ import type {
 } from './PaymentIntegrationFormStripe.types';
 import PaymentIntegrationFormStripeFrame from './PaymentIntegrationFormStripeFrame.vue';
 import type { PaymentIntegrationFormStripeFrameProps } from './PaymentIntegrationFormStripeFrame.types.ts';
+import { getFrameOptions } from './PaymentIntegrationFormStripe.lib.ts';
 import PaymentCompletedCard from '@/components/payments/PaymentCompletedCard/PaymentCompletedCard.vue';
 import PaymentErrorCard from '@/components/payments/PaymentErrorCard/PaymentErrorCard.vue';
 import type { Error } from '@/types/errors';
 import { createPaymentsService } from '@/services/payments';
 import { createPaymentMethodsService } from '@/services/paymentMethods';
-import {
-    createReturnUrl,
-    transformToAdyenAmount,
-    PAYMENT_ACCEPTOR_ID_QUERY_STRING,
-} from '@/utils/adyen';
+import { createReturnUrl, PAYMENT_ACCEPTOR_ID_QUERY_STRING } from '@/utils/adyen';
 import { getQueryParam } from '@/utils/url';
 import { useLogger } from '@/components/providers';
-
-const STRIPE_WALLETS = { link: 'never' as const };
-const STRIPE_APPEARANCE = {
-    variables: { borderRadius: '4px', colorBackground: 'rgba(243, 244, 246, 0.5)' },
-    rules: {
-        '.TermsText': { fontSize: '14px' },
-        '.Input': {
-            backgroundColor: 'rgba(243, 244, 246, 0.5)',
-            fontSize: '14px',
-            borderColor: 'rgb(229, 231, 235)',
-        },
-    },
-};
 
 const props = withDefaults(defineProps<PaymentIntegrationFormStripeProps>(), {
     validateOnSubmit: () => Promise.resolve(true),
@@ -42,9 +26,12 @@ defineExpose({ submit });
 
 const PAYMENT_GATEWAY_VARIANT_STRIPE = 'STRIPE';
 
-const frameRef = ref<InstanceType<typeof PaymentIntegrationFormStripeFrame>>();
-const showPaymentSuccess = ref(false);
+const showPaymentSuccess = ref<boolean>(false);
 const integrationError = ref<Error>();
+const frameRef = ref<InstanceType<typeof PaymentIntegrationFormStripeFrame>>();
+const frameOptions = computed<PaymentIntegrationFormStripeFrameProps['options']>(() =>
+    getFrameOptions({ amount: props.amount, email: props.email, variant: props.variant }),
+);
 
 // Loaded lazily — only needed for handleNextAction (3DS), which appends to
 // document.body and works fine outside the shadow root.
@@ -57,37 +44,6 @@ const { tokenizePaymentMethod } = createPaymentMethodsService();
 const publicKey = computed(
     () => props.paymentMethodOptionResponseEntry.integration.payment_gateway?.stripe?.public_key,
 );
-
-const frameOptions = computed<PaymentIntegrationFormStripeFrameProps['options']>(() => {
-    const currency = props.amount.currency.toLowerCase();
-    const fields = {
-        billingDetails: {
-            address: { country: 'never' as const },
-            ...(props.email ? { email: 'never' as const } : {}),
-        },
-    };
-
-    if (props.variant === 'TOKENIZE') {
-        return {
-            mode: 'setup' as const,
-            currency,
-            setup_future_usage: 'off_session',
-            wallets: STRIPE_WALLETS,
-            fields,
-            appearance: STRIPE_APPEARANCE,
-        };
-    }
-
-    return {
-        mode: 'payment' as const,
-        amount: transformToAdyenAmount(props.amount).value,
-        currency,
-        setup_future_usage: 'off_session',
-        wallets: STRIPE_WALLETS,
-        fields,
-        appearance: STRIPE_APPEARANCE,
-    };
-});
 
 function submit() {
     handleSubmit().catch((error) => {
@@ -102,18 +58,33 @@ function submit() {
 
 async function handleSubmit() {
     const isValid = await props.validateOnSubmit();
-    if (!isValid) return;
+
+    if (!isValid) {
+        return;
+    }
+
     frameRef.value?.triggerSubmit();
 }
 
 async function getStripeInstance(): Promise<Stripe> {
-    if (stripeInstance.value) return stripeInstance.value;
+    if (stripeInstance.value) {
+        return stripeInstance.value;
+    }
+
     const key = publicKey.value;
-    if (!key) throw new Error('Missing Stripe public key');
+    if (!key) {
+        throw new Error('Missing Stripe public key');
+    }
+
     const { loadStripe } = await import('@stripe/stripe-js');
     const stripe = await loadStripe(key);
-    if (!stripe) throw new Error('Failed to load Stripe.js');
+
+    if (!stripe) {
+        throw new Error('Failed to load Stripe.js');
+    }
+
     stripeInstance.value = stripe;
+
     return stripe;
 }
 

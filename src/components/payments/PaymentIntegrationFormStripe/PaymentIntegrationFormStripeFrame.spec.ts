@@ -86,7 +86,7 @@ describe('PaymentIntegrationFormStripeFrame', () => {
             const cw = mockContentWindow(iframe);
 
             await wrapper.setProps({
-                options: { ...defaultProps.options, amount: 2000 },
+                options: { mode: 'payment', currency: 'eur', amount: 2000, setup_future_usage: 'off_session' },
             });
 
             expect(cw.postMessage).toHaveBeenCalledWith(

@@ -193,12 +193,10 @@ const effectiveBillingPeriods = computed<BillingPeriod[]>(() => {
 
     const registerPeriodsFromPricing = (pricing?: Pricing) => {
         pricing?.items?.forEach((item) => {
-            item.configs?.forEach((config) => registerPeriod(config.billing_period));
             item.billing_period_configs?.forEach((periodConfig) =>
                 registerPeriod(periodConfig.billing_period),
             );
             item.pricing_currency_configs?.forEach((currencyConfig) => {
-                currencyConfig.configs?.forEach((config) => registerPeriod(config.billing_period));
                 currencyConfig.billing_period_configs?.forEach((periodConfig) =>
                     registerPeriod(periodConfig.billing_period),
                 );

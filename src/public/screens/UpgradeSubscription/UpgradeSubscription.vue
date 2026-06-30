@@ -7,7 +7,13 @@ import {
     ErrorNotification,
     getCustomerCountry,
 } from '@solvimon/solvimon-ui';
-import type { Amount, Invoice, PaymentMethodOptionsResponse } from '@solvimon/solvimon-types';
+import type {
+    Amount,
+    Invoice,
+    PaymentMethodOptionsResponse,
+    PricingCategoryExtended,
+    PricingExtended,
+} from '@solvimon/solvimon-types';
 import type { UpgradeSubscriptionProps } from './UpgradeSubscription.types';
 import type {
     OnDemandPricing,
@@ -64,7 +70,7 @@ const previewInvoice = ref<Invoice | undefined>(undefined);
 const countryCode = ref<string | undefined>(undefined);
 const hasSelectedPaymentMethod = ref(false);
 
-type ExpandedPricingCategory = OnDemandPricingCategory;
+type ExpandedPricingCategory = PricingCategoryExtended;
 
 const getActiveSchedule = async () => {
     const subscription = await getSubscription({
@@ -99,11 +105,10 @@ const findSourceCategory = (
 ) =>
     sourceCategories.find(
         (sourceCategory) =>
-            sourceCategory.product_category_id === category.product_category_id ||
-            sourceCategory.id === category.id,
+            sourceCategory.product_category_id === category.product_category_id,
     );
 
-const findSourcePricing = (pricing: OnDemandPricing, sourcePricings: OnDemandPricing[] = []) =>
+const findSourcePricing = (pricing: OnDemandPricing, sourcePricings: PricingExtended[] = []) =>
     sourcePricings.find((sourcePricing) => sourcePricing.id === pricing.id);
 
 // Each pricing can have multiple items (e.g. different units). We turn each item
@@ -111,7 +116,7 @@ const findSourcePricing = (pricing: OnDemandPricing, sourcePricings: OnDemandPri
 // but we already have the full pricing plan version from the subscription call, so we use that.
 const normalizePricingRows = (
     pricing: OnDemandPricing,
-    sourcePricing?: OnDemandPricing,
+    sourcePricing?: PricingExtended,
 ): OnDemandPricing[] =>
     (pricing.items ?? []).map((item) => {
         const sourceItem = sourcePricing?.items?.find((candidate) => candidate.id === item.id);
@@ -147,7 +152,7 @@ const normalizeOnDemandCategories = (
 
         return {
             ...category,
-            name: category.name ?? sourceCategory?.name,
+            name: category.name ?? sourceCategory?.product_category?.name,
             product_category: category.product_category ?? sourceCategory?.product_category,
             pricings: (category.pricings ?? []).flatMap((pricing) =>
                 normalizePricingRows(pricing, findSourcePricing(pricing, sourceCategory?.pricings)),

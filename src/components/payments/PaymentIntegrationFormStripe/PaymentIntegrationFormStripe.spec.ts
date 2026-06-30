@@ -17,8 +17,11 @@ vi.mock('@/services/paymentMethods', () => ({
 
 vi.mock('@/utils/adyen', () => ({
     createReturnUrl: vi.fn(() => 'https://example.com/return?payment_acceptor_id=paya_123'),
-    transformToAdyenAmount: vi.fn((amount) => ({ value: 999 })),
     PAYMENT_ACCEPTOR_ID_QUERY_STRING: 'payment_acceptor_id',
+}));
+
+vi.mock('@/utils/amount', () => ({
+    toMinorUnitAmount: vi.fn(() => ({ value: 999, currency: 'EUR' })),
 }));
 
 const mockGetQueryParam = vi.fn();

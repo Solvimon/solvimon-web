@@ -1,6 +1,5 @@
 import {
     getAdyenClientKeyFromPaymentMethodOptionsResponse,
-    transformToAdyenAmount,
     mapAdyenPaymentMethods,
     mapAdyenPaymentMethod,
     createReturnUrl,
@@ -107,69 +106,6 @@ describe('adyen utils', () => {
             );
 
             expect(result).toBeUndefined();
-        });
-    });
-
-    describe('transformToAdyenAmount', () => {
-        it('should transform USD amount correctly', () => {
-            const amount: Amount = {
-                quantity: '10.50',
-                currency: 'USD',
-            };
-
-            const result = transformToAdyenAmount(amount);
-
-            expect(result.currency).toBe('USD');
-            expect(result.value).toBe(1050); // 10.50 * 100 (2 decimal places for USD)
-        });
-
-        it('should transform EUR amount correctly', () => {
-            const amount: Amount = {
-                quantity: '25.99',
-                currency: 'EUR',
-            };
-
-            const result = transformToAdyenAmount(amount);
-
-            expect(result.currency).toBe('EUR');
-            expect(result.value).toBe(2599); // 25.99 * 100
-        });
-
-        it('should handle amounts with more decimal places', () => {
-            const amount: Amount = {
-                quantity: '10.1234',
-                currency: 'USD',
-            };
-
-            const result = transformToAdyenAmount(amount);
-
-            expect(result.currency).toBe('USD');
-            // USD has 2 decimal places, so 10.1234 * 100 = 1012.34, rounded to 1012
-            expect(result.value).toBe(1012);
-        });
-
-        it('should handle zero amount', () => {
-            const amount: Amount = {
-                quantity: '0',
-                currency: 'USD',
-            };
-
-            const result = transformToAdyenAmount(amount);
-
-            expect(result.currency).toBe('USD');
-            expect(result.value).toBe(0);
-        });
-
-        it('should handle large amounts', () => {
-            const amount: Amount = {
-                quantity: '999999.99',
-                currency: 'USD',
-            };
-
-            const result = transformToAdyenAmount(amount);
-
-            expect(result.currency).toBe('USD');
-            expect(result.value).toBe(99999999);
         });
     });
 

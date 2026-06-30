@@ -162,7 +162,6 @@
     "seats.tiered_unbounded_range_label": "> {lower_bound} seats",
     "secure_payments_kpi.generic": "Veilige en versleutelde betalingen",
     "secure_payments_kpi.specific_vendor": "Veilige en versleutelde betalingen door",
-    "subscription_payment_completed_card.continue": "Doorgaan naar verkoper",
     "subscription_payment_completed_card.thank_you_for_subscribing": "Bedankt voor je abonnement.",
     "subscription_payment_completed_card.title": "Betaling geslaagd",
     "tax_check.invalid_vat_number": "BTW-nummer is ongeldig.",

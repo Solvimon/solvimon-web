@@ -1,10 +1,11 @@
-import type { CoreConfiguration, PaymentAmount, RawPaymentMethod } from '@adyen/adyen-web';
+import type { CoreConfiguration, RawPaymentMethod } from '@adyen/adyen-web';
 import type {
     Amount,
     PaymentMethodOptionAdyen,
     PaymentMethodOptionResponseEntry,
 } from '@solvimon/solvimon-types';
 import type { Logger } from '@/components/providers/LoggerProvider/LoggerProvider.types';
+import { toMinorUnitAmount } from '@/utils/amount';
 
 export const PAYMENT_ACCEPTOR_ID_QUERY_STRING = 'payment_acceptor_id';
 export const REDIRECT_RESULT_QUERY_STRING = 'redirectResult';
@@ -13,23 +14,6 @@ export function getAdyenClientKeyFromPaymentMethodOptionsResponse(
     paymentMethodOptionResponse: PaymentMethodOptionResponseEntry,
 ): string | undefined {
     return paymentMethodOptionResponse.integration.payment_gateway?.adyen?.public_key;
-}
-
-/**
- * Transforms a Solvimon amount to an Adyen amount.
- */
-export function transformToAdyenAmount(amount: Amount): PaymentAmount {
-    const formatter = new Intl.NumberFormat(undefined, {
-        style: 'currency',
-        currency: amount.currency,
-    });
-
-    const { maximumFractionDigits = 10 } = formatter.resolvedOptions();
-
-    return {
-        value: Math.round(+amount.quantity * Math.pow(10, maximumFractionDigits)),
-        currency: amount.currency,
-    };
 }
 
 /**
@@ -129,7 +113,7 @@ export function getAdyenExpressCheckoutConfiguration({
     logger: Logger;
 }): CoreConfiguration {
     return {
-        ...(amount ? { amount: transformToAdyenAmount(amount) } : {}),
+        ...(amount ? { amount: toMinorUnitAmount(amount) } : {}),
         analytics: { enabled: false },
         clientKey: getAdyenClientKeyFromPaymentMethodOptionsResponse(paymentMethodOptionResponse),
         countryCode,

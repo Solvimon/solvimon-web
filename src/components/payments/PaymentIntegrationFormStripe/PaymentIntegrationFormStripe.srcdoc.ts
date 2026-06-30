@@ -63,6 +63,7 @@ body { overflow: hidden; }
 
     if (event.data.type === 'stripe:submit') {
       if (!elements) return;
+      var submitEmail = 'email' in event.data ? event.data.email : email;
       elements.submit().then(function (submitResult) {
         if (submitResult.error) {
           parent.postMessage({
@@ -77,7 +78,7 @@ body { overflow: hidden; }
         }
         var billingDetails = {};
         if (countryCode) billingDetails.address = { country: countryCode };
-        if (email) billingDetails.email = email;
+        if (submitEmail) billingDetails.email = submitEmail;
         var tokenParams = Object.keys(billingDetails).length
           ? { payment_method_data: { billing_details: billingDetails } }
           : {};

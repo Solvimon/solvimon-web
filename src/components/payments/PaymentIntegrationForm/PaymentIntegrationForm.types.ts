@@ -27,6 +27,7 @@ interface BasePaymentIntegrationFormProps {
     variant: 'AUTHORIZE' | 'TOKENIZE';
     amount: Amount;
     selectedOption?: string;
+    email?: string;
     validateOnSubmit?: () => Promise<boolean>;
     context?: PaymentAuthorizationContext;
     forceStorePaymentMethod?: boolean;

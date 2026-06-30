@@ -1,5 +1,15 @@
 import { vi } from 'vitest';
 
+vi.mock('@/components/providers', () => ({
+    useLogger: () => ({
+        error: vi.fn(),
+        info: vi.fn(),
+        warn: vi.fn(),
+        debug: vi.fn(),
+        capture: vi.fn(),
+    }),
+}));
+
 Object.defineProperty(window, 'matchMedia', {
     writable: true,
     value: vi.fn().mockImplementation((query: string) => ({

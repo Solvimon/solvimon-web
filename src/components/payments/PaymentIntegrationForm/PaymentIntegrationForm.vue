@@ -1,11 +1,20 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { FormMessage, useIntl } from '@solvimon/solvimon-ui';
-import type { PaymentGatewayVariant } from '@solvimon/solvimon-types';
+import type {
+    PaymentGatewayVariant,
+    PaymentMethodOptionResponseEntry,
+} from '@solvimon/solvimon-types';
 import type {
     PaymentIntegrationFormEmits,
     PaymentIntegrationFormProps,
 } from './PaymentIntegrationForm.types';
+import {
+    isAdyenPaymentIntegration,
+    isSelectedIntegration,
+    isStripePaymentIntegration,
+} from './PaymentIntegrationForm.lib';
+import PaymentIntegrationFormStripe from '@/components/payments/PaymentIntegrationFormStripe/PaymentIntegrationFormStripe.vue';
 import PaymentIntegrationFormAdyen from '@/components/payments/PaymentIntegrationFormAdyen/PaymentIntegrationFormAdyen.vue';
 
 const props = defineProps<PaymentIntegrationFormProps>();
@@ -14,21 +23,32 @@ defineExpose({ submit });
 
 const { $t } = useIntl();
 
-const selectedIntegration = ref<PaymentGatewayVariant>();
+const userSelectedIntegration = ref<PaymentGatewayVariant>();
+const selectedIntegration = computed(
+    () =>
+        userSelectedIntegration.value ??
+        props.paymentMethodOptions[0]?.integration.payment_gateway?.variant,
+);
+
 const integrationRefs = ref(new Map());
 const showIntegrationError = ref(false);
 
-function handleSelect({
+const handleSelect = ({
     paymentGatewayVariant,
     paymentMethodType,
 }: {
     paymentGatewayVariant: PaymentGatewayVariant;
     paymentMethodType: string;
-}) {
+}) => {
     showIntegrationError.value = false;
-    selectedIntegration.value = paymentGatewayVariant;
+    userSelectedIntegration.value = paymentGatewayVariant;
     emit('select', { paymentGatewayVariant, paymentMethodType });
-}
+};
+
+const setIntegrationRef = (paymentMethodOption: PaymentMethodOptionResponseEntry) => {
+    return (el: unknown) =>
+        integrationRefs.value.set(paymentMethodOption.integration.payment_gateway?.variant, el);
+};
 
 function submit() {
     if (!selectedIntegration.value) {
@@ -45,15 +65,10 @@ function submit() {
         v-for="paymentMethodOption in paymentMethodOptions"
         :key="paymentMethodOption.integration.id"
     >
+        <!-- Adyen -->
         <PaymentIntegrationFormAdyen
-            v-if="paymentMethodOption.integration.payment_gateway?.variant === 'ADYEN'"
-            :ref="
-                (el) =>
-                    integrationRefs.set(
-                        paymentMethodOption.integration.payment_gateway!.variant,
-                        el,
-                    )
-            "
+            v-if="isAdyenPaymentIntegration(paymentMethodOption)"
+            :ref="setIntegrationRef(paymentMethodOption)"
             :context="context"
             :payment-method-option-response-entry="paymentMethodOption"
             :country-code="countryCode"
@@ -61,9 +76,28 @@ function submit() {
             :variant="variant"
             :amount="amount"
             :invoice-id="invoiceId"
-            :selected="
-                selectedIntegration === paymentMethodOption.integration.payment_gateway.variant
-            "
+            :selected="isSelectedIntegration({ selectedIntegration, paymentMethodOption })"
+            :validate-on-submit="validateOnSubmit"
+            :force-store-payment-method="forceStorePaymentMethod"
+            @select="handleSelect"
+            @payment-failed="$emit('payment-failed', $event)"
+            @payment-success="$emit('payment-success')"
+            @ready="$emit('ready')"
+        />
+
+        <!-- Stripe -->
+        <PaymentIntegrationFormStripe
+            v-else-if="isStripePaymentIntegration(paymentMethodOption)"
+            :ref="setIntegrationRef(paymentMethodOption)"
+            :context="context"
+            :payment-method-option-response-entry="paymentMethodOption"
+            :country-code="countryCode"
+            :customer-id="customerId"
+            :variant="variant"
+            :amount="amount"
+            :invoice-id="invoiceId"
+            :selected="isSelectedIntegration({ selectedIntegration, paymentMethodOption })"
+            :email="email"
             :validate-on-submit="validateOnSubmit"
             :force-store-payment-method="forceStorePaymentMethod"
             @select="handleSelect"

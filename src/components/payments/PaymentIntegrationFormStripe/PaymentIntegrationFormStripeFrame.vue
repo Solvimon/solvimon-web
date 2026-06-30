@@ -24,7 +24,7 @@ function sendInit() {
 }
 
 function triggerSubmit() {
-    iframeRef.value?.contentWindow?.postMessage({ type: 'stripe:submit' }, '*');
+    iframeRef.value?.contentWindow?.postMessage({ type: 'stripe:submit', email: props.email }, '*');
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

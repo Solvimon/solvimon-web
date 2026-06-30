@@ -1,4 +1,5 @@
-import { nextTick } from 'vue';
+import { nextTick, defineComponent, h } from 'vue';
+import { flushPromises, mount } from '@vue/test-utils';
 import type {
     PricingPlanSubscription,
     PricingPlanSubscriptionExpanded,
@@ -22,6 +23,9 @@ const {
     mockTaxIdValidator,
     mockGetFirstPricingPlanScheduleOfType,
     mockGetScheduleCustomizations,
+    mockGetQueryParam,
+    mockGetGeoLocation,
+    mockWithPreselectedEnabledPricings,
 } = vi.hoisted(() => ({
     mockGetSubscription:
         vi.fn<
@@ -35,6 +39,9 @@ const {
     mockTaxIdValidator: vi.fn(() => true),
     mockGetFirstPricingPlanScheduleOfType: vi.fn(),
     mockGetScheduleCustomizations: vi.fn(),
+    mockGetQueryParam: vi.fn<(name: string) => string | null>(() => null),
+    mockGetGeoLocation: vi.fn(() => Promise.resolve({ country: 'NL' })),
+    mockWithPreselectedEnabledPricings: vi.fn(() => [] as string[]),
 }));
 
 const mockUseInvoicePreview = vi.fn<
@@ -128,6 +135,35 @@ vi.mock('@/utils/pricingPlanSchedule', () => ({
     getScheduleCustomizations: mockGetScheduleCustomizations,
 }));
 
+vi.mock('@/utils/url', () => ({
+    getQueryParam: (name: string) => mockGetQueryParam(name),
+}));
+
+vi.mock('@/utils/adyen', () => ({
+    PAYMENT_ACCEPTOR_ID_QUERY_STRING: 'payment_acceptor_id',
+}));
+
+vi.mock('@/utils/enabledPricings', () => ({
+    withPreselectedEnabledPricings: (response: unknown, ids: unknown) =>
+        mockWithPreselectedEnabledPricings(response, ids),
+}));
+
+vi.mock('@/services/geolocation', () => ({
+    createGeoLocationService: () => ({ getGeoLocation: mockGetGeoLocation }),
+}));
+
+function withSetup<T>(composable: () => T): [T, ReturnType<typeof mount>] {
+    let result!: T;
+    const wrapper = mount(
+        defineComponent({
+            setup() {
+                result = composable();
+                return () => h('div');
+            },
+        }),
+    );
+    return [result, wrapper];
+}
 
 describe('useCheckoutView', () => {
     const mockSubscription: PricingPlanSubscriptionExpanded = {
@@ -145,6 +181,8 @@ describe('useCheckoutView', () => {
 
     beforeEach(() => {
         vi.clearAllMocks();
+        mockGetQueryParam.mockReturnValue(null);
+        sessionStorage.clear();
         mockGetSubscription.mockResolvedValue(mockSubscription);
         mockLoadInvoicePreview.mockResolvedValue(undefined);
         mockLoadPaymentMethodOptions.mockResolvedValue(undefined);
@@ -168,6 +206,7 @@ describe('useCheckoutView', () => {
 
     afterEach(() => {
         vi.clearAllMocks();
+        sessionStorage.clear();
     });
 
     it('initializes with provided parameters', () => {
@@ -879,5 +918,277 @@ describe('useCheckoutView', () => {
         expect(
             context.init_pricing_plan_subscription.customer_details.organization?.tax_ids,
         ).toBeUndefined();
+    });
+
+    describe('onMounted', () => {
+        it('calls loadSubscription on mount', async () => {
+            const [, wrapper] = withSetup(() =>
+                useCheckoutView({
+                    initialCountry: undefined,
+                    initialEmail: undefined,
+                    subscriptionId: 'sub_123' as PricingPlanSubscription['id'],
+                }),
+            );
+            await flushPromises();
+            expect(mockGetSubscription).toHaveBeenCalledWith({ id: 'sub_123', expanded: true });
+            wrapper.unmount();
+        });
+
+        it('calls loadInvoicePreview on mount after subscription loads', async () => {
+            const [, wrapper] = withSetup(() =>
+                useCheckoutView({
+                    initialCountry: undefined,
+                    initialEmail: undefined,
+                    subscriptionId: 'sub_123' as PricingPlanSubscription['id'],
+                }),
+            );
+            await flushPromises();
+            expect(mockLoadInvoicePreview).toHaveBeenCalled();
+            wrapper.unmount();
+        });
+
+        it('does not propagate loadInvoicePreview errors on mount', async () => {
+            mockLoadInvoicePreview.mockRejectedValue(new Error('preview failed'));
+            const [, wrapper] = withSetup(() =>
+                useCheckoutView({
+                    initialCountry: undefined,
+                    initialEmail: undefined,
+                    subscriptionId: 'sub_123' as PricingPlanSubscription['id'],
+                }),
+            );
+            await expect(flushPromises()).resolves.not.toThrow();
+            wrapper.unmount();
+        });
+    });
+
+    describe('saveFormStateForRedirect', () => {
+        const REDIRECT_FORM_STATE_KEY = 'solvimon_checkout_redirect_state';
+
+        it('writes the current form state to sessionStorage', () => {
+            const checkoutFormMock = createMockCheckoutForm({
+                email: 'test@example.com',
+                country: 'NL' as CountryCode,
+                firstName: 'Jan',
+            });
+            mockUseCheckoutForm.mockReturnValue(checkoutFormMock);
+
+            const result = useCheckoutView({
+                initialCountry: undefined,
+                initialEmail: undefined,
+                subscriptionId: 'sub_123' as PricingPlanSubscription['id'],
+            });
+
+            result.saveFormStateForRedirect();
+
+            const raw = sessionStorage.getItem(REDIRECT_FORM_STATE_KEY);
+            expect(raw).not.toBeNull();
+            const parsed = JSON.parse(raw!);
+            expect(parsed).toMatchObject({
+                email: 'test@example.com',
+                country: 'NL',
+                firstName: 'Jan',
+            });
+        });
+
+        it('overwrites any previously saved state', () => {
+            sessionStorage.setItem(REDIRECT_FORM_STATE_KEY, JSON.stringify({ email: 'old@example.com' }));
+
+            const checkoutFormMock = createMockCheckoutForm({ email: 'new@example.com' });
+            mockUseCheckoutForm.mockReturnValue(checkoutFormMock);
+
+            const result = useCheckoutView({
+                initialCountry: undefined,
+                initialEmail: undefined,
+                subscriptionId: 'sub_123' as PricingPlanSubscription['id'],
+            });
+
+            result.saveFormStateForRedirect();
+
+            const parsed = JSON.parse(sessionStorage.getItem(REDIRECT_FORM_STATE_KEY)!);
+            expect(parsed.email).toBe('new@example.com');
+        });
+    });
+
+    describe('redirect detection', () => {
+        const REDIRECT_FORM_STATE_KEY = 'solvimon_checkout_redirect_state';
+
+        function setupRedirectParams(overrides: Record<string, string | null> = {}) {
+            const defaults: Record<string, string | null> = {
+                redirect_status: 'succeeded',
+                payment_acceptor_id: 'paya_123',
+                payment_intent_client_secret: 'pi_secret_123',
+                setup_intent_client_secret: null,
+            };
+            const params = { ...defaults, ...overrides };
+            mockGetQueryParam.mockImplementation((name: string) => params[name] ?? null);
+        }
+
+        it('sets isPaid to true synchronously when all redirect params are present', async () => {
+            setupRedirectParams();
+
+            const [result, wrapper] = withSetup(() =>
+                useCheckoutView({
+                    initialCountry: undefined,
+                    initialEmail: undefined,
+                    subscriptionId: 'sub_123' as PricingPlanSubscription['id'],
+                }),
+            );
+
+            expect(result.isPaid.value).toBe(true);
+            await flushPromises();
+            wrapper.unmount();
+        });
+
+        it('accepts setup_intent_client_secret as the client secret param', async () => {
+            setupRedirectParams({
+                payment_intent_client_secret: null,
+                setup_intent_client_secret: 'seti_secret_123',
+            });
+
+            const [result, wrapper] = withSetup(() =>
+                useCheckoutView({
+                    initialCountry: undefined,
+                    initialEmail: undefined,
+                    subscriptionId: 'sub_123' as PricingPlanSubscription['id'],
+                }),
+            );
+
+            expect(result.isPaid.value).toBe(true);
+            await flushPromises();
+            wrapper.unmount();
+        });
+
+        it('does not set isPaid when redirect_status is not succeeded', async () => {
+            setupRedirectParams({ redirect_status: 'failed' });
+
+            const [result, wrapper] = withSetup(() =>
+                useCheckoutView({
+                    initialCountry: undefined,
+                    initialEmail: undefined,
+                    subscriptionId: 'sub_123' as PricingPlanSubscription['id'],
+                }),
+            );
+
+            await flushPromises();
+            expect(result.isPaid.value).toBe(false);
+            wrapper.unmount();
+        });
+
+        it('does not set isPaid when payment_acceptor_id is missing', async () => {
+            setupRedirectParams({ payment_acceptor_id: null });
+
+            const [result, wrapper] = withSetup(() =>
+                useCheckoutView({
+                    initialCountry: undefined,
+                    initialEmail: undefined,
+                    subscriptionId: 'sub_123' as PricingPlanSubscription['id'],
+                }),
+            );
+
+            await flushPromises();
+            expect(result.isPaid.value).toBe(false);
+            wrapper.unmount();
+        });
+
+        it('does not set isPaid when both client secrets are absent', async () => {
+            setupRedirectParams({
+                payment_intent_client_secret: null,
+                setup_intent_client_secret: null,
+            });
+
+            const [result, wrapper] = withSetup(() =>
+                useCheckoutView({
+                    initialCountry: undefined,
+                    initialEmail: undefined,
+                    subscriptionId: 'sub_123' as PricingPlanSubscription['id'],
+                }),
+            );
+
+            await flushPromises();
+            expect(result.isPaid.value).toBe(false);
+            wrapper.unmount();
+        });
+
+        it('restores form state from sessionStorage after subscription loads', async () => {
+            setupRedirectParams();
+
+            const savedState = { email: 'restored@example.com', country: 'DE', firstName: 'Hans' };
+            sessionStorage.setItem(REDIRECT_FORM_STATE_KEY, JSON.stringify(savedState));
+
+            const checkoutFormMock = createMockCheckoutForm();
+            mockUseCheckoutForm.mockReturnValue(checkoutFormMock);
+
+            const [, wrapper] = withSetup(() =>
+                useCheckoutView({
+                    initialCountry: undefined,
+                    initialEmail: undefined,
+                    subscriptionId: 'sub_123' as PricingPlanSubscription['id'],
+                }),
+            );
+
+            await flushPromises();
+
+            expect(checkoutFormMock.updateInitialState).toHaveBeenCalledWith(
+                expect.objectContaining(savedState),
+            );
+            wrapper.unmount();
+        });
+
+        it('removes the sessionStorage item after restoring form state', async () => {
+            setupRedirectParams();
+            sessionStorage.setItem(REDIRECT_FORM_STATE_KEY, JSON.stringify({ email: 'a@b.com' }));
+
+            const [, wrapper] = withSetup(() =>
+                useCheckoutView({
+                    initialCountry: undefined,
+                    initialEmail: undefined,
+                    subscriptionId: 'sub_123' as PricingPlanSubscription['id'],
+                }),
+            );
+
+            await flushPromises();
+
+            expect(sessionStorage.getItem(REDIRECT_FORM_STATE_KEY)).toBeNull();
+            wrapper.unmount();
+        });
+
+        it('does not call updateInitialState for restoration when no sessionStorage item exists', async () => {
+            setupRedirectParams();
+
+            const checkoutFormMock = createMockCheckoutForm();
+            mockUseCheckoutForm.mockReturnValue(checkoutFormMock);
+
+            const [, wrapper] = withSetup(() =>
+                useCheckoutView({
+                    initialCountry: undefined,
+                    initialEmail: undefined,
+                    subscriptionId: 'sub_123' as PricingPlanSubscription['id'],
+                }),
+            );
+
+            await flushPromises();
+
+            // updateInitialState is called once by loadSubscription, but not for restoration
+            const callArgs = checkoutFormMock.updateInitialState.mock.calls;
+            expect(callArgs).toHaveLength(1); // only from loadSubscription
+            wrapper.unmount();
+        });
+
+        it('handles malformed sessionStorage JSON gracefully', async () => {
+            setupRedirectParams();
+            sessionStorage.setItem(REDIRECT_FORM_STATE_KEY, 'not valid json {{{');
+
+            const [result, wrapper] = withSetup(() =>
+                useCheckoutView({
+                    initialCountry: undefined,
+                    initialEmail: undefined,
+                    subscriptionId: 'sub_123' as PricingPlanSubscription['id'],
+                }),
+            );
+
+            await expect(flushPromises()).resolves.not.toThrow();
+            expect(result.isPaid.value).toBe(true);
+            wrapper.unmount();
+        });
     });
 });

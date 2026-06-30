@@ -113,7 +113,7 @@ const isCollapsible = computed(() => !!seats.value.pricing?.tiered?.bands);
 
         <!-- content-->
         <div v-if="seats.pricing?.tiered?.bands">
-            <Expand>
+            <Expand :is-open="isExpanded">
                 <div v-if="isExpanded">
                     <TieredTable
                         :bands="seats.pricing.tiered.bands"

@@ -168,7 +168,7 @@ const readableCountryName = computed(() =>
                     </template>
                 </div>
 
-                <Expand>
+                <Expand :is-open="showBillingDetails || !!isBillingInformationMandatory">
                     <div v-if="showBillingDetails || isBillingInformationMandatory">
                         <div class="mt-2 flex flex-col gap-3">
                             <Input
@@ -281,7 +281,7 @@ const readableCountryName = computed(() =>
                     </template>
                 </Toggle>
 
-                <Expand>
+                <Expand :is-open="isCompanyPurchase">
                     <div v-if="isCompanyPurchase">
                         <div class="mt-4 grid grid-cols-1 gap-3">
                             <Input

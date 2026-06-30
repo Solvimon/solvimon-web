@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { FormMessage, useIntl } from '@solvimon/solvimon-ui';
 import type {
     PaymentGatewayVariant,
@@ -23,7 +23,13 @@ defineExpose({ submit });
 
 const { $t } = useIntl();
 
-const selectedIntegration = ref<PaymentGatewayVariant>();
+const userSelectedIntegration = ref<PaymentGatewayVariant>();
+const selectedIntegration = computed(
+    () =>
+        userSelectedIntegration.value ??
+        props.paymentMethodOptions[0]?.integration.payment_gateway?.variant,
+);
+
 const integrationRefs = ref(new Map());
 const showIntegrationError = ref(false);
 
@@ -35,7 +41,7 @@ const handleSelect = ({
     paymentMethodType: string;
 }) => {
     showIntegrationError.value = false;
-    selectedIntegration.value = paymentGatewayVariant;
+    userSelectedIntegration.value = paymentGatewayVariant;
     emit('select', { paymentGatewayVariant, paymentMethodType });
 };
 
@@ -91,6 +97,7 @@ function submit() {
             :amount="amount"
             :invoice-id="invoiceId"
             :selected="isSelectedIntegration({ selectedIntegration, paymentMethodOption })"
+            :email="email"
             :validate-on-submit="validateOnSubmit"
             :force-store-payment-method="forceStorePaymentMethod"
             @select="handleSelect"

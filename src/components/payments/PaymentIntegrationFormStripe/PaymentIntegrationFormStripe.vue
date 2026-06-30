@@ -21,9 +21,18 @@ import {
 import { getQueryParam } from '@/utils/url';
 import { useLogger } from '@/components/providers';
 
-// Loaded lazily — only needed for handleNextAction (3DS), which appends to
-// document.body and works fine outside the shadow root.
-let parentStripe: Stripe | null = null;
+const STRIPE_WALLETS = { link: 'never' as const };
+const STRIPE_APPEARANCE = {
+    variables: { borderRadius: '4px', colorBackground: 'rgba(243, 244, 246, 0.5)' },
+    rules: {
+        '.TermsText': { fontSize: '14px' },
+        '.Input': {
+            backgroundColor: 'rgba(243, 244, 246, 0.5)',
+            fontSize: '14px',
+            borderColor: 'rgb(229, 231, 235)',
+        },
+    },
+};
 
 const props = withDefaults(defineProps<PaymentIntegrationFormStripeProps>(), {
     validateOnSubmit: () => Promise.resolve(true),
@@ -37,6 +46,10 @@ const frameRef = ref<InstanceType<typeof PaymentIntegrationFormStripeFrame>>();
 const showPaymentSuccess = ref(false);
 const integrationError = ref<Error>();
 
+// Loaded lazily — only needed for handleNextAction (3DS), which appends to
+// document.body and works fine outside the shadow root.
+const stripeInstance = ref<Stripe | null>(null);
+
 const logger = useLogger();
 const { authorizePayment } = createPaymentsService();
 const { tokenizePaymentMethod } = createPaymentMethodsService();
@@ -47,9 +60,22 @@ const publicKey = computed(
 
 const frameOptions = computed<PaymentIntegrationFormStripeFrameProps['options']>(() => {
     const currency = props.amount.currency.toLowerCase();
+    const fields = {
+        billingDetails: {
+            address: { country: 'never' as const },
+            ...(props.email ? { email: 'never' as const } : {}),
+        },
+    };
 
     if (props.variant === 'TOKENIZE') {
-        return { mode: 'setup' as const, currency, setup_future_usage: 'off_session' };
+        return {
+            mode: 'setup' as const,
+            currency,
+            setup_future_usage: 'off_session',
+            wallets: STRIPE_WALLETS,
+            fields,
+            appearance: STRIPE_APPEARANCE,
+        };
     }
 
     return {
@@ -57,6 +83,9 @@ const frameOptions = computed<PaymentIntegrationFormStripeFrameProps['options']>
         amount: transformToAdyenAmount(props.amount).value,
         currency,
         setup_future_usage: 'off_session',
+        wallets: STRIPE_WALLETS,
+        fields,
+        appearance: STRIPE_APPEARANCE,
     };
 });
 
@@ -77,15 +106,15 @@ async function handleSubmit() {
     frameRef.value?.triggerSubmit();
 }
 
-async function getParentStripeInstance(): Promise<Stripe> {
-    if (parentStripe) return parentStripe;
+async function getStripeInstance(): Promise<Stripe> {
+    if (stripeInstance.value) return stripeInstance.value;
     const key = publicKey.value;
     if (!key) throw new Error('Missing Stripe public key');
     const { loadStripe } = await import('@stripe/stripe-js');
     const stripe = await loadStripe(key);
     if (!stripe) throw new Error('Failed to load Stripe.js');
-    parentStripe = stripe;
-    return parentStripe;
+    stripeInstance.value = stripe;
+    return stripe;
 }
 
 async function handleConfirmationToken(confirmationTokenId: string) {
@@ -103,7 +132,9 @@ async function handleConfirmationToken(confirmationTokenId: string) {
                 payment_gateway_variant: PAYMENT_GATEWAY_VARIANT_STRIPE,
                 stripe: { confirmation_token_id: confirmationTokenId },
                 amount: props.amount,
-                ...(props.context ? { context: props.context } : {}),
+                ...(props.context && props.context.type !== 'CHARGE_ON_DEMAND'
+                    ? { context: props.context }
+                    : {}),
                 return_url: returnUrl,
             });
             await handlePaymentResult(result);
@@ -113,13 +144,7 @@ async function handleConfirmationToken(confirmationTokenId: string) {
                 `Failed payment authorization for payment acceptor with id ${paymentAcceptorId}`,
                 { error },
             );
-            const err: Error = {
-                code: 'UNKNOWN_ERROR',
-                message: 'Payment authorization failed',
-                error,
-            };
-            integrationError.value = err;
-            emit('payment-failed', err);
+            emitError({ code: 'UNKNOWN_ERROR', message: 'Payment authorization failed', error });
         }
         return;
     }
@@ -147,13 +172,7 @@ async function handleConfirmationToken(confirmationTokenId: string) {
                 `Tokenization failed for payment acceptor with id ${paymentAcceptorId}`,
                 { error },
             );
-            const err: Error = {
-                code: 'UNKNOWN_ERROR',
-                message: 'Tokenization failed',
-                error,
-            };
-            integrationError.value = err;
-            emit('payment-failed', err);
+            emitError({ code: 'UNKNOWN_ERROR', message: 'Tokenization failed', error });
         }
     }
 }
@@ -169,32 +188,24 @@ async function handlePaymentResult(result: AuthorizePaymentResponse) {
                 'STRIPE_ACTION_FAILED',
                 'Missing client_secret in Stripe ACTION_REQUIRED response',
             );
-            const err: Error = {
-                code: 'UNKNOWN_ERROR',
-                message: 'Payment action failed',
-                error: result,
-            };
-            integrationError.value = err;
-            emit('payment-failed', err);
+            emitError({ code: 'UNKNOWN_ERROR', message: 'Payment action failed', error: result });
             return;
         }
 
-        const stripe = await getParentStripeInstance().catch(() => null);
-        if (!stripe) return;
+        let stripe: Stripe;
+        try {
+            stripe = await getStripeInstance();
+        } catch (error) {
+            logger.error('STRIPE_ACTION_FAILED', 'Failed to load Stripe.js', { error });
+            emitError({ code: 'UNKNOWN_ERROR', message: 'Payment action failed', error });
+            return;
+        }
 
-        const { error } = await stripe.handleNextAction({
-            clientSecret,
-        });
+        const { error } = await stripe.handleNextAction({ clientSecret });
 
         if (error) {
             logger.error('STRIPE_ACTION_FAILED', 'Stripe handleNextAction failed', { error });
-            const err: Error = {
-                code: 'UNKNOWN_ERROR',
-                message: 'Payment action failed',
-                error,
-            };
-            integrationError.value = err;
-            emit('payment-failed', err);
+            emitError({ code: 'UNKNOWN_ERROR', message: 'Payment action failed', error });
             return;
         }
 
@@ -210,29 +221,19 @@ async function handlePaymentResult(result: AuthorizePaymentResponse) {
     }
 
     logger.error('STRIPE_ACTION_FAILED', 'Unexpected payment result status', { error: result });
-    const err: Error = { code: 'UNKNOWN_ERROR', message: 'Payment failed', error: result };
-    integrationError.value = err;
-    emit('payment-failed', err);
+    emitError({ code: 'UNKNOWN_ERROR', message: 'Payment failed', error: result });
 }
 
-/* eslint-disable no-console */
 async function handleRedirectReturn() {
     const paymentAcceptorId = props.paymentMethodOptionResponseEntry.payment_acceptor.id;
     const urlPaymentAcceptorId = getQueryParam(PAYMENT_ACCEPTOR_ID_QUERY_STRING);
-    console.log('[Stripe] handleRedirectReturn', { urlPaymentAcceptorId, paymentAcceptorId });
     if (urlPaymentAcceptorId !== paymentAcceptorId) return;
 
     const redirectStatus = getQueryParam('redirect_status');
     const paymentIntentClientSecret = getQueryParam('payment_intent_client_secret');
     const setupIntentClientSecret = getQueryParam('setup_intent_client_secret');
-    console.log('[Stripe] redirect params', {
-        redirectStatus,
-        paymentIntentClientSecret,
-        setupIntentClientSecret,
-    });
-    if (!redirectStatus) return;
 
-    if (!paymentIntentClientSecret && !setupIntentClientSecret) return;
+    if (!redirectStatus || (!paymentIntentClientSecret && !setupIntentClientSecret)) return;
 
     if (redirectStatus === 'succeeded') {
         showPaymentSuccess.value = true;
@@ -240,30 +241,51 @@ async function handleRedirectReturn() {
         return;
     }
 
-    console.error('[Stripe] redirect return failed', { redirectStatus });
-    const err: Error = {
+    logger.error('STRIPE_REDIRECT_RETURN_FAILED', 'Stripe redirect returned non-succeeded status', {
+        redirectStatus,
+    });
+    emitError({
         code: 'UNKNOWN_ERROR',
         message: 'Payment failed',
         error: new globalThis.Error(`Stripe redirect returned status: ${redirectStatus}`),
-    };
+    });
+}
+
+function handleReady() {
+    emit('select', {
+        paymentMethodType: 'card',
+        paymentGatewayVariant: PAYMENT_GATEWAY_VARIANT_STRIPE,
+    });
+    emit('ready');
+}
+
+function handleLoadError(error: { message?: string; type?: string }) {
+    emitError({
+        code: 'UNKNOWN_ERROR',
+        message: error.message ?? 'Failed to load payment form',
+        error,
+    });
+}
+
+function emitError(err: Error) {
     integrationError.value = err;
     emit('payment-failed', err);
 }
 
 onMounted(() => {
     handleRedirectReturn().catch((error) => {
-        console.error('[Stripe] handleRedirectReturn threw', error);
+        logger.error('STRIPE_REDIRECT_RETURN_FAILED', 'handleRedirectReturn threw unexpectedly', {
+            error,
+        });
     });
 });
-/* eslint-enable no-console */
 
 onBeforeUnmount(() => {
-    parentStripe = null;
+    stripeInstance.value = null;
 });
 </script>
 
 <template>
-    {{ integrationError }}
     <PaymentCompletedCard v-if="showPaymentSuccess" :variant="variant" />
     <PaymentErrorCard v-else-if="integrationError" :error="integrationError" />
     <PaymentIntegrationFormStripeFrame
@@ -271,13 +293,9 @@ onBeforeUnmount(() => {
         ref="frameRef"
         :public-key="publicKey"
         :options="frameOptions"
-        @ready="
-            emit('select', {
-                paymentMethodType: 'card',
-                paymentGatewayVariant: PAYMENT_GATEWAY_VARIANT_STRIPE,
-            });
-            emit('ready');
-        "
+        :country-code="countryCode"
+        :email="email"
+        @ready="handleReady"
         @change="
             (type) =>
                 emit('select', {
@@ -285,16 +303,8 @@ onBeforeUnmount(() => {
                     paymentGatewayVariant: PAYMENT_GATEWAY_VARIANT_STRIPE,
                 })
         "
-        @loaderror="
-            (error) => {
-                integrationError = {
-                    code: 'UNKNOWN_ERROR',
-                    message: error.message ?? 'Failed to load payment form',
-                    error,
-                };
-            }
-        "
-        @submit-success="(id) => handleConfirmationToken(id)"
+        @loaderror="handleLoadError"
+        @submit-success="handleConfirmationToken"
         @submit-error="
             (error) =>
                 logger.error('STRIPE_CONFIRMATION_TOKEN_FAILED', 'Stripe submission failed', {

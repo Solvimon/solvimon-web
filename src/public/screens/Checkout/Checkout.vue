@@ -621,6 +621,7 @@ onMounted(() => {
                                 :country-code="checkoutForm.form.value.country"
                                 :context="authorizationContext"
                                 :amount="amount"
+                                :email="checkoutForm.form.value.email"
                                 variant="AUTHORIZE"
                                 :payment-method-options="paymentMethodOptions ?? []"
                                 :validate-on-submit="handleValidateOnSubmit"

@@ -18,7 +18,7 @@ const iframeSrc = ref<string>();
 
 function sendInit() {
     iframeRef.value?.contentWindow?.postMessage(
-        { type: 'stripe:init', publicKey: props.publicKey, options: props.options },
+        { type: 'stripe:init', publicKey: props.publicKey, options: props.options, countryCode: props.countryCode, email: props.email },
         '*',
     );
 }

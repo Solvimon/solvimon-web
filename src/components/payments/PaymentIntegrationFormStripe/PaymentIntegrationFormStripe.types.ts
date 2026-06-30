@@ -1,12 +1,14 @@
 import type {
     Amount,
-    AuthorizePaymentPayload,
     Customer,
     Invoice,
     PaymentGatewayVariant,
     PaymentMethodOptionResponseEntry,
 } from '@solvimon/solvimon-types';
 import type { Error } from '@/types/errors';
+import type { PaymentAuthorizationContext } from '@/components/payments/PaymentIntegrationForm/PaymentIntegrationForm.types';
+
+export type { PaymentAuthorizationContext };
 
 export interface PaymentIntegrationFormStripeProps {
     countryCode: string;
@@ -17,7 +19,8 @@ export interface PaymentIntegrationFormStripeProps {
     selected: boolean;
     amount: Amount;
     validateOnSubmit?: () => Promise<boolean>;
-    context: AuthorizePaymentPayload['context'];
+    context?: PaymentAuthorizationContext;
+    email?: string;
     forceStorePaymentMethod?: boolean;
 }
 

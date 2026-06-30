@@ -24,15 +24,17 @@ body { overflow: hidden; }
 <script src="https://js.stripe.com/dahlia/stripe.js"><\/script>
 <script>
 (function () {
-  var stripe, elements;
+  var stripe, elements, countryCode, email;
 
   window.addEventListener('message', function (event) {
     if (!event.data || typeof event.data !== 'object') return;
 
     if (event.data.type === 'stripe:init') {
+      countryCode = event.data.countryCode;
+      email = event.data.email;
       stripe = Stripe(event.data.publicKey);
       elements = stripe.elements(event.data.options);
-      var paymentElement = elements.create('payment');
+      var paymentElement = elements.create('payment', { layout: { type: 'accordion', defaultCollapsed: false }, wallets: event.data.options.wallets, fields: event.data.options.fields });
 
       paymentElement.on('ready', function () {
         parent.postMessage({ type: 'stripe:ready' }, '*');
@@ -73,7 +75,13 @@ body { overflow: hidden; }
           }, '*');
           return;
         }
-        stripe.createConfirmationToken({ elements: elements }).then(function (tokenResult) {
+        var billingDetails = {};
+        if (countryCode) billingDetails.address = { country: countryCode };
+        if (email) billingDetails.email = email;
+        var tokenParams = Object.keys(billingDetails).length
+          ? { payment_method_data: { billing_details: billingDetails } }
+          : {};
+        stripe.createConfirmationToken({ elements: elements, params: tokenParams }).then(function (tokenResult) {
           if (tokenResult.error) {
             parent.postMessage({
               type: 'stripe:submit:error',

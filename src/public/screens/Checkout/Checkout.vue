@@ -93,6 +93,7 @@ const {
     amount,
     loadInvoicePreview,
     updateInvoicePreviewOnBillingInformationChange,
+    saveFormStateForRedirect,
 } = useCheckoutView({
     initialCountry: props.configuration?.countryCode,
     initialEmail: props.configuration?.email,
@@ -107,6 +108,7 @@ const handleSubmit = async () => {
         return;
     }
 
+    saveFormStateForRedirect();
     paymentIntegrationFormRef.value?.submit();
 };
 

@@ -21,8 +21,11 @@ import {
     getScheduleCustomizations,
 } from '@/utils/pricingPlanSchedule';
 import { withPreselectedEnabledPricings } from '@/utils/enabledPricings';
+import { getQueryParam } from '@/utils/url';
+import { PAYMENT_ACCEPTOR_ID_QUERY_STRING } from '@/utils/adyen';
 
 const DEFAULT_TAX_IDENTIFIER_TYPE = 'GENERIC_TAX_ID';
+const REDIRECT_FORM_STATE_KEY = 'solvimon_checkout_redirect_state';
 
 export function useCheckoutView({
     initialCountry,
@@ -315,12 +318,40 @@ export function useCheckoutView({
         },
     );
 
+    function saveFormStateForRedirect() {
+        sessionStorage.setItem(REDIRECT_FORM_STATE_KEY, JSON.stringify(checkoutForm.form.value));
+    }
+
     onMounted(async () => {
+        const redirectStatus = getQueryParam('redirect_status');
+        const hasPaymentAcceptorId = !!getQueryParam(PAYMENT_ACCEPTOR_ID_QUERY_STRING);
+        const hasClientSecret =
+            !!getQueryParam('payment_intent_client_secret') ||
+            !!getQueryParam('setup_intent_client_secret');
+        const isSuccessfulRedirect =
+            redirectStatus === 'succeeded' && hasPaymentAcceptorId && hasClientSecret;
+
+        if (isSuccessfulRedirect) {
+            isPaid.value = true;
+        }
+
         await loadSubscription();
         try {
             await loadInvoicePreview();
         } catch {
             // Ignore initial preview failures; caller-specific handlers can opt in.
+        }
+
+        if (isSuccessfulRedirect) {
+            const saved = sessionStorage.getItem(REDIRECT_FORM_STATE_KEY);
+            if (saved) {
+                try {
+                    checkoutForm.updateInitialState(JSON.parse(saved));
+                } catch {
+                    // Ignore malformed state
+                }
+                sessionStorage.removeItem(REDIRECT_FORM_STATE_KEY);
+            }
         }
     });
 
@@ -354,5 +385,6 @@ export function useCheckoutView({
         authorizationContext,
         isPaid,
         amount,
+        saveFormStateForRedirect,
     };
 }

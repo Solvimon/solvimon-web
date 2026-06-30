@@ -26,8 +26,8 @@ import {
     PAYMENT_ACCEPTOR_ID_QUERY_STRING,
     REDIRECT_RESULT_QUERY_STRING,
     transformObjectToAdyenObject,
-    transformToAdyenAmount,
 } from '@/utils/adyen';
+import { toMinorUnitAmount } from '@/utils/amount';
 import { useExperimentalFeature } from '@/components/providers/ExperimentalFeatureProvider/composables/useExperimentalFeature';
 import { filterOutExpressPaymentMethods } from '@/utils/paymentMethods';
 import { useLogger } from '@/components/providers';
@@ -78,7 +78,7 @@ async function getConfiguration(): Promise<{
     checkoutConfig: CoreConfiguration;
     dropInConfig: DropinConfiguration;
 }> {
-    const adyenAmount = transformToAdyenAmount(props.amount);
+    const adyenAmount = toMinorUnitAmount(props.amount);
     const paymentMethods = experimentalFeatures?.value?.['express-checkout']
         ? filterOutExpressPaymentMethods(
               mapAdyenPaymentMethods(props.paymentMethodOptionResponseEntry),

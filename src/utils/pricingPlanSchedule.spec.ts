@@ -34,7 +34,6 @@ describe('pricingPlanSchedule utils', () => {
             ({
                 object_type: 'PRICING_ITEM_CONFIG',
                 id,
-                type: 'FLAT',
                 order: 1,
                 billing_in_advance: false,
                 details: {

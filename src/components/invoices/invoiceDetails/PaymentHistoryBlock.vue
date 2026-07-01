@@ -54,9 +54,11 @@ const colorMapping: Record<Payment['result'], ChipColor> = {
                             })
                         }}
                     </Typography>
-                    <Chip class="sv-payment-history__item-status" :color="colorMapping[paymentAttempt.result]">{{
-                        formatEnum(paymentAttempt.result)
-                    }}</Chip>
+                    <Chip
+                        class="sv-payment-history__item-status"
+                        :color="colorMapping[paymentAttempt.result]"
+                        >{{ formatEnum(paymentAttempt.result) }}</Chip
+                    >
                 </div>
 
                 <PaymentMethod

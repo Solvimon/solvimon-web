@@ -144,8 +144,7 @@ vi.mock('@/utils/adyen', () => ({
 }));
 
 vi.mock('@/utils/enabledPricings', () => ({
-    withPreselectedEnabledPricings: (response: unknown, ids: unknown) =>
-        mockWithPreselectedEnabledPricings(response, ids),
+    withPreselectedEnabledPricings: mockWithPreselectedEnabledPricings,
 }));
 
 vi.mock('@/services/geolocation', () => ({

@@ -46,7 +46,7 @@ const resolvedProps = computed<SolvimonInvoiceEntryProps>(() => ({
                     :invoice="invoice"
                     :invoice-download-service="invoiceDownloadService"
                     :payments="payments.payments.value"
-                    :configuration="configuration"
+                    :configuration="resolvedProps.configuration"
                 />
             </template>
         </InvoiceEntryView>

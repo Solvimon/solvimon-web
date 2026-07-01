@@ -6,7 +6,6 @@ import type { PaymentIntegrationFormStripeProps } from './PaymentIntegrationForm
 const mockAuthorizePayment = vi.fn();
 const mockTokenizePaymentMethod = vi.fn();
 const mockHandleNextAction = vi.fn();
-const mockLoadStripe = vi.fn();
 vi.mock('@/services/payments', () => ({
     createPaymentsService: () => ({ authorizePayment: mockAuthorizePayment }),
 }));
@@ -27,10 +26,6 @@ vi.mock('@/utils/amount', () => ({
 const mockGetQueryParam = vi.fn();
 vi.mock('@/utils/url', () => ({
     getQueryParam: (key: string) => mockGetQueryParam(key),
-}));
-
-vi.mock('@stripe/stripe-js', () => ({
-    loadStripe: mockLoadStripe,
 }));
 
 const mockProps: PaymentIntegrationFormStripeProps = {
@@ -118,8 +113,12 @@ describe('PaymentIntegrationFormStripe', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         mockGetQueryParam.mockReturnValue(null);
-        mockLoadStripe.mockResolvedValue({ handleNextAction: mockHandleNextAction });
+        window.Stripe = vi.fn().mockReturnValue({ handleNextAction: mockHandleNextAction });
         mockHandleNextAction.mockResolvedValue({ error: null });
+    });
+
+    afterEach(() => {
+        delete window.Stripe;
     });
 
     describe('handlePaymentResult — ACTION_REQUIRED', () => {

@@ -9,6 +9,7 @@ import type {
 import PaymentIntegrationFormStripeFrame from './PaymentIntegrationFormStripeFrame.vue';
 import type { PaymentIntegrationFormStripeFrameProps } from './PaymentIntegrationFormStripeFrame.types.ts';
 import { getFrameOptions } from './PaymentIntegrationFormStripe.lib.ts';
+import { STRIPE_SCRIPT_URL } from './PaymentIntegrationFormStripe.constants.ts';
 import PaymentCompletedCard from '@/components/payments/PaymentCompletedCard/PaymentCompletedCard.vue';
 import PaymentErrorCard from '@/components/payments/PaymentErrorCard/PaymentErrorCard.vue';
 import type { Error } from '@/types/errors';
@@ -66,6 +67,26 @@ async function handleSubmit() {
     frameRef.value?.triggerSubmit();
 }
 
+function loadStripeDahlia(key: string): Promise<Stripe> {
+    return new Promise<Stripe>((resolve, reject) => {
+        if (window.Stripe) {
+            resolve(window.Stripe(key));
+            return;
+        }
+        const script = document.createElement('script');
+        script.src = STRIPE_SCRIPT_URL;
+        script.onload = () => {
+            if (!window.Stripe) {
+                reject(new Error('Stripe not available after script load'));
+                return;
+            }
+            resolve(window.Stripe(key));
+        };
+        script.onerror = () => reject(new Error('Failed to load Stripe.js'));
+        document.head.appendChild(script);
+    });
+}
+
 async function getStripeInstance(): Promise<Stripe> {
     if (stripeInstance.value) {
         return stripeInstance.value;
@@ -76,15 +97,8 @@ async function getStripeInstance(): Promise<Stripe> {
         throw new Error('Missing Stripe public key');
     }
 
-    const { loadStripe } = await import('@stripe/stripe-js');
-    const stripe = await loadStripe(key);
-
-    if (!stripe) {
-        throw new Error('Failed to load Stripe.js');
-    }
-
+    const stripe = await loadStripeDahlia(key);
     stripeInstance.value = stripe;
-
     return stripe;
 }
 

@@ -1,3 +1,6 @@
+
+import { STRIPE_SCRIPT_URL } from './PaymentIntegrationFormStripe.constants.ts';
+
 /**
  * Static HTML loaded into the Stripe iframe via the srcdoc attribute.
  *
@@ -21,7 +24,7 @@ body { overflow: hidden; }
 </head>
 <body>
 <div id="stripe-root"></div>
-<script src="https://js.stripe.com/dahlia/stripe.js"><\/script>
+<script src="${STRIPE_SCRIPT_URL}"><\/script>
 <script>
 (function () {
   var stripe, elements, countryCode, email;

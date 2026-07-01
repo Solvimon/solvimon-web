@@ -31,7 +31,11 @@ const paymentMethodOptionsResponseEntryIncludingApplePay = computed<
     }
 
     return props.paymentMethodsOptionsResponse?.find((entry) =>
-        entry.options?.some((option) => option.name.toLowerCase() === 'apple pay'),
+        entry.options?.some(
+            (option) =>
+                option.name.toLowerCase() === 'apple pay' &&
+                option.payment_gateway_variant === 'ADYEN',
+        ),
     );
 });
 
@@ -43,7 +47,11 @@ const paymentMethodOptionsResponseEntryIncludingPayPal = computed<
     }
 
     return props.paymentMethodsOptionsResponse?.find((entry) =>
-        entry.options?.some((option) => option.name.toLowerCase() === 'paypal'),
+        entry.options?.some(
+            (option) =>
+                option.name.toLowerCase() === 'paypal' &&
+                option.payment_gateway_variant === 'ADYEN',
+        ),
     );
 });
 
@@ -55,7 +63,11 @@ const paymentMethodOptionsResponseEntryIncludingGooglePay = computed<
     }
 
     return props.paymentMethodsOptionsResponse?.find((entry) =>
-        entry.options?.some((option) => option.name.toLowerCase() === 'google pay'),
+        entry.options?.some(
+            (option) =>
+                option.name.toLowerCase() === 'google pay' &&
+                option.payment_gateway_variant === 'ADYEN',
+        ),
     );
 });
 
@@ -113,8 +125,8 @@ const expressPaymentButtonCount = computed(() => {
         </div>
         <div class="grid grid-cols-6 gap-1 md:gap-2">
             <template v-if="!isReady">
-                <Skeleton class="h-11 col-span-3" />
-                <Skeleton class="h-11 col-span-3" />
+                <Skeleton class="col-span-3 h-11" />
+                <Skeleton class="col-span-3 h-11" />
             </template>
             <div
                 class="col-span-3 md:col-span-2"
@@ -185,7 +197,7 @@ const expressPaymentButtonCount = computed(() => {
                 />
             </div>
         </div>
-        <div class="h-4 mt-4">
+        <div class="mt-4 h-4">
             <Skeleton v-if="!isReady" variant="divider-text" />
             <DividerText
                 v-else

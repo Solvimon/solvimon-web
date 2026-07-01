@@ -1,23 +1,23 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import type { SolvimonInvoiceEntryProps } from './Invoice.entry.types';
-import InvoiceEntryView from './Invoice.entry.view.vue';
-import { COMPONENT_NAME } from './Invoice.entry.ce';
-import Invoice from './Invoice.vue';
+import type { SolvimonInvoiceHeaderEntryProps } from './InvoiceHeader.entry.types';
+import InvoiceHeaderEntryView from './InvoiceHeader.entry.view.vue';
+import InvoiceHeader from './InvoiceHeader.vue';
 import { Provider } from '@/components/providers';
+import { getComponentName } from '@/utils/component';
 
-const props = defineProps<SolvimonInvoiceEntryProps>();
+const COMPONENT_NAME = getComponentName('invoice-header');
+
+const props = defineProps<SolvimonInvoiceHeaderEntryProps>();
 
 if (!props.configuration?.invoiceId) {
     throw new Error('Missing invoice id');
 }
 
-const resolvedProps = computed<SolvimonInvoiceEntryProps>(() => ({
+const resolvedProps = computed<SolvimonInvoiceHeaderEntryProps>(() => ({
     ...props,
     configuration: {
-        enableCustomerBillingInformation: true,
         enableDownloadButton: true,
-        enablePaymentAttempts: true,
         ...props.configuration,
     },
 }));
@@ -38,9 +38,9 @@ const resolvedProps = computed<SolvimonInvoiceEntryProps>(() => ({
         :css-overrides="cssOverrides"
         @error="(error) => $emit('error', error)"
     >
-        <InvoiceEntryView v-bind="resolvedProps">
+        <InvoiceHeaderEntryView v-bind="resolvedProps">
             <template #default="{ invoice, payments, isLoading, invoiceDownloadService }">
-                <Invoice
+                <InvoiceHeader
                     v-if="invoice"
                     :is-loading="isLoading"
                     :invoice="invoice"
@@ -49,6 +49,6 @@ const resolvedProps = computed<SolvimonInvoiceEntryProps>(() => ({
                     :configuration="resolvedProps.configuration"
                 />
             </template>
-        </InvoiceEntryView>
+        </InvoiceHeaderEntryView>
     </Provider>
 </template>

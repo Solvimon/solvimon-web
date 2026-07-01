@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { defineAsyncComponent } from 'vue';
-import { CustomerBillingInformation, InvoiceHeader, useIntl } from '@solvimon/solvimon-ui';
+import { CustomerBillingInformation, useIntl } from '@solvimon/solvimon-ui';
 import type { InvoiceProps } from './Invoice.types';
+import InvoiceHeader from '@/public/components/InvoiceHeader/InvoiceHeader.vue';
 import InvoiceBlock from '@/components/invoices/invoiceDetails/InvoiceBlock.vue';
 import InvoiceDetailsBlock from '@/components/invoices/invoiceDetails/InvoiceDetailsBlock.vue';
 
@@ -18,11 +19,11 @@ const { $t } = useIntl();
     <div class="sv-invoice sv-root sv-component">
         <InvoiceHeader
             class="sv-invoice__header mb-6"
-            :payment-attempts="payments ?? []"
             :invoice="invoice"
-            :download-service="() => invoiceDownloadService(invoice.id)"
-            :show-download-button="configuration.enableDownloadButton"
-            variant="external"
+            :payments="payments"
+            :invoice-download-service="invoiceDownloadService"
+            :is-loading="isLoading"
+            :configuration="configuration"
         />
 
         <div class="sv-invoice__body flex flex-col gap-3 lg:flex-row lg:gap-6">

@@ -694,7 +694,11 @@ onMounted(() => {
                         type="button"
                         size="lg"
                         class="sv-action sv-action--primary sv-action--full-width sv-checkout__submit w-full"
-                        :disabled="isPromotionCodePending || paymentMethodOptions.length === 0 || isPaymentPending"
+                        :disabled="
+                            isPromotionCodePending ||
+                            paymentMethodOptions.length === 0 ||
+                            isPaymentPending
+                        "
                         :loading="isPaymentPending"
                         @click="handleSubmit"
                     >

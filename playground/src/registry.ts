@@ -66,6 +66,13 @@ export const components: StoryEntry[] = [
     },
     {
         kind: 'component',
+        id: 'invoice-header',
+        label: 'Invoice Header',
+        description: 'Displays the header section of a single invoice. Requires configuration.invoiceId.',
+        defaultConfiguration: { invoiceId: '' },
+    },
+    {
+        kind: 'component',
         id: 'invoice-details',
         label: 'Invoice Details',
         description: 'Detailed view of a single invoice. Requires configuration.invoiceId.',

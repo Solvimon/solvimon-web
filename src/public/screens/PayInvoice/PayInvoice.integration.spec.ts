@@ -256,7 +256,13 @@ describe('PayInvoice', () => {
     });
 
     it('shows "Select a payment method" error when submitted without selecting a payment method', async () => {
-        const wrapper = mountComponent();
+        const optionsWithNoVariant = [
+            {
+                ...mockPaymentMethodOptions[0],
+                integration: { ...mockPaymentMethodOptions[0].integration, payment_gateway: undefined },
+            },
+        ];
+        const wrapper = mountComponent({ paymentMethodOptions: optionsWithNoVariant });
         await waitForAdyenMount();
 
         await wrapper.findComponent({ name: 'PaymentIntegrationForm' }).vm.submit();

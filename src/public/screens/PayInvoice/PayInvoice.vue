@@ -25,12 +25,14 @@ const props = withDefaults(defineProps<PayInvoiceProps>(), {
 
 const selectedPaymentMethod = ref<SelectedPaymentMethod>();
 const paymentIntegrationFormRef = ref<InstanceType<typeof PaymentIntegrationForm>>();
+const isPaymentPending = ref(false);
 
 function handleSubmit() {
     if (!paymentIntegrationFormRef.value) {
         throw new Error('payment integration form not found');
     }
 
+    isPaymentPending.value = true;
     paymentIntegrationFormRef.value.submit();
 }
 
@@ -38,6 +40,10 @@ const handlePaymentSuccess = () => {
     if (props.configuration.onPaymentSuccess) {
         props.configuration.onPaymentSuccess();
     }
+};
+
+const handlePaymentFailed = () => {
+    isPaymentPending.value = false;
 };
 </script>
 
@@ -89,27 +95,30 @@ const handlePaymentSuccess = () => {
                     no-border
                     no-spacing
                 >
-                    <PaymentIntegrationForm
-                        ref="paymentIntegrationFormRef"
-                        :amount="amount"
-                        :country-code="countryCode"
-                        :context="{
-                            type: 'INVOICE',
-                            related_resource_ids: [
-                                {
-                                    type: 'INVOICE',
-                                    id: invoice.id,
-                                },
-                            ],
-                        }"
-                        :customer-id="invoice.customer.id"
-                        force-store-payment-method
-                        :invoice-id="invoice.id"
-                        :payment-method-options="paymentMethodOptions"
-                        variant="AUTHORIZE"
-                        @payment-success="handlePaymentSuccess"
-                        @select="(payload) => (selectedPaymentMethod = payload)"
-                    />
+                    <div :class="{ 'pointer-events-none opacity-60': isPaymentPending }">
+                        <PaymentIntegrationForm
+                            ref="paymentIntegrationFormRef"
+                            :amount="amount"
+                            :country-code="countryCode"
+                            :context="{
+                                type: 'INVOICE',
+                                related_resource_ids: [
+                                    {
+                                        type: 'INVOICE',
+                                        id: invoice.id,
+                                    },
+                                ],
+                            }"
+                            :customer-id="invoice.customer.id"
+                            force-store-payment-method
+                            :invoice-id="invoice.id"
+                            :payment-method-options="paymentMethodOptions"
+                            variant="AUTHORIZE"
+                            @payment-success="handlePaymentSuccess"
+                            @payment-failed="handlePaymentFailed"
+                            @select="(payload) => (selectedPaymentMethod = payload)"
+                        />
+                    </div>
                 </Section>
             </template>
         </template>
@@ -120,7 +129,8 @@ const handlePaymentSuccess = () => {
 
             <div v-if="invoice">
                 <PayButton
-                    :disabled="!selectedPaymentMethod"
+                    :disabled="!selectedPaymentMethod || isPaymentPending"
+                    :loading="isPaymentPending"
                     :amount="amount"
                     :payment-method="selectedPaymentMethod"
                     @click="handleSubmit"

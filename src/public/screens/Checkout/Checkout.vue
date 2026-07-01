@@ -101,6 +101,8 @@ const {
     enabledPricingIds: props.configuration?.enabledPricingIds,
 });
 
+const isPaymentPending = ref(false);
+
 const handleSubmit = async () => {
     await checkoutForm.validation.value.$validate();
 
@@ -108,8 +110,13 @@ const handleSubmit = async () => {
         return;
     }
 
+    isPaymentPending.value = true;
     saveFormStateForRedirect();
     paymentIntegrationFormRef.value?.submit();
+};
+
+const handlePaymentFailed = () => {
+    isPaymentPending.value = false;
 };
 
 const handleValidateOnSubmit = async () => {
@@ -618,19 +625,22 @@ onMounted(() => {
                             v-else-if="amount && checkoutForm.form.value.country"
                             class="sv-checkout__payment-form"
                         >
-                            <PaymentIntegrationForm
-                                ref="paymentIntegrationFormRef"
-                                :country-code="checkoutForm.form.value.country"
-                                :context="authorizationContext"
-                                :amount="amount"
-                                :email="checkoutForm.form.value.email"
-                                variant="AUTHORIZE"
-                                :payment-method-options="paymentMethodOptions ?? []"
-                                :validate-on-submit="handleValidateOnSubmit"
-                                force-store-payment-method
-                                @payment-success="handlePaymentSuccess"
-                                @ready="emit('ready')"
-                            />
+                            <div :class="{ 'pointer-events-none opacity-60': isPaymentPending }">
+                                <PaymentIntegrationForm
+                                    ref="paymentIntegrationFormRef"
+                                    :country-code="checkoutForm.form.value.country"
+                                    :context="authorizationContext"
+                                    :amount="amount"
+                                    :email="checkoutForm.form.value.email"
+                                    variant="AUTHORIZE"
+                                    :payment-method-options="paymentMethodOptions ?? []"
+                                    :validate-on-submit="handleValidateOnSubmit"
+                                    force-store-payment-method
+                                    @payment-success="handlePaymentSuccess"
+                                    @payment-failed="handlePaymentFailed"
+                                    @ready="emit('ready')"
+                                />
+                            </div>
                         </div>
                     </div>
                 </Skeleton>
@@ -684,7 +694,8 @@ onMounted(() => {
                         type="button"
                         size="lg"
                         class="sv-action sv-action--primary sv-action--full-width sv-checkout__submit w-full"
-                        :disabled="isPromotionCodePending || paymentMethodOptions.length === 0"
+                        :disabled="isPromotionCodePending || paymentMethodOptions.length === 0 || isPaymentPending"
+                        :loading="isPaymentPending"
                         @click="handleSubmit"
                     >
                         {{

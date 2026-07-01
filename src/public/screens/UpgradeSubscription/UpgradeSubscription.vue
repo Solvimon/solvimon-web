@@ -68,7 +68,6 @@ const paymentIntegrationFormRef = ref();
 const activeScheduleId = ref<string | undefined>(undefined);
 const previewInvoice = ref<Invoice | undefined>(undefined);
 const countryCode = ref<string | undefined>(undefined);
-const hasSelectedPaymentMethod = ref(false);
 
 type ExpandedPricingCategory = PricingCategoryExtended;
 
@@ -328,20 +327,15 @@ const canPurchase = computed(
 const purchaseError = ref<string | undefined>(undefined);
 
 const handlePurchase = async () => {
-    if (!canPurchase.value) return;
+    if (!canPurchase.value || isPurchasePending.value) return;
 
     purchaseError.value = undefined;
-    if (hasSelectedPaymentMethod.value) {
-        isPurchasePending.value = true;
-    }
+    isPurchasePending.value = true;
     paymentIntegrationFormRef.value?.submit();
 };
 
 const handleValidatePaymentSubmit = async () => canPurchase.value;
 
-const handlePaymentMethodSelect = () => {
-    hasSelectedPaymentMethod.value = true;
-};
 
 let redirectTimer: ReturnType<typeof setTimeout> | undefined;
 
@@ -530,7 +524,10 @@ onUnmounted(() => {
                             v-else-if="countryCode && activeScheduleId"
                             class="sv-upgrade-subscription__payment-form"
                         >
-                            <div class="sv-upgrade-subscription__payment-method-picker">
+                            <div
+                                class="sv-upgrade-subscription__payment-method-picker"
+                                :class="{ 'pointer-events-none opacity-60': isPurchasePending }"
+                            >
                                 <PaymentIntegrationForm
                                     ref="paymentIntegrationFormRef"
                                     :customer-id="customerId"
@@ -541,7 +538,6 @@ onUnmounted(() => {
                                     :payment-method-options="paymentMethodOptions"
                                     :validate-on-submit="handleValidatePaymentSubmit"
                                     force-store-payment-method
-                                    @select="handlePaymentMethodSelect"
                                     @payment-success="handlePaymentSuccess"
                                     @payment-failed="handlePaymentFailed"
                                 />
@@ -575,7 +571,7 @@ onUnmounted(() => {
                         size="lg"
                         class="sv-action sv-action--primary sv-action--full-width sv-upgrade-subscription__purchase w-full"
                         type="button"
-                        :disabled="!canPurchase"
+                        :disabled="!canPurchase || isPurchasePending"
                         :loading="isPurchasePending"
                         @click="handlePurchase"
                     >

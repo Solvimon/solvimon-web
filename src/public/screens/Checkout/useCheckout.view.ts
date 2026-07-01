@@ -335,6 +335,21 @@ export function useCheckoutView({
             isPaid.value = true;
         }
 
+        const raw = sessionStorage.getItem(REDIRECT_FORM_STATE_KEY);
+        let savedFormState: Partial<CheckoutFormState> | null = null;
+        if (raw) {
+            try {
+                savedFormState = JSON.parse(raw);
+            } catch {
+                // Ignore malformed state
+            }
+        }
+
+        // Apply early so the form shows the user's data immediately, before API calls complete.
+        if (savedFormState) {
+            checkoutForm.updateInitialState(savedFormState);
+        }
+
         await loadSubscription();
         try {
             await loadInvoicePreview();
@@ -342,16 +357,11 @@ export function useCheckoutView({
             // Ignore initial preview failures; caller-specific handlers can opt in.
         }
 
-        if (isSuccessfulRedirect) {
-            const saved = sessionStorage.getItem(REDIRECT_FORM_STATE_KEY);
-            if (saved) {
-                try {
-                    checkoutForm.updateInitialState(JSON.parse(saved));
-                } catch {
-                    // Ignore malformed state
-                }
-                sessionStorage.removeItem(REDIRECT_FORM_STATE_KEY);
-            }
+        // Re-apply after loadSubscription resets enabledPricingIds/seatsValues to subscription
+        // defaults, so the user's saved plan selections are preserved.
+        if (savedFormState) {
+            checkoutForm.updateInitialState(savedFormState);
+            sessionStorage.removeItem(REDIRECT_FORM_STATE_KEY);
         }
     });
 

@@ -5,6 +5,7 @@ import type { SolvimonBillingInformationEntryProps } from '@/public/components/B
 import type { SolvimonBillingInformationFormEntryProps } from '@/public/components/BillingInformationForm/BillingInformationForm.entry.types';
 import type { SolvimonCustomerPaymentMethodsEntryProps } from '@/public/components/CustomerPaymentMethods/CustomerPaymentMethods.entry.types';
 import type { SolvimonInvoiceEntryProps } from '@/public/components/Invoice/Invoice.entry.types';
+import type { SolvimonInvoiceHeaderEntryProps } from '@/public/components/InvoiceHeader/InvoiceHeader.entry.types';
 import type { SolvimonInvoiceDetailsEntryProps } from '@/public/components/InvoiceDetails/InvoiceDetails.entry.types';
 import type { SolvimonInvoicesListEntryProps } from '@/public/components/InvoicesList/InvoicesList.entry.types';
 import type { SolvimonPaymentMethodFormEntryProps } from '@/public/components/PaymentMethodForm/PaymentMethodForm.entry.types';
@@ -45,6 +46,7 @@ export interface SolvimonMountInstance {
 
 interface RegisteredComponentEntryPropsById {
     invoice: SolvimonInvoiceEntryProps;
+    'invoice-header': SolvimonInvoiceHeaderEntryProps;
     'invoice-details': SolvimonInvoiceDetailsEntryProps;
     'invoices-list': SolvimonInvoicesListEntryProps;
     'payment-history': SolvimonPaymentHistoryEntryProps;

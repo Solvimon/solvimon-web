@@ -6,6 +6,7 @@ import CheckoutEntry from '@/public/screens/Checkout/Checkout.entry.vue';
 import UpgradeSubscriptionEntry from '@/public/screens/UpgradeSubscription/UpgradeSubscription.entry.vue';
 import PayInvoiceEntry from '@/public/screens/PayInvoice/PayInvoice.entry.vue';
 import InvoiceEntry from '@/public/components/Invoice/Invoice.entry.vue';
+import InvoiceHeaderEntry from '@/public/components/InvoiceHeader/InvoiceHeader.entry.vue';
 import InvoiceDetailsEntry from '@/public/components/InvoiceDetails/InvoiceDetails.entry.vue';
 import InvoicesListEntry from '@/public/components/InvoicesList/InvoicesList.entry.vue';
 import PaymentHistoryEntry from '@/public/components/PaymentHistory/PaymentHistory.entry.vue';
@@ -25,6 +26,7 @@ const SCREENS: Record<RegisteredScreenId, Component> = {
 
 const COMPONENTS: Record<RegisteredComponentId, Component> = {
     invoice: InvoiceEntry,
+    'invoice-header': InvoiceHeaderEntry,
     'invoice-details': InvoiceDetailsEntry,
     'invoices-list': InvoicesListEntry,
     'payment-history': PaymentHistoryEntry,
@@ -46,6 +48,7 @@ const REGISTERED_SCREEN_IDS = [
 
 const REGISTERED_COMPONENT_IDS = [
     'invoice',
+    'invoice-header',
     'invoice-details',
     'invoices-list',
     'payment-history',

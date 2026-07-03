@@ -1,14 +1,26 @@
 <script setup lang="ts">
-import { getCustomerCountry, Section, useIntl } from '@solvimon/solvimon-ui';
-import { computed } from 'vue';
+import {
+    Button,
+    getCustomerCountry,
+    getCustomerName,
+    Section,
+    useIntl,
+} from '@solvimon/solvimon-ui';
+import { computed, ref } from 'vue';
 import type { Amount } from '@solvimon/solvimon-types';
 import type {
     PaymentMethodFormConfiguration,
+    PaymentMethodFormEmits,
     PaymentMethodFormProps,
 } from './PaymentMethodForm.types';
 import Skeleton from '@/components/shared/Skeleton.vue';
 import PaymentIntegrationForm from '@/components/payments/PaymentIntegrationForm/PaymentIntegrationForm.vue';
-import type { PaymentIntegrationFormProps } from '@/components/payments/PaymentIntegrationForm/PaymentIntegrationForm.types';
+import type {
+    AuthorizePaymentIntegrationFormProps,
+    PaymentIntegrationFormProps,
+    TokenizePaymentIntegrationFormProps,
+    SelectedPaymentMethod,
+} from '@/components/payments/PaymentIntegrationForm/PaymentIntegrationForm.types';
 
 const FALLBACK_COUNTRY_CODE = 'NL';
 const DEFAULT_AMOUNT: Amount = {
@@ -20,7 +32,28 @@ const props = withDefaults(defineProps<PaymentMethodFormProps>(), {
     isLoading: false,
 });
 
+const emit = defineEmits<PaymentMethodFormEmits>();
+
 const { $t } = useIntl();
+
+const paymentIntegrationFormRef = ref<InstanceType<typeof PaymentIntegrationForm>>();
+const selectedPaymentMethod = ref<SelectedPaymentMethod>();
+const isPaymentPending = ref(false);
+
+function handleSubmit() {
+    isPaymentPending.value = true;
+    paymentIntegrationFormRef.value?.submit();
+}
+
+function handlePaymentSuccess() {
+    isPaymentPending.value = false;
+    emit('payment-success');
+}
+
+function handlePaymentFailed(error: unknown) {
+    isPaymentPending.value = false;
+    emit('payment-failed', error);
+}
 
 const resolveConfiguration = (
     configuration?: PaymentMethodFormConfiguration,
@@ -59,33 +92,34 @@ const countryCode = computed<string>(() => {
 });
 
 const paymentIntegrationProps = computed<PaymentIntegrationFormProps>(() => {
-    if (configuration.value.variant === 'AUTHORIZE') {
+    const variant = configuration.value.variant;
+    const customerName = getCustomerName(props.customer);
+
+    const commonProps = {
+        amount: configuration.value.amount ?? DEFAULT_AMOUNT,
+        paymentMethodOptions: props.paymentMethodOptions,
+        countryCode: countryCode.value,
+        ...(props.customer.email ? { email: props.customer.email } : {}),
+        ...(customerName ? { name: customerName } : {}),
+        validateOnSubmit: configuration.value.validateOnSubmit,
+        forceStorePaymentMethod: configuration.value.forceStorePaymentMethod,
+        selectedOption: configuration.value.selectedOption,
+        invoiceId: configuration.value.invoiceId,
+    };
+
+    if (variant === 'AUTHORIZE') {
         return {
-            paymentMethodOptions: props.paymentMethodOptions,
-            countryCode: countryCode.value,
-            variant: 'AUTHORIZE',
-            amount: configuration.value.amount,
+            ...commonProps,
+            variant,
             context: configuration.value.context,
-            invoiceId: configuration.value.invoiceId,
-            successRedirectUrl: configuration.value.successRedirectUrl,
-            selectedOption: configuration.value.selectedOption,
-            validateOnSubmit: configuration.value.validateOnSubmit,
-            forceStorePaymentMethod: configuration.value.forceStorePaymentMethod,
-        };
+        } satisfies AuthorizePaymentIntegrationFormProps;
     }
 
     return {
-        paymentMethodOptions: props.paymentMethodOptions,
-        customerId: props.customer.id,
-        countryCode: countryCode.value,
+        ...commonProps,
         variant: 'TOKENIZE',
-        amount: configuration.value.amount ?? DEFAULT_AMOUNT,
-        invoiceId: configuration.value.invoiceId,
-        successRedirectUrl: configuration.value.successRedirectUrl,
-        selectedOption: configuration.value.selectedOption,
-        validateOnSubmit: configuration.value.validateOnSubmit,
-        forceStorePaymentMethod: configuration.value.forceStorePaymentMethod,
-    };
+        customerId: props.customer.id,
+    } satisfies TokenizePaymentIntegrationFormProps;
 });
 </script>
 
@@ -110,9 +144,22 @@ const paymentIntegrationProps = computed<PaymentIntegrationFormProps>(() => {
             })
         "
     >
-        <PaymentIntegrationForm
-            class="sv-payment-method-form__integration"
-            v-bind="paymentIntegrationProps"
-        />
+        <div :class="{ 'pointer-events-none opacity-60': isPaymentPending }">
+            <PaymentIntegrationForm
+                ref="paymentIntegrationFormRef"
+                class="sv-payment-method-form__integration"
+                v-bind="paymentIntegrationProps"
+                @select="(payload) => (selectedPaymentMethod = payload)"
+                @payment-success="handlePaymentSuccess"
+                @payment-failed="handlePaymentFailed"
+            />
+        </div>
+        <Button
+            color="primary"
+            class="mt-4 w-full"
+            :loading="isPaymentPending"
+            @click="handleSubmit"
+            >Save payment method</Button
+        >
     </Section>
 </template>

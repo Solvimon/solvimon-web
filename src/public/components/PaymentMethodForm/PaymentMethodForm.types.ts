@@ -37,3 +37,8 @@ export interface PaymentMethodFormProps {
     isLoading?: boolean;
     countryCode?: string;
 }
+
+export interface PaymentMethodFormEmits {
+    (e: 'payment-success'): void;
+    (e: 'payment-failed', error: unknown): void;
+}

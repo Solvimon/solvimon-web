@@ -21,6 +21,7 @@ export interface PaymentIntegrationFormStripeProps {
     validateOnSubmit?: () => Promise<boolean>;
     context?: PaymentAuthorizationContext;
     email?: string;
+    name?: string;
     forceStorePaymentMethod?: boolean;
 }
 

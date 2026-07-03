@@ -27,7 +27,7 @@ body { overflow: hidden; }
 <script src="${STRIPE_SCRIPT_URL}"><\/script>
 <script>
 (function () {
-  var stripe, elements, countryCode, email;
+  var stripe, elements, countryCode, email, name;
 
   window.addEventListener('message', function (event) {
     if (!event.data || typeof event.data !== 'object') return;
@@ -35,6 +35,7 @@ body { overflow: hidden; }
     if (event.data.type === 'stripe:init') {
       countryCode = event.data.countryCode;
       email = event.data.email;
+      name = event.data.name;
       stripe = Stripe(event.data.publicKey);
       elements = stripe.elements(event.data.options);
       var paymentElement = elements.create('payment', { layout: { type: 'accordion', defaultCollapsed: false }, wallets: event.data.options.wallets, fields: event.data.options.fields });
@@ -67,6 +68,7 @@ body { overflow: hidden; }
     if (event.data.type === 'stripe:submit') {
       if (!elements) return;
       var submitEmail = 'email' in event.data ? event.data.email : email;
+      var submitName = 'name' in event.data ? event.data.name : name;
       elements.submit().then(function (submitResult) {
         if (submitResult.error) {
           parent.postMessage({
@@ -82,6 +84,7 @@ body { overflow: hidden; }
         var billingDetails = {};
         if (countryCode) billingDetails.address = { country: countryCode };
         if (submitEmail) billingDetails.email = submitEmail;
+        if (submitName) billingDetails.name = submitName;
         var tokenParams = Object.keys(billingDetails).length
           ? { payment_method_data: { billing_details: billingDetails } }
           : {};

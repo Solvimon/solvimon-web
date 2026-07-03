@@ -75,6 +75,7 @@ export function useIncrementalLoading<T>({
     const nonMutableItems = computed(() => structuredClone(items.value));
 
     const fetchInitial = async () => {
+        items.value = [];
         return await loadPage(1);
     };
 

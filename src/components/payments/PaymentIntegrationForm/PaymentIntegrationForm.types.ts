@@ -28,6 +28,7 @@ interface BasePaymentIntegrationFormProps {
     amount: Amount;
     selectedOption?: string;
     email?: string;
+    name?: string;
     validateOnSubmit?: () => Promise<boolean>;
     context?: PaymentAuthorizationContext;
     forceStorePaymentMethod?: boolean;

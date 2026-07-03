@@ -9,7 +9,10 @@
                 <slot name="content" />
             </div>
 
-            <aside class="sv-layout__aside grid w-full grid-cols-1 gap-4 md:w-80 md:shrink-0">
+            <aside
+                v-if="$slots.aside"
+                class="sv-layout__aside grid w-full grid-cols-1 gap-4 md:w-80 md:shrink-0"
+            >
                 <slot name="aside" />
             </aside>
         </div>

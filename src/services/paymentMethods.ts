@@ -17,6 +17,7 @@ import type {
     GetPaymentMethodOptionsBySubscriptionIdPayload,
     GetPaymentMethodOptionsPayload,
     GetPaymentMethodsPayload,
+    SetDefaultPaymentMethodPayload,
 } from './paymentMethods.types';
 import { useConfig } from '@/components/providers/ConfigProvider/composables/useConfig';
 
@@ -24,6 +25,14 @@ export function createPaymentMethodsService() {
     const request = createRequestService();
     const config = useConfig();
     const BASE_URL = '/portal/payment-methods';
+
+    function setDefaultPaymentMethod({ paymentMethodId }: SetDefaultPaymentMethodPayload): Promise<PaymentMethod> {
+        return request<PaymentMethod>({
+            url: `${config.apiUrls.config}${BASE_URL}/${paymentMethodId}`,
+            options: { method: 'PATCH' },
+            data: { is_default: true },
+        });
+    }
 
     function getPaymentMethods({
         customerId,
@@ -116,5 +125,6 @@ export function createPaymentMethodsService() {
         getPaymentMethods,
         getPaymentMethodOptions,
         tokenizePaymentMethod,
+        setDefaultPaymentMethod,
     };
 }

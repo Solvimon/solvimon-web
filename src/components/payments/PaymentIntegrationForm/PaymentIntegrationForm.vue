@@ -98,6 +98,7 @@ function submit() {
             :invoice-id="invoiceId"
             :selected="isSelectedIntegration({ selectedIntegration, paymentMethodOption })"
             :email="email"
+            :name="name"
             :validate-on-submit="validateOnSubmit"
             :force-store-payment-method="forceStorePaymentMethod"
             @select="handleSelect"

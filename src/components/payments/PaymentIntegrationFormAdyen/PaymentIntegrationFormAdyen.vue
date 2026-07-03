@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import type { CoreConfiguration, DropinConfiguration, PaymentAction } from '@adyen/adyen-web';
 import type {
     AuthorizePaymentPayload,
@@ -64,8 +64,6 @@ const { authorizePayment, getPaymentDetails } = createPaymentsService();
 const { tokenizePaymentMethod } = createPaymentMethodsService();
 const experimentalFeatures = useExperimentalFeature();
 
-const showPayButton = computed(() => props.variant === 'TOKENIZE');
-
 function submit() {
     try {
         dropInInstance?.submit();
@@ -105,7 +103,7 @@ async function getConfiguration(): Promise<{
             onPaymentCompleted: handleOnPaymentCompleted,
             onPaymentFailed: handleOnPaymentFailed,
             onError: handleOnError,
-            showPayButton: showPayButton.value,
+            showPayButton: false,
         },
         dropInConfig: {
             disableFinalAnimation: true,

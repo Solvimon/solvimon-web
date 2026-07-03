@@ -1,11 +1,15 @@
 <script setup lang="ts">
-import { TooltipTeleportProvider, SearchSelectInputTeleportProvider } from '@solvimon/solvimon-ui';
+import { DropdownTeleportProvider, PortalProvider, TooltipTeleportProvider, SearchSelectInputTeleportProvider } from '@solvimon/solvimon-ui';
 </script>
 
 <template>
-    <TooltipTeleportProvider>
-        <SearchSelectInputTeleportProvider>
-            <slot />
-        </SearchSelectInputTeleportProvider>
-    </TooltipTeleportProvider>
+    <DropdownTeleportProvider>
+        <PortalProvider name="modal">
+            <TooltipTeleportProvider>
+                <SearchSelectInputTeleportProvider>
+                    <slot />
+                </SearchSelectInputTeleportProvider>
+            </TooltipTeleportProvider>
+        </PortalProvider>
+    </DropdownTeleportProvider>
 </template>

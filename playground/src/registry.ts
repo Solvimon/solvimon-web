@@ -36,6 +36,12 @@ export const screens: StoryEntry[] = [
         description: 'Payment flow for a specific invoice. Requires configuration.invoiceId.',
         defaultConfiguration: { invoiceId: '' },
     },
+    {
+        kind: 'screen',
+        id: 'payment-methods-management',
+        label: 'Payment Methods Management',
+        description: 'Add new or set default payment methods for a customer.',
+    },
 ];
 
 export const components: StoryEntry[] = [

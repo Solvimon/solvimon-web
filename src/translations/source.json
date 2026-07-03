@@ -499,6 +499,30 @@
         "defaultMessage": "Select a payment method",
         "description": "Error shown when no payment method is selected"
     },
+    "payment_method.context_menu.delete.label": {
+        "defaultMessage": "Delete",
+        "description": "Context menu option for deleting the payment method"
+    },
+    "payment_method.context_menu.set_as_default.label": {
+        "defaultMessage": "Set as default",
+        "description": "Context menu option for setting the default payment method"
+    },
+    "payment_methods_list.delete_modal.body": {
+        "defaultMessage": "Are you sure you want to delete this payment method?",
+        "description": "Confirmation message in the delete payment method modal"
+    },
+    "payment_methods_list.delete_modal.cancel": {
+        "defaultMessage": "Cancel",
+        "description": "Cancel button in the delete payment method modal"
+    },
+    "payment_methods_list.delete_modal.confirm": {
+        "defaultMessage": "Delete",
+        "description": "Confirm button in the delete payment method modal"
+    },
+    "payment_methods_list.delete_modal.title": {
+        "defaultMessage": "Delete payment method",
+        "description": "Title of the delete payment method confirmation modal"
+    },
     "payments.retry_button.label": {
         "defaultMessage": "Try again",
         "description": "Retry button text when an error has happened during a payment"
@@ -514,6 +538,14 @@
     "pricing_item_pricing.unsupported_pricing_error": {
         "defaultMessage": "Unsupported pricing",
         "description": "Text displayed when the pricing item pricing is unsupported"
+    },
+    "screens.payment_method_management.description": {
+        "defaultMessage": "Add a new payment method or set a default payment method for your payments.",
+        "description": "The descriptive text for the payment method management screen"
+    },
+    "screens.payment_method_management.title": {
+        "defaultMessage": "Payment methods",
+        "description": "The title for the payment method management screen "
     },
     "sdk.invoice_details.customer_billing_information.title": {
         "defaultMessage": "Your billing information",

@@ -4,6 +4,7 @@ import { defineSolvimonCustomerOverview } from '@/public/screens/CustomerOvervie
 import { defineSolvimonCheckout } from '@/public/screens/Checkout/Checkout.entry.ce';
 import { defineSolvimonUpgradeSubscription } from '@/public/screens/UpgradeSubscription/UpgradeSubscription.entry.ce';
 import { defineSolvimonPayInvoice } from '@/public/screens/PayInvoice/PayInvoice.entry.ce';
+import { defineSolvimonPaymentMethodsManagement } from '@/public/screens/PaymentMethodsManagement/PaymentMethodsManagement.entry.ce';
 import { defineSolvimonInvoice } from '@/public/components/Invoice/Invoice.entry.ce';
 import { defineSolvimonInvoiceHeader } from '@/public/components/InvoiceHeader/InvoiceHeader.entry.ce';
 import { defineSolvimonInvoiceDetails } from '@/public/components/InvoiceDetails/InvoiceDetails.entry.ce';
@@ -24,6 +25,7 @@ const SCREEN_DEFINERS: Record<RegisteredScreenId, DefineFn> = {
     checkout: defineSolvimonCheckout,
     'upgrade-subscription': defineSolvimonUpgradeSubscription,
     'pay-invoice': defineSolvimonPayInvoice,
+    'payment-methods-management': defineSolvimonPaymentMethodsManagement,
 };
 
 const COMPONENT_DEFINERS: Record<RegisteredComponentId, DefineFn> = {

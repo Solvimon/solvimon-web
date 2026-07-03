@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { Section, Typography, Button, PaymentMethod, useIntl } from '@solvimon/solvimon-ui';
+import { Section, Typography, Button, useIntl } from '@solvimon/solvimon-ui';
 import { computed } from 'vue';
 import type {
     CustomerPaymentMethodsBlockEmits,
     CustomerPaymentMethodsBlockProps,
 } from './CustomerPaymentMethodsBlock.types';
+import PaymentMethodsList from '@/components/payments/PaymentMethodsList/PaymentMethodsList.vue';
 
 const props = withDefaults(defineProps<CustomerPaymentMethodsBlockProps>(), {
     limit: 2,
@@ -57,32 +58,22 @@ const hasPaymentMethods = computed<boolean>(() => props.paymentMethods.length > 
             >
         </template>
 
-        <div v-if="hasPaymentMethods" class="sv-payment-methods__list flex flex-col gap-2">
-            <Section
-                v-for="paymentMethod in paymentMethods"
-                :key="paymentMethod.id"
-                class="sv-payment-methods__item"
-            >
-                <PaymentMethod
-                    class="sv-payment-methods__item-content"
-                    :payment-method="paymentMethod"
-                />
-            </Section>
-        </div>
+        <PaymentMethodsList v-if="hasPaymentMethods" :payment-methods="paymentMethods" />
         <Section v-else class="sv-empty-state sv-payment-methods__empty">
             <Typography
                 variant="body-sm"
                 shade="lighter"
                 no-spacing
                 class="sv-payment-methods__empty-message"
-            >{{
-                $t({
-                    defaultMessage: 'Add a payment method for recurring invoice payments.',
-                    description:
-                        'Helper text for adding a payment method when no payment methods are configured',
-                    id: 'customer_overview.payment_methods_block.add_payment_method_helper_text',
-                })
-            }}</Typography>
+                >{{
+                    $t({
+                        defaultMessage: 'Add a payment method for recurring invoice payments.',
+                        description:
+                            'Helper text for adding a payment method when no payment methods are configured',
+                        id: 'customer_overview.payment_methods_block.add_payment_method_helper_text',
+                    })
+                }}</Typography
+            >
             <Button
                 v-if="showAddButton"
                 class="sv-action sv-action--secondary sv-action--full-width sv-payment-methods__add mt-4 w-full"

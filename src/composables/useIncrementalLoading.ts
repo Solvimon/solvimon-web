@@ -20,7 +20,7 @@ export function useIncrementalLoading<T>({
     const hasNextBatch = ref<boolean>(false);
     const isPending = computed<boolean>(() => status.value === ApiStatus.Loading);
 
-    const loadPage = async (pageNumber: number) => {
+    const loadPage = async (pageNumber: number, { replace = false } = {}) => {
         // Prevent concurrent requests
         if (isPending.value) return;
 
@@ -41,7 +41,7 @@ export function useIncrementalLoading<T>({
             // Check if there is a next batch
             hasNextBatch.value = !!response.links?.next;
 
-            items.value = [...items.value, ...response.data];
+            items.value = replace ? response.data : [...items.value, ...response.data];
             status.value = ApiStatus.Done;
             page.value = pageNumber;
         } catch (err) {
@@ -75,8 +75,7 @@ export function useIncrementalLoading<T>({
     const nonMutableItems = computed(() => structuredClone(items.value));
 
     const fetchInitial = async () => {
-        items.value = [];
-        return await loadPage(1);
+        return await loadPage(1, { replace: true });
     };
 
     return {

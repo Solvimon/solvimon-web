@@ -13,6 +13,12 @@ vi.mock('@/components/providers', () => ({
     }),
 }));
 
+vi.mock('@/services/paymentMethods', () => ({
+    createPaymentMethodsService: () => ({
+        setDefaultPaymentMethod: vi.fn().mockResolvedValue({}),
+    }),
+}));
+
 vi.mock('@solvimon/solvimon-ui', async () => {
     const { createSolvimonUiMock } = await import('@/test-utils/solvimonUiMock');
     const { mockUseIntl } = await import('@/test-utils/useIntlMock');
@@ -39,6 +45,12 @@ vi.mock('@solvimon/solvimon-ui', async () => {
                         String((props.paymentMethod as { id?: string }).id),
                     );
             },
+        }),
+        Modal: defineComponent({
+            name: 'ModalStub',
+            props: ['showModal', 'title', 'confirmButtonText', 'cancelButtonText'],
+            emits: ['confirm', 'close'],
+            template: '<div data-testid="modal-stub"><slot name="body" /></div>',
         }),
     });
 });

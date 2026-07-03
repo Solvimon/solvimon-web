@@ -1,5 +1,5 @@
 type StripeWalletsOption = { link?: 'never' | 'auto' };
-type StripeFieldsOption = { billingDetails?: { address?: { country?: 'never' | 'auto' }; email?: 'never' | 'auto' } };
+type StripeFieldsOption = { billingDetails?: { address?: { country?: 'never' | 'auto' }; email?: 'never' | 'auto'; name?: 'never' | 'auto' } };
 type StripeAppearanceOption = {
     variables?: { borderRadius?: string; [key: string]: string | undefined };
     rules?: { [selector: string]: { [property: string]: string } };
@@ -14,6 +14,7 @@ export interface PaymentIntegrationFormStripeFrameProps {
     options: StripeFrameOptions;
     countryCode?: string;
     email?: string;
+    name?: string;
 }
 
 export type PaymentIntegrationFormStripeFrameEmits = {

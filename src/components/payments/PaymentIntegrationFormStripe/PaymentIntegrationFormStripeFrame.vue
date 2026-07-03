@@ -18,13 +18,23 @@ const iframeSrc = ref<string>();
 
 function sendInit() {
     iframeRef.value?.contentWindow?.postMessage(
-        { type: 'stripe:init', publicKey: props.publicKey, options: props.options, countryCode: props.countryCode, email: props.email },
+        {
+            type: 'stripe:init',
+            publicKey: props.publicKey,
+            options: props.options,
+            countryCode: props.countryCode,
+            email: props.email,
+            name: props.name,
+        },
         '*',
     );
 }
 
 function triggerSubmit() {
-    iframeRef.value?.contentWindow?.postMessage({ type: 'stripe:submit', email: props.email }, '*');
+    iframeRef.value?.contentWindow?.postMessage(
+        { type: 'stripe:submit', email: props.email, name: props.name },
+        '*',
+    );
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -111,7 +121,7 @@ watch(
         :src="iframeSrc"
         :height="iframeHeight || undefined"
         frameborder="0"
-        style="width: 100%; display: block; border: none;"
+        style="width: 100%; display: block; border: none"
         title="Payment form"
         @load="sendInit"
     />

@@ -15,11 +15,12 @@ const STRIPE_APPEARANCE = {
     },
 };
 
-function getFields(email?: string) {
+function getFields(email?: string, name?: string) {
     return {
         billingDetails: {
             address: { country: 'never' as const },
             ...(email ? { email: 'never' as const } : {}),
+            ...(name ? { name: 'never' as const } : {}),
         },
     };
 }
@@ -27,14 +28,16 @@ function getFields(email?: string) {
 export function getFrameOptions({
     amount,
     email,
+    name,
     variant,
 }: {
     amount: Amount;
     email?: string;
+    name?: string;
     variant: 'TOKENIZE' | 'AUTHORIZE';
 }): StripeFrameOptions {
     const currency = amount.currency.toLowerCase();
-    const fields = getFields(email);
+    const fields = getFields(email, name);
 
     if (variant === 'TOKENIZE') {
         return {

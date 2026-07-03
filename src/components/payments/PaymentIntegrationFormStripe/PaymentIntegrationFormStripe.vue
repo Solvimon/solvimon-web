@@ -31,7 +31,7 @@ const showPaymentSuccess = ref<boolean>(false);
 const integrationError = ref<Error>();
 const frameRef = ref<InstanceType<typeof PaymentIntegrationFormStripeFrame>>();
 const frameOptions = computed<PaymentIntegrationFormStripeFrameProps['options']>(() =>
-    getFrameOptions({ amount: props.amount, email: props.email, variant: props.variant }),
+    getFrameOptions({ amount: props.amount, email: props.email, name: props.name, variant: props.variant }),
 );
 
 // Loaded lazily — only needed for handleNextAction (3DS), which appends to
@@ -280,6 +280,7 @@ onBeforeUnmount(() => {
         :options="frameOptions"
         :country-code="countryCode"
         :email="email"
+        :name="name"
         @ready="handleReady"
         @change="
             (type) =>

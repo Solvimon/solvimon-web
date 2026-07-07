@@ -4,6 +4,7 @@ export const Headers = {
     AUTHORIZATION: 'Authorization',
     CONTENT_TYPE: 'Content-Type',
     X_REQUEST_ID: 'X-Request-Id',
+    X_CLIENT_VERSION: 'X-Client-Version',
 };
 
 export const isApiErrorResponse = (

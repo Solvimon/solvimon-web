@@ -1,5 +1,6 @@
 import type { ApiSuccessCollectionResponse } from '@solvimon/solvimon-types';
 import { useErrorHandling } from '@solvimon/solvimon-ui';
+import { version } from '../../package.json';
 import type {
     CollectionRequestParams,
     RequestOptions,
@@ -25,6 +26,7 @@ export function createRequestService({ enableAccessCheck } = { enableAccessCheck
     const getDefaultHeaders: GetDefaultHeaders = ({ headers: overrides = {} }) => {
         const headers = {
             [Headers.CONTENT_TYPE]: 'application/json',
+            [Headers.X_CLIENT_VERSION]: `solvimon-web-v${version}`,
             ...authHeaders,
         };
 

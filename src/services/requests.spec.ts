@@ -1,6 +1,9 @@
 import type { Mock } from 'vitest';
 import { createRequestService } from './requests';
 import { Headers as HeadersConst } from './requests.lib';
+import { version } from '../../package.json';
+
+const CLIENT_VERSION = `solvimon-web-v${version}`;
 
 const CALLED_URL = 'https://domain.com/test';
 const TOKEN = 'some-token-123';
@@ -51,6 +54,7 @@ describe('createRequestService', () => {
                     method: 'GET',
                     headers: {
                         [HeadersConst.CONTENT_TYPE]: 'application/json',
+                        [HeadersConst.X_CLIENT_VERSION]: CLIENT_VERSION,
                     },
                 }),
             );
@@ -67,6 +71,7 @@ describe('createRequestService', () => {
                     headers: {
                         [HeadersConst.CONTENT_TYPE]: 'application/json',
                         [HeadersConst.AUTHORIZATION]: `Bearer ${TOKEN}`,
+                        [HeadersConst.X_CLIENT_VERSION]: CLIENT_VERSION,
                     },
                 }),
             );
@@ -92,6 +97,7 @@ describe('createRequestService', () => {
                     headers: {
                         [HeadersConst.CONTENT_TYPE]: 'application/json',
                         [HeadersConst.AUTHORIZATION]: `Bearer ${TOKEN}`,
+                        [HeadersConst.X_CLIENT_VERSION]: CLIENT_VERSION,
                         ...CUSTOM_HEADERS,
                     },
                 }),
@@ -117,6 +123,7 @@ describe('createRequestService', () => {
                     method: 'GET',
                     headers: {
                         [HeadersConst.CONTENT_TYPE]: 'text/plain',
+                        [HeadersConst.X_CLIENT_VERSION]: CLIENT_VERSION,
                     },
                 }),
             );
@@ -139,7 +146,9 @@ describe('createRequestService', () => {
                 CALLED_URL,
                 expect.objectContaining({
                     method: 'GET',
-                    headers: {},
+                    headers: {
+                        [HeadersConst.X_CLIENT_VERSION]: CLIENT_VERSION,
+                    },
                 }),
             );
         });

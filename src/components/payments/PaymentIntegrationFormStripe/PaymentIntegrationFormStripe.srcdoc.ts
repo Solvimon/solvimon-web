@@ -27,32 +27,34 @@ body { overflow: hidden; }
 <script src="${STRIPE_SCRIPT_URL}"><\/script>
 <script>
 (function () {
-  var stripe, elements, countryCode, email, name;
+  let stripe, elements, countryCode, email, name, parentOrigin;
 
   window.addEventListener('message', function (event) {
     if (!event.data || typeof event.data !== 'object') return;
+    if (event.source !== window.parent) return;
 
     if (event.data.type === 'stripe:init') {
+      parentOrigin = event.origin;
       countryCode = event.data.countryCode;
       email = event.data.email;
       name = event.data.name;
       stripe = Stripe(event.data.publicKey);
       elements = stripe.elements(event.data.options);
-      var paymentElement = elements.create('payment', { layout: { type: 'accordion', defaultCollapsed: false }, wallets: event.data.options.wallets, fields: event.data.options.fields });
+      const paymentElement = elements.create('payment', { layout: { type: 'accordion', defaultCollapsed: false }, wallets: event.data.options.wallets, fields: event.data.options.fields });
 
       paymentElement.on('ready', function () {
-        parent.postMessage({ type: 'stripe:ready' }, '*');
+        parent.postMessage({ type: 'stripe:ready' }, parentOrigin);
       });
 
       paymentElement.on('change', function (e) {
-        parent.postMessage({ type: 'stripe:change', paymentMethodType: e.value.type }, '*');
+        parent.postMessage({ type: 'stripe:change', paymentMethodType: e.value.type }, parentOrigin);
       });
 
       paymentElement.on('loaderror', function (e) {
         parent.postMessage({
           type: 'stripe:loaderror',
           error: { message: e.error.message, type: e.error.type }
-        }, '*');
+        }, parentOrigin);
       });
 
       paymentElement.mount('#stripe-root');
@@ -61,14 +63,14 @@ body { overflow: hidden; }
         parent.postMessage({
           type: 'stripe:resize',
           height: document.documentElement.scrollHeight
-        }, '*');
+        }, parentOrigin);
       }).observe(document.documentElement);
     }
 
     if (event.data.type === 'stripe:submit') {
-      if (!elements) return;
-      var submitEmail = 'email' in event.data ? event.data.email : email;
-      var submitName = 'name' in event.data ? event.data.name : name;
+      if (!elements || !parentOrigin || event.origin !== parentOrigin) return;
+      const submitEmail = 'email' in event.data ? event.data.email : email;
+      const submitName = 'name' in event.data ? event.data.name : name;
       elements.submit().then(function (submitResult) {
         if (submitResult.error) {
           parent.postMessage({
@@ -78,14 +80,14 @@ body { overflow: hidden; }
               type: submitResult.error.type,
               code: submitResult.error.code
             }
-          }, '*');
+          }, parentOrigin);
           return;
         }
-        var billingDetails = {};
+        const billingDetails = {};
         if (countryCode) billingDetails.address = { country: countryCode };
         if (submitEmail) billingDetails.email = submitEmail;
         if (submitName) billingDetails.name = submitName;
-        var tokenParams = Object.keys(billingDetails).length
+        const tokenParams = Object.keys(billingDetails).length
           ? { payment_method_data: { billing_details: billingDetails } }
           : {};
         stripe.createConfirmationToken({ elements: elements, params: tokenParams }).then(function (tokenResult) {
@@ -97,13 +99,13 @@ body { overflow: hidden; }
                 type: tokenResult.error.type,
                 code: tokenResult.error.code
               }
-            }, '*');
+            }, parentOrigin);
             return;
           }
           parent.postMessage({
             type: 'stripe:submit:success',
             confirmationTokenId: tokenResult.confirmationToken.id
-          }, '*');
+          }, parentOrigin);
         });
       });
     }

@@ -82,7 +82,7 @@ describe('PaymentIntegrationFormStripeFrame', () => {
                     options: defaultProps.options,
                     countryCode: 'NL',
                 },
-                '*',
+                window.location.origin,
             );
         });
 
@@ -97,7 +97,7 @@ describe('PaymentIntegrationFormStripeFrame', () => {
 
             expect(cw.postMessage).toHaveBeenCalledWith(
                 expect.objectContaining({ type: 'stripe:init' }),
-                '*',
+                window.location.origin,
             );
         });
 
@@ -120,7 +120,7 @@ describe('PaymentIntegrationFormStripeFrame', () => {
 
             wrapper.vm.triggerSubmit();
 
-            expect(cw.postMessage).toHaveBeenCalledWith({ type: 'stripe:submit' }, '*');
+            expect(cw.postMessage).toHaveBeenCalledWith({ type: 'stripe:submit' }, window.location.origin);
         });
     });
 

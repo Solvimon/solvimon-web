@@ -26,14 +26,14 @@ function sendInit() {
             email: props.email,
             name: props.name,
         },
-        '*',
+        window.location.origin,
     );
 }
 
 function triggerSubmit() {
     iframeRef.value?.contentWindow?.postMessage(
         { type: 'stripe:submit', email: props.email, name: props.name },
-        '*',
+        window.location.origin,
     );
 }
 

@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0-alpha.15] - 2026-07-27
+
+### Added
+
+- Added a Payment Methods Management screen where customers can view, add, and manage their saved payment methods.
+- Added a Payment Methods list component.
+- Added Stripe as a payment provider alongside Adyen across the checkout and payment flows.
+- Added the ability to set a default payment method.
+- Added an Invoice header that surfaces key invoice summary details.
+- Added an optional `name` prop to the payment form.
+- Added an `X-Client-Version` header to outgoing API requests.
+
+### Changed
+
+- The pay button now shows a loading state while a payment is being processed.
+- Checkout form state is now preserved and restored across payment redirects.
+- Express payment methods are now shown only for Adyen.
+- The screen aside is now optional.
+- Removed the "Continue to merchant" button from the payment flow.
+- Improved the authentication mechanism.
+
+### Fixed
+
+- Fixed the Invoice component ignoring its resolved props.
+- Fixed list items not resetting when the initial page of data is refetched.
+
 ## [0.1.0-alpha.14] - 2026-06-17
 
 ### Added

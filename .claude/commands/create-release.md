@@ -39,9 +39,10 @@ Prepare a new SDK release by bumping the version and updating the changelog, the
 9. Run `npm run changelog:check` to verify the changelog is valid. Fix any issues before continuing.
 
 10. Tell the user the release is ready and show the next manual steps:
+    - Branch name: `release/<version>` (e.g. `release/0.1.0-alpha.16`)
     - Suggested commit message: `chore(release): release version <version>`
     - Files to stage: `package.json`, `package-lock.json`, `CHANGELOG.md`
-    - Create a branch, commit, push, and open a pull request to `main`
+    - Create the branch, commit, push, and open a pull request to `main`
 
 ## Notes
 

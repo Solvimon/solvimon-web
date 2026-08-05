@@ -14,6 +14,10 @@ import { taxId } from '@solvimon/solvimon-ui/validators';
 import { createSubscriptionsService } from '@/services/subscriptions';
 import { useInvoicePreview } from '@/composables/useInvoicePreview';
 import { useCheckoutForm } from '@/components/customer/CheckoutForm/useCheckoutForm';
+import {
+    DEFAULT_TAX_IDENTIFIER_TYPE,
+    toCustomer,
+} from '@/components/customer/CheckoutForm/CheckoutForm.lib';
 import { usePaymentMethodOptions } from '@/composables/useCheckoutPaymentMethodOptions';
 import type { CheckoutFormState } from '@/components/customer/CheckoutForm/CheckoutForm.types';
 import {
@@ -24,7 +28,6 @@ import { withPreselectedEnabledPricings } from '@/utils/enabledPricings';
 import { getQueryParam } from '@/utils/url';
 import { PAYMENT_ACCEPTOR_ID_QUERY_STRING } from '@/utils/adyen';
 
-const DEFAULT_TAX_IDENTIFIER_TYPE = 'GENERIC_TAX_ID';
 const REDIRECT_FORM_STATE_KEY = 'solvimon_checkout_redirect_state';
 
 export function useCheckoutView({
@@ -56,18 +59,15 @@ export function useCheckoutView({
     } = usePaymentMethodOptions();
 
     const loadInvoicePreview = () => {
-        const payload = {
+        const formState = checkoutForm.form.value;
+
+        return invoicePreview.loadInvoicePreview({
             subscription: subscription.value!,
-            checkoutForm: checkoutForm.form.value,
-            enabledPricingIds,
-            promotionCode: checkoutForm.form.value.promotionCode,
-        };
-
-        if (checkoutForm.form.value.enabledPricingIds) {
-            payload.enabledPricingIds = checkoutForm.form.value.enabledPricingIds;
-        }
-
-        return invoicePreview.loadInvoicePreview(payload);
+            customer: toCustomer(formState),
+            seatsValues: formState.seatsValues,
+            enabledPricingIds: formState.enabledPricingIds ?? enabledPricingIds,
+            promotionCode: formState.promotionCode,
+        });
     };
 
     /**
@@ -83,9 +83,12 @@ export function useCheckoutView({
         const enabledPricingIds =
             formState.enabledPricingIds ?? checkoutForm.form.value.enabledPricingIds;
 
+        const mergedState = { ...checkoutForm.form.value, ...formState };
+
         await invoicePreview.loadInvoicePreview({
             subscription: subscription.value!,
-            checkoutForm: { ...checkoutForm.form.value, ...formState },
+            customer: toCustomer(mergedState),
+            seatsValues: mergedState.seatsValues,
             enabledPricingIds,
             promotionCode,
         });

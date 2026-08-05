@@ -1,4 +1,5 @@
 import type {
+    Customer,
     Invoice,
     InvoicePreview,
     Pricing,
@@ -6,7 +7,6 @@ import type {
     PricingPlanScheduleCustomization,
     PricingPlanSubscriptionExpanded,
 } from '@solvimon/solvimon-types';
-import type { CheckoutFormState } from '@/components/customer/CheckoutForm/CheckoutForm.types';
 import { useInvoicePreview } from './useInvoicePreview';
 
 const { mockGetInvoicePreview } = vi.hoisted(() => ({
@@ -27,6 +27,12 @@ vi.mock('@/services/invoices', () => ({
     })),
 }));
 
+const individualCustomer = (country: string): Partial<Customer> => ({
+    type: 'INDIVIDUAL',
+    individual: {
+        residential_address: { country },
+    },
+});
 
 describe('useInvoicePreview', () => {
     beforeEach(() => {
@@ -63,14 +69,19 @@ describe('useInvoicePreview', () => {
             billing_period: { type: 'MONTH', value: 1 },
         } as unknown as PricingPlanSubscriptionExpanded;
 
-        const checkoutForm = {
+        const customer: Partial<Customer> = {
             type: 'ORGANIZATION',
-            addressLine1: 'Main street 1',
-            city: 'Amsterdam',
-            postalCode: '1000AA',
-            state: 'NH',
-            companyLegalName: 'Acme Corp',
-        } as unknown as CheckoutFormState;
+            organization: {
+                legal_name: 'Acme Corp',
+                registered_address: {
+                    line1: 'Main street 1',
+                    city: 'Amsterdam',
+                    postal_code: '1000AA',
+                    state: 'NH',
+                    country: '',
+                },
+            },
+        };
 
         const subscriptionStartAt = '2024-02-01T00:00:00.000Z' as PricingPlanSchedule['start_at'];
         const enabledPricingIds = ['pricing_1'];
@@ -95,7 +106,7 @@ describe('useInvoicePreview', () => {
         await loadInvoicePreview({
             subscription,
             subscriptionStartAt,
-            checkoutForm,
+            customer,
             enabledPricingIds,
         });
 
@@ -130,6 +141,38 @@ describe('useInvoicePreview', () => {
         expect(invoicePreview.value).toEqual(defaultInvoice);
     });
 
+    it('falls back to placeholder customer details when no customer is given', async () => {
+        const subscription = {
+            id: 'sub_124',
+            pricing_plan_schedule_infos: [
+                {
+                    id: 'default_schedule_id',
+                    pricing_plan_schedule: { type: 'DEFAULT' },
+                },
+            ],
+            billing_period: { type: 'MONTH', value: 1 },
+        } as unknown as PricingPlanSubscriptionExpanded;
+
+        mockGetInvoicePreview.mockResolvedValue({
+            first_invoice: { id: 'first' },
+            invoice_infos: [],
+        } as unknown as InvoicePreview);
+
+        const { loadInvoicePreview } = useInvoicePreview();
+        await loadInvoicePreview({ subscription });
+
+        expect(mockGetInvoicePreview).toHaveBeenCalledWith(
+            expect.objectContaining({
+                customer: {
+                    type: 'INDIVIDUAL',
+                    individual: {
+                        residential_address: { country: 'NL' },
+                    },
+                },
+            }),
+        );
+    });
+
     it('uses pricing currency from country when supported, otherwise default currency settings', () => {
         const subscription = {
             id: 'sub_456',
@@ -160,7 +203,7 @@ describe('useInvoicePreview', () => {
 
         loadInvoicePreview({
             subscription,
-            checkoutForm: { type: 'INDIVIDUAL', country: 'NL' } as CheckoutFormState,
+            customer: individualCustomer('NL'),
             enabledPricingIds: undefined,
         });
 
@@ -182,7 +225,7 @@ describe('useInvoicePreview', () => {
 
         loadInvoicePreview({
             subscription,
-            checkoutForm: { type: 'INDIVIDUAL', country: 'AU' } as CheckoutFormState,
+            customer: individualCustomer('AU'),
             enabledPricingIds: undefined,
         });
 
@@ -235,7 +278,7 @@ describe('useInvoicePreview', () => {
         const { loadInvoicePreview } = useInvoicePreview();
         await loadInvoicePreview({
             subscription,
-            checkoutForm: { type: 'INDIVIDUAL', country: 'AU' } as CheckoutFormState,
+            customer: individualCustomer('AU'),
             enabledPricingIds: ['pricing_1' as Pricing['id']],
         });
 
@@ -281,7 +324,7 @@ describe('useInvoicePreview', () => {
         const { loadInvoicePreview } = useInvoicePreview();
         await loadInvoicePreview({
             subscription,
-            checkoutForm: { type: 'INDIVIDUAL', country: 'AU' } as CheckoutFormState,
+            customer: individualCustomer('AU'),
             enabledPricingIds: ['pricing_1' as Pricing['id']],
         });
 
@@ -322,7 +365,7 @@ describe('useInvoicePreview', () => {
         const { loadInvoicePreview } = useInvoicePreview();
         await loadInvoicePreview({
             subscription,
-            checkoutForm: { type: 'INDIVIDUAL', country: 'AU' } as CheckoutFormState,
+            customer: individualCustomer('AU'),
             enabledPricingIds: ['pricing_1' as Pricing['id']],
         });
 

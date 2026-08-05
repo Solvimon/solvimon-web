@@ -1,29 +1,18 @@
-import {
-    ApiStatus,
-    type Address,
-    type BillingPeriod,
-    type Invoice,
-    type Pricing,
-    type PricingPlanSchedule,
-    type PricingPlanSubscriptionExpanded,
-} from '@solvimon/solvimon-types';
+import { ApiStatus, type BillingPeriod, type Invoice } from '@solvimon/solvimon-types';
 import type { TimePeriod } from '@solvimon/solvimon-types';
 import { computed, ref } from 'vue';
 import { convertDateRangeToTimePeriod } from '@solvimon/solvimon-ui';
-import { taxId } from '@solvimon/solvimon-ui/validators';
 import { isEqual } from '@solvimon/solvimon-ui';
+import { buildCustomerPayload, getCustomerAddress } from './useInvoicePreview.lib';
+import type { LoadInvoicePreviewParams } from './useInvoicePreview.types';
 import { useLogger } from '@/components/providers/LoggerProvider/composables/useLogger';
 import { createInvoicesService } from '@/services/invoices';
-import type { CheckoutFormState } from '@/components/customer/CheckoutForm/CheckoutForm.types';
 import {
     getFirstPricingPlanScheduleOfType,
     getScheduleCustomizations,
 } from '@/utils/pricingPlanSchedule';
 import { getPricingCurrencyForCountry } from '@/utils/countryCurrency';
 import type { GetInvoicePreviewPayload } from '@/services/invoices.types';
-
-const EMPTY_LEGAL_ENTITY_NAME = 'preview';
-const EMPTY_COUNTRY = 'NL';
 
 export const useInvoicePreview = () => {
     const { getInvoicePreview } = createInvoicesService();
@@ -42,26 +31,12 @@ export const useInvoicePreview = () => {
     const loadInvoicePreview = async ({
         subscription,
         subscriptionStartAt,
-        checkoutForm,
+        customer = {},
+        seatsValues,
         enabledPricingIds,
         promotionCode,
-    }: {
-        subscription: PricingPlanSubscriptionExpanded;
-        subscriptionStartAt?: PricingPlanSchedule['start_at'];
-        checkoutForm: CheckoutFormState;
-        enabledPricingIds?: Pricing['id'][];
-        promotionCode?: string | null;
-    }) => {
-        const address = {
-            ...(checkoutForm.addressLine1 && { line1: checkoutForm.addressLine1 }),
-            ...(checkoutForm.addressLine2 && { line2: checkoutForm.addressLine2 }),
-            ...(checkoutForm.city && { city: checkoutForm.city }),
-            ...(checkoutForm.state && { state: checkoutForm.state }),
-            ...(checkoutForm.country
-                ? { country: checkoutForm.country || EMPTY_COUNTRY }
-                : { country: EMPTY_COUNTRY }),
-            ...(checkoutForm.postalCode && { postal_code: checkoutForm.postalCode }),
-        } satisfies Partial<Address>;
+    }: LoadInvoicePreviewParams) => {
+        const customerPayload = buildCustomerPayload(customer);
 
         status.value = ApiStatus.Loading;
 
@@ -87,7 +62,7 @@ export const useInvoicePreview = () => {
                   : [];
 
         const pricingCurrency = getPricingCurrencyForCountry({
-            country: checkoutForm.country,
+            country: getCustomerAddress(customer)?.country,
             pricingCurrencySettings,
             fallbackCurrency: subscription.billing_currency,
         });
@@ -109,7 +84,7 @@ export const useInvoicePreview = () => {
                     enabledPricings: enabledPricingIds?.map((enabledPricingId) => ({
                         pricing_id: enabledPricingId,
                     })),
-                    seatsValues: checkoutForm.seatsValues,
+                    seatsValues,
                     pricingPlanScheduleInfos: subscription.pricing_plan_schedule_infos,
                     pricingCurrency: hasMultiplePricingCurrencies ? pricingCurrency : undefined,
                     billingPeriod: hasMultipleBillingPeriods ? period : undefined,
@@ -141,25 +116,7 @@ export const useInvoicePreview = () => {
                 pricingPlanSubscriptionId: subscription.id,
                 startAt: subscriptionStartAt,
                 customizations: scheduleCustomizations,
-                customer: {
-                    type: checkoutForm.type || 'INDIVIDUAL',
-                    ...(checkoutForm.type === 'INDIVIDUAL' && {
-                        individual: {
-                            residential_address: address,
-                        },
-                    }),
-                    ...(checkoutForm.type === 'ORGANIZATION' && {
-                        organization: {
-                            legal_name: checkoutForm.companyLegalName || EMPTY_LEGAL_ENTITY_NAME,
-                            registered_address: address,
-                            ...(checkoutForm.companyVatNumber && {
-                                tax_id: taxId.$validator(checkoutForm.companyVatNumber, {}, {})
-                                    ? checkoutForm.companyVatNumber
-                                    : undefined,
-                            }),
-                        },
-                    }),
-                },
+                customer: customerPayload,
             } satisfies GetInvoicePreviewPayload;
 
             const cachedPayload = cachedPreviewPayloads.value[periodKey];

@@ -1,4 +1,5 @@
 import type {
+    ChargeOnDemandPricingItemsPayload,
     Customer,
     Invoice,
     InvoicePreview,
@@ -40,11 +41,15 @@ interface InvoicesService {
     previewChargeOnDemandPricingItems: (
         args: ChargeOnDemandPricingItemsPreviewPayload,
     ) => Promise<Invoice>;
+    chargeOnDemandPricingItems: (payload: ChargeOnDemandPricingItemsPayload) => Promise<Invoice>;
 }
 
 export function createInvoicesService(): InvoicesService {
     const request = createRequestService();
     const config = useConfig();
+
+    /** Previewing and charging on-demand pricing items share one endpoint. */
+    const chargeOnDemandPricingItemsUrl = `${config.apiUrls.transaction}/portal/invoices/charge-on-demand-pricing-items`;
 
     /**
      * Get a single invoice
@@ -142,22 +147,49 @@ export function createInvoicesService(): InvoicesService {
         });
     }
 
+    /**
+     * POST /v1/portal/invoices/charge-on-demand-pricing-items
+     *
+     * Calculates what the selected on-demand pricing items would be invoiced for, without
+     * creating anything.
+     */
     function previewChargeOnDemandPricingItems({
         pricingPlanScheduleId,
         pricingItemIds,
         startAt,
     }: ChargeOnDemandPricingItemsPreviewPayload) {
         return request<Invoice>({
-            url: `${config.apiUrls.transaction}/portal/invoices/charge-on-demand-pricing-items`,
+            url: chargeOnDemandPricingItemsUrl,
             options: { method: 'POST' },
             data: {
                 pricing_plan_schedule_id: pricingPlanScheduleId,
                 pricing_items: pricingItemIds.map((pricingItemId) => ({
                     pricing_item_id: pricingItemId,
                 })),
-                ...(startAt ? { start_at: startAt } : {}),
                 preview: true,
-            },
+                ...(startAt ? { start_at: startAt } : {}),
+            } satisfies ChargeOnDemandPricingItemsPayload,
+        });
+    }
+
+    /**
+     * POST /v1/portal/invoices/charge-on-demand-pricing-items
+     *
+     * Creates (and unless told otherwise, finalises) an invoice for the given on-demand pricing
+     * items, and returns it.
+     *
+     * Passing `payment_method_id` (pmet_xxx) creates AND pays the invoice in a single call, so
+     * the caller can show a success state directly. Omit it for new payment methods — the caller
+     * should redirect to invoice-pay instead.
+     */
+    function chargeOnDemandPricingItems(payload: ChargeOnDemandPricingItemsPayload) {
+        return request<Invoice>({
+            url: chargeOnDemandPricingItemsUrl,
+            options: { method: 'POST' },
+            data: {
+                finalize_immediately: true,
+                ...payload,
+            } satisfies ChargeOnDemandPricingItemsPayload,
         });
     }
 
@@ -167,5 +199,6 @@ export function createInvoicesService(): InvoicesService {
         getInvoicePdf,
         getInvoicePreview,
         previewChargeOnDemandPricingItems,
+        chargeOnDemandPricingItems,
     };
 }

@@ -1,8 +1,7 @@
 import type { CountryCode, PricingCurrencySettings } from '@solvimon/solvimon-types';
 
 // Generated from Unicode CLDR 48.1 (released 2026-01-30); single primary currency per country.
-
-const COUNTRY_CURRENCY_MAP: Partial<Record<CountryCode, string>> = {
+const COUNTRY_CURRENCY_MAP: Record<string, string | undefined> = {
     AD: 'EUR',
     AE: 'AED',
     AF: 'AFN',
@@ -250,9 +249,9 @@ const COUNTRY_CURRENCY_MAP: Partial<Record<CountryCode, string>> = {
     ZA: 'ZAR',
     ZM: 'ZMW',
     ZW: 'ZWL',
-};
+} satisfies Partial<Record<CountryCode, string>>;
 
-export const getCurrencyForCountry = (country?: CountryCode): string | undefined => {
+export const getCurrencyForCountry = (country?: string): string | undefined => {
     if (!country) {
         return undefined;
     }
@@ -265,7 +264,7 @@ export const getPricingCurrencyForCountry = ({
     pricingCurrencySettings,
     fallbackCurrency,
 }: {
-    country?: CountryCode;
+    country?: string;
     pricingCurrencySettings?: PricingCurrencySettings;
     fallbackCurrency?: string;
 }): string | undefined => {

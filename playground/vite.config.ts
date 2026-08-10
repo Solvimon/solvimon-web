@@ -46,6 +46,14 @@ export default defineConfig({
         // Required for symlinked local packages to resolve subpath exports correctly
         preserveSymlinks: true,
     },
+    optimizeDeps: {
+        // solvimon-ui is symlinked to a local checkout. With preserveSymlinks Vite treats it as a
+        // regular dependency and pre-bundles it, after which rebuilds of that package are never
+        // picked up — the browser keeps running the cached copy until the cache is cleared by
+        // hand. Excluding it means its modules are served directly, so a rebuild + reload is
+        // enough.
+        exclude: ['@solvimon/solvimon-ui'],
+    },
     server: {
         host: 'portal.local',
         port: 5175,

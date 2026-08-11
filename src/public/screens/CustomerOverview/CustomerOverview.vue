@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import { ApiStatus } from '@solvimon/solvimon-types';
+import type { CustomerWalletBalanceItem } from '@solvimon/solvimon-types';
+import { computed, ref, watch } from 'vue';
 import type { CustomerOverviewProps } from './CustomerOverview.types';
 import { ContentWithAsideLayout } from '@/layouts';
 import InvoicesList from '@/public/components/InvoicesList/InvoicesList.vue';
 import { useInvoicesList } from '@/composables/useInvoicesList';
 import { usePortal } from '@/components/providers/PortalProvider/composables/usePortal';
+import { useLogger } from '@/components/providers';
 import { useSubscriptionsList } from '@/composables/useSubscriptionsList';
 import { useCustomer } from '@/composables/useCustomer';
 import SubscriptionsList from '@/public/components/SubscriptionsList/SubscriptionsList.vue';
@@ -15,11 +18,14 @@ import CustomerPaymentMethods from '@/public/components/CustomerPaymentMethods/C
 import { useCustomerPaymentMethodOptions } from '@/composables/useCustomerPaymentMethodOptions';
 import { useCustomerWalletBalances } from '@/composables/useCustomerWalletBalances';
 import CustomerWalletBalances from '@/public/components/CustomerWalletBalances/CustomerWalletBalances.vue';
-import { useWalletBalanceItems } from '@/composables/useWalletBalanceItems';
+import TopUpModal from '@/components/wallets/TopUpModal/TopUpModal.vue';
+import { useTopUpModal } from '@/components/wallets/TopUpModal/useTopUpModal';
+import { getActiveDefaultScheduleId } from '@/utils/pricingPlanSchedule';
 
 defineProps<CustomerOverviewProps>();
 
 const portal = usePortal();
+const logger = useLogger();
 
 const customerId = portal.value?.customer_id;
 
@@ -29,7 +35,10 @@ const subscriptions = useSubscriptionsList({ customerId, batchSize: 2 });
 const paymentMethods = usePaymentMethods({ customerId });
 const customerPaymentMethodOptions = useCustomerPaymentMethodOptions({ customerId });
 const customerWalletBalances = useCustomerWalletBalances({ customerId });
-const walletBalanceItems = useWalletBalanceItems(customerWalletBalances.walletBalances);
+// Computed at the top level so the template unwraps the ref — nested access does not.
+const walletBalanceItems = computed(
+    () => customerWalletBalances.walletBalances.value?.wallet_balances ?? [],
+);
 
 const { isLoading } = useLoadInitialData(
     customer.get.execute(),
@@ -39,6 +48,45 @@ const { isLoading } = useLoadInitialData(
     customerPaymentMethodOptions.fetch(),
     customerWalletBalances.fetch(),
 );
+
+/**
+ * A payment method added from the top-up modal is not in the list yet, so reload it — the modal picks
+ * the new one up from the refreshed list.
+ */
+const handlePaymentMethodStored = () => {
+    void paymentMethods.fetchAll();
+};
+
+/** The top-up was charged, so the balance it credited is out of date. */
+const handleTopUpCharged = () => {
+    void customerWalletBalances.fetch();
+};
+
+/** One-off charges such as a wallet top-up are invoiced on the schedule billed right now. */
+const activeScheduleId = computed(() => getActiveDefaultScheduleId(subscriptions.items.value));
+
+// Without a schedule a top-up can be entered but never previewed or charged, so report what the
+// customer's subscriptions offered when none of them qualifies.
+watch([activeScheduleId, () => subscriptions.items.value], ([scheduleId, activeSubscriptions]) => {
+    if (scheduleId || activeSubscriptions.length === 0) {
+        return;
+    }
+
+    logger.warn('ACTIVE_SCHEDULE_NOT_FOUND', 'No schedule is currently being billed', {
+        schedules: activeSubscriptions.flatMap(({ pricing_plan_schedule_infos }) =>
+            (pricing_plan_schedule_infos ?? []).map(({ id, type, start_at, end_at, ...info }) => ({
+                id,
+                type: info.pricing_plan_schedule?.type ?? type,
+                start_at,
+                end_at,
+            })),
+        ),
+    });
+});
+
+const selectedBalanceItem = ref<CustomerWalletBalanceItem | undefined>();
+
+const topUpModal = useTopUpModal(selectedBalanceItem);
 </script>
 
 <template>
@@ -69,6 +117,8 @@ const { isLoading } = useLoadInitialData(
                 :has-error="customerWalletBalances.apiStatus.value === ApiStatus.Failed"
                 :is-loading="isLoading"
                 :wallet-balances="walletBalanceItems"
+                show-top-up-button
+                @top-up="selectedBalanceItem = $event"
             />
 
             <CustomerPaymentMethods
@@ -82,6 +132,16 @@ const { isLoading } = useLoadInitialData(
                 class="sv-customer-overview__billing-information"
                 :is-loading="isLoading"
                 :customer="customer.customer.value"
+            />
+
+            <TopUpModal
+                :show-modal="topUpModal.showModal.value"
+                :payment-methods="paymentMethods.items.value"
+                :customer="customer.customer.value"
+                :selected-balance-item="selectedBalanceItem"
+                @close="selectedBalanceItem = undefined"
+                @confirm="handleTopUpCharged"
+                @payment-success="handlePaymentMethodStored"
             />
         </template>
     </ContentWithAsideLayout>

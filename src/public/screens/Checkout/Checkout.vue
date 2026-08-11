@@ -8,7 +8,7 @@ import {
     useIntl,
     useTimePeriod,
 } from '@solvimon/solvimon-ui';
-import { computed, defineAsyncComponent, onMounted, ref } from 'vue';
+import { computed, defineAsyncComponent, onMounted, ref, watch } from 'vue';
 import type { Address, BillingPeriod, CountryCode } from '@solvimon/solvimon-types';
 import type { CheckoutEmits, CheckoutProps } from './Checkout.types';
 import { useCheckoutView } from './useCheckout.view';
@@ -405,6 +405,20 @@ const {
         promotionCode.value = null;
     },
 });
+
+// Auto-apply a coupon code from `configuration.couponCode` once the subscription
+// (required by applyPromotionCode) has loaded. Invalid codes are handled by the
+// same onInvalidPromotionCode/onApplyError paths as a manually entered code.
+watch(
+    subscription,
+    (loadedSubscription) => {
+        if (loadedSubscription && props.configuration?.couponCode) {
+            promotionCode.value = props.configuration.couponCode;
+            void applyPromotionCode(props.configuration.couponCode);
+        }
+    },
+    { once: true },
+);
 
 const handleRedirect = () => {
     if (!successRedirectUrl) return;

@@ -6,6 +6,7 @@ import { COMPONENT_NAME } from './Checkout.entry.ce';
 import Provider from '@/components/providers/Provider/Provider.vue';
 import Checkout from '@/public/screens/Checkout/Checkout.vue';
 import { useLogger } from '@/components/providers';
+import { getQueryParam } from '@/utils/url';
 
 const props = defineProps<SolvimonCheckoutEntryProps>();
 const emit = defineEmits<SolvimonCheckoutEmits>();
@@ -40,6 +41,9 @@ const getValidEmail = (email: string | undefined) => {
 
 const validCountryCode = getValidCountryCode(props.configuration?.countryCode);
 const validEmail = getValidEmail(props.configuration?.email);
+// Falls back to the host page's own URL so marketing/checkout links can carry the code
+// (e.g. `?coupon_code=WELCOME10`) without requiring the embedder to pass it explicitly.
+const couponCode = props.configuration?.couponCode ?? getQueryParam('coupon_code') ?? undefined;
 </script>
 
 <template>
@@ -63,6 +67,7 @@ const validEmail = getValidEmail(props.configuration?.email);
                 email: validEmail,
                 countryCode: validCountryCode,
                 enabledPricingIds: configuration?.enabledPricingIds,
+                couponCode,
             }"
             @ready="emit('ready')"
         >

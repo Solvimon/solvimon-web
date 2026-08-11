@@ -16,6 +16,11 @@ export interface CheckoutConfiguration {
      */
     email?: string;
     /**
+     * Optional coupon/promotion code. This will be pre-filled and applied automatically.
+     * When not provided, it falls back to a `coupon_code` query parameter on the page.
+     */
+    couponCode?: string;
+    /**
      * Optional enabled pricing ids.
      */
     enabledPricingIds?: string[];

@@ -1,4 +1,5 @@
 import {
+    getActiveDefaultScheduleId,
     getAllPricingsFromScheduleInfos,
     getFirstPricingPlanScheduleOfType,
     getPricingItemConfigMetaById,
@@ -14,6 +15,7 @@ import type {
     PricingItemExtended,
     PricingPlanSchedule,
     PricingPlanScheduleInfoExpanded,
+    PricingPlanSubscriptionExpanded,
     PricingPlanVersionExtended,
 } from '@solvimon/solvimon-types';
 
@@ -24,13 +26,7 @@ describe('pricingPlanSchedule utils', () => {
             value: 1,
         } satisfies BillingPeriod;
 
-        const createConfig = ({
-            id,
-            currency,
-        }: {
-            id: string;
-            currency?: string;
-        }) =>
+        const createConfig = ({ id, currency }: { id: string; currency?: string }) =>
             ({
                 object_type: 'PRICING_ITEM_CONFIG',
                 id,
@@ -65,11 +61,7 @@ describe('pricingPlanSchedule utils', () => {
                 configs,
             }) satisfies PricingItemExtended;
 
-        const createPricingPlanScheduleInfo = ({
-            items,
-        }: {
-            items: PricingItemExtended[];
-        }) => {
+        const createPricingPlanScheduleInfo = ({ items }: { items: PricingItemExtended[] }) => {
             const pricing = {
                 object_type: 'PRICING',
                 id: 'pricing-1',
@@ -441,6 +433,86 @@ describe('pricingPlanSchedule utils', () => {
         });
     });
 
+    describe('getActiveDefaultScheduleId', () => {
+        const NOW = new Date('2026-08-06T12:00:00.000Z');
+
+        const createSubscription = (
+            scheduleInfos: {
+                id: string;
+                type?: string;
+                start_at: string;
+                end_at?: string;
+            }[],
+        ) =>
+            ({
+                pricing_plan_schedule_infos: scheduleInfos.map(({ id, type, ...dates }) => ({
+                    id,
+                    ...dates,
+                    pricing_plan_schedule: { type: type ?? 'DEFAULT' },
+                })),
+            }) as unknown as PricingPlanSubscriptionExpanded;
+
+        beforeEach(() => {
+            vi.useFakeTimers();
+            vi.setSystemTime(NOW);
+        });
+
+        afterEach(() => {
+            vi.useRealTimers();
+        });
+
+        it('returns the schedule that is running right now', () => {
+            const subscriptions = [
+                createSubscription([{ id: 'ppsc_running', start_at: '2026-01-01T00:00:00.000Z' }]),
+            ];
+
+            expect(getActiveDefaultScheduleId(subscriptions)).toBe('ppsc_running');
+        });
+
+        it('prefers the most recently started schedule across subscriptions', () => {
+            const subscriptions = [
+                createSubscription([{ id: 'ppsc_older', start_at: '2025-01-01T00:00:00.000Z' }]),
+                createSubscription([{ id: 'ppsc_newer', start_at: '2026-07-01T00:00:00.000Z' }]),
+            ];
+
+            expect(getActiveDefaultScheduleId(subscriptions)).toBe('ppsc_newer');
+        });
+
+        it('skips schedules that have not started or have already ended', () => {
+            const subscriptions = [
+                createSubscription([
+                    { id: 'ppsc_future', start_at: '2026-09-01T00:00:00.000Z' },
+                    {
+                        id: 'ppsc_ended',
+                        start_at: '2025-01-01T00:00:00.000Z',
+                        end_at: '2026-01-01T00:00:00.000Z',
+                    },
+                    {
+                        id: 'ppsc_running',
+                        start_at: '2026-02-01T00:00:00.000Z',
+                        end_at: '2026-12-01T00:00:00.000Z',
+                    },
+                ]),
+            ];
+
+            expect(getActiveDefaultScheduleId(subscriptions)).toBe('ppsc_running');
+        });
+
+        it('ignores schedules that are not the default one', () => {
+            const subscriptions = [
+                createSubscription([
+                    { id: 'ppsc_trial', type: 'TRIAL', start_at: '2026-01-01T00:00:00.000Z' },
+                ]),
+            ];
+
+            expect(getActiveDefaultScheduleId(subscriptions)).toBeUndefined();
+        });
+
+        it('returns undefined without subscriptions', () => {
+            expect(getActiveDefaultScheduleId([])).toBeUndefined();
+        });
+    });
+
     describe('getAllPricingsFromScheduleInfos', () => {
         const makeInfo = (
             categories: PricingCategoryExtended[] | undefined,
@@ -493,7 +565,14 @@ describe('pricingPlanSchedule utils', () => {
                     pricing_plan_id: 'plan-1',
                     version: 1,
                     status: 'ACTIVE',
-                    pricing_plan: { object_type: 'PRICING_PLAN', id: 'plan-1', reference: 'ref', name: 'Plan', type: 'STANDARD', variant: 'DEFAULT' },
+                    pricing_plan: {
+                        object_type: 'PRICING_PLAN',
+                        id: 'plan-1',
+                        reference: 'ref',
+                        name: 'Plan',
+                        type: 'STANDARD',
+                        variant: 'DEFAULT',
+                    },
                     pricing_categories: [
                         {
                             product_category_id: 'cat-1',

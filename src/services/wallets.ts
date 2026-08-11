@@ -1,4 +1,5 @@
 import type { Customer, CustomerWalletBalancesResponse } from '@solvimon/solvimon-types';
+import { serializeQueryParams, withExpand } from '@solvimon/solvimon-ui';
 import { createRequestService } from './requests';
 import { useConfig } from '@/components/providers/ConfigProvider/composables/useConfig';
 
@@ -15,8 +16,10 @@ export function createWalletsService(): WalletsService {
     function getCustomerWalletBalances(
         customerId: Customer['id'],
     ): Promise<CustomerWalletBalancesResponse> {
+        const queryParams = withExpand({ expandParams: ['ALL'] });
+
         return request<CustomerWalletBalancesResponse>({
-            url: `${config.apiUrls.config}/portal/customers/${customerId}/wallets/balance`,
+            url: `${config.apiUrls.config}/portal/customers/${customerId}/wallets/balance${serializeQueryParams(queryParams)}`,
             options: { method: 'POST' },
             data: {},
         });

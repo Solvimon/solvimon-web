@@ -2,14 +2,14 @@
 import type { SolvimonWalletBalancesEntryProps } from './WalletBalances.entry.types';
 import { useCustomerWalletBalances } from '@/composables/useCustomerWalletBalances';
 import { useLoadInitialData } from '@/composables/useLoadInitialData';
-import { useWalletBalanceItems } from '@/composables/useWalletBalanceItems';
 
 const props = defineProps<SolvimonWalletBalancesEntryProps>();
 
 const customerId = props.portalObject.customer_id;
 
 const customerWalletBalances = useCustomerWalletBalances({ customerId });
-const walletBalanceItems = useWalletBalanceItems(customerWalletBalances.walletBalances);
+
+const { walletBalances } = customerWalletBalances;
 
 const { isLoading } = useLoadInitialData(customerWalletBalances.fetch());
 </script>
@@ -18,7 +18,7 @@ const { isLoading } = useLoadInitialData(customerWalletBalances.fetch());
     <slot
         name="default"
         :customer-wallet-balances="customerWalletBalances"
-        :wallet-balance-items="walletBalanceItems"
+        :wallet-balance-items="walletBalances?.wallet_balances ?? []"
         :is-loading="isLoading"
     />
 </template>

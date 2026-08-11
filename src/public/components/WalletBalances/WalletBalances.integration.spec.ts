@@ -43,7 +43,11 @@ vi.mock('@solvimon/solvimon-ui', async () => {
         }),
         WalletBalances: defineComponent({
             name: 'WalletBalancesStub',
-            props: { items: { type: Array, required: true }, title: String },
+            props: {
+                customerWalletBalances: { type: Array, required: true },
+                title: String,
+                showTopUpButton: Boolean,
+            },
             setup(props) {
                 return () => h('div', { 'data-testid': 'wallet-balances-stub' }, props.title);
             },

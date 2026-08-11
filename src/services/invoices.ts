@@ -1,5 +1,6 @@
 import type {
     ChargeOnDemandPricingItemsPayload,
+    ChargeOnDemandPricingItemsPricingItemConfig,
     Customer,
     Invoice,
     InvoicePreview,
@@ -15,7 +16,11 @@ import { useConfig } from '@/components/providers/ConfigProvider/composables/use
 
 interface ChargeOnDemandPricingItemsPreviewPayload {
     pricingPlanScheduleId: PricingPlanSchedule['id'];
-    pricingItemIds: string[];
+    /**
+     * The items to preview. A flexible item — a wallet top-up for instance — also carries the
+     * amount the customer chose; fixed items only need their id.
+     */
+    pricingItems: ChargeOnDemandPricingItemsPricingItemConfig[];
     startAt?: string;
 }
 
@@ -155,7 +160,7 @@ export function createInvoicesService(): InvoicesService {
      */
     function previewChargeOnDemandPricingItems({
         pricingPlanScheduleId,
-        pricingItemIds,
+        pricingItems,
         startAt,
     }: ChargeOnDemandPricingItemsPreviewPayload) {
         return request<Invoice>({
@@ -163,9 +168,7 @@ export function createInvoicesService(): InvoicesService {
             options: { method: 'POST' },
             data: {
                 pricing_plan_schedule_id: pricingPlanScheduleId,
-                pricing_items: pricingItemIds.map((pricingItemId) => ({
-                    pricing_item_id: pricingItemId,
-                })),
+                pricing_items: pricingItems,
                 preview: true,
                 ...(startAt ? { start_at: startAt } : {}),
             } satisfies ChargeOnDemandPricingItemsPayload,

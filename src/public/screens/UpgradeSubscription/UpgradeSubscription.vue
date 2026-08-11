@@ -256,7 +256,9 @@ watch([selectedPricingItemIds, activeScheduleId], ([pricingItemIds, scheduleId])
     previewTimer = setTimeout(() => {
         previewChargeOnDemandPricingItems({
             pricingPlanScheduleId: scheduleId,
-            pricingItemIds,
+            pricingItems: pricingItemIds.map((pricingItemId) => ({
+                pricing_item_id: pricingItemId,
+            })),
         })
             .then((invoice) => {
                 if (requestId === previewRequestId) {

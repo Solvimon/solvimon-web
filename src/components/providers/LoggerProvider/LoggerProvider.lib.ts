@@ -4,6 +4,35 @@ import type { LogEntry, Logger, LogLevel, LogSink, SerializedError } from './Log
 
 export const LOGGER_PROVIDER_INJECTION_KEY: InjectionKey<Logger> = Symbol('sdkLogger');
 
+/**
+ * Mirrors log entries to the browser console.
+ *
+ * The SDK reports through the consumer's `onLog` handler and a `log` custom event, so nothing is
+ * visible while developing an integration that does neither. Reserved for non-production
+ * environments to keep consumers' consoles clean.
+ *
+ * Log context ends up in the console verbatim, so never put tokens or credentials in it.
+ */
+export function createConsoleLogSink(): LogSink {
+    return ({ level, code, message, context, error }) => {
+        /* eslint-disable no-console -- this sink exists to make SDK logs visible while developing */
+        const write =
+            level === 'error' ? console.error : level === 'warn' ? console.warn : console.info;
+        /* eslint-enable no-console */
+
+        write(
+            `[solvimon] ${code}: ${message}`,
+            ...(context ? [context] : []),
+            ...(error ? [error] : []),
+        );
+    };
+}
+
+/** Fans an entry out to every sink, so console output can sit next to the consumer's own. */
+export function combineLogSinks(...sinks: LogSink[]): LogSink {
+    return (entry) => sinks.forEach((sink) => sink(entry));
+}
+
 export function createCustomElementLogSink(
     sink: LogSink,
     hostRef: Ref<HTMLElement | null>,

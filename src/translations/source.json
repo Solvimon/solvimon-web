@@ -303,6 +303,10 @@
         "defaultMessage": "Available payment methods",
         "description": "Title of the available payment methods form"
     },
+    "components.payment_method_form.submit_button.label": {
+        "defaultMessage": "Save payment method",
+        "description": "Label of the button that stores the entered payment method"
+    },
     "customer.invoice_table.pay_invoice_button.label": {
         "defaultMessage": "Pay",
         "description": "The label for the pay invoice button"
@@ -507,6 +511,10 @@
         "defaultMessage": "Set as default",
         "description": "Context menu option for setting the default payment method"
     },
+    "payment_method_selector.add_payment_method": {
+        "defaultMessage": "Add payment method",
+        "description": "Label of the button that adds a new payment method"
+    },
     "payment_methods_list.delete_modal.body": {
         "defaultMessage": "Are you sure you want to delete this payment method?",
         "description": "Confirmation message in the delete payment method modal"
@@ -627,6 +635,82 @@
         "defaultMessage": "VAT number is valid.",
         "description": "The message shown when the VAT number is valid"
     },
+    "topup_modal.add_payment_method.subtitle": {
+        "defaultMessage": "Add a new payment method for topping up your balance.",
+        "description": "Subtitle of the top-up modal while the customer is adding a payment method"
+    },
+    "topup_modal.add_payment_method.title": {
+        "defaultMessage": "Add payment method",
+        "description": "Title of the top-up modal while the customer is adding a payment method"
+    },
+    "topup_modal.back_button.label": {
+        "defaultMessage": "Back",
+        "description": "Label of the button that leaves the add payment method step in the top-up modal"
+    },
+    "topup_modal.cancel_button.label": {
+        "defaultMessage": "Cancel",
+        "description": "Label of the button that closes the top-up modal"
+    },
+    "topup_modal.confirm_button.empty.label": {
+        "defaultMessage": "Top up balance",
+        "description": "Label of the confirm button in the top-up modal while no amount is entered"
+    },
+    "topup_modal.confirm_button.label": {
+        "defaultMessage": "Top up balance with {value}",
+        "description": "Label of the confirm button in the top-up modal once an amount is entered"
+    },
+    "topup_modal.done_button.label": {
+        "defaultMessage": "Done",
+        "description": "Label of the button that dismisses the top-up modal once the top-up has been charged"
+    },
+    "topup_modal.flexible_option.bounds": {
+        "defaultMessage": "Between {minimum} and {maximum}",
+        "description": "Bounds of the choose-your-amount option in the top-up modal"
+    },
+    "topup_modal.flexible_option.label": {
+        "defaultMessage": "Choose your own amount",
+        "description": "Label of the choose-your-amount option in the top-up modal"
+    },
+    "topup_modal.payment_method_selector.label": {
+        "defaultMessage": "Payment method",
+        "description": "Label above the payment method that pays for the top-up, in the top-up modal"
+    },
+    "topup_modal.pricing_items.label": {
+        "defaultMessage": "Top up amount",
+        "description": "Label above the list of ways to top up the wallet in the top-up modal"
+    },
+    "topup_modal.save_payment_method.label": {
+        "defaultMessage": "Save payment method",
+        "description": "Label of the confirm button in the top-up modal while adding a payment method"
+    },
+    "topup_modal.subtitle": {
+        "defaultMessage": "Your current balance is {balance}.",
+        "description": "Subtitle of the top-up modal showing the current wallet balance"
+    },
+    "topup_modal.success.added": {
+        "defaultMessage": "Your balance was topped up with {value}. Please be aware that it can take some time to reflect this change in your wallet.",
+        "description": "Confirmation of what a completed top-up added to the wallet balance"
+    },
+    "topup_modal.success.modal_subtitle": {
+        "defaultMessage": "Your payment went through.",
+        "description": "Subtitle of the top-up modal once the top-up has been charged"
+    },
+    "topup_modal.success.modal_title": {
+        "defaultMessage": "Top-up complete",
+        "description": "Title of the top-up modal once the top-up has been charged"
+    },
+    "topup_modal.success.receipt.heading": {
+        "defaultMessage": "Receipt",
+        "description": "Heading above the invoice a completed top-up produced"
+    },
+    "topup_modal.success.title": {
+        "defaultMessage": "Top-up successful",
+        "description": "Title of the top-up modal once the top-up has been charged"
+    },
+    "topup_modal.title": {
+        "defaultMessage": "Top up balance",
+        "description": "Title of the wallet top-up modal"
+    },
     "upgrade_subscription.empty_state": {
         "defaultMessage": "No one-off items are available for this subscription.",
         "description": "Shown when there are no one-off items available for the subscription"
@@ -734,9 +818,5 @@
     "wallet_balance.service_period_heading": {
         "defaultMessage": "Service period - {startAt} - {endAt}",
         "description": "Heading shown above wallet balance details for an invoice period"
-    },
-    "wallet_balance.wallet_ballance_title": {
-        "defaultMessage": "Balance",
-        "description": "Fallback wallet title in wallet balance components"
     }
 }

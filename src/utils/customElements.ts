@@ -1,5 +1,6 @@
 import { defineCustomElement as defineCustomElementVue } from 'vue';
 import type { CustomElementOptions } from 'vue';
+import { componentStyles } from '@solvimon/solvimon-ui/component-styles';
 
 import tailwindStyles from '../../.sdk/tailwind.css?inline';
 
@@ -18,7 +19,12 @@ export function defineCustomElement(
 ) {
     return defineCustomElementVue(component, {
         shadowRoot: true,
-        styles: [tailwindStyles, ...(component.styles ?? []), ...(options.styles ?? [])],
+        styles: [
+            tailwindStyles,
+            ...componentStyles,
+            ...(component.styles ?? []),
+            ...(options.styles ?? []),
+        ],
         ...options,
     });
 }

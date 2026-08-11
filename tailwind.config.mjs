@@ -7,6 +7,10 @@ export default {
         'src/**/*.{vue,ts}',
         // solvimon-ui ships compiled JS only (no Vue sources in dist), so scan the dist bundles
         './node_modules/@solvimon/solvimon-ui/dist/**/*.{js,mjs}',
+        // ...but not its bundled dependencies: they hold no classes, and scanning them is slow.
+        // Tailwind resolves the symlinked package to its real path, so the `node_modules` segment
+        // disappears from the pattern and it gets flagged as a broad glob.
+        '!./node_modules/@solvimon/solvimon-ui/dist/node_modules/**',
     ],
     theme: {
         extend: {

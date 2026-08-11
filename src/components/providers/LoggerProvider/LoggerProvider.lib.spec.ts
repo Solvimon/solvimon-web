@@ -1,5 +1,7 @@
 import { ref } from 'vue';
 import {
+    combineLogSinks,
+    createConsoleLogSink,
     createCustomElementLogSink,
     createLogger,
     createLoggingContext,
@@ -34,7 +36,12 @@ describe('serializeError', () => {
 
     it('serializes a plain object with error-like fields', () => {
         const obj = { name: 'CustomError', message: 'something went wrong', stack: 'at ...' };
-        expect(serializeError(obj)).toEqual({ name: 'CustomError', message: 'something went wrong', stack: 'at ...', cause: undefined });
+        expect(serializeError(obj)).toEqual({
+            name: 'CustomError',
+            message: 'something went wrong',
+            stack: 'at ...',
+            cause: undefined,
+        });
     });
 
     it('falls back to String() for primitives', () => {
@@ -46,7 +53,11 @@ describe('serializeError', () => {
 describe('createLoggingContext', () => {
     beforeEach(() => {
         Object.defineProperty(window, 'location', {
-            value: { origin: 'https://example.com', pathname: '/billing', href: 'https://example.com/billing?token=secret' },
+            value: {
+                origin: 'https://example.com',
+                pathname: '/billing',
+                href: 'https://example.com/billing?token=secret',
+            },
             writable: true,
         });
     });
@@ -148,14 +159,21 @@ describe('createLogger', () => {
 
         it('uses code and message from context when provided', () => {
             const logger = createLogger(sink);
-            logger.capture(new Error('oops'), { code: 'PAYMENT_AUTHORIZATION_FAILED', message: 'payment failed' });
+            logger.capture(new Error('oops'), {
+                code: 'PAYMENT_AUTHORIZATION_FAILED',
+                message: 'payment failed',
+            });
             expect(lastEntry().code).toBe('PAYMENT_AUTHORIZATION_FAILED');
             expect(lastEntry().message).toBe('payment failed');
         });
 
         it('does not leak code/message into the context field', () => {
             const logger = createLogger(sink);
-            logger.capture(new Error('oops'), { code: 'RESOURCE_REVOKED', message: 'gone', extra: 'val' });
+            logger.capture(new Error('oops'), {
+                code: 'RESOURCE_REVOKED',
+                message: 'gone',
+                extra: 'val',
+            });
             const ctx = lastEntry().context as Record<string, unknown>;
             expect(ctx.code).toBeUndefined();
             expect(ctx.message).toBeUndefined();
@@ -165,7 +183,10 @@ describe('createLogger', () => {
 
     describe('context enrichment', () => {
         it('adds componentName and environment to every entry', () => {
-            const logger = createLogger(sink, { customElementName: 'solvimon-checkout', environment: 'LIVE' });
+            const logger = createLogger(sink, {
+                customElementName: 'solvimon-checkout',
+                environment: 'LIVE',
+            });
             logger.warn('ADYEN_INVALID_CONFIGURATION', 'msg');
             const ctx = lastEntry().context as Record<string, unknown>;
             expect(ctx.componentName).toBe('solvimon-checkout');
@@ -209,5 +230,74 @@ describe('createCustomElementLogSink', () => {
         expect(received[0].detail).toBe(entry);
         expect(received[0].bubbles).toBe(true);
         expect(received[0].composed).toBe(true);
+    });
+});
+
+describe('createConsoleLogSink', () => {
+    const entryOf = (level: LogEntry['level'], overrides: Partial<LogEntry> = {}): LogEntry =>
+        ({
+            schemaVersion: 1,
+            level,
+            code: 'INVOICE_PREVIEW_SKIPPED',
+            message: 'nothing to charge it on',
+            timestamp: '2026-08-07T00:00:00.000Z',
+            ...overrides,
+        }) as LogEntry;
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    it('writes errors with console.error, warnings with console.warn and the rest with console.info', () => {
+        const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+        const info = vi.spyOn(console, 'info').mockImplementation(() => {});
+        const sink = createConsoleLogSink();
+
+        sink(entryOf('error'));
+        sink(entryOf('warn'));
+        sink(entryOf('info'));
+        sink(entryOf('debug'));
+
+        expect(error).toHaveBeenCalledTimes(1);
+        expect(warn).toHaveBeenCalledTimes(1);
+        expect(info).toHaveBeenCalledTimes(2);
+    });
+
+    it('prefixes the code and message, and appends context and error when present', () => {
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+        const context = { missing: ['pricingPlanScheduleId'] };
+        const err = new Error('boom');
+
+        createConsoleLogSink()(entryOf('warn', { context, error: err }));
+
+        expect(warn).toHaveBeenCalledWith(
+            '[solvimon] INVOICE_PREVIEW_SKIPPED: nothing to charge it on',
+            context,
+            err,
+        );
+    });
+
+    it('omits context and error when there are none', () => {
+        const info = vi.spyOn(console, 'info').mockImplementation(() => {});
+
+        createConsoleLogSink()(entryOf('info'));
+
+        expect(info).toHaveBeenCalledWith(
+            '[solvimon] INVOICE_PREVIEW_SKIPPED: nothing to charge it on',
+        );
+    });
+});
+
+describe('combineLogSinks', () => {
+    it('passes the entry to every sink', () => {
+        const first = vi.fn();
+        const second = vi.fn();
+        const entry = { schemaVersion: 1, level: 'warn' } as LogEntry;
+
+        combineLogSinks(first, second)(entry);
+
+        expect(first).toHaveBeenCalledWith(entry);
+        expect(second).toHaveBeenCalledWith(entry);
     });
 });

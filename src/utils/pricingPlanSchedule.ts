@@ -6,6 +6,7 @@ import type {
     PricingPlanScheduleCustomization,
     PricingPlanScheduleInfo,
     PricingPlanScheduleInfoExpanded,
+    PricingPlanSubscriptionExpanded,
 } from '@solvimon/solvimon-types';
 
 /**
@@ -21,6 +22,31 @@ export function getFirstPricingPlanScheduleOfType({
     return pricingPlanScheduleInfos.find(
         (scheduleInfo) => scheduleInfo.pricing_plan_schedule.type === type,
     );
+}
+
+/**
+ * The schedule a customer is billed on right now: the most recently started DEFAULT schedule that
+ * has begun and has not ended yet. One-off charges — a wallet top-up for instance — are invoiced
+ * on that schedule. Returns undefined when no subscription is currently running.
+ */
+export function getActiveDefaultScheduleId(
+    subscriptions: PricingPlanSubscriptionExpanded[],
+): PricingPlanScheduleInfoExpanded['id'] | undefined {
+    const now = Date.now();
+
+    return subscriptions
+        .flatMap(({ pricing_plan_schedule_infos }) => pricing_plan_schedule_infos ?? [])
+        .filter((scheduleInfo) => {
+            const type = scheduleInfo.pricing_plan_schedule?.type ?? scheduleInfo.type;
+            const startAt = Date.parse(scheduleInfo.start_at);
+            const endAt = scheduleInfo.end_at ? Date.parse(scheduleInfo.end_at) : undefined;
+            const hasStarted = Number.isFinite(startAt) && startAt <= now;
+            const hasNotEnded = endAt === undefined || !Number.isFinite(endAt) || endAt > now;
+
+            return type === 'DEFAULT' && hasStarted && hasNotEnded;
+        })
+        .sort((a, b) => Date.parse(b.start_at) - Date.parse(a.start_at))
+        .at(0)?.id;
 }
 
 export function getAllPricingsFromScheduleInfos({
@@ -51,8 +77,9 @@ export function getPricingItemConfigMetaById({
                 item.billing_period_configs?.forEach((billingConfig) => {
                     billingConfig.configs?.forEach((config) => {
                         if (config.id) {
-                            const currency = config.details?.bands?.find((band) => band.amount?.currency)
-                                ?.amount?.currency;
+                            const currency = config.details?.bands?.find(
+                                (band) => band.amount?.currency,
+                            )?.amount?.currency;
 
                             metaById.set(config.id, {
                                 ...(currency && { currency }),
@@ -64,8 +91,9 @@ export function getPricingItemConfigMetaById({
 
                 item.configs?.forEach((config) => {
                     if (config.id) {
-                        const currency = config.details?.bands?.find((band) => band.amount?.currency)
-                            ?.amount?.currency;
+                        const currency = config.details?.bands?.find(
+                            (band) => band.amount?.currency,
+                        )?.amount?.currency;
 
                         metaById.set(config.id, {
                             ...(currency && { currency }),

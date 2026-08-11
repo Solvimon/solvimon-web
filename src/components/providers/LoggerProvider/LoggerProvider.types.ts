@@ -20,7 +20,12 @@ export type LogSink = (entry: LogEntry) => void;
 export type Logger = {
     debug: (code: string, message: string, context?: Record<string, unknown>) => void;
     info: (code: string, message: string, context?: Record<string, unknown>) => void;
-    warn: (code: WarnCode, message: string, context?: Record<string, unknown>, err?: unknown) => void;
+    warn: (
+        code: WarnCode,
+        message: string,
+        context?: Record<string, unknown>,
+        err?: unknown,
+    ) => void;
     error: (
         code: ErrorCode,
         message: string,
@@ -45,8 +50,10 @@ export interface LoggerProviderProps {
 }
 
 export type WarnCode =
+    | 'ACTIVE_SCHEDULE_NOT_FOUND'
     | 'ADYEN_INVALID_CONFIGURATION'
     | 'APPLE_PAY_ACTION_REQUIRED'
+    | 'INVOICE_PREVIEW_SKIPPED'
     | 'TRANSLATION_LOAD_FAILED';
 
 export type ErrorCode =
@@ -71,6 +78,7 @@ export type ErrorCode =
     | 'PURCHASE_FAILED'
     | 'INITIAL_DATA_LOAD_FAILED'
     | 'INVOICE_PREVIEW_FAILED'
+    | 'TOP_UP_FAILED'
     | 'REQUEST_PARSE_FAILED'
     | 'ADYEN_SUBMIT_FAILED'
     | 'STRIPE_SUBMIT_FAILED'

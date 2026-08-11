@@ -19,8 +19,10 @@ export interface TokenizePaymentMethodFormConfiguration extends PaymentMethodFor
     variant?: 'TOKENIZE';
 }
 
-export interface AuthorizePaymentMethodFormConfiguration
-    extends Omit<PaymentMethodFormBaseConfiguration, 'amount'> {
+export interface AuthorizePaymentMethodFormConfiguration extends Omit<
+    PaymentMethodFormBaseConfiguration,
+    'amount'
+> {
     variant: 'AUTHORIZE';
     amount: Amount;
     context: Exclude<AuthorizePaymentPayload['context'], undefined>;
@@ -36,9 +38,16 @@ export interface PaymentMethodFormProps {
     configuration?: PaymentMethodFormConfiguration;
     isLoading?: boolean;
     countryCode?: string;
+    title?: string;
+    /**
+     * Hides the form's own submit button, for hosts that submit it from their own chrome — a modal
+     * footer, say. Pair it with the exposed `submit()` and `isPaymentPending`.
+     */
+    hideSubmitButton?: boolean;
 }
 
 export interface PaymentMethodFormEmits {
-    (e: 'payment-success'): void;
-    (e: 'payment-failed', error: unknown): void;
+    /** The form completed: the method was stored, or the payment authorized. */
+    (e: 'success'): void;
+    (e: 'failure', error: unknown): void;
 }

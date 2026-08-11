@@ -45,14 +45,25 @@ function handleSubmit() {
     paymentIntegrationFormRef.value?.submit();
 }
 
+const submitLabel = computed(() =>
+    $t({
+        defaultMessage: 'Save payment method',
+        description: 'Label of the button that stores the entered payment method',
+        id: 'components.payment_method_form.submit_button.label',
+    }),
+);
+
+// Lets a host submit the form from its own chrome, and mirror the pending state onto its button.
+defineExpose({ submit: handleSubmit, isPaymentPending });
+
 function handlePaymentSuccess() {
     isPaymentPending.value = false;
-    emit('payment-success');
+    emit('success');
 }
 
 function handlePaymentFailed(error: unknown) {
     isPaymentPending.value = false;
-    emit('payment-failed', error);
+    emit('failure', error);
 }
 
 const resolveConfiguration = (
@@ -137,6 +148,7 @@ const paymentIntegrationProps = computed<PaymentIntegrationFormProps>(() => {
         no-spacing
         content-background="none"
         :title="
+            title ??
             $t({
                 defaultMessage: 'Available payment methods',
                 description: 'Title of the available payment methods form',
@@ -155,11 +167,12 @@ const paymentIntegrationProps = computed<PaymentIntegrationFormProps>(() => {
             />
         </div>
         <Button
+            v-if="!hideSubmitButton"
             color="primary"
             class="mt-4 w-full"
             :loading="isPaymentPending"
             @click="handleSubmit"
-            >Save payment method</Button
+            >{{ submitLabel }}</Button
         >
     </Section>
 </template>

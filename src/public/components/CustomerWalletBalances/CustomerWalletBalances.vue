@@ -1,10 +1,13 @@
 <script setup lang="ts">
-import { ErrorNotification, useIntl } from '@solvimon/solvimon-ui';
-import type { CustomerWalletBalancesProps } from './CustomerWalletBalances.types';
-import CustomerWalletBalancesBlock from '@/components/customer/CustomerWalletBalancesBlock/CustomerWalletBalancesBlock.vue';
+import { ErrorNotification, useIntl, WalletBalances } from '@solvimon/solvimon-ui';
+import type {
+    CustomerWalletBalancesEmits,
+    CustomerWalletBalancesProps,
+} from './CustomerWalletBalances.types';
 import Skeleton from '@/components/shared/Skeleton.vue';
 
 defineProps<CustomerWalletBalancesProps>();
+defineEmits<CustomerWalletBalancesEmits>();
 
 const { $t } = useIntl();
 </script>
@@ -27,9 +30,21 @@ const { $t } = useIntl();
             })
         "
     />
-    <CustomerWalletBalancesBlock
+    <WalletBalances
         v-else-if="walletBalances.length > 0"
         class="sv-wallet-balances sv-root sv-component"
-        :wallet-balances="walletBalances"
+        :customer-wallet-balances="walletBalances"
+        :show-top-up-button="showTopUpButton"
+        :title="
+            $t(
+                {
+                    defaultMessage: '{count, plural, one {Wallet} other {Wallets}}',
+                    description: 'Title for the wallets block on the customer overview page',
+                    id: 'customer_overview.wallet_balances_block.title',
+                },
+                { count: String(walletBalances.length) },
+            )
+        "
+        @top-up="$emit('top-up', $event)"
     />
 </template>

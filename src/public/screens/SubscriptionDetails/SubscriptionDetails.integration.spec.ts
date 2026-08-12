@@ -1,5 +1,6 @@
 import { mount } from '@vue/test-utils';
 import { defineComponent, h } from 'vue';
+import type { CustomerWalletBalanceItem } from '@solvimon/solvimon-types';
 import SubscriptionDetails from './SubscriptionDetails.vue';
 import type { PricingPlanSubscriptionExpanded } from '@/types/subscription';
 
@@ -27,12 +28,51 @@ vi.mock('@solvimon/solvimon-ui', async () => {
                     h('div', { class: 'sv-pricing-plan-schedules-stub' }, String(props.schedules.length));
             },
         }),
+        WalletBalances: defineComponent({
+            name: 'WalletBalancesStub',
+            props: {
+                customerWalletBalances: { type: Array, required: true },
+                title: String,
+                showTopUpButton: Boolean,
+            },
+            setup(props) {
+                return () =>
+                    h(
+                        'div',
+                        { class: 'sv-wallet-balances-stub' },
+                        String(props.customerWalletBalances.length),
+                    );
+            },
+        }),
     });
 });
 
 vi.mock('@/components/providers', () => ({
     useActionDispatchProvider: () => ({ dispatchAction: mockDispatchAction }),
 }));
+
+// The real modal builds its own request services, which need providers this mount does not have.
+vi.mock('@/components/wallets/TopUpModal/TopUpModal.vue', () => ({
+    default: defineComponent({
+        name: 'TopUpModalStub',
+        props: { showModal: Boolean, selectedBalanceItem: Object },
+        emits: ['close', 'confirm', 'payment-success'],
+        setup(props) {
+            return () =>
+                h('div', {
+                    class: 'sv-top-up-modal-stub',
+                    'data-open': String(props.showModal),
+                });
+        },
+    }),
+}));
+
+const mockWalletBalance = {
+    wallet_id: 'w_1',
+    wallet_balance: {
+        open_balance: { currency: 'EUR', quantity: '100' },
+    },
+} as unknown as CustomerWalletBalanceItem;
 
 const mockSubscription = {
     id: 'ppsu_1',
@@ -143,6 +183,61 @@ describe('SubscriptionDetails', () => {
                 action: 'cancel-subscription',
                 data: { subscriptionId: 'ppsu_1' },
             });
+        });
+    });
+
+    describe('wallets', () => {
+        it('renders the wallet balances in the aside', () => {
+            const wrapper = mountComponent({ walletBalances: [mockWalletBalance] });
+
+            expect(wrapper.find('.sv-subscription-details__wallet-balances').exists()).toBe(true);
+            expect(wrapper.find('.sv-wallet-balances-stub').text()).toBe('1');
+        });
+
+        it('reports the wallet balances failing to load', () => {
+            const wrapper = mountComponent({
+                walletBalances: [mockWalletBalance],
+                hasWalletBalancesError: true,
+            });
+
+            expect(wrapper.find('.sv-wallet-balances-stub').exists()).toBe(false);
+            expect(wrapper.find('.sv-wallet-balances.sv-error').exists()).toBe(true);
+        });
+
+        it('keeps the top-up modal closed until a wallet is picked', () => {
+            const wrapper = mountComponent({ walletBalances: [mockWalletBalance] });
+
+            expect(wrapper.find('.sv-top-up-modal-stub').attributes('data-open')).toBe('false');
+        });
+
+        it('opens the top-up modal for the wallet that asked for it', async () => {
+            const wrapper = mountComponent({ walletBalances: [mockWalletBalance] });
+
+            wrapper
+                .findComponent({ name: 'CustomerWalletBalances' })
+                .vm.$emit('top-up', mockWalletBalance);
+            await wrapper.vm.$nextTick();
+
+            const modal = wrapper.findComponent({ name: 'TopUpModalStub' });
+
+            expect(modal.attributes('data-open')).toBe('true');
+            expect(modal.props('selectedBalanceItem')).toEqual(mockWalletBalance);
+        });
+
+        it('reports a charged top-up so the balance can be reloaded', () => {
+            const wrapper = mountComponent({ walletBalances: [mockWalletBalance] });
+
+            wrapper.findComponent({ name: 'TopUpModalStub' }).vm.$emit('confirm');
+
+            expect(wrapper.emitted('top-up-charged')).toHaveLength(1);
+        });
+
+        it('reports a stored payment method so the list can be reloaded', () => {
+            const wrapper = mountComponent({ walletBalances: [mockWalletBalance] });
+
+            wrapper.findComponent({ name: 'TopUpModalStub' }).vm.$emit('payment-success');
+
+            expect(wrapper.emitted('payment-method-stored')).toHaveLength(1);
         });
     });
 

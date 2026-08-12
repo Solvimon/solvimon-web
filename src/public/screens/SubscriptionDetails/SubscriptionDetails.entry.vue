@@ -24,12 +24,31 @@ defineProps<SolvimonSubscriptionDetailsEntryProps>();
         @error="(error) => $emit('error', error)"
     >
         <SubscriptionDetailsEntryView v-bind="$props">
-            <template #default="{ subscription, schedulesData, isLoading, error }">
+            <template
+                #default="{
+                    subscription,
+                    schedulesData,
+                    customer,
+                    paymentMethods,
+                    walletBalances,
+                    hasWalletBalancesError,
+                    isLoading,
+                    error,
+                    refreshWalletBalances,
+                    refreshPaymentMethods,
+                }"
+            >
                 <SubscriptionDetails
                     :subscription="subscription"
                     :schedules-data="schedulesData"
+                    :customer="customer"
+                    :payment-methods="paymentMethods"
+                    :wallet-balances="walletBalances"
+                    :has-wallet-balances-error="hasWalletBalancesError"
                     :is-loading="isLoading"
                     :error="error"
+                    @top-up-charged="refreshWalletBalances"
+                    @payment-method-stored="refreshPaymentMethods"
                 />
             </template>
         </SubscriptionDetailsEntryView>

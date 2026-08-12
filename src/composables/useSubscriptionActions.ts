@@ -17,6 +17,7 @@ export function useSubscriptionActions({
     isRenewable: ComputedRef<boolean>;
     cancel: () => void;
     renew: () => void;
+    manage: () => void;
 } {
     const { dispatchAction } = useActionDispatchProvider();
 
@@ -53,5 +54,15 @@ export function useSubscriptionActions({
         });
     };
 
-    return { isCancellable, isRenewable, cancel, renew };
+    /** Hands off to the host's upgrade flow, where the plan and its pricings can be changed. */
+    const manage = () => {
+        if (!subscription.value) return;
+
+        dispatchAction({
+            action: 'manage-subscription',
+            data: { subscriptionId: subscription.value.id },
+        });
+    };
+
+    return { isCancellable, isRenewable, cancel, renew, manage };
 }

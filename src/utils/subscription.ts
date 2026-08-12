@@ -2,18 +2,26 @@ import type {
     PricingExtended,
     PricingGroupExtended,
     PricingPlan,
+    PricingPlanScheduleInfoExpanded,
     PricingPlanSubscriptionExpanded,
 } from '@solvimon/solvimon-types';
 import { getFirstPricingPlanScheduleOfType } from './pricingPlanSchedule';
 
 /**
- * The pricing plan the subscription is on now. Schedule infos run in chronological order, so the
- * last one supersedes the ones before it.
+ * The schedule the subscription runs on now. Schedule infos are in chronological order, so the last
+ * one supersedes the ones before it.
  */
+export function getMostRecentScheduleInfo(
+    subscription: PricingPlanSubscriptionExpanded | undefined,
+): PricingPlanScheduleInfoExpanded | undefined {
+    return subscription?.pricing_plan_schedule_infos?.at(-1);
+}
+
+/** The pricing plan the subscription is on now. */
 export function getMostRecentPricingPlan(
     subscription: PricingPlanSubscriptionExpanded | undefined,
 ): PricingPlan | undefined {
-    return subscription?.pricing_plan_schedule_infos?.at(-1)?.pricing_plan_version?.pricing_plan;
+    return getMostRecentScheduleInfo(subscription)?.pricing_plan_version?.pricing_plan;
 }
 
 /**

@@ -7,6 +7,7 @@ import {
     findPricingsByIds,
     getFallbackTrialAndSubscriptionStartAndEndDates,
     getMostRecentPricingPlan,
+    getMostRecentScheduleInfo,
     getPricingGroupsFromExtendedPricingPlanSubscription,
     getSubscriptionName,
 } from './subscription';
@@ -234,6 +235,37 @@ describe('subscription utils', () => {
         it('handles empty ids array', () => {
             const result = findPricingsByIds(mockData, []);
             expect(result).toEqual([]);
+        });
+    });
+
+    describe('getMostRecentScheduleInfo', () => {
+        const withScheduleIds = (...ids: string[]) =>
+            ({
+                pricing_plan_schedule_infos: ids.map((id) => ({ id })),
+            }) as unknown as PricingPlanSubscriptionExpanded;
+
+        it('returns the last schedule info, since later ones supersede earlier ones', () => {
+            expect(getMostRecentScheduleInfo(withScheduleIds('ppsc_1', 'ppsc_2'))?.id).toBe(
+                'ppsc_2',
+            );
+        });
+
+        it('returns the only schedule info when there is one', () => {
+            expect(getMostRecentScheduleInfo(withScheduleIds('ppsc_1'))?.id).toBe('ppsc_1');
+        });
+
+        it('returns undefined when there are no schedule infos', () => {
+            expect(getMostRecentScheduleInfo(withScheduleIds())).toBeUndefined();
+        });
+
+        it('returns undefined when the subscription carries no schedule infos at all', () => {
+            const subscription = {} as unknown as PricingPlanSubscriptionExpanded;
+
+            expect(getMostRecentScheduleInfo(subscription)).toBeUndefined();
+        });
+
+        it('returns undefined when there is no subscription', () => {
+            expect(getMostRecentScheduleInfo(undefined)).toBeUndefined();
         });
     });
 

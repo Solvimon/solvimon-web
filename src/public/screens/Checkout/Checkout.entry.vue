@@ -41,8 +41,6 @@ const getValidEmail = (email: string | undefined) => {
 
 const validCountryCode = getValidCountryCode(props.configuration?.countryCode);
 const validEmail = getValidEmail(props.configuration?.email);
-// Falls back to the host page's own URL so marketing/checkout links can carry the code
-// (e.g. `?coupon_code=WELCOME10`) without requiring the embedder to pass it explicitly.
 const couponCode = props.configuration?.couponCode ?? getQueryParam('coupon_code') ?? undefined;
 </script>
 

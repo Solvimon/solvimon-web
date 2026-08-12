@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, toRef } from 'vue';
 import { Button, Section, Typography, useIntl, ErrorNotification } from '@solvimon/solvimon-ui';
 import type { SubscriptionDetailsProps } from './SubscriptionDetails.types';
 import { ContentWithAsideLayout } from '@/layouts';
-import { useActionDispatchProvider } from '@/components/providers';
+import { useSubscriptionActions } from '@/composables/useSubscriptionActions';
 import SubscriptionSummary from '@/components/subscriptions/SubscriptionSummary.vue';
 import SubscriptionSchedules from '@/public/components/SubscriptionSchedules/SubscriptionSchedules.vue';
 import EmptyStatePlaceholder from '@/components/checkout/EmptyStatePlaceholder.vue';
@@ -12,7 +12,13 @@ import Skeleton from '@/components/shared/Skeleton.vue';
 const props = defineProps<SubscriptionDetailsProps>();
 
 const { $t } = useIntl();
-const { dispatchAction } = useActionDispatchProvider();
+
+const {
+    isCancellable,
+    isRenewable,
+    cancel: handleCancel,
+    renew: handleRenew,
+} = useSubscriptionActions({ subscription: toRef(props, 'subscription') });
 
 const mostRecentPricingPlan = computed(
     () => props.subscription?.pricing_plan_schedule_infos?.at(-1)?.pricing_plan_version.pricing_plan,
@@ -29,35 +35,6 @@ const title = computed<string>(
             description: 'Title for the subscription details page',
         }),
 );
-
-/** A subscription that has never been cancelled has no inactive periods. */
-const isCancellable = computed<boolean>(() => {
-    const inactivePeriods = props.subscription?.inactive_periods;
-    return Boolean(props.subscription) && (!inactivePeriods || inactivePeriods.length === 0);
-});
-
-const isRenewable = computed<boolean>(() => {
-    const inactivePeriods = props.subscription?.inactive_periods;
-    return Array.isArray(inactivePeriods) && inactivePeriods.length > 0;
-});
-
-const handleCancel = () => {
-    if (!props.subscription) return;
-
-    dispatchAction({
-        action: 'cancel-subscription',
-        data: { subscriptionId: props.subscription.id },
-    });
-};
-
-const handleRenew = () => {
-    if (!props.subscription) return;
-
-    dispatchAction({
-        action: 'renew-subscription',
-        data: { subscriptionId: props.subscription.id },
-    });
-};
 </script>
 
 <template>

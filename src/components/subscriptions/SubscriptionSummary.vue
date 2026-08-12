@@ -2,25 +2,23 @@
 import { Avatar, Typography, useIntl } from '@solvimon/solvimon-ui';
 import { computed } from 'vue';
 import type { SubscriptionSummaryProps } from './SubscriptionSummary.types';
-import { findPricingsByIds } from '@/utils/subscription';
+import { findPricingsByIds, getMostRecentPricingPlan, getSubscriptionName } from '@/utils/subscription';
 
 const props = defineProps<SubscriptionSummaryProps>();
 
 const { $t } = useIntl();
 
-const mostRecentPricingPlan = computed(
-    () => props.subscription.pricing_plan_schedule_infos?.at(-1)?.pricing_plan_version.pricing_plan,
-);
+const mostRecentPricingPlan = computed(() => getMostRecentPricingPlan(props.subscription));
 
-const name = computed(
-    () =>
-        mostRecentPricingPlan.value?.name ||
-        props.subscription.name ||
-        $t({
+const name = computed(() =>
+    getSubscriptionName({
+        subscription: props.subscription,
+        fallback: $t({
             defaultMessage: 'Subscription',
             description: 'The fallback name for when no subscription name can be determined',
             id: 'customer_overview.subscriptions_block.fallback_subscription_name',
         }),
+    }),
 );
 
 const description = computed(

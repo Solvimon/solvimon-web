@@ -39,7 +39,10 @@ import { getPricingCurrencyForCountry } from '@/utils/countryCurrency';
 import { ContentWithAsideLayout } from '@/layouts';
 import { useViewport } from '@/composables/useViewport';
 import PromotionCodeSection from '@/components/checkout/PromotionCodeSection.vue';
-import { getFallbackTrialAndSubscriptionStartAndEndDates } from '@/utils/subscription';
+import {
+    getFallbackTrialAndSubscriptionStartAndEndDates,
+    getSubscriptionName,
+} from '@/utils/subscription';
 import SecurePaymentsKPI from '@/components/payments/SecurePaymentsKPI/SecurePaymentsKPI.vue';
 import { safeUrlRedirect } from '@/utils/url';
 
@@ -286,11 +289,14 @@ const expressPaymentMethodBillingInformation = computed(() => {
         return undefined;
     }
 
-    const subscriptionName =
-        subscription.value?.name ??
-        subscription.value?.pricing_plan_schedule_infos?.at(-1)?.pricing_plan_version.pricing_plan
-            ?.name ??
-        'Subscription';
+    const subscriptionName = getSubscriptionName({
+        subscription: subscription.value,
+        fallback: $t({
+            defaultMessage: 'Subscription',
+            description: 'The fallback name for when no subscription name can be determined',
+            id: 'customer_overview.subscriptions_block.fallback_subscription_name',
+        }),
+    });
 
     return {
         description: subscriptionName,

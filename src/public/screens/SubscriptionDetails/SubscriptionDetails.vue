@@ -8,6 +8,7 @@ import type {
 } from './SubscriptionDetails.types';
 import { ContentWithAsideLayout } from '@/layouts';
 import { useSubscriptionActions } from '@/composables/useSubscriptionActions';
+import { getSubscriptionName } from '@/utils/subscription';
 import SubscriptionSummary from '@/components/subscriptions/SubscriptionSummary.vue';
 import SubscriptionSchedules from '@/public/components/SubscriptionSchedules/SubscriptionSchedules.vue';
 import CustomerWalletBalances from '@/public/components/CustomerWalletBalances/CustomerWalletBalances.vue';
@@ -15,6 +16,7 @@ import TopUpModal from '@/components/wallets/TopUpModal/TopUpModal.vue';
 import { useTopUpModal } from '@/components/wallets/TopUpModal/useTopUpModal';
 import EmptyStatePlaceholder from '@/components/checkout/EmptyStatePlaceholder.vue';
 import Skeleton from '@/components/shared/Skeleton.vue';
+import EnabledPricingsList from '@/components/subscriptions/EnabledPricingsList/EnabledPricingsList.vue';
 
 const props = withDefaults(defineProps<SubscriptionDetailsProps>(), {
     walletBalances: () => [],
@@ -34,21 +36,16 @@ const selectedBalanceItem = ref<CustomerWalletBalanceItem | undefined>();
 
 const topUpModal = useTopUpModal(selectedBalanceItem);
 
-const mostRecentPricingPlan = computed(
-    () =>
-        props.subscription?.pricing_plan_schedule_infos?.at(-1)?.pricing_plan_version.pricing_plan,
-);
-
 /** Falls back to the generic screen title while the subscription is loading or has no name. */
-const title = computed<string>(
-    () =>
-        props.subscription?.name ||
-        mostRecentPricingPlan.value?.name ||
-        $t({
+const title = computed<string>(() =>
+    getSubscriptionName({
+        subscription: props.subscription,
+        fallback: $t({
             defaultMessage: 'Subscription details',
             id: 'subscription_details.title',
             description: 'Title for the subscription details page',
         }),
+    }),
 );
 </script>
 
@@ -166,6 +163,8 @@ const title = computed<string>(
                 show-top-up-button
                 @top-up="selectedBalanceItem = $event"
             />
+
+            <EnabledPricingsList />
 
             <TopUpModal
                 :show-modal="topUpModal.showModal.value"

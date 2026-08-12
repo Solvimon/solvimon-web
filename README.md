@@ -100,11 +100,11 @@ For more details, see [`@solvimon/solvimon-web/core`](./src/public/core/README.m
 
 Full-page experiences.
 
-| Export path                                           | Custom element                    |
-| ----------------------------------------------------- | --------------------------------- |
-| `@solvimon/solvimon-web/screens/checkout`             | `<solvimon-checkout>`             |
-| `@solvimon/solvimon-web/screens/customer-overview`    | `<solvimon-customer-overview>`    |
-| `@solvimon/solvimon-web/screens/upgrade-subscription` | `<solvimon-upgrade-subscription>` |
+| Export path                                              | Custom element                       |
+| -------------------------------------------------------- | ------------------------------------ |
+| `@solvimon/solvimon-web/screens/checkout`                | `<solvimon-checkout>`                |
+| `@solvimon/solvimon-web/screens/customer-overview`       | `<solvimon-customer-overview>`       |
+| `@solvimon/solvimon-web/screens/subscription-management` | `<solvimon-subscription-management>` |
 
 ### Components
 

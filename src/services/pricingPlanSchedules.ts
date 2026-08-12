@@ -1,6 +1,6 @@
 import { createRequestService } from './requests';
 import { useConfig } from '@/components/providers/ConfigProvider/composables/useConfig';
-import type { OnDemandPricingItemsResponse } from '@/components/subscriptions/UpgradeSubscription/UpgradeSubscription.types';
+import type { OnDemandPricingItemsResponse } from '@/components/subscriptions/SubscriptionManagement/SubscriptionManagement.types';
 
 export interface GetOnDemandPricingItemsPayload {
     scheduleId: string;

@@ -87,7 +87,7 @@ onMounted(async () => {
             <Typography variant="heading-3" tag="h2" class="sv-payment-method-picker__title">{{
                 $t({
                     defaultMessage: 'Saved payment methods',
-                    id: 'upgrade_subscription.payment_picker.saved_title',
+                    id: 'subscription_management.payment_picker.saved_title',
                     description:
                         'Heading for the saved payment methods section in the upgrade subscription payment picker',
                 })
@@ -117,7 +117,7 @@ onMounted(async () => {
             <Typography variant="heading-3" tag="h2" class="sv-payment-method-picker__title">{{
                 $t({
                     defaultMessage: 'All payment methods',
-                    id: 'upgrade_subscription.payment_picker.all_title',
+                    id: 'subscription_management.payment_picker.all_title',
                     description:
                         'Heading for the all payment methods section in the upgrade subscription payment picker',
                 })

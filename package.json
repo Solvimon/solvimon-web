@@ -75,10 +75,10 @@
             "import": "./dist/screens/CustomerOverview/CustomerOverview.es.js",
             "require": "./dist/screens/CustomerOverview/CustomerOverview.cjs.js"
         },
-        "./screens/upgrade-subscription": {
-            "types": "./dist/screens/UpgradeSubscription/UpgradeSubscription.ce.d.ts",
-            "import": "./dist/screens/UpgradeSubscription/UpgradeSubscription.es.js",
-            "require": "./dist/screens/UpgradeSubscription/UpgradeSubscription.cjs.js"
+        "./screens/subscription-management": {
+            "types": "./dist/screens/SubscriptionManagement/SubscriptionManagement.ce.d.ts",
+            "import": "./dist/screens/SubscriptionManagement/SubscriptionManagement.es.js",
+            "require": "./dist/screens/SubscriptionManagement/SubscriptionManagement.cjs.js"
         },
         "./screens/subscription-details": {
             "types": "./dist/screens/SubscriptionDetails/SubscriptionDetails.ce.d.ts",

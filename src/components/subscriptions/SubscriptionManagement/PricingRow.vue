@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Button, Typography, formatAmount, useIntl } from '@solvimon/solvimon-ui';
 import { computed } from 'vue';
-import type { OnDemandPricing } from './UpgradeSubscription.types';
+import type { OnDemandPricing } from './SubscriptionManagement.types';
 
 const props = defineProps<{
     pricing: OnDemandPricing;
@@ -49,7 +49,7 @@ const pricingItemId = computed(() => props.pricing.items?.[0]?.id);
                     $t({
                         defaultMessage: 'one-off',
                         description: 'Label indicating a one-time charge on a pricing row',
-                        id: 'upgrade_subscription.pricing_row.one_off_label',
+                        id: 'subscription_management.pricing_row.one_off_label',
                     })
                 }}</Typography>
             </div>
@@ -70,12 +70,12 @@ const pricingItemId = computed(() => props.pricing.items?.[0]?.id);
                     ? $t({
                           defaultMessage: 'Remove',
                           description: 'Button to remove a pricing item from the cart',
-                          id: 'upgrade_subscription.pricing_row.remove_button_label',
+                          id: 'subscription_management.pricing_row.remove_button_label',
                       })
                     : $t({
                           defaultMessage: 'Add to cart',
                           description: 'Button to add a pricing item to the cart',
-                          id: 'upgrade_subscription.pricing_row.add_button_label',
+                          id: 'subscription_management.pricing_row.add_button_label',
                       })
             }}
         </Button>

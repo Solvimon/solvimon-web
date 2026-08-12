@@ -24,8 +24,8 @@ export const screens: StoryEntry[] = [
     },
     {
         kind: 'screen',
-        id: 'upgrade-subscription',
-        label: 'Upgrade Subscription',
+        id: 'subscription-management',
+        label: 'Subscription Management',
         description: 'Upgrade or change a customer subscription plan.',
         defaultConfiguration: { subscriptionId: '' },
     },

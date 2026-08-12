@@ -15,7 +15,7 @@ import type { SolvimonSubscriptionsListEntryProps } from '@/public/components/Su
 import type { SolvimonWalletBalancesEntryProps } from '@/public/components/WalletBalances/WalletBalances.entry.types';
 import type { SolvimonCheckoutEntryProps } from '@/public/screens/Checkout/Checkout.entry.types';
 import type { SolvimonCustomerOverviewEntryProps } from '@/public/screens/CustomerOverview/CustomerOverview.entry.types';
-import type { SolvimonUpgradeSubscriptionEntryProps } from '@/public/screens/UpgradeSubscription/UpgradeSubscription.entry.types';
+import type { SolvimonSubscriptionManagementEntryProps } from '@/public/screens/SubscriptionManagement/SubscriptionManagement.entry.types';
 import type { SolvimonPayInvoiceEntryProps } from '@/public/screens/PayInvoice/PayInvoice.entry.types';
 import type { SolvimonPaymentMethodsManagementEntryProps } from '@/public/screens/PaymentMethodsManagement/PaymentMethodsManagement.entry.types';
 
@@ -63,7 +63,7 @@ interface RegisteredComponentEntryPropsById {
 interface RegisteredScreenEntryPropsById {
     checkout: SolvimonCheckoutEntryProps;
     'customer-overview': SolvimonCustomerOverviewEntryProps;
-    'upgrade-subscription': SolvimonUpgradeSubscriptionEntryProps;
+    'subscription-management': SolvimonSubscriptionManagementEntryProps;
     'pay-invoice': SolvimonPayInvoiceEntryProps;
     'payment-methods-management': SolvimonPaymentMethodsManagementEntryProps;
 }

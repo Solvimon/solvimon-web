@@ -14,11 +14,11 @@ import type {
     PricingCategoryExtended,
     PricingExtended,
 } from '@solvimon/solvimon-types';
-import type { UpgradeSubscriptionProps } from './UpgradeSubscription.types';
+import type { SubscriptionManagementProps } from './SubscriptionManagement.types';
 import type {
     OnDemandPricing,
     OnDemandPricingCategory,
-} from '@/components/subscriptions/UpgradeSubscription/UpgradeSubscription.types';
+} from '@/components/subscriptions/SubscriptionManagement/SubscriptionManagement.types';
 import UpgradeOrderSummary from '@/components/subscriptions/UpgradeOrderSummary.vue';
 import OnDemandPricingList from '@/components/subscriptions/OnDemandPricingList.vue';
 import { ContentWithAsideLayout } from '@/layouts';
@@ -37,7 +37,7 @@ import SecurePaymentsKPI from '@/components/payments/SecurePaymentsKPI/SecurePay
 import PaymentFeedbackCard from '@/components/payments/PaymentFeedbackCard/PaymentFeedbackCard.vue';
 import { useViewport } from '@/composables/useViewport';
 
-const props = defineProps<UpgradeSubscriptionProps>();
+const props = defineProps<SubscriptionManagementProps>();
 const { $t } = useIntl();
 const { getSubscription } = createSubscriptionsService();
 const { getCustomer } = createCustomerService();
@@ -202,7 +202,7 @@ const loadOnDemandPricingItems = async () => {
         );
         loadError.value = $t({
             defaultMessage: 'Unable to load items. Please try again later.',
-            id: 'upgrade_subscription.load_error',
+            id: 'subscription_management.load_error',
             description:
                 'Error message shown when the one-off items cannot be loaded on the upgrade subscription page',
         });
@@ -276,7 +276,7 @@ watch([selectedPricingItemIds, activeScheduleId], ([pricingItemIds, scheduleId])
                 );
                 purchaseError.value = $t({
                     defaultMessage: 'Unable to calculate the total. Please try again.',
-                    id: 'upgrade_subscription.preview_error',
+                    id: 'subscription_management.preview_error',
                     description:
                         'Error message shown when the upgrade subscription invoice preview cannot be loaded',
                 });
@@ -355,7 +355,7 @@ const handlePaymentFailed = (error: PaymentError) => {
         error.message ||
         $t({
             defaultMessage: 'Something went wrong. Please try again.',
-            id: 'upgrade_subscription.purchase_error',
+            id: 'subscription_management.purchase_error',
             description:
                 'Error message shown when the purchase call fails on the upgrade subscription page',
         });
@@ -370,15 +370,15 @@ onUnmounted(() => {
 <template>
     <div
         v-if="isPurchased"
-        class="sv-upgrade-subscription sv-root sv-screen sv-upgrade-subscription--purchased flex h-full items-center justify-center p-8"
+        class="sv-subscription-management sv-root sv-screen sv-subscription-management--purchased flex h-full items-center justify-center p-8"
     >
         <PaymentFeedbackCard
-            class="sv-upgrade-subscription__success"
+            class="sv-subscription-management__success"
             status="success"
             :title="
                 $t({
                     defaultMessage: 'Payment successful',
-                    id: 'upgrade_subscription.success.title',
+                    id: 'subscription_management.success.title',
                     description: 'Title shown after a successful upgrade purchase',
                 })
             "
@@ -388,11 +388,11 @@ onUnmounted(() => {
                 variant="body-sm"
                 shade="lighter"
                 tag="div"
-                class="sv-upgrade-subscription__success-message mt-1"
+                class="sv-subscription-management__success-message mt-1"
                 >{{
                     $t({
                         defaultMessage: 'Your purchase has been completed.',
-                        id: 'upgrade_subscription.success.subtitle',
+                        id: 'subscription_management.success.subtitle',
                         description: 'Subtitle shown after a successful upgrade purchase',
                     })
                 }}
@@ -401,11 +401,11 @@ onUnmounted(() => {
                 variant="body-sm"
                 shade="lighter"
                 tag="div"
-                class="sv-upgrade-subscription__success-redirect mt-1"
+                class="sv-subscription-management__success-redirect mt-1"
                 >{{
                     $t({
                         defaultMessage: 'You will be redirected shortly…',
-                        id: 'upgrade_subscription.success.redirect',
+                        id: 'subscription_management.success.redirect',
                         description:
                             'Shown below the success message while the redirect timer is running',
                     })
@@ -414,14 +414,14 @@ onUnmounted(() => {
             </div>
         </PaymentFeedbackCard>
     </div>
-    <ContentWithAsideLayout v-else class="sv-upgrade-subscription sv-root sv-screen">
+    <ContentWithAsideLayout v-else class="sv-subscription-management sv-root sv-screen">
         <template #header>
-            <div class="sv-upgrade-subscription__header">
-                <Typography variant="heading-2" tag="h1" class="sv-upgrade-subscription__title">
+            <div class="sv-subscription-management__header">
+                <Typography variant="heading-2" tag="h1" class="sv-subscription-management__title">
                     {{
                         $t({
                             defaultMessage: 'Upgrade subscription',
-                            id: 'upgrade_subscription.title',
+                            id: 'subscription_management.title',
                             description: 'Title for the upgrade subscription page',
                         })
                     }}
@@ -432,7 +432,7 @@ onUnmounted(() => {
         <template #content>
             <UpgradeOrderSummary
                 v-if="isMobileViewport"
-                class="sv-upgrade-subscription__mobile-order-summary"
+                class="sv-subscription-management__mobile-order-summary"
                 :selected-pricings="selectedPricings"
                 :invoice="previewInvoice"
                 :loading="isPreviewPending"
@@ -440,7 +440,7 @@ onUnmounted(() => {
 
             <div
                 v-if="!isLoadingItems && !loadError && categories.length > 0"
-                class="sv-upgrade-subscription__pricing-list"
+                class="sv-subscription-management__pricing-list"
             >
                 <OnDemandPricingList
                     :categories="categories"
@@ -449,47 +449,47 @@ onUnmounted(() => {
                     @toggle="handleToggle"
                 />
             </div>
-            <div v-else-if="isLoadingItems" class="sv-upgrade-subscription__loading p-4">
+            <div v-else-if="isLoadingItems" class="sv-subscription-management__loading p-4">
                 <div class="sv-skeleton h-[72px] animate-pulse rounded-md bg-gray-100" />
                 <div class="sv-skeleton mt-2 h-[72px] animate-pulse rounded-md bg-gray-100" />
                 <div class="sv-skeleton mt-2 h-[72px] animate-pulse rounded-md bg-gray-100" />
             </div>
             <ErrorNotification
                 v-else-if="loadError"
-                class="sv-upgrade-subscription__load-error sv-error m-4"
+                class="sv-subscription-management__load-error sv-error m-4"
                 :title="loadError"
             />
             <Typography
                 v-else
                 variant="body-sm"
                 shade="lighter"
-                class="sv-upgrade-subscription__empty-state p-4"
+                class="sv-subscription-management__empty-state p-4"
                 >{{
                     $t({
                         defaultMessage: 'No one-off items are available for this subscription.',
-                        id: 'upgrade_subscription.empty_state',
+                        id: 'subscription_management.empty_state',
                         description:
                             'Shown when there are no one-off items available for the subscription',
                     })
                 }}
             </Typography>
 
-            <div class="sv-upgrade-subscription__payment-methods">
+            <div class="sv-subscription-management__payment-methods">
                 <Skeleton variant="section" class="min-h-[130px]">
                     <div
                         v-if="
                             !isLoadingItems || (isLoadingItems && paymentMethodOptions.length > 0)
                         "
-                        class="sv-upgrade-subscription__payment-methods-body"
+                        class="sv-subscription-management__payment-methods-body"
                     >
                         <Typography
                             variant="heading-3"
                             tag="h2"
-                            class="sv-upgrade-subscription__payment-methods-title mb-2"
+                            class="sv-subscription-management__payment-methods-title mb-2"
                             >{{
                                 $t({
                                     defaultMessage: 'Payment method',
-                                    id: 'upgrade_subscription.payment_method_block.title',
+                                    id: 'subscription_management.payment_method_block.title',
                                     description:
                                         'The title of the payment method block in the upgrade subscription flow',
                                 })
@@ -497,14 +497,14 @@ onUnmounted(() => {
                         >
                         <EmptyStatePlaceholder
                             v-if="paymentMethodOptions.length === 0"
-                            class="sv-upgrade-subscription__payment-methods-empty"
+                            class="sv-subscription-management__payment-methods-empty"
                             icon="credit_card_off"
                         >
                             <template #title>
                                 {{
                                     $t({
                                         defaultMessage: 'No payment methods available',
-                                        id: 'upgrade_subscription.payment_method_block.no_payment_methods_available_title',
+                                        id: 'subscription_management.payment_method_block.no_payment_methods_available_title',
                                         description:
                                             'The title shown when there are no available payment methods',
                                     })
@@ -515,7 +515,7 @@ onUnmounted(() => {
                                     $t({
                                         defaultMessage:
                                             'There are no available payment methods. Please contact support for more information.',
-                                        id: 'upgrade_subscription.payment_method_block.no_payment_methods_available_message',
+                                        id: 'subscription_management.payment_method_block.no_payment_methods_available_message',
                                         description:
                                             'The message shown when there are no available payment methods',
                                     })
@@ -524,10 +524,10 @@ onUnmounted(() => {
                         </EmptyStatePlaceholder>
                         <div
                             v-else-if="countryCode && activeScheduleId"
-                            class="sv-upgrade-subscription__payment-form"
+                            class="sv-subscription-management__payment-form"
                         >
                             <div
-                                class="sv-upgrade-subscription__payment-method-picker"
+                                class="sv-subscription-management__payment-method-picker"
                                 :class="{ 'pointer-events-none opacity-60': isPurchasePending }"
                             >
                                 <PaymentIntegrationForm
@@ -551,7 +551,7 @@ onUnmounted(() => {
         </template>
 
         <template #aside>
-            <div class="sv-upgrade-subscription__order-summary">
+            <div class="sv-subscription-management__order-summary">
                 <Skeleton variant="section" class="min-h-[220px]">
                     <UpgradeOrderSummary
                         :selected-pricings="selectedPricings"
@@ -563,15 +563,15 @@ onUnmounted(() => {
 
             <ErrorNotification
                 v-if="purchaseError"
-                class="sv-upgrade-subscription__error sv-error"
+                class="sv-subscription-management__error sv-error"
                 :title="purchaseError"
             />
 
             <div class="flex flex-col gap-2">
-                <Skeleton class="sv-upgrade-subscription__submit-skeleton min-h-[44px]">
+                <Skeleton class="sv-subscription-management__submit-skeleton min-h-[44px]">
                     <Button
                         size="lg"
-                        class="sv-action sv-action--primary sv-action--full-width sv-upgrade-subscription__purchase w-full"
+                        class="sv-action sv-action--primary sv-action--full-width sv-subscription-management__purchase w-full"
                         type="button"
                         :disabled="!canPurchase || isPurchasePending"
                         :loading="isPurchasePending"
@@ -580,7 +580,7 @@ onUnmounted(() => {
                         {{
                             $t({
                                 defaultMessage: 'Purchase',
-                                id: 'upgrade_subscription.purchase_button.label',
+                                id: 'subscription_management.purchase_button.label',
                                 description:
                                     'Label for the purchase button on the upgrade subscription page',
                             })

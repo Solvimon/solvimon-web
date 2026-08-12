@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Typography } from '@solvimon/solvimon-ui';
 import PricingRow from './PricingRow.vue';
-import type { OnDemandPricing, OnDemandPricingCategory } from './UpgradeSubscription.types';
+import type { OnDemandPricing, OnDemandPricingCategory } from './SubscriptionManagement.types';
 
 const props = defineProps<{
     category: OnDemandPricingCategory;

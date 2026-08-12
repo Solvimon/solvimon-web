@@ -80,6 +80,11 @@
             "import": "./dist/screens/UpgradeSubscription/UpgradeSubscription.es.js",
             "require": "./dist/screens/UpgradeSubscription/UpgradeSubscription.cjs.js"
         },
+        "./screens/subscription-details": {
+            "types": "./dist/screens/SubscriptionDetails/SubscriptionDetails.ce.d.ts",
+            "import": "./dist/screens/SubscriptionDetails/SubscriptionDetails.es.js",
+            "require": "./dist/screens/SubscriptionDetails/SubscriptionDetails.cjs.js"
+        },
         "./screens/pay-invoice": {
             "types": "./dist/screens/PayInvoice/PayInvoice.ce.d.ts",
             "import": "./dist/screens/PayInvoice/PayInvoice.es.js",
@@ -157,7 +162,7 @@
         "@playwright/test": "^1.57.0",
         "@rushstack/eslint-patch": "^1.2.0",
         "@solvimon/solvimon-types": "^1.0.1",
-        "@solvimon/solvimon-ui": "^1.3.3",
+        "@solvimon/solvimon-ui": "^1.7.5",
         "@tsconfig/node22": "^22.0.0",
         "@types/jsdom": "^21.1.7",
         "@types/node": "^22.10.2",

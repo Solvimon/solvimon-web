@@ -186,6 +186,60 @@ describe('SubscriptionDetails', () => {
         });
     });
 
+    describe('upgrades', () => {
+        const withUpgrade = {
+            ...mockSubscription,
+            pricing_plan_schedule_infos: [
+                {
+                    id: 'ppsc_1',
+                    pricing_plan_schedule: {
+                        id: 'ppsc_1',
+                        enabled_pricings: [{ pricing_id: 'pri_1' }],
+                    },
+                    pricing_plan_version: {
+                        pricing_plan: { name: 'Pro plan' },
+                        pricing_categories: [
+                            {
+                                pricing_groups: [
+                                    {
+                                        id: 'pgr_1',
+                                        name: 'Credit packs',
+                                        pricings: [{ id: 'pri_1', name: '1.000 credits' }],
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                },
+            ],
+        } as unknown as PricingPlanSubscriptionExpanded;
+
+        it('lists the pricings enabled on the current schedule', () => {
+            const wrapper = mountComponent({ subscription: withUpgrade });
+
+            expect(wrapper.find('.sv-enabled-pricings-list__item-name').text()).toBe(
+                '1.000 credits',
+            );
+        });
+
+        it('renders no upgrades block when the schedule has none enabled', () => {
+            const wrapper = mountComponent();
+
+            expect(wrapper.find('.sv-enabled-pricings-list').exists()).toBe(false);
+        });
+
+        it('hands an upgrade off to the host', async () => {
+            const wrapper = mountComponent({ subscription: withUpgrade });
+
+            await wrapper.find('.sv-enabled-pricings-list__item-upgrade').trigger('click');
+
+            expect(mockDispatchAction).toHaveBeenCalledWith({
+                action: 'manage-subscription',
+                data: { subscriptionId: 'ppsu_1' },
+            });
+        });
+    });
+
     describe('wallets', () => {
         it('renders the wallet balances in the aside', () => {
             const wrapper = mountComponent({ walletBalances: [mockWalletBalance] });

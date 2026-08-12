@@ -117,6 +117,29 @@ describe('useSubscriptionActions', () => {
         });
     });
 
+    describe('manage', () => {
+        it('dispatches the manage subscription action', () => {
+            const { manage } = useSubscriptionActions({
+                subscription: ref(createSubscription()),
+            });
+
+            manage();
+
+            expect(mockDispatchAction).toHaveBeenCalledWith({
+                action: 'manage-subscription',
+                data: { subscriptionId: 'ppsu_1' },
+            });
+        });
+
+        it('dispatches nothing while there is no subscription', () => {
+            const { manage } = useSubscriptionActions({ subscription: ref(undefined) });
+
+            manage();
+
+            expect(mockDispatchAction).not.toHaveBeenCalled();
+        });
+    });
+
     describe('renew', () => {
         it('dispatches the renew subscription action', () => {
             const { renew } = useSubscriptionActions({

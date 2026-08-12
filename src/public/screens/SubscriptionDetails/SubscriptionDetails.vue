@@ -8,7 +8,7 @@ import type {
 } from './SubscriptionDetails.types';
 import { ContentWithAsideLayout } from '@/layouts';
 import { useSubscriptionActions } from '@/composables/useSubscriptionActions';
-import { getSubscriptionName } from '@/utils/subscription';
+import { getMostRecentScheduleInfo, getSubscriptionName } from '@/utils/subscription';
 import SubscriptionSummary from '@/components/subscriptions/SubscriptionSummary.vue';
 import SubscriptionSchedules from '@/public/components/SubscriptionSchedules/SubscriptionSchedules.vue';
 import CustomerWalletBalances from '@/public/components/CustomerWalletBalances/CustomerWalletBalances.vue';
@@ -30,7 +30,11 @@ const {
     isRenewable,
     cancel: handleCancel,
     renew: handleRenew,
+    manage: handleUpgrade,
 } = useSubscriptionActions({ subscription: toRef(props, 'subscription') });
+
+/** The upgrades on offer are the ones enabled on the schedule the subscription runs on now. */
+const currentScheduleInfo = computed(() => getMostRecentScheduleInfo(props.subscription));
 
 const selectedBalanceItem = ref<CustomerWalletBalanceItem | undefined>();
 
@@ -164,7 +168,12 @@ const title = computed<string>(() =>
                 @top-up="selectedBalanceItem = $event"
             />
 
-            <EnabledPricingsList />
+            <EnabledPricingsList
+                v-if="currentScheduleInfo"
+                class="sv-subscription-details__upgrades"
+                :pricing-plan-schedule="currentScheduleInfo"
+                @upgrade="handleUpgrade"
+            />
 
             <TopUpModal
                 :show-modal="topUpModal.showModal.value"

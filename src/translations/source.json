@@ -387,6 +387,18 @@
     "defaultMessage": "-",
     "description": "Placeholder shown when a wallet balance quantity is missing"
   },
+  "enabled_pricings_list.item.price": {
+    "defaultMessage": "{amount} per {period}",
+    "description": "The recurring price of an enabled pricing, e.g. \"€ 100,00 per month\""
+  },
+  "enabled_pricings_list.item.upgrade_button.label": {
+    "defaultMessage": "Upgrade",
+    "description": "Label for the button that changes which pricing is enabled for a group"
+  },
+  "enabled_pricings_list.title": {
+    "defaultMessage": "Upgrades",
+    "description": "Title for the block listing the pricings enabled on a subscription"
+  },
   "invoice_credits.balance.table_header": {
     "defaultMessage": "Balance",
     "description": "Column header for the available wallet balance amount"

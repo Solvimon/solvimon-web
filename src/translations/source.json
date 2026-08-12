@@ -647,14 +647,6 @@
     "defaultMessage": "Subscription details",
     "description": "Title for the subscription details page"
   },
-  "subscription_management.empty_state": {
-    "defaultMessage": "No one-off items are available for this subscription.",
-    "description": "Shown when there are no one-off items available for the subscription"
-  },
-  "subscription_management.load_error": {
-    "defaultMessage": "Unable to load items. Please try again later.",
-    "description": "Error message shown when the one-off items cannot be loaded on the upgrade subscription page"
-  },
   "subscription_management.order_summary.empty_state": {
     "defaultMessage": "Select your items",
     "description": "Placeholder shown when no items are selected in the order summary"
@@ -679,18 +671,6 @@
     "defaultMessage": "Order summary",
     "description": "Title for the order summary section on the upgrade subscription page"
   },
-  "subscription_management.payment_method_block.no_payment_methods_available_message": {
-    "defaultMessage": "There are no available payment methods. Please contact support for more information.",
-    "description": "The message shown when there are no available payment methods"
-  },
-  "subscription_management.payment_method_block.no_payment_methods_available_title": {
-    "defaultMessage": "No payment methods available",
-    "description": "The title shown when there are no available payment methods"
-  },
-  "subscription_management.payment_method_block.title": {
-    "defaultMessage": "Payment method",
-    "description": "The title of the payment method block in the upgrade subscription flow"
-  },
   "subscription_management.payment_picker.all_title": {
     "defaultMessage": "All payment methods",
     "description": "Heading for the all payment methods section in the upgrade subscription payment picker"
@@ -698,10 +678,6 @@
   "subscription_management.payment_picker.saved_title": {
     "defaultMessage": "Saved payment methods",
     "description": "Heading for the saved payment methods section in the upgrade subscription payment picker"
-  },
-  "subscription_management.preview_error": {
-    "defaultMessage": "Unable to calculate the total. Please try again.",
-    "description": "Error message shown when the upgrade subscription invoice preview cannot be loaded"
   },
   "subscription_management.pricing_row.add_button_label": {
     "defaultMessage": "Add to cart",
@@ -714,26 +690,6 @@
   "subscription_management.pricing_row.remove_button_label": {
     "defaultMessage": "Remove",
     "description": "Button to remove a pricing item from the cart"
-  },
-  "subscription_management.purchase_button.label": {
-    "defaultMessage": "Purchase",
-    "description": "Label for the purchase button on the upgrade subscription page"
-  },
-  "subscription_management.purchase_error": {
-    "defaultMessage": "Something went wrong. Please try again.",
-    "description": "Error message shown when the purchase call fails on the upgrade subscription page"
-  },
-  "subscription_management.success.redirect": {
-    "defaultMessage": "You will be redirected shortly…",
-    "description": "Shown below the success message while the redirect timer is running"
-  },
-  "subscription_management.success.subtitle": {
-    "defaultMessage": "Your purchase has been completed.",
-    "description": "Subtitle shown after a successful upgrade purchase"
-  },
-  "subscription_management.success.title": {
-    "defaultMessage": "Payment successful",
-    "description": "Title shown after a successful upgrade purchase"
   },
   "subscription_management.title": {
     "defaultMessage": "Upgrade subscription",

@@ -2,7 +2,7 @@
 import { computed } from 'vue';
 import { Typography, useIntl } from '@solvimon/solvimon-ui';
 import OnDemandPricingRow from './OnDemandPricingRow.vue';
-import type { OnDemandPricingCategory } from './UpgradeSubscription/UpgradeSubscription.types';
+import type { OnDemandPricingCategory } from './SubscriptionManagement/SubscriptionManagement.types';
 
 const props = defineProps<{
     categories: OnDemandPricingCategory[];

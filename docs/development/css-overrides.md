@@ -150,7 +150,7 @@ Expose loading and error states with shared classes:
 <Skeleton class="sv-payment-methods__list sv-loading" />
 
 <!-- Error state inside a screen -->
-<ErrorNotification class="sv-upgrade-subscription__error sv-error" />
+<ErrorNotification class="sv-subscription-management__error sv-error" />
 ```
 
 Use a block-specific class together with `sv-loading` or `sv-error` when the state belongs to one part of a screen or component.

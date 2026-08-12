@@ -40,8 +40,8 @@ export interface ActionRequestDetailRenewSubscription extends ActionRequestDetai
     data: { subscriptionId: string };
 }
 
-export interface ActionRequestDetailUpgradeSubscription extends ActionRequestDetailBase {
-    action: 'upgrade-subscription';
+export interface ActionRequestDetailManageSubscription extends ActionRequestDetailBase {
+    action: 'manage-subscription';
     data: { subscriptionId: string };
 }
 
@@ -68,7 +68,7 @@ export type ActionRequestDetail =
     | ActionRequestDetailViewAllSubscriptions
     | ActionRequestDetailCancelSubscription
     | ActionRequestDetailRenewSubscription
-    | ActionRequestDetailUpgradeSubscription
+    | ActionRequestDetailManageSubscription
     | ActionRequestDetailEditBillingInformation
     | ActionRequestDetailViewAllPaymentMethods
     | ActionRequestDetailAddPaymentMethod

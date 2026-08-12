@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import PricingCategorySection from './PricingCategorySection.vue';
-import type { OnDemandPricingCategory } from './UpgradeSubscription.types';
+import type { OnDemandPricingCategory } from './SubscriptionManagement.types';
 
 const props = defineProps<{
     categories: OnDemandPricingCategory[];

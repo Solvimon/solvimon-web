@@ -26,9 +26,9 @@ export {
     defineSolvimonCustomerOverview,
 } from './public/screens/CustomerOverview/CustomerOverview.entry.ce';
 export {
-    SolvimonUpgradeSubscription,
-    defineSolvimonUpgradeSubscription,
-} from './public/screens/UpgradeSubscription/UpgradeSubscription.entry.ce';
+    SolvimonSubscriptionManagement,
+    defineSolvimonSubscriptionManagement,
+} from './public/screens/SubscriptionManagement/SubscriptionManagement.entry.ce';
 export {
     SolvimonPayInvoice,
     defineSolvimonPayInvoice,

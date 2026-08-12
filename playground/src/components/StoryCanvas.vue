@@ -108,7 +108,7 @@ onUnmounted(() => unmount?.());
 // ---------------------------------------------------------------------------
 // Action log — captures action-request events fired by SDK components so
 // playground users can see what actions their integration would need to handle
-// (e.g. navigate-to-customer-overview, upgrade-subscription). Capped at 20
+// (e.g. navigate-to-customer-overview, manage-subscription). Capped at 20
 // entries to avoid unbounded growth during a session.
 // ---------------------------------------------------------------------------
 type ActionLogEntry = { id: number; action: string; data: string; ts: string };

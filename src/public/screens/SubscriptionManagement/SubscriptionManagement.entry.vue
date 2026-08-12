@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import UpgradeSubscription from './UpgradeSubscription.vue';
-import { COMPONENT_NAME } from './UpgradeSubscription.entry.ce';
-import type { SolvimonUpgradeSubscriptionEntryProps } from './UpgradeSubscription.entry.types';
+import SubscriptionManagement from './SubscriptionManagement.vue';
+import { COMPONENT_NAME } from './SubscriptionManagement.entry.ce';
+import type { SolvimonSubscriptionManagementEntryProps } from './SubscriptionManagement.entry.types';
 import Provider from '@/components/providers/Provider/Provider.vue';
 
-defineProps<SolvimonUpgradeSubscriptionEntryProps>();
+defineProps<SolvimonSubscriptionManagementEntryProps>();
 </script>
 
 <template>
@@ -22,6 +22,6 @@ defineProps<SolvimonUpgradeSubscriptionEntryProps>();
         :css-overrides="cssOverrides"
         @error="(error) => $emit('error', error)"
     >
-        <UpgradeSubscription :configuration="configuration" />
+        <SubscriptionManagement :configuration="configuration" />
     </Provider>
 </template>

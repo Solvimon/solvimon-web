@@ -9,7 +9,7 @@ import {
     useIntl,
 } from '@solvimon/solvimon-ui';
 import type { Amount as MoneyAmount, Invoice } from '@solvimon/solvimon-types';
-import type { OnDemandPricing } from './UpgradeSubscription/UpgradeSubscription.types';
+import type { OnDemandPricing } from './SubscriptionManagement/SubscriptionManagement.types';
 
 const props = defineProps<{
     selectedPricings: OnDemandPricing[];
@@ -39,7 +39,7 @@ const invoiceHeader = computed(() => {
                 ? $t(
                       {
                           defaultMessage: '{count} items',
-                          id: 'upgrade_subscription.order_summary.item_count',
+                          id: 'subscription_management.order_summary.item_count',
                           description:
                               'Subtitle shown below the product name when multiple one-off items are selected',
                       },
@@ -79,7 +79,7 @@ const selectedPricingRows = computed(() =>
 const title = computed(() =>
     $t({
         defaultMessage: 'Order summary',
-        id: 'upgrade_subscription.order_summary.title',
+        id: 'subscription_management.order_summary.title',
         description: 'Title for the order summary section on the upgrade subscription page',
     }),
 );
@@ -87,7 +87,7 @@ const title = computed(() =>
 
 <template>
     <Section
-        class="sv-order-summary sv-upgrade-subscription__order-summary"
+        class="sv-order-summary sv-subscription-management__order-summary"
         no-border
         no-spacing
         content-background="none"
@@ -100,7 +100,7 @@ const title = computed(() =>
                     <Typography variant="body-sm" weight="semibold" shade="lighter" no-spacing>{{
                         $t({
                             defaultMessage: 'Select your items',
-                            id: 'upgrade_subscription.order_summary.empty_state',
+                            id: 'subscription_management.order_summary.empty_state',
                             description:
                                 'Placeholder shown when no items are selected in the order summary',
                         })
@@ -171,7 +171,7 @@ const title = computed(() =>
                                 selectedPricingRows.length > 1
                                     ? $t({
                                           defaultMessage: 'Selected items',
-                                          id: 'upgrade_subscription.order_summary.selected_items_title',
+                                          id: 'subscription_management.order_summary.selected_items_title',
                                           description:
                                               'Temporary order summary title shown while the invoice preview is loading',
                                       })
@@ -182,7 +182,7 @@ const title = computed(() =>
                                     ? $t(
                                           {
                                               defaultMessage: '{count} items',
-                                              id: 'upgrade_subscription.order_summary.selected_item_count',
+                                              id: 'subscription_management.order_summary.selected_item_count',
                                               description:
                                                   'Temporary order summary subtitle shown while the invoice preview is loading',
                                           },
@@ -190,7 +190,7 @@ const title = computed(() =>
                                       )
                                     : $t({
                                           defaultMessage: 'one-off',
-                                          id: 'upgrade_subscription.order_summary.one_off_label',
+                                          id: 'subscription_management.order_summary.one_off_label',
                                           description:
                                               'One-off payment label next to a line item in order summary',
                                       })

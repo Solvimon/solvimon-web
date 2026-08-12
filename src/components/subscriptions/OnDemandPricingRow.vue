@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { Section, Button, formatAmount, useIntl } from '@solvimon/solvimon-ui';
-import type { OnDemandPricing } from './UpgradeSubscription/UpgradeSubscription.types';
+import type { OnDemandPricing } from './SubscriptionManagement/SubscriptionManagement.types';
 import PricingGroupContent from '@/components/subscriptions/PlanCustomizationForm/PricingGroupContent.vue';
 
 const props = defineProps<{

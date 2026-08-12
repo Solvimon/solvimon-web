@@ -100,7 +100,7 @@ const isViewAllButtonVisible = computed<boolean>(() => props.showViewAllButton);
                 @view-subscription-details="$emit('view-subscription-details', $event)"
                 @cancel-subscription="$emit('cancel-subscription', $event)"
                 @renew-subscription="$emit('renew-subscription', $event)"
-                @upgrade-subscription="$emit('upgrade-subscription', $event)"
+                @manage-subscription="$emit('manage-subscription', $event)"
             />
         </div>
     </Section>

@@ -142,7 +142,7 @@ const isDetailButtonVisible = computed<boolean>(() => props.showViewSubscription
                     color="gray"
                     class="sv-action sv-action--secondary sv-subscriptions-list__item-upgrade w-full md:w-auto"
                     type="button"
-                    @click="$emit('upgrade-subscription', { subscriptionId: subscription.id })"
+                    @click="$emit('manage-subscription', { subscriptionId: subscription.id })"
                 >
                     {{
                         $t({

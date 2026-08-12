@@ -48,9 +48,9 @@ const { dispatchAction } = useActionDispatchProvider();
                 data: { subscriptionId: $event.subscriptionId },
             })
         "
-        @upgrade-subscription="
+        @manage-subscription="
             dispatchAction({
-                action: 'upgrade-subscription',
+                action: 'manage-subscription',
                 data: { subscriptionId: $event.subscriptionId },
             })
         "

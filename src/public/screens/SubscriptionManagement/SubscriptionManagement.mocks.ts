@@ -9,7 +9,7 @@ import type {
     OnDemandPricing,
     OnDemandPricingCategory,
     OnDemandPricingItemsResponse,
-} from '@/components/subscriptions/UpgradeSubscription/UpgradeSubscription.types';
+} from '@/components/subscriptions/SubscriptionManagement/SubscriptionManagement.types';
 
 const mockSubscriptionGetResponse = {
     object_type: 'PRICING_PLAN_SUBSCRIPTION',

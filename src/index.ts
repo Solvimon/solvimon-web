@@ -30,6 +30,10 @@ export {
     defineSolvimonSubscriptionManagement,
 } from './public/screens/SubscriptionManagement/SubscriptionManagement.entry.ce';
 export {
+    SolvimonSubscriptionDetails,
+    defineSolvimonSubscriptionDetails,
+} from './public/screens/SubscriptionDetails/SubscriptionDetails.entry.ce';
+export {
     SolvimonPayInvoice,
     defineSolvimonPayInvoice,
 } from './public/screens/PayInvoice/PayInvoice.entry.ce';

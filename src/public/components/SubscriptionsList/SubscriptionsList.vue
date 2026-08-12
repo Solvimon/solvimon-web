@@ -26,8 +26,6 @@ const { dispatchAction } = useActionDispatchProvider();
         :is-loading="isLoading"
         :show-view-all-button="configuration?.showViewAllButton"
         :show-view-details-button="configuration?.showViewDetailsButton"
-        :show-cancel-button="configuration?.showCancelButton"
-        :show-renew-button="configuration?.showRenewButton"
         :show-upgrade-button="configuration?.showUpgradeButton"
         @view-subscription-details="
             dispatchAction({
@@ -36,18 +34,6 @@ const { dispatchAction } = useActionDispatchProvider();
             })
         "
         @view-all-subscriptions="dispatchAction({ action: 'view-all-subscriptions' })"
-        @cancel-subscription="
-            dispatchAction({
-                action: 'cancel-subscription',
-                data: { subscriptionId: $event.subscriptionId },
-            })
-        "
-        @renew-subscription="
-            dispatchAction({
-                action: 'renew-subscription',
-                data: { subscriptionId: $event.subscriptionId },
-            })
-        "
         @manage-subscription="
             dispatchAction({
                 action: 'manage-subscription',

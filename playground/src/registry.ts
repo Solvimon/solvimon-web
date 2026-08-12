@@ -31,6 +31,13 @@ export const screens: StoryEntry[] = [
     },
     {
         kind: 'screen',
+        id: 'subscription-details',
+        label: 'Subscription Details',
+        description: 'Details of a single subscription. Requires configuration.subscriptionId.',
+        defaultConfiguration: { subscriptionId: '' },
+    },
+    {
+        kind: 'screen',
         id: 'pay-invoice',
         label: 'Pay Invoice',
         description: 'Payment flow for a specific invoice. Requires configuration.invoiceId.',

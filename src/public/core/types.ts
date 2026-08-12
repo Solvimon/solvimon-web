@@ -17,6 +17,7 @@ import type { SolvimonCheckoutEntryProps } from '@/public/screens/Checkout/Check
 import type { SolvimonCustomerOverviewEntryProps } from '@/public/screens/CustomerOverview/CustomerOverview.entry.types';
 import type { SolvimonSubscriptionManagementEntryProps } from '@/public/screens/SubscriptionManagement/SubscriptionManagement.entry.types';
 import type { SolvimonPayInvoiceEntryProps } from '@/public/screens/PayInvoice/PayInvoice.entry.types';
+import type { SolvimonSubscriptionDetailsEntryProps } from '@/public/screens/SubscriptionDetails/SubscriptionDetails.entry.types';
 import type { SolvimonPaymentMethodsManagementEntryProps } from '@/public/screens/PaymentMethodsManagement/PaymentMethodsManagement.entry.types';
 
 /**
@@ -64,6 +65,7 @@ interface RegisteredScreenEntryPropsById {
     checkout: SolvimonCheckoutEntryProps;
     'customer-overview': SolvimonCustomerOverviewEntryProps;
     'subscription-management': SolvimonSubscriptionManagementEntryProps;
+    'subscription-details': SolvimonSubscriptionDetailsEntryProps;
     'pay-invoice': SolvimonPayInvoiceEntryProps;
     'payment-methods-management': SolvimonPaymentMethodsManagementEntryProps;
 }

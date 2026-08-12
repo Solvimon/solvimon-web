@@ -311,17 +311,9 @@
     "defaultMessage": "Pay",
     "description": "The label for the pay invoice button"
   },
-  "customer.subscriptions_block.cancel_button_label": {
-    "defaultMessage": "Cancel subscription",
-    "description": "Aria label for the cancel subscription icon button"
-  },
   "customer.subscriptions_block.next_billing_date": {
     "defaultMessage": "Next billing date",
     "description": "The label for the next billing date"
-  },
-  "customer.subscriptions_block.renew_button_label": {
-    "defaultMessage": "Renew subscription",
-    "description": "The label for the renew subscription button in the subscriptions block"
   },
   "customer.subscriptions_block.show_details_button_label": {
     "defaultMessage": "Subscription details",
@@ -618,6 +610,30 @@
   "secure_payments_kpi.specific_vendor": {
     "defaultMessage": "Secure and encrypted payments by",
     "description": "Secure encrypted payments KPI for a specific vendor, followed by a vendor logo"
+  },
+  "subscription_details.cancel_button.label": {
+    "defaultMessage": "Cancel subscription",
+    "description": "Label for the cancel subscription button on the subscription details page"
+  },
+  "subscription_details.empty_state.message": {
+    "defaultMessage": "This subscription is no longer available.",
+    "description": "Message shown when the requested subscription does not exist"
+  },
+  "subscription_details.empty_state.title": {
+    "defaultMessage": "Subscription not found",
+    "description": "Title shown when the requested subscription does not exist"
+  },
+  "subscription_details.load_error": {
+    "defaultMessage": "Unable to load this subscription. Please try again later.",
+    "description": "Error message shown when the subscription cannot be loaded on the subscription details page"
+  },
+  "subscription_details.renew_button.label": {
+    "defaultMessage": "Renew subscription",
+    "description": "Label for the renew subscription button on the subscription details page"
+  },
+  "subscription_details.title": {
+    "defaultMessage": "Subscription details",
+    "description": "Title for the subscription details page"
   },
   "subscription_management.empty_state": {
     "defaultMessage": "No one-off items are available for this subscription.",

@@ -1,15 +1,25 @@
 <script setup lang="ts">
-import { computed, toRef } from 'vue';
+import { computed, ref, toRef } from 'vue';
 import { Button, Section, Typography, useIntl, ErrorNotification } from '@solvimon/solvimon-ui';
-import type { SubscriptionDetailsProps } from './SubscriptionDetails.types';
+import type { CustomerWalletBalanceItem } from '@solvimon/solvimon-types';
+import type {
+    SubscriptionDetailsEmits,
+    SubscriptionDetailsProps,
+} from './SubscriptionDetails.types';
 import { ContentWithAsideLayout } from '@/layouts';
 import { useSubscriptionActions } from '@/composables/useSubscriptionActions';
 import SubscriptionSummary from '@/components/subscriptions/SubscriptionSummary.vue';
 import SubscriptionSchedules from '@/public/components/SubscriptionSchedules/SubscriptionSchedules.vue';
+import CustomerWalletBalances from '@/public/components/CustomerWalletBalances/CustomerWalletBalances.vue';
+import TopUpModal from '@/components/wallets/TopUpModal/TopUpModal.vue';
+import { useTopUpModal } from '@/components/wallets/TopUpModal/useTopUpModal';
 import EmptyStatePlaceholder from '@/components/checkout/EmptyStatePlaceholder.vue';
 import Skeleton from '@/components/shared/Skeleton.vue';
 
-const props = defineProps<SubscriptionDetailsProps>();
+const props = withDefaults(defineProps<SubscriptionDetailsProps>(), {
+    walletBalances: () => [],
+});
+defineEmits<SubscriptionDetailsEmits>();
 
 const { $t } = useIntl();
 
@@ -20,8 +30,13 @@ const {
     renew: handleRenew,
 } = useSubscriptionActions({ subscription: toRef(props, 'subscription') });
 
+const selectedBalanceItem = ref<CustomerWalletBalanceItem | undefined>();
+
+const topUpModal = useTopUpModal(selectedBalanceItem);
+
 const mostRecentPricingPlan = computed(
-    () => props.subscription?.pricing_plan_schedule_infos?.at(-1)?.pricing_plan_version.pricing_plan,
+    () =>
+        props.subscription?.pricing_plan_schedule_infos?.at(-1)?.pricing_plan_version.pricing_plan,
 );
 
 /** Falls back to the generic screen title while the subscription is loading or has no name. */
@@ -43,10 +58,7 @@ const title = computed<string>(
             <div
                 class="sv-subscription-details__header flex flex-col gap-2 md:flex-row md:items-center"
             >
-                <Typography
-                    variant="heading-2"
-                    tag="h1"
-                    class="sv-subscription-details__title grow"
+                <Typography variant="heading-2" tag="h1" class="sv-subscription-details__title grow"
                     >{{ title }}
                 </Typography>
 
@@ -146,7 +158,24 @@ const title = computed<string>(
         </template>
 
         <template #aside>
-            <!-- Scaffolding only. Actions on the subscription belong here. -->
+            <CustomerWalletBalances
+                class="sv-subscription-details__wallet-balances"
+                :has-error="Boolean(hasWalletBalancesError)"
+                :is-loading="isLoading"
+                :wallet-balances="walletBalances"
+                show-top-up-button
+                @top-up="selectedBalanceItem = $event"
+            />
+
+            <TopUpModal
+                :show-modal="topUpModal.showModal.value"
+                :payment-methods="paymentMethods"
+                :customer="customer"
+                :selected-balance-item="selectedBalanceItem"
+                @close="selectedBalanceItem = undefined"
+                @confirm="$emit('top-up-charged')"
+                @payment-success="$emit('payment-method-stored')"
+            />
         </template>
     </ContentWithAsideLayout>
 </template>

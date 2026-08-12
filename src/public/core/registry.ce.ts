@@ -3,6 +3,7 @@ import { defineSolvimonPaymentMethodForm } from '@/public/components/PaymentMeth
 import { defineSolvimonCustomerOverview } from '@/public/screens/CustomerOverview/CustomerOverview.entry.ce';
 import { defineSolvimonCheckout } from '@/public/screens/Checkout/Checkout.entry.ce';
 import { defineSolvimonSubscriptionManagement } from '@/public/screens/SubscriptionManagement/SubscriptionManagement.entry.ce';
+import { defineSolvimonSubscriptionDetails } from '@/public/screens/SubscriptionDetails/SubscriptionDetails.entry.ce';
 import { defineSolvimonPayInvoice } from '@/public/screens/PayInvoice/PayInvoice.entry.ce';
 import { defineSolvimonPaymentMethodsManagement } from '@/public/screens/PaymentMethodsManagement/PaymentMethodsManagement.entry.ce';
 import { defineSolvimonInvoice } from '@/public/components/Invoice/Invoice.entry.ce';
@@ -24,6 +25,7 @@ const SCREEN_DEFINERS: Record<RegisteredScreenId, DefineFn> = {
     'customer-overview': defineSolvimonCustomerOverview,
     checkout: defineSolvimonCheckout,
     'subscription-management': defineSolvimonSubscriptionManagement,
+    'subscription-details': defineSolvimonSubscriptionDetails,
     'pay-invoice': defineSolvimonPayInvoice,
     'payment-methods-management': defineSolvimonPaymentMethodsManagement,
 };

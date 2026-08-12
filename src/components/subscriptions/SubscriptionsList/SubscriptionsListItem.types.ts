@@ -6,14 +6,10 @@ export interface SubscriptionsListItemProps {
     paymentMethod?: PaymentMethod;
     customer: Customer;
     showViewSubscriptionDetailsButton?: boolean;
-    showCancelSubscriptionButton?: boolean;
-    showRenewSubscriptionButton?: boolean;
     showUpgradeSubscriptionButton?: boolean;
 }
 
 export interface SubscriptionsListItemEmits {
     (e: 'view-subscription-details', payload: { subscriptionId: string }): void;
-    (e: 'cancel-subscription', payload: { subscriptionId: string }): void;
-    (e: 'renew-subscription', payload: { subscriptionId: string }): void;
     (e: 'manage-subscription', payload: { subscriptionId: string }): void;
 }

@@ -1,13 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import {
-    PaymentMethod,
-    Section,
-    Typography,
-    useIntl,
-    Button,
-    IconButton,
-} from '@solvimon/solvimon-ui';
+import { PaymentMethod, Section, Typography, useIntl, Button } from '@solvimon/solvimon-ui';
 import type { PricingPlan } from '@solvimon/solvimon-types';
 import type {
     SubscriptionsListItemEmits,
@@ -16,8 +9,6 @@ import type {
 
 const props = withDefaults(defineProps<SubscriptionsListItemProps>(), {
     showViewSubscriptionDetailsButton: true,
-    showCancelSubscriptionButton: true,
-    showRenewSubscriptionButton: true,
     showUpgradeSubscriptionButton: true,
 });
 defineEmits<SubscriptionsListItemEmits>();
@@ -52,22 +43,6 @@ const subscriptionDescription = computed<string | undefined>(
     () => mostRecentPricingPlan.value?.description,
 );
 
-const isCancellable = computed<boolean>(() => {
-    const inactivePeriods = props.subscription.inactive_periods;
-    return !inactivePeriods || inactivePeriods.length === 0;
-});
-
-const isRenewable = computed<boolean>(() => {
-    const inactivePeriods = props.subscription.inactive_periods;
-    return Array.isArray(inactivePeriods) && inactivePeriods.length > 0;
-});
-
-const isCancelButtonVisible = computed<boolean>(
-    () => isCancellable.value && props.showCancelSubscriptionButton,
-);
-const isRenewButtonVisible = computed<boolean>(
-    () => isRenewable.value && props.showRenewSubscriptionButton,
-);
 const isDetailButtonVisible = computed<boolean>(() => props.showViewSubscriptionDetailsButton);
 </script>
 
@@ -150,40 +125,6 @@ const isDetailButtonVisible = computed<boolean>(() => props.showViewSubscription
                             description:
                                 'The label for the upgrade subscription button in the subscriptions block',
                             id: 'customer.subscriptions_block.upgrade_button_label',
-                        })
-                    }}
-                </Button>
-                <IconButton
-                    v-if="isCancelButtonVisible"
-                    icon="delete"
-                    variant="outline"
-                    color="gray"
-                    size="md"
-                    class="sv-action sv-subscriptions-list__item-cancel"
-                    type="button"
-                    :aria-label="
-                        $t({
-                            defaultMessage: 'Cancel subscription',
-                            description: 'Aria label for the cancel subscription icon button',
-                            id: 'customer.subscriptions_block.cancel_button_label',
-                        })
-                    "
-                    @click="$emit('cancel-subscription', { subscriptionId: subscription.id })"
-                />
-                <Button
-                    v-if="isRenewButtonVisible"
-                    variant="outline"
-                    color="gray"
-                    class="sv-action sv-action--secondary sv-subscriptions-list__item-renew w-full md:w-auto"
-                    type="button"
-                    @click="$emit('renew-subscription', { subscriptionId: subscription.id })"
-                >
-                    {{
-                        $t({
-                            defaultMessage: 'Renew subscription',
-                            description:
-                                'The label for the renew subscription button in the subscriptions block',
-                            id: 'customer.subscriptions_block.renew_button_label',
                         })
                     }}
                 </Button>

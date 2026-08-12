@@ -4,8 +4,6 @@ export type SubscriptionsListConfiguration = {
     maxItems?: number;
     showViewAllButton?: boolean;
     showViewDetailsButton?: boolean;
-    showCancelButton?: boolean;
-    showRenewButton?: boolean;
     showUpgradeButton?: boolean;
 };
 

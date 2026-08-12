@@ -71,8 +71,6 @@ describe('SubscriptionsList component', () => {
             maxItems?: number;
             showViewAllButton?: boolean;
             showViewDetailsButton?: boolean;
-            showCancelButton?: boolean;
-            showRenewButton?: boolean;
         };
         isLoading?: boolean;
     } = {}) =>
@@ -97,14 +95,6 @@ describe('SubscriptionsList component', () => {
         expect(button).toBeDefined();
 
         return button!;
-    };
-
-    const getCancelButton = (wrapper: ReturnType<typeof mountComponent>) => {
-        const button = wrapper.find('.sv-subscriptions-list__item-cancel');
-
-        expect(button.exists()).toBe(true);
-
-        return button;
     };
 
     beforeEach(() => {
@@ -239,101 +229,6 @@ describe('SubscriptionsList component', () => {
             expect(mockDispatchAction).toHaveBeenCalledWith({
                 action: 'view-subscription-details',
                 data: { subscriptionId: 'sub_details' },
-            });
-        });
-    });
-
-    describe('cancel subscription button', () => {
-        it('is not rendered when showCancelButton is false', () => {
-            const wrapper = mountComponent({
-                configuration: {
-                    showCancelButton: false,
-                },
-            });
-
-            expect(wrapper.text()).not.toContain('Cancel subscription');
-        });
-
-        it('is not rendered when showCancelButton is true but the subscription is not cancellable', () => {
-            const wrapper = mountComponent({
-                subscriptions: [createSubscription({ inactivePeriods: [{}] })],
-                configuration: {
-                    showCancelButton: true,
-                },
-            });
-
-            expect(wrapper.text()).not.toContain('Cancel subscription');
-        });
-
-        it('is rendered when showCancelButton is true adn the subscription is cancellable', () => {
-            const wrapper = mountComponent({
-                subscriptions: [createSubscription({ inactivePeriods: [] })],
-                configuration: {
-                    showCancelButton: true,
-                },
-            });
-
-            expect(getCancelButton(wrapper).attributes('aria-label')).toBe('Cancel subscription');
-        });
-
-        it('dispatches the cancel subscription action when clicked', async () => {
-            const wrapper = mountComponent({
-                subscriptions: [createSubscription({ id: 'sub_cancel', inactivePeriods: [] })],
-            });
-
-            await getCancelButton(wrapper).trigger('click');
-
-            expect(mockDispatchAction).toHaveBeenCalledWith({
-                action: 'cancel-subscription',
-                data: { subscriptionId: 'sub_cancel' },
-            });
-        });
-    });
-
-    describe('renew subscription button', () => {
-        it('is not rendered when showRenewButton is false', () => {
-            const wrapper = mountComponent({
-                subscriptions: [createSubscription({ inactivePeriods: [{}] })],
-                configuration: {
-                    showRenewButton: false,
-                },
-            });
-
-            expect(wrapper.text()).not.toContain('Renew subscription');
-        });
-
-        it('is not rendered when showRenewButton is true but the subscription is not renewable', () => {
-            const wrapper = mountComponent({
-                subscriptions: [createSubscription({ inactivePeriods: [] })],
-                configuration: {
-                    showRenewButton: true,
-                },
-            });
-
-            expect(wrapper.text()).not.toContain('Renew subscription');
-        });
-
-        it('is rendered when showRenewButton is true and the subscription is renewable', () => {
-            const wrapper = mountComponent({
-                subscriptions: [createSubscription({ inactivePeriods: [{}] })],
-                configuration: {
-                    showRenewButton: true,
-                },
-            });
-
-            expect(wrapper.text()).toContain('Renew subscription');
-        });
-
-        it('dispatches the renew subscription action when clicked', async () => {
-            const wrapper = mountComponent({
-                subscriptions: [createSubscription({ id: 'sub_renew', inactivePeriods: [{}] })],
-            });
-
-            await getButtonByText(wrapper, 'Renew subscription').trigger('click');
-
-            expect(mockDispatchAction).toHaveBeenCalledWith({
-                action: 'renew-subscription',
-                data: { subscriptionId: 'sub_renew' },
             });
         });
     });

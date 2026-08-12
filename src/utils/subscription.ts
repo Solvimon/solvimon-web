@@ -1,9 +1,35 @@
 import type {
     PricingExtended,
     PricingGroupExtended,
+    PricingPlan,
     PricingPlanSubscriptionExpanded,
 } from '@solvimon/solvimon-types';
 import { getFirstPricingPlanScheduleOfType } from './pricingPlanSchedule';
+
+/**
+ * The pricing plan the subscription is on now. Schedule infos run in chronological order, so the
+ * last one supersedes the ones before it.
+ */
+export function getMostRecentPricingPlan(
+    subscription: PricingPlanSubscriptionExpanded | undefined,
+): PricingPlan | undefined {
+    return subscription?.pricing_plan_schedule_infos?.at(-1)?.pricing_plan_version?.pricing_plan;
+}
+
+/**
+ * The name to show for a subscription: the name it was given, then the plan it is on. Callers pass
+ * their own `fallback` because the wording differs per screen — and because translating it belongs
+ * in the component, not here.
+ */
+export function getSubscriptionName({
+    subscription,
+    fallback,
+}: {
+    subscription: PricingPlanSubscriptionExpanded | undefined;
+    fallback: string;
+}): string {
+    return subscription?.name || getMostRecentPricingPlan(subscription)?.name || fallback;
+}
 
 /**
  * Recursively searches for PRICING objects with matching IDs.

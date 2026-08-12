@@ -6,7 +6,9 @@ import type {
 import {
     findPricingsByIds,
     getFallbackTrialAndSubscriptionStartAndEndDates,
+    getMostRecentPricingPlan,
     getPricingGroupsFromExtendedPricingPlanSubscription,
+    getSubscriptionName,
 } from './subscription';
 
 const makeScheduleInfo = (
@@ -232,6 +234,80 @@ describe('subscription utils', () => {
         it('handles empty ids array', () => {
             const result = findPricingsByIds(mockData, []);
             expect(result).toEqual([]);
+        });
+    });
+
+    describe('getMostRecentPricingPlan', () => {
+        const withPlans = (...names: (string | undefined)[]) =>
+            ({
+                pricing_plan_schedule_infos: names.map((name) => ({
+                    pricing_plan_version: { pricing_plan: { name } },
+                })),
+            }) as unknown as PricingPlanSubscriptionExpanded;
+
+        it('returns the plan of the last schedule info, since later ones supersede earlier ones', () => {
+            expect(getMostRecentPricingPlan(withPlans('Starter', 'Pro'))?.name).toBe('Pro');
+        });
+
+        it('returns undefined when there are no schedule infos', () => {
+            expect(getMostRecentPricingPlan(withPlans())).toBeUndefined();
+        });
+
+        it('returns undefined when there is no subscription', () => {
+            expect(getMostRecentPricingPlan(undefined)).toBeUndefined();
+        });
+
+        it('returns undefined when the schedule info carries no plan', () => {
+            const subscription = {
+                pricing_plan_schedule_infos: [{}],
+            } as unknown as PricingPlanSubscriptionExpanded;
+
+            expect(getMostRecentPricingPlan(subscription)).toBeUndefined();
+        });
+    });
+
+    describe('getSubscriptionName', () => {
+        const createSubscription = ({
+            name,
+            planName,
+        }: { name?: string; planName?: string } = {}) =>
+            ({
+                name,
+                pricing_plan_schedule_infos: [
+                    { pricing_plan_version: { pricing_plan: { name: planName } } },
+                ],
+            }) as unknown as PricingPlanSubscriptionExpanded;
+
+        it('prefers the name the subscription was given', () => {
+            const subscription = createSubscription({ name: 'My plan', planName: 'Pro' });
+
+            expect(getSubscriptionName({ subscription, fallback: 'Subscription' })).toBe('My plan');
+        });
+
+        it('falls back to the most recent pricing plan name', () => {
+            const subscription = createSubscription({ planName: 'Pro' });
+
+            expect(getSubscriptionName({ subscription, fallback: 'Subscription' })).toBe('Pro');
+        });
+
+        it('falls back to the given fallback when neither is named', () => {
+            const subscription = createSubscription();
+
+            expect(getSubscriptionName({ subscription, fallback: 'Subscription' })).toBe(
+                'Subscription',
+            );
+        });
+
+        it('treats an empty name as no name', () => {
+            const subscription = createSubscription({ name: '', planName: 'Pro' });
+
+            expect(getSubscriptionName({ subscription, fallback: 'Subscription' })).toBe('Pro');
+        });
+
+        it('falls back when there is no subscription yet', () => {
+            expect(
+                getSubscriptionName({ subscription: undefined, fallback: 'Subscription details' }),
+            ).toBe('Subscription details');
         });
     });
 });

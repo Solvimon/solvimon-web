@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { PaymentMethod, Section, Typography, useIntl, Button } from '@solvimon/solvimon-ui';
-import type { PricingPlan } from '@solvimon/solvimon-types';
 import type {
     SubscriptionsListItemEmits,
     SubscriptionsListItemProps,
 } from './SubscriptionsListItem.types';
+import { getMostRecentPricingPlan, getSubscriptionName } from '@/utils/subscription';
 
 const props = withDefaults(defineProps<SubscriptionsListItemProps>(), {
     showViewSubscriptionDetailsButton: true,
@@ -16,27 +16,17 @@ defineEmits<SubscriptionsListItemEmits>();
 const { $t } = useIntl();
 const { formatDate } = useIntl();
 
-const mostRecentPricingPlan = computed<PricingPlan | undefined>(() => {
-    const scheduleInfos = props.subscription.pricing_plan_schedule_infos;
+const mostRecentPricingPlan = computed(() => getMostRecentPricingPlan(props.subscription));
 
-    if (scheduleInfos.length === 0) {
-        return undefined;
-    }
-
-    const latestScheduleInfo = scheduleInfos[scheduleInfos.length - 1];
-
-    return latestScheduleInfo?.pricing_plan_version?.pricing_plan;
-});
-
-const subscriptionName = computed<string>(
-    () =>
-        props.subscription.name ||
-        mostRecentPricingPlan.value?.name ||
-        $t({
+const subscriptionName = computed<string>(() =>
+    getSubscriptionName({
+        subscription: props.subscription,
+        fallback: $t({
             defaultMessage: 'Subscription',
             description: 'The fallback name for when no subscription name can be determined',
             id: 'customer_overview.subscriptions_block.fallback_subscription_name',
         }),
+    }),
 );
 
 const subscriptionDescription = computed<string | undefined>(

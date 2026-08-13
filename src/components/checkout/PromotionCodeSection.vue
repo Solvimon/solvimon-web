@@ -9,6 +9,10 @@ import type {
 
 const { $t } = useIntl();
 
+// The template has a fragment root (the `Section` branches plus the aria-live
+// status node), so fallthrough attributes are bound to the `Section` manually.
+defineOptions({ inheritAttrs: false });
+
 const props = withDefaults(defineProps<PromotionCodeSectionProps>(), {
     promotionCode: null,
 });
@@ -139,7 +143,7 @@ watch(
 </script>
 
 <template>
-    <Section v-if="!isApplied" no-spacing class="relative w-full">
+    <Section v-if="!isApplied" v-bind="$attrs" no-spacing class="relative w-full">
         <button
             ref="toggleRef"
             type="button"
@@ -214,7 +218,14 @@ watch(
         </div>
     </Section>
 
-    <Section v-else no-border no-spacing content-background="none" class="relative w-full">
+    <Section
+        v-else
+        v-bind="$attrs"
+        no-border
+        no-spacing
+        content-background="none"
+        class="relative w-full"
+    >
         <button
             type="button"
             class="w-full rounded border border-primary-900 bg-white"

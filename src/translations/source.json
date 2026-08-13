@@ -691,6 +691,10 @@
     "defaultMessage": "Order summary",
     "description": "Title for the order summary section on the upgrade subscription page"
   },
+  "subscription_management.payment_method_selector.label": {
+    "defaultMessage": "Payment method",
+    "description": "Label above the payment method that pays for the subscription change"
+  },
   "subscription_management.payment_picker.all_title": {
     "defaultMessage": "All payment methods",
     "description": "Heading for the all payment methods section in the upgrade subscription payment picker"
@@ -710,6 +714,34 @@
   "subscription_management.pricing_row.remove_button_label": {
     "defaultMessage": "Remove",
     "description": "Button to remove a pricing item from the cart"
+  },
+  "subscription_management.success.message": {
+    "defaultMessage": "Your {subject} has been changed. Please be aware that it can take some time to reflect this change in your subscription.",
+    "description": "Confirmation of the pricing group a committed subscription change applied to"
+  },
+  "subscription_management.success.message_generic": {
+    "defaultMessage": "Your subscription has been changed. Please be aware that it can take some time to reflect this change in your subscription.",
+    "description": "Confirmation of a committed subscription change when the pricing group is not known"
+  },
+  "subscription_management.success.title": {
+    "defaultMessage": "Subscription updated",
+    "description": "Title shown on the manage subscription screen once the change is committed"
+  },
+  "subscription_management.summary.empty_state": {
+    "defaultMessage": "Select your plan to see what it costs.",
+    "description": "Shown in the order summary before a plan has been picked to preview"
+  },
+  "subscription_management.summary.error": {
+    "defaultMessage": "Unable to calculate the total. Please try again.",
+    "description": "Error shown when the invoice preview for a subscription change cannot be loaded"
+  },
+  "subscription_management.summary.title": {
+    "defaultMessage": "Order summary",
+    "description": "Title of the block previewing what a subscription change is invoiced for"
+  },
+  "subscription_management.summary.total_due_heading": {
+    "defaultMessage": "Total due",
+    "description": "Heading above the total of the invoice previewing a subscription change, replacing the shared preview\u2019s \"Total due today\""
   },
   "subscription_management.title": {
     "defaultMessage": "Upgrade subscription",

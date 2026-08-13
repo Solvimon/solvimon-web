@@ -67,7 +67,12 @@ export const useInvoicePreview = () => {
             fallbackCurrency: subscription.billing_currency,
         });
 
+        // Nothing to price against: the plan version lists no billing periods and the subscription
+        // carries none either. Reported, since otherwise no request is made and no error is raised.
         if (!periodsForPreview.length) {
+            logger.warn('INVOICE_PREVIEW_SKIPPED', 'No billing period to preview an invoice for', {
+                subscriptionId: subscription.id,
+            });
             status.value = ApiStatus.Done;
             return;
         }

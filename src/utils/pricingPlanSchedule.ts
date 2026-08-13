@@ -11,16 +11,22 @@ import type {
 
 /**
  * Get the first pricing plan schedule of a given type.
+ *
+ * The type is read off the nested schedule where the response carries one and off the info itself
+ * otherwise, since which of the two is filled in depends on what the request expanded. Neither is
+ * reached into blindly: this runs before a screen has anything to show, so throwing here takes the
+ * whole screen down rather than one part of it.
  */
 export function getFirstPricingPlanScheduleOfType({
     pricingPlanScheduleInfos,
     type,
 }: {
-    pricingPlanScheduleInfos: PricingPlanScheduleInfoExpanded[];
+    pricingPlanScheduleInfos: PricingPlanScheduleInfoExpanded[] | undefined;
     type: PricingPlanScheduleInfo['type'];
 }): PricingPlanScheduleInfoExpanded | undefined {
-    return pricingPlanScheduleInfos.find(
-        (scheduleInfo) => scheduleInfo.pricing_plan_schedule.type === type,
+    return (pricingPlanScheduleInfos ?? []).find(
+        (scheduleInfo) =>
+            (scheduleInfo.pricing_plan_schedule?.type ?? scheduleInfo.type) === type,
     );
 }
 

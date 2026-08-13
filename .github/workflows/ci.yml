@@ -275,13 +275,10 @@ jobs:
                   name: bundle-sizes
                   path: /tmp/pr
 
-            # Mirrors the repo layout so the copies keep resolving `../safe-path.mjs`
+            # Copied wholesale so the scripts keep resolving each other and `safe-path.mjs`
             # after the base branch is checked out over the top of them.
             - name: Preserve CI scripts
-              run: |
-                  mkdir -p /tmp/ci-scripts/ci
-                  cp scripts/safe-path.mjs /tmp/ci-scripts/
-                  cp scripts/ci/measure-bundle.mjs scripts/ci/bundle-size-report.mjs /tmp/ci-scripts/ci/
+              run: cp -r scripts /tmp/ci-scripts
 
             - name: Checkout base branch
               uses: actions/checkout@v6

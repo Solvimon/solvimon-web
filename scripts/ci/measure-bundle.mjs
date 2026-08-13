@@ -158,5 +158,11 @@ export function measureBundle(distDir = 'dist') {
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-    console.log(JSON.stringify(measureBundle()));
+    const { measureConsumerBundles } = await import('./measure-consumer-bundle.mjs');
+    const result = measureBundle();
+    const consumer = await measureConsumerBundles('dist');
+    for (const [key, entry] of Object.entries(result.entries)) {
+        entry.consumer = consumer[key] ?? null;
+    }
+    console.log(JSON.stringify(result));
 }

@@ -4,7 +4,6 @@ export type SubscriptionsListConfiguration = {
     maxItems?: number;
     showViewAllButton?: boolean;
     showViewDetailsButton?: boolean;
-    showUpgradeButton?: boolean;
 };
 
 export interface SubscriptionsListProps {

@@ -83,7 +83,6 @@
     "customer.invoice_table.pay_invoice_button.label": "Betalen",
     "customer.subscriptions_block.next_billing_date": "Volgende factuurdatum",
     "customer.subscriptions_block.show_details_button_label": "Abonnementsdetails",
-    "customer.subscriptions_block.upgrade_button_label": "Abonnement upgraden",
     "customer_invoices.load_failed.subtitle": "Vernieuw de pagina of neem contact op met de ondersteuning.",
     "customer_invoices.load_failed.title": "We kunnen je facturen niet laden",
     "customer_overview.billing_information_block.load_failed.subtitle": "Vernieuw de pagina of neem contact op met de ondersteuning.",

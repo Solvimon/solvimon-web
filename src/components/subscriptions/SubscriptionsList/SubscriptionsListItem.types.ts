@@ -6,10 +6,8 @@ export interface SubscriptionsListItemProps {
     paymentMethod?: PaymentMethod;
     customer: Customer;
     showViewSubscriptionDetailsButton?: boolean;
-    showUpgradeSubscriptionButton?: boolean;
 }
 
 export interface SubscriptionsListItemEmits {
     (e: 'view-subscription-details', payload: { subscriptionId: string }): void;
-    (e: 'manage-subscription', payload: { subscriptionId: string }): void;
 }

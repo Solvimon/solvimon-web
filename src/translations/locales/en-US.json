@@ -83,7 +83,6 @@
   "customer.invoice_table.pay_invoice_button.label": "Pay",
   "customer.subscriptions_block.next_billing_date": "Next billing date",
   "customer.subscriptions_block.show_details_button_label": "Subscription details",
-  "customer.subscriptions_block.upgrade_button_label": "Upgrade subscription",
   "customer_overview.billing_information_block.load_failed.subtitle": "Please refresh or contact support.",
   "customer_overview.billing_information_block.load_failed.title": "We can’t load your billing information",
   "customer_overview.billing_information_block.title": "Billing information",

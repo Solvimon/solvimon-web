@@ -335,10 +335,6 @@
     "defaultMessage": "Subscription details",
     "description": "The label for the subscription details button in the subscriptions block"
   },
-  "customer.subscriptions_block.upgrade_button_label": {
-    "defaultMessage": "Upgrade subscription",
-    "description": "The label for the upgrade subscription button in the subscriptions block"
-  },
   "customer_overview.billing_information_block.load_failed.subtitle": {
     "defaultMessage": "Please refresh or contact support.",
     "description": "Subtitle when payments methods fail to load"

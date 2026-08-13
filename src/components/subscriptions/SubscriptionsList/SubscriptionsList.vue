@@ -9,7 +9,6 @@ const props = withDefaults(defineProps<SubscriptionsListProps>(), {
     paymentMethods: () => [],
     showViewAllButton: true,
     showViewDetailsButton: true,
-    showUpgradeButton: true,
 });
 defineEmits<SubscriptionsListEmits>();
 
@@ -92,9 +91,7 @@ const isViewAllButtonVisible = computed<boolean>(() => props.showViewAllButton);
                 :payment-method="getPaymentMethod(subscription.payment_method_id)"
                 :customer="customer!"
                 :show-view-subscription-details-button="showViewDetailsButton"
-                :show-upgrade-subscription-button="showUpgradeButton"
                 @view-subscription-details="$emit('view-subscription-details', $event)"
-                @manage-subscription="$emit('manage-subscription', $event)"
             />
         </div>
     </Section>

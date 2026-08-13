@@ -50,6 +50,7 @@ if (!filePath.startsWith(baseDir + path.sep)) {
 - **Services** — API calls belong in `src/services/`. Use `createRequestService` and return typed response interfaces.
 - **Imports** — use the `@/` alias for internal imports; no relative paths that traverse more than one level (enforced by ESLint).
 - **Lodash** — use named imports from `lodash-es`, never the default import.
+- **Formatting** — Prettier owns all formatting; ESLint's formatting rules are disabled via `skipFormatting`. Never hand-format to taste — run `npm run format`. CI fails on `npm run format:check` and on any ESLint warning (`lint:ci` runs with `--max-warnings 0`).
 
 ## Testing
 

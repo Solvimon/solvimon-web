@@ -19,13 +19,25 @@ npm run playground:dev
 Work on a feature branch off `main`. Link every PR to the issue it addresses. Before opening a PR, make sure the following pass locally:
 
 ```sh
-npm run type-check   # TypeScript + Vue template types
-npm run lint         # ESLint (auto-fixes on save)
-npm run test:unit    # Vitest unit tests
-npm run build        # Full SDK build
+npm run type-check     # TypeScript + Vue template types
+npm run lint           # ESLint (auto-fixes on save)
+npm run format         # Prettier (rewrites files in place)
+npm run test:unit      # Vitest unit tests
+npm run build          # Full SDK build
 ```
 
-CI runs all of these automatically on every PR, along with coverage and bundle size comparisons posted as PR comments. All checks must be green before merge.
+CI runs the non-mutating variants of these (`lint:ci`, `format:check`) on every PR, along with
+coverage and bundle size comparisons posted as PR comments. All checks must be green before merge.
+
+A `pre-commit` hook runs ESLint and Prettier over staged files via `lint-staged`, so committed code
+is formatted and lint-clean by default. It fails the commit on any lint error that cannot be
+auto-fixed. Set `SKIP_LINT_STAGED=1` to bypass it for a work-in-progress commit — CI will still
+reject the change.
+
+Formatting is owned entirely by Prettier; ESLint's formatting rules are switched off (see
+`skipFormatting` in `eslint.config.mjs`), so the two never disagree. Generated-but-committed files
+(`src/translations/`, `tailwind.css`, `package-lock.json`) are listed in `.prettierignore` and keep
+their generator's formatting.
 
 ## PR scope
 

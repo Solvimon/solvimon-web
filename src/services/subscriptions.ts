@@ -102,6 +102,10 @@ export function createSubscriptionsService(): SubscriptionsService {
                 type: 'BILLING',
             },
             expandParams: [
+                // Expanding the schedule's own id is what makes the API return the nested
+                // `pricing_plan_schedule`, and with it the DEFAULT/TRIAL type. Without it the
+                // schedule infos carry no type at all and no schedule counts as active.
+                'pricing_plan_schedule_infos.id',
                 'pricing_plan_schedule_infos.pricing_plan_version_id',
                 'pricing_plan_schedule_infos.pricing_plan_version.pricing_plan_id',
             ],

@@ -1,7 +1,9 @@
 import {
     getActiveDefaultScheduleId,
+    getActiveDefaultScheduleInfo,
     getAllPricingsFromScheduleInfos,
     getFirstPricingPlanScheduleOfType,
+    getPricingGroupByPricingId,
     getPricingItemConfigMetaById,
     getScheduleCustomizations,
 } from './pricingPlanSchedule';
@@ -644,6 +646,172 @@ describe('pricingPlanSchedule utils', () => {
                 billingPeriod: monthlyBillingPeriod,
             });
             expect(result.get('cc-config-1')).toEqual({ currency: 'EUR' });
+        });
+    });
+
+    describe('getActiveDefaultScheduleInfo', () => {
+        const NOW = new Date('2026-08-06T12:00:00.000Z');
+
+        const createScheduleInfos = (
+            scheduleInfos: { id: string; type?: string; start_at: string; end_at?: string }[],
+        ) =>
+            scheduleInfos.map(({ id, type, ...dates }) => ({
+                id,
+                ...dates,
+                pricing_plan_schedule: { type: type ?? 'DEFAULT' },
+            })) as unknown as PricingPlanScheduleInfoExpanded[];
+
+        beforeEach(() => {
+            vi.useFakeTimers();
+            vi.setSystemTime(NOW);
+        });
+
+        afterEach(() => {
+            vi.useRealTimers();
+        });
+
+        it('returns the schedule info that is running right now', () => {
+            const scheduleInfos = createScheduleInfos([
+                { id: 'ppsc_running', start_at: '2026-01-01T00:00:00.000Z' },
+            ]);
+
+            expect(getActiveDefaultScheduleInfo(scheduleInfos)?.id).toBe('ppsc_running');
+        });
+
+        it('reads the dates off the schedule when the info does not repeat them', () => {
+            const scheduleInfos = [
+                {
+                    id: 'ppsc_running',
+                    pricing_plan_schedule: {
+                        type: 'DEFAULT',
+                        start_at: '2026-01-01T00:00:00.000Z',
+                    },
+                },
+                {
+                    id: 'ppsc_ended',
+                    pricing_plan_schedule: {
+                        type: 'DEFAULT',
+                        start_at: '2025-01-01T00:00:00.000Z',
+                        end_at: '2026-01-01T00:00:00.000Z',
+                    },
+                },
+            ] as unknown as PricingPlanScheduleInfoExpanded[];
+
+            expect(getActiveDefaultScheduleInfo(scheduleInfos)?.id).toBe('ppsc_running');
+        });
+
+        it('prefers the most recently started schedule', () => {
+            const scheduleInfos = createScheduleInfos([
+                { id: 'ppsc_older', start_at: '2025-01-01T00:00:00.000Z' },
+                { id: 'ppsc_newer', start_at: '2026-07-01T00:00:00.000Z' },
+            ]);
+
+            expect(getActiveDefaultScheduleInfo(scheduleInfos)?.id).toBe('ppsc_newer');
+        });
+
+        it('ignores schedules that have not started yet', () => {
+            const scheduleInfos = createScheduleInfos([
+                { id: 'ppsc_future', start_at: '2026-09-01T00:00:00.000Z' },
+            ]);
+
+            expect(getActiveDefaultScheduleInfo(scheduleInfos)).toBeUndefined();
+        });
+
+        it('ignores schedules that have already ended', () => {
+            const scheduleInfos = createScheduleInfos([
+                {
+                    id: 'ppsc_ended',
+                    start_at: '2025-01-01T00:00:00.000Z',
+                    end_at: '2026-01-01T00:00:00.000Z',
+                },
+            ]);
+
+            expect(getActiveDefaultScheduleInfo(scheduleInfos)).toBeUndefined();
+        });
+
+        it('ignores trial schedules', () => {
+            const scheduleInfos = createScheduleInfos([
+                { id: 'ppsc_trial', type: 'TRIAL', start_at: '2026-01-01T00:00:00.000Z' },
+            ]);
+
+            expect(getActiveDefaultScheduleInfo(scheduleInfos)).toBeUndefined();
+        });
+
+        it('returns undefined when there are no schedule infos', () => {
+            expect(getActiveDefaultScheduleInfo([])).toBeUndefined();
+        });
+    });
+
+    describe('getPricingGroupByPricingId', () => {
+        const scheduleInfo = {
+            pricing_plan_version: {
+                pricing_categories: [
+                    {
+                        pricing_groups: [
+                            {
+                                id: 'pgr_credits',
+                                name: 'Credit packs',
+                                pricings: [{ id: 'pri_1000' }, { id: 'pri_5000' }],
+                            },
+                        ],
+                    },
+                    {
+                        pricings: [{ id: 'pri_ungrouped' }],
+                        pricing_groups: [
+                            {
+                                id: 'pgr_support',
+                                name: 'Support',
+                                pricings: [{ id: 'pri_premium' }],
+                            },
+                        ],
+                    },
+                ],
+            },
+        } as unknown as PricingPlanScheduleInfoExpanded;
+
+        it('returns the group holding the pricing', () => {
+            const group = getPricingGroupByPricingId({
+                pricingPlanScheduleInfo: scheduleInfo,
+                pricingId: 'pri_5000',
+            });
+
+            expect(group?.name).toBe('Credit packs');
+        });
+
+        it('looks across every category', () => {
+            const group = getPricingGroupByPricingId({
+                pricingPlanScheduleInfo: scheduleInfo,
+                pricingId: 'pri_premium',
+            });
+
+            expect(group?.id).toBe('pgr_support');
+        });
+
+        it('returns undefined for a pricing that belongs to no group', () => {
+            expect(
+                getPricingGroupByPricingId({
+                    pricingPlanScheduleInfo: scheduleInfo,
+                    pricingId: 'pri_ungrouped',
+                }),
+            ).toBeUndefined();
+        });
+
+        it('returns undefined for an unknown pricing', () => {
+            expect(
+                getPricingGroupByPricingId({
+                    pricingPlanScheduleInfo: scheduleInfo,
+                    pricingId: 'pri_nope',
+                }),
+            ).toBeUndefined();
+        });
+
+        it('returns undefined when the version carries no categories', () => {
+            expect(
+                getPricingGroupByPricingId({
+                    pricingPlanScheduleInfo: {} as unknown as PricingPlanScheduleInfoExpanded,
+                    pricingId: 'pri_1000',
+                }),
+            ).toBeUndefined();
         });
     });
 });

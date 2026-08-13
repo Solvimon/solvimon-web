@@ -2,7 +2,9 @@ import type {
     BillingPeriod,
     ConfiguredMeterValue,
     EnabledPricing,
+    Pricing,
     PricingExtended,
+    PricingGroupExtended,
     PricingPlanScheduleCustomization,
     PricingPlanScheduleInfo,
     PricingPlanScheduleInfoExpanded,
@@ -38,21 +40,55 @@ export function getFirstPricingPlanScheduleOfType({
 export function getActiveDefaultScheduleId(
     subscriptions: PricingPlanSubscriptionExpanded[],
 ): PricingPlanScheduleInfoExpanded['id'] | undefined {
+    return getActiveDefaultScheduleInfo(
+        subscriptions.flatMap(({ pricing_plan_schedule_infos }) => pricing_plan_schedule_infos ?? []),
+    )?.id;
+}
+
+/** The dates live on the schedule itself; the info only repeats them for some responses. */
+const getStartAt = (scheduleInfo: PricingPlanScheduleInfoExpanded): number =>
+    Date.parse(scheduleInfo.start_at ?? scheduleInfo.pricing_plan_schedule?.start_at);
+
+/**
+ * The schedule being billed right now out of the ones given: the most recently started DEFAULT
+ * schedule that has begun and has not ended. Returns undefined when none of them is running.
+ */
+export function getActiveDefaultScheduleInfo(
+    scheduleInfos: PricingPlanScheduleInfoExpanded[],
+): PricingPlanScheduleInfoExpanded | undefined {
     const now = Date.now();
 
-    return subscriptions
-        .flatMap(({ pricing_plan_schedule_infos }) => pricing_plan_schedule_infos ?? [])
+    return scheduleInfos
         .filter((scheduleInfo) => {
-            const type = scheduleInfo.pricing_plan_schedule?.type ?? scheduleInfo.type;
-            const startAt = Date.parse(scheduleInfo.start_at);
-            const endAt = scheduleInfo.end_at ? Date.parse(scheduleInfo.end_at) : undefined;
+            const schedule = scheduleInfo.pricing_plan_schedule;
+            const type = schedule?.type ?? scheduleInfo.type;
+            const startAt = getStartAt(scheduleInfo);
+            const endAtValue = scheduleInfo.end_at ?? schedule?.end_at;
+            const endAt = endAtValue ? Date.parse(endAtValue) : undefined;
             const hasStarted = Number.isFinite(startAt) && startAt <= now;
             const hasNotEnded = endAt === undefined || !Number.isFinite(endAt) || endAt > now;
 
             return type === 'DEFAULT' && hasStarted && hasNotEnded;
         })
-        .sort((a, b) => Date.parse(b.start_at) - Date.parse(a.start_at))
-        .at(0)?.id;
+        .sort((a, b) => getStartAt(b) - getStartAt(a))
+        .at(0);
+}
+
+/**
+ * The group a pricing was chosen from, which is what names the choice the customer made
+ * ("Credit packs") rather than the option they took ("1.000 credits"). Pricings that sit directly
+ * on a category belong to no group and come back undefined.
+ */
+export function getPricingGroupByPricingId({
+    pricingPlanScheduleInfo,
+    pricingId,
+}: {
+    pricingPlanScheduleInfo: PricingPlanScheduleInfoExpanded;
+    pricingId: Pricing['id'];
+}): PricingGroupExtended | undefined {
+    return (pricingPlanScheduleInfo.pricing_plan_version?.pricing_categories ?? [])
+        .flatMap((category) => category.pricing_groups ?? [])
+        .find((group) => (group.pricings ?? []).some((pricing) => pricing.id === pricingId));
 }
 
 export function getAllPricingsFromScheduleInfos({

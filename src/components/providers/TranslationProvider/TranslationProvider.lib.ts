@@ -1,9 +1,17 @@
 import type { IntlMessages } from '@solvimon/solvimon-ui';
-import type { LocaleLoader, SupportedLocale } from './TranslationProvider.types';
+import type { InjectionKey } from 'vue';
+import type {
+    LocaleLoader,
+    SupportedLocale,
+    TranslationSettings,
+} from './TranslationProvider.types';
 import type { Logger } from '@/components/providers/LoggerProvider/LoggerProvider.types';
 import { SUPPORTED_LOCALES } from '@/translations/supported';
 
 export const DEFAULT_LOCALE: SupportedLocale = 'en-US';
+
+export const TRANSLATION_SETTINGS_KEY: InjectionKey<TranslationSettings> =
+    Symbol('translation-settings');
 
 export const supportedLocaleSet: ReadonlySet<string> = new Set(SUPPORTED_LOCALES);
 

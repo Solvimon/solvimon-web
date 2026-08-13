@@ -275,8 +275,13 @@ jobs:
                   name: bundle-sizes
                   path: /tmp/pr
 
+            # Mirrors the repo layout so the copies keep resolving `../safe-path.mjs`
+            # after the base branch is checked out over the top of them.
             - name: Preserve CI scripts
-              run: cp scripts/ci/measure-bundle.mjs scripts/ci/bundle-size-report.mjs /tmp/
+              run: |
+                  mkdir -p /tmp/ci-scripts/ci
+                  cp scripts/safe-path.mjs /tmp/ci-scripts/
+                  cp scripts/ci/measure-bundle.mjs scripts/ci/bundle-size-report.mjs /tmp/ci-scripts/ci/
 
             - name: Checkout base branch
               uses: actions/checkout@v6
@@ -296,11 +301,11 @@ jobs:
               run: rm -rf dist && npm run build
 
             - name: Measure base bundle
-              run: node /tmp/measure-bundle.mjs > /tmp/base-bundle.json
+              run: node /tmp/ci-scripts/ci/measure-bundle.mjs > /tmp/base-bundle.json
 
             - name: Generate bundle size report
               run: |
-                  node /tmp/bundle-size-report.mjs \
+                  node /tmp/ci-scripts/ci/bundle-size-report.mjs \
                       --pr /tmp/pr/bundle-sizes.json \
                       --base /tmp/base-bundle.json \
                       --sha ${{ github.sha }} \

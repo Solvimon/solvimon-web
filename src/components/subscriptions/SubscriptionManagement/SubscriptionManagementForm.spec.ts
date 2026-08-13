@@ -155,9 +155,7 @@ describe('SubscriptionManagementForm', () => {
         });
 
         expect(
-            wrapper
-                .findComponent({ name: 'PaymentMethodSelector' })
-                .props('paymentMethodOptions'),
+            wrapper.findComponent({ name: 'PaymentMethodSelector' }).props('paymentMethodOptions'),
         ).toEqual([]);
     });
 

@@ -41,10 +41,7 @@ describe('pricingItem utils', () => {
                 product_items: productItems,
             }) as PricingItemExtended;
 
-        const createMockPricing = (
-            id: string,
-            items?: PricingItemExtended[],
-        ): PricingExtended =>
+        const createMockPricing = (id: string, items?: PricingItemExtended[]): PricingExtended =>
             ({
                 id,
                 object_type: 'PRICING',
@@ -159,9 +156,7 @@ describe('pricingItem utils', () => {
             const config2 = createMockConfig('config-2');
             const config3 = createMockConfig('config-3');
             const pricings: PricingExtended[] = [
-                createMockPricing('pricing-1', [
-                    createMockPricingItem('item-1', [config1]),
-                ]),
+                createMockPricing('pricing-1', [createMockPricingItem('item-1', [config1])]),
                 createMockPricing('pricing-2', [
                     createMockPricingItem('item-2', [config2]),
                     createMockPricingItem('item-3', [config3]),
@@ -187,9 +182,7 @@ describe('pricingItem utils', () => {
                     createMockPricingItem('item-1', [config1]),
                     createMockPricingItem('item-2', [config2], [productItem]),
                 ]),
-                createMockPricing('pricing-2', [
-                    createMockPricingItem('item-3', [config3]),
-                ]),
+                createMockPricing('pricing-2', [createMockPricingItem('item-3', [config3])]),
             ];
 
             const result = getPricingItemByPricingConfigId({
@@ -228,9 +221,7 @@ describe('pricingItem utils', () => {
 
         it('should handle items with undefined configs array', () => {
             const pricings: PricingExtended[] = [
-                createMockPricing('pricing-1', [
-                    createMockPricingItem('item-1', undefined),
-                ]),
+                createMockPricing('pricing-1', [createMockPricingItem('item-1', undefined)]),
             ];
 
             const result = getPricingItemByPricingConfigId({

@@ -167,8 +167,9 @@ const getCreditsConversion = (
     config: PricingItemConfigExtended,
     walletBalanceItem?: CustomerWalletBalanceItem,
 ) =>
-    getWalletGrants(config, walletBalanceItem).find(({ credits_grant }) => credits_grant?.conversion)
-        ?.credits_grant?.conversion;
+    getWalletGrants(config, walletBalanceItem).find(
+        ({ credits_grant }) => credits_grant?.conversion,
+    )?.credits_grant?.conversion;
 
 /** The credits a fixed top-up hands over outright, rather than converting from what is paid. */
 const getGrantedCredits = (

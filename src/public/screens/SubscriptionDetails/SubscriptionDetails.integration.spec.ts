@@ -25,7 +25,11 @@ vi.mock('@solvimon/solvimon-ui', async () => {
             props: { schedules: { type: Array, required: true } },
             setup(props) {
                 return () =>
-                    h('div', { class: 'sv-pricing-plan-schedules-stub' }, String(props.schedules.length));
+                    h(
+                        'div',
+                        { class: 'sv-pricing-plan-schedules-stub' },
+                        String(props.schedules.length),
+                    );
             },
         }),
         WalletBalances: defineComponent({

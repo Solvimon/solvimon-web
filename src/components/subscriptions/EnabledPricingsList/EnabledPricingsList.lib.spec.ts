@@ -76,7 +76,9 @@ describe('getEnabledPricingsEntries', () => {
     });
 
     it('returns nothing when the schedule has no enabled pricings', () => {
-        expect(getEnabledPricingsEntries(createScheduleInfo({ enabledPricingIds: [] }))).toEqual([]);
+        expect(getEnabledPricingsEntries(createScheduleInfo({ enabledPricingIds: [] }))).toEqual(
+            [],
+        );
     });
 
     it('returns nothing when the version has no pricing groups', () => {
@@ -91,9 +93,7 @@ describe('getEnabledPricingsEntries', () => {
     it('names the pricing after its first product when it has no name of its own', () => {
         const [entry] = getEnabledPricingsEntries(
             createScheduleInfo({
-                pricings: [
-                    { id: 'pri_credits_1000', products: [{ name: 'Credit pack, small' }] },
-                ],
+                pricings: [{ id: 'pri_credits_1000', products: [{ name: 'Credit pack, small' }] }],
             }),
         );
 
@@ -121,7 +121,12 @@ describe('getEnabledPricingsEntries', () => {
                                     {
                                         details: {
                                             bands: [
-                                                { fixed_amount: { currency: 'EUR', quantity: '75' } },
+                                                {
+                                                    fixed_amount: {
+                                                        currency: 'EUR',
+                                                        quantity: '75',
+                                                    },
+                                                },
                                             ],
                                         },
                                     },

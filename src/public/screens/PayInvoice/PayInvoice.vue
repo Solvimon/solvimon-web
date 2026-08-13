@@ -67,7 +67,13 @@ const handlePaymentFailed = () => {
             <PaymentFeedbackCard
                 v-if="invoice?.paid"
                 status="success"
-                :title="$t({ id: 'pay_invoice.paid.title', defaultMessage: 'Thank you for your payment!', description: 'Title shown when the invoice has already been paid' })"
+                :title="
+                    $t({
+                        id: 'pay_invoice.paid.title',
+                        defaultMessage: 'Thank you for your payment!',
+                        description: 'Title shown when the invoice has already been paid',
+                    })
+                "
                 class="mt-8"
             >
                 <Typography variant="body-sm" class="mt-1">
@@ -79,10 +85,22 @@ const handlePaymentFailed = () => {
             <PaymentFeedbackCard
                 v-else-if="error"
                 status="error"
-                :title="$t({ id: 'pay_invoice.error.title', defaultMessage: 'Something went wrong', description: 'Title shown when the invoice payment fails to load' })"
+                :title="
+                    $t({
+                        id: 'pay_invoice.error.title',
+                        defaultMessage: 'Something went wrong',
+                        description: 'Title shown when the invoice payment fails to load',
+                    })
+                "
             >
                 <Typography variant="body-sm" class="mt-1">
-                    {{ $t({ id: 'pay_invoice.error.description', defaultMessage: 'Please try again or contact support.', description: 'Body text shown when the invoice payment fails to load' }) }}
+                    {{
+                        $t({
+                            id: 'pay_invoice.error.description',
+                            defaultMessage: 'Please try again or contact support.',
+                            description: 'Body text shown when the invoice payment fails to load',
+                        })
+                    }}
                 </Typography>
             </PaymentFeedbackCard>
 
@@ -90,7 +108,14 @@ const handlePaymentFailed = () => {
             <template v-else-if="!isLoading && countryCode && amount && invoice">
                 <Section
                     v-if="paymentMethodOptions?.length"
-                    :title="$t({ id: 'pay_invoice.payment_methods.title', defaultMessage: 'Payment methods', description: 'Section title for the payment method selector on the pay invoice screen' })"
+                    :title="
+                        $t({
+                            id: 'pay_invoice.payment_methods.title',
+                            defaultMessage: 'Payment methods',
+                            description:
+                                'Section title for the payment method selector on the pay invoice screen',
+                        })
+                    "
                     content-background="none"
                     no-border
                     no-spacing

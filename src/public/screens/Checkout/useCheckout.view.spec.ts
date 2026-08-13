@@ -990,7 +990,10 @@ describe('useCheckoutView', () => {
         });
 
         it('overwrites any previously saved state', () => {
-            sessionStorage.setItem(REDIRECT_FORM_STATE_KEY, JSON.stringify({ email: 'old@example.com' }));
+            sessionStorage.setItem(
+                REDIRECT_FORM_STATE_KEY,
+                JSON.stringify({ email: 'old@example.com' }),
+            );
 
             const checkoutFormMock = createMockCheckoutForm({ email: 'new@example.com' });
             mockUseCheckoutForm.mockReturnValue(checkoutFormMock);

@@ -14,8 +14,16 @@ const defaultProps: PaymentIntegrationFormStripeFrameProps = {
 };
 
 beforeAll(() => {
-    Object.defineProperty(URL, 'createObjectURL', { value: vi.fn(), writable: true, configurable: true });
-    Object.defineProperty(URL, 'revokeObjectURL', { value: vi.fn(), writable: true, configurable: true });
+    Object.defineProperty(URL, 'createObjectURL', {
+        value: vi.fn(),
+        writable: true,
+        configurable: true,
+    });
+    Object.defineProperty(URL, 'revokeObjectURL', {
+        value: vi.fn(),
+        writable: true,
+        configurable: true,
+    });
 });
 
 beforeEach(() => {
@@ -92,7 +100,12 @@ describe('PaymentIntegrationFormStripeFrame', () => {
             const cw = mockContentWindow(iframe);
 
             await wrapper.setProps({
-                options: { mode: 'payment', currency: 'eur', amount: 2000, setup_future_usage: 'off_session' },
+                options: {
+                    mode: 'payment',
+                    currency: 'eur',
+                    amount: 2000,
+                    setup_future_usage: 'off_session',
+                },
             });
 
             expect(cw.postMessage).toHaveBeenCalledWith(

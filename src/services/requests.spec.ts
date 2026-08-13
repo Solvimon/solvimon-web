@@ -10,7 +10,8 @@ const TOKEN = 'some-token-123';
 const onError = vi.fn();
 
 vi.mock('@solvimon/solvimon-ui', async () => {
-    const actual = await vi.importActual<typeof import('@solvimon/solvimon-ui')>('@solvimon/solvimon-ui');
+    const actual =
+        await vi.importActual<typeof import('@solvimon/solvimon-ui')>('@solvimon/solvimon-ui');
 
     return {
         ...actual,

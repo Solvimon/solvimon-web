@@ -32,11 +32,7 @@ describe('createLatestGuard', () => {
             if (isLatest()) results.push(value);
         };
 
-        await Promise.all([
-            run(1, 20),
-            run(2, 10),
-            run(3, 5),
-        ]);
+        await Promise.all([run(1, 20), run(2, 10), run(3, 5)]);
 
         expect(results).toEqual([3]);
     });

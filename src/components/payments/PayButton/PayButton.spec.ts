@@ -4,19 +4,14 @@ import PayButton from './PayButton.vue';
 import type { SelectedPaymentMethod } from '@/components/payments/PaymentIntegrationForm/PaymentIntegrationForm.types';
 
 vi.mock('@solvimon/solvimon-ui', async () => {
-    const actual = await vi.importActual<typeof import('@solvimon/solvimon-ui')>('@solvimon/solvimon-ui');
+    const actual =
+        await vi.importActual<typeof import('@solvimon/solvimon-ui')>('@solvimon/solvimon-ui');
     return {
         ...actual,
         useIntl: () => ({
-            $t: (
-                message: { defaultMessage: string },
-                values?: Record<string, string>,
-            ) => {
+            $t: (message: { defaultMessage: string }, values?: Record<string, string>) => {
                 if (!values) return message.defaultMessage;
-                return message.defaultMessage.replace(
-                    /\{(\w+)\}/g,
-                    (_, key) => values[key] ?? '',
-                );
+                return message.defaultMessage.replace(/\{(\w+)\}/g, (_, key) => values[key] ?? '');
             },
         }),
         formatAmount: (amount: Amount) => `${amount.currency} ${amount.quantity}`,

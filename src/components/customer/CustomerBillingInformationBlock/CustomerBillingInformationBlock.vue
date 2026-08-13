@@ -35,7 +35,12 @@ const fetchCustomer = async (id: Customer['id']): Promise<void> => {
         apiStatus.value = ApiStatus.Done;
     } catch (error) {
         apiStatus.value = ApiStatus.Failed;
-        logger.error('CUSTOMER_FETCH_FAILED', 'Failed to fetch customer billing information', {}, error);
+        logger.error(
+            'CUSTOMER_FETCH_FAILED',
+            'Failed to fetch customer billing information',
+            {},
+            error,
+        );
     }
 };
 

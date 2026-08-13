@@ -2,11 +2,7 @@ import { ApiStatus } from '@solvimon/solvimon-types';
 import { useIncrementalLoading } from './useIncrementalLoading';
 
 describe('useIncrementalLoading', () => {
-    const createSuccessResponse = <T>(
-        data: T[],
-        page: number,
-        hasNext = false,
-    ) => ({
+    const createSuccessResponse = <T>(data: T[], page: number, hasNext = false) => ({
         data,
         page,
         limit: 10,
@@ -44,9 +40,7 @@ describe('useIncrementalLoading', () => {
 
     it('fetchInitial calls service and appends response data to items', async () => {
         const page1Data = [{ id: '1' }, { id: '2' }];
-        const service = vi
-            .fn()
-            .mockResolvedValueOnce(createSuccessResponse(page1Data, 1, true));
+        const service = vi.fn().mockResolvedValueOnce(createSuccessResponse(page1Data, 1, true));
         const { items, fetchInitial, isPending, hasNextBatch } = useIncrementalLoading<{
             id: string;
         }>({ service });
@@ -107,9 +101,7 @@ describe('useIncrementalLoading', () => {
     });
 
     it('returns items as a deep clone (nonMutableItems) so internal ref is not exposed', async () => {
-        const service = vi
-            .fn()
-            .mockResolvedValue(createSuccessResponse([{ id: '1' }], 1));
+        const service = vi.fn().mockResolvedValue(createSuccessResponse([{ id: '1' }], 1));
         const { items, fetchInitial } = useIncrementalLoading<{ id: string }>({ service });
 
         await fetchInitial();

@@ -44,14 +44,13 @@ const { $t } = useIntl();
                         width-class="w-10"
                         height-class="h-4"
                         shade="darker"
-                        class="inline-block mr-1.5"
+                        class="mr-1.5 inline-block"
                     />
                     <template #tooltip>
                         <TooltipContent>
                             <TooltipParagraph>{{
                                 $t({
-                                    defaultMessage:
-                                        'Will be determined by billing information',
+                                    defaultMessage: 'Will be determined by billing information',
                                     description:
                                         'Tooltip content for the invoice preview when taxes are not determined by billing information',
                                     id: 'invoice_preview.taxes_not_determined_by_billing_information_tooltip',
@@ -81,8 +80,7 @@ const { $t } = useIntl();
                               )
                             : $t(
                                   {
-                                      defaultMessage:
-                                          'per {period_name}, starting today',
+                                      defaultMessage: 'per {period_name}, starting today',
                                       id: 'checkout.subscription_description',
                                       description: 'The description of the subscription',
                                   },

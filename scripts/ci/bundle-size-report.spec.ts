@@ -11,12 +11,23 @@ function makeSnapshot(total: number, entries: Record<string, number> = {}) {
     return { total, entries };
 }
 
-function setup({ pr, base }: { pr: ReturnType<typeof makeSnapshot>; base: ReturnType<typeof makeSnapshot> }) {
+function setup({
+    pr,
+    base,
+}: {
+    pr: ReturnType<typeof makeSnapshot>;
+    base: ReturnType<typeof makeSnapshot>;
+}) {
     mockReadFileSync.mockReturnValueOnce(JSON.stringify(pr) as never);
     mockReadFileSync.mockReturnValueOnce(JSON.stringify(base) as never);
 }
 
-const defaultArgs = { prPath: '/tmp/pr.json', basePath: '/tmp/base.json', sha: 'abc1234', baseRef: 'main' };
+const defaultArgs = {
+    prPath: '/tmp/pr.json',
+    basePath: '/tmp/base.json',
+    sha: 'abc1234',
+    baseRef: 'main',
+};
 
 describe('generateBundleSizeReport', () => {
     beforeEach(() => vi.clearAllMocks());

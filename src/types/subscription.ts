@@ -3,7 +3,9 @@ import type {
     PricingPlanScheduleInfoExpanded,
 } from '@solvimon/solvimon-types';
 
-export interface PricingPlanSubscriptionExpanded
-    extends Omit<OriginalPricingPlanSubscriptionExpanded, 'pricing_plan_schedule_infos'> {
+export interface PricingPlanSubscriptionExpanded extends Omit<
+    OriginalPricingPlanSubscriptionExpanded,
+    'pricing_plan_schedule_infos'
+> {
     pricing_plan_schedule_infos: PricingPlanScheduleInfoExpanded[];
 }

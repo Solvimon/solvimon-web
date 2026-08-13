@@ -36,14 +36,15 @@ const { $t, formatDate } = useIntl();
                     v-if="invoice.invoice_date"
                     variant="body-xs"
                     class="sv-invoice-details__value"
-                >{{
-                    formatDate({
-                        date: invoice.invoice_date,
-                        format: 'date',
-                        timezone: invoice.customer.timezone,
-                        offsetType: 'offsetted',
-                    })
-                }}</Typography>
+                    >{{
+                        formatDate({
+                            date: invoice.invoice_date,
+                            format: 'date',
+                            timezone: invoice.customer.timezone,
+                            offsetType: 'offsetted',
+                        })
+                    }}</Typography
+                >
             </div>
             <div class="sv-invoice-details__row">
                 <Typography variant="caps-heading" class="sv-invoice-details__label">
@@ -60,14 +61,15 @@ const { $t, formatDate } = useIntl();
                     v-if="invoice.due_date"
                     variant="body-xs"
                     class="sv-invoice-details__value"
-                >{{
-                    formatDate({
-                        date: invoice.due_date,
-                        format: 'date',
-                        timezone: invoice.customer.timezone,
-                        offsetType: 'offsetted',
-                    })
-                }}</Typography>
+                    >{{
+                        formatDate({
+                            date: invoice.due_date,
+                            format: 'date',
+                            timezone: invoice.customer.timezone,
+                            offsetType: 'offsetted',
+                        })
+                    }}</Typography
+                >
             </div>
         </div>
     </Section>

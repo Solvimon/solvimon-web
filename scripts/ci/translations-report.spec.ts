@@ -33,7 +33,9 @@ describe('generateTranslationsReport', () => {
     it('includes the translations-report marker', () => {
         const { supported } = setup({ source: {}, supported: ['en-US'], locales: { 'en-US': {} } });
 
-        expect(generateTranslationsReport({ ...defaultArgs, supported })).toContain('<!-- translations-report -->');
+        expect(generateTranslationsReport({ ...defaultArgs, supported })).toContain(
+            '<!-- translations-report -->',
+        );
     });
 
     it('shows NOTE when all locales are complete', () => {
@@ -114,7 +116,9 @@ describe('generateTranslationsReport', () => {
             locales: { 'nl-NL': { a: 'AA' } },
         });
 
-        expect(generateTranslationsReport({ ...defaultArgs, supported })).toContain('2 keys missing');
+        expect(generateTranslationsReport({ ...defaultArgs, supported })).toContain(
+            '2 keys missing',
+        );
     });
 
     it('uses singular "key" for exactly one missing key', () => {
@@ -142,13 +146,17 @@ describe('generateTranslationsReport', () => {
     it('includes the SHA in the footer', () => {
         const { supported } = setup({ source: {}, supported: ['en-US'], locales: { 'en-US': {} } });
 
-        expect(generateTranslationsReport({ ...defaultArgs, supported, sha: 'deadbeef' })).toContain(
-            'Measured at deadbeef',
-        );
+        expect(
+            generateTranslationsReport({ ...defaultArgs, supported, sha: 'deadbeef' }),
+        ).toContain('Measured at deadbeef');
     });
 
     it('shows NOTE when source has no keys', () => {
-        const { supported } = setup({ source: {}, supported: ['en-US', 'nl-NL'], locales: { 'en-US': {}, 'nl-NL': {} } });
+        const { supported } = setup({
+            source: {},
+            supported: ['en-US', 'nl-NL'],
+            locales: { 'en-US': {}, 'nl-NL': {} },
+        });
 
         expect(generateTranslationsReport({ ...defaultArgs, supported })).toContain('> [!NOTE]');
     });

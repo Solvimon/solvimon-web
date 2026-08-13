@@ -43,7 +43,14 @@ vi.mock('@solvimon/solvimon-ui', async () => {
     return createSolvimonUiMock({
         FlexiblePricingInput: defineComponent({
             name: 'FlexiblePricingInputStub',
-            props: ['modelValue', 'config', 'currency', 'creditsConfiguration', 'label', 'disabled'],
+            props: [
+                'modelValue',
+                'config',
+                'currency',
+                'creditsConfiguration',
+                'label',
+                'disabled',
+            ],
             emits: ['update:modelValue'],
             template: '<div data-testid="amount-input" />',
         }),
@@ -294,7 +301,10 @@ describe('TopUpModalForm', () => {
     });
 
     it('starts on nothing when only fixed top-ups are offered, so none is charged by surprise', () => {
-        const wrapper = mountForm([createFixedItem(), createFixedItem({ pricingItemId: 'prii_2' })]);
+        const wrapper = mountForm([
+            createFixedItem(),
+            createFixedItem({ pricingItemId: 'prii_2' }),
+        ]);
 
         expect(radios(wrapper).some((radio) => radio.element.checked)).toBe(false);
         expect(mockPreview).not.toHaveBeenCalled();
@@ -313,7 +323,10 @@ describe('TopUpModalForm', () => {
         expect(radios(wrapper).some((radio) => radio.element.checked)).toBe(false);
 
         await wrapper.setProps({
-            topUpPricingItems: [createFixedItem({ pricingItemId: 'prii_other' }), createFlexibleItem()],
+            topUpPricingItems: [
+                createFixedItem({ pricingItemId: 'prii_other' }),
+                createFlexibleItem(),
+            ],
         });
 
         expect(radios(wrapper).map((radio) => radio.element.checked)).toEqual([false, true]);
@@ -353,7 +366,9 @@ describe('TopUpModalForm', () => {
 
         // Regression: the section wrapping the preview always rendered, and `Skeleton` steps aside for
         // any slot content at all — so the placeholder was unreachable and an empty box stood in.
-        expect(wrapper.find('[data-testid="top-up-invoice-preview-skeleton"]').exists()).toBe(false);
+        expect(wrapper.find('[data-testid="top-up-invoice-preview-skeleton"]').exists()).toBe(
+            false,
+        );
         expect(wrapper.find('[data-testid="invoice-preview"]').exists()).toBe(true);
     });
 
@@ -373,9 +388,7 @@ describe('TopUpModalForm', () => {
 
         expect(mockPreview).toHaveBeenCalledWith({
             pricingPlanScheduleId: 'ppsc_1',
-            pricingItems: [
-                { pricing_item_id: 'prii_flexible', flexible_amount: amountOf('250') },
-            ],
+            pricingItems: [{ pricing_item_id: 'prii_flexible', flexible_amount: amountOf('250') }],
         });
     });
 
@@ -430,7 +443,10 @@ describe('TopUpModalForm', () => {
     });
 
     it('does not build an amount input before its option is ever chosen', () => {
-        const wrapper = mountForm([createFixedItem(), createFlexibleItem({ pricingItemId: 'prii_b' })]);
+        const wrapper = mountForm([
+            createFixedItem(),
+            createFlexibleItem({ pricingItemId: 'prii_b' }),
+        ]);
 
         // Both are flexible-less until opened: `lazy` keeps closed panels empty.
         expect(wrapper.findAll('.expand--open')).toHaveLength(1);
@@ -611,7 +627,10 @@ describe('TopUpModalForm', () => {
 
     it('moves to the default when the chosen method is gone', async () => {
         const wrapper = mountForm([createFlexibleItem()], {
-            paymentMethods: [createPaymentMethod('pm_gone'), createPaymentMethod('pm_default', true)],
+            paymentMethods: [
+                createPaymentMethod('pm_gone'),
+                createPaymentMethod('pm_default', true),
+            ],
         });
         await selector(wrapper).vm.$emit('update:modelValue', 'pm_gone');
         await nextTick();
@@ -750,7 +769,11 @@ describe('TopUpModalForm', () => {
     it('names a credit based top-up in credits rather than in money', async () => {
         const wrapper = mountForm([
             createFlexibleItem({ inCredits: true }),
-            createFixedItem({ pricingItemId: 'prii_fixed', grantedCredits: '100', quantity: '10.00' }),
+            createFixedItem({
+                pricingItemId: 'prii_fixed',
+                grantedCredits: '100',
+                quantity: '10.00',
+            }),
         ]);
 
         await select(wrapper, 1);

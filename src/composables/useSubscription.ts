@@ -12,7 +12,13 @@ export function useSubscription({
     subscriptionId: PricingPlanSubscription['id'];
 }) {
     const { getSubscription } = createSubscriptionsService();
-    const { data, execute: get, apiStatus, error, isPending } = useService({
+    const {
+        data,
+        execute: get,
+        apiStatus,
+        error,
+        isPending,
+    } = useService({
         service: () => getSubscription({ id: subscriptionId, expanded: true }),
     });
 

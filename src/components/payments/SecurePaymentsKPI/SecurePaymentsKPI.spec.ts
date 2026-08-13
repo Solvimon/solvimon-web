@@ -92,5 +92,4 @@ describe('SecurePaymentsKPI', () => {
         });
         expect(wrapper.find('[role="img"]').attributes('aria-label')).toBe('Stripe');
     });
-
 });

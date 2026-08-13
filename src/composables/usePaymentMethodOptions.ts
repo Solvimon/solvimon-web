@@ -28,7 +28,13 @@ export function usePaymentMethodOptions() {
               });
 
     const initialValue: PaymentMethodOptionsResponse = [];
-    const { data, execute: get, apiStatus, error, isPending } = useService({
+    const {
+        data,
+        execute: get,
+        apiStatus,
+        error,
+        isPending,
+    } = useService({
         initialValue,
         service,
     });

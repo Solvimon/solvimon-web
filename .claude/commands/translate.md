@@ -7,15 +7,15 @@ Generate missing translations for all locales (or a specific one if $ARGUMENTS i
 2. Read `src/translations/source.json` and get the supported locales from `SUPPORTED_LOCALES` in `src/translations/supported.js`.
 
 3. For each locale in `SUPPORTED_LOCALES` (or only the locale in $ARGUMENTS if provided):
-   - Read `src/translations/locales/<locale>.json` (treat as empty if it doesn't exist)
-   - Identify every key in `source.json` that is absent from the locale file
+    - Read `src/translations/locales/<locale>.json` (treat as empty if it doesn't exist)
+    - Identify every key in `source.json` that is absent from the locale file
 
 4. For each missing key, produce a translation:
-   - Use the `defaultMessage` value in `source.json` as the source text
-   - For `en-US`, use the `defaultMessage` value verbatim as the translation
-   - If the entry has a `description` field in `source.json`, use it to understand the context (e.g. where the string appears, what it refers to) and let that inform word choice
-   - Look at the existing entries in the target locale file to match style and register
-   - Preserve ICU MessageFormat syntax exactly: `{variable}`, `{date, date, long}`, `{amount, number}`, plural/select blocks, etc. — only translate the human-readable text around them
+    - Use the `defaultMessage` value in `source.json` as the source text
+    - For `en-US`, use the `defaultMessage` value verbatim as the translation
+    - If the entry has a `description` field in `source.json`, use it to understand the context (e.g. where the string appears, what it refers to) and let that inform word choice
+    - Look at the existing entries in the target locale file to match style and register
+    - Preserve ICU MessageFormat syntax exactly: `{variable}`, `{date, date, long}`, `{amount, number}`, plural/select blocks, etc. — only translate the human-readable text around them
 
 5. Write the updated locale file at `src/translations/locales/<locale>.json`, merging the new keys into the existing ones. Keep the existing entries unchanged and add the new ones in alphabetical key order.
 

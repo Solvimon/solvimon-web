@@ -19,7 +19,9 @@ export function useTaxIDValidationCheck(form: Ref<CheckoutFormState>) {
         return isEUCountry(countryCode.value ?? '');
     });
 
-    const isTaxIDCheckEnabled = computed(() => !!(taxId.value && legalName.value && countryCode.value));
+    const isTaxIDCheckEnabled = computed(
+        () => !!(taxId.value && legalName.value && countryCode.value),
+    );
 
     const showViesCheckNotice = computed(() => {
         return isSelectedCountryEU.value && taxId.value;

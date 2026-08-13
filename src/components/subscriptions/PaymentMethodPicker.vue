@@ -97,7 +97,10 @@ onMounted(async () => {
                     v-for="method in savedMethods"
                     :key="method.id"
                     :content-background="selectedId === method.id ? 'none' : 'gray'"
-                    :class="{ 'sv-payment-method-picker__option--selected !bg-white': selectedId === method.id }"
+                    :class="{
+                        'sv-payment-method-picker__option--selected !bg-white':
+                            selectedId === method.id,
+                    }"
                     class="sv-payment-method-picker__option cursor-pointer"
                     @click="emit('select', method.id)"
                 >
@@ -110,10 +113,7 @@ onMounted(async () => {
         </div>
 
         <!-- All payment methods (new) -->
-        <div
-            v-if="newOptions.length > 0"
-            class="sv-payment-method-picker__new flex flex-col gap-2"
-        >
+        <div v-if="newOptions.length > 0" class="sv-payment-method-picker__new flex flex-col gap-2">
             <Typography variant="heading-3" tag="h2" class="sv-payment-method-picker__title">{{
                 $t({
                     defaultMessage: 'All payment methods',
@@ -161,7 +161,11 @@ onMounted(async () => {
                             />
                         </div>
 
-                        <Typography variant="body-sm" class="sv-payment-method-picker__option-label">{{ option.name }}</Typography>
+                        <Typography
+                            variant="body-sm"
+                            class="sv-payment-method-picker__option-label"
+                            >{{ option.name }}</Typography
+                        >
                     </div>
                 </Section>
             </div>

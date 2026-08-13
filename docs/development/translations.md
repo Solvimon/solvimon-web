@@ -19,18 +19,18 @@ src/translations/
 
 ## Scripts
 
-| Script | What it does |
-|---|---|
-| `npm run translations:extract` | Re-scans `src/**/*.{ts,vue}` and regenerates `source.json` |
-| `npm run translations:compile` | Compiles `source.json` → `en-US.json` (run after extract) |
-| `npm run translations:check` | Verifies every key in `source.json` exists in all locale files |
+| Script                         | What it does                                                   |
+| ------------------------------ | -------------------------------------------------------------- |
+| `npm run translations:extract` | Re-scans `src/**/*.{ts,vue}` and regenerates `source.json`     |
+| `npm run translations:compile` | Compiles `source.json` → `en-US.json` (run after extract)      |
+| `npm run translations:check`   | Verifies every key in `source.json` exists in all locale files |
 
 ## Adding a translatable string
 
 Use the `$t` function (or `useI18n().t`) with a string literal ID and a `defaultMessage`:
 
 ```ts
-const label = $t('my_feature.submit_button', { defaultMessage: 'Submit' })
+const label = $t('my_feature.submit_button', { defaultMessage: 'Submit' });
 ```
 
 The ID must be a string literal — dynamic IDs are not extracted. After adding new strings, regenerate the catalog:

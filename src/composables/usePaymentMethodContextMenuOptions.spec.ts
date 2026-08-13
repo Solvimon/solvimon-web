@@ -2,7 +2,8 @@ import type { PaymentMethod } from '@solvimon/solvimon-types';
 import type { ContextMenuItemType, ContextMenuOption } from '@solvimon/solvimon-ui';
 import { usePaymentMethodContextMenuOptions } from './usePaymentMethodContextMenuOptions';
 
-const menuItems = (items: ContextMenuOption[] | undefined) => (items ?? []) as ContextMenuItemType[];
+const menuItems = (items: ContextMenuOption[] | undefined) =>
+    (items ?? []) as ContextMenuItemType[];
 
 vi.mock('@solvimon/solvimon-ui', async () => {
     const { createSolvimonUiMock } = await import('@/test-utils/solvimonUiMock');
@@ -32,7 +33,9 @@ describe('usePaymentMethodContextMenuOptions', () => {
                 onDeleteRequest,
             });
 
-            expect(menuItems(getContextMenuItems(createPaymentMethod({ is_default: false })))).toHaveLength(2);
+            expect(
+                menuItems(getContextMenuItems(createPaymentMethod({ is_default: false }))),
+            ).toHaveLength(2);
         });
 
         it('returns one item for the default payment method', () => {
@@ -41,7 +44,9 @@ describe('usePaymentMethodContextMenuOptions', () => {
                 onDeleteRequest,
             });
 
-            expect(menuItems(getContextMenuItems(createPaymentMethod({ is_default: true })))).toHaveLength(1);
+            expect(
+                menuItems(getContextMenuItems(createPaymentMethod({ is_default: true }))),
+            ).toHaveLength(1);
         });
     });
 
@@ -52,7 +57,9 @@ describe('usePaymentMethodContextMenuOptions', () => {
                 onDeleteRequest,
             });
 
-            const items = menuItems(getContextMenuItems(createPaymentMethod({ is_default: false })));
+            const items = menuItems(
+                getContextMenuItems(createPaymentMethod({ is_default: false })),
+            );
 
             expect(items[0].label).toBe('Set as default');
             expect(items[1].label).toBe('Delete');

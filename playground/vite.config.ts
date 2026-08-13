@@ -4,7 +4,6 @@ import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import vueDevTools from 'vite-plugin-vue-devtools';
 
-
 const SSL_CERT_DIR = './.cert';
 const SSL_CERT_FILE = `${SSL_CERT_DIR}/cert.pem`;
 const SSL_KEY_FILE = `${SSL_CERT_DIR}/dev.pem`;

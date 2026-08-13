@@ -20,7 +20,8 @@ export const screens: StoryEntry[] = [
         kind: 'screen',
         id: 'customer-overview',
         label: 'Customer Overview',
-        description: "Overview of a customer's billing information, subscriptions, invoices, and payment methods.",
+        description:
+            "Overview of a customer's billing information, subscriptions, invoices, and payment methods.",
     },
     {
         kind: 'screen',
@@ -81,7 +82,8 @@ export const components: StoryEntry[] = [
         kind: 'component',
         id: 'invoice-header',
         label: 'Invoice Header',
-        description: 'Displays the header section of a single invoice. Requires configuration.invoiceId.',
+        description:
+            'Displays the header section of a single invoice. Requires configuration.invoiceId.',
         defaultConfiguration: { invoiceId: '' },
     },
     {

@@ -122,9 +122,7 @@ describe('subscription utils', () => {
             const trialStart = '2024-01-01T00:00:00Z';
             const trialEnd = '2024-01-31T00:00:00Z'; // 30 days
             const subscription = {
-                pricing_plan_schedule_infos: [
-                    makeScheduleInfo('TRIAL', trialStart, trialEnd),
-                ],
+                pricing_plan_schedule_infos: [makeScheduleInfo('TRIAL', trialStart, trialEnd)],
             } as unknown as PricingPlanSubscriptionExpanded;
 
             const result = getFallbackTrialAndSubscriptionStartAndEndDates(subscription);
@@ -136,9 +134,7 @@ describe('subscription utils', () => {
 
         it('sets subscriptionStartDate to now when no trial exists', () => {
             const subscription = {
-                pricing_plan_schedule_infos: [
-                    makeScheduleInfo('DEFAULT', '2024-02-01T00:00:00Z'),
-                ],
+                pricing_plan_schedule_infos: [makeScheduleInfo('DEFAULT', '2024-02-01T00:00:00Z')],
             } as unknown as PricingPlanSubscriptionExpanded;
 
             const result = getFallbackTrialAndSubscriptionStartAndEndDates(subscription);
@@ -166,9 +162,7 @@ describe('subscription utils', () => {
             const subStart = '2024-02-01T00:00:00Z';
             const subEnd = '2025-02-01T00:00:00Z'; // 1 year
             const subscription = {
-                pricing_plan_schedule_infos: [
-                    makeScheduleInfo('DEFAULT', subStart, subEnd),
-                ],
+                pricing_plan_schedule_infos: [makeScheduleInfo('DEFAULT', subStart, subEnd)],
             } as unknown as PricingPlanSubscriptionExpanded;
 
             const result = getFallbackTrialAndSubscriptionStartAndEndDates(subscription);

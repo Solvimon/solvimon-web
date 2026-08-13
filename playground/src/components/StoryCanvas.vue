@@ -165,11 +165,7 @@ onUnmounted(() => document.removeEventListener('action-request', handleActionReq
 
         <aside v-if="entry.defaultConfiguration !== undefined" class="config-panel">
             <p class="config-panel-label">Configuration</p>
-            <textarea
-                v-model="configJson"
-                class="config-textarea"
-                spellcheck="false"
-            />
+            <textarea v-model="configJson" class="config-textarea" spellcheck="false" />
             <div class="config-actions">
                 <span v-if="configError" class="config-error">{{ configError }}</span>
                 <button class="apply-btn" @click="applyConfig">Apply</button>

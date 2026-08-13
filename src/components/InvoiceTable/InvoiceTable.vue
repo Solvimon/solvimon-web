@@ -63,9 +63,7 @@ const showLoadMoreButton = computed(() => props.hasMoreItems);
                             })
                         }}
                     </TableHeadCell>
-                    <TableHeadCell
-                        class="sv-table__cell sv-invoices-list__cell--status text-right"
-                    >
+                    <TableHeadCell class="sv-table__cell sv-invoices-list__cell--status text-right">
                         {{
                             $t({
                                 defaultMessage: 'Status',
@@ -78,7 +76,11 @@ const showLoadMoreButton = computed(() => props.hasMoreItems);
                 </TableHeadRow>
             </TableHead>
             <TableBody>
-                <TableRow v-for="invoice in invoices" :key="invoice.id" class="sv-table__row sv-invoices-list__row">
+                <TableRow
+                    v-for="invoice in invoices"
+                    :key="invoice.id"
+                    class="sv-table__row sv-invoices-list__row"
+                >
                     <template v-if="showViewButton" #link>
                         <button
                             type="button"

@@ -9,7 +9,7 @@ const handleReload = () => {
 </script>
 
 <template>
-    <div class="flex w-full min-h-96 justify-center items-center">
+    <div class="flex min-h-96 w-full items-center justify-center">
         <div class="max-w-sm">
             <Typography variant="heading-1">{{
                 $t({

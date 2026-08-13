@@ -121,9 +121,7 @@ const createInvoice = (): Invoice =>
     }) as Invoice;
 
 const getPeriodTitle = (period: { period_order: number }) => `Period ${period.period_order}`;
-const getCreditTypeLabel = (credits?: {
-    credit_type_id?: string;
-}) => {
+const getCreditTypeLabel = (credits?: { credit_type_id?: string }) => {
     if (!credits?.credit_type_id) {
         return 'Credits';
     }

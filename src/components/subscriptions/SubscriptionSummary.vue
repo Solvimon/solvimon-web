@@ -2,7 +2,11 @@
 import { Avatar, Typography, useIntl } from '@solvimon/solvimon-ui';
 import { computed } from 'vue';
 import type { SubscriptionSummaryProps } from './SubscriptionSummary.types';
-import { findPricingsByIds, getMostRecentPricingPlan, getSubscriptionName } from '@/utils/subscription';
+import {
+    findPricingsByIds,
+    getMostRecentPricingPlan,
+    getSubscriptionName,
+} from '@/utils/subscription';
 
 const props = defineProps<SubscriptionSummaryProps>();
 

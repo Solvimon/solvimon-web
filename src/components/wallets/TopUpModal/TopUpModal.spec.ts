@@ -124,7 +124,10 @@ const balanceItem = {
                             bands: [{ fixed_amount: { quantity: '10.00', currency: 'EUR' } }],
                         },
                         wallet_grants: [
-                            { wallet_type_id: 'wtyp_1', credits_grant: { credits: credits('1000') } },
+                            {
+                                wallet_type_id: 'wtyp_1',
+                                credits_grant: { credits: credits('1000') },
+                            },
                         ],
                     },
                 ],

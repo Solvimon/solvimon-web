@@ -11,9 +11,8 @@ vi.mock('@/services/geolocation', () => ({
 }));
 
 vi.mock('@solvimon/solvimon-ui', async () => {
-    const actual = await vi.importActual<typeof import('@solvimon/solvimon-ui')>(
-        '@solvimon/solvimon-ui',
-    );
+    const actual =
+        await vi.importActual<typeof import('@solvimon/solvimon-ui')>('@solvimon/solvimon-ui');
     return {
         ...actual,
         objectDiff: (opts: { from: Record<string, unknown>; to: Record<string, unknown> }) => {

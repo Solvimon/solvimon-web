@@ -52,7 +52,7 @@ describe('useTaxIDValidationCheck', () => {
 
     it('does not call service when selected country is not in EU', async () => {
         mockIsEUCountry.mockReturnValue(false);
-        
+
         const form = createForm({ country: 'US' as CheckoutFormState['country'] });
         const composable = useTaxIDValidationCheck(form);
 
@@ -76,7 +76,7 @@ describe('useTaxIDValidationCheck', () => {
                 },
             ],
         });
-        
+
         const composable = useTaxIDValidationCheck(form);
 
         await composable.runTaxIDCheck();

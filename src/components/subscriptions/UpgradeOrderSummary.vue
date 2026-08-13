@@ -1,13 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import {
-    Amount,
-    Icon,
-    InvoicePreview,
-    Section,
-    Typography,
-    useIntl,
-} from '@solvimon/solvimon-ui';
+import { Amount, Icon, InvoicePreview, Section, Typography, useIntl } from '@solvimon/solvimon-ui';
 import type { Amount as MoneyAmount, Invoice } from '@solvimon/solvimon-types';
 import type { OnDemandPricing } from './SubscriptionManagement/SubscriptionManagement.types';
 
@@ -33,7 +26,8 @@ const invoiceHeader = computed(() => {
     const lineCount = invoiceLineRows.value.length;
 
     return {
-        title: product?.name ?? group?.product_category?.name ?? invoiceLineRows.value[0]?.description,
+        title:
+            product?.name ?? group?.product_category?.name ?? invoiceLineRows.value[0]?.description,
         subtitle:
             lineCount > 1
                 ? $t(
@@ -49,23 +43,22 @@ const invoiceHeader = computed(() => {
     };
 });
 
-const invoiceLineRows = computed<
-    Array<{ key: string; description: string; amount?: MoneyAmount }>
->(() =>
-    (props.invoice?.periods ?? []).flatMap((period, periodIndex) =>
-        period.groups.flatMap((group, groupIndex) =>
-            (group.lines ?? []).map((line, lineIndex) => ({
-                key: `${periodIndex}-${groupIndex}-${lineIndex}`,
-                description:
-                    line.description ??
-                    line.product_items?.[0]?.name ??
-                    group.products?.[0]?.name ??
-                    group.product_category?.name ??
-                    '—',
-                amount: line.amount_excluding_tax,
-            })),
+const invoiceLineRows = computed<Array<{ key: string; description: string; amount?: MoneyAmount }>>(
+    () =>
+        (props.invoice?.periods ?? []).flatMap((period, periodIndex) =>
+            period.groups.flatMap((group, groupIndex) =>
+                (group.lines ?? []).map((line, lineIndex) => ({
+                    key: `${periodIndex}-${groupIndex}-${lineIndex}`,
+                    description:
+                        line.description ??
+                        line.product_items?.[0]?.name ??
+                        group.products?.[0]?.name ??
+                        group.product_category?.name ??
+                        '—',
+                    amount: line.amount_excluding_tax,
+                })),
+            ),
         ),
-    ),
 );
 
 const selectedPricingRows = computed(() =>
@@ -141,12 +134,7 @@ const title = computed(() =>
                             <Typography tag="span" variant="body-xs" class="grow">{{
                                 line.description
                             }}</Typography>
-                            <Typography
-                                v-if="line.amount"
-                                tag="span"
-                                variant="body-xs"
-                                no-spacing
-                            >
+                            <Typography v-if="line.amount" tag="span" variant="body-xs" no-spacing>
                                 <Amount :value="line.amount" />
                             </Typography>
                         </div>

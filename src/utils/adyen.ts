@@ -25,7 +25,10 @@ export function mapAdyenPaymentMethods(
 ): RawPaymentMethod[] {
     return (
         paymentMethodOptionResponse.options
-            ?.filter((option): option is PaymentMethodOptionAdyen => option.payment_gateway_variant === 'ADYEN')
+            ?.filter(
+                (option): option is PaymentMethodOptionAdyen =>
+                    option.payment_gateway_variant === 'ADYEN',
+            )
             .flatMap((adyenPaymentMethodOption) =>
                 mapAdyenPaymentMethod(adyenPaymentMethodOption.adyen),
             ) ?? []
@@ -73,7 +76,10 @@ export function getAdyenEnvironmentFromPaymentMethodOptionsResponse(
         paymentMethodsOptionsResponse?.integration.payment_gateway?.adyen?.environment;
 
     if (!environment) {
-        logger.warn('ADYEN_INVALID_CONFIGURATION', 'No environment set for adyen advanced flow, defaulted to live');
+        logger.warn(
+            'ADYEN_INVALID_CONFIGURATION',
+            'No environment set for adyen advanced flow, defaulted to live',
+        );
         return 'live';
     }
 
@@ -91,7 +97,10 @@ export function getAdyenEnvironmentFromPaymentMethodOptionsResponse(
         case 'LIVE':
             return 'live';
         default:
-            logger.warn('ADYEN_INVALID_CONFIGURATION', `Unsupported environment "${environment}" for adyen advanced flow, defaulted to "live"`);
+            logger.warn(
+                'ADYEN_INVALID_CONFIGURATION',
+                `Unsupported environment "${environment}" for adyen advanced flow, defaulted to "live"`,
+            );
             return 'live';
     }
 }

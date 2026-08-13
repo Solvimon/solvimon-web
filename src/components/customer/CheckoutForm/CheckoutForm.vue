@@ -44,7 +44,8 @@ const country = computed<CountryCode | undefined>({
 
 const showVatIdInput = computed(() => model.value.country !== 'US');
 
-const { isTaxIDCheckEnabled, isTaxIDCheckPending, taxIdValidationData, runTaxIDCheck } = useTaxIDValidationCheck(model);
+const { isTaxIDCheckEnabled, isTaxIDCheckPending, taxIdValidationData, runTaxIDCheck } =
+    useTaxIDValidationCheck(model);
 
 const { $t } = useIntl();
 

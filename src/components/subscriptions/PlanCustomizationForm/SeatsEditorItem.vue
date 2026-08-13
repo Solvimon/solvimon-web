@@ -42,8 +42,8 @@ const isCollapsible = computed(() => !!seats.value.pricing?.tiered?.bands);
 
 <template>
     <div>
-        <div class="flex flex-row-reverse md:flex-row gap-4">
-            <div class="w-24 md:w-32 shrink-0 justify-start">
+        <div class="flex flex-row-reverse gap-4 md:flex-row">
+            <div class="w-24 shrink-0 justify-start md:w-32">
                 <StepInput
                     v-model="seatsNumber"
                     size="sm"
@@ -51,7 +51,7 @@ const isCollapsible = computed(() => !!seats.value.pricing?.tiered?.bands);
                 />
             </div>
             <div
-                class="flex flex-col grow"
+                class="flex grow flex-col"
                 :class="{ 'hover:cursor-pointer': isCollapsible }"
                 :tabindex="isCollapsible ? 0 : undefined"
                 @click="isCollapsible ? (isExpanded = !isExpanded) : undefined"
@@ -103,7 +103,7 @@ const isCollapsible = computed(() => !!seats.value.pricing?.tiered?.bands);
                         <Icon
                             icon="keyboard_arrow_down"
                             size="xs"
-                            class="absolute transition ease-in-out text-gray-400"
+                            class="absolute text-gray-400 transition ease-in-out"
                             :class="{ 'rotate-0': !isExpanded, 'rotate-180': isExpanded }"
                         />
                     </Typography>

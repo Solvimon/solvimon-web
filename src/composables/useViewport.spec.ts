@@ -28,7 +28,13 @@ const mountViewport = (initialMatches: boolean) => {
         }),
     );
 
-    return { wrapper, mql, get isMobileViewport() { return isMobileViewport; } };
+    return {
+        wrapper,
+        mql,
+        get isMobileViewport() {
+            return isMobileViewport;
+        },
+    };
 };
 
 describe('useViewport', () => {

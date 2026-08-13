@@ -2,7 +2,9 @@ import SolvimonSubscriptionManagementVue from './SubscriptionManagement.entry.vu
 import { defineCustomElement } from '@/utils/customElements';
 import { getComponentName } from '@/utils/component';
 
-export const SolvimonSubscriptionManagement = defineCustomElement(SolvimonSubscriptionManagementVue);
+export const SolvimonSubscriptionManagement = defineCustomElement(
+    SolvimonSubscriptionManagementVue,
+);
 export const COMPONENT_NAME = getComponentName('subscription-management');
 
 export const defineSolvimonSubscriptionManagement = () => {

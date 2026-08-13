@@ -59,7 +59,8 @@ vi.mock('@/composables/useSubscriptionUpgradePreview', () => ({
 
 vi.mock('@/components/providers', async () => {
     const { createProviderMock } = await import('@/test-utils/providerMock');
-    const { createTestPortalObject: createPortal } = await import('@/test-utils/portalObjectFixture');
+    const { createTestPortalObject: createPortal } =
+        await import('@/test-utils/portalObjectFixture');
     const { ref } = await import('vue');
 
     return {
@@ -343,9 +344,9 @@ describe('SubscriptionManagement', () => {
             const wrapper = mountComponent({ enabledPricingId: 'pri_1000' });
 
             expect(
-                wrapper.findComponent({ name: 'SubscriptionManagementForm' }).props(
-                    'enabledPricingIds',
-                ),
+                wrapper
+                    .findComponent({ name: 'SubscriptionManagementForm' })
+                    .props('enabledPricingIds'),
             ).toEqual(['pri_1000']);
         });
 
@@ -416,9 +417,9 @@ describe('SubscriptionManagement', () => {
 
     describe('adding a payment method', () => {
         const openAddPaymentMethod = async (wrapper: ReturnType<typeof mountComponent>) => {
-            wrapper.findComponent({ name: 'SubscriptionManagementForm' }).vm.$emit(
-                'add-payment-method',
-            );
+            wrapper
+                .findComponent({ name: 'SubscriptionManagementForm' })
+                .vm.$emit('add-payment-method');
             await wrapper.vm.$nextTick();
 
             return wrapper;
@@ -512,9 +513,9 @@ describe('SubscriptionManagement', () => {
             const wrapper = await update(mountComponent({ enabledPricingId: 'pri_1000' }));
 
             expect(
-                wrapper.findComponent({ name: 'SubscriptionManagementSuccess' }).props(
-                    'pricingGroupName',
-                ),
+                wrapper
+                    .findComponent({ name: 'SubscriptionManagementSuccess' })
+                    .props('pricingGroupName'),
             ).toBe('Credit packs');
         });
 

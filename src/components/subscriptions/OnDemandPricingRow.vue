@@ -42,11 +42,7 @@ const description = computed(() =>
 <template>
     <Section
         :content-background="selected ? 'none' : 'gray'"
-        :content-classes="
-            selected
-                ? '!border-primary-600 ring-1 ring-primary-600'
-                : undefined
-        "
+        :content-classes="selected ? '!border-primary-600 ring-1 ring-primary-600' : undefined"
     >
         <PricingGroupContent :name="title" :description="description">
             <template #default>

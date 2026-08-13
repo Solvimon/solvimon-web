@@ -16,16 +16,18 @@ vi.mock('@solvimon/solvimon-ui', async () => {
             name: 'ModalStub',
             props: { showModal: Boolean, isLoading: Boolean, title: String },
             emits: ['confirm', 'close'],
-            setup: (props, { slots }) => () =>
-                h(
-                    'div',
-                    {
-                        class: 'sv-modal-stub',
-                        'data-open': String(props.showModal),
-                        'data-loading': String(props.isLoading),
-                    },
-                    slots.body?.(),
-                ),
+            setup:
+                (props, { slots }) =>
+                () =>
+                    h(
+                        'div',
+                        {
+                            class: 'sv-modal-stub',
+                            'data-open': String(props.showModal),
+                            'data-loading': String(props.isLoading),
+                        },
+                        slots.body?.(),
+                    ),
         }),
     });
 });

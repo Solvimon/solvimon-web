@@ -167,9 +167,7 @@ describe('CustomerPaymentMethods component', () => {
         });
 
         expect(wrapper.text()).toContain('Add payment method');
-        expect(wrapper.text()).toContain(
-            'Add a payment method for recurring invoice payments.',
-        );
+        expect(wrapper.text()).toContain('Add a payment method for recurring invoice payments.');
     });
 
     it('does not render the add payment method button when there are no payment methods and showAddButton is false', () => {

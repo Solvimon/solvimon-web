@@ -50,7 +50,9 @@ describe('url utils', () => {
 
     describe('sanitizeUrl', () => {
         it('passes through a valid https URL', () => {
-            expect(sanitizeUrl('https://example.com/path?q=1')).toBe('https://example.com/path?q=1');
+            expect(sanitizeUrl('https://example.com/path?q=1')).toBe(
+                'https://example.com/path?q=1',
+            );
         });
 
         it('passes through a valid http URL', () => {

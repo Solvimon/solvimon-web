@@ -5,6 +5,7 @@
 Apply these checks whenever writing or reviewing code in this repository.
 
 ### Path traversal (Node.js scripts)
+
 Any file path derived from external input (arguments, config, environment) must be normalised and confirmed to sit inside the intended directory before use. See the existing guard in `scripts/check-translations.mjs` as the reference pattern:
 
 ```ts
@@ -15,25 +16,30 @@ if (!filePath.startsWith(baseDir + path.sep)) {
 ```
 
 ### XSS
+
 - Vue 3 templates escape output by default — keep it that way.
 - Never use `v-html` with content that originates from user input or API responses.
 - ICU translation strings may contain `<strong>` and similar tags rendered via `v-html`; only safe, hard-coded tags are acceptable there — never interpolate user data into those strings.
 
 ### Authentication & tokens
+
 - The bearer token is injected by `createRequestService` — do not read or forward `accessToken` anywhere else.
 - Never log tokens, credentials, or full authorization headers (not even to `console.error`).
 - Token parsing (`parseToken` in `src/utils/token.ts`) must stay within a try/catch; never let a malformed token propagate uncaught.
 
 ### API requests
+
 - Always use `createRequestService` for API calls — it handles auth headers and error propagation consistently.
 - URL construction uses `new URL()` + `searchParams.append()` — never build URLs by string concatenation.
 - `credentials: 'omit'` must remain on all `fetch` calls to prevent credential leakage in cross-origin requests.
 
 ### Input validation
+
 - Use Vuelidate (`@vuelidate/core`) for all form validation. Do not roll custom validation logic for fields like email, VAT numbers, or amounts.
 - Validate and sanitise query parameters read via `getQueryParam` before using them in any logic.
 
 ### Secrets
+
 - Never hard-code API keys, tokens, or passwords.
 - `.env` files must not be committed (already in `.gitignore`).
 

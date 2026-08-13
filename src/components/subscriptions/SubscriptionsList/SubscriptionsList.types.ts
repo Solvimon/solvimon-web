@@ -7,12 +7,10 @@ export interface SubscriptionsListProps {
     isLoading: boolean;
     showViewAllButton?: boolean;
     showViewDetailsButton?: boolean;
-    showUpgradeButton?: boolean;
 }
 
 export interface SubscriptionsListEmits {
     (e: 'view-subscription-details', payload: { subscriptionId: string }): void;
     (e: 'view-all-subscriptions'): void;
-    (e: 'manage-subscription', payload: { subscriptionId: string }): void;
     (e: 'load-more'): void;
 }

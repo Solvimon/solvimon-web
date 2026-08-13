@@ -26,7 +26,6 @@ const { dispatchAction } = useActionDispatchProvider();
         :is-loading="isLoading"
         :show-view-all-button="configuration?.showViewAllButton"
         :show-view-details-button="configuration?.showViewDetailsButton"
-        :show-upgrade-button="configuration?.showUpgradeButton"
         @view-subscription-details="
             dispatchAction({
                 action: 'view-subscription-details',
@@ -34,12 +33,6 @@ const { dispatchAction } = useActionDispatchProvider();
             })
         "
         @view-all-subscriptions="dispatchAction({ action: 'view-all-subscriptions' })"
-        @manage-subscription="
-            dispatchAction({
-                action: 'manage-subscription',
-                data: { subscriptionId: $event.subscriptionId },
-            })
-        "
         @load-more="$emit('load-more')"
     />
 </template>

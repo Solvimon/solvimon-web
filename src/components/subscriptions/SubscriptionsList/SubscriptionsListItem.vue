@@ -9,7 +9,6 @@ import { getMostRecentPricingPlan, getSubscriptionName } from '@/utils/subscript
 
 const props = withDefaults(defineProps<SubscriptionsListItemProps>(), {
     showViewSubscriptionDetailsButton: true,
-    showUpgradeSubscriptionButton: true,
 });
 defineEmits<SubscriptionsListItemEmits>();
 
@@ -98,23 +97,6 @@ const isDetailButtonVisible = computed<boolean>(() => props.showViewSubscription
                             description:
                                 'The label for the subscription details button in the subscriptions block',
                             id: 'customer.subscriptions_block.show_details_button_label',
-                        })
-                    }}
-                </Button>
-                <Button
-                    v-if="showUpgradeSubscriptionButton"
-                    variant="outline"
-                    color="gray"
-                    class="sv-action sv-action--secondary sv-subscriptions-list__item-upgrade w-full md:w-auto"
-                    type="button"
-                    @click="$emit('manage-subscription', { subscriptionId: subscription.id })"
-                >
-                    {{
-                        $t({
-                            defaultMessage: 'Upgrade subscription',
-                            description:
-                                'The label for the upgrade subscription button in the subscriptions block',
-                            id: 'customer.subscriptions_block.upgrade_button_label',
                         })
                     }}
                 </Button>

@@ -1,4 +1,4 @@
-import type { PaymentMethod } from '@solvimon/solvimon-types';
+import type { PaymentMethod, PaymentMethodOptionsResponse } from '@solvimon/solvimon-types';
 import type { RadioGroupExtendedProps } from '@solvimon/solvimon-ui';
 
 export interface PaymentMethodSelectorProps {
@@ -37,6 +37,12 @@ export interface PaymentMethodSelectorProps {
      * @default true
      */
     showAddOption?: boolean;
+    /**
+     * The methods the customer is allowed to add — card, direct debit, and so on. An empty list
+     * means there is nothing to add, which is said in place of the button. Left out when the caller
+     * has not looked them up, in which case adding stays on offer.
+     */
+    paymentMethodOptions?: PaymentMethodOptionsResponse;
 }
 
 export interface PaymentMethodSelectorEmits {

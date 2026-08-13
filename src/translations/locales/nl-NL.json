@@ -139,6 +139,7 @@
     "payment_method.context_menu.delete.label": "Verwijderen",
     "payment_method.context_menu.set_as_default.label": "Instellen als standaard",
     "payment_method_selector.add_payment_method": "Betaalmethode toevoegen",
+    "payment_method_selector.no_payment_methods_available": "Er zijn geen beschikbare betaalmethoden. Neem contact op met de ondersteuning voor meer informatie.",
     "payment_methods_list.delete_modal.body": "Weet u zeker dat u deze betaalmethode wilt verwijderen?",
     "payment_methods_list.delete_modal.cancel": "Annuleren",
     "payment_methods_list.delete_modal.confirm": "Verwijderen",

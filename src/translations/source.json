@@ -519,6 +519,10 @@
     "defaultMessage": "Add payment method",
     "description": "Label of the button that adds a new payment method"
   },
+  "payment_method_selector.no_payment_methods_available": {
+    "defaultMessage": "There are no available payment methods. Please contact support for more information.",
+    "description": "Shown in place of the add button when the customer cannot add any payment method"
+  },
   "payment_methods_list.delete_modal.body": {
     "defaultMessage": "Are you sure you want to delete this payment method?",
     "description": "Confirmation message in the delete payment method modal"

@@ -1,5 +1,11 @@
 <script setup lang="ts">
-import { Button, PaymentMethod, RadioGroupExtended, useIntl } from '@solvimon/solvimon-ui';
+import {
+    Button,
+    PaymentMethod,
+    RadioGroupExtended,
+    Typography,
+    useIntl,
+} from '@solvimon/solvimon-ui';
 import { computed, toRef } from 'vue';
 import type {
     PaymentMethodSelectorEmits,
@@ -25,6 +31,9 @@ const selectedValue = computed<string | boolean | undefined>({
 });
 
 const hasPaymentMethods = computed(() => props.paymentMethods.length > 0);
+
+/** Nothing can be added when none of the methods is on offer, so the button would lead nowhere. */
+const canAddPaymentMethod = computed(() => props.paymentMethodOptions?.length !== 0);
 </script>
 
 <template>
@@ -57,7 +66,7 @@ const hasPaymentMethods = computed(() => props.paymentMethods.length > 0);
         </div>
 
         <Button
-            v-if="showAddOption"
+            v-if="showAddOption && canAddPaymentMethod"
             class="sv-action sv-action--secondary sv-action--full-width sv-payment-method-selector__add w-full"
             variant="outline"
             color="gray"
@@ -74,5 +83,23 @@ const hasPaymentMethods = computed(() => props.paymentMethods.length > 0);
                 })
             }}
         </Button>
+
+        <Typography
+            v-else-if="showAddOption"
+            variant="body-sm"
+            shade="lighter"
+            tag="p"
+            class="sv-payment-method-selector__unavailable"
+        >
+            {{
+                $t({
+                    defaultMessage:
+                        'There are no available payment methods. Please contact support for more information.',
+                    description:
+                        'Shown in place of the add button when the customer cannot add any payment method',
+                    id: 'payment_method_selector.no_payment_methods_available',
+                })
+            }}
+        </Typography>
     </div>
 </template>

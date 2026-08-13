@@ -129,6 +129,7 @@
   "payment_method.context_menu.delete.label": "Delete",
   "payment_method.context_menu.set_as_default.label": "Set as default",
   "payment_method_selector.add_payment_method": "Add payment method",
+  "payment_method_selector.no_payment_methods_available": "There are no available payment methods. Please contact support for more information.",
   "payment_methods_list.delete_modal.body": "Are you sure you want to delete this payment method?",
   "payment_methods_list.delete_modal.cancel": "Cancel",
   "payment_methods_list.delete_modal.confirm": "Delete",

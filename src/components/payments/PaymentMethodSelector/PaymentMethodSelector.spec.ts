@@ -1,6 +1,10 @@
 import { mount } from '@vue/test-utils';
 import { defineComponent, h } from 'vue';
-import type { Customer, PaymentMethod } from '@solvimon/solvimon-types';
+import type {
+    Customer,
+    PaymentMethod,
+    PaymentMethodOptionsResponse,
+} from '@solvimon/solvimon-types';
 import PaymentMethodSelector from './PaymentMethodSelector.vue';
 
 // ─── UI library mock ──────────────────────────────────────────────────────────
@@ -161,6 +165,32 @@ describe('PaymentMethodSelector', () => {
         const wrapper = mountComponent({ showAddOption: false });
 
         expect(wrapper.find('[data-testid="add-button"]').exists()).toBe(false);
+        expect(wrapper.find('.sv-payment-method-selector__unavailable').exists()).toBe(false);
+    });
+
+    it('offers adding when there are methods on offer to add', () => {
+        const wrapper = mountComponent({
+            paymentMethodOptions: [{ type: 'CARD' }] as unknown as PaymentMethodOptionsResponse,
+        });
+
+        expect(wrapper.find('[data-testid="add-button"]').exists()).toBe(true);
+        expect(wrapper.find('.sv-payment-method-selector__unavailable').exists()).toBe(false);
+    });
+
+    it('says nothing is available instead of offering to add when there is nothing to add', () => {
+        const wrapper = mountComponent({ paymentMethodOptions: [] });
+
+        expect(wrapper.find('[data-testid="add-button"]').exists()).toBe(false);
+        expect(wrapper.find('.sv-payment-method-selector__unavailable').text()).toBe(
+            'There are no available payment methods. Please contact support for more information.',
+        );
+    });
+
+    it('keeps offering to add while the caller has not looked the options up', () => {
+        const wrapper = mountComponent();
+
+        expect(wrapper.find('[data-testid="add-button"]').exists()).toBe(true);
+        expect(wrapper.find('.sv-payment-method-selector__unavailable').exists()).toBe(false);
     });
 
     it('renders the group label', () => {

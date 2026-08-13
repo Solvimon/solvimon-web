@@ -4,10 +4,8 @@ import type {
     Customer,
     Invoice,
     InvoicePreview,
-    PricingPlanSubscription,
     ApiSuccessCollectionResponse,
     PricingPlanSchedule,
-    PricingPlanScheduleCustomization,
 } from '@solvimon/solvimon-types';
 import { downloadFile, withPagination } from '@solvimon/solvimon-ui';
 import { createRequestService } from './requests';
@@ -37,12 +35,7 @@ interface InvoicesService {
         query?: Record<string, string | number | null | undefined>;
     }) => Promise<ApiSuccessCollectionResponse<Invoice>>;
     getInvoicePdf: (id: string) => Promise<void>;
-    getInvoicePreview: (args: {
-        customer: Partial<Customer>;
-        pricingPlanSubscriptionId: PricingPlanSubscription['id'];
-        startAt?: PricingPlanSchedule['start_at'];
-        customizations?: PricingPlanScheduleCustomization[];
-    }) => Promise<InvoicePreview>;
+    getInvoicePreview: (args: GetInvoicePreviewPayload) => Promise<InvoicePreview>;
     previewChargeOnDemandPricingItems: (
         args: ChargeOnDemandPricingItemsPreviewPayload,
     ) => Promise<Invoice>;
@@ -133,21 +126,29 @@ export function createInvoicesService(): InvoicesService {
         startAt,
         customizations,
         pricing_plan_schedule_customizations,
+        forExistingSubscription = false,
     }: GetInvoicePreviewPayload) {
         return request<InvoicePreview>({
             url: `${config.apiUrls.transaction}/portal/invoices/preview`,
             options: { method: 'POST' },
             data: {
-                template_pricing_plan_subscription_id: pricingPlanSubscriptionId,
+                // A subscription that is already running is priced as itself, and its customer is
+                // known. One that does not exist yet is priced off the template it would be created
+                // from, for the details it would be invoiced to.
+                ...(forExistingSubscription
+                    ? { pricing_plan_subscription_id: pricingPlanSubscriptionId }
+                    : {
+                          template_pricing_plan_subscription_id: pricingPlanSubscriptionId,
+                          customer_details: {
+                              ...customer,
+                              reference: 'preview',
+                          },
+                      }),
                 ...(startAt && { start_at: startAt }),
                 ...(customizations && { pricing_plan_schedule_customizations: customizations }),
                 ...(pricing_plan_schedule_customizations && {
                     pricing_plan_schedule_customizations,
                 }),
-                customer_details: {
-                    ...customer,
-                    reference: 'preview',
-                },
             },
         });
     }

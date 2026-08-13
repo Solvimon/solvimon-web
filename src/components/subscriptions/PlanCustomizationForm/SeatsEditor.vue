@@ -20,13 +20,17 @@ const itemModel = (index: number) =>
 </script>
 
 <template>
-    <Section v-for="(item, index) in modelValue" :key="index">
-        <SeatsEditorItem
-            v-if="item.pricing_item_config_id"
-            :key="item.pricing_item_config_id"
-            v-model="itemModel(index).value"
-            :default-value="initialSeatsValues?.[index]"
-            :pricings="pricings"
-        />
-    </Section>
+    <!-- Single root so fallthrough attributes are inherited; the grid mirrors the
+         parent's own so the sections keep the same spacing as when they were siblings. -->
+    <div v-if="modelValue.length > 0" class="grid grid-cols-1 gap-1">
+        <Section v-for="(item, index) in modelValue" :key="index">
+            <SeatsEditorItem
+                v-if="item.pricing_item_config_id"
+                :key="item.pricing_item_config_id"
+                v-model="itemModel(index).value"
+                :default-value="initialSeatsValues?.[index]"
+                :pricings="pricings"
+            />
+        </Section>
+    </div>
 </template>

@@ -1,4 +1,20 @@
 {
+  "add_payment_method_modal.cancel_button.label": {
+    "defaultMessage": "Cancel",
+    "description": "Label of the button that abandons adding a payment method"
+  },
+  "add_payment_method_modal.confirm_button.label": {
+    "defaultMessage": "Save payment method",
+    "description": "Label of the button that stores the payment method being added"
+  },
+  "add_payment_method_modal.subtitle": {
+    "defaultMessage": "Add a new payment method to pay with.",
+    "description": "Subtitle of the modal for adding a payment method"
+  },
+  "add_payment_method_modal.title": {
+    "defaultMessage": "Add payment method",
+    "description": "Title of the modal for adding a payment method"
+  },
   "addon_multiple_editor.add_to_subscription_button": {
     "defaultMessage": "Add to subscription",
     "description": "The button to add a pricing to the subscription"

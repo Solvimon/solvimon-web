@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0-alpha.17] - 2026-08-13
+
+### Added
+
+- Added a Subscription Details screen showing a subscription's plan, wallet balances, and the upgrades available on it.
+- Added a Subscription Management screen where customers can change the plan a running subscription is on, with an order summary that prices the change before it is committed and a confirmation once it goes through.
+- Added wallet top-ups: customers can top up a balance from the customer overview and see what the top-up will be invoiced for before paying.
+- Added the ability to apply a promotion code during checkout, including codes supplied up front.
+- Added a modal for adding a payment method, so a customer adding one mid-flow keeps the choice they were making.
+- Added a payment method selector for choosing between saved payment methods.
+- SDK logs are now mirrored to the browser console outside production.
+
+### Changed
+
+- Upgrading is now offered per pricing on the Subscription Details screen instead of by a single button on the subscriptions list. The list's `showUpgradeButton` configuration option has been removed along with it.
+- The Upgrade Subscription screen is now called Subscription Management.
+- The payment method form can now be driven by the surrounding screen, which can submit it, hide its button, and set its title.
+- Adding a payment method is now only offered when the customer has methods available to add; otherwise the selector says none are available.
+- Wallet balances are now rendered with the shared Solvimon UI component.
+
+### Fixed
+
+- Fixed component styles from the Solvimon UI package not reaching the SDK's components, which left parts of the interface unstyled.
+- Fixed the checkout silently loading nothing when a subscription's response left out its nested schedule: neither the invoice preview nor the available payment methods appeared, and no error was reported.
+- Fixed classes passed to the promotion code section and the seats editor being dropped instead of applied.
+
 ## [0.1.0-alpha.16] - 2026-07-28
 
 ### Fixed

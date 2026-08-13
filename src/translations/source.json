@@ -667,6 +667,10 @@
     "defaultMessage": "Subscription details",
     "description": "Title for the subscription details page"
   },
+  "subscription_management.done_button.label": {
+    "defaultMessage": "Done",
+    "description": "Label of the button that leaves the manage subscription screen once the change is committed"
+  },
   "subscription_management.order_summary.empty_state": {
     "defaultMessage": "Select your items",
     "description": "Placeholder shown when no items are selected in the order summary"
@@ -744,8 +748,20 @@
     "description": "Heading above the total of the invoice previewing a subscription change, replacing the shared preview\u2019s \"Total due today\""
   },
   "subscription_management.title": {
-    "defaultMessage": "Upgrade subscription",
-    "description": "Title for the upgrade subscription page"
+    "defaultMessage": "Manage {subject}",
+    "description": "Title for the manage subscription page, naming the pricing group being changed"
+  },
+  "subscription_management.title.default_subject": {
+    "defaultMessage": "subscription",
+    "description": "Stands in for the pricing group name in the manage subscription title when no group is known, e.g. \"Manage subscription\""
+  },
+  "subscription_management.update_button.label": {
+    "defaultMessage": "Update subscription",
+    "description": "Label of the button that commits the subscription change"
+  },
+  "subscription_management.update_error": {
+    "defaultMessage": "Something went wrong. Please try again.",
+    "description": "Error shown when committing a subscription change fails"
   },
   "subscription_payment_completed_card.thank_you_for_subscribing": {
     "defaultMessage": "Thank you for subscribing.",

@@ -27,8 +27,7 @@ export function getFirstPricingPlanScheduleOfType({
     type: PricingPlanScheduleInfo['type'];
 }): PricingPlanScheduleInfoExpanded | undefined {
     return (pricingPlanScheduleInfos ?? []).find(
-        (scheduleInfo) =>
-            (scheduleInfo.pricing_plan_schedule?.type ?? scheduleInfo.type) === type,
+        (scheduleInfo) => (scheduleInfo.pricing_plan_schedule?.type ?? scheduleInfo.type) === type,
     );
 }
 
@@ -41,7 +40,9 @@ export function getActiveDefaultScheduleId(
     subscriptions: PricingPlanSubscriptionExpanded[],
 ): PricingPlanScheduleInfoExpanded['id'] | undefined {
     return getActiveDefaultScheduleInfo(
-        subscriptions.flatMap(({ pricing_plan_schedule_infos }) => pricing_plan_schedule_infos ?? []),
+        subscriptions.flatMap(
+            ({ pricing_plan_schedule_infos }) => pricing_plan_schedule_infos ?? [],
+        ),
     )?.id;
 }
 

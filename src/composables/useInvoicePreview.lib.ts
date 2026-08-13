@@ -43,9 +43,7 @@ export const buildAddress = (customer: Partial<Customer>): Address => {
  * Turn (possibly incomplete) customer details into the customer of an invoice preview request,
  * falling back to placeholders for anything the customer has not provided yet.
  */
-export const buildCustomerPayload = (
-    customer: Partial<Customer>,
-): GetInvoicePreviewCustomer => {
+export const buildCustomerPayload = (customer: Partial<Customer>): GetInvoicePreviewCustomer => {
     const address = buildAddress(customer);
     const type = customer.type ?? 'INDIVIDUAL';
 

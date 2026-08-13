@@ -53,10 +53,7 @@ describe('paymentMethods utils', () => {
 
     describe('getPaymentMethodOptionsWithoutExpress', () => {
         it('removes entries whose only option is an express method', () => {
-            const response = makeResponse(
-                [makeOption('Apple Pay')],
-                [makeOption('Credit Card')],
-            );
+            const response = makeResponse([makeOption('Apple Pay')], [makeOption('Credit Card')]);
             const result = getPaymentMethodOptionsWithoutExpress(response);
             expect(result).toHaveLength(1);
             expect(result[0].options![0].name).toBe('Credit Card');
@@ -83,7 +80,11 @@ describe('paymentMethods utils', () => {
         });
 
         it('returns empty array for an empty response', () => {
-            expect(getPaymentMethodOptionsWithoutExpress([] as unknown as PaymentMethodOptionsResponse)).toEqual([]);
+            expect(
+                getPaymentMethodOptionsWithoutExpress(
+                    [] as unknown as PaymentMethodOptionsResponse,
+                ),
+            ).toEqual([]);
         });
     });
 

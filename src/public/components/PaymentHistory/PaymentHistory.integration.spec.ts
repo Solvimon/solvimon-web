@@ -1,6 +1,11 @@
 import { mount } from '@vue/test-utils';
 import { defineComponent, h, ref } from 'vue';
-import type { ApiSuccessCollectionResponse, Customer, Invoice, Payment } from '@solvimon/solvimon-types';
+import type {
+    ApiSuccessCollectionResponse,
+    Customer,
+    Invoice,
+    Payment,
+} from '@solvimon/solvimon-types';
 import PaymentHistoryEntry from './PaymentHistory.entry.vue';
 import { createTestPortalObject } from '@/test-utils/portalObjectFixture';
 
@@ -30,7 +35,8 @@ vi.mock('@solvimon/solvimon-ui', async () => {
             name: 'PaymentMethodStub',
             props: { paymentMethod: { type: Object, required: true } },
             setup(_, { slots }) {
-                return () => h('div', { 'data-testid': 'payment-method-stub' }, [slots.description?.()]);
+                return () =>
+                    h('div', { 'data-testid': 'payment-method-stub' }, [slots.description?.()]);
             },
         }),
     });

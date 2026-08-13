@@ -36,9 +36,7 @@ const { isLoading } = useLoadInitialData(
     fetchWalletBalances(),
 );
 
-const schedulesData = computed(() =>
-    subscription.value ? withPlanData(subscription.value) : [],
-);
+const schedulesData = computed(() => (subscription.value ? withPlanData(subscription.value) : []));
 
 // Computed at the top level so the template unwraps the ref — nested access does not.
 const walletBalanceItems = computed(() => walletBalances.value?.wallet_balances ?? []);

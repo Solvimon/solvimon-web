@@ -30,7 +30,9 @@ describe('useSeatBasedPricing', () => {
             id,
             order: 0,
             billing_in_advance: billingInAdvance,
-            billing_period_configs: billingPeriod ? [{ billing_period: billingPeriod, configs: [] }] : undefined,
+            billing_period_configs: billingPeriod
+                ? [{ billing_period: billingPeriod, configs: [] }]
+                : undefined,
             details: {
                 pricing_type: type,
                 bands,

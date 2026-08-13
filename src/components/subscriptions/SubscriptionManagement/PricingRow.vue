@@ -38,9 +38,8 @@ const pricingItemId = computed(() => props.pricing.items?.[0]?.id);
                 variant="body-xs"
                 shade="lighter"
                 class="sv-pricing-list__description"
-            >{{
-                description
-            }}</Typography>
+                >{{ description }}</Typography
+            >
             <div class="sv-pricing-list__price mt-0.5 flex items-center gap-1">
                 <Typography v-if="price" variant="body-sm" shade="lighter">{{
                     formatAmount(price)

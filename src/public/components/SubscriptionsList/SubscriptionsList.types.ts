@@ -1,4 +1,8 @@
-import type { Customer, PaymentMethod, PricingPlanSubscriptionExpanded } from '@solvimon/solvimon-types';
+import type {
+    Customer,
+    PaymentMethod,
+    PricingPlanSubscriptionExpanded,
+} from '@solvimon/solvimon-types';
 
 export type SubscriptionsListConfiguration = {
     maxItems?: number;

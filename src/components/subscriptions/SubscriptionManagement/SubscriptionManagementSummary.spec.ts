@@ -27,7 +27,10 @@ vi.mock('@/components/providers/TranslationProvider/TranslationOverride.vue', ()
     default: defineComponent({
         name: 'TranslationOverrideStub',
         props: { messages: { type: Object, required: true } },
-        setup: (_props, { slots }) => () => h('div', {}, slots.default?.()),
+        setup:
+            (_props, { slots }) =>
+            () =>
+                h('div', {}, slots.default?.()),
     }),
 }));
 

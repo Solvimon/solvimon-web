@@ -42,16 +42,14 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     const source = JSON.parse(fs.readFileSync(path.join(translationsDir, 'source.json'), 'utf-8'));
     const sourceKeys = Object.keys(source);
 
-    const files = SUPPORTED_LOCALES
-        .map((locale) => {
-            try {
-                return resolveSafePath(`${locale}.json`, localesDir);
-            } catch {
-                console.error(`⚠️ Skipping suspicious locale: ${locale}`);
-                return null;
-            }
-        })
-        .filter(Boolean);
+    const files = SUPPORTED_LOCALES.map((locale) => {
+        try {
+            return resolveSafePath(`${locale}.json`, localesDir);
+        } catch {
+            console.error(`⚠️ Skipping suspicious locale: ${locale}`);
+            return null;
+        }
+    }).filter(Boolean);
 
     const results = checkTranslations(sourceKeys, files, (f) => fs.readFileSync(f, 'utf-8'));
 

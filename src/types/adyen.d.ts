@@ -4,5 +4,4 @@ declare module '@adyen/adyen-web' {
     }
 }
 
-
 export {};

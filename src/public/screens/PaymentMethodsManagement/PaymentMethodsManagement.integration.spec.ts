@@ -1,6 +1,10 @@
 import { mount } from '@vue/test-utils';
 import { defineComponent, h, nextTick } from 'vue';
-import type { Customer, PaymentMethod, PaymentMethodOptionsResponse } from '@solvimon/solvimon-types';
+import type {
+    Customer,
+    PaymentMethod,
+    PaymentMethodOptionsResponse,
+} from '@solvimon/solvimon-types';
 import PaymentMethodsManagement from './PaymentMethodsManagement.vue';
 import PaymentMethodsList from '@/components/payments/PaymentMethodsList/PaymentMethodsList.vue';
 

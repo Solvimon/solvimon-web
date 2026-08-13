@@ -527,7 +527,10 @@ describe('adyen utils', () => {
         });
 
         it('should default to live when paymentMethodOptionResponse is undefined', () => {
-            const result = getAdyenEnvironmentFromPaymentMethodOptionsResponse(undefined, noopLogger);
+            const result = getAdyenEnvironmentFromPaymentMethodOptionsResponse(
+                undefined,
+                noopLogger,
+            );
 
             expect(result).toBe('live');
         });

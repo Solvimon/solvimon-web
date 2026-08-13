@@ -5,15 +5,21 @@ import InvoiceEntry from './Invoice.entry.vue';
 import type { SolvimonInvoiceEntryProps } from './Invoice.entry.types';
 import { createTestPortalObject } from '@/test-utils/portalObjectFixture';
 
-const { mockUseInvoice, mockUsePayments, mockUseLoadInitialData, mockDownloadInvoicePdf, mockInvoiceGet, mockPaymentsGet } =
-    vi.hoisted(() => ({
-        mockUseInvoice: vi.fn(),
-        mockUsePayments: vi.fn(),
-        mockUseLoadInitialData: vi.fn(),
-        mockDownloadInvoicePdf: vi.fn(),
-        mockInvoiceGet: vi.fn(),
-        mockPaymentsGet: vi.fn(),
-    }));
+const {
+    mockUseInvoice,
+    mockUsePayments,
+    mockUseLoadInitialData,
+    mockDownloadInvoicePdf,
+    mockInvoiceGet,
+    mockPaymentsGet,
+} = vi.hoisted(() => ({
+    mockUseInvoice: vi.fn(),
+    mockUsePayments: vi.fn(),
+    mockUseLoadInitialData: vi.fn(),
+    mockDownloadInvoicePdf: vi.fn(),
+    mockInvoiceGet: vi.fn(),
+    mockPaymentsGet: vi.fn(),
+}));
 
 vi.mock('./Invoice.entry.ce', () => ({
     COMPONENT_NAME: 'solvimon-invoice',

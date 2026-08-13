@@ -26,7 +26,7 @@ const handleRetry = (): void => {
 </script>
 
 <template>
-    <div :class="['flex flex-col gap-1 items-center text-center', { 'p-3 pt-2': withSpacing }]">
+    <div :class="['flex flex-col items-center gap-1 text-center', { 'p-3 pt-2': withSpacing }]">
         <Typography variant="body-xs" shade="light" weight="semibold">
             {{ title }}
         </Typography>

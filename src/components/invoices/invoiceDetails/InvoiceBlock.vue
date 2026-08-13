@@ -45,7 +45,9 @@ const { isMobileViewport: isSmallScreen } = useViewport();
             >
                 <template #logo> <slot name="logo" /> </template
             ></InvoiceSummary>
-            <InvoiceCreditsBreakdown class="sv-invoice__credits-breakdown" :invoice="invoice" />
-        </div
+            <InvoiceCreditsBreakdown
+                class="sv-invoice__credits-breakdown"
+                :invoice="invoice"
+            /></div
     ></Section>
 </template>

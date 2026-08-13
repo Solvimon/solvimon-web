@@ -1,5 +1,11 @@
 <script setup lang="ts">
-import { ErrorNotification, InvoicePreview, Section, Typography, useIntl } from '@solvimon/solvimon-ui';
+import {
+    ErrorNotification,
+    InvoicePreview,
+    Section,
+    Typography,
+    useIntl,
+} from '@solvimon/solvimon-ui';
 import { computed } from 'vue';
 import type { SubscriptionManagementSummaryProps } from './SubscriptionManagementSummary.types';
 import Skeleton from '@/components/shared/Skeleton.vue';
@@ -30,7 +36,8 @@ const invoicePreviewMessages = computed(() => ({
             $t({
                 defaultMessage: 'Order summary',
                 id: 'subscription_management.summary.title',
-                description: 'Title of the block previewing what a subscription change is invoiced for',
+                description:
+                    'Title of the block previewing what a subscription change is invoiced for',
             })
         "
     >

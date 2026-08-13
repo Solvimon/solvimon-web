@@ -1,4 +1,3 @@
-
 import { STRIPE_SCRIPT_URL } from './PaymentIntegrationFormStripe.constants.ts';
 
 /**

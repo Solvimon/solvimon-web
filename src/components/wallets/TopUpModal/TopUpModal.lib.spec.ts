@@ -320,7 +320,11 @@ describe('getTopUpPricingItems pricing kinds', () => {
     it('marks a fixed pricing with no amount as not chargeable', () => {
         const [result] = getTopUpPricingItems(
             createBalanceItem([
-                { id: 'pico_fixed', on_demand: true, details: { pricing_type: 'FIXED', bands: [] } },
+                {
+                    id: 'pico_fixed',
+                    on_demand: true,
+                    details: { pricing_type: 'FIXED', bands: [] },
+                },
             ]),
         );
 

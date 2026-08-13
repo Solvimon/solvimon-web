@@ -29,7 +29,13 @@ function makeSummary({
     };
 }
 
-function setup({ pr, base }: { pr: ReturnType<typeof makeSummary>; base?: ReturnType<typeof makeSummary> }) {
+function setup({
+    pr,
+    base,
+}: {
+    pr: ReturnType<typeof makeSummary>;
+    base?: ReturnType<typeof makeSummary>;
+}) {
     mockExistsSync.mockReturnValue(!!base as never);
     mockReadFileSync.mockReturnValueOnce(JSON.stringify(pr) as never);
     if (base) {
@@ -37,7 +43,12 @@ function setup({ pr, base }: { pr: ReturnType<typeof makeSummary>; base?: Return
     }
 }
 
-const defaultArgs = { prPath: '/tmp/pr.json', basePath: '/tmp/base.json', sha: 'abc1234', baseRef: 'main' };
+const defaultArgs = {
+    prPath: '/tmp/pr.json',
+    basePath: '/tmp/base.json',
+    sha: 'abc1234',
+    baseRef: 'main',
+};
 
 describe('generateCoverageReport', () => {
     beforeEach(() => vi.clearAllMocks());

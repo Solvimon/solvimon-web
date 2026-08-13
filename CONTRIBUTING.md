@@ -67,14 +67,14 @@ This project uses [Conventional Commits](https://www.conventionalcommits.org/en/
 
 Common types:
 
-| Type | When to use |
-|------|-------------|
-| `feat` | A new feature or capability |
-| `fix` | A bug fix |
-| `docs` | Documentation changes only |
+| Type       | When to use                                             |
+| ---------- | ------------------------------------------------------- |
+| `feat`     | A new feature or capability                             |
+| `fix`      | A bug fix                                               |
+| `docs`     | Documentation changes only                              |
 | `refactor` | Code change that neither fixes a bug nor adds a feature |
-| `test` | Adding or updating tests |
-| `chore` | Build process, tooling, or dependency changes |
+| `test`     | Adding or updating tests                                |
+| `chore`    | Build process, tooling, or dependency changes           |
 
 The scope is optional but encouraged — use the component or area being changed (e.g. `feat(checkout)`, `fix(invoice)`).
 
@@ -92,7 +92,7 @@ Commit messages are used to generate the changelog entries in `CHANGELOG.md`. A 
 
 **Tests** — co-locate unit tests with the source file they cover (`Component.spec.ts` next to `Component.vue`). Tests for CI scripts live in `scripts/ci/`.
 
-**Comments** — only when the *why* is non-obvious. Do not describe what the code does.
+**Comments** — only when the _why_ is non-obvious. Do not describe what the code does.
 
 ## Testing
 

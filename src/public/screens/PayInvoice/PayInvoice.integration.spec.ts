@@ -66,7 +66,13 @@ vi.mock('@/services/paymentMethods', () => ({
 
 // ─── Provider mocks ───────────────────────────────────────────────────────────
 
-const mockLogger = { error: vi.fn(), info: vi.fn(), warn: vi.fn(), debug: vi.fn(), capture: vi.fn() };
+const mockLogger = {
+    error: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    debug: vi.fn(),
+    capture: vi.fn(),
+};
 
 vi.mock('@/components/providers', () => ({
     useLogger: () => mockLogger,
@@ -80,9 +86,8 @@ vi.mock(
 // ─── UI library mock ──────────────────────────────────────────────────────────
 
 vi.mock('@solvimon/solvimon-ui', async () => {
-    const actual = await vi.importActual<typeof import('@solvimon/solvimon-ui')>(
-        '@solvimon/solvimon-ui',
-    );
+    const actual =
+        await vi.importActual<typeof import('@solvimon/solvimon-ui')>('@solvimon/solvimon-ui');
     return {
         ...actual,
         useIntl: () => ({
@@ -259,7 +264,10 @@ describe('PayInvoice', () => {
         const optionsWithNoVariant = [
             {
                 ...mockPaymentMethodOptions[0],
-                integration: { ...mockPaymentMethodOptions[0].integration, payment_gateway: undefined },
+                integration: {
+                    ...mockPaymentMethodOptions[0].integration,
+                    payment_gateway: undefined,
+                },
             },
         ];
         const wrapper = mountComponent({ paymentMethodOptions: optionsWithNoVariant });

@@ -3,12 +3,13 @@ import { ApiStatus } from '@solvimon/solvimon-types';
 import type { PricingPlanSubscriptionExpanded } from '@/types/subscription';
 import { useSubscription } from './useSubscription';
 
-const mockGetSubscription = vi.fn<
-    (params: {
-        id: PricingPlanSubscription['id'];
-        expanded: true;
-    }) => Promise<PricingPlanSubscriptionExpanded>
->();
+const mockGetSubscription =
+    vi.fn<
+        (params: {
+            id: PricingPlanSubscription['id'];
+            expanded: true;
+        }) => Promise<PricingPlanSubscriptionExpanded>
+    >();
 
 vi.mock('@/services/subscriptions', () => ({
     createSubscriptionsService: vi.fn(() => ({

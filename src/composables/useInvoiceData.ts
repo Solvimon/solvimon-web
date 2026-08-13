@@ -6,7 +6,10 @@ import { useData } from '@/utils/useData';
 
 type InvoiceData = { invoice: Invoice; paymentAttempts: ApiSuccessCollectionResponse<Payment> };
 
-export function useInvoiceData(invoiceId: Invoice['id']): { data: Ref<InvoiceData | undefined>; isPending: Ref<boolean> } {
+export function useInvoiceData(invoiceId: Invoice['id']): {
+    data: Ref<InvoiceData | undefined>;
+    isPending: Ref<boolean>;
+} {
     const { getInvoice } = createInvoicesService();
     const { getPayments } = createPaymentsService();
 

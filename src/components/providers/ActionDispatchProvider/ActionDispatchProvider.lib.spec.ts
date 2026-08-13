@@ -76,4 +76,3 @@ describe('createActionDispatcher', () => {
         expect(result).toBe(false);
     });
 });
-

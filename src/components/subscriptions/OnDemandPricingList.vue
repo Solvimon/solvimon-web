@@ -54,9 +54,8 @@ const getCategoryTitle = (category: OnDemandPricingCategory) =>
                         variant="body-sm"
                         weight="semibold"
                         class="sv-pricing-list__group-title mt-2"
-                    >{{
-                        group.name
-                    }}</Typography>
+                        >{{ group.name }}</Typography
+                    >
                     <OnDemandPricingRow
                         v-for="pricing in group.pricings"
                         :key="pricing.id"

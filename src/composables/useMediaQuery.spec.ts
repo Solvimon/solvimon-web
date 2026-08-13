@@ -28,7 +28,13 @@ const mountWithQuery = (query: string, initialMatches: boolean) => {
         }),
     );
 
-    return { wrapper, mql, get matches() { return matches; } };
+    return {
+        wrapper,
+        mql,
+        get matches() {
+            return matches;
+        },
+    };
 };
 
 describe('useMediaQuery', () => {

@@ -13,5 +13,9 @@ defineProps<InvoiceDetailsProps>();
         class="sv-invoice-details sv-root sv-component sv-loading min-h-[100px]"
         data-testid="invoice-details-skeleton"
     />
-    <InvoiceDetailsBlock v-else class="sv-invoice-details sv-root sv-component" :invoice="invoice" />
+    <InvoiceDetailsBlock
+        v-else
+        class="sv-invoice-details sv-root sv-component"
+        :invoice="invoice"
+    />
 </template>

@@ -29,8 +29,8 @@ Run `/fix-dependabot` from Claude Code to fetch and fix all open alerts in one g
 1. Fetches every open alert via the GitHub API, grouped by severity (critical → high → medium → low).
 2. Shows a summary: package, vulnerable version range, CVE/GHSA identifier, and the patched version.
 3. For each alert, determines whether the package is a direct or transitive dependency and applies the appropriate fix:
-   - **Direct dependency** — `npm install <package>@<patched-version>`
-   - **Transitive dependency** — `npm audit fix`, or an `overrides` entry in `package.json` if that is not sufficient
+    - **Direct dependency** — `npm install <package>@<patched-version>`
+    - **Transitive dependency** — `npm audit fix`, or an `overrides` entry in `package.json` if that is not sufficient
 4. Runs `npm audit` to confirm the alerts are resolved.
 5. Reports any alerts it could not fix automatically (e.g. no patch available, or a breaking major-version bump required) and explains why.
 
@@ -44,9 +44,9 @@ Run `/fix-dependabot` from Claude Code to fetch and fix all open alerts in one g
 
 This repository contains several nested packages with their own lock files:
 
-| Path | Purpose |
-|---|---|
-| `package-lock.json` | Root SDK package |
+| Path                          | Purpose          |
+| ----------------------------- | ---------------- |
+| `package-lock.json`           | Root SDK package |
 | `tests/app/package-lock.json` | Test application |
 
 Dependabot scans each lock file independently. When running `/fix-dependabot`, check the alert's **manifest path** in the summary — if the alert is in a nested package, `npm audit fix` must be run from that package's directory, not the root.

@@ -44,7 +44,7 @@ function handleClick() {
         size="lg"
         :aria-label="ariaLabel"
         :class="buttonClasses"
-        class="!block w-full h-11 bg-center bg-no-repeat"
+        class="!block h-11 w-full bg-center bg-no-repeat"
         @click="handleClick"
     >
         <template v-if="props.type === 'applepay'">

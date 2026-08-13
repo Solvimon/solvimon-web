@@ -1,4 +1,9 @@
-import type { Address, Amount, Invoice, PaymentMethodOptionsResponse } from '@solvimon/solvimon-types';
+import type {
+    Address,
+    Amount,
+    Invoice,
+    PaymentMethodOptionsResponse,
+} from '@solvimon/solvimon-types';
 import type { ExpressPaymentMethodProps } from '@/components/payments/ExpressPaymentMethod/ExpressPaymentMethod.types';
 import type { CheckoutFormState } from '@/components/customer/CheckoutForm/CheckoutForm.types';
 

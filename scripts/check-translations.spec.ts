@@ -65,7 +65,10 @@ describe('checkTranslations', () => {
     });
 
     it('handles multiple locale files', () => {
-        const files: Record<string, object> = { 'nl.json': { greeting: 'Hallo', farewell: 'Dag', error: 'Fout' }, 'de.json': { greeting: 'Hallo' } };
+        const files: Record<string, object> = {
+            'nl.json': { greeting: 'Hallo', farewell: 'Dag', error: 'Fout' },
+            'de.json': { greeting: 'Hallo' },
+        };
         const readFile = (f: string) => JSON.stringify(files[f]);
         const results = checkTranslations(sourceKeys, ['nl.json', 'de.json'], readFile);
 
@@ -90,7 +93,8 @@ describe('checkTranslations', () => {
     });
 
     it('does not flag extra keys in a locale as missing', () => {
-        const readFile = () => JSON.stringify({ greeting: 'Hi', farewell: 'Bye', error: 'Oops', extra: 'Bonus' });
+        const readFile = () =>
+            JSON.stringify({ greeting: 'Hi', farewell: 'Bye', error: 'Oops', extra: 'Bonus' });
         const results = checkTranslations(sourceKeys, ['en.json'], readFile);
         expect(results[0].missingKeys).toEqual([]);
     });

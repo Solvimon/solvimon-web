@@ -1,4 +1,9 @@
-import type { Amount, BillingPeriod, PricingExtended, PricingItemConfig } from '@solvimon/solvimon-types';
+import type {
+    Amount,
+    BillingPeriod,
+    PricingExtended,
+    PricingItemConfig,
+} from '@solvimon/solvimon-types';
 import { computed, type ComputedRef } from 'vue';
 import { getPricingItemByPricingConfigId } from '@/utils/pricingItem';
 
@@ -40,8 +45,12 @@ export function useSeatBasedPricing({
                 description: productItem?.description,
             },
             pricing: {
-                ...(config?.details?.pricing_type === 'FLAT' && { amount: config.details?.bands?.[0]?.amount }),
-                ...(config?.details?.pricing_type === 'TIERED' && { tiered: { bands: config.details?.bands } }),
+                ...(config?.details?.pricing_type === 'FLAT' && {
+                    amount: config.details?.bands?.[0]?.amount,
+                }),
+                ...(config?.details?.pricing_type === 'TIERED' && {
+                    tiered: { bands: config.details?.bands },
+                }),
             },
         };
     });

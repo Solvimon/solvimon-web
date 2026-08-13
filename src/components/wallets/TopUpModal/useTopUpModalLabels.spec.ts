@@ -69,9 +69,9 @@ describe('useTopUpModalLabels', () => {
     it('leaves the top-up out of the label on the other steps', () => {
         const topUpValue = creditsOf('1000');
 
-        expect(createLabels({ step: 'ADD_PAYMENT_METHOD', topUpValue }).confirmButtonText.value).toBe(
-            'Save payment method',
-        );
+        expect(
+            createLabels({ step: 'ADD_PAYMENT_METHOD', topUpValue }).confirmButtonText.value,
+        ).toBe('Save payment method');
         expect(createLabels({ step: 'SUCCESS', topUpValue }).confirmButtonText.value).toBe('Done');
     });
 

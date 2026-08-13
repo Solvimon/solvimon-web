@@ -72,8 +72,16 @@ describe('useWatchAsync', () => {
 
         const loader = vi
             .fn()
-            .mockReturnValueOnce(new Promise<string>((r) => { resolveFirst = r; }))
-            .mockReturnValueOnce(new Promise<string>((r) => { resolveSecond = r; }));
+            .mockReturnValueOnce(
+                new Promise<string>((r) => {
+                    resolveFirst = r;
+                }),
+            )
+            .mockReturnValueOnce(
+                new Promise<string>((r) => {
+                    resolveSecond = r;
+                }),
+            );
 
         const { data, version } = mountWithSource(() => source.value, loader, '');
 

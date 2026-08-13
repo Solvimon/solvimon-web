@@ -126,7 +126,9 @@ describe('PaymentIntegrationFormStripe', () => {
             mockAuthorizePayment.mockResolvedValue(stripeActionRequiredResponse);
             const wrapper = mountComponent();
 
-            await wrapper.findComponent({ name: 'PaymentIntegrationFormStripeFrame' }).vm.$emit('submit-success', 'ctok_test');
+            await wrapper
+                .findComponent({ name: 'PaymentIntegrationFormStripeFrame' })
+                .vm.$emit('submit-success', 'ctok_test');
             await nextTick();
             await new Promise((r) => setTimeout(r, 0));
 
@@ -139,7 +141,9 @@ describe('PaymentIntegrationFormStripe', () => {
             mockAuthorizePayment.mockResolvedValue(stripeActionRequiredResponseTopLevel);
             const wrapper = mountComponent();
 
-            await wrapper.findComponent({ name: 'PaymentIntegrationFormStripeFrame' }).vm.$emit('submit-success', 'ctok_test');
+            await wrapper
+                .findComponent({ name: 'PaymentIntegrationFormStripeFrame' })
+                .vm.$emit('submit-success', 'ctok_test');
             await nextTick();
             await new Promise((r) => setTimeout(r, 0));
 
@@ -154,7 +158,9 @@ describe('PaymentIntegrationFormStripe', () => {
             });
             const wrapper = mountComponent();
 
-            await wrapper.findComponent({ name: 'PaymentIntegrationFormStripeFrame' }).vm.$emit('submit-success', 'ctok_test');
+            await wrapper
+                .findComponent({ name: 'PaymentIntegrationFormStripeFrame' })
+                .vm.$emit('submit-success', 'ctok_test');
             await nextTick();
             await new Promise((r) => setTimeout(r, 0));
 
@@ -167,7 +173,9 @@ describe('PaymentIntegrationFormStripe', () => {
             mockHandleNextAction.mockResolvedValue({ error: { message: 'Card declined' } });
             const wrapper = mountComponent();
 
-            await wrapper.findComponent({ name: 'PaymentIntegrationFormStripeFrame' }).vm.$emit('submit-success', 'ctok_test');
+            await wrapper
+                .findComponent({ name: 'PaymentIntegrationFormStripeFrame' })
+                .vm.$emit('submit-success', 'ctok_test');
             await nextTick();
             await new Promise((r) => setTimeout(r, 0));
 
@@ -181,7 +189,9 @@ describe('PaymentIntegrationFormStripe', () => {
             mockAuthorizePayment.mockResolvedValue(successResponse);
             const wrapper = mountComponent();
 
-            await wrapper.findComponent({ name: 'PaymentIntegrationFormStripeFrame' }).vm.$emit('submit-success', 'ctok_test');
+            await wrapper
+                .findComponent({ name: 'PaymentIntegrationFormStripeFrame' })
+                .vm.$emit('submit-success', 'ctok_test');
             await nextTick();
             await new Promise((r) => setTimeout(r, 0));
 
@@ -254,7 +264,9 @@ describe('PaymentIntegrationFormStripe', () => {
             mockTokenizePaymentMethod.mockResolvedValue(successResponse);
             const wrapper = mountComponent({ variant: 'TOKENIZE' });
 
-            await wrapper.findComponent({ name: 'PaymentIntegrationFormStripeFrame' }).vm.$emit('submit-success', 'ctok_test');
+            await wrapper
+                .findComponent({ name: 'PaymentIntegrationFormStripeFrame' })
+                .vm.$emit('submit-success', 'ctok_test');
             await nextTick();
             await new Promise((r) => setTimeout(r, 0));
 
@@ -266,7 +278,9 @@ describe('PaymentIntegrationFormStripe', () => {
             mockTokenizePaymentMethod.mockRejectedValue(new Error('network error'));
             const wrapper = mountComponent({ variant: 'TOKENIZE' });
 
-            await wrapper.findComponent({ name: 'PaymentIntegrationFormStripeFrame' }).vm.$emit('submit-success', 'ctok_test');
+            await wrapper
+                .findComponent({ name: 'PaymentIntegrationFormStripeFrame' })
+                .vm.$emit('submit-success', 'ctok_test');
             await nextTick();
             await new Promise((r) => setTimeout(r, 0));
 

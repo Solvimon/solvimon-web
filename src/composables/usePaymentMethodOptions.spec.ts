@@ -1,4 +1,7 @@
-import type { PaymentMethodOptionsResponse, PricingPlanSubscription } from '@solvimon/solvimon-types';
+import type {
+    PaymentMethodOptionsResponse,
+    PricingPlanSubscription,
+} from '@solvimon/solvimon-types';
 import { ApiStatus } from '@solvimon/solvimon-types';
 import type { GetPaymentMethodOptionsPayload } from '@/services/paymentMethods.types';
 import { usePaymentMethodOptions } from './usePaymentMethodOptions';

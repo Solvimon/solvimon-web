@@ -26,7 +26,9 @@ export function createPaymentMethodsService() {
     const config = useConfig();
     const BASE_URL = '/portal/payment-methods';
 
-    function setDefaultPaymentMethod({ paymentMethodId }: SetDefaultPaymentMethodPayload): Promise<PaymentMethod> {
+    function setDefaultPaymentMethod({
+        paymentMethodId,
+    }: SetDefaultPaymentMethodPayload): Promise<PaymentMethod> {
         return request<PaymentMethod>({
             url: `${config.apiUrls.config}${BASE_URL}/${paymentMethodId}`,
             options: { method: 'PATCH' },

@@ -21,12 +21,12 @@ When no `LoggerProvider` is in the tree, `useLogger()` returns a no-op so intern
 
 ## Log levels
 
-| Level | When to use |
-| :---- | :---------- |
+| Level   | When to use                                                                                           |
+| :------ | :---------------------------------------------------------------------------------------------------- |
 | `error` | Something failed that the consumer should know about — payment errors, failed fetches, invalid config |
-| `warn` | Something is degraded but the SDK recovered — missing optional config, fallback values used |
-| `info` | Lifecycle events useful for tracing a user flow — component mounted, payment started |
-| `debug` | Verbose detail only useful while debugging — raw API payloads, intermediate state |
+| `warn`  | Something is degraded but the SDK recovered — missing optional config, fallback values used           |
+| `info`  | Lifecycle events useful for tracing a user flow — component mounted, payment started                  |
+| `debug` | Verbose detail only useful while debugging — raw API payloads, intermediate state                     |
 
 The default minimum level is `warn`. Consumers can lower it via the `logLevel` prop on `LoggerProvider`.
 

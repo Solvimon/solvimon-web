@@ -23,7 +23,15 @@ defineProps<SolvimonPaymentMethodsManagementEntryProps>();
         @error="(error) => $emit('error', error)"
     >
         <PaymentMethodsManagementEntryView v-bind="$props">
-            <template #default="{ customer, paymentMethods, paymentMethodOptions, isLoading, refreshPaymentMethods }">
+            <template
+                #default="{
+                    customer,
+                    paymentMethods,
+                    paymentMethodOptions,
+                    isLoading,
+                    refreshPaymentMethods,
+                }"
+            >
                 <PaymentMethodsManagement
                     v-if="customer"
                     :is-loading="isLoading"

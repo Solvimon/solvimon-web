@@ -76,11 +76,9 @@ export default defineConfig({
                 globals: {
                     vue: 'Vue',
                 },
-                manualChunks(id) {
-                    if (id.includes('node_modules/@solvimon/solvimon-ui')) {
-                        return 'vendor-ui';
-                    }
-                },
+                // No manual vendor chunk: forcing all of solvimon-ui into one chunk made
+                // every entry import the union of what all entries use. Rollup already
+                // hoists shared modules on its own, per set of entries that use them.
             },
         },
     },

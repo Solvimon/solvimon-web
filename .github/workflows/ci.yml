@@ -161,6 +161,21 @@ jobs:
                   key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json') }}
             - run: npm run lint:ci
 
+    format:
+        name: Format
+        needs: install
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v6
+            - uses: actions/setup-node@v6
+              with:
+                  node-version-file: package.json
+            - uses: actions/cache/restore@v5
+              with:
+                  path: node_modules
+                  key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json') }}
+            - run: npm run format:check
+
     build:
         name: Build
         needs: install

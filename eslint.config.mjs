@@ -6,6 +6,7 @@ import formatjs from 'eslint-plugin-formatjs';
 import unusedImports from 'eslint-plugin-unused-imports';
 import noRelativeImportPaths from 'eslint-plugin-no-relative-import-paths';
 import importX from 'eslint-plugin-import-x';
+import skipFormatting from '@vue/eslint-config-prettier/skip-formatting';
 
 export default defineConfigWithVueTs(
     globalIgnores([
@@ -42,7 +43,8 @@ export default defineConfigWithVueTs(
         },
 
         rules: {
-            quotes: ['warn', 'single', { avoidEscape: true }],
+            // Quote style and every other formatting concern is owned by Prettier
+            // (see the skipFormatting config at the bottom of this file).
             'no-else-return': 'warn',
             'vue/component-name-in-template-casing': [
                 'error',
@@ -167,4 +169,8 @@ export default defineConfigWithVueTs(
             'no-console': 'off',
         },
     },
+
+    // Must stay last: turns off every ESLint rule that would fight Prettier.
+    // Formatting is enforced separately via `npm run format:check`.
+    skipFormatting,
 );

@@ -19,6 +19,8 @@
         "playground:unlink": "node ./scripts/link-local-packages.mjs unlink",
         "lint": "eslint . --fix",
         "lint:ci": "eslint . --ignore-pattern .eslintignore",
+        "format": "prettier --write .",
+        "format:check": "prettier --check .",
         "test:unit": "vitest",
         "test:coverage": "vitest --run --coverage",
         "type-check:declarations": "vue-tsc --declaration --emitDeclarationOnly -p tsconfig.json --composite false",

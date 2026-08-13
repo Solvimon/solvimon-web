@@ -1,6 +1,6 @@
 import type { Address, Customer } from '@solvimon/solvimon-types';
 import { taxId } from '@solvimon/solvimon-ui/validators';
-import type { GetInvoicePreviewPayload } from '@/services/invoices.types';
+import type { GetInvoicePreviewCustomer } from '@/services/invoices.types';
 
 const EMPTY_LEGAL_ENTITY_NAME = 'preview';
 const EMPTY_COUNTRY = 'NL';
@@ -45,7 +45,7 @@ export const buildAddress = (customer: Partial<Customer>): Address => {
  */
 export const buildCustomerPayload = (
     customer: Partial<Customer>,
-): GetInvoicePreviewPayload['customer'] => {
+): GetInvoicePreviewCustomer => {
     const address = buildAddress(customer);
     const type = customer.type ?? 'INDIVIDUAL';
 

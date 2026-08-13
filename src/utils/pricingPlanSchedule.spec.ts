@@ -215,6 +215,29 @@ describe('pricingPlanSchedule utils', () => {
             expect(result?.pricing_plan_schedule.type).toBe('TRIAL');
         });
 
+        it('reads the type off the info when the response nests no schedule', () => {
+            const schedules = [
+                { id: 'schedule-1', type: 'TRIAL' },
+                { id: 'schedule-2', type: 'DEFAULT' },
+            ] as unknown as PricingPlanScheduleInfoExpanded[];
+
+            expect(
+                getFirstPricingPlanScheduleOfType({
+                    pricingPlanScheduleInfos: schedules,
+                    type: 'DEFAULT',
+                })?.id,
+            ).toBe('schedule-2');
+        });
+
+        it('survives a response that carries no schedule infos at all', () => {
+            expect(
+                getFirstPricingPlanScheduleOfType({
+                    pricingPlanScheduleInfos: undefined,
+                    type: 'DEFAULT',
+                }),
+            ).toBeUndefined();
+        });
+
         it('should return undefined when no schedule matches the type', () => {
             const schedules: PricingPlanScheduleInfoExpanded[] = [
                 createMockScheduleInfo('schedule-1', 'DEFAULT'),

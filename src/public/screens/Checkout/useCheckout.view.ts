@@ -11,6 +11,7 @@ import type {
 } from '@solvimon/solvimon-types';
 import { computed, onMounted, ref, watch } from 'vue';
 import { taxId } from '@solvimon/solvimon-ui/validators';
+import { useLogger } from '@/components/providers';
 import { createSubscriptionsService } from '@/services/subscriptions';
 import { useInvoicePreview } from '@/composables/useInvoicePreview';
 import { useCheckoutForm } from '@/components/customer/CheckoutForm/useCheckoutForm';
@@ -41,6 +42,8 @@ export function useCheckoutView({
     subscriptionId: PricingPlanSubscription['id'];
     enabledPricingIds?: Pricing['id'][];
 }) {
+    const logger = useLogger();
+
     const isPaid = ref<boolean>(false);
     const subscription = ref<PricingPlanSubscriptionExpanded>();
 
@@ -353,11 +356,26 @@ export function useCheckoutView({
             checkoutForm.updateInitialState(savedFormState);
         }
 
-        await loadSubscription();
+        // Everything downstream waits on the subscription — the preview prices it, and the payment
+        // method options need the amount that preview returns. So a failure here reads as "nothing
+        // is loading" rather than as itself, and has to be reported where it happens.
+        try {
+            await loadSubscription();
+        } catch (error) {
+            logger.error(
+                'SUBSCRIPTION_LOAD_FAILED',
+                'Failed to load the subscription the checkout prices',
+                {},
+                error,
+            );
+            throw error;
+        }
+
         try {
             await loadInvoicePreview();
         } catch {
-            // Ignore initial preview failures; caller-specific handlers can opt in.
+            // Already reported by useInvoicePreview, and the form reloads the preview on every
+            // change, so a failed first attempt is not fatal.
         }
 
         // Re-apply after loadSubscription resets enabledPricingIds/seatsValues to subscription

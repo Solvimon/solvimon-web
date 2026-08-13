@@ -7,10 +7,17 @@ import { generateBundleSizeReport } from './bundle-size-report.mjs';
 
 const mockReadFileSync = vi.mocked(readFileSync);
 
-type Entry = { eager: number; lazy: number };
+type Consumer = { raw: number; brotli: number; chunks: number } | null;
+type Entry = { eager: number; lazy: number; consumer: Consumer };
 
-function entry(eager: number, lazy = 0): Entry {
-    return { eager, lazy };
+/** `shipped` is the brotli size a consumer's bundler emits — the metric the report gates on. */
+function entry(shipped: number, eager = 0, lazy = 0): Entry {
+    return { eager, lazy, consumer: { raw: shipped * 4, brotli: shipped, chunks: 1 } };
+}
+
+/** An entry whose consumer build failed, so only our own chunk sizes are known. */
+function unmeasured(eager: number, lazy = 0): Entry {
+    return { eager, lazy, consumer: null };
 }
 
 function makeSnapshot(total: number, entries: Record<string, Entry> = {}) {
@@ -47,7 +54,7 @@ describe('generateBundleSizeReport', () => {
         const report = generateBundleSizeReport(defaultArgs);
 
         expect(report).toContain('> [!NOTE]');
-        expect(report).toContain('Heaviest entry (eager) unchanged');
+        expect(report).toContain('Heaviest entry (shipped, brotli) unchanged');
     });
 
     it('shows caution when the heaviest entry grows', () => {
@@ -96,7 +103,7 @@ describe('generateBundleSizeReport', () => {
 
         const report = generateBundleSizeReport(defaultArgs);
 
-        expect(report).toContain('Heaviest entry (eager) unchanged (900 B)');
+        expect(report).toContain('Heaviest entry (shipped, brotli) unchanged (900 B)');
     });
 
     it('shows red indicator for an increased entry', () => {
@@ -129,25 +136,39 @@ describe('generateBundleSizeReport', () => {
         expect(report).not.toContain('🔴');
     });
 
-    it('shows the lazy size for an entry', () => {
+    it('shows our own eager and lazy sizes as diagnostics', () => {
         setup({
-            pr: makeSnapshot(1000, { 'screens/Checkout': entry(1000, 2048) }),
-            base: makeSnapshot(1000, { 'screens/Checkout': entry(1000, 2048) }),
-        });
-
-        expect(generateBundleSizeReport(defaultArgs)).toContain('2.0 KB');
-    });
-
-    // Making a lazy dependency eager is the regression this column exists to catch.
-    it('shows a delta on the lazy column when lazy size changes', () => {
-        setup({
-            pr: makeSnapshot(1000, { 'screens/Checkout': entry(3000, 0) }),
-            base: makeSnapshot(1000, { 'screens/Checkout': entry(1000, 2000) }),
+            pr: makeSnapshot(1000, { 'screens/Checkout': entry(500, 4096, 2048) }),
+            base: makeSnapshot(1000, { 'screens/Checkout': entry(500, 4096, 2048) }),
         });
 
         const report = generateBundleSizeReport(defaultArgs);
 
+        expect(report).toContain('4.0 KB');
+        expect(report).toContain('2.0 KB');
+    });
+
+    // Making a lazy dependency eager is the regression these columns exist to catch: the
+    // shipped size barely moves, but eager jumps against a matching drop in lazy.
+    it('shows deltas on the eager and lazy columns when they change', () => {
+        setup({
+            pr: makeSnapshot(1000, { 'screens/Checkout': entry(500, 3000, 0) }),
+            base: makeSnapshot(1000, { 'screens/Checkout': entry(500, 1000, 2000) }),
+        });
+
+        const report = generateBundleSizeReport(defaultArgs);
+
+        expect(report).toContain('+2.0 KB (+200.0%)');
         expect(report).toContain('−2.0 KB (−100.0%)');
+    });
+
+    it('renders a dash when the consumer build could not be measured', () => {
+        setup({
+            pr: makeSnapshot(1000, { 'screens/Checkout': unmeasured(1000) }),
+            base: makeSnapshot(1000, { 'screens/Checkout': unmeasured(1000) }),
+        });
+
+        expect(generateBundleSizeReport(defaultArgs)).toContain('| — |');
     });
 
     it('includes entries present only in PR as new entries', () => {

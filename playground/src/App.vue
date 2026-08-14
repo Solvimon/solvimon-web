@@ -213,7 +213,7 @@ function applyPortal() {
 .sidebar {
     display: flex;
     flex-direction: column;
-    background: #ffffff;
+    background: #f8fafc;
     border-right: 1px solid #e2e8f0;
     overflow: hidden;
 }
@@ -285,8 +285,9 @@ function applyPortal() {
         color 0.1s;
 }
 
+/* Darker than the sidebar now that it is grey — #f1f5f9 was invisible against it. */
 .nav-item:hover {
-    background: #f1f5f9;
+    background: #e2e8f0;
     color: #0f172a;
 }
 
@@ -301,7 +302,7 @@ function applyPortal() {
     padding: 5px 8px;
     border: 1px solid #e2e8f0;
     border-radius: 7px;
-    background: transparent;
+    background: #ffffff;
     color: #475569;
     font-size: 12px;
     font-weight: 500;
@@ -327,13 +328,14 @@ function applyPortal() {
     color: #94a3b8;
 }
 
+/* White against the grey sidebar, so the field still reads as somewhere to type. */
 .portal-textarea {
     width: 100%;
     height: 110px;
     padding: 8px;
     border: 1px solid #e2e8f0;
     border-radius: 8px;
-    background: #f8fafc;
+    background: #ffffff;
     font-family: 'Fira Code', 'Cascadia Code', monospace;
     font-size: 11px;
     color: #0f172a;
@@ -384,6 +386,6 @@ function applyPortal() {
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    background: #f8fafc;
+    background: #ffffff;
 }
 </style>

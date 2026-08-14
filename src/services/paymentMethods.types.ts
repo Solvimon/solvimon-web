@@ -9,6 +9,10 @@ export interface SetDefaultPaymentMethodPayload {
     paymentMethodId: PaymentMethod['id'];
 }
 
+export interface ArchivePaymentMethodPayload {
+    paymentMethodId: PaymentMethod['id'];
+}
+
 export interface GetPaymentMethodsPayload {
     customerId: Customer['id'];
     pagination: {

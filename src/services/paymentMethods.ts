@@ -13,6 +13,7 @@ import type {
 import { withPagination } from '@solvimon/solvimon-ui';
 import { createRequestService } from './requests';
 import type {
+    ArchivePaymentMethodPayload,
     GetPaymentMethodOptionsByCustomerIdPayload,
     GetPaymentMethodOptionsBySubscriptionIdPayload,
     GetPaymentMethodOptionsPayload,
@@ -36,7 +37,21 @@ export function createPaymentMethodsService() {
         });
     }
 
-    function getPaymentMethods({
+    /**
+     * Deleting a payment method archives it: the API has no DELETE, and the record has to survive
+     * for the invoices already paid with it.
+     */
+    function archivePaymentMethod({
+        paymentMethodId,
+    }: ArchivePaymentMethodPayload): Promise<PaymentMethod> {
+        return request<PaymentMethod>({
+            url: `${config.apiUrls.config}${BASE_URL}/${paymentMethodId}`,
+            options: { method: 'PATCH' },
+            data: { status: 'ARCHIVED' },
+        });
+    }
+
+    async function getPaymentMethods({
         customerId,
         pagination,
         query,
@@ -63,10 +78,17 @@ export function createPaymentMethodsService() {
             url.searchParams.append(key, `${value}`);
         });
 
-        return request<PaymentMethod>({
+        const response = await request<PaymentMethod>({
             url: url.toString(),
             isCollection: true,
         });
+
+        // Archived methods are deleted as far as the customer is concerned. The endpoint takes no
+        // status filter, so they are dropped here — the one place every read goes through.
+        return {
+            ...response,
+            data: (response.data ?? []).filter(({ status }) => status !== 'ARCHIVED'),
+        };
     }
 
     /**
@@ -124,6 +146,7 @@ export function createPaymentMethodsService() {
     }
 
     return {
+        archivePaymentMethod,
         getPaymentMethods,
         getPaymentMethodOptions,
         tokenizePaymentMethod,

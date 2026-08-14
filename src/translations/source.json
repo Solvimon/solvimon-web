@@ -547,6 +547,10 @@
     "defaultMessage": "Delete",
     "description": "Confirm button in the delete payment method modal"
   },
+  "payment_methods_list.delete_modal.error": {
+    "defaultMessage": "We could not delete this payment method. Please try again.",
+    "description": "Error shown when deleting a payment method fails"
+  },
   "payment_methods_list.delete_modal.title": {
     "defaultMessage": "Delete payment method",
     "description": "Title of the delete payment method confirmation modal"

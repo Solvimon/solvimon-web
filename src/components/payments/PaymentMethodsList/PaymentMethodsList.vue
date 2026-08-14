@@ -1,10 +1,17 @@
 <script setup lang="ts">
-import { Modal, PaymentMethod, Section, Typography, useIntl } from '@solvimon/solvimon-ui';
+import {
+    ErrorNotification,
+    Modal,
+    PaymentMethod,
+    Section,
+    Typography,
+    useIntl,
+} from '@solvimon/solvimon-ui';
 import type { PaymentMethod as PaymentMethodType } from '@solvimon/solvimon-types';
 import { ref } from 'vue';
 import type { PaymentMethodsListEmits, PaymentMethodsListProps } from './PaymentMethodsList.types';
 import { usePaymentMethodContextMenuOptions } from '@/composables/usePaymentMethodContextMenuOptions';
-import { useSetDefaultPaymentMethod } from '@/composables/useSetDefaultPaymentMethod';
+import { usePaymentMethodActions } from '@/composables/usePaymentMethodActions';
 
 defineProps<PaymentMethodsListProps>();
 const emit = defineEmits<PaymentMethodsListEmits>();
@@ -12,7 +19,7 @@ const emit = defineEmits<PaymentMethodsListEmits>();
 const { $t } = useIntl();
 
 const pendingDeletePaymentMethod = ref<PaymentMethodType | null>(null);
-const { execute: setDefault } = useSetDefaultPaymentMethod();
+const { archive, archiveError, isArchiving, setDefault } = usePaymentMethodActions();
 
 const { getContextMenuItems } = usePaymentMethodContextMenuOptions({
     onDeleteRequest: (paymentMethod) => {
@@ -24,10 +31,18 @@ const { getContextMenuItems } = usePaymentMethodContextMenuOptions({
     },
 });
 
-function handleConfirmDelete() {
-    if (pendingDeletePaymentMethod.value) {
-        emit('delete', pendingDeletePaymentMethod.value);
+async function handleConfirmDelete() {
+    const paymentMethod = pendingDeletePaymentMethod.value;
+
+    if (!paymentMethod || isArchiving.value) return;
+
+    try {
+        await archive(paymentMethod.id);
+    } catch {
+        return;
     }
+
+    emit('delete', paymentMethod);
     pendingDeletePaymentMethod.value = null;
 }
 </script>
@@ -50,6 +65,9 @@ function handleConfirmDelete() {
     <Modal
         size="md"
         :show-modal="!!pendingDeletePaymentMethod"
+        :is-loading="isArchiving"
+        :no-click-away="isArchiving"
+        :no-backdrop-close="isArchiving"
         :title="
             $t({
                 id: 'payment_methods_list.delete_modal.title',
@@ -98,6 +116,19 @@ function handleConfirmDelete() {
                         <PaymentMethod :payment-method="pendingDeletePaymentMethod" />
                     </div>
                 </Section>
+
+                <ErrorNotification
+                    v-if="archiveError"
+                    class="sv-payment-methods__delete-modal-error sv-error"
+                    :title="
+                        $t({
+                            id: 'payment_methods_list.delete_modal.error',
+                            defaultMessage:
+                                'We could not delete this payment method. Please try again.',
+                            description: 'Error shown when deleting a payment method fails',
+                        })
+                    "
+                />
             </div>
         </template>
     </Modal>

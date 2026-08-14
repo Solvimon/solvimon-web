@@ -130,6 +130,10 @@ describe('Invoice entry component', () => {
         });
 
         await flushPromises();
+        // PaymentHistoryBlock is loaded lazily, so it is still an unresolved import at this point.
+        // Waiting on the import itself keeps the assertions off a race the suite's size decides.
+        await vi.dynamicImportSettled();
+        await flushPromises();
 
         return wrapper;
     };

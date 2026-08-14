@@ -19,6 +19,7 @@ import { getMostRecentScheduleInfo, getSubscriptionName } from '@/utils/subscrip
 import SubscriptionSummary from '@/components/subscriptions/SubscriptionSummary.vue';
 import SubscriptionSchedules from '@/public/components/SubscriptionSchedules/SubscriptionSchedules.vue';
 import CustomerWalletBalances from '@/public/components/CustomerWalletBalances/CustomerWalletBalances.vue';
+import CustomerPaymentMethods from '@/public/components/CustomerPaymentMethods/CustomerPaymentMethods.vue';
 import TopUpModal from '@/components/wallets/TopUpModal/TopUpModal.vue';
 import { useTopUpModal } from '@/components/wallets/TopUpModal/useTopUpModal';
 import EmptyStatePlaceholder from '@/components/checkout/EmptyStatePlaceholder.vue';
@@ -82,6 +83,10 @@ const cancellationSuccessMessage = computed<string | undefined>(() => {
 
 /** The upgrades on offer are the ones enabled on the schedule the subscription runs on now. */
 const currentScheduleInfo = computed(() => getMostRecentScheduleInfo(props.subscription));
+
+const subscriptionPaymentMethod = computed(() =>
+    (props.paymentMethods ?? []).find(({ id }) => id === props.subscription?.payment_method_id),
+);
 
 const selectedBalanceItem = ref<CustomerWalletBalanceItem | undefined>();
 
@@ -227,6 +232,14 @@ const title = computed<string>(() =>
                 class="sv-subscription-details__upgrades"
                 :pricing-plan-schedule="currentScheduleInfo"
                 @upgrade="handleUpgrade"
+            />
+
+            <CustomerPaymentMethods
+                v-if="subscriptionPaymentMethod"
+                class="sv-subscription-details__payment-method"
+                :is-loading="isLoading"
+                :payment-methods="[subscriptionPaymentMethod]"
+                :configuration="{ showViewAllButton: false, showAddButton: false }"
             />
 
             <TopUpModal

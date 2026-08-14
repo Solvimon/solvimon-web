@@ -27,16 +27,6 @@ export interface ActionRequestDetailViewAllSubscriptions extends ActionRequestDe
     action: 'view-all-subscriptions';
 }
 
-export interface ActionRequestDetailCancelSubscription extends ActionRequestDetailBase {
-    action: 'cancel-subscription';
-    data: { subscriptionId: string };
-}
-
-export interface ActionRequestDetailRenewSubscription extends ActionRequestDetailBase {
-    action: 'renew-subscription';
-    data: { subscriptionId: string };
-}
-
 export interface ActionRequestDetailManageSubscription extends ActionRequestDetailBase {
     action: 'manage-subscription';
     data: { subscriptionId: string };
@@ -63,8 +53,6 @@ export type ActionRequestDetail =
     | ActionRequestDetailPayInvoice
     | ActionRequestDetailViewSubscriptionDetails
     | ActionRequestDetailViewAllSubscriptions
-    | ActionRequestDetailCancelSubscription
-    | ActionRequestDetailRenewSubscription
     | ActionRequestDetailManageSubscription
     | ActionRequestDetailViewAllPaymentMethods
     | ActionRequestDetailAddPaymentMethod

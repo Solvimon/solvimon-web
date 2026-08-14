@@ -14,6 +14,8 @@ export interface SubscriptionDetailsConfiguration {
      * the host can hand it straight through.
      */
     subscriptionId: PricingPlanSubscription['id'];
+    /** Brand logo shown beside the subscription's name, as in the checkout summary. */
+    avatar?: string;
 }
 
 export interface SubscriptionDetailsProps extends BaseScreenProps {
@@ -33,6 +35,8 @@ export interface SubscriptionDetailsProps extends BaseScreenProps {
     walletBalances?: CustomerWalletBalanceItem[];
     /** Whether loading the wallet balances failed. */
     hasWalletBalancesError?: boolean;
+    /** Brand logo shown beside the subscription's name in the cancellation summary. */
+    avatar?: string;
 }
 
 export interface SubscriptionDetailsEmits {
@@ -40,4 +44,6 @@ export interface SubscriptionDetailsEmits {
     (e: 'top-up-charged'): void;
     /** A new payment method was tokenized and stored for the customer. */
     (e: 'payment-method-stored'): void;
+    /** The subscription was cancelled or renewed, so the copy on screen is out of date. */
+    (e: 'subscription-changed'): void;
 }

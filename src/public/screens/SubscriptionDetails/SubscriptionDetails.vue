@@ -1,6 +1,13 @@
 <script setup lang="ts">
-import { computed, ref, toRef } from 'vue';
-import { Button, Section, Typography, useIntl, ErrorNotification } from '@solvimon/solvimon-ui';
+import { computed, ref, toRef, watch } from 'vue';
+import {
+    Alert,
+    Button,
+    Section,
+    Typography,
+    useIntl,
+    ErrorNotification,
+} from '@solvimon/solvimon-ui';
 import type { CustomerWalletBalanceItem } from '@solvimon/solvimon-types';
 import type {
     SubscriptionDetailsEmits,
@@ -17,21 +24,61 @@ import { useTopUpModal } from '@/components/wallets/TopUpModal/useTopUpModal';
 import EmptyStatePlaceholder from '@/components/checkout/EmptyStatePlaceholder.vue';
 import Skeleton from '@/components/shared/Skeleton.vue';
 import EnabledPricingsList from '@/components/subscriptions/EnabledPricingsList/EnabledPricingsList.vue';
+import SubscriptionCancellationModal from '@/components/subscriptions/SubscriptionCancellationModal/SubscriptionCancellationModal.vue';
+import type { SubscriptionCancellationVariant } from '@/services/subscriptions';
 
 const props = withDefaults(defineProps<SubscriptionDetailsProps>(), {
     walletBalances: () => [],
 });
-defineEmits<SubscriptionDetailsEmits>();
+const emit = defineEmits<SubscriptionDetailsEmits>();
 
 const { $t } = useIntl();
 
 const {
     isCancellable,
     isRenewable,
+    pendingVariant,
     cancel: handleCancel,
     renew: handleRenew,
+    dismiss: handleDismissCancellation,
     manage: handleUpgrade,
 } = useSubscriptionActions({ subscription: toRef(props, 'subscription') });
+
+/**
+ * What the customer just did, kept after the modal closes so the screen can confirm it. Cleared when
+ * either button is used again, so a second confirmation replaces the first rather than stacking.
+ */
+const confirmedVariant = ref<SubscriptionCancellationVariant | undefined>();
+
+watch(pendingVariant, (variant) => {
+    if (variant) confirmedVariant.value = undefined;
+});
+
+/**
+ * The change landed, so the subscription on screen is stale — the host refetches it, which is what
+ * flips the header between Cancel and Renew.
+ */
+const handleCancellationConfirmed = () => {
+    confirmedVariant.value = pendingVariant.value;
+    emit('subscription-changed');
+};
+
+const cancellationSuccessMessage = computed<string | undefined>(() => {
+    if (!confirmedVariant.value) return undefined;
+
+    return confirmedVariant.value === 'RENEW'
+        ? $t({
+              defaultMessage: 'Your subscription has been renewed.',
+              id: 'subscription_details.renew_success',
+              description: 'Confirmation shown after a cancellation has been undone',
+          })
+        : $t({
+              defaultMessage:
+                  'Your subscription has been cancelled. You keep access until the end of the billing period.',
+              id: 'subscription_details.cancel_success',
+              description: 'Confirmation shown after a subscription has been cancelled',
+          });
+});
 
 /** The upgrades on offer are the ones enabled on the schedule the subscription runs on now. */
 const currentScheduleInfo = computed(() => getMostRecentScheduleInfo(props.subscription));
@@ -102,6 +149,13 @@ const title = computed<string>(() =>
         </template>
 
         <template #content>
+            <Alert
+                v-if="cancellationSuccessMessage"
+                class="sv-subscription-details__cancellation-success"
+                type="success"
+                :title="cancellationSuccessMessage"
+            />
+
             <ErrorNotification
                 v-if="error"
                 class="sv-subscription-details__error sv-error"
@@ -183,6 +237,15 @@ const title = computed<string>(() =>
                 @close="selectedBalanceItem = undefined"
                 @confirm="$emit('top-up-charged')"
                 @payment-success="$emit('payment-method-stored')"
+            />
+
+            <SubscriptionCancellationModal
+                :show-modal="Boolean(pendingVariant)"
+                :variant="pendingVariant"
+                :subscription="subscription"
+                :avatar="avatar"
+                @confirmed="handleCancellationConfirmed"
+                @close="handleDismissCancellation"
             />
         </template>
     </ContentWithAsideLayout>

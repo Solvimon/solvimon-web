@@ -71,6 +71,26 @@ vi.mock('@/components/wallets/TopUpModal/TopUpModal.vue', () => ({
     }),
 }));
 
+// Builds a subscriptions service of its own, which needs providers this mount does not have.
+vi.mock(
+    '@/components/subscriptions/SubscriptionCancellationModal/SubscriptionCancellationModal.vue',
+    () => ({
+        default: defineComponent({
+            name: 'SubscriptionCancellationModalStub',
+            props: { showModal: Boolean, variant: String, subscription: Object },
+            emits: ['close', 'confirmed'],
+            setup(props) {
+                return () =>
+                    h('div', {
+                        class: 'sv-subscription-cancellation-modal-stub',
+                        'data-open': String(props.showModal),
+                        'data-variant': props.variant ?? '',
+                    });
+            },
+        }),
+    }),
+);
+
 const mockWalletBalance = {
     wallet_id: 'w_1',
     wallet_balance: {
@@ -178,15 +198,61 @@ describe('SubscriptionDetails', () => {
             expect(wrapper.find('.sv-subscription-details__cancel').exists()).toBe(false);
         });
 
-        it('dispatches the cancel subscription action when clicked', async () => {
+        it('opens the cancellation modal when clicked, rather than handing it to the host', async () => {
             const wrapper = mountComponent();
 
             await wrapper.find('.sv-subscription-details__cancel').trigger('click');
 
-            expect(mockDispatchAction).toHaveBeenCalledWith({
-                action: 'cancel-subscription',
-                data: { subscriptionId: 'ppsu_1' },
-            });
+            const modal = wrapper.find('.sv-subscription-cancellation-modal-stub');
+            expect(modal.attributes('data-open')).toBe('true');
+            expect(modal.attributes('data-variant')).toBe('CANCEL');
+            expect(mockDispatchAction).not.toHaveBeenCalled();
+        });
+
+        it('keeps the modal closed until a button is used', () => {
+            const wrapper = mountComponent();
+
+            expect(
+                wrapper.find('.sv-subscription-cancellation-modal-stub').attributes('data-open'),
+            ).toBe('false');
+        });
+
+        it('asks the host to refetch once the cancellation is confirmed', async () => {
+            const wrapper = mountComponent();
+
+            await wrapper.find('.sv-subscription-details__cancel').trigger('click');
+            wrapper
+                .findComponent({ name: 'SubscriptionCancellationModalStub' })
+                .vm.$emit('confirmed');
+
+            expect(wrapper.emitted('subscription-changed')).toHaveLength(1);
+        });
+
+        it('confirms the cancellation on screen', async () => {
+            const wrapper = mountComponent();
+
+            await wrapper.find('.sv-subscription-details__cancel').trigger('click');
+            wrapper
+                .findComponent({ name: 'SubscriptionCancellationModalStub' })
+                .vm.$emit('confirmed');
+            await wrapper.vm.$nextTick();
+
+            expect(wrapper.find('.sv-subscription-details__cancellation-success').exists()).toBe(
+                true,
+            );
+        });
+
+        it('closes the modal when it is dismissed', async () => {
+            const wrapper = mountComponent();
+
+            await wrapper.find('.sv-subscription-details__cancel').trigger('click');
+            wrapper.findComponent({ name: 'SubscriptionCancellationModalStub' }).vm.$emit('close');
+            await wrapper.vm.$nextTick();
+
+            expect(
+                wrapper.find('.sv-subscription-cancellation-modal-stub').attributes('data-open'),
+            ).toBe('false');
+            expect(wrapper.emitted('subscription-changed')).toBeUndefined();
         });
     });
 
@@ -316,17 +382,30 @@ describe('SubscriptionDetails', () => {
             expect(wrapper.find('.sv-subscription-details__renew').exists()).toBe(false);
         });
 
-        it('dispatches the renew subscription action when clicked', async () => {
+        it('opens the renewal modal when clicked, rather than handing it to the host', async () => {
             const wrapper = mountComponent({
                 subscription: { ...mockSubscription, inactive_periods: [{}] },
             });
 
             await wrapper.find('.sv-subscription-details__renew').trigger('click');
 
-            expect(mockDispatchAction).toHaveBeenCalledWith({
-                action: 'renew-subscription',
-                data: { subscriptionId: 'ppsu_1' },
+            const modal = wrapper.find('.sv-subscription-cancellation-modal-stub');
+            expect(modal.attributes('data-open')).toBe('true');
+            expect(modal.attributes('data-variant')).toBe('RENEW');
+            expect(mockDispatchAction).not.toHaveBeenCalled();
+        });
+
+        it('asks the host to refetch once the renewal is confirmed', async () => {
+            const wrapper = mountComponent({
+                subscription: { ...mockSubscription, inactive_periods: [{}] },
             });
+
+            await wrapper.find('.sv-subscription-details__renew').trigger('click');
+            wrapper
+                .findComponent({ name: 'SubscriptionCancellationModalStub' })
+                .vm.$emit('confirmed');
+
+            expect(wrapper.emitted('subscription-changed')).toHaveLength(1);
         });
     });
 });

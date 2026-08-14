@@ -36,12 +36,14 @@ defineProps<SolvimonSubscriptionDetailsEntryProps>();
                     error,
                     refreshWalletBalances,
                     refreshPaymentMethods,
+                    refreshSubscription,
                 }"
             >
                 <SubscriptionDetails
                     :subscription="subscription"
                     :schedules-data="schedulesData"
                     :customer="customer"
+                    :avatar="configuration.avatar"
                     :payment-methods="paymentMethods"
                     :wallet-balances="walletBalances"
                     :has-wallet-balances-error="hasWalletBalancesError"
@@ -49,6 +51,7 @@ defineProps<SolvimonSubscriptionDetailsEntryProps>();
                     :error="error"
                     @top-up-charged="refreshWalletBalances"
                     @payment-method-stored="refreshPaymentMethods"
+                    @subscription-changed="refreshSubscription"
                 />
             </template>
         </SubscriptionDetailsEntryView>

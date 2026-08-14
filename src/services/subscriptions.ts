@@ -14,6 +14,14 @@ import type { PricingPlanSubscriptionExpanded } from '@/types/subscription';
 
 const ENDPOINT = '/portal/pricing-plan-subscriptions';
 
+export const SUBSCRIPTION_CANCELLATION_TYPES = {
+    CANCEL: 'NEXT_BILLING_PERIOD',
+    RENEW: 'UNDO',
+} as const;
+
+/** Which of the two the customer asked for. */
+export type SubscriptionCancellationVariant = keyof typeof SUBSCRIPTION_CANCELLATION_TYPES;
+
 interface SubscriptionsService {
     getSubscription(params: {
         id: PricingPlanSubscription['id'];
@@ -27,6 +35,10 @@ interface SubscriptionsService {
         customerId: string;
         pagination?: WithPagination<string>;
     }): Promise<ApiSuccessCollectionResponse<PricingPlanSubscriptionExpanded>>;
+    setSubscriptionCancellation(params: {
+        id: PricingPlanSubscription['id'];
+        variant: SubscriptionCancellationVariant;
+    }): Promise<PricingPlanSubscription>;
 }
 
 export function createSubscriptionsService(): SubscriptionsService {
@@ -121,8 +133,23 @@ export function createSubscriptionsService(): SubscriptionsService {
         });
     }
 
+    function setSubscriptionCancellation({
+        id,
+        variant,
+    }: {
+        id: PricingPlanSubscription['id'];
+        variant: SubscriptionCancellationVariant;
+    }): Promise<PricingPlanSubscription> {
+        return request<PricingPlanSubscription>({
+            url: `${config.apiUrls.config}${ENDPOINT}/${id}/cancel`,
+            data: { type: SUBSCRIPTION_CANCELLATION_TYPES[variant] },
+            options: { method: 'POST' },
+        });
+    }
+
     return {
         getSubscription,
         getActiveSubscriptions,
+        setSubscriptionCancellation,
     };
 }

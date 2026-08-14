@@ -146,6 +146,7 @@
     "payment_methods_list.delete_modal.body": "Weet u zeker dat u deze betaalmethode wilt verwijderen?",
     "payment_methods_list.delete_modal.cancel": "Annuleren",
     "payment_methods_list.delete_modal.confirm": "Verwijderen",
+    "payment_methods_list.delete_modal.error": "We konden deze betaalmethode niet verwijderen. Probeer het opnieuw.",
     "payment_methods_list.delete_modal.title": "Betaalmethode verwijderen",
     "payments.retry_button.label": "Opnieuw proberen",
     "pricing_group_multiple_editor.at_least_one_description": "Selecteer minimaal één product",

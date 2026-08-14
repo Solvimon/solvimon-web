@@ -1,17 +1,19 @@
-import { mount } from '@vue/test-utils';
+import { flushPromises, mount } from '@vue/test-utils';
 import { defineComponent, h, nextTick } from 'vue';
 import type { PaymentMethod } from '@solvimon/solvimon-types';
 import PaymentMethodsList from './PaymentMethodsList.vue';
 
 // ─── Service mock ─────────────────────────────────────────────────────────────
 
-const { mockSetDefaultPaymentMethod } = vi.hoisted(() => ({
+const { mockSetDefaultPaymentMethod, mockArchivePaymentMethod } = vi.hoisted(() => ({
     mockSetDefaultPaymentMethod: vi.fn().mockResolvedValue({ id: 'pm_1', is_default: true }),
+    mockArchivePaymentMethod: vi.fn().mockResolvedValue({ id: 'pm_1', status: 'ARCHIVED' }),
 }));
 
 vi.mock('@/services/paymentMethods', () => ({
     createPaymentMethodsService: () => ({
         setDefaultPaymentMethod: mockSetDefaultPaymentMethod,
+        archivePaymentMethod: mockArchivePaymentMethod,
     }),
 }));
 
@@ -50,9 +52,14 @@ vi.mock('@solvimon/solvimon-ui', async () => {
         }),
         Modal: defineComponent({
             name: 'ModalStub',
-            props: ['showModal', 'title', 'confirmButtonText', 'cancelButtonText'],
+            props: ['showModal', 'title', 'confirmButtonText', 'cancelButtonText', 'isLoading'],
             emits: ['confirm', 'close'],
             template: '<div data-testid="modal-stub"><slot name="body" /></div>',
+        }),
+        ErrorNotification: defineComponent({
+            name: 'ErrorNotificationStub',
+            props: ['title'],
+            template: '<div data-testid="delete-error">{{ title }}</div>',
         }),
         Typography: defineComponent({
             name: 'TypographyStub',
@@ -130,18 +137,48 @@ describe('PaymentMethodsList', () => {
         expect(modalBody.text()).toContain('pm_to_delete');
     });
 
-    it('emits delete with the payment method and closes the modal when confirmed', async () => {
+    it('archives the payment method, emits delete and closes the modal when confirmed', async () => {
         const wrapper = mountComponent();
         const pm = createPaymentMethod({ id: 'pm_1' });
 
         capturedOnDeleteRequest!(pm);
         await nextTick();
         await wrapper.findComponent({ name: 'ModalStub' }).vm.$emit('confirm');
-        await nextTick();
+        await flushPromises();
 
+        expect(mockArchivePaymentMethod).toHaveBeenCalledWith({ paymentMethodId: 'pm_1' });
         expect(wrapper.emitted('delete')).toHaveLength(1);
         expect(wrapper.emitted('delete')![0]).toEqual([pm]);
         expect(wrapper.findComponent({ name: 'ModalStub' }).props('showModal')).toBe(false);
+    });
+
+    it('keeps the modal open and reports the failure when archiving fails', async () => {
+        mockArchivePaymentMethod.mockRejectedValueOnce(new Error('nope'));
+
+        const wrapper = mountComponent();
+
+        capturedOnDeleteRequest!(createPaymentMethod({ id: 'pm_1' }));
+        await nextTick();
+        await wrapper.findComponent({ name: 'ModalStub' }).vm.$emit('confirm');
+        await flushPromises();
+
+        expect(wrapper.emitted('delete')).toBeUndefined();
+        expect(wrapper.findComponent({ name: 'ModalStub' }).props('showModal')).toBe(true);
+        expect(wrapper.find('[data-testid="delete-error"]').exists()).toBe(true);
+    });
+
+    it('does not fire a second archive while the first is still out', async () => {
+        const wrapper = mountComponent();
+
+        capturedOnDeleteRequest!(createPaymentMethod({ id: 'pm_1' }));
+        await nextTick();
+
+        const modal = wrapper.findComponent({ name: 'ModalStub' });
+        modal.vm.$emit('confirm');
+        modal.vm.$emit('confirm');
+        await flushPromises();
+
+        expect(mockArchivePaymentMethod).toHaveBeenCalledTimes(1);
     });
 
     it('closes the modal without emitting delete when cancelled', async () => {

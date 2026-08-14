@@ -8,7 +8,7 @@ import PaymentMethodsList from '@/components/payments/PaymentMethodsList/Payment
 import PaymentMethodForm from '@/public/components/PaymentMethodForm/PaymentMethodForm.vue';
 
 defineProps<PaymentMethodsManagementProps>();
-const emit = defineEmits<{ 'set-default': [] }>();
+const emit = defineEmits<{ 'set-default': []; delete: [] }>();
 
 const { $t } = useIntl();
 
@@ -42,6 +42,7 @@ const showPaymentMethodForm = ref(false);
                 <PaymentMethodsList
                     :payment-methods="paymentMethods"
                     @set-default="emit('set-default')"
+                    @delete="emit('delete')"
                 />
             </Section>
 

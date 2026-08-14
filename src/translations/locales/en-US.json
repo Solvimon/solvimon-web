@@ -136,6 +136,7 @@
   "payment_methods_list.delete_modal.body": "Are you sure you want to delete this payment method?",
   "payment_methods_list.delete_modal.cancel": "Cancel",
   "payment_methods_list.delete_modal.confirm": "Delete",
+  "payment_methods_list.delete_modal.error": "We could not delete this payment method. Please try again.",
   "payment_methods_list.delete_modal.title": "Delete payment method",
   "payments.retry_button.label": "Try again",
   "pricing_group_multiple_editor.at_least_one_description": "Select at least one product",

@@ -1,6 +1,6 @@
 import { mount } from '@vue/test-utils';
 import { defineComponent, h } from 'vue';
-import type { CustomerWalletBalanceItem } from '@solvimon/solvimon-types';
+import type { CustomerWalletBalanceItem, PaymentMethod } from '@solvimon/solvimon-types';
 import SubscriptionDetails from './SubscriptionDetails.vue';
 import type { PricingPlanSubscriptionExpanded } from '@/types/subscription';
 
@@ -91,6 +91,29 @@ vi.mock(
     }),
 );
 
+// Renders the real payment method components, which resolve an ErrorHandlingProvider this mount
+// does not have. The stub keeps which method was handed down assertable.
+vi.mock('@/public/components/CustomerPaymentMethods/CustomerPaymentMethods.vue', () => ({
+    default: defineComponent({
+        name: 'CustomerPaymentMethodsStub',
+        props: {
+            paymentMethods: { type: Array, default: () => [] },
+            isLoading: Boolean,
+            configuration: { type: Object, default: undefined },
+        },
+        setup(props) {
+            return () =>
+                h(
+                    'div',
+                    { class: 'sv-customer-payment-methods-stub' },
+                    (props.paymentMethods as { card?: { last_four_digits?: string } }[])
+                        .map(({ card }) => card?.last_four_digits)
+                        .join(','),
+                );
+        },
+    }),
+}));
+
 const mockWalletBalance = {
     wallet_id: 'w_1',
     wallet_balance: {
@@ -108,6 +131,27 @@ const mockSubscription = {
             pricing_plan_version: { pricing_plan: { name: 'Pro plan' } },
         },
     ],
+} as unknown as PricingPlanSubscriptionExpanded;
+
+const createCard = (id: string, lastFour: string) =>
+    ({
+        id,
+        type: 'CARD',
+        status: 'ACTIVE',
+        card: {
+            brand: 'MASTERCARD',
+            last_four_digits: lastFour,
+            expiry_date: { expiry_month: 3, expiry_year: 2030 },
+        },
+    }) as unknown as PaymentMethod;
+
+const subscriptionCard = createCard('pmet_subscription', '4242');
+const otherPaymentMethod = createCard('pmet_other', '1111');
+
+/** Names its method by id, which is all the subscription itself carries. */
+const subscriptionWithPaymentMethod = {
+    ...mockSubscription,
+    payment_method_id: 'pmet_subscription',
 } as unknown as PricingPlanSubscriptionExpanded;
 
 const mountComponent = (props: Record<string, unknown> = {}) =>
@@ -307,6 +351,46 @@ describe('SubscriptionDetails', () => {
                 action: 'manage-subscription',
                 data: { subscriptionId: 'ppsu_1' },
             });
+        });
+    });
+
+    describe('payment method', () => {
+        it('shows the method the subscription is billed with', () => {
+            const wrapper = mountComponent({
+                subscription: subscriptionWithPaymentMethod,
+                paymentMethods: [otherPaymentMethod, subscriptionCard],
+            });
+
+            const block = wrapper.find('.sv-subscription-details__payment-method');
+
+            expect(block.exists()).toBe(true);
+            expect(block.text()).toContain('4242');
+        });
+
+        it("leaves out the customer's other methods", () => {
+            const wrapper = mountComponent({
+                subscription: subscriptionWithPaymentMethod,
+                paymentMethods: [otherPaymentMethod, subscriptionCard],
+            });
+
+            expect(wrapper.find('.sv-subscription-details__payment-method').text()).not.toContain(
+                '1111',
+            );
+        });
+
+        it('leaves the block out when the subscription has no method of its own', () => {
+            const wrapper = mountComponent({ paymentMethods: [otherPaymentMethod] });
+
+            expect(wrapper.find('.sv-subscription-details__payment-method').exists()).toBe(false);
+        });
+
+        it('leaves the block out when the id names a method the customer no longer has', () => {
+            const wrapper = mountComponent({
+                subscription: subscriptionWithPaymentMethod,
+                paymentMethods: [otherPaymentMethod],
+            });
+
+            expect(wrapper.find('.sv-subscription-details__payment-method').exists()).toBe(false);
         });
     });
 

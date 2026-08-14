@@ -691,6 +691,10 @@
     "defaultMessage": "Cancel subscription",
     "description": "Label for the cancel subscription button on the subscription details page"
   },
+  "subscription_details.cancel_success": {
+    "defaultMessage": "Your subscription has been cancelled. You keep access until the end of the billing period.",
+    "description": "Confirmation shown after a subscription has been cancelled"
+  },
   "subscription_details.empty_state.message": {
     "defaultMessage": "This subscription is no longer available.",
     "description": "Message shown when the requested subscription does not exist"
@@ -706,6 +710,10 @@
   "subscription_details.renew_button.label": {
     "defaultMessage": "Renew subscription",
     "description": "Label for the renew subscription button on the subscription details page"
+  },
+  "subscription_details.renew_success": {
+    "defaultMessage": "Your subscription has been renewed.",
+    "description": "Confirmation shown after a cancellation has been undone"
   },
   "subscription_details.title": {
     "defaultMessage": "Subscription details",

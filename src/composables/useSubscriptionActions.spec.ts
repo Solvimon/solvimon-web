@@ -95,25 +95,47 @@ describe('useSubscriptionActions', () => {
     });
 
     describe('cancel', () => {
-        it('dispatches the cancel subscription action', () => {
+        it('opens the cancel confirmation', () => {
+            const { cancel, pendingVariant } = useSubscriptionActions({
+                subscription: ref(createSubscription()),
+            });
+
+            cancel();
+
+            expect(pendingVariant.value).toBe('CANCEL');
+        });
+
+        it('is not handed to the host', () => {
             const { cancel } = useSubscriptionActions({
                 subscription: ref(createSubscription()),
             });
 
             cancel();
 
-            expect(mockDispatchAction).toHaveBeenCalledWith({
-                action: 'cancel-subscription',
-                data: { subscriptionId: 'ppsu_1' },
-            });
+            expect(mockDispatchAction).not.toHaveBeenCalled();
         });
 
-        it('dispatches nothing while there is no subscription', () => {
-            const { cancel } = useSubscriptionActions({ subscription: ref(undefined) });
+        it('opens nothing while there is no subscription', () => {
+            const { cancel, pendingVariant } = useSubscriptionActions({
+                subscription: ref(undefined),
+            });
 
             cancel();
 
-            expect(mockDispatchAction).not.toHaveBeenCalled();
+            expect(pendingVariant.value).toBeUndefined();
+        });
+    });
+
+    describe('dismiss', () => {
+        it('closes whichever confirmation is open', () => {
+            const { cancel, dismiss, pendingVariant } = useSubscriptionActions({
+                subscription: ref(createSubscription()),
+            });
+
+            cancel();
+            dismiss();
+
+            expect(pendingVariant.value).toBeUndefined();
         });
     });
 
@@ -141,25 +163,34 @@ describe('useSubscriptionActions', () => {
     });
 
     describe('renew', () => {
-        it('dispatches the renew subscription action', () => {
+        it('opens the renew confirmation', () => {
+            const { renew, pendingVariant } = useSubscriptionActions({
+                subscription: ref(createSubscription([{}])),
+            });
+
+            renew();
+
+            expect(pendingVariant.value).toBe('RENEW');
+        });
+
+        it('is not handed to the host', () => {
             const { renew } = useSubscriptionActions({
                 subscription: ref(createSubscription([{}])),
             });
 
             renew();
 
-            expect(mockDispatchAction).toHaveBeenCalledWith({
-                action: 'renew-subscription',
-                data: { subscriptionId: 'ppsu_1' },
-            });
+            expect(mockDispatchAction).not.toHaveBeenCalled();
         });
 
-        it('dispatches nothing while there is no subscription', () => {
-            const { renew } = useSubscriptionActions({ subscription: ref(undefined) });
+        it('opens nothing while there is no subscription', () => {
+            const { renew, pendingVariant } = useSubscriptionActions({
+                subscription: ref(undefined),
+            });
 
             renew();
 
-            expect(mockDispatchAction).not.toHaveBeenCalled();
+            expect(pendingVariant.value).toBeUndefined();
         });
     });
 });

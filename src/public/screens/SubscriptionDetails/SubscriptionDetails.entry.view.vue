@@ -38,7 +38,6 @@ const { isLoading } = useLoadInitialData(
 
 const schedulesData = computed(() => (subscription.value ? withPlanData(subscription.value) : []));
 
-// Computed at the top level so the template unwraps the ref — nested access does not.
 const walletBalanceItems = computed(() => walletBalances.value?.wallet_balances ?? []);
 
 const hasWalletBalancesError = computed(() => walletBalancesApiStatus.value === ApiStatus.Failed);
@@ -57,5 +56,6 @@ const hasWalletBalancesError = computed(() => walletBalancesApiStatus.value === 
         :error="error"
         :refresh-wallet-balances="fetchWalletBalances"
         :refresh-payment-methods="fetchPaymentMethods"
+        :refresh-subscription="fetchSubscription"
     />
 </template>

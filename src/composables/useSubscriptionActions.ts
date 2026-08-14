@@ -1,12 +1,15 @@
-import { computed, type ComputedRef, type Ref } from 'vue';
+import { computed, ref, type ComputedRef, type Ref } from 'vue';
 import type { PricingPlanSubscriptionExpanded } from '@/types/subscription';
 import { useActionDispatchProvider } from '@/components/providers';
+import type { SubscriptionCancellationVariant } from '@/services/subscriptions';
 
 /**
- * Availability of — and dispatching for — the actions a host can take on a single subscription.
+ * Availability of the actions that can be taken on a single subscription.
  *
  * Cancelling and renewing are mutually exclusive: a subscription that is still running can be
- * cancelled, one that has been cancelled can be renewed.
+ * cancelled, one that has been cancelled can be renewed. Both are confirmed in a modal and carried
+ * out by the SDK itself, so they open that modal rather than being handed to the host; only
+ * managing — which is a whole flow of the host's own — is still dispatched.
  */
 export function useSubscriptionActions({
     subscription,
@@ -15,13 +18,14 @@ export function useSubscriptionActions({
 }): {
     isCancellable: ComputedRef<boolean>;
     isRenewable: ComputedRef<boolean>;
+    pendingVariant: Ref<SubscriptionCancellationVariant | undefined>;
     cancel: () => void;
     renew: () => void;
+    dismiss: () => void;
     manage: () => void;
 } {
     const { dispatchAction } = useActionDispatchProvider();
 
-    /** A subscription that has never been cancelled has no inactive periods. */
     const isCancellable = computed<boolean>(() => {
         if (!subscription.value) return false;
 
@@ -36,25 +40,24 @@ export function useSubscriptionActions({
         return Array.isArray(inactivePeriods) && inactivePeriods.length > 0;
     });
 
+    const pendingVariant = ref<SubscriptionCancellationVariant | undefined>();
+
     const cancel = () => {
         if (!subscription.value) return;
 
-        dispatchAction({
-            action: 'cancel-subscription',
-            data: { subscriptionId: subscription.value.id },
-        });
+        pendingVariant.value = 'CANCEL';
     };
 
     const renew = () => {
         if (!subscription.value) return;
 
-        dispatchAction({
-            action: 'renew-subscription',
-            data: { subscriptionId: subscription.value.id },
-        });
+        pendingVariant.value = 'RENEW';
     };
 
-    /** Hands off to the host's upgrade flow, where the plan and its pricings can be changed. */
+    const dismiss = () => {
+        pendingVariant.value = undefined;
+    };
+
     const manage = () => {
         if (!subscription.value) return;
 
@@ -64,5 +67,5 @@ export function useSubscriptionActions({
         });
     };
 
-    return { isCancellable, isRenewable, cancel, renew, manage };
+    return { isCancellable, isRenewable, pendingVariant, cancel, renew, dismiss, manage };
 }

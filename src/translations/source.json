@@ -639,6 +639,54 @@
     "defaultMessage": "Secure and encrypted payments by",
     "description": "Secure encrypted payments KPI for a specific vendor, followed by a vendor logo"
   },
+  "subscription_cancellation_modal.cancel.confirm_button.label": {
+    "defaultMessage": "Cancel subscription",
+    "description": "Label of the confirm button in the cancel subscription modal"
+  },
+  "subscription_cancellation_modal.cancel.error": {
+    "defaultMessage": "We could not cancel your subscription. Please try again.",
+    "description": "Error shown when cancelling a subscription fails"
+  },
+  "subscription_cancellation_modal.cancel.explanation": {
+    "defaultMessage": "Your subscription will be canceled, but you’ll continue to have access until the end of the billing period.",
+    "description": "Explanation of what happens when a running subscription is cancelled, shown in the cancel subscription modal"
+  },
+  "subscription_cancellation_modal.cancel.explanation_with_date": {
+    "defaultMessage": "Your subscription will be canceled, but you’ll continue to have access until {date}.",
+    "description": "Explanation of what happens when a running subscription is cancelled, naming the date access ends, shown in the cancel subscription modal"
+  },
+  "subscription_cancellation_modal.cancel.title": {
+    "defaultMessage": "Cancel subscription",
+    "description": "Title of the cancel subscription confirmation modal"
+  },
+  "subscription_cancellation_modal.cancel_button.label": {
+    "defaultMessage": "Cancel",
+    "description": "Label of the button that dismisses the cancellation modal"
+  },
+  "subscription_cancellation_modal.renew.confirm_button.label": {
+    "defaultMessage": "Renew subscription",
+    "description": "Label of the confirm button in the renew subscription modal"
+  },
+  "subscription_cancellation_modal.renew.error": {
+    "defaultMessage": "We could not renew your subscription. Please try again.",
+    "description": "Error shown when undoing a cancellation fails"
+  },
+  "subscription_cancellation_modal.renew.explanation": {
+    "defaultMessage": "Your subscription will continue as before, and billing will resume on its usual schedule.",
+    "description": "Explanation of what happens when a cancellation is undone, shown in the renew subscription modal when no end date is known"
+  },
+  "subscription_cancellation_modal.renew.explanation_with_date": {
+    "defaultMessage": "You can renew your subscription until {date}. After this period you can only create a new subscription.",
+    "description": "Explanation of the deadline for undoing a cancellation, shown in the renew subscription modal"
+  },
+  "subscription_cancellation_modal.renew.title": {
+    "defaultMessage": "Renew subscription",
+    "description": "Title of the renew subscription confirmation modal"
+  },
+  "subscription_cancellation_modal.renews_label": {
+    "defaultMessage": "Renews",
+    "description": "Label before the date the subscription renews, shown in the cancel subscription modal"
+  },
   "subscription_details.cancel_button.label": {
     "defaultMessage": "Cancel subscription",
     "description": "Label for the cancel subscription button on the subscription details page"
@@ -741,7 +789,7 @@
   },
   "subscription_management.summary.total_due_heading": {
     "defaultMessage": "Total due",
-    "description": "Heading above the total of the invoice previewing a subscription change, replacing the shared preview\u2019s \"Total due today\""
+    "description": "Heading above the total of the invoice previewing a subscription change, replacing the shared preview’s \"Total due today\""
   },
   "subscription_management.title": {
     "defaultMessage": "Manage {subject}",

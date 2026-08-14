@@ -48,6 +48,7 @@ function handleConfirmDelete() {
     </div>
 
     <Modal
+        size="md"
         :show-modal="!!pendingDeletePaymentMethod"
         :title="
             $t({
@@ -74,16 +75,30 @@ function handleConfirmDelete() {
         @close="pendingDeletePaymentMethod = null"
     >
         <template v-if="pendingDeletePaymentMethod" #body>
-            <Typography>{{
-                $t({
-                    id: 'payment_methods_list.delete_modal.body',
-                    defaultMessage: 'Are you sure you want to delete this payment method?',
-                    description: 'Confirmation message in the delete payment method modal',
-                })
-            }}</Typography>
-            <Section>
-                <PaymentMethod :payment-method="pendingDeletePaymentMethod" />
-            </Section>
+            <div class="sv-payment-methods__delete-modal-body flex flex-col gap-3">
+                <Typography
+                    variant="body-sm"
+                    shade="lighter"
+                    tag="p"
+                    class="sv-payment-methods__delete-modal-explanation"
+                >
+                    {{
+                        $t({
+                            id: 'payment_methods_list.delete_modal.body',
+                            defaultMessage: 'Are you sure you want to delete this payment method?',
+                            description: 'Confirmation message in the delete payment method modal',
+                        })
+                    }}
+                </Typography>
+
+                <Section no-spacing class="sv-payment-methods__delete-modal-payment-method">
+                    <!-- The summary in the cancellation modal brings its own inset; PaymentMethod
+                         does not, so it is padded here to sit the same way inside the card. -->
+                    <div class="px-3 py-2">
+                        <PaymentMethod :payment-method="pendingDeletePaymentMethod" />
+                    </div>
+                </Section>
+            </div>
         </template>
     </Modal>
 </template>

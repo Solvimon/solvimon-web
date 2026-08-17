@@ -104,9 +104,8 @@ const selectedPricingItemId = computed<string | boolean | undefined>({
 });
 
 /**
- * Start on the choose-your-amount top-up when the wallet offers one: it is the most useful default,
- * and — unlike a fixed one — selecting it charges nothing until an amount is entered. Runs only when
- * nothing chosen is still on offer, so it cannot overrule the customer.
+ * Opens on a top-up already chosen, so the customer never has to make a first pick before seeing
+ * what a top-up would cost.
  */
 watch(
     chargeableItems,
@@ -119,9 +118,9 @@ watch(
             return;
         }
 
-        selectedPricingItemId.value = items.find(
-            ({ flexiblePricing }) => flexiblePricing,
-        )?.pricingItemId;
+        const preferred = items.find(({ flexiblePricing }) => flexiblePricing) ?? items[0];
+
+        selectedPricingItemId.value = preferred?.pricingItemId;
     },
     { immediate: true },
 );
@@ -444,22 +443,24 @@ watch(
 
             <!-- payment methods -->
             <div>
-                <PaymentMethodSelector
-                    v-model="selectedPaymentMethodId"
-                    class="sv-top-up-form__payment-methods"
-                    :payment-methods="sortedPaymentMethods"
-                    required
-                    :disabled="isCharging"
-                    :label="
-                        $t({
-                            defaultMessage: 'Payment method',
-                            description:
-                                'Label above the payment method that pays for the top-up, in the top-up modal',
-                            id: 'topup_modal.payment_method_selector.label',
-                        })
-                    "
-                    @add-payment-method="emit('add-payment-method')"
-                />
+                <slot name="payment-method">
+                    <PaymentMethodSelector
+                        v-model="selectedPaymentMethodId"
+                        class="sv-top-up-form__payment-methods"
+                        :payment-methods="sortedPaymentMethods"
+                        required
+                        :disabled="isCharging"
+                        :label="
+                            $t({
+                                defaultMessage: 'Payment method',
+                                description:
+                                    'Label above the payment method that pays for the top-up, in the top-up modal',
+                                id: 'topup_modal.payment_method_selector.label',
+                            })
+                        "
+                        @add-payment-method="emit('add-payment-method')"
+                    />
+                </slot>
             </div>
         </div>
     </form>

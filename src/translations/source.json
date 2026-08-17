@@ -231,10 +231,6 @@
     "defaultMessage": "Select your billing country",
     "description": "The title shown when no country is selected"
   },
-  "checkout.payment_method_block.no_payment_methods_available_message": {
-    "defaultMessage": "There are no available payment methods. Please contact support for more information.",
-    "description": "The message shown when there are no available payment methods"
-  },
   "checkout.payment_method_block.no_payment_methods_available_title": {
     "defaultMessage": "No payment methods available",
     "description": "The title shown when there are no available payment methods"
@@ -870,6 +866,10 @@
   "topup_modal.flexible_option.label": {
     "defaultMessage": "Choose your own amount",
     "description": "Label of the choose-your-amount option in the top-up modal"
+  },
+  "topup_modal.no_payment_methods_available_title": {
+    "defaultMessage": "No payment methods available",
+    "description": "Shown in the top-up modal when the customer has nothing stored and no method can be added"
   },
   "topup_modal.payment_method_selector.label": {
     "defaultMessage": "Payment method",

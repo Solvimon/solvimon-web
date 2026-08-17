@@ -239,6 +239,7 @@
     "topup_modal.done_button.label": "Klaar",
     "topup_modal.flexible_option.bounds": "Tussen {minimum} en {maximum}",
     "topup_modal.flexible_option.label": "Kies je eigen bedrag",
+    "topup_modal.no_payment_methods_available_title": "Geen betaalmethoden beschikbaar",
     "topup_modal.payment_method_selector.label": "Betaalmethode",
     "topup_modal.pricing_items.label": "Selecteer opwaardeerbedrag",
     "topup_modal.save_payment_method.label": "Betaalmethode opslaan",

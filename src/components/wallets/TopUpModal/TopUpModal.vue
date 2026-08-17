@@ -18,6 +18,7 @@ import { usePaymentMethodOptions } from '@/composables/usePaymentMethodOptions';
 import PaymentMethodForm from '@/public/components/PaymentMethodForm/PaymentMethodForm.vue';
 import type { TokenizePaymentMethodFormConfiguration } from '@/public/components/PaymentMethodForm/PaymentMethodForm.types';
 import { useElementHeight } from '@/composables/useElementHeight';
+import EmptyStatePlaceholder from '@/components/checkout/EmptyStatePlaceholder.vue';
 
 const props = defineProps<TopUpModalProps>();
 const emit = defineEmits<TopUpModalEmits>();
@@ -64,6 +65,28 @@ watch(
 
 /** Which pane is on screen. Every step renames the title, the subtitle and the footer buttons too. */
 const step = ref<TopUpModalStep>('TOP_UP');
+
+const hasStoredPaymentMethods = computed(() => (props.paymentMethods ?? []).length > 0);
+
+/**
+ * Nothing can be added: the gateway offers this customer no way to pay. Only once the options have
+ * been fetched — they start out empty, so answering before then says "none available" every time the
+ * modal opens.
+ */
+const hasNoPaymentMethodOptions = computed(
+    () => !isPaymentMethodOptionsPending.value && (paymentMethodOptions.value ?? []).length === 0,
+);
+
+/**
+ * There is no way to pay: nothing stored to charge, and no method the customer could add. Confirming
+ * is refused rather than left to fail against the API.
+ */
+const isTopUpUnavailable = computed(
+    () =>
+        step.value === 'TOP_UP' &&
+        !hasStoredPaymentMethods.value &&
+        hasNoPaymentMethodOptions.value,
+);
 
 /**
  * The top-up as it was charged, kept for the success step: the form still holds it, but reading it from
@@ -157,7 +180,6 @@ const trackOffset = computed(() => {
 });
 
 const paymentMethodFormRef = ref<InstanceType<typeof PaymentMethodForm>>();
-
 /** True while the payment gateway is working, so the confirm button can show it. */
 const isSavingPaymentMethod = computed(
     () => step.value === 'ADD_PAYMENT_METHOD' && !!paymentMethodFormRef.value?.isPaymentPending,
@@ -304,7 +326,30 @@ watch(
                                     :payment-methods="paymentMethods"
                                     @add-payment-method="step = 'ADD_PAYMENT_METHOD'"
                                     @success="handleTopUpSuccess"
-                                />
+                                >
+                                    <!--
+                                        Nothing stored and nothing addable, so there is no method to
+                                        select and no point offering a way to add one.
+                                    -->
+                                    <template v-if="isTopUpUnavailable" #payment-method>
+                                        <EmptyStatePlaceholder
+                                            class="sv-topup-modal__payment-methods-empty"
+                                            icon="credit_card_off"
+                                        >
+                                            <template #title>
+                                                {{
+                                                    $t({
+                                                        defaultMessage:
+                                                            'No payment methods available',
+                                                        id: 'topup_modal.no_payment_methods_available_title',
+                                                        description:
+                                                            'Shown in the top-up modal when the customer has nothing stored and no method can be added',
+                                                    })
+                                                }}
+                                            </template>
+                                        </EmptyStatePlaceholder>
+                                    </template>
+                                </TopUpModalForm>
                             </div>
                         </div>
 
@@ -347,14 +392,33 @@ watch(
         </template>
 
         <!--
-            The money is taken by the time this pane is on screen, so there is nothing left to cancel —
-            hence one button, which the modal's own footer cannot express.
+            Stands in for the modal's own footer in the two cases it cannot express: the success pane,
+            where the money is already taken and there is nothing left to cancel, and a wallet with no
+            way to pay at all, where confirming has to be refused outright.
         -->
-        <template v-if="step === 'SUCCESS'" #footer>
+        <template v-if="step === 'SUCCESS' || isTopUpUnavailable" #footer>
             <div class="flex flex-col gap-2">
-                <Button size="lg" data-testid="done" @click="handleDone">{{
-                    confirmButtonText
-                }}</Button>
+                <Button
+                    v-if="step === 'SUCCESS'"
+                    size="lg"
+                    data-testid="done"
+                    @click="handleDone"
+                    >{{ confirmButtonText }}</Button
+                >
+
+                <template v-else>
+                    <Button size="lg" disabled data-testid="confirm">{{
+                        confirmButtonText
+                    }}</Button>
+                    <Button
+                        size="lg"
+                        color="gray"
+                        variant="ghost"
+                        data-testid="cancel"
+                        @click="handleCancel"
+                        >{{ cancelButtonText }}</Button
+                    >
+                </template>
             </div>
         </template>
     </Modal>

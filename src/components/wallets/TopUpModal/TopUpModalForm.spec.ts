@@ -300,14 +300,29 @@ describe('TopUpModalForm', () => {
         expect(mockPreview).not.toHaveBeenCalled();
     });
 
-    it('starts on nothing when only fixed top-ups are offered, so none is charged by surprise', () => {
+    it('starts on the first fixed top-up when no flexible one is offered', () => {
         const wrapper = mountForm([
             createFixedItem(),
             createFixedItem({ pricingItemId: 'prii_2' }),
         ]);
 
-        expect(radios(wrapper).some((radio) => radio.element.checked)).toBe(false);
-        expect(mockPreview).not.toHaveBeenCalled();
+        expect(radios(wrapper).map((radio) => radio.element.checked)).toEqual([true, false]);
+    });
+
+    it('starts on the only top-up when the wallet offers one fixed option', () => {
+        const wrapper = mountForm([createFixedItem()]);
+
+        expect(radios(wrapper).map((radio) => radio.element.checked)).toEqual([true]);
+    });
+
+    // A fixed price is known up front, so the chosen one is priced without waiting for input.
+    it('previews the fixed top-up it starts on', () => {
+        mountForm([createFixedItem()]);
+
+        expect(mockPreview).toHaveBeenCalledWith({
+            pricingPlanScheduleId: 'ppsc_1',
+            pricingItems: [{ pricing_item_id: 'prii_fixed' }],
+        });
     });
 
     it('does not overrule a choice the customer has already made', async () => {
@@ -320,7 +335,7 @@ describe('TopUpModalForm', () => {
 
     it('moves to the flexible top-up when the wallet on offer changes', async () => {
         const wrapper = mountForm([createFixedItem()]);
-        expect(radios(wrapper).some((radio) => radio.element.checked)).toBe(false);
+        expect(radios(wrapper).map((radio) => radio.element.checked)).toEqual([true]);
 
         await wrapper.setProps({
             topUpPricingItems: [

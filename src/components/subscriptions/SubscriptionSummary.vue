@@ -45,7 +45,7 @@ const selectedPricings = computed(() => {
 </script>
 
 <template>
-    <div class="flex flex-row gap-3 px-3 py-2">
+    <div class="flex flex-row gap-3" :class="noSpacing ? undefined : 'px-3 py-2'">
         <Avatar v-if="avatar" :image-src="avatar" size="lg" class="my-1" />
         <div class="grow">
             <Typography variant="body" weight="semibold" no-spacing>{{ name }}</Typography>

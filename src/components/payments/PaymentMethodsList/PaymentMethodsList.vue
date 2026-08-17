@@ -31,6 +31,11 @@ const { getContextMenuItems } = usePaymentMethodContextMenuOptions({
     },
 });
 
+function handleCloseModal() {
+    pendingDeletePaymentMethod.value = null;
+    archiveError.value = null;
+}
+
 async function handleConfirmDelete() {
     const paymentMethod = pendingDeletePaymentMethod.value;
 
@@ -90,7 +95,7 @@ async function handleConfirmDelete() {
             })
         "
         @confirm="handleConfirmDelete"
-        @close="pendingDeletePaymentMethod = null"
+        @close="handleCloseModal"
     >
         <template v-if="pendingDeletePaymentMethod" #body>
             <div class="sv-payment-methods__delete-modal-body flex flex-col gap-3">

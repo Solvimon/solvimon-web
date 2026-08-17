@@ -221,6 +221,7 @@
   "topup_modal.payment_method_selector.label": "Payment method",
   "topup_modal.pricing_items.label": "Top up amount",
   "topup_modal.save_payment_method.label": "Save payment method",
+  "topup_modal.subscriptions.label": "Subscription to top up",
   "topup_modal.subtitle": "Your current balance is {balance}.",
   "topup_modal.success.added": "Your balance was topped up with {value}. Please be aware that it can take some time to reflect this change in your wallet.",
   "topup_modal.success.modal_subtitle": "Your payment went through.",

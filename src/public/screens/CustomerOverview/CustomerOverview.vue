@@ -31,7 +31,14 @@ const customerId = portal.value?.customer_id;
 
 const customer = useCustomer({ customerId });
 const invoices = useInvoicesList({ customerId, batchSize: 5 });
-const subscriptions = useSubscriptionsList({ customerId, batchSize: 2 });
+/**
+ * How many subscriptions the block shows. Every active one is loaded — the top-up modal needs the
+ * full set to work out which subscription a wallet is topped up for — but the block itself stays a
+ * summary, with "View all" leading to the rest.
+ */
+const SUBSCRIPTIONS_SHOWN = 2;
+
+const subscriptions = useSubscriptionsList({ customerId });
 const paymentMethods = usePaymentMethods({ customerId });
 const customerPaymentMethodOptions = useCustomerPaymentMethodOptions({ customerId });
 const customerWalletBalances = useCustomerWalletBalances({ customerId });
@@ -40,10 +47,12 @@ const walletBalanceItems = computed(
     () => customerWalletBalances.walletBalances.value?.wallet_balances ?? [],
 );
 
+const shownSubscriptions = computed(() => subscriptions.items.value.slice(0, SUBSCRIPTIONS_SHOWN));
+
 const { isLoading } = useLoadInitialData(
     customer.get.execute(),
     invoices.fetchInitial(),
-    subscriptions.fetchInitial(),
+    subscriptions.fetchAll(),
     paymentMethods.fetchAll(),
     customerPaymentMethodOptions.fetch(),
     customerWalletBalances.fetch(),
@@ -96,10 +105,9 @@ const topUpModal = useTopUpModal(selectedBalanceItem);
                 v-if="customer.customer.value"
                 class="sv-customer-overview__subscriptions"
                 :customer="customer.customer.value"
-                :subscriptions="subscriptions.items.value"
+                :subscriptions="shownSubscriptions"
                 :payment-methods="paymentMethods.items.value"
                 :is-loading="isLoading"
-                @load-more="subscriptions.fetchMore"
             />
         </template>
         <template #content>
@@ -139,6 +147,7 @@ const topUpModal = useTopUpModal(selectedBalanceItem);
                 :payment-methods="paymentMethods.items.value"
                 :customer="customer.customer.value"
                 :selected-balance-item="selectedBalanceItem"
+                :subscriptions="subscriptions.items.value"
                 @close="selectedBalanceItem = undefined"
                 @confirm="handleTopUpCharged"
                 @payment-success="handlePaymentMethodStored"

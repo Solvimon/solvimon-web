@@ -883,6 +883,10 @@
     "defaultMessage": "Save payment method",
     "description": "Label of the confirm button in the top-up modal while adding a payment method"
   },
+  "topup_modal.subscriptions.label": {
+    "defaultMessage": "Subscription to top up",
+    "description": "Label above the list of subscriptions a top-up can be charged against, in the top-up modal"
+  },
   "topup_modal.subtitle": {
     "defaultMessage": "Your current balance is {balance}.",
     "description": "Subtitle of the top-up modal showing the current wallet balance"

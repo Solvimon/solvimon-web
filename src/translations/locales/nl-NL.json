@@ -243,6 +243,7 @@
     "topup_modal.payment_method_selector.label": "Betaalmethode",
     "topup_modal.pricing_items.label": "Selecteer opwaardeerbedrag",
     "topup_modal.save_payment_method.label": "Betaalmethode opslaan",
+    "topup_modal.subscriptions.label": "Op te waarderen abonnement",
     "topup_modal.subtitle": "Je huidige saldo is {balance}.",
     "topup_modal.success.added": "Je saldo is opgewaardeerd met {value}. Houd er rekening mee dat het even kan duren voordat deze wijziging in je wallet te zien is.",
     "topup_modal.success.modal_subtitle": "Je betaling is gelukt.",

@@ -555,3 +555,174 @@ describe('TopUpModal — confirming on the add payment method pane', () => {
         expect(mockCharge).not.toHaveBeenCalled();
     });
 });
+
+describe('TopUpModal — a wallet topped up through several subscriptions', () => {
+    /** Two subscriptions, each carrying one of the schedules the wallet is topped up on. */
+    const subscriptionOn = (id: string, name: string, scheduleId: string, pricingId: string) => ({
+        id,
+        name,
+        pricing_plan_schedule_infos: [
+            {
+                id: scheduleId,
+                pricing_plan_schedule: { enabled_pricings: [{ pricing_id: pricingId }] },
+                pricing_plan_version: {
+                    pricing_categories: [
+                        {
+                            pricings: [
+                                { object_type: 'PRICING', id: pricingId, name: `${name} pricing` },
+                            ],
+                        },
+                    ],
+                },
+            },
+        ],
+    });
+
+    const twoSubscriptions = [
+        subscriptionOn('ppsu_1', 'Pro plan', 'ppsc_1', 'pric_1'),
+        subscriptionOn('ppsu_2', 'Credits add-on', 'ppsc_2', 'pric_2'),
+    ] as unknown as PricingPlanSubscriptionExpanded[];
+
+    beforeEach(() => {
+        vi.useFakeTimers();
+        mockCharge.mockReset();
+        mockSubmitPaymentMethod.mockReset();
+        mockCharge.mockResolvedValue({ id: 'inv_charged' });
+        gateway.options.value = [{ id: 'pmo_card' }];
+        gateway.isPending.value = false;
+    });
+
+    afterEach(() => {
+        vi.useRealTimers();
+    });
+
+    /**
+     * The subscription radios, told apart from the top-up ones by their id: the group builds ids
+     * from its `name`, which it does not put on the inputs themselves.
+     */
+    const subscriptionRadios = (wrapper: ReturnType<typeof mountModal>) =>
+        wrapper.findAll<HTMLInputElement>('input[id^="radio_top-up-subscription"]');
+
+    /** The same wallet topped up on a schedule of each subscription. */
+    const sharedBalanceItem = {
+        ...balanceItem,
+        charge_on_demand_pricing_items: [
+            {
+                pricing_item_id: 'prii_first',
+                pricing_plan_schedule_id: 'ppsc_1',
+                pricing_item: {
+                    id: 'prii_first',
+                    configs: [
+                        {
+                            id: 'pico_first',
+                            on_demand: true,
+                            details: {
+                                pricing_type: 'FIXED',
+                                bands: [{ fixed_amount: { quantity: '10.00', currency: 'EUR' } }],
+                            },
+                        },
+                    ],
+                },
+            },
+            {
+                pricing_item_id: 'prii_second',
+                pricing_plan_schedule_id: 'ppsc_2',
+                pricing_item: {
+                    id: 'prii_second',
+                    configs: [
+                        {
+                            id: 'pico_second',
+                            on_demand: true,
+                            details: {
+                                pricing_type: 'FIXED',
+                                bands: [{ fixed_amount: { quantity: '20.00', currency: 'EUR' } }],
+                            },
+                        },
+                    ],
+                },
+            },
+        ],
+    } as unknown as CustomerWalletBalanceItem;
+
+    const mountWithChoice = (props: Record<string, unknown> = {}) =>
+        mountModal({
+            selectedBalanceItem: sharedBalanceItem,
+            subscriptions: twoSubscriptions,
+            ...props,
+        });
+
+    const offeredItemIds = (wrapper: ReturnType<typeof mountModal>) =>
+        (
+            wrapper.findComponent({ name: 'TopUpModalForm' }).props('topUpPricingItems') as {
+                pricingItemId: string;
+            }[]
+        ).map(({ pricingItemId }) => pricingItemId);
+
+    it('offers only the top-ups of the chosen subscription', () => {
+        const wrapper = mountWithChoice();
+
+        expect(offeredItemIds(wrapper)).toEqual(['prii_first']);
+    });
+
+    it('swaps the top-ups over when another subscription is chosen', async () => {
+        const wrapper = mountWithChoice();
+
+        await subscriptionRadios(wrapper)[1].setValue();
+        await nextTick();
+
+        expect(offeredItemIds(wrapper)).toEqual(['prii_second']);
+    });
+
+    it('asks which subscription the top-up is for', () => {
+        const wrapper = mountWithChoice();
+
+        expect(subscriptionRadios(wrapper).map((radio) => radio.element.value)).toEqual([
+            'ppsu_1',
+            'ppsu_2',
+        ]);
+        expect(wrapper.text()).toContain('Pro plan');
+        expect(wrapper.text()).toContain('Credits add-on');
+    });
+
+    // Drawn with the same component the checkout and cancellation modal use.
+    it('draws each option as a subscription summary', () => {
+        const wrapper = mountWithChoice();
+
+        const summaries = wrapper.findAllComponents({ name: 'SubscriptionSummary' });
+
+        expect(summaries).toHaveLength(2);
+        expect(summaries.map((summary) => summary.props('subscription').id)).toEqual([
+            'ppsu_1',
+            'ppsu_2',
+        ]);
+    });
+
+    // Only the name renders without them: the plan description is routinely empty.
+    it('names the pricings each subscription runs, as the checkout summary does', () => {
+        const wrapper = mountWithChoice();
+
+        expect(wrapper.text()).toContain('Pro plan pricing');
+        expect(wrapper.text()).toContain('Credits add-on pricing');
+    });
+
+    it('starts on the first one', () => {
+        const wrapper = mountWithChoice();
+
+        expect(subscriptionRadios(wrapper).map((radio) => radio.element.checked)).toEqual([
+            true,
+            false,
+        ]);
+    });
+
+    it('does not ask when the wallet has only one subscription behind it', () => {
+        const wrapper = mountWithChoice({ subscriptions: [twoSubscriptions[0]] });
+
+        expect(subscriptionRadios(wrapper)).toHaveLength(0);
+    });
+
+    it('does not ask when no subscriptions were given at all', () => {
+        const wrapper = mountModal();
+
+        expect(subscriptionRadios(wrapper)).toHaveLength(0);
+    });
+});

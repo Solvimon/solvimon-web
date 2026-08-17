@@ -664,6 +664,29 @@ describe('TopUpModal — a wallet topped up through several subscriptions', () =
         expect(offeredItemIds(wrapper)).toEqual(['prii_first']);
     });
 
+    // How the subscription details screen scopes a wallet it shares with the customer's others.
+    it('offers only the one subscription it is handed', () => {
+        const wrapper = mountWithChoice({ subscriptions: [twoSubscriptions[1]] });
+
+        expect(offeredItemIds(wrapper)).toEqual(['prii_second']);
+    });
+
+    // Offering the whole wallet here would top up against a subscription the caller left out.
+    it('offers nothing when none of the subscriptions it is handed bills the wallet', () => {
+        const wrapper = mountWithChoice({
+            subscriptions: [subscriptionOn('ppsu_3', 'Other', 'ppsc_other', 'pric_3')],
+        });
+
+        expect(offeredItemIds(wrapper)).toEqual([]);
+    });
+
+    // Screens with no subscription context at all, which have nothing to narrow by.
+    it('offers the whole wallet when it is handed no subscriptions', () => {
+        const wrapper = mountWithChoice({ subscriptions: [] });
+
+        expect(offeredItemIds(wrapper)).toEqual(['prii_first', 'prii_second']);
+    });
+
     it('swaps the top-ups over when another subscription is chosen', async () => {
         const wrapper = mountWithChoice();
 

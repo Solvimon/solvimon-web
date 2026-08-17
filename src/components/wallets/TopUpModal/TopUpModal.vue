@@ -95,11 +95,20 @@ const summaryById = computed(() =>
  * a wallet whose schedules could not be resolved offers nothing rather than everything.
  */
 const balanceItemForSubscription = computed(() => {
+    // Called without a subscription context there is nothing to narrow by, so the wallet is whole.
+    if (!props.selectedBalanceItem || !props.subscriptions?.length) {
+        return props.selectedBalanceItem;
+    }
+
     const selected = topUpSubscriptions.value.find(({ id }) => id === selectedSubscriptionId.value);
 
-    return selected
-        ? withTopUpPricingItemsForSchedules(props.selectedBalanceItem, selected.scheduleIds)
-        : props.selectedBalanceItem;
+    // Subscriptions were given but none of them bills this wallet. Offering the whole wallet here
+    // would top up against a subscription the caller deliberately left out.
+    if (!selected) {
+        return { ...props.selectedBalanceItem, charge_on_demand_pricing_items: [] };
+    }
+
+    return withTopUpPricingItemsForSchedules(props.selectedBalanceItem, selected.scheduleIds);
 });
 
 /**
@@ -312,10 +321,6 @@ watch(
                 <SlidingPanes :panes="TOP_UP_MODAL_STEPS" :current="step">
                     <!-- top up modal form -->
                     <template #TOP_UP>
-                        <!--
-                            A wallet granted by several subscriptions is topped up against one of
-                            them, so the choice comes before what to top up with.
-                        -->
                         <div v-if="hasSubscriptionChoice" class="mb-4">
                             <RadioGroupExtended
                                 v-model="selectedSubscriptionId"

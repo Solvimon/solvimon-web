@@ -23,6 +23,11 @@ export interface SubscriptionSummaryProps {
      */
     avatar?: string;
     /**
+     * Drops the summary's own padding, for callers whose row already provides it — a radio option,
+     * for instance, which would otherwise pad it twice over.
+     */
+    noSpacing?: boolean;
+    /**
      * The trial period to display.
      */
     trialPeriod?: TimePeriod;

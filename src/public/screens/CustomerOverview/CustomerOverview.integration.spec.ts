@@ -49,10 +49,6 @@ vi.mock('@/composables/useCustomer', () => ({
     }),
 }));
 
-vi.mock('@/composables/useCustomerPaymentMethodOptions', () => ({
-    useCustomerPaymentMethodOptions: () => ({ fetch: vi.fn().mockResolvedValue(undefined) }),
-}));
-
 vi.mock('@/composables/useCustomerWalletBalances', () => ({
     useCustomerWalletBalances: () => ({
         walletBalances: ref({ wallet_balances: [] }),

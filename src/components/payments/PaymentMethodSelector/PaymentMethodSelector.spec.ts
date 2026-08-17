@@ -1,3 +1,4 @@
+import type { ErrorObject } from '@vuelidate/core';
 import { mount } from '@vue/test-utils';
 import { defineComponent, h } from 'vue';
 import type {
@@ -218,5 +219,35 @@ describe('PaymentMethodSelector', () => {
         expect(wrapper.classes()).toEqual(
             expect.arrayContaining(['sv-payment-method-selector', 'my-class']),
         );
+    });
+});
+
+describe('PaymentMethodSelector — reporting an error', () => {
+    // Only the message is read; the rest of a vuelidate ErrorObject is irrelevant here.
+    const requiredError = [
+        { $message: 'Select a payment method to pay for this top-up.' },
+    ] as unknown as ErrorObject[];
+
+    it('shows the error beneath the options', () => {
+        const wrapper = mountComponent({ error: requiredError });
+
+        expect(wrapper.text()).toContain('Select a payment method to pay for this top-up.');
+    });
+
+    /**
+     * The group carries the error, and there is no group without options — which is precisely the
+     * case a required payment method is missing in, so the error has to survive it.
+     */
+    it('shows the error when there are no payment methods to choose from', () => {
+        const wrapper = mountComponent({ paymentMethods: [], error: requiredError });
+
+        expect(radios(wrapper)).toHaveLength(0);
+        expect(wrapper.text()).toContain('Select a payment method to pay for this top-up.');
+    });
+
+    it('says nothing when there is no error', () => {
+        const wrapper = mountComponent({ paymentMethods: [] });
+
+        expect(wrapper.text()).not.toContain('Select a payment method');
     });
 });

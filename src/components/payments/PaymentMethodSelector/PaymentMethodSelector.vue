@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import {
     Button,
+    FormMessage,
     PaymentMethod,
     RadioGroupExtended,
     Typography,
@@ -101,5 +102,17 @@ const canAddPaymentMethod = computed(() => props.paymentMethodOptions?.length !=
                 })
             }}
         </Typography>
+
+        <!--
+            The group carries the error itself, but it is not rendered when there is nothing to
+            choose from — which is exactly when a required method is most likely to be missing. Sits
+            below the add button, since adding one is what resolves it.
+        -->
+        <FormMessage
+            v-if="error && !hasPaymentMethods"
+            class="sv-payment-method-selector__error"
+            :message="error"
+            variant="error"
+        />
     </div>
 </template>

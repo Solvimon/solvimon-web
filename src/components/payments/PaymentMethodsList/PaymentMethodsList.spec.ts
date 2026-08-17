@@ -193,6 +193,26 @@ describe('PaymentMethodsList', () => {
         expect(wrapper.findComponent({ name: 'ModalStub' }).props('showModal')).toBe(false);
     });
 
+    it('does not carry a previous failure into the modal when it is reopened', async () => {
+        mockArchivePaymentMethod.mockRejectedValueOnce(new Error('nope'));
+
+        const wrapper = mountComponent();
+
+        capturedOnDeleteRequest!(createPaymentMethod({ id: 'pm_1' }));
+        await nextTick();
+        await wrapper.findComponent({ name: 'ModalStub' }).vm.$emit('confirm');
+        await flushPromises();
+        expect(wrapper.find('[data-testid="delete-error"]').exists()).toBe(true);
+
+        await wrapper.findComponent({ name: 'ModalStub' }).vm.$emit('close');
+        await nextTick();
+
+        capturedOnDeleteRequest!(createPaymentMethod({ id: 'pm_2' }));
+        await nextTick();
+
+        expect(wrapper.find('[data-testid="delete-error"]').exists()).toBe(false);
+    });
+
     it('calls setDefaultPaymentMethod and emits set-default when a default is set', async () => {
         const wrapper = mountComponent();
         const pm = createPaymentMethod({ id: 'pm_1' });

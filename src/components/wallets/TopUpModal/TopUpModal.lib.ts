@@ -75,6 +75,39 @@ export interface TopUpPricingItem {
 }
 
 /**
+ * The same wallet balance with only the top-ups billed on the given schedules left on it.
+ *
+ * The balances endpoint answers per customer, so a wallet shared across subscriptions offers the
+ * on-demand items of all of them. A screen showing one subscription has to narrow that down, or it
+ * offers top-ups that would be charged against a subscription the customer is not looking at.
+ *
+ * Returns the balance unchanged when no schedules are named, since then there is nothing to narrow
+ * to — the customer overview passes none.
+ */
+export const withTopUpPricingItemsForSchedules = (
+    walletBalanceItem: CustomerWalletBalanceItem | undefined,
+    scheduleIds: PricingPlanSchedule['id'][],
+): CustomerWalletBalanceItem | undefined => {
+    if (!walletBalanceItem || scheduleIds.length === 0) {
+        return walletBalanceItem;
+    }
+
+    const allowed = new Set(scheduleIds);
+
+    return {
+        ...walletBalanceItem,
+        charge_on_demand_pricing_items: (
+            walletBalanceItem.charge_on_demand_pricing_items ?? []
+        ).filter(
+            (entry) =>
+                isChargeOnDemandPricingItem(entry) &&
+                !!entry.pricing_plan_schedule_id &&
+                allowed.has(entry.pricing_plan_schedule_id),
+        ),
+    };
+};
+
+/**
  * The ways this wallet can be topped up, one entry per pricing config, paired with the item id and
  * schedule needed to charge it.
  */

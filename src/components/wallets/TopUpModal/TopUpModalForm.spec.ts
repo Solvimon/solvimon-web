@@ -31,6 +31,8 @@ vi.mock('@/components/payments/PaymentMethodSelector/PaymentMethodSelector.vue',
             'paymentMethodFormConfiguration',
             'label',
             'required',
+            'disabled',
+            'error',
         ],
         emits: ['update:modelValue', 'add-payment-method'],
         template: '<div data-testid="payment-method-selector" />',
@@ -129,10 +131,22 @@ const createUnsupportedItem = () =>
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
+/**
+ * A stored method comes as standard: a top-up cannot be charged without one, so leaving it out
+ * would only ever exercise the refusal. Pass `paymentMethods: []` to test that on purpose.
+ */
 const mountForm = (
     topUpPricingItems: TopUpPricingItem[] | undefined,
     props: Record<string, unknown> = {},
-) => mount(TopUpModalForm, { props: { topUpPricingItems, ...props }, attachTo: document.body });
+) =>
+    mount(TopUpModalForm, {
+        props: {
+            topUpPricingItems,
+            paymentMethods: [createPaymentMethod('pm_default', true)],
+            ...props,
+        },
+        attachTo: document.body,
+    });
 
 const createPaymentMethod = (id: string, isDefault = false, createdAt = '2026-01-01T00:00:00Z') =>
     ({ id, is_default: isDefault, created_at: createdAt, type: 'CARD', card: {} }) as never;
@@ -800,5 +814,79 @@ describe('TopUpModalForm', () => {
 
         // Converted at the wallet's own rate, so 25 × 10 credits.
         expect(wrapper.vm.chargedValue).toEqual(creditsOf('250'));
+    });
+});
+
+describe('TopUpModalForm — what a charge requires', () => {
+    beforeEach(() => {
+        vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+        vi.useRealTimers();
+    });
+
+    const paymentMethodErrors = (wrapper: ReturnType<typeof mountForm>) =>
+        (selector(wrapper).props('error') ?? []) as { $message: string }[];
+
+    it('refuses to charge without a payment method', async () => {
+        const wrapper = mountForm([createFixedItem()], { paymentMethods: [] });
+
+        await wrapper.vm.submit();
+
+        expect(mockCharge).not.toHaveBeenCalled();
+    });
+
+    it('refuses to charge without a top-up chosen', async () => {
+        const wrapper = mountForm([]);
+
+        await wrapper.vm.submit();
+
+        expect(mockCharge).not.toHaveBeenCalled();
+    });
+
+    // A flexible top-up has nothing to charge until an amount is entered.
+    it('refuses to charge a flexible top-up with no amount', async () => {
+        const wrapper = mountForm([createFlexibleItem()]);
+
+        await enterAmount(wrapper, undefined);
+        await wrapper.vm.submit();
+
+        expect(mockCharge).not.toHaveBeenCalled();
+    });
+
+    it('charges once all three are in place', async () => {
+        const wrapper = mountForm([createFixedItem()]);
+
+        await wrapper.vm.submit();
+
+        expect(mockCharge).toHaveBeenCalled();
+    });
+
+    // Nothing is shown until the customer tries: an untouched form is not yet wrong.
+    it('says nothing about the payment method before a first attempt', () => {
+        const wrapper = mountForm([createFixedItem()], { paymentMethods: [] });
+
+        expect(paymentMethodErrors(wrapper)).toHaveLength(0);
+    });
+
+    it('faults the payment method on submit when none is selected', async () => {
+        const wrapper = mountForm([createFixedItem()], { paymentMethods: [] });
+
+        await wrapper.vm.submit();
+        await nextTick();
+
+        expect(paymentMethodErrors(wrapper).map(({ $message }) => $message)).toEqual([
+            'Select a payment method to pay for this top-up.',
+        ]);
+    });
+
+    it('leaves the payment method unfaulted when one is selected', async () => {
+        const wrapper = mountForm([createFixedItem()]);
+
+        await wrapper.vm.submit();
+        await nextTick();
+
+        expect(paymentMethodErrors(wrapper)).toHaveLength(0);
     });
 });

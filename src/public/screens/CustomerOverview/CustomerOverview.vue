@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ApiStatus } from '@solvimon/solvimon-types';
-import type { CustomerWalletBalanceItem } from '@solvimon/solvimon-types';
-import { computed, ref, watch } from 'vue';
+import { computed, watch } from 'vue';
 import type { CustomerOverviewProps } from './CustomerOverview.types';
 import { ContentWithAsideLayout } from '@/layouts';
 import InvoicesList from '@/public/components/InvoicesList/InvoicesList.vue';
@@ -18,8 +17,6 @@ import CustomerPaymentMethods from '@/public/components/CustomerPaymentMethods/C
 import { useCustomerPaymentMethodOptions } from '@/composables/useCustomerPaymentMethodOptions';
 import { useCustomerWalletBalances } from '@/composables/useCustomerWalletBalances';
 import CustomerWalletBalances from '@/public/components/CustomerWalletBalances/CustomerWalletBalances.vue';
-import TopUpModal from '@/components/wallets/TopUpModal/TopUpModal.vue';
-import { useTopUpModal } from '@/components/wallets/TopUpModal/useTopUpModal';
 import { getActiveDefaultScheduleId } from '@/utils/pricingPlanSchedule';
 
 defineProps<CustomerOverviewProps>();
@@ -92,10 +89,6 @@ watch([activeScheduleId, () => subscriptions.items.value], ([scheduleId, activeS
         ),
     });
 });
-
-const selectedBalanceItem = ref<CustomerWalletBalanceItem | undefined>();
-
-const topUpModal = useTopUpModal(selectedBalanceItem);
 </script>
 
 <template>
@@ -126,7 +119,11 @@ const topUpModal = useTopUpModal(selectedBalanceItem);
                 :is-loading="isLoading"
                 :wallet-balances="walletBalanceItems"
                 show-top-up-button
-                @top-up="selectedBalanceItem = $event"
+                :customer="customer.customer.value"
+                :payment-methods="paymentMethods.items.value"
+                :subscriptions="subscriptions.items.value"
+                @top-up-charged="handleTopUpCharged"
+                @payment-method-stored="handlePaymentMethodStored"
             />
 
             <CustomerPaymentMethods
@@ -140,17 +137,6 @@ const topUpModal = useTopUpModal(selectedBalanceItem);
                 class="sv-customer-overview__billing-information"
                 :is-loading="isLoading"
                 :customer="customer.customer.value"
-            />
-
-            <TopUpModal
-                :show-modal="topUpModal.showModal.value"
-                :payment-methods="paymentMethods.items.value"
-                :customer="customer.customer.value"
-                :selected-balance-item="selectedBalanceItem"
-                :subscriptions="subscriptions.items.value"
-                @close="selectedBalanceItem = undefined"
-                @confirm="handleTopUpCharged"
-                @payment-success="handlePaymentMethodStored"
             />
         </template>
     </ContentWithAsideLayout>

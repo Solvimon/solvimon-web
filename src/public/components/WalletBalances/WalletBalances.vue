@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import type { WalletBalancesProps } from './WalletBalances.types';
+import type { WalletBalancesEmits, WalletBalancesProps } from './WalletBalances.types';
 import CustomerWalletBalances from '@/public/components/CustomerWalletBalances/CustomerWalletBalances.vue';
 
 defineProps<WalletBalancesProps>();
+const emit = defineEmits<WalletBalancesEmits>();
 </script>
 
 <template>
@@ -11,5 +12,12 @@ defineProps<WalletBalancesProps>();
         :has-error="hasError"
         :is-loading="isLoading"
         :wallet-balances="walletBalances"
+        :show-top-up-button="showTopUpButton"
+        :customer="customer"
+        :payment-methods="paymentMethods"
+        :subscriptions="subscriptions"
+        @top-up-charged="emit('top-up-charged')"
+        @payment-method-stored="emit('payment-method-stored')"
+        @payment-failed="(error) => emit('payment-failed', error)"
     />
 </template>

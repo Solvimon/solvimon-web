@@ -434,7 +434,7 @@ describe('SubscriptionDetails', () => {
             const wrapper = mountComponent({ walletBalances: [mockWalletBalance] });
 
             wrapper
-                .findComponent({ name: 'CustomerWalletBalances' })
+                .findComponent({ name: 'WalletBalancesStub' })
                 .vm.$emit('top-up', mockWalletBalance);
             await wrapper.vm.$nextTick();
 
@@ -447,26 +447,27 @@ describe('SubscriptionDetails', () => {
         });
 
         // The balance is fetched per customer, so a shared wallet arrives carrying the top-ups of
-        // every subscription it is granted by — including ones this screen is not showing.
-        it('offers only the top-ups billed on this subscription', async () => {
+        // every subscription it is granted by — including ones this screen is not showing. The modal
+        // narrows by the subscriptions it is handed, so this screen hands it only its own.
+        it('scopes the top-up to the subscription on screen', () => {
             const wrapper = mountComponent({ walletBalances: [sharedWalletBalance] });
 
-            wrapper
+            const handed = wrapper
                 .findComponent({ name: 'CustomerWalletBalances' })
-                .vm.$emit('top-up', sharedWalletBalance);
-            await wrapper.vm.$nextTick();
+                .props('subscriptions') as { id: string }[];
 
-            const offered = wrapper
-                .findComponent({ name: 'TopUpModalStub' })
-                .props('selectedBalanceItem') as {
-                charge_on_demand_pricing_items: { pricing_plan_schedule_id: string }[];
-            };
+            expect(handed.map(({ id }) => id)).toEqual(['ppsu_1']);
+        });
+
+        it('scopes the top-up to nothing while the subscription is still loading', () => {
+            const wrapper = mountComponent({
+                walletBalances: [sharedWalletBalance],
+                subscription: undefined,
+            });
 
             expect(
-                offered.charge_on_demand_pricing_items.map(
-                    ({ pricing_plan_schedule_id }) => pricing_plan_schedule_id,
-                ),
-            ).toEqual(['ppsc_1']);
+                wrapper.findComponent({ name: 'CustomerWalletBalances' }).props('subscriptions'),
+            ).toEqual([]);
         });
 
         it('reports a charged top-up so the balance can be reloaded', () => {

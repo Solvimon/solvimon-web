@@ -8,7 +8,6 @@ import {
     useIntl,
     ErrorNotification,
 } from '@solvimon/solvimon-ui';
-import type { CustomerWalletBalanceItem } from '@solvimon/solvimon-types';
 import type {
     SubscriptionDetailsEmits,
     SubscriptionDetailsProps,
@@ -20,9 +19,6 @@ import SubscriptionSummary from '@/components/subscriptions/SubscriptionSummary.
 import SubscriptionSchedules from '@/public/components/SubscriptionSchedules/SubscriptionSchedules.vue';
 import CustomerWalletBalances from '@/public/components/CustomerWalletBalances/CustomerWalletBalances.vue';
 import CustomerPaymentMethods from '@/public/components/CustomerPaymentMethods/CustomerPaymentMethods.vue';
-import TopUpModal from '@/components/wallets/TopUpModal/TopUpModal.vue';
-import { useTopUpModal } from '@/components/wallets/TopUpModal/useTopUpModal';
-import { withTopUpPricingItemsForSchedules } from '@/components/wallets/TopUpModal/TopUpModal.lib';
 import EmptyStatePlaceholder from '@/components/checkout/EmptyStatePlaceholder.vue';
 import Skeleton from '@/components/shared/Skeleton.vue';
 import EnabledPricingsList from '@/components/subscriptions/EnabledPricingsList/EnabledPricingsList.vue';
@@ -89,22 +85,11 @@ const subscriptionPaymentMethod = computed(() =>
     (props.paymentMethods ?? []).find(({ id }) => id === props.subscription?.payment_method_id),
 );
 
-const selectedBalanceItem = ref<CustomerWalletBalanceItem | undefined>();
-
 /**
- * A wallet can be shared across subscriptions, and the balances endpoint answers per customer — so
- * the balance arrives carrying every subscription's top-ups. Only this subscription's are offered
- * here; the rest would be charged against something the customer is not looking at.
+ * The one subscription this screen is about, so a wallet shared with others offers only the
+ * top-ups billed on it.
  */
-const subscriptionScheduleIds = computed(() =>
-    (props.subscription?.pricing_plan_schedule_infos ?? []).map(({ id }) => id),
-);
-
-const topUpBalanceItem = computed(() =>
-    withTopUpPricingItemsForSchedules(selectedBalanceItem.value, subscriptionScheduleIds.value),
-);
-
-const topUpModal = useTopUpModal(selectedBalanceItem);
+const topUpSubscriptions = computed(() => (props.subscription ? [props.subscription] : []));
 
 /** Falls back to the generic screen title while the subscription is loading or has no name. */
 const title = computed<string>(() =>
@@ -238,7 +223,11 @@ const title = computed<string>(() =>
                 :is-loading="isLoading"
                 :wallet-balances="walletBalances"
                 show-top-up-button
-                @top-up="selectedBalanceItem = $event"
+                :customer="customer"
+                :payment-methods="paymentMethods"
+                :subscriptions="topUpSubscriptions"
+                @top-up-charged="$emit('top-up-charged')"
+                @payment-method-stored="$emit('payment-method-stored')"
             />
 
             <EnabledPricingsList
@@ -254,16 +243,6 @@ const title = computed<string>(() =>
                 :is-loading="isLoading"
                 :payment-methods="[subscriptionPaymentMethod]"
                 :configuration="{ showViewAllButton: false, showAddButton: false }"
-            />
-
-            <TopUpModal
-                :show-modal="topUpModal.showModal.value"
-                :payment-methods="paymentMethods"
-                :customer="customer"
-                :selected-balance-item="topUpBalanceItem"
-                @close="selectedBalanceItem = undefined"
-                @confirm="$emit('top-up-charged')"
-                @payment-success="$emit('payment-method-stored')"
             />
 
             <SubscriptionCancellationModal

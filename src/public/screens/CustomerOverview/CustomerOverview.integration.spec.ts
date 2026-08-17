@@ -90,7 +90,7 @@ vi.mock('@/public/components/InvoicesList/InvoicesList.vue', () => ({
 vi.mock('@/public/components/CustomerWalletBalances/CustomerWalletBalances.vue', () => ({
     default: defineComponent({
         name: 'CustomerWalletBalancesStub',
-        props: ['walletBalances', 'isLoading', 'hasError'],
+        props: ['walletBalances', 'isLoading', 'hasError', 'subscriptions', 'paymentMethods'],
         setup: () => () => h('div'),
     }),
 }));
@@ -105,13 +105,6 @@ vi.mock('@/public/components/BillingInformation/BillingInformation.vue', () => (
     default: defineComponent({
         name: 'BillingInformationStub',
         props: ['customer', 'isLoading'],
-        setup: () => () => h('div'),
-    }),
-}));
-vi.mock('@/components/wallets/TopUpModal/TopUpModal.vue', () => ({
-    default: defineComponent({
-        name: 'TopUpModalStub',
-        props: ['showModal', 'paymentMethods', 'customer', 'selectedBalanceItem', 'subscriptions'],
         setup: () => () => h('div'),
     }),
 }));
@@ -167,13 +160,14 @@ describe('CustomerOverview — subscriptions', () => {
         expect(shown.map(({ id }) => id)).toEqual(['ppsu_1', 'ppsu_2']);
     });
 
-    // The modal links a wallet's schedules to subscriptions, so a capped list would lose options.
-    it('hands the top-up modal every subscription, not just the shown ones', async () => {
+    // The top-up modal links a wallet's schedules to subscriptions, so a capped list would lose
+    // options.
+    it('hands the wallet balances every subscription, not just the shown ones', async () => {
         const wrapper = await mountOverview();
 
-        const handed = wrapper.findComponent({ name: 'TopUpModalStub' }).props('subscriptions') as {
-            id: string;
-        }[];
+        const handed = wrapper
+            .findComponent({ name: 'CustomerWalletBalancesStub' })
+            .props('subscriptions') as { id: string }[];
 
         expect(handed).toHaveLength(5);
     });

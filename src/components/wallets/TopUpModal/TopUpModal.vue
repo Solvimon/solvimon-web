@@ -5,15 +5,21 @@ import {
     formatWalletBalanceValue,
     getCustomerCountry,
     Modal,
+    RadioGroupExtended,
     useIntl,
 } from '@solvimon/solvimon-ui';
 import { computed, ref, watch } from 'vue';
 import type { TopUpModalEmits, TopUpModalProps, TopUpModalStep } from './TopUpModal.types';
 import { TOP_UP_MODAL_STEPS } from './TopUpModal.types';
-import { getTopUpPricingItems } from './TopUpModal.lib';
+import {
+    getTopUpPricingItems,
+    getTopUpSubscriptions,
+    withTopUpPricingItemsForSchedules,
+} from './TopUpModal.lib';
 import TopUpModalForm from './TopUpModalForm.vue';
 import TopUpModalSuccess from './TopUpModalSuccess.vue';
 import { useTopUpModalLabels } from './useTopUpModalLabels';
+import SubscriptionSummary from '@/components/subscriptions/SubscriptionSummary.vue';
 import { usePaymentMethodOptions } from '@/composables/usePaymentMethodOptions';
 import PaymentMethodForm from '@/public/components/PaymentMethodForm/PaymentMethodForm.vue';
 import type { TokenizePaymentMethodFormConfiguration } from '@/public/components/PaymentMethodForm/PaymentMethodForm.types';
@@ -34,11 +40,74 @@ const currentBalance = computed(() =>
 );
 
 /**
+ * Which subscriptions this wallet can be topped up for. A wallet granted by more than one is
+ * offered per subscription, since a top-up is charged against one of them and the customer has to
+ * say which.
+ */
+const topUpSubscriptions = computed(() =>
+    getTopUpSubscriptions(props.selectedBalanceItem, props.subscriptions ?? []),
+);
+
+const selectedSubscriptionId = ref<string | boolean>();
+
+/**
+ * Opens on the first, so a top-up is always charged against something the customer can see named.
+ * Immediate, since the subscriptions may already be resolved by the time the modal is built.
+ */
+watch(
+    topUpSubscriptions,
+    (available) => {
+        const chosenIsStillOffered = available.some(
+            ({ id }) => id === selectedSubscriptionId.value,
+        );
+
+        if (!chosenIsStillOffered) {
+            selectedSubscriptionId.value = available[0]?.id;
+        }
+    },
+    { immediate: true },
+);
+
+/** Only worth asking when the wallet is topped up through more than one subscription. */
+const hasSubscriptionChoice = computed(() => topUpSubscriptions.value.length > 1);
+
+const subscriptionOptions = computed(() =>
+    topUpSubscriptions.value.map(({ id, name }) => ({ value: id, label: name })),
+);
+
+/**
+ * What each row needs to draw itself as a summary: the subscription, and the pricings running on
+ * the schedules this wallet is topped up on — the summary's subline, which would otherwise be empty
+ * whenever the plan carries no description.
+ */
+const summaryById = computed(() =>
+    Object.fromEntries(
+        topUpSubscriptions.value.flatMap(({ id, enabledPricingIds }) => {
+            const subscription = (props.subscriptions ?? []).find(({ id: it }) => it === id);
+
+            return subscription ? [[id, { subscription, enabledPricingIds }]] : [];
+        }),
+    ),
+);
+
+/**
+ * The balance as the chosen subscription sees it. Narrowed even when there is nothing to choose, so
+ * a wallet whose schedules could not be resolved offers nothing rather than everything.
+ */
+const balanceItemForSubscription = computed(() => {
+    const selected = topUpSubscriptions.value.find(({ id }) => id === selectedSubscriptionId.value);
+
+    return selected
+        ? withTopUpPricingItemsForSchedules(props.selectedBalanceItem, selected.scheduleIds)
+        : props.selectedBalanceItem;
+});
+
+/**
  * The ways this wallet can be topped up. Flattened here rather than passed raw: the balances field
  * is declared as `PricingItemConfig[]` but carries pricing *items*, so reading `details` off an
  * element type-checks yet is undefined at runtime.
  */
-const topUpPricingItems = computed(() => getTopUpPricingItems(props.selectedBalanceItem));
+const topUpPricingItems = computed(() => getTopUpPricingItems(balanceItemForSubscription.value));
 
 const {
     paymentMethodOptions,
@@ -243,6 +312,48 @@ watch(
                 <SlidingPanes :panes="TOP_UP_MODAL_STEPS" :current="step">
                     <!-- top up modal form -->
                     <template #TOP_UP>
+                        <!--
+                            A wallet granted by several subscriptions is topped up against one of
+                            them, so the choice comes before what to top up with.
+                        -->
+                        <div v-if="hasSubscriptionChoice" class="mb-4">
+                            <RadioGroupExtended
+                                v-model="selectedSubscriptionId"
+                                class="sv-topup-modal__subscription"
+                                name="top-up-subscription"
+                                direction="column"
+                                required
+                                :options="subscriptionOptions"
+                                :show-radio="false"
+                                :label="
+                                    $t({
+                                        defaultMessage: 'Subscription to top up',
+                                        description:
+                                            'Label above the list of subscriptions a top-up can be charged against, in the top-up modal',
+                                        id: 'topup_modal.subscriptions.label',
+                                    })
+                                "
+                            >
+                                <template #prefix="{ optionValue }">
+                                    <SubscriptionSummary
+                                        v-if="summaryById[String(optionValue)]"
+                                        class="sv-topup-modal__subscription-option grow"
+                                        no-spacing
+                                        :subscription="
+                                            summaryById[String(optionValue)].subscription
+                                        "
+                                        :enabled-pricing-ids="
+                                            summaryById[String(optionValue)].enabledPricingIds
+                                        "
+                                    />
+                                </template>
+
+                                <template #label="{ option }">
+                                    <span class="sr-only">{{ option.label }}</span>
+                                </template>
+                            </RadioGroupExtended>
+                        </div>
+
                         <TopUpModalForm
                             :key="topUpFormKey"
                             ref="topUpFormRef"

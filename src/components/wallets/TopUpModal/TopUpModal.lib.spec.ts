@@ -1,7 +1,11 @@
-import type { CustomerWalletBalanceItem } from '@solvimon/solvimon-types';
+import type {
+    CustomerWalletBalanceItem,
+    PricingPlanSubscriptionExpanded,
+} from '@solvimon/solvimon-types';
 import {
     getFlexibleTopUpPricing,
     getTopUpPricingItems,
+    getTopUpSubscriptions,
     withTopUpPricingItemsForSchedules,
 } from './TopUpModal.lib';
 
@@ -412,5 +416,123 @@ describe('withTopUpPricingItemsForSchedules', () => {
         const filtered = withTopUpPricingItemsForSchedules(balanceWith(['ppsc_1']), ['ppsc_1']);
 
         expect(filtered?.wallet_type_id).toBe('wtyp_1');
+    });
+});
+
+describe('getTopUpSubscriptions', () => {
+    /** Shaped like the balances response: one entry per schedule the wallet is topped up on. */
+    const balanceOn = (scheduleIds: string[]) =>
+        ({
+            wallet_id: 'wall_1',
+            wallet_balance: {},
+            charge_on_demand_pricing_items: scheduleIds.map((id) => ({
+                pricing_item_id: 'prii_shared',
+                pricing_plan_schedule_id: id,
+                pricing_item: { id: 'prii_shared', configs: [] },
+            })),
+        }) as unknown as CustomerWalletBalanceItem;
+
+    const subscription = (id: string, name: string, scheduleIds: string[]) =>
+        ({
+            id,
+            name,
+            pricing_plan_schedule_infos: scheduleIds.map((scheduleId) => ({ id: scheduleId })),
+        }) as unknown as PricingPlanSubscriptionExpanded;
+
+    // The same pricing item on two schedules resolves to the two subscriptions behind them.
+    it('links each schedule to the subscription that carries it', () => {
+        expect(
+            getTopUpSubscriptions(balanceOn(['ppsc_a', 'ppsc_b']), [
+                subscription('ppsu_1', 'Pro plan', ['ppsc_a']),
+                subscription('ppsu_2', 'Credits add-on', ['ppsc_b']),
+            ]),
+        ).toEqual([
+            { id: 'ppsu_1', name: 'Pro plan', scheduleIds: ['ppsc_a'], enabledPricingIds: [] },
+            {
+                id: 'ppsu_2',
+                name: 'Credits add-on',
+                scheduleIds: ['ppsc_b'],
+                enabledPricingIds: [],
+            },
+        ]);
+    });
+
+    it('leaves out subscriptions this wallet is not topped up through', () => {
+        expect(
+            getTopUpSubscriptions(balanceOn(['ppsc_a']), [
+                subscription('ppsu_1', 'Pro plan', ['ppsc_a']),
+                subscription('ppsu_2', 'Unrelated', ['ppsc_z']),
+            ]).map(({ id }) => id),
+        ).toEqual(['ppsu_1']);
+    });
+
+    it('gathers every schedule of a subscription the wallet names', () => {
+        expect(
+            getTopUpSubscriptions(balanceOn(['ppsc_a', 'ppsc_b']), [
+                subscription('ppsu_1', 'Pro plan', ['ppsc_a', 'ppsc_b', 'ppsc_unused']),
+            ]),
+        ).toEqual([
+            {
+                id: 'ppsu_1',
+                name: 'Pro plan',
+                scheduleIds: ['ppsc_a', 'ppsc_b'],
+                enabledPricingIds: [],
+            },
+        ]);
+    });
+
+    it('gathers the pricings running on the schedules the wallet names', () => {
+        const withPricings = {
+            id: 'ppsu_1',
+            name: 'Pro plan',
+            pricing_plan_schedule_infos: [
+                {
+                    id: 'ppsc_a',
+                    pricing_plan_schedule: { enabled_pricings: [{ pricing_id: 'pric_1' }] },
+                },
+                {
+                    // Not one this wallet is topped up on, so its pricing is left out.
+                    id: 'ppsc_elsewhere',
+                    pricing_plan_schedule: { enabled_pricings: [{ pricing_id: 'pric_other' }] },
+                },
+            ],
+        } as unknown as PricingPlanSubscriptionExpanded;
+
+        expect(
+            getTopUpSubscriptions(balanceOn(['ppsc_a']), [withPricings])[0].enabledPricingIds,
+        ).toEqual(['pric_1']);
+    });
+
+    it('follows the order the subscriptions were given, so the first is the first listed', () => {
+        const ids = getTopUpSubscriptions(balanceOn(['ppsc_a', 'ppsc_b']), [
+            subscription('ppsu_2', 'Second', ['ppsc_b']),
+            subscription('ppsu_1', 'First', ['ppsc_a']),
+        ]).map(({ id }) => id);
+
+        expect(ids).toEqual(['ppsu_2', 'ppsu_1']);
+    });
+
+    it('falls back to the reference, then the id, for a subscription with no name', () => {
+        const withReference = {
+            id: 'ppsu_1',
+            reference: 'credits',
+            pricing_plan_schedule_infos: [{ id: 'ppsc_a' }],
+        } as unknown as PricingPlanSubscriptionExpanded;
+        const bare = {
+            id: 'ppsu_1',
+            pricing_plan_schedule_infos: [{ id: 'ppsc_a' }],
+        } as unknown as PricingPlanSubscriptionExpanded;
+
+        expect(getTopUpSubscriptions(balanceOn(['ppsc_a']), [withReference])[0].name).toBe(
+            'credits',
+        );
+        expect(getTopUpSubscriptions(balanceOn(['ppsc_a']), [bare])[0].name).toBe('ppsu_1');
+    });
+
+    it('comes back empty without a wallet or without subscriptions', () => {
+        expect(
+            getTopUpSubscriptions(undefined, [subscription('ppsu_1', 'Pro', ['ppsc_a'])]),
+        ).toEqual([]);
+        expect(getTopUpSubscriptions(balanceOn(['ppsc_a']), [])).toEqual([]);
     });
 });

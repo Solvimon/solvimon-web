@@ -1,4 +1,9 @@
-import type { Customer, CustomerWalletBalanceItem, PaymentMethod } from '@solvimon/solvimon-types';
+import type {
+    Customer,
+    CustomerWalletBalanceItem,
+    PaymentMethod,
+    PricingPlanSubscriptionExpanded,
+} from '@solvimon/solvimon-types';
 
 /**
  * The panes the modal moves between, in the order they sit on the track. Named rather than derived
@@ -16,6 +21,12 @@ export interface TopUpModalProps {
     paymentMethods?: PaymentMethod[];
     /** The customer being charged; the payment form needs their country, name and email. */
     customer?: Customer;
+    /**
+     * The customer's active subscriptions, used to work out which of them a wallet can be topped up
+     * for — the balance names only the schedules, which these carry. Pass the full set, not the
+     * page a list happens to show.
+     */
+    subscriptions?: PricingPlanSubscriptionExpanded[];
 }
 
 export interface TopUpModalEmits {

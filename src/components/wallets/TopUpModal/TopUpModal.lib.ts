@@ -4,6 +4,9 @@ import type {
     PricingItemConfigExtended,
     PricingItemExtended,
     PricingPlanSchedule,
+    Pricing,
+    PricingPlanSubscription,
+    PricingPlanSubscriptionExpanded,
     WalletBalanceValue,
 } from '@solvimon/solvimon-types';
 import { hasOneOfPricingTypes, isFlexiblePricing } from '@solvimon/solvimon-ui';
@@ -73,6 +76,72 @@ export interface TopUpPricingItem {
         value: WalletBalanceValue;
     };
 }
+
+/**
+ * The distinct schedules this wallet's top-ups are billed on. The balance names them and nothing
+ * else, so they are the only handle on which subscriptions the wallet can be topped up for.
+ */
+export const getTopUpScheduleIds = (
+    walletBalanceItem?: CustomerWalletBalanceItem,
+): PricingPlanSchedule['id'][] => [
+    ...new Set(
+        (walletBalanceItem?.charge_on_demand_pricing_items ?? []).flatMap((entry) =>
+            isChargeOnDemandPricingItem(entry) && entry.pricing_plan_schedule_id
+                ? [entry.pricing_plan_schedule_id]
+                : [],
+        ),
+    ),
+];
+
+export interface TopUpSubscription {
+    id: PricingPlanSubscription['id'];
+    /** What the customer knows it as, for the selector. */
+    name: string;
+    /** The schedules of this subscription that this wallet is topped up on. */
+    scheduleIds: PricingPlanSchedule['id'][];
+    /**
+     * The pricings running on those schedules. Without these a summary has only the subscription's
+     * name to show, since the plan description is routinely empty.
+     */
+    enabledPricingIds: Pricing['id'][];
+}
+
+/**
+ * Which of the customer's subscriptions this wallet can be topped up for.
+ *
+ * A balance names the schedules its top-ups are billed on and nothing more, so the link to a
+ * subscription is made through the schedules the subscriptions themselves carry. Order follows the
+ * subscriptions given, so "the first" means the first the customer would see listed.
+ */
+export const getTopUpSubscriptions = (
+    walletBalanceItem: CustomerWalletBalanceItem | undefined,
+    subscriptions: PricingPlanSubscriptionExpanded[],
+): TopUpSubscription[] => {
+    const toppedUpOn = new Set(getTopUpScheduleIds(walletBalanceItem));
+
+    return subscriptions.flatMap((subscription) => {
+        const scheduleInfos = (subscription.pricing_plan_schedule_infos ?? []).filter(({ id }) =>
+            toppedUpOn.has(id),
+        );
+
+        if (scheduleInfos.length === 0) {
+            return [];
+        }
+
+        return [
+            {
+                id: subscription.id,
+                name: subscription.name || subscription.reference || subscription.id,
+                scheduleIds: scheduleInfos.map(({ id }) => id),
+                enabledPricingIds: scheduleInfos.flatMap((info) =>
+                    (info.pricing_plan_schedule?.enabled_pricings ?? []).flatMap(
+                        ({ pricing_id }) => (pricing_id ? [pricing_id] : []),
+                    ),
+                ),
+            },
+        ];
+    });
+};
 
 /**
  * The same wallet balance with only the top-ups billed on the given schedules left on it.

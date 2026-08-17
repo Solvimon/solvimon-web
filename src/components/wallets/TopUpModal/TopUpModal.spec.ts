@@ -1,11 +1,17 @@
 import { mount } from '@vue/test-utils';
 import { defineComponent, nextTick } from 'vue';
-import type { Customer, CustomerWalletBalanceItem } from '@solvimon/solvimon-types';
+import type { Customer, CustomerWalletBalanceItem, PaymentMethod } from '@solvimon/solvimon-types';
 import TopUpModal from './TopUpModal.vue';
 
 // ─── Mocks ────────────────────────────────────────────────────────────────────
 
-const { mockCharge } = vi.hoisted(() => ({ mockCharge: vi.fn() }));
+const { mockCharge, mockSubmitPaymentMethod, gateway } = vi.hoisted(() => ({
+    mockCharge: vi.fn(),
+    mockSubmitPaymentMethod: vi.fn(),
+    // What the gateway offers this customer. Empty means nothing can be added at all. Held as a real
+    // ref so the modal reacts to it arriving, the way it does against the live composable.
+    gateway: {} as { options: { value: unknown[] }; isPending: { value: boolean } },
+}));
 
 vi.mock('@/services/invoices', () => ({
     createInvoicesService: () => ({
@@ -14,13 +20,20 @@ vi.mock('@/services/invoices', () => ({
     }),
 }));
 
-vi.mock('@/composables/usePaymentMethodOptions', () => ({
-    usePaymentMethodOptions: () => ({
-        paymentMethodOptions: { value: [] },
-        get: vi.fn(),
-        isPending: { value: false },
-    }),
-}));
+vi.mock('@/composables/usePaymentMethodOptions', async () => {
+    const { ref } = await import('vue');
+
+    gateway.options = ref<unknown[]>([{ id: 'pmo_card' }]);
+    gateway.isPending = ref(false);
+
+    return {
+        usePaymentMethodOptions: () => ({
+            paymentMethodOptions: gateway.options,
+            get: vi.fn(),
+            isPending: gateway.isPending,
+        }),
+    };
+});
 
 // Starts up the Adyen and Stripe integrations, which have nothing to do with the modal's chrome.
 vi.mock('@/public/components/PaymentMethodForm/PaymentMethodForm.vue', () => ({
@@ -34,6 +47,10 @@ vi.mock('@/public/components/PaymentMethodForm/PaymentMethodForm.vue', () => ({
             'hideSubmitButton',
         ],
         emits: ['success', 'failure'],
+        // The modal submits the form through its ref, so the stub has to answer to that too.
+        setup(_props, { expose }) {
+            expose({ submit: mockSubmitPaymentMethod, isPaymentPending: false });
+        },
         template: '<div data-testid="payment-method-form" />',
     }),
 }));
@@ -138,9 +155,23 @@ const balanceItem = {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const mountModal = () =>
+/** One stored card, so the modal takes its ordinary path: pick a top-up, pick a method, charge. */
+const storedPaymentMethod = {
+    id: 'pmet_1',
+    type: 'CARD',
+    status: 'ACTIVE',
+    card: { brand: 'VISA', last_four_digits: '4242' },
+} as unknown as PaymentMethod;
+
+const mountModal = (props: Record<string, unknown> = {}) =>
     mount(TopUpModal, {
-        props: { showModal: true, customer, selectedBalanceItem: balanceItem },
+        props: {
+            showModal: true,
+            customer,
+            selectedBalanceItem: balanceItem,
+            paymentMethods: [storedPaymentMethod],
+            ...props,
+        },
         attachTo: document.body,
     });
 
@@ -193,6 +224,8 @@ describe('TopUpModal', () => {
         vi.useFakeTimers();
         mockCharge.mockReset();
         mockCharge.mockResolvedValue({ id: 'inv_charged' });
+        gateway.options.value = [{ id: 'pmo_card' }];
+        gateway.isPending.value = false;
     });
 
     afterEach(() => {
@@ -398,7 +431,143 @@ describe('TopUpModal', () => {
         await nextTick();
 
         expect(trackOffset(wrapper)).toBe(atStep(0));
-        // The form is rebuilt too: it is never unmounted, so it would still hold the last amount.
-        expect(wrapper.find('[data-testid="invoice-preview"]').exists()).toBe(false);
+        // The form is rebuilt too — it is never unmounted, so it would otherwise hold the charged
+        // state. Rebuilt, it opens on its pre-selected top-up, which prices itself straight away.
+        expect(wrapper.find('input[type="radio"]').element).toHaveProperty('checked', true);
+        expect(wrapper.find('[data-testid="invoice-preview"]').exists()).toBe(true);
+    });
+});
+
+describe('TopUpModal — nothing stored and nothing on offer', () => {
+    beforeEach(() => {
+        vi.useFakeTimers();
+        mockCharge.mockReset();
+        mockSubmitPaymentMethod.mockReset();
+        mockCharge.mockResolvedValue({ id: 'inv_charged' });
+        gateway.options.value = [];
+        gateway.isPending.value = false;
+    });
+
+    afterEach(() => {
+        vi.useRealTimers();
+    });
+
+    const mountEmpty = () => mountModal({ paymentMethods: [] });
+
+    it('says so in place of a selector there is nothing to fill', () => {
+        const wrapper = mountEmpty();
+
+        expect(wrapper.text()).toContain('No payment methods available');
+        expect(selector(wrapper).exists()).toBe(false);
+    });
+
+    it('offers the selector again once the gateway has something', async () => {
+        const wrapper = mountEmpty();
+        expect(selector(wrapper).exists()).toBe(false);
+
+        gateway.options.value = [{ id: 'pmo_card' }];
+        await nextTick();
+
+        // Back to the ordinary flow: the selector, and its own way of adding a method.
+        expect(selector(wrapper).exists()).toBe(true);
+        expect(wrapper.text()).not.toContain('No payment methods available');
+    });
+
+    it('leaves the selector in place when a method is stored, whatever the gateway offers', () => {
+        const wrapper = mountModal();
+
+        expect(selector(wrapper).exists()).toBe(true);
+        expect(wrapper.text()).not.toContain('No payment methods available');
+    });
+});
+
+describe('TopUpModal — while the gateway is still answering', () => {
+    beforeEach(() => {
+        vi.useFakeTimers();
+        mockCharge.mockReset();
+        mockSubmitPaymentMethod.mockReset();
+        mockCharge.mockResolvedValue({ id: 'inv_charged' });
+    });
+
+    afterEach(() => {
+        vi.useRealTimers();
+    });
+
+    // The options start out empty, so answering before they land would say "none available" on
+    // every open and disable a confirm the customer can in fact use.
+    it('waits for the options before saying there are none', async () => {
+        gateway.options.value = [];
+        gateway.isPending.value = true;
+
+        const wrapper = mountModal({ paymentMethods: [] });
+
+        expect(wrapper.text()).not.toContain('No payment methods available');
+        expect(selector(wrapper).exists()).toBe(true);
+
+        gateway.isPending.value = false;
+        await nextTick();
+
+        expect(wrapper.text()).toContain('No payment methods available');
+    });
+});
+
+describe('TopUpModal — confirm when there is no way to pay', () => {
+    beforeEach(() => {
+        vi.useFakeTimers();
+        mockCharge.mockReset();
+        mockSubmitPaymentMethod.mockReset();
+        gateway.options.value = [];
+        gateway.isPending.value = false;
+    });
+
+    afterEach(() => {
+        vi.useRealTimers();
+    });
+
+    it('disables the confirm button', () => {
+        const wrapper = mountModal({ paymentMethods: [] });
+
+        expect(wrapper.find('[data-testid="confirm"]').attributes('disabled')).toBeDefined();
+    });
+
+    it('still lets the customer out', async () => {
+        const wrapper = mountModal({ paymentMethods: [] });
+
+        await wrapper.find('[data-testid="cancel"]').trigger('click');
+
+        expect(wrapper.emitted('close')).toHaveLength(1);
+    });
+
+    it('leaves the confirm button usable when a method can be added', () => {
+        gateway.options.value = [{ id: 'pmo_card' }];
+
+        const wrapper = mountModal({ paymentMethods: [] });
+
+        expect(wrapper.find('[data-testid="confirm"]').attributes('disabled')).toBeUndefined();
+    });
+});
+
+describe('TopUpModal — confirming on the add payment method pane', () => {
+    beforeEach(() => {
+        vi.useFakeTimers();
+        mockCharge.mockReset();
+        mockSubmitPaymentMethod.mockReset();
+        gateway.options.value = [{ id: 'pmo_card' }];
+        gateway.isPending.value = false;
+    });
+
+    afterEach(() => {
+        vi.useRealTimers();
+    });
+
+    it('submits the payment method form rather than charging the top-up', async () => {
+        const wrapper = mountModal();
+        await startAddingPaymentMethod(wrapper);
+
+        await wrapper.find('[data-testid="confirm"]').trigger('click');
+        await nextTick();
+
+        expect(mockSubmitPaymentMethod).toHaveBeenCalledTimes(1);
+        expect(mockCharge).not.toHaveBeenCalled();
     });
 });

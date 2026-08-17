@@ -22,6 +22,7 @@ import CustomerWalletBalances from '@/public/components/CustomerWalletBalances/C
 import CustomerPaymentMethods from '@/public/components/CustomerPaymentMethods/CustomerPaymentMethods.vue';
 import TopUpModal from '@/components/wallets/TopUpModal/TopUpModal.vue';
 import { useTopUpModal } from '@/components/wallets/TopUpModal/useTopUpModal';
+import { withTopUpPricingItemsForSchedules } from '@/components/wallets/TopUpModal/TopUpModal.lib';
 import EmptyStatePlaceholder from '@/components/checkout/EmptyStatePlaceholder.vue';
 import Skeleton from '@/components/shared/Skeleton.vue';
 import EnabledPricingsList from '@/components/subscriptions/EnabledPricingsList/EnabledPricingsList.vue';
@@ -89,6 +90,19 @@ const subscriptionPaymentMethod = computed(() =>
 );
 
 const selectedBalanceItem = ref<CustomerWalletBalanceItem | undefined>();
+
+/**
+ * A wallet can be shared across subscriptions, and the balances endpoint answers per customer — so
+ * the balance arrives carrying every subscription's top-ups. Only this subscription's are offered
+ * here; the rest would be charged against something the customer is not looking at.
+ */
+const subscriptionScheduleIds = computed(() =>
+    (props.subscription?.pricing_plan_schedule_infos ?? []).map(({ id }) => id),
+);
+
+const topUpBalanceItem = computed(() =>
+    withTopUpPricingItemsForSchedules(selectedBalanceItem.value, subscriptionScheduleIds.value),
+);
 
 const topUpModal = useTopUpModal(selectedBalanceItem);
 
@@ -246,7 +260,7 @@ const title = computed<string>(() =>
                 :show-modal="topUpModal.showModal.value"
                 :payment-methods="paymentMethods"
                 :customer="customer"
-                :selected-balance-item="selectedBalanceItem"
+                :selected-balance-item="topUpBalanceItem"
                 @close="selectedBalanceItem = undefined"
                 @confirm="$emit('top-up-charged')"
                 @payment-success="$emit('payment-method-stored')"

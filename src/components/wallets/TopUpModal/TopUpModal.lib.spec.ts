@@ -1,5 +1,9 @@
 import type { CustomerWalletBalanceItem } from '@solvimon/solvimon-types';
-import { getFlexibleTopUpPricing, getTopUpPricingItems } from './TopUpModal.lib';
+import {
+    getFlexibleTopUpPricing,
+    getTopUpPricingItems,
+    withTopUpPricingItemsForSchedules,
+} from './TopUpModal.lib';
 
 const WALLET_TYPE_ID = 'wtyp_1';
 
@@ -348,5 +352,65 @@ describe('getTopUpPricingItems pricing kinds', () => {
 
         expect(results.map(({ flexiblePricing }) => !!flexiblePricing)).toEqual([true, false]);
         expect(results.map(({ fixedPricing }) => !!fixedPricing)).toEqual([false, true]);
+    });
+});
+
+describe('withTopUpPricingItemsForSchedules', () => {
+    const balanceWith = (scheduleIds: (string | undefined)[]) =>
+        ({
+            wallet_type_id: 'wtyp_1',
+            wallet_balance: { balance: {} },
+            charge_on_demand_pricing_items: scheduleIds.map((id, index) => ({
+                pricing_item_id: `prii_${index}`,
+                ...(id && { pricing_plan_schedule_id: id }),
+                pricing_item: { id: `prii_${index}`, configs: [] },
+            })),
+        }) as unknown as CustomerWalletBalanceItem;
+
+    const scheduleIdsOf = (item?: CustomerWalletBalanceItem) =>
+        (
+            (item?.charge_on_demand_pricing_items ?? []) as unknown as {
+                pricing_plan_schedule_id?: string;
+            }[]
+        ).map(({ pricing_plan_schedule_id }) => pricing_plan_schedule_id);
+
+    it('keeps only the top-ups billed on the given schedules', () => {
+        const filtered = withTopUpPricingItemsForSchedules(
+            balanceWith(['ppsc_1', 'ppsc_other', 'ppsc_2']),
+            ['ppsc_1', 'ppsc_2'],
+        );
+
+        expect(scheduleIdsOf(filtered)).toEqual(['ppsc_1', 'ppsc_2']);
+    });
+
+    it('drops entries that name no schedule, since none can be charged', () => {
+        const filtered = withTopUpPricingItemsForSchedules(balanceWith([undefined, 'ppsc_1']), [
+            'ppsc_1',
+        ]);
+
+        expect(scheduleIdsOf(filtered)).toEqual(['ppsc_1']);
+    });
+
+    it('comes back empty when none of the top-ups belong to the subscription', () => {
+        const filtered = withTopUpPricingItemsForSchedules(balanceWith(['ppsc_other']), ['ppsc_1']);
+
+        expect(scheduleIdsOf(filtered)).toEqual([]);
+    });
+
+    // The customer overview is not looking at one subscription, so it narrows to nothing.
+    it('leaves the balance alone when no schedules are named', () => {
+        const balance = balanceWith(['ppsc_1', 'ppsc_other']);
+
+        expect(withTopUpPricingItemsForSchedules(balance, [])).toBe(balance);
+    });
+
+    it('has nothing to narrow without a balance', () => {
+        expect(withTopUpPricingItemsForSchedules(undefined, ['ppsc_1'])).toBeUndefined();
+    });
+
+    it('leaves the rest of the balance untouched', () => {
+        const filtered = withTopUpPricingItemsForSchedules(balanceWith(['ppsc_1']), ['ppsc_1']);
+
+        expect(filtered?.wallet_type_id).toBe('wtyp_1');
     });
 });

@@ -121,6 +121,18 @@ const mockWalletBalance = {
     },
 } as unknown as CustomerWalletBalanceItem;
 
+/** The same wallet granted by two subscriptions, only one of which this screen shows. */
+const sharedWalletBalance = {
+    wallet_id: 'w_1',
+    wallet_balance: {
+        open_balance: { currency: 'EUR', quantity: '100' },
+    },
+    charge_on_demand_pricing_items: [
+        { pricing_item_id: 'prii_mine', pricing_plan_schedule_id: 'ppsc_1', pricing_item: {} },
+        { pricing_item_id: 'prii_other', pricing_plan_schedule_id: 'ppsc_other', pricing_item: {} },
+    ],
+} as unknown as CustomerWalletBalanceItem;
+
 const mockSubscription = {
     id: 'ppsu_1',
     name: 'Pro plan',
@@ -429,7 +441,32 @@ describe('SubscriptionDetails', () => {
             const modal = wrapper.findComponent({ name: 'TopUpModalStub' });
 
             expect(modal.attributes('data-open')).toBe('true');
-            expect(modal.props('selectedBalanceItem')).toEqual(mockWalletBalance);
+            expect(modal.props('selectedBalanceItem')).toMatchObject({
+                wallet_id: mockWalletBalance.wallet_id,
+            });
+        });
+
+        // The balance is fetched per customer, so a shared wallet arrives carrying the top-ups of
+        // every subscription it is granted by — including ones this screen is not showing.
+        it('offers only the top-ups billed on this subscription', async () => {
+            const wrapper = mountComponent({ walletBalances: [sharedWalletBalance] });
+
+            wrapper
+                .findComponent({ name: 'CustomerWalletBalances' })
+                .vm.$emit('top-up', sharedWalletBalance);
+            await wrapper.vm.$nextTick();
+
+            const offered = wrapper
+                .findComponent({ name: 'TopUpModalStub' })
+                .props('selectedBalanceItem') as {
+                charge_on_demand_pricing_items: { pricing_plan_schedule_id: string }[];
+            };
+
+            expect(
+                offered.charge_on_demand_pricing_items.map(
+                    ({ pricing_plan_schedule_id }) => pricing_plan_schedule_id,
+                ),
+            ).toEqual(['ppsc_1']);
         });
 
         it('reports a charged top-up so the balance can be reloaded', () => {

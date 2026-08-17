@@ -1,6 +1,11 @@
 import { mount } from '@vue/test-utils';
 import { defineComponent, nextTick } from 'vue';
-import type { Customer, CustomerWalletBalanceItem, PaymentMethod } from '@solvimon/solvimon-types';
+import type {
+    Customer,
+    CustomerWalletBalanceItem,
+    PaymentMethod,
+    PricingPlanSubscriptionExpanded,
+} from '@solvimon/solvimon-types';
 import TopUpModal from './TopUpModal.vue';
 
 // ─── Mocks ────────────────────────────────────────────────────────────────────
@@ -10,7 +15,10 @@ const { mockCharge, mockSubmitPaymentMethod, gateway } = vi.hoisted(() => ({
     mockSubmitPaymentMethod: vi.fn(),
     // What the gateway offers this customer. Empty means nothing can be added at all. Held as a real
     // ref so the modal reacts to it arriving, the way it does against the live composable.
-    gateway: {} as { options: { value: unknown[] }; isPending: { value: boolean } },
+    gateway: {} as {
+        options: { value: unknown[] };
+        isPending: { value: boolean };
+    },
 }));
 
 vi.mock('@/services/invoices', () => ({
@@ -175,15 +183,14 @@ const mountModal = (props: Record<string, unknown> = {}) =>
         attachTo: document.body,
     });
 
-const viewport = (wrapper: ReturnType<typeof mountModal>) =>
-    wrapper.find('.sv-topup-modal__viewport');
-
 /**
  * How far the track has slid, which is what says which pane is on screen. A step is a pane's width
- * plus the gap that keeps the neighbouring pane out of the viewport's sideways clip.
+ * plus the gap that keeps the neighbouring pane out of the viewport's sideways clip. The sliding
+ * itself belongs to `SlidingPanes`, which has its own tests; this only says which pane the modal
+ * asked for.
  */
 const trackOffset = (wrapper: ReturnType<typeof mountModal>) =>
-    wrapper.find<HTMLElement>('.sv-topup-modal__track').element.style.transform;
+    wrapper.find<HTMLElement>('.sv-sliding-panes__track').element.style.transform;
 
 const atStep = (index: number) =>
     index === 0 ? 'translateX(0px)' : `translateX(calc(${-index} * (100% + 1rem)))`;
@@ -230,29 +237,6 @@ describe('TopUpModal', () => {
 
     afterEach(() => {
         vi.useRealTimers();
-    });
-
-    it('animates the body height while the panes slide past each other', async () => {
-        const wrapper = mountModal();
-
-        await startAddingPaymentMethod(wrapper);
-
-        expect(viewport(wrapper).classes()).toContain('transition-[height]');
-    });
-
-    it('stops animating the body height once the panes have settled', async () => {
-        const wrapper = mountModal();
-        await startAddingPaymentMethod(wrapper);
-
-        await vi.advanceTimersByTimeAsync(300);
-
-        // Regression: following content that animates itself — the amount input expanding — restarted
-        // this ease every frame, so the height crawled behind and clipped what it was revealing.
-        expect(viewport(wrapper).classes()).not.toContain('transition-[height]');
-    });
-
-    it('leaves the body height unanimated until a pane is ever switched', () => {
-        expect(viewport(mountModal()).classes()).not.toContain('transition-[height]');
     });
 
     it('slides the track over to the add-a-method pane', async () => {

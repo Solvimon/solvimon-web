@@ -623,17 +623,6 @@ onMounted(() => {
                                     })
                                 }}
                             </template>
-                            <template #message>
-                                {{
-                                    $t({
-                                        defaultMessage:
-                                            'There are no available payment methods. Please contact support for more information.',
-                                        id: 'checkout.payment_method_block.no_payment_methods_available_message',
-                                        description:
-                                            'The message shown when there are no available payment methods',
-                                    })
-                                }}
-                            </template>
                         </EmptyStatePlaceholder>
                         <div
                             v-else-if="amount && checkoutForm.form.value.country"

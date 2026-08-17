@@ -871,6 +871,10 @@
     "defaultMessage": "No payment methods available",
     "description": "Shown in the top-up modal when the customer has nothing stored and no method can be added"
   },
+  "topup_modal.payment_method_required": {
+    "defaultMessage": "Select a payment method to pay for this top-up.",
+    "description": "Error shown under the payment methods in the top-up modal when none is selected on submit"
+  },
   "topup_modal.payment_method_selector.label": {
     "defaultMessage": "Payment method",
     "description": "Label above the payment method that pays for the top-up, in the top-up modal"

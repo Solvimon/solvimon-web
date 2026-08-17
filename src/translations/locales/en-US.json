@@ -218,6 +218,7 @@
   "topup_modal.flexible_option.bounds": "Between {minimum} and {maximum}",
   "topup_modal.flexible_option.label": "Choose your own amount",
   "topup_modal.no_payment_methods_available_title": "No payment methods available",
+  "topup_modal.payment_method_required": "Select a payment method to pay for this top-up.",
   "topup_modal.payment_method_selector.label": "Payment method",
   "topup_modal.pricing_items.label": "Top up amount",
   "topup_modal.save_payment_method.label": "Save payment method",

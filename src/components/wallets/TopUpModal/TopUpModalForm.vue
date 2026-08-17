@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { Amount, WalletBalanceValue } from '@solvimon/solvimon-types';
-import { computed, ref, watch } from 'vue';
+import { computed, reactive, ref, watch } from 'vue';
+import { helpers, required } from '@vuelidate/validators';
 import {
     Expand,
     FlexiblePricingInput,
@@ -10,6 +11,7 @@ import {
     RadioGroupExtended,
     Typography,
     useIntl,
+    useValidation,
     Section,
     Divider,
 } from '@solvimon/solvimon-ui';
@@ -218,8 +220,42 @@ const logger = useLogger();
 
 const isCharging = ref(false);
 
-/** There is nothing to charge until a top-up is chosen and, if flexible, an amount entered. */
-const canSubmit = computed(() => !!model.value.pricing_plan_schedule_id && !!pricingItems.value);
+/**
+ * Everything a charge needs: the schedule it is billed on — which is the chosen subscription, where
+ * there is a choice — a top-up with an amount to it, and a method to pay with.
+ */
+const canSubmit = computed(
+    () =>
+        !!model.value.pricing_plan_schedule_id &&
+        !!pricingItems.value &&
+        !!model.value.payment_method_id,
+);
+
+/**
+ * A top-up cannot be charged to nothing, so the method is validated rather than merely guarded:
+ * confirming with none chosen puts the error under the selector instead of doing nothing at all.
+ */
+const validationState = reactive({
+    paymentMethodId: computed(() => model.value.payment_method_id ?? null),
+});
+
+const validation = useValidation(
+    {
+        paymentMethodId: {
+            required: helpers.withMessage(
+                () =>
+                    $t({
+                        defaultMessage: 'Select a payment method to pay for this top-up.',
+                        description:
+                            'Error shown under the payment methods in the top-up modal when none is selected on submit',
+                        id: 'topup_modal.payment_method_required',
+                    }),
+                required,
+            ),
+        },
+    },
+    validationState,
+);
 
 /**
  * What the chosen top-up adds to the wallet, read by the modal for its confirm button and its success
@@ -237,7 +273,11 @@ const chargedValue = computed<WalletBalanceValue | undefined>(() => {
  * exposed handle rather than a button of its own.
  */
 async function submit() {
-    if (!canSubmit.value || isCharging.value) {
+    // Touched rather than awaited: `$validate()` is a promise, and yielding before the guard below
+    // would let a second press through while the first was still validating.
+    validation.value.$touch();
+
+    if (validation.value.$invalid || !canSubmit.value || isCharging.value) {
         return;
     }
 
@@ -449,6 +489,7 @@ watch(
                         class="sv-top-up-form__payment-methods"
                         :payment-methods="sortedPaymentMethods"
                         required
+                        :error="validation.paymentMethodId.$errors"
                         :disabled="isCharging"
                         :label="
                             $t({

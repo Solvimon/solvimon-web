@@ -7,7 +7,7 @@ import {
     Modal,
     useIntl,
 } from '@solvimon/solvimon-ui';
-import { computed, onBeforeUnmount, ref, watch, type Ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import type { TopUpModalEmits, TopUpModalProps, TopUpModalStep } from './TopUpModal.types';
 import { TOP_UP_MODAL_STEPS } from './TopUpModal.types';
 import { getTopUpPricingItems } from './TopUpModal.lib';
@@ -17,8 +17,8 @@ import { useTopUpModalLabels } from './useTopUpModalLabels';
 import { usePaymentMethodOptions } from '@/composables/usePaymentMethodOptions';
 import PaymentMethodForm from '@/public/components/PaymentMethodForm/PaymentMethodForm.vue';
 import type { TokenizePaymentMethodFormConfiguration } from '@/public/components/PaymentMethodForm/PaymentMethodForm.types';
-import { useElementHeight } from '@/composables/useElementHeight';
 import EmptyStatePlaceholder from '@/components/checkout/EmptyStatePlaceholder.vue';
+import SlidingPanes from '@/components/shared/SlidingPanes/SlidingPanes.vue';
 
 const props = defineProps<TopUpModalProps>();
 const emit = defineEmits<TopUpModalEmits>();
@@ -110,73 +110,13 @@ const paymentMethodFormConfiguration = computed<TokenizePaymentMethodFormConfigu
 }));
 
 /**
- * Both panes stay mounted so the body can animate between their heights, but the form is only built
- * once it is first asked for: it starts up a payment gateway, which is not worth doing for a
- * customer who never adds a method.
+ * Every pane stays mounted, but the form is only built once it is first asked for: it starts up a
+ * payment gateway, which is not worth doing for a customer who never adds a method.
  */
 const hasEverShownForm = ref(false);
 
-/** How long the panes take to slide past each other, matching the `duration-300` on the track. */
-const PANE_TRANSITION_MS = 300;
-
-/**
- * Whether the panes are sliding past each other right now — the only time the body animates its own
- * height.
- *
- * Animating it the rest of the time fights whatever is growing inside: the amount input expands over
- * its own 300ms, every frame of which re-measures the pane and restarts this ease from wherever it had
- * got to. The height then crawls behind its target, clipping the content it is supposed to be
- * revealing, and keeps easing after the input has finished. Outside a switch the measured height is
- * applied straight away instead, so the inner animation is what the customer sees.
- */
-const isSwitchingPanes = ref(false);
-let switchTimeout: ReturnType<typeof setTimeout> | undefined;
-
 watch(step, (currentStep) => {
     hasEverShownForm.value = hasEverShownForm.value || currentStep === 'ADD_PAYMENT_METHOD';
-
-    isSwitchingPanes.value = true;
-    clearTimeout(switchTimeout);
-    switchTimeout = setTimeout(() => {
-        isSwitchingPanes.value = false;
-    }, PANE_TRANSITION_MS);
-});
-
-onBeforeUnmount(() => {
-    clearTimeout(switchTimeout);
-});
-
-const topUpPaneRef = ref<HTMLElement>();
-const addPaneRef = ref<HTMLElement>();
-const successPaneRef = ref<HTMLElement>();
-
-const paneHeights: Record<TopUpModalStep, Ref<number>> = {
-    TOP_UP: useElementHeight(topUpPaneRef),
-    ADD_PAYMENT_METHOD: useElementHeight(addPaneRef),
-    SUCCESS: useElementHeight(successPaneRef),
-};
-
-/**
- * The height the body animates to. A transition cannot run to `auto`, so it tracks whichever pane is
- * on screen — and follows that pane as its own content changes.
- */
-const paneHeight = computed(() => paneHeights[step.value].value);
-
-/**
- * The space between panes on the track, matching the `gap-4` that puts it there.
- *
- * It exists so the viewport's sideways clip has something empty to cut: the clip box reaches past the
- * panes by the viewport's own padding — the room a selected option's ring needs — and without a gap
- * that same room shows the edge of the neighbouring pane. Twice the padding leaves the neighbour just
- * out of sight.
- */
-const PANE_GAP = '1rem';
-
-/** How far the track has to slide to bring the current pane into view, gaps included. */
-const trackOffset = computed(() => {
-    const index = TOP_UP_MODAL_STEPS.indexOf(step.value);
-
-    return index === 0 ? 'translateX(0px)' : `translateX(calc(${-index} * (100% + ${PANE_GAP})))`;
 });
 
 const paymentMethodFormRef = ref<InstanceType<typeof PaymentMethodForm>>();
@@ -300,102 +240,64 @@ watch(
     >
         <template #body>
             <div class="grid grid-cols-1 gap-4 pb-4">
-                <div
-                    class="sv-topup-modal__viewport relative -mx-2 overflow-hidden px-2"
-                    :class="
-                        isSwitchingPanes
-                            ? 'transition-[height] duration-300 ease-in-out motion-reduce:transition-none'
-                            : ''
-                    "
-                    :style="paneHeight ? { height: `${paneHeight}px` } : undefined"
-                >
-                    <div
-                        class="sv-topup-modal__track flex items-start gap-4 transition-transform duration-300 ease-in-out motion-reduce:transition-none"
-                        :style="{ transform: trackOffset }"
-                    >
-                        <!-- top up modal form -->
-                        <div
-                            class="sv-topup-modal__pane w-full shrink-0"
-                            :inert="step !== 'TOP_UP' || undefined"
+                <SlidingPanes :panes="TOP_UP_MODAL_STEPS" :current="step">
+                    <!-- top up modal form -->
+                    <template #TOP_UP>
+                        <TopUpModalForm
+                            :key="topUpFormKey"
+                            ref="topUpFormRef"
+                            :top-up-pricing-items="topUpPricingItems"
+                            :payment-methods="paymentMethods"
+                            @add-payment-method="step = 'ADD_PAYMENT_METHOD'"
+                            @success="handleTopUpSuccess"
                         >
-                            <div ref="topUpPaneRef">
-                                <TopUpModalForm
-                                    :key="topUpFormKey"
-                                    ref="topUpFormRef"
-                                    :top-up-pricing-items="topUpPricingItems"
-                                    :payment-methods="paymentMethods"
-                                    @add-payment-method="step = 'ADD_PAYMENT_METHOD'"
-                                    @success="handleTopUpSuccess"
+                            <template v-if="isTopUpUnavailable" #payment-method>
+                                <EmptyStatePlaceholder
+                                    class="sv-topup-modal__payment-methods-empty"
+                                    icon="credit_card_off"
                                 >
-                                    <!--
-                                        Nothing stored and nothing addable, so there is no method to
-                                        select and no point offering a way to add one.
-                                    -->
-                                    <template v-if="isTopUpUnavailable" #payment-method>
-                                        <EmptyStatePlaceholder
-                                            class="sv-topup-modal__payment-methods-empty"
-                                            icon="credit_card_off"
-                                        >
-                                            <template #title>
-                                                {{
-                                                    $t({
-                                                        defaultMessage:
-                                                            'No payment methods available',
-                                                        id: 'topup_modal.no_payment_methods_available_title',
-                                                        description:
-                                                            'Shown in the top-up modal when the customer has nothing stored and no method can be added',
-                                                    })
-                                                }}
-                                            </template>
-                                        </EmptyStatePlaceholder>
+                                    <template #title>
+                                        {{
+                                            $t({
+                                                defaultMessage: 'No payment methods available',
+                                                id: 'topup_modal.no_payment_methods_available_title',
+                                                description:
+                                                    'Shown in the top-up modal when the customer has nothing stored and no method can be added',
+                                            })
+                                        }}
                                     </template>
-                                </TopUpModalForm>
-                            </div>
-                        </div>
+                                </EmptyStatePlaceholder>
+                            </template>
+                        </TopUpModalForm>
+                    </template>
 
-                        <!-- payment method add form -->
-                        <div
-                            class="sv-topup-modal__pane w-full shrink-0"
-                            :inert="step !== 'ADD_PAYMENT_METHOD' || undefined"
-                        >
-                            <div ref="addPaneRef">
-                                <PaymentMethodForm
-                                    v-if="customer && hasEverShownForm"
-                                    ref="paymentMethodFormRef"
-                                    hide-submit-button
-                                    :customer="customer"
-                                    :payment-method-options="paymentMethodOptions"
-                                    :is-loading="isPaymentMethodOptionsPending"
-                                    :configuration="paymentMethodFormConfiguration"
-                                    @success="handlePaymentSuccess"
-                                    @failure="(error) => $emit('payment-failed', error)"
-                                />
-                            </div>
-                        </div>
+                    <!-- payment method add form -->
+                    <template #ADD_PAYMENT_METHOD>
+                        <PaymentMethodForm
+                            v-if="customer && hasEverShownForm"
+                            ref="paymentMethodFormRef"
+                            hide-submit-button
+                            :customer="customer"
+                            :payment-method-options="paymentMethodOptions"
+                            :is-loading="isPaymentMethodOptionsPending"
+                            :configuration="paymentMethodFormConfiguration"
+                            @success="handlePaymentSuccess"
+                            @failure="(error) => $emit('payment-failed', error)"
+                        />
+                    </template>
 
-                        <!-- charged confirmation -->
-                        <div
-                            class="sv-topup-modal__pane w-full shrink-0"
-                            :inert="step !== 'SUCCESS' || undefined"
-                        >
-                            <div ref="successPaneRef">
-                                <TopUpModalSuccess
-                                    v-if="chargedInvoice"
-                                    :added-value="chargedValue"
-                                    :invoice="chargedInvoice"
-                                />
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                    <!-- charged confirmation -->
+                    <template #SUCCESS>
+                        <TopUpModalSuccess
+                            v-if="chargedInvoice"
+                            :added-value="chargedValue"
+                            :invoice="chargedInvoice"
+                        />
+                    </template>
+                </SlidingPanes>
             </div>
         </template>
 
-        <!--
-            Stands in for the modal's own footer in the two cases it cannot express: the success pane,
-            where the money is already taken and there is nothing left to cancel, and a wallet with no
-            way to pay at all, where confirming has to be refused outright.
-        -->
         <template v-if="step === 'SUCCESS' || isTopUpUnavailable" #footer>
             <div class="flex flex-col gap-2">
                 <Button

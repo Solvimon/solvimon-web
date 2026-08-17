@@ -14,7 +14,6 @@ import { usePaymentMethods } from '@/composables/usePaymentMethods';
 import BillingInformation from '@/public/components/BillingInformation/BillingInformation.vue';
 import { useLoadInitialData } from '@/composables/useLoadInitialData';
 import CustomerPaymentMethods from '@/public/components/CustomerPaymentMethods/CustomerPaymentMethods.vue';
-import { useCustomerPaymentMethodOptions } from '@/composables/useCustomerPaymentMethodOptions';
 import { useCustomerWalletBalances } from '@/composables/useCustomerWalletBalances';
 import CustomerWalletBalances from '@/public/components/CustomerWalletBalances/CustomerWalletBalances.vue';
 import { getActiveDefaultScheduleId } from '@/utils/pricingPlanSchedule';
@@ -37,7 +36,6 @@ const SUBSCRIPTIONS_SHOWN = 2;
 
 const subscriptions = useSubscriptionsList({ customerId });
 const paymentMethods = usePaymentMethods({ customerId });
-const customerPaymentMethodOptions = useCustomerPaymentMethodOptions({ customerId });
 const customerWalletBalances = useCustomerWalletBalances({ customerId });
 // Computed at the top level so the template unwraps the ref — nested access does not.
 const walletBalanceItems = computed(
@@ -51,7 +49,6 @@ const { isLoading } = useLoadInitialData(
     invoices.fetchInitial(),
     subscriptions.fetchAll(),
     paymentMethods.fetchAll(),
-    customerPaymentMethodOptions.fetch(),
     customerWalletBalances.fetch(),
 );
 

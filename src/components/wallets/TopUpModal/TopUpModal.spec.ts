@@ -10,20 +10,23 @@ import TopUpModal from './TopUpModal.vue';
 
 // ─── Mocks ────────────────────────────────────────────────────────────────────
 
-const { mockCharge, mockSubmitPaymentMethod, gateway } = vi.hoisted(() => ({
-    mockCharge: vi.fn(),
-    mockSubmitPaymentMethod: vi.fn(),
-    // What the gateway offers this customer. Empty means nothing can be added at all. Held as a real
-    // ref so the modal reacts to it arriving, the way it does against the live composable.
-    gateway: {} as {
-        options: { value: unknown[] };
-        isPending: { value: boolean };
-    },
-}));
+const { mockCharge, mockSubmitPaymentMethod, mockLoadPaymentMethodOptions, mockPreview, gateway } =
+    vi.hoisted(() => ({
+        mockCharge: vi.fn(),
+        mockSubmitPaymentMethod: vi.fn(),
+        mockLoadPaymentMethodOptions: vi.fn(),
+        mockPreview: vi.fn().mockResolvedValue({ id: 'inv_1' }),
+        // What the gateway offers this customer. Empty means nothing can be added at all. Held as a real
+        // ref so the modal reacts to it arriving, the way it does against the live composable.
+        gateway: {} as {
+            options: { value: unknown[] };
+            isPending: { value: boolean };
+        },
+    }));
 
 vi.mock('@/services/invoices', () => ({
     createInvoicesService: () => ({
-        previewChargeOnDemandPricingItems: vi.fn().mockResolvedValue({ id: 'inv_1' }),
+        previewChargeOnDemandPricingItems: mockPreview,
         chargeOnDemandPricingItems: mockCharge,
     }),
 }));
@@ -37,7 +40,7 @@ vi.mock('@/composables/usePaymentMethodOptions', async () => {
     return {
         usePaymentMethodOptions: () => ({
             paymentMethodOptions: gateway.options,
-            get: vi.fn(),
+            get: mockLoadPaymentMethodOptions,
             isPending: gateway.isPending,
         }),
     };
@@ -225,6 +228,35 @@ const chargeTopUp = async (wrapper: ReturnType<typeof mountModal>) => {
 };
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
+
+// Both screens keep the modal built so it can animate open, which would be a request per wallet
+// block on every page load if it asked for anything before a wallet was picked.
+describe('TopUpModal — closed', () => {
+    beforeEach(() => {
+        mockLoadPaymentMethodOptions.mockClear();
+        mockPreview.mockClear();
+    });
+
+    it('asks the gateway for nothing until it is opened', async () => {
+        const wrapper = mountModal({ showModal: false, selectedBalanceItem: undefined });
+        await nextTick();
+
+        expect(mockLoadPaymentMethodOptions).not.toHaveBeenCalled();
+        expect(mockPreview).not.toHaveBeenCalled();
+
+        await wrapper.setProps({ showModal: true, selectedBalanceItem: balanceItem });
+        await nextTick();
+
+        expect(mockLoadPaymentMethodOptions).toHaveBeenCalledTimes(1);
+    });
+
+    it('previews nothing until it is opened', async () => {
+        mountModal({ showModal: false, selectedBalanceItem: balanceItem });
+        await nextTick();
+
+        expect(mockPreview).not.toHaveBeenCalled();
+    });
+});
 
 describe('TopUpModal', () => {
     beforeEach(() => {

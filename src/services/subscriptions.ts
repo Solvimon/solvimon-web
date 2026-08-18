@@ -10,6 +10,7 @@ import {
 } from '@solvimon/solvimon-ui';
 import { createRequestService } from './requests';
 import { useConfig } from '@/components/providers/ConfigProvider/composables/useConfig';
+import { EXPAND_ALL } from '@/constants';
 import type { PricingPlanSubscriptionExpanded } from '@/types/subscription';
 
 const ENDPOINT = '/portal/pricing-plan-subscriptions';
@@ -63,41 +64,9 @@ export function createSubscriptionsService(): SubscriptionsService {
         id: PricingPlanSubscription['id'];
         expanded?: boolean;
     }): Promise<PricingPlanSubscription | PricingPlanSubscriptionExpanded> {
-        const expandParams = expanded
-            ? [
-                  'pricing_plan_schedule_infos.id',
-                  'pricing_plan_schedule_infos.pricing_plan_version_id',
-                  'pricing_plan_schedule_infos.pricing_plan_version.pricing_plan_id',
-                  'pricing_plan_schedule_infos.pricing_plan_version.credit_types',
-                  'pricing_plan_schedule_infos.pricing_plan_version.pricing_categories.product_category_id',
-                  'pricing_plan_schedule_infos.pricing_plan_version.pricing_categories.pricings.product_ids',
-                  'pricing_plan_schedule_infos.pricing_plan_version.pricing_categories.pricings.entitlements.feature_id',
-                  'pricing_plan_schedule_infos.pricing_plan_version.pricing_categories.pricings.items.configs.conditions.meter_properties.id',
-                  'pricing_plan_schedule_infos.pricing_plan_version.pricing_categories.pricings.items.configs.wallet_grants.wallet_type_id',
-                  'pricing_plan_schedule_infos.pricing_plan_version.pricing_categories.pricings.items.product_item_ids',
-                  'pricing_plan_schedule_infos.pricing_plan_version.pricing_categories.pricings.items.product_items.usage_based.meter_value_calculation_id',
-                  'pricing_plan_schedule_infos.pricing_plan_version.pricing_categories.pricings.items.product_items.usage_metric.meter_value_calculation.meter_value_id',
-                  'pricing_plan_schedule_infos.pricing_plan_version.pricing_categories.pricings.items.product_items.usage_metric.meter_value_calculation.meter_id',
-                  'pricing_plan_schedule_infos.pricing_plan_version.pricing_categories.pricings.items.product_items.usage_metric.meter_value_calculation.meter.meter_values.id',
-                  'pricing_plan_schedule_infos.pricing_plan_version.pricing_categories.pricings.items.product_items.usage_metric.meter_value_calculation.meter.meter_properties',
-                  'pricing_plan_schedule_infos.pricing_plan_version.pricing_categories.pricings.items.product_items.usage_metric.meter_value_calculation.meter.meter_properties.id',
-                  'pricing_plan_schedule_infos.pricing_plan_version.pricing_categories.pricing_groups.pricings.product_ids',
-                  'pricing_plan_schedule_infos.pricing_plan_version.pricing_categories.pricing_groups.pricings.items.configs.conditions.meter_properties.id',
-                  'pricing_plan_schedule_infos.pricing_plan_version.pricing_categories.pricing_groups.pricings.items.configs.wallet_grants.wallet_type_id',
-                  'pricing_plan_schedule_infos.pricing_plan_version.pricing_categories.pricing_groups.pricings.items.product_item_ids',
-                  'pricing_plan_schedule_infos.pricing_plan_version.pricing_categories.pricing_groups.pricings.items.product_items.usage_based.meter_value_calculation_id',
-                  'pricing_plan_schedule_infos.pricing_plan_version.pricing_categories.pricing_groups.pricings.items.product_items.usage_metric.meter_value_calculation.meter_value_id',
-                  'pricing_plan_schedule_infos.pricing_plan_version.pricing_categories.pricing_groups.pricings.items.product_items.usage_metric.meter_value_calculation.meter_id',
-                  'pricing_plan_schedule_infos.pricing_plan_version.pricing_categories.pricing_groups.pricings.items.product_items.usage_metric.meter_value_calculation.meter.meter_values',
-                  'pricing_plan_schedule_infos.pricing_plan_version.pricing_categories.pricing_groups.pricings.items.product_items.usage_metric.meter_value_calculation.meter.meter_values.id',
-                  'pricing_plan_schedule_infos.pricing_plan_version.pricing_categories.pricing_groups.pricings.items.product_items.usage_metric.meter_value_calculation.meter.meter_properties',
-                  'pricing_plan_schedule_infos.pricing_plan_version.pricing_categories.pricing_groups.pricings.items.product_items.usage_metric.meter_value_calculation.meter.meter_properties.id',
-              ]
-            : [];
-
         return request<PricingPlanSubscription>({
             url: `${config.apiUrls.config}${ENDPOINT}/${id}${serializeQueryParams(
-                withExpand({ expandParams }),
+                withExpand({ expandParams: EXPAND_ALL, expand: expanded }),
             )}`,
         });
     }
@@ -116,14 +85,7 @@ export function createSubscriptionsService(): SubscriptionsService {
                 statuses: ['ACTIVE'],
                 type: 'BILLING',
             },
-            expandParams: [
-                // Expanding the schedule's own id is what makes the API return the nested
-                // `pricing_plan_schedule`, and with it the DEFAULT/TRIAL type. Without it the
-                // schedule infos carry no type at all and no schedule counts as active.
-                'pricing_plan_schedule_infos.id',
-                'pricing_plan_schedule_infos.pricing_plan_version_id',
-                'pricing_plan_schedule_infos.pricing_plan_version.pricing_plan_id',
-            ],
+            expandParams: EXPAND_ALL,
         });
         const queryString = serializeQueryParams(withPagination(queryWithExpand, paginationParams));
 

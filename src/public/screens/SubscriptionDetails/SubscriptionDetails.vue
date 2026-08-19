@@ -1,13 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, toRef, watch } from 'vue';
-import {
-    Alert,
-    Button,
-    Section,
-    Typography,
-    useIntl,
-    ErrorNotification,
-} from '@solvimon/solvimon-ui';
+import { Alert, Button, Typography, useIntl, ErrorNotification } from '@solvimon/solvimon-ui';
 import type {
     SubscriptionDetailsEmits,
     SubscriptionDetailsProps,
@@ -15,7 +8,6 @@ import type {
 import { ContentWithAsideLayout } from '@/layouts';
 import { useSubscriptionActions } from '@/composables/useSubscriptionActions';
 import { getMostRecentScheduleInfo, getSubscriptionName } from '@/utils/subscription';
-import SubscriptionSummary from '@/components/subscriptions/SubscriptionSummary.vue';
 import SubscriptionSchedules from '@/public/components/SubscriptionSchedules/SubscriptionSchedules.vue';
 import CustomerWalletBalances from '@/public/components/CustomerWalletBalances/CustomerWalletBalances.vue';
 import CustomerPaymentMethods from '@/public/components/CustomerPaymentMethods/CustomerPaymentMethods.vue';
@@ -176,10 +168,6 @@ const title = computed<string>(() =>
             <Skeleton v-else-if="isLoading" variant="section" class="min-h-[220px]" />
 
             <template v-else-if="subscription">
-                <Section no-spacing class="sv-subscription-details__summary">
-                    <SubscriptionSummary :subscription="subscription" />
-                </Section>
-
                 <SubscriptionSchedules
                     class="sv-subscription-details__schedules"
                     :schedules-data="schedulesData ?? []"

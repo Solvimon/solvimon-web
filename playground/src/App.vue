@@ -285,9 +285,8 @@ function applyPortal() {
         color 0.1s;
 }
 
-/* Darker than the sidebar now that it is grey — #f1f5f9 was invisible against it. */
 .nav-item:hover {
-    background: #e2e8f0;
+    background: #f1f5f9;
     color: #0f172a;
 }
 
@@ -302,7 +301,7 @@ function applyPortal() {
     padding: 5px 8px;
     border: 1px solid #e2e8f0;
     border-radius: 7px;
-    background: #ffffff;
+    background: transparent;
     color: #475569;
     font-size: 12px;
     font-weight: 500;
@@ -328,14 +327,13 @@ function applyPortal() {
     color: #94a3b8;
 }
 
-/* White against the grey sidebar, so the field still reads as somewhere to type. */
 .portal-textarea {
     width: 100%;
     height: 110px;
     padding: 8px;
     border: 1px solid #e2e8f0;
     border-radius: 8px;
-    background: #ffffff;
+    background: #f8fafc;
     font-family: 'Fira Code', 'Cascadia Code', monospace;
     font-size: 11px;
     color: #0f172a;

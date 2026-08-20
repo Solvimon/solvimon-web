@@ -1,18 +1,14 @@
 <script setup lang="ts">
-import type { Amount, WalletBalanceValue } from '@solvimon/solvimon-types';
+import type { Amount, PaymentMethod, WalletBalanceValue } from '@solvimon/solvimon-types';
 import { computed, reactive, ref, watch } from 'vue';
 import { helpers, required } from '@vuelidate/validators';
 import {
     Expand,
-    FlexiblePricingInput,
     formatAmount,
-    formatWalletBalanceValue,
-    InvoicePreview,
     RadioGroupExtended,
     Typography,
     useIntl,
     useValidation,
-    Section,
     Divider,
 } from '@solvimon/solvimon-ui';
 import {
@@ -20,17 +16,28 @@ import {
     type TopUpModalFormProps,
     type TopUpModalFormState,
 } from './TopUpModalForm.types';
-import { useTopUpInvoicePreview } from './useTopUpInvoicePreview';
-import { getTopUpValue, type TopUpPricingItem } from './TopUpModal.lib';
-import Skeleton from '@/components/shared/Skeleton.vue';
+import TopUpInvoicePreview from './TopUpInvoicePreview.vue';
+import {
+    getAutoTopUpCreditUnitName,
+    getAutoTopUpEditorConfig,
+    getTopUpValue,
+    type FlexibleTopUpPricing,
+    type TopUpPricingItem,
+} from './TopUpModal.lib';
+import AutoTopUpConfigEditor from '@/components/wallets/AutoTopUpConfig/AutoTopUpConfig.vue';
+import ConvertedAmountInput from '@/components/wallets/ConvertedAmountInput/ConvertedAmountInput.vue';
 import PaymentMethodSelector from '@/components/payments/PaymentMethodSelector/PaymentMethodSelector.vue';
+import { useDefaultPaymentMethod } from '@/composables/useDefaultPaymentMethod';
+import { useWalletBalanceFormat } from '@/composables/useWalletBalanceFormat';
 import { createInvoicesService } from '@/services/invoices';
 import { useLogger } from '@/components/providers/LoggerProvider/composables/useLogger';
 
 const props = defineProps<TopUpModalFormProps>();
 const emit = defineEmits<TopUpModalFormEmits>();
 
-const { $t, formatNumber } = useIntl();
+const { $t } = useIntl();
+
+const { formatValue } = useWalletBalanceFormat();
 
 const model = ref<TopUpModalFormState>({
     pricing_plan_schedule_id: '',
@@ -41,10 +48,20 @@ const model = ref<TopUpModalFormState>({
     preview: true,
 });
 
-/** Only the ways this wallet can actually be charged are offered. */
-const chargeableItems = computed(() =>
-    (props.topUpPricingItems ?? []).filter((item) => item.flexiblePricing || item.fixedPricing),
-);
+/**
+ * Choose-your-own-amount first, since that is the option that opens selected. A stable partition, so
+ * the fixed packs keep the order they arrive in.
+ */
+const chargeableItems = computed(() => {
+    const chargeable = (props.topUpPricingItems ?? []).filter(
+        (item) => item.flexiblePricing || item.fixedPricing,
+    );
+
+    return [
+        ...chargeable.filter(({ flexiblePricing }) => flexiblePricing),
+        ...chargeable.filter(({ flexiblePricing }) => !flexiblePricing),
+    ];
+});
 
 const findItem = (pricingItemId?: string) =>
     chargeableItems.value.find((item) => item.pricingItemId === pricingItemId);
@@ -144,10 +161,6 @@ const flexibleAmount = computed<Amount | undefined>({
     },
 });
 
-// Credits or money, whichever the wallet holds — the same formatting the modal's subtitle uses.
-const formatValue = (value: WalletBalanceValue) =>
-    formatWalletBalanceValue($t, formatNumber, value);
-
 /**
  * What a fixed top-up costs, shown to the right of what it grants. Only for a credit based wallet:
  * elsewhere the option is already labelled with this very amount, and repeating it reads as a bug.
@@ -163,6 +176,34 @@ const getCostLabel = (optionValue: string | boolean) => {
  * narrowed local through `v-for`. Per option rather than "the selected one", so the input keeps its
  * config while the row is collapsing rather than blanking the moment the choice moves elsewhere.
  */
+const selectedFlexiblePricing = computed(
+    () => findItem(String(selectedPricingItemId.value))?.flexiblePricing,
+);
+
+/** The field hands back a bare quantity, so the currency it is charged in is put back on here. */
+const flexibleAmountQuantity = computed<string>({
+    get: () => flexibleAmount.value?.quantity ?? '',
+    set: (quantity) => {
+        const currency = selectedFlexiblePricing.value?.currency;
+
+        flexibleAmount.value = quantity && currency ? { quantity, currency } : undefined;
+    },
+});
+
+const entryBaseFor = (pricing: Omit<FlexibleTopUpPricing, 'pricingItemId'>) =>
+    pricing.creditsConfiguration ? ('CREDITS' as const) : ('AMOUNT' as const);
+
+/** Read off the wallet: the name lives on the credit type, not on the pricing's conversion config. */
+const creditUnitName = computed(() => getAutoTopUpCreditUnitName(props.topUpPricingItems));
+
+const entryUnitFor = (pricing: Omit<FlexibleTopUpPricing, 'pricingItemId'>) =>
+    pricing.creditsConfiguration
+        ? (creditUnitName.value ??
+          pricing.creditsConfiguration.unitNamePlural ??
+          pricing.creditsConfiguration.unitNameSingle ??
+          '')
+        : pricing.currency;
+
 const flexiblePricingFor = (optionValue: string | boolean) => {
     const flexiblePricing = findItem(String(optionValue))?.flexiblePricing;
 
@@ -213,7 +254,19 @@ const pricingItems = computed(() => {
     return chargeable.length > 0 ? chargeable : undefined;
 });
 
-const { invoicePreview } = useTopUpInvoicePreview({ pricingPlanScheduleId, pricingItems });
+/**
+ * Nothing unless the wallet offers a choose-your-amount top-up — the only kind a rule can charge —
+ * and has no rule yet, an existing one being the auto top-up modal's to change.
+ */
+const autoTopUpEditor = computed(() => {
+    const canSetUpAutoTopUp =
+        !props.autoTopUpConfig &&
+        chargeableItems.value.some(({ flexiblePricing }) => flexiblePricing);
+
+    return canSetUpAutoTopUp ? getAutoTopUpEditorConfig(props.topUpPricingItems) : undefined;
+});
+
+const autoTopUpFormRef = ref<InstanceType<typeof AutoTopUpConfigEditor>>();
 
 const { chargeOnDemandPricingItems } = createInvoicesService();
 const logger = useLogger();
@@ -277,7 +330,15 @@ async function submit() {
     // would let a second press through while the first was still validating.
     validation.value.$touch();
 
-    if (validation.value.$invalid || !canSubmit.value || isCharging.value) {
+    // Confirmed by the same button, so it is touched either way and says why it cannot be saved.
+    const editedAutoTopUp = autoTopUpFormRef.value?.validate();
+
+    if (
+        validation.value.$invalid ||
+        autoTopUpFormRef.value?.isInvalid ||
+        !canSubmit.value ||
+        isCharging.value
+    ) {
         return;
     }
 
@@ -294,6 +355,18 @@ async function submit() {
             preview: false,
         });
 
+        // Only a rule the customer changed: every top-up would otherwise re-save the one it opened on.
+        if (
+            editedAutoTopUp &&
+            autoTopUpFormRef.value?.hasChanges &&
+            model.value.payment_method_id
+        ) {
+            emit('save-auto-top-up', {
+                rule: editedAutoTopUp,
+                paymentMethodId: model.value.payment_method_id,
+            });
+        }
+
         emit('success', invoice);
     } catch (error) {
         logger.error('TOP_UP_FAILED', 'Failed to charge the wallet top-up', {}, error);
@@ -305,61 +378,17 @@ async function submit() {
 
 defineExpose({ submit, isCharging, canSubmit, chargedValue });
 
-/** Which stored payment method pays for the top-up — kept on the payload it is submitted with. */
-const selectedPaymentMethodId = computed<string | undefined>({
+const selectedPaymentMethodId = computed<PaymentMethod['id'] | undefined>({
     get: () => model.value.payment_method_id ?? undefined,
     set: (paymentMethodId) => {
         model.value.payment_method_id = paymentMethodId;
     },
 });
 
-const toTime = (createdAt?: string) => {
-    const parsed = Date.parse(createdAt ?? '');
-
-    return Number.isFinite(parsed) ? parsed : 0;
-};
-
-/**
- * Newest first, so a method the customer just added leads the list rather than being buried at the
- * bottom of it.
- */
-const sortedPaymentMethods = computed(() =>
-    [...(props.paymentMethods ?? [])].sort((a, b) => toTime(b.created_at) - toTime(a.created_at)),
-);
-
-/**
- * Start on the customer's default payment method, falling back to the newest one they have — but
- * prefer one they have just added, since adding it was a deliberate act. Otherwise it leaves a choice
- * they have already made alone, so the list arriving late cannot overrule them.
- */
-watch(
-    () => props.paymentMethods,
-    (paymentMethods, previousPaymentMethods) => {
-        const addedPaymentMethod = paymentMethods?.find(
-            ({ id }) => !previousPaymentMethods?.some((previous) => previous.id === id),
-        );
-
-        // Only a list that already had methods and then grew means the customer added one. Arriving
-        // from nothing is the list loading, where the default should still win.
-        if (addedPaymentMethod && previousPaymentMethods?.length) {
-            selectedPaymentMethodId.value = addedPaymentMethod.id;
-            return;
-        }
-
-        const chosenStillExists = paymentMethods?.some(
-            ({ id }) => id === model.value.payment_method_id,
-        );
-
-        if (chosenStillExists) {
-            return;
-        }
-
-        selectedPaymentMethodId.value = (
-            paymentMethods?.find(({ is_default }) => is_default) ?? sortedPaymentMethods.value[0]
-        )?.id;
-    },
-    { immediate: true },
-);
+const { sortedPaymentMethods } = useDefaultPaymentMethod({
+    paymentMethods: computed(() => props.paymentMethods),
+    selectedPaymentMethodId,
+});
 </script>
 
 <template>
@@ -411,11 +440,6 @@ watch(
                                 no-spacing
                                 >{{ option.description }}</Typography
                             >
-                            <!--
-                                The bounds ride inside the panel with the input they describe, so
-                                choosing this option grows the two as one movement rather than
-                                snapping the text in and then easing the input open beneath it.
-                            -->
                             <Expand
                                 v-if="flexiblePricingFor(optionValue).length > 0"
                                 :is-open="String(optionValue) === selectedPricingItemId"
@@ -436,44 +460,42 @@ watch(
                                         no-spacing
                                         >{{ option.description }}</Typography
                                     >
-                                    <FlexiblePricingInput
-                                        v-model="flexibleAmount"
-                                        :config="flexiblePricing.config"
+                                    <ConvertedAmountInput
+                                        v-model="flexibleAmountQuantity"
+                                        name="top-up-amount"
+                                        model-base="AMOUNT"
+                                        :unit="entryUnitFor(flexiblePricing)"
+                                        :entry-base="entryBaseFor(flexiblePricing)"
                                         :currency="flexiblePricing.currency"
-                                        :credits-configuration="
-                                            flexiblePricing.creditsConfiguration
+                                        :conversion-rate="
+                                            flexiblePricing.creditsConfiguration?.conversionRate
                                         "
                                         required
                                         :disabled="isCharging"
-                                        :show-range-hint="false"
                                     />
                                 </div>
                             </Expand>
                         </div>
                     </template>
                 </RadioGroupExtended>
+            </div>
 
-                <!--
-                    invoice preview
+            <div>
+                <TopUpInvoicePreview
+                    :pricing-plan-schedule-id="pricingPlanScheduleId"
+                    :pricing-items="pricingItems"
+                />
+            </div>
 
-                    The section is what waits on the request, not the preview inside it: `Skeleton`
-                    hands over to its slot as soon as that slot renders anything at all, so an empty
-                    section there left the placeholder unreachable and an empty bordered box on
-                    screen, growing to the preview's height once it landed.
-
-                    The placeholder is one plain block, fixed at the height a preview usually comes
-                    back at. The section variant would add a title bar this has nothing to put in,
-                    and any other height puts the jump back.
-                -->
-                <Skeleton
-                    v-if="pricingItems"
-                    class="h-[152px]"
-                    data-testid="top-up-invoice-preview-skeleton"
-                >
-                    <Section v-if="invoicePreview" content-background="none">
-                        <InvoicePreview :invoice="invoicePreview" is-customer-facing />
-                    </Section>
-                </Skeleton>
+            <div v-if="autoTopUpEditor">
+                <AutoTopUpConfigEditor
+                    ref="autoTopUpFormRef"
+                    class="sv-top-up-form__auto-top-up"
+                    v-bind="autoTopUpEditor"
+                    contained
+                    :show-threshold-conversion="false"
+                    :disabled="isCharging"
+                />
             </div>
 
             <!-- divider -->
@@ -490,6 +512,7 @@ watch(
                         :payment-methods="sortedPaymentMethods"
                         required
                         :error="validation.paymentMethodId.$errors"
+                        :payment-method-options="paymentMethodOptions"
                         :disabled="isCharging"
                         :label="
                             $t({

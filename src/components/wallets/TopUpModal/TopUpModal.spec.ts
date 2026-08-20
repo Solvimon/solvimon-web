@@ -8,21 +8,32 @@ import type {
 } from '@solvimon/solvimon-types';
 import TopUpModal from './TopUpModal.vue';
 
-// ─── Mocks ────────────────────────────────────────────────────────────────────
+const {
+    mockCharge,
+    mockCreateAutoTopUp,
+    mockSubmitPaymentMethod,
+    mockLoadPaymentMethodOptions,
+    mockPreview,
+    gateway,
+} = vi.hoisted(() => ({
+    mockCharge: vi.fn(),
+    mockCreateAutoTopUp: vi.fn(),
+    mockSubmitPaymentMethod: vi.fn(),
+    mockLoadPaymentMethodOptions: vi.fn(),
+    mockPreview: vi.fn().mockResolvedValue({ id: 'inv_1' }),
+    gateway: {} as {
+        options: { value: unknown[] };
+        isPending: { value: boolean };
+    },
+}));
 
-const { mockCharge, mockSubmitPaymentMethod, mockLoadPaymentMethodOptions, mockPreview, gateway } =
-    vi.hoisted(() => ({
-        mockCharge: vi.fn(),
-        mockSubmitPaymentMethod: vi.fn(),
-        mockLoadPaymentMethodOptions: vi.fn(),
-        mockPreview: vi.fn().mockResolvedValue({ id: 'inv_1' }),
-        // What the gateway offers this customer. Empty means nothing can be added at all. Held as a real
-        // ref so the modal reacts to it arriving, the way it does against the live composable.
-        gateway: {} as {
-            options: { value: unknown[] };
-            isPending: { value: boolean };
-        },
-    }));
+vi.mock('@/services/autoTopUpConfigs', () => ({
+    createAutoTopUpConfigsService: () => ({ createAutoTopUpConfig: mockCreateAutoTopUp }),
+}));
+
+vi.mock('@/components/providers/LoggerProvider/composables/useLogger', () => ({
+    useLogger: () => ({ warn: vi.fn(), error: vi.fn() }),
+}));
 
 vi.mock('@/services/invoices', () => ({
     createInvoicesService: () => ({
@@ -46,7 +57,6 @@ vi.mock('@/composables/usePaymentMethodOptions', async () => {
     };
 });
 
-// Starts up the Adyen and Stripe integrations, which have nothing to do with the modal's chrome.
 vi.mock('@/public/components/PaymentMethodForm/PaymentMethodForm.vue', () => ({
     default: defineComponent({
         name: 'PaymentMethodFormStub',
@@ -58,7 +68,6 @@ vi.mock('@/public/components/PaymentMethodForm/PaymentMethodForm.vue', () => ({
             'hideSubmitButton',
         ],
         emits: ['success', 'failure'],
-        // The modal submits the form through its ref, so the stub has to answer to that too.
         setup(_props, { expose }) {
             expose({ submit: mockSubmitPaymentMethod, isPaymentPending: false });
         },
@@ -78,13 +87,17 @@ vi.mock('@/components/payments/PaymentMethodSelector/PaymentMethodSelector.vue',
 vi.mock('@solvimon/solvimon-ui', async () => {
     const { createSolvimonUiMock } = await import('@/test-utils/solvimonUiMock');
     return createSolvimonUiMock({
+        FlexiblePricingInput: defineComponent({
+            name: 'FlexiblePricingInputStub',
+            props: ['modelValue', 'config', 'currency', 'creditsConfiguration', 'label', 'error'],
+            emits: ['update:modelValue'],
+            template: '<div data-testid="flexible-pricing-input" />',
+        }),
         InvoicePreview: defineComponent({
             name: 'InvoicePreviewStub',
             props: ['invoice', 'isCustomerFacing'],
             template: '<div data-testid="invoice-preview" />',
         }),
-        // The real one reaches for solvimon-ui's own intl provider, which is not this modal's concern.
-        // Stubbed down to the chrome the modal drives: the labels it sets and the two buttons.
         Modal: defineComponent({
             name: 'ModalStub',
             props: [
@@ -117,8 +130,6 @@ vi.mock('@solvimon/solvimon-ui', async () => {
     });
 });
 
-// ─── Fixtures ─────────────────────────────────────────────────────────────────
-
 const customer = {
     id: 'cust_1',
     billing_address: { country_code: 'NL' },
@@ -130,7 +141,6 @@ const credits = (quantity: string) => ({
     credit_type: { unit_name: { singular: 'coin', plural: 'coins' } },
 });
 
-/** A credit based wallet with one fixed top-up on offer: €10.00 for 1,000 coins. */
 const balanceItem = {
     wallet_type_id: 'wtyp_1',
     wallet_balance: {
@@ -164,9 +174,6 @@ const balanceItem = {
     ],
 } as unknown as CustomerWalletBalanceItem;
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-/** One stored card, so the modal takes its ordinary path: pick a top-up, pick a method, charge. */
 const storedPaymentMethod = {
     id: 'pmet_1',
     type: 'CARD',
@@ -186,19 +193,12 @@ const mountModal = (props: Record<string, unknown> = {}) =>
         attachTo: document.body,
     });
 
-/**
- * How far the track has slid, which is what says which pane is on screen. A step is a pane's width
- * plus the gap that keeps the neighbouring pane out of the viewport's sideways clip. The sliding
- * itself belongs to `SlidingPanes`, which has its own tests; this only says which pane the modal
- * asked for.
- */
 const trackOffset = (wrapper: ReturnType<typeof mountModal>) =>
     wrapper.find<HTMLElement>('.sv-sliding-panes__track').element.style.transform;
 
 const atStep = (index: number) =>
     index === 0 ? 'translateX(0px)' : `translateX(calc(${-index} * (100% + 1rem)))`;
 
-/** The customer asks for the add-a-method step, which the top-up form hands up to the modal. */
 const startAddingPaymentMethod = async (wrapper: ReturnType<typeof mountModal>) => {
     await wrapper.findComponent({ name: 'TopUpModalForm' }).vm.$emit('add-payment-method');
     await nextTick();
@@ -207,7 +207,6 @@ const startAddingPaymentMethod = async (wrapper: ReturnType<typeof mountModal>) 
 const selector = (wrapper: ReturnType<typeof mountModal>) =>
     wrapper.findComponent({ name: 'PaymentMethodSelectorStub' });
 
-/** Choose the fixed top-up and confirm it, the way the customer would. */
 const startCharge = async (wrapper: ReturnType<typeof mountModal>) => {
     await wrapper.find<HTMLInputElement>('input[type="radio"]').setValue();
     await wrapper.find('[data-testid="confirm"]').trigger('click');
@@ -216,10 +215,6 @@ const startCharge = async (wrapper: ReturnType<typeof mountModal>) => {
     return wrapper;
 };
 
-/**
- * Charge the top-up and let the request come back: the form reports the invoice it got, and what was
- * added is read off the chosen pricing item.
- */
 const chargeTopUp = async (wrapper: ReturnType<typeof mountModal>) => {
     await startCharge(wrapper);
     await vi.runAllTimersAsync();
@@ -227,10 +222,6 @@ const chargeTopUp = async (wrapper: ReturnType<typeof mountModal>) => {
     return wrapper;
 };
 
-// ─── Tests ────────────────────────────────────────────────────────────────────
-
-// Both screens keep the modal built so it can animate open, which would be a request per wallet
-// block on every page load if it asked for anything before a wallet was picked.
 describe('TopUpModal — closed', () => {
     beforeEach(() => {
         mockLoadPaymentMethodOptions.mockClear();
@@ -286,7 +277,6 @@ describe('TopUpModal', () => {
         await wrapper.find<HTMLInputElement>('input[type="radio"]').setValue();
         await nextTick();
 
-        // A credit based wallet, so the credits it grants rather than the €10.00 being charged.
         expect(wrapper.find('[data-testid="confirm"]').text()).toBe(
             'Top up balance with 1000 coins',
         );
@@ -342,10 +332,7 @@ describe('TopUpModal', () => {
         expect(trackOffset(wrapper)).toBe(atStep(0));
     });
 
-    // ─── While the charge is out ───────────────────────────────────────────────
-
     it('shows the confirm button working while the charge is out', async () => {
-        // Left hanging, so the modal is caught mid-charge.
         mockCharge.mockReturnValue(new Promise(() => {}));
         const wrapper = await startCharge(mountModal());
 
@@ -356,7 +343,6 @@ describe('TopUpModal', () => {
         mockCharge.mockReturnValue(new Promise(() => {}));
         const wrapper = await startCharge(mountModal());
 
-        // The chosen top-up and the payment method both settle the charge, so neither may move now.
         expect(wrapper.find<HTMLInputElement>('input[type="radio"]').element.disabled).toBe(true);
         expect(selector(wrapper).props('disabled')).toBe(true);
     });
@@ -368,7 +354,6 @@ describe('TopUpModal', () => {
         await wrapper.findComponent({ name: 'ModalStub' }).vm.$emit('close');
 
         // The money may already be on its way; the modal's own cancel button cannot be disabled, so
-        // the close is refused instead of letting the customer walk away from a charge in flight.
         expect(wrapper.emitted('close')).toBeUndefined();
     });
 
@@ -377,8 +362,6 @@ describe('TopUpModal', () => {
 
         expect(wrapper.findComponent({ name: 'ModalStub' }).props('isLoading')).toBe(false);
     });
-
-    // ─── Success step ─────────────────────────────────────────────────────────
 
     it('slides on to the confirmation once the top-up is charged', async () => {
         const wrapper = await chargeTopUp(mountModal());
@@ -390,17 +373,15 @@ describe('TopUpModal', () => {
     it('holds the charge back while the customer is still on the receipt', async () => {
         const wrapper = await chargeTopUp(mountModal());
 
-        // Reporting it here would reload the balance under a receipt the customer is still reading.
         expect(wrapper.emitted('confirm')).toBeUndefined();
         expect(wrapper.emitted('close')).toBeUndefined();
     });
 
-    it('names what the top-up added to the balance', async () => {
+    it('shows the receipt the charge produced', async () => {
         const wrapper = await chargeTopUp(mountModal());
 
-        expect(wrapper.text()).toContain('Top-up successful');
-        // Unseparated: the intl mock's formatNumber returns the raw quantity.
-        expect(wrapper.text()).toContain('Your balance was topped up with 1000 coins.');
+        expect(wrapper.text()).toContain('Receipt');
+        expect(wrapper.find('[data-testid="invoice-preview"]').exists()).toBe(true);
     });
 
     it('renames its chrome for the confirmation', async () => {
@@ -413,8 +394,6 @@ describe('TopUpModal', () => {
     it('offers only a way out once the money has been taken', async () => {
         const wrapper = await chargeTopUp(mountModal());
 
-        // The modal's own footer always renders a cancel button beside the confirm one; there is
-        // nothing to cancel here, so the confirmation replaces the footer with a single button.
         expect(wrapper.find('[data-testid="done"]').text()).toBe('Done');
         expect(wrapper.find('[data-testid="cancel"]').exists()).toBe(false);
     });
@@ -432,7 +411,6 @@ describe('TopUpModal', () => {
         const wrapper = await chargeTopUp(mountModal());
 
         // The cross reaches the modal as the same event the cancel button would, and the confirmation
-        // has no cancel button — so this is the other way out of the step.
         await wrapper.findComponent({ name: 'ModalStub' }).vm.$emit('close');
 
         expect(wrapper.emitted('confirm')).toHaveLength(1);
@@ -447,8 +425,6 @@ describe('TopUpModal', () => {
         await nextTick();
 
         expect(trackOffset(wrapper)).toBe(atStep(0));
-        // The form is rebuilt too — it is never unmounted, so it would otherwise hold the charged
-        // state. Rebuilt, it opens on its pre-selected top-up, which prices itself straight away.
         expect(wrapper.find('input[type="radio"]').element).toHaveProperty('checked', true);
         expect(wrapper.find('[data-testid="invoice-preview"]').exists()).toBe(true);
     });
@@ -470,30 +446,27 @@ describe('TopUpModal — nothing stored and nothing on offer', () => {
 
     const mountEmpty = () => mountModal({ paymentMethods: [] });
 
-    it('says so in place of a selector there is nothing to fill', () => {
-        const wrapper = mountEmpty();
+    const offeredOptions = (wrapper: ReturnType<typeof mountModal>) =>
+        wrapper.findComponent({ name: 'TopUpModalForm' }).props('paymentMethodOptions');
 
-        expect(wrapper.text()).toContain('No payment methods available');
-        expect(selector(wrapper).exists()).toBe(false);
+    // the gateway offers, which is the thing the selector cannot find out for itself.
+    it('tells the form what the gateway offers', () => {
+        expect(offeredOptions(mountEmpty())).toEqual([]);
     });
 
-    it('offers the selector again once the gateway has something', async () => {
+    it('passes on what the gateway offers once it answers', async () => {
         const wrapper = mountEmpty();
-        expect(selector(wrapper).exists()).toBe(false);
 
         gateway.options.value = [{ id: 'pmo_card' }];
         await nextTick();
 
-        // Back to the ordinary flow: the selector, and its own way of adding a method.
-        expect(selector(wrapper).exists()).toBe(true);
-        expect(wrapper.text()).not.toContain('No payment methods available');
+        expect(offeredOptions(wrapper)).toEqual([{ id: 'pmo_card' }]);
     });
 
-    it('leaves the selector in place when a method is stored, whatever the gateway offers', () => {
-        const wrapper = mountModal();
+    it('refuses to charge', () => {
+        const wrapper = mountEmpty();
 
-        expect(selector(wrapper).exists()).toBe(true);
-        expect(wrapper.text()).not.toContain('No payment methods available');
+        expect(wrapper.find('[data-testid="confirm"]').attributes('disabled')).toBeDefined();
     });
 });
 
@@ -509,21 +482,20 @@ describe('TopUpModal — while the gateway is still answering', () => {
         vi.useRealTimers();
     });
 
-    // The options start out empty, so answering before they land would say "none available" on
-    // every open and disable a confirm the customer can in fact use.
-    it('waits for the options before saying there are none', async () => {
+    it('waits for the options before reporting that there are none', async () => {
         gateway.options.value = [];
         gateway.isPending.value = true;
 
         const wrapper = mountModal({ paymentMethods: [] });
+        const offered = () =>
+            wrapper.findComponent({ name: 'TopUpModalForm' }).props('paymentMethodOptions');
 
-        expect(wrapper.text()).not.toContain('No payment methods available');
-        expect(selector(wrapper).exists()).toBe(true);
+        expect(offered()).toBeUndefined();
 
         gateway.isPending.value = false;
         await nextTick();
 
-        expect(wrapper.text()).toContain('No payment methods available');
+        expect(offered()).toEqual([]);
     });
 });
 
@@ -589,7 +561,6 @@ describe('TopUpModal — confirming on the add payment method pane', () => {
 });
 
 describe('TopUpModal — a wallet topped up through several subscriptions', () => {
-    /** Two subscriptions, each carrying one of the schedules the wallet is topped up on. */
     const subscriptionOn = (id: string, name: string, scheduleId: string, pricingId: string) => ({
         id,
         name,
@@ -628,14 +599,9 @@ describe('TopUpModal — a wallet topped up through several subscriptions', () =
         vi.useRealTimers();
     });
 
-    /**
-     * The subscription radios, told apart from the top-up ones by their id: the group builds ids
-     * from its `name`, which it does not put on the inputs themselves.
-     */
     const subscriptionRadios = (wrapper: ReturnType<typeof mountModal>) =>
         wrapper.findAll<HTMLInputElement>('input[id^="radio_top-up-subscription"]');
 
-    /** The same wallet topped up on a schedule of each subscription. */
     const sharedBalanceItem = {
         ...balanceItem,
         charge_on_demand_pricing_items: [
@@ -696,14 +662,12 @@ describe('TopUpModal — a wallet topped up through several subscriptions', () =
         expect(offeredItemIds(wrapper)).toEqual(['prii_first']);
     });
 
-    // How the subscription details screen scopes a wallet it shares with the customer's others.
     it('offers only the one subscription it is handed', () => {
         const wrapper = mountWithChoice({ subscriptions: [twoSubscriptions[1]] });
 
         expect(offeredItemIds(wrapper)).toEqual(['prii_second']);
     });
 
-    // Offering the whole wallet here would top up against a subscription the caller left out.
     it('offers nothing when none of the subscriptions it is handed bills the wallet', () => {
         const wrapper = mountWithChoice({
             subscriptions: [subscriptionOn('ppsu_3', 'Other', 'ppsc_other', 'pric_3')],
@@ -712,7 +676,6 @@ describe('TopUpModal — a wallet topped up through several subscriptions', () =
         expect(offeredItemIds(wrapper)).toEqual([]);
     });
 
-    // Screens with no subscription context at all, which have nothing to narrow by.
     it('offers the whole wallet when it is handed no subscriptions', () => {
         const wrapper = mountWithChoice({ subscriptions: [] });
 
@@ -739,7 +702,6 @@ describe('TopUpModal — a wallet topped up through several subscriptions', () =
         expect(wrapper.text()).toContain('Credits add-on');
     });
 
-    // Drawn with the same component the checkout and cancellation modal use.
     it('draws each option as a subscription summary', () => {
         const wrapper = mountWithChoice();
 
@@ -752,7 +714,6 @@ describe('TopUpModal — a wallet topped up through several subscriptions', () =
         ]);
     });
 
-    // Only the name renders without them: the plan description is routinely empty.
     it('names the pricings each subscription runs, as the checkout summary does', () => {
         const wrapper = mountWithChoice();
 
@@ -779,5 +740,156 @@ describe('TopUpModal — a wallet topped up through several subscriptions', () =
         const wrapper = mountModal();
 
         expect(subscriptionRadios(wrapper)).toHaveLength(0);
+    });
+});
+
+describe('TopUpModal — a rule set alongside the top-up', () => {
+    const RULE = {
+        status: 'ACTIVE' as const,
+        threshold: { amount: { quantity: '5.00', currency: 'EUR' } },
+        topup_amount: { quantity: '10.00', currency: 'EUR' },
+    };
+
+    const flexibleBalanceItem = {
+        ...balanceItem,
+        wallet_id: 'wall_1',
+        charge_on_demand_pricing_items: [
+            {
+                pricing_item_id: 'prii_flexible',
+                pricing_plan_schedule_id: 'ppsc_1',
+                pricing_item: {
+                    id: 'prii_flexible',
+                    configs: [
+                        {
+                            id: 'pico_flexible',
+                            on_demand: true,
+                            details: {
+                                pricing_type: 'FLEXIBLE',
+                                bands: [
+                                    {
+                                        minimum_amount: { quantity: '10.00', currency: 'EUR' },
+                                        maximum_amount: { quantity: '500.00', currency: 'EUR' },
+                                    },
+                                ],
+                            },
+                        },
+                    ],
+                },
+            },
+        ],
+    } as unknown as CustomerWalletBalanceItem;
+
+    beforeEach(() => {
+        vi.useFakeTimers();
+        mockCreateAutoTopUp.mockReset();
+        mockCreateAutoTopUp.mockResolvedValue({ id: 'atuc_1' });
+        gateway.options.value = [{ id: 'pmo_card' }];
+        gateway.isPending.value = false;
+    });
+
+    afterEach(() => {
+        vi.useRealTimers();
+    });
+
+    const saveRule = async (wrapper: ReturnType<typeof mountModal>) => {
+        wrapper
+            .findComponent({ name: 'TopUpModalForm' })
+            .vm.$emit('save-auto-top-up', { rule: RULE, paymentMethodId: 'pmet_1' });
+        await vi.runAllTimersAsync();
+    };
+
+    it('saves the rule as the API takes it', async () => {
+        const wrapper = mountModal({ selectedBalanceItem: flexibleBalanceItem });
+
+        await saveRule(wrapper);
+
+        expect(mockCreateAutoTopUp).toHaveBeenCalledWith({
+            wallet_id: 'wall_1',
+            status: 'ACTIVE',
+            threshold: RULE.threshold,
+            pricing_plan_schedule_id: 'ppsc_1',
+            pricing_item_id: 'prii_flexible',
+            payment_method_id: 'pmet_1',
+            topup_amount: RULE.topup_amount,
+        });
+    });
+
+    it('reports the saved rule so the balance showing it can be reloaded', async () => {
+        const wrapper = mountModal({ selectedBalanceItem: flexibleBalanceItem });
+
+        await saveRule(wrapper);
+
+        expect(wrapper.emitted('auto-top-up-saved')).toHaveLength(1);
+    });
+
+    it('keeps quiet about a rule that fails to save, the charge having gone through', async () => {
+        mockCreateAutoTopUp.mockRejectedValue(new Error('nope'));
+        const wrapper = mountModal({ selectedBalanceItem: flexibleBalanceItem });
+
+        await saveRule(wrapper);
+
+        expect(wrapper.emitted('auto-top-up-saved')).toBeUndefined();
+        expect(wrapper.emitted('failure')).toBeUndefined();
+    });
+
+    // A rule tops up by an amount of its own, which a wallet of fixed packs cannot charge.
+    it('saves nothing for a wallet with no choose-your-amount top-up', async () => {
+        const wrapper = mountModal();
+
+        await saveRule(wrapper);
+
+        expect(mockCreateAutoTopUp).not.toHaveBeenCalled();
+    });
+});
+
+describe('TopUpModal — a wallet that already tops itself up', () => {
+    const withRule = (configs: unknown[]) =>
+        ({
+            ...balanceItem,
+            wallet: { auto_top_up_configs: configs },
+        }) as unknown as CustomerWalletBalanceItem;
+
+    beforeEach(() => {
+        vi.useFakeTimers();
+        gateway.options.value = [{ id: 'pmo_card' }];
+        gateway.isPending.value = false;
+    });
+
+    afterEach(() => {
+        vi.useRealTimers();
+    });
+
+    const handedRule = (wrapper: ReturnType<typeof mountModal>) =>
+        wrapper.findComponent({ name: 'TopUpModalForm' }).props('autoTopUpConfig');
+
+    it('tells the form about the rule the wallet already runs on', () => {
+        const wrapper = mountModal({
+            selectedBalanceItem: withRule([
+                {
+                    id: 'atuc_1',
+                    status: 'ACTIVE',
+                    threshold: { amount: { quantity: '5.00', currency: 'EUR' } },
+                    topup_amount: { quantity: '10.00', currency: 'EUR' },
+                },
+            ]),
+        });
+
+        expect(handedRule(wrapper)).toEqual({
+            status: 'ACTIVE',
+            threshold: { amount: { quantity: '5.00', currency: 'EUR' } },
+            topup_amount: { quantity: '10.00', currency: 'EUR' },
+        });
+    });
+
+    it('ignores a rule that was switched off', () => {
+        const wrapper = mountModal({
+            selectedBalanceItem: withRule([{ id: 'atuc_1', status: 'INACTIVE', threshold: {} }]),
+        });
+
+        expect(handedRule(wrapper)).toBeUndefined();
+    });
+
+    it('tells the form nothing for a wallet that never had one', () => {
+        expect(handedRule(mountModal())).toBeUndefined();
     });
 });

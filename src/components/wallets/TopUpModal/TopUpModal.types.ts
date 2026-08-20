@@ -32,6 +32,8 @@ export interface TopUpModalProps {
 export interface TopUpModalEmits {
     (e: 'confirm'): void;
     (e: 'close'): void;
+    /** An automatic top-up rule was saved alongside the charge, so the wallet showing it is stale. */
+    (e: 'auto-top-up-saved'): void;
     /** A new payment method was tokenized and stored for the customer. */
     (e: 'payment-success'): void;
     (e: 'payment-failed', error: unknown): void;

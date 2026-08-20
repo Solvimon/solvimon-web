@@ -2,8 +2,10 @@ import type {
     ChargeOnDemandPricingItemsPayload,
     Invoice,
     PaymentMethod,
+    PaymentMethodOptionsResponse,
 } from '@solvimon/solvimon-types';
 import type { TopUpPricingItem } from './TopUpModal.lib';
+import type { AutoTopUpRule } from '@/components/wallets/AutoTopUpConfig/AutoTopUpConfig.types';
 
 export interface TopUpModalFormProps {
     /**
@@ -11,18 +13,18 @@ export interface TopUpModalFormProps {
      * `getTopUpPricingItems`, since the raw balances field cannot be walked directly.
      */
     topUpPricingItems: TopUpPricingItem[] | undefined;
-    /** The customer's stored payment methods, to pay the top-up with. */
     paymentMethods?: PaymentMethod[];
+    paymentMethodOptions?: PaymentMethodOptionsResponse;
+    autoTopUpConfig?: AutoTopUpRule;
 }
 
 export interface TopUpModalFormEmits {
-    /**
-     * The customer wants to pay with a method they have not saved yet. Handled by the modal, which
-     * swaps its whole body over to the form for adding one.
-     */
     (e: 'add-payment-method'): void;
-    /** The top-up was charged, and this is the invoice it produced. */
     (e: 'success', invoice: Invoice): void;
+    (
+        e: 'save-auto-top-up',
+        request: { rule: AutoTopUpRule; paymentMethodId: PaymentMethod['id'] },
+    ): void;
     (e: 'failure', error: unknown): void;
 }
 

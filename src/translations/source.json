@@ -39,6 +39,114 @@
     "defaultMessage": "Select one product",
     "description": "The description of the addon single editor for exactly one product"
   },
+  "auto_topup_cancellation_modal.cancel": {
+    "defaultMessage": "Cancel",
+    "description": "Button dismissing the modal that turns a wallet automatic top-up off"
+  },
+  "auto_topup_cancellation_modal.confirm": {
+    "defaultMessage": "Yes, turn it off",
+    "description": "Button confirming that a wallet automatic top-up is turned off"
+  },
+  "auto_topup_cancellation_modal.explanation": {
+    "defaultMessage": "Your balance will no longer be topped up automatically. You can still top up whenever you want to.",
+    "description": "Explanation in the modal that turns a wallet automatic top-up off"
+  },
+  "auto_topup_cancellation_modal.explanation_with_amount": {
+    "defaultMessage": "Your balance will no longer be topped up with {amount} when it falls below {threshold}. You can still top up whenever you want to.",
+    "description": "Explanation in the modal that turns a wallet automatic top-up off, naming what it charged and when"
+  },
+  "auto_topup_cancellation_modal.explanation_with_threshold": {
+    "defaultMessage": "Your balance will no longer be topped up automatically when it falls below {threshold}. You can still top up whenever you want to.",
+    "description": "Explanation in the modal that turns a wallet automatic top-up off, naming the threshold"
+  },
+  "auto_topup_cancellation_modal.failed": {
+    "defaultMessage": "Could not turn off the automatic top-up. Please try again later.",
+    "description": "Error shown when turning a wallet automatic top-up off failed"
+  },
+  "auto_topup_cancellation_modal.title": {
+    "defaultMessage": "Turn off automatic top-up",
+    "description": "Title of the modal that turns a wallet automatic top-up off"
+  },
+  "auto_topup_config.amount.at_least_minimum": {
+    "defaultMessage": "Top up with at least {minimum}.",
+    "description": "Error shown under the auto top-up amount when it is below what the pricing allows"
+  },
+  "auto_topup_config.amount.label": {
+    "defaultMessage": "Top-up with",
+    "description": "Label of the amount every automatic top-up adds"
+  },
+  "auto_topup_config.amount.positive": {
+    "defaultMessage": "Top up with more than zero.",
+    "description": "Error shown under the auto top-up amount when it is zero or negative"
+  },
+  "auto_topup_config.amount.required": {
+    "defaultMessage": "Enter the amount to top up with.",
+    "description": "Error shown under the auto top-up amount when it is left empty"
+  },
+  "auto_topup_config.amount.within_maximum": {
+    "defaultMessage": "Top up with at most {maximum}.",
+    "description": "Error shown under the auto top-up amount when it is above what the pricing allows"
+  },
+  "auto_topup_config.subtitle": {
+    "defaultMessage": "Automatically top up your balance when it runs low.",
+    "description": "Subtitle of the automatic wallet top-up settings"
+  },
+  "auto_topup_config.threshold.label": {
+    "defaultMessage": "When your balance falls below",
+    "description": "Label of the balance at which an automatic top-up is charged"
+  },
+  "auto_topup_config.threshold.not_negative": {
+    "defaultMessage": "The balance to top up at cannot be negative.",
+    "description": "Error shown under the auto top-up threshold when it is below zero"
+  },
+  "auto_topup_config.threshold.required": {
+    "defaultMessage": "Enter the balance to top up at.",
+    "description": "Error shown under the auto top-up threshold when it is left empty"
+  },
+  "auto_topup_config.title": {
+    "defaultMessage": "Auto top-up",
+    "description": "Title of the automatic wallet top-up settings"
+  },
+  "auto_topup_modal.add_payment_method.cancel": {
+    "defaultMessage": "Back",
+    "description": "Button returning from adding a payment method to the auto top-up rule"
+  },
+  "auto_topup_modal.add_payment_method.confirm": {
+    "defaultMessage": "Add payment method",
+    "description": "Button storing the payment method being added in the auto top-up modal"
+  },
+  "auto_topup_modal.add_payment_method.subtitle": {
+    "defaultMessage": "This method pays for every automatic top-up.",
+    "description": "Subtitle of the auto top-up modal while the customer is adding a payment method"
+  },
+  "auto_topup_modal.add_payment_method.title": {
+    "defaultMessage": "Add payment method",
+    "description": "Title of the auto top-up modal while the customer is adding a payment method"
+  },
+  "auto_topup_modal.cancel": {
+    "defaultMessage": "Cancel",
+    "description": "Button dismissing the auto top-up modal"
+  },
+  "auto_topup_modal.confirm": {
+    "defaultMessage": "Save",
+    "description": "Button saving the automatic top-up rule"
+  },
+  "auto_topup_modal.payment_method.label": {
+    "defaultMessage": "Pay automatic top-ups with",
+    "description": "Label above the payment method an automatic top-up is charged to"
+  },
+  "auto_topup_modal.payment_method.required": {
+    "defaultMessage": "Select a payment method to pay for automatic top-ups.",
+    "description": "Error shown in the auto top-up modal when no payment method is selected"
+  },
+  "auto_topup_modal.subtitle": {
+    "defaultMessage": "Your current balance is {balance}. Enable auto top so you can stay productive",
+    "description": "Subtitle of the automatic wallet top-up modal, naming the balance"
+  },
+  "auto_topup_modal.title": {
+    "defaultMessage": "Automatic top-up",
+    "description": "Title of the automatic wallet top-up modal"
+  },
   "billing_information_form.submit_button.label": {
     "defaultMessage": "Save changes",
     "description": "The label for the submit button of the billing information form"
@@ -319,6 +427,30 @@
     "defaultMessage": "Save payment method",
     "description": "Label of the button that stores the entered payment method"
   },
+  "converted_amount_input.bounds.maximum": {
+    "defaultMessage": "Up to {maximum} {unit}",
+    "description": "Largest amount a flexible top-up may be charged for, beside its label"
+  },
+  "converted_amount_input.bounds.minimum": {
+    "defaultMessage": "At least {minimum} {unit}",
+    "description": "Smallest amount a flexible top-up may be charged for, beside its label"
+  },
+  "converted_amount_input.bounds.range": {
+    "defaultMessage": "Between {minimum} and {maximum} {unit}",
+    "description": "Range of what a flexible top-up may be charged for, beside its label"
+  },
+  "converted_amount_input.buys": {
+    "defaultMessage": "Buys about {credits}",
+    "description": "Helper text under a money field, naming the credits that amount converts into"
+  },
+  "converted_amount_input.cost": {
+    "defaultMessage": "Will cost {amount} excluding taxes",
+    "description": "Helper text under a credits field, naming what those credits cost in money"
+  },
+  "converted_amount_input.credits": {
+    "defaultMessage": "credits",
+    "description": "Generic name for a wallet credit, where its credit type does not name one"
+  },
   "customer.invoice_table.pay_invoice_button.label": {
     "defaultMessage": "Pay",
     "description": "The label for the pay invoice button"
@@ -526,6 +658,10 @@
   "payment_method_selector.add_payment_method": {
     "defaultMessage": "Add payment method",
     "description": "Label of the button that adds a new payment method"
+  },
+  "payment_method_selector.empty_state.title": {
+    "defaultMessage": "No payment methods available",
+    "description": "Shown in place of the payment method choice when the customer has nothing stored and nothing can be added"
   },
   "payment_method_selector.no_payment_methods_available": {
     "defaultMessage": "There are no available payment methods. Please contact support for more information.",
@@ -867,9 +1003,9 @@
     "defaultMessage": "Choose your own amount",
     "description": "Label of the choose-your-amount option in the top-up modal"
   },
-  "topup_modal.no_payment_methods_available_title": {
-    "defaultMessage": "No payment methods available",
-    "description": "Shown in the top-up modal when the customer has nothing stored and no method can be added"
+  "topup_modal.invoice_preview.label": {
+    "defaultMessage": "You will pay",
+    "description": "Label above the preview of what topping up will be invoiced for"
   },
   "topup_modal.payment_method_required": {
     "defaultMessage": "Select a payment method to pay for this top-up.",
@@ -895,10 +1031,6 @@
     "defaultMessage": "Your current balance is {balance}.",
     "description": "Subtitle of the top-up modal showing the current wallet balance"
   },
-  "topup_modal.success.added": {
-    "defaultMessage": "Your balance was topped up with {value}. Please be aware that it can take some time to reflect this change in your wallet.",
-    "description": "Confirmation of what a completed top-up added to the wallet balance"
-  },
   "topup_modal.success.modal_subtitle": {
     "defaultMessage": "Your payment went through.",
     "description": "Subtitle of the top-up modal once the top-up has been charged"
@@ -910,10 +1042,6 @@
   "topup_modal.success.receipt.heading": {
     "defaultMessage": "Receipt",
     "description": "Heading above the invoice a completed top-up produced"
-  },
-  "topup_modal.success.title": {
-    "defaultMessage": "Top-up successful",
-    "description": "Title of the top-up modal once the top-up has been charged"
   },
   "topup_modal.title": {
     "defaultMessage": "Top up balance",

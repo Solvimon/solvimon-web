@@ -133,7 +133,6 @@ const handleClose = () => {
 
 <template>
     <Modal
-        class="sv-subscription-cancellation-modal"
         size="md"
         :show-modal="showModal"
         :title="title"
@@ -146,7 +145,9 @@ const handleClose = () => {
         @close="handleClose"
     >
         <template #body>
-            <div class="sv-subscription-cancellation-modal__body flex flex-col gap-3">
+            <div
+                class="sv-subscription-cancellation-modal sv-subscription-cancellation-modal__body flex flex-col gap-3"
+            >
                 <Typography
                     variant="body-sm"
                     shade="lighter"

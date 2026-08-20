@@ -53,8 +53,7 @@ const price = computed<string | undefined>(() => {
             <div class="sv-enabled-pricings-list__item-content grow">
                 <Typography
                     tag="span"
-                    variant="body-sm"
-                    weight="semibold"
+                    variant="body-xs"
                     shade="lighter"
                     class="sv-enabled-pricings-list__item-group"
                     >{{ entry.groupName }}</Typography

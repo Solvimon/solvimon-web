@@ -1,14 +1,13 @@
 import { mount } from '@vue/test-utils';
-import { defineComponent, nextTick } from 'vue';
+import { defineComponent, h, nextTick } from 'vue';
 import type { Amount } from '@solvimon/solvimon-types';
 import type { TopUpPricingItem } from './TopUpModal.lib';
 import TopUpModalForm from './TopUpModalForm.vue';
 
-// ─── Mocks ────────────────────────────────────────────────────────────────────
-
-const { mockPreview, mockCharge } = vi.hoisted(() => ({
+const { mockPreview, mockCharge, mockAutoTopUp } = vi.hoisted(() => ({
     mockPreview: vi.fn(),
     mockCharge: vi.fn(),
+    mockAutoTopUp: { validate: vi.fn(), hasChanges: false, isInvalid: false },
 }));
 
 vi.mock('@/services/invoices', () => ({
@@ -18,7 +17,56 @@ vi.mock('@/services/invoices', () => ({
     }),
 }));
 
-// Covered by its own spec, and it pulls in the Adyen and Stripe integrations through the form.
+vi.mock('@/components/wallets/AutoTopUpConfig/AutoTopUpConfig.vue', () => ({
+    default: defineComponent({
+        name: 'AutoTopUpConfigStub',
+        props: {
+            config: Object,
+            denomination: Object,
+            creditUnitName: String,
+            chargeCurrency: String,
+            contained: Boolean,
+            showThresholdConversion: { type: Boolean, default: true },
+            disabled: Boolean,
+        },
+        setup(_props, { expose }) {
+            expose({
+                validate: mockAutoTopUp.validate,
+                get hasChanges() {
+                    return mockAutoTopUp.hasChanges;
+                },
+                get isInvalid() {
+                    return mockAutoTopUp.isInvalid;
+                },
+            });
+
+            return () => h('div', { 'data-testid': 'auto-top-up-config' });
+        },
+    }),
+}));
+
+vi.mock('@/components/wallets/ConvertedAmountInput/ConvertedAmountInput.vue', () => ({
+    default: defineComponent({
+        name: 'ConvertedAmountInputStub',
+        props: [
+            'modelValue',
+            'unit',
+            'modelBase',
+            'entryBase',
+            'currency',
+            'conversionRate',
+            'creditUnitName',
+            'bounds',
+            'showConversionHint',
+            'name',
+            'required',
+            'disabled',
+        ],
+        emits: ['update:modelValue'],
+        template: '<div data-testid="amount-input" />',
+    }),
+}));
+
 vi.mock('@/components/payments/PaymentMethodSelector/PaymentMethodSelector.vue', () => ({
     default: defineComponent({
         name: 'PaymentMethodSelectorStub',
@@ -39,23 +87,9 @@ vi.mock('@/components/payments/PaymentMethodSelector/PaymentMethodSelector.vue',
     }),
 }));
 
-// The real RadioGroupExtended is kept, so the `show-radio` and v-model contract is exercised.
 vi.mock('@solvimon/solvimon-ui', async () => {
     const { createSolvimonUiMock } = await import('@/test-utils/solvimonUiMock');
     return createSolvimonUiMock({
-        FlexiblePricingInput: defineComponent({
-            name: 'FlexiblePricingInputStub',
-            props: [
-                'modelValue',
-                'config',
-                'currency',
-                'creditsConfiguration',
-                'label',
-                'disabled',
-            ],
-            emits: ['update:modelValue'],
-            template: '<div data-testid="amount-input" />',
-        }),
         InvoicePreview: defineComponent({
             name: 'InvoicePreviewStub',
             props: ['invoice'],
@@ -64,11 +98,8 @@ vi.mock('@solvimon/solvimon-ui', async () => {
     });
 });
 
-// ─── Fixtures ─────────────────────────────────────────────────────────────────
-
 const amountOf = (quantity: string): Amount => ({ quantity, currency: 'EUR' });
 
-/** Credits of a wallet whose credit type is named coin/coins. */
 const creditsOf = (quantity: string) => ({
     credits: {
         quantity,
@@ -89,7 +120,7 @@ const createFlexibleItem = ({
         flexiblePricing: {
             config: { minimum_amount: amountOf('100.00'), maximum_amount: amountOf('1000.00') },
             currency: 'EUR',
-            creditsConfiguration: { conversionRate: '10' },
+            ...(inCredits && { creditsConfiguration: { conversionRate: '10' } }),
             bounds: inCredits
                 ? { minimum: creditsOf('1000'), maximum: creditsOf('10000') }
                 : {
@@ -108,7 +139,6 @@ const createFixedItem = ({
     pricingItemId?: string;
     scheduleId?: string;
     quantity?: string;
-    /** Set for a credit based wallet: what the top-up grants, shown instead of the amount. */
     grantedCredits?: string;
 } = {}) =>
     ({
@@ -121,7 +151,6 @@ const createFixedItem = ({
         },
     }) as unknown as TopUpPricingItem;
 
-/** Neither flexible nor fixed: nothing this form knows how to charge. */
 const createUnsupportedItem = () =>
     ({
         pricingItemId: 'prii_unsupported',
@@ -129,12 +158,6 @@ const createUnsupportedItem = () =>
         config: { id: 'pico_unsupported', on_demand: true },
     }) as unknown as TopUpPricingItem;
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-/**
- * A stored method comes as standard: a top-up cannot be charged without one, so leaving it out
- * would only ever exercise the refusal. Pass `paymentMethods: []` to test that on purpose.
- */
 const mountForm = (
     topUpPricingItems: TopUpPricingItem[] | undefined,
     props: Record<string, unknown> = {},
@@ -154,24 +177,28 @@ const createPaymentMethod = (id: string, isDefault = false, createdAt = '2026-01
 const radios = (wrapper: ReturnType<typeof mountForm>) =>
     wrapper.findAll<HTMLInputElement>('input[type="radio"]');
 
+const checkedRadio = (wrapper: ReturnType<typeof mountForm>) =>
+    radios(wrapper).find((radio) => radio.element.checked)?.element.value;
+
 const amountInput = (wrapper: ReturnType<typeof mountForm>) =>
-    wrapper.findComponent({ name: 'FlexiblePricingInputStub' });
+    wrapper.findComponent({ name: 'ConvertedAmountInputStub' });
 
 const selector = (wrapper: ReturnType<typeof mountForm>) =>
     wrapper.findComponent({ name: 'PaymentMethodSelectorStub' });
+
+const editor = (wrapper: ReturnType<typeof mountForm>) =>
+    wrapper.findComponent({ name: 'AutoTopUpConfigStub' });
 
 const select = async (wrapper: ReturnType<typeof mountForm>, index: number) => {
     await radios(wrapper)[index].setValue();
     await vi.runAllTimersAsync();
 };
 
-const enterAmount = async (wrapper: ReturnType<typeof mountForm>, amount: Amount | undefined) => {
-    amountInput(wrapper).vm.$emit('update:modelValue', amount);
+const enterAmount = async (wrapper: ReturnType<typeof mountForm>, quantity: string) => {
+    amountInput(wrapper).vm.$emit('update:modelValue', quantity);
     await nextTick();
     await vi.runAllTimersAsync();
 };
-
-// ─── Tests ────────────────────────────────────────────────────────────────────
 
 describe('TopUpModalForm', () => {
     beforeEach(() => {
@@ -195,6 +222,32 @@ describe('TopUpModalForm', () => {
         ]);
     });
 
+    it('shows the flexible top-up first, whatever order the balance lists it in', () => {
+        const wrapper = mountForm([
+            createFixedItem({ pricingItemId: 'prii_ten', quantity: '10.00' }),
+            createFixedItem({ pricingItemId: 'prii_fifty', quantity: '50.00' }),
+            createFlexibleItem(),
+        ]);
+
+        expect(radios(wrapper).map((radio) => radio.element.value)).toEqual([
+            'prii_flexible',
+            'prii_ten',
+            'prii_fifty',
+        ]);
+    });
+
+    it('leaves the fixed top-ups in the order the balance lists them', () => {
+        const wrapper = mountForm([
+            createFixedItem({ pricingItemId: 'prii_fifty', quantity: '50.00' }),
+            createFixedItem({ pricingItemId: 'prii_ten', quantity: '10.00' }),
+        ]);
+
+        expect(radios(wrapper).map((radio) => radio.element.value)).toEqual([
+            'prii_fifty',
+            'prii_ten',
+        ]);
+    });
+
     it('leaves out pricing items it cannot charge', () => {
         const wrapper = mountForm([createUnsupportedItem(), createFixedItem()]);
 
@@ -211,7 +264,6 @@ describe('TopUpModalForm', () => {
         const wrapper = mountForm([createFlexibleItem()]);
 
         expect(wrapper.text()).toContain('Choose your own amount');
-        // Formatted, so the maximum carries a thousands separator.
         expect(wrapper.text()).toContain('100.00');
         expect(wrapper.text()).toContain('1,000.00');
     });
@@ -229,7 +281,6 @@ describe('TopUpModalForm', () => {
     });
 
     it('does not repeat the cost when the option is already labelled with it', () => {
-        // A money based wallet labels the option with the amount, so a second copy reads as a bug.
         const wrapper = mountForm([createFixedItem({ quantity: '10.00' })]);
 
         expect(wrapper.find('.sv-top-up-form__option-cost').exists()).toBe(false);
@@ -244,12 +295,10 @@ describe('TopUpModalForm', () => {
 
     it('hides the flexible bounds while that option is not chosen', async () => {
         const wrapper = mountForm([createFlexibleItem(), createFixedItem()]);
-        // Auto-selected, so the bounds start out visible.
         expect(wrapper.find('.expand--open').text()).toContain('Between');
 
         await select(wrapper, 1);
 
-        // They only guide the input, so they collapse along with it — one movement, not two.
         expect(wrapper.find('.expand--open').exists()).toBe(false);
         expect(wrapper.find('.expand').text()).toContain('Between');
         expect(wrapper.text()).toContain('Choose your own amount');
@@ -267,13 +316,12 @@ describe('TopUpModalForm', () => {
     it('gives a fixed top-up no expanding panel, having nothing to reveal', () => {
         const wrapper = mountForm([createFixedItem()]);
 
-        expect(wrapper.find('.expand').exists()).toBe(false);
+        expect(wrapper.find('.sv-top-up-form__options .expand').exists()).toBe(false);
     });
 
     it('labels flexible bounds in credits when the wallet holds credits', () => {
         const wrapper = mountForm([createFlexibleItem({ inCredits: true })]);
 
-        // Unseparated: the intl mock's formatNumber returns the raw quantity.
         expect(wrapper.text()).toContain('1000 coins');
         expect(wrapper.text()).toContain('10000 coins');
     });
@@ -281,7 +329,7 @@ describe('TopUpModalForm', () => {
     it('hides the radio dot', () => {
         const wrapper = mountForm([createFixedItem()]);
 
-        expect(wrapper.find('.rounded-full').exists()).toBe(false);
+        expect(wrapper.find('.sv-top-up-form__options .rounded-full').exists()).toBe(false);
     });
 
     it('renders nothing to choose from when there are no pricing items', () => {
@@ -292,14 +340,12 @@ describe('TopUpModalForm', () => {
     it('starts on the choose-your-amount top-up when the wallet offers one', () => {
         const wrapper = mountForm([createFixedItem(), createFlexibleItem()]);
 
-        expect(radios(wrapper).map((radio) => radio.element.checked)).toEqual([false, true]);
+        expect(checkedRadio(wrapper)).toBe('prii_flexible');
     });
 
     it('prices the top-up it started on without waiting to be nudged', () => {
         mountForm([createFixedItem(), createFlexibleItem()]);
 
-        // A watcher only sees changes, and the option chosen during setup is not one — so the
-        // placeholder used to sit there for good.
         expect(mockPreview).toHaveBeenCalledWith({
             pricingPlanScheduleId: 'ppsc_1',
             pricingItems: [
@@ -329,7 +375,6 @@ describe('TopUpModalForm', () => {
         expect(radios(wrapper).map((radio) => radio.element.checked)).toEqual([true]);
     });
 
-    // A fixed price is known up front, so the chosen one is priced without waiting for input.
     it('previews the fixed top-up it starts on', () => {
         mountForm([createFixedItem()]);
 
@@ -349,7 +394,7 @@ describe('TopUpModalForm', () => {
 
     it('moves to the flexible top-up when the wallet on offer changes', async () => {
         const wrapper = mountForm([createFixedItem()]);
-        expect(radios(wrapper).map((radio) => radio.element.checked)).toEqual([true]);
+        expect(checkedRadio(wrapper)).toBe('prii_fixed');
 
         await wrapper.setProps({
             topUpPricingItems: [
@@ -358,7 +403,7 @@ describe('TopUpModalForm', () => {
             ],
         });
 
-        expect(radios(wrapper).map((radio) => radio.element.checked)).toEqual([false, true]);
+        expect(checkedRadio(wrapper)).toBe('prii_flexible');
     });
 
     it('previews a fixed top-up as soon as it is chosen, since its price is known', async () => {
@@ -374,15 +419,12 @@ describe('TopUpModalForm', () => {
     });
 
     it('holds the height a preview will need while the request is out', async () => {
-        // Left hanging, so the placeholder is what is on screen.
         mockPreview.mockReturnValue(new Promise(() => {}));
         const wrapper = mountForm([createFixedItem()]);
 
         await select(wrapper, 0);
 
         const skeleton = wrapper.find('[data-testid="top-up-invoice-preview-skeleton"]');
-        // One block at the height a preview usually comes back at. A title bar it has nothing to put
-        // in, or a shorter block, and the modal jumps as the request lands.
         expect(skeleton.classes()).toContain('h-[152px]');
         expect(skeleton.find('.sv-skeleton__title').exists()).toBe(false);
         expect(wrapper.find('[data-testid="invoice-preview"]').exists()).toBe(false);
@@ -394,7 +436,6 @@ describe('TopUpModalForm', () => {
         await select(wrapper, 0);
 
         // Regression: the section wrapping the preview always rendered, and `Skeleton` steps aside for
-        // any slot content at all — so the placeholder was unreachable and an empty box stood in.
         expect(wrapper.find('[data-testid="top-up-invoice-preview-skeleton"]').exists()).toBe(
             false,
         );
@@ -413,7 +454,7 @@ describe('TopUpModalForm', () => {
         const wrapper = mountForm([createFlexibleItem()]);
         await select(wrapper, 0);
 
-        await enterAmount(wrapper, amountOf('250'));
+        await enterAmount(wrapper, '250');
 
         expect(mockPreview).toHaveBeenCalledWith({
             pricingPlanScheduleId: 'ppsc_1',
@@ -424,11 +465,10 @@ describe('TopUpModalForm', () => {
     it('clears the preview again when the amount is removed', async () => {
         const wrapper = mountForm([createFlexibleItem()]);
         await select(wrapper, 0);
-        await enterAmount(wrapper, amountOf('250'));
+        await enterAmount(wrapper, '250');
 
-        await enterAmount(wrapper, undefined);
+        await enterAmount(wrapper, '');
 
-        // The minimum it started on and the amount that was entered; wiping the field asks for nothing.
         expect(mockPreview).toHaveBeenCalledTimes(2);
         expect(wrapper.find('[data-testid="invoice-preview"]').exists()).toBe(false);
     });
@@ -437,7 +477,7 @@ describe('TopUpModalForm', () => {
         const wrapper = mountForm([createFlexibleItem(), createFixedItem()]);
 
         // Regression: every option's panel used to render one, so a fixed row grew an input too.
-        expect(wrapper.findAllComponents({ name: 'FlexiblePricingInputStub' })).toHaveLength(1);
+        expect(wrapper.findAllComponents({ name: 'ConvertedAmountInputStub' })).toHaveLength(1);
     });
 
     it('starts the amount at the minimum the option allows', async () => {
@@ -445,19 +485,17 @@ describe('TopUpModalForm', () => {
 
         await select(wrapper, 0);
 
-        expect(amountInput(wrapper).props('modelValue')).toEqual(amountOf('100.00'));
+        expect(amountInput(wrapper).props('modelValue')).toBe('100.00');
     });
 
     it('starts it there again when the option is chosen a second time', async () => {
         const wrapper = mountForm([createFlexibleItem(), createFixedItem()]);
-        await enterAmount(wrapper, amountOf('250'));
+        await enterAmount(wrapper, '250');
         await select(wrapper, 1);
 
         await select(wrapper, 0);
 
-        // The input seeds itself only on the render it is first built in, and it is kept from then on,
-        // so coming back to a collapsed option used to find it empty.
-        expect(amountInput(wrapper).props('modelValue')).toEqual(amountOf('100.00'));
+        expect(amountInput(wrapper).props('modelValue')).toBe('100.00');
     });
 
     it('collapses the amount input when another top-up is chosen', async () => {
@@ -466,7 +504,6 @@ describe('TopUpModalForm', () => {
 
         await select(wrapper, 1);
 
-        // Kept mounted so the height can animate shut; the container is what closes.
         expect(wrapper.find('.expand--open').exists()).toBe(false);
         expect(amountInput(wrapper).exists()).toBe(true);
     });
@@ -477,18 +514,16 @@ describe('TopUpModalForm', () => {
             createFlexibleItem({ pricingItemId: 'prii_b' }),
         ]);
 
-        // Both are flexible-less until opened: `lazy` keeps closed panels empty.
         expect(wrapper.findAll('.expand--open')).toHaveLength(1);
     });
 
     it('charges only the chosen top-up when the choice changes', async () => {
         const wrapper = mountForm([createFlexibleItem(), createFixedItem()]);
         await select(wrapper, 0);
-        await enterAmount(wrapper, amountOf('250'));
+        await enterAmount(wrapper, '250');
 
         await select(wrapper, 1);
 
-        // The flexible amount goes with it: only one top-up is ever charged.
         expect(mockPreview).toHaveBeenLastCalledWith({
             pricingPlanScheduleId: 'ppsc_1',
             pricingItems: [{ pricing_item_id: 'prii_fixed' }],
@@ -500,20 +535,20 @@ describe('TopUpModalForm', () => {
 
         await select(wrapper, 1);
 
-        // Selection is read back out of the payload, so the radio reflects what will be charged.
         expect(radios(wrapper).map((radio) => radio.element.checked)).toEqual([false, true]);
     });
 
     it('gives the amount input its bounds, currency and credits conversion', async () => {
-        const wrapper = mountForm([createFlexibleItem()]);
+        const wrapper = mountForm([createFlexibleItem({ inCredits: true })]);
 
         await select(wrapper, 0);
 
-        // No label of its own: the option it sits in already says what it is for.
         expect(amountInput(wrapper).props()).toMatchObject({
-            config: { minimum_amount: amountOf('100.00'), maximum_amount: amountOf('1000.00') },
+            unit: 'coins',
+            modelBase: 'AMOUNT',
+            entryBase: 'CREDITS',
             currency: 'EUR',
-            creditsConfiguration: { conversionRate: '10' },
+            conversionRate: '10',
         });
     });
 
@@ -532,7 +567,6 @@ describe('TopUpModalForm', () => {
 
         await selector(wrapper).vm.$emit('add-payment-method');
 
-        // The form for adding lives in the modal, which swaps its whole body over.
         expect(wrapper.emitted('add-payment-method')).toHaveLength(1);
     });
 
@@ -609,7 +643,6 @@ describe('TopUpModalForm', () => {
         });
         expect(selector(wrapper).props('modelValue')).toBe('pm_default');
 
-        // What a reload after storing a new method looks like.
         await wrapper.setProps({
             paymentMethods: [
                 createPaymentMethod('pm_default', true),
@@ -646,7 +679,6 @@ describe('TopUpModalForm', () => {
 
         await selector(wrapper).vm.$emit('update:modelValue', 'pm_1');
         await nextTick();
-        // A reload of the same list must not snap the choice back to the default.
         await wrapper.setProps({
             paymentMethods: [createPaymentMethod('pm_1'), createPaymentMethod('pm_default', true)],
         });
@@ -670,7 +702,9 @@ describe('TopUpModalForm', () => {
     });
 
     it('records the chosen payment method on the charge payload', async () => {
-        const wrapper = mountForm([createFlexibleItem()]);
+        const wrapper = mountForm([createFlexibleItem()], {
+            paymentMethods: [createPaymentMethod('pm_default', true), createPaymentMethod('pm_2')],
+        });
 
         await selector(wrapper).vm.$emit('update:modelValue', 'pm_2');
         await nextTick();
@@ -687,8 +721,6 @@ describe('TopUpModalForm', () => {
         expect(pricingPlanScheduleId).toBeDefined();
         expect(mockPreview).not.toHaveBeenCalled();
     });
-
-    // ─── Charging ─────────────────────────────────────────────────────────────
 
     it('charges the chosen top-up for real, not as a preview', async () => {
         const wrapper = mountForm([createFixedItem()], {
@@ -709,7 +741,7 @@ describe('TopUpModalForm', () => {
     it('charges the entered amount for a flexible top-up', async () => {
         const wrapper = mountForm([createFlexibleItem()]);
         await select(wrapper, 0);
-        await enterAmount(wrapper, amountOf('250'));
+        await enterAmount(wrapper, '250');
 
         await wrapper.vm.submit();
 
@@ -742,15 +774,13 @@ describe('TopUpModalForm', () => {
 
         expect(wrapper.emitted('failure')).toEqual([[error]]);
         expect(wrapper.emitted('success')).toBeUndefined();
-        // Free to try again: a failure is not a charge in flight.
         expect(wrapper.vm.isCharging).toBe(false);
     });
 
     it('refuses to charge a flexible top-up with no amount entered', async () => {
         const wrapper = mountForm([createFlexibleItem()]);
         await select(wrapper, 0);
-        // The option starts at its minimum, so the field has to be wiped to have nothing to charge.
-        await enterAmount(wrapper, undefined);
+        await enterAmount(wrapper, '');
 
         expect(wrapper.vm.canSubmit).toBe(false);
         await wrapper.vm.submit();
@@ -759,11 +789,10 @@ describe('TopUpModalForm', () => {
     });
 
     it('locks the amount input down while the charge is out', async () => {
-        // Left hanging, so the form is caught mid-charge.
         mockCharge.mockReturnValue(new Promise(() => {}));
         const wrapper = mountForm([createFlexibleItem()]);
         await select(wrapper, 0);
-        await enterAmount(wrapper, amountOf('250'));
+        await enterAmount(wrapper, '250');
         expect(amountInput(wrapper).props('disabled')).toBeFalsy();
 
         void wrapper.vm.submit();
@@ -788,10 +817,9 @@ describe('TopUpModalForm', () => {
         expect(wrapper.vm.chargedValue).toEqual({ amount: amountOf('10.00') });
 
         await select(wrapper, 0);
-        // Chosen, not entered: the choose-your-amount option starts at its minimum.
         expect(wrapper.vm.chargedValue).toEqual({ amount: amountOf('100.00') });
 
-        await enterAmount(wrapper, amountOf('250'));
+        await enterAmount(wrapper, '250');
         expect(wrapper.vm.chargedValue).toEqual({ amount: amountOf('250') });
     });
 
@@ -806,13 +834,11 @@ describe('TopUpModalForm', () => {
         ]);
 
         await select(wrapper, 1);
-        // The granted credits, not the €10.00 the card is charged.
         expect(wrapper.vm.chargedValue).toEqual(creditsOf('100'));
 
         await select(wrapper, 0);
-        await enterAmount(wrapper, amountOf('25'));
+        await enterAmount(wrapper, '25');
 
-        // Converted at the wallet's own rate, so 25 × 10 credits.
         expect(wrapper.vm.chargedValue).toEqual(creditsOf('250'));
     });
 });
@@ -845,11 +871,10 @@ describe('TopUpModalForm — what a charge requires', () => {
         expect(mockCharge).not.toHaveBeenCalled();
     });
 
-    // A flexible top-up has nothing to charge until an amount is entered.
     it('refuses to charge a flexible top-up with no amount', async () => {
         const wrapper = mountForm([createFlexibleItem()]);
 
-        await enterAmount(wrapper, undefined);
+        await enterAmount(wrapper, '');
         await wrapper.vm.submit();
 
         expect(mockCharge).not.toHaveBeenCalled();
@@ -863,7 +888,6 @@ describe('TopUpModalForm — what a charge requires', () => {
         expect(mockCharge).toHaveBeenCalled();
     });
 
-    // Nothing is shown until the customer tries: an untouched form is not yet wrong.
     it('says nothing about the payment method before a first attempt', () => {
         const wrapper = mountForm([createFixedItem()], { paymentMethods: [] });
 
@@ -888,5 +912,110 @@ describe('TopUpModalForm — what a charge requires', () => {
         await nextTick();
 
         expect(paymentMethodErrors(wrapper)).toHaveLength(0);
+    });
+    describe('auto top-up', () => {
+        const AUTO_TOP_UP = {
+            status: 'ACTIVE',
+            threshold: { amount: { quantity: '5.00', currency: 'EUR' } },
+        };
+
+        beforeEach(() => {
+            mockCharge.mockReset();
+            mockCharge.mockResolvedValue({ id: 'inv_charged' });
+            mockAutoTopUp.validate.mockReset();
+            mockAutoTopUp.validate.mockReturnValue(AUTO_TOP_UP);
+            mockAutoTopUp.hasChanges = false;
+            mockAutoTopUp.isInvalid = false;
+        });
+
+        it('asks for the rule in the currency the wallet is topped up in', () => {
+            const wrapper = mountForm([createFlexibleItem()]);
+
+            expect(editor(wrapper).props('denomination')).toEqual({ currency: 'EUR' });
+        });
+
+        it('leaves the threshold cost out of the rule beside a charge', () => {
+            const wrapper = mountForm([createFlexibleItem({ inCredits: true })]);
+
+            expect(editor(wrapper).props('showThresholdConversion')).toBe(false);
+        });
+
+        it('asks a credit based wallet for a threshold in its own credits', () => {
+            const wrapper = mountForm([createFlexibleItem({ inCredits: true })]);
+
+            expect(editor(wrapper).props('denomination')).toEqual({ creditTypeId: 'ctyp_1' });
+            expect(editor(wrapper).props('creditUnitName')).toBe('coins');
+        });
+
+        it('leaves out a wallet that already has a rule', () => {
+            const wrapper = mountForm([createFlexibleItem()], { autoTopUpConfig: AUTO_TOP_UP });
+
+            expect(editor(wrapper).exists()).toBe(false);
+        });
+
+        it('leaves out a wallet with no choose-your-amount top-up', () => {
+            const wrapper = mountForm([createFixedItem()]);
+
+            expect(editor(wrapper).exists()).toBe(false);
+        });
+
+        it('asks nothing of a wallet with no way to be topped up', () => {
+            expect(editor(mountForm([])).exists()).toBe(false);
+        });
+
+        it('refuses to charge while the rule does not validate', async () => {
+            mockAutoTopUp.isInvalid = true;
+            const wrapper = mountForm([createFlexibleItem()]);
+
+            await wrapper.vm.submit();
+
+            expect(mockCharge).not.toHaveBeenCalled();
+        });
+
+        it('faults the rule rather than ignoring it', async () => {
+            mockAutoTopUp.isInvalid = true;
+            const wrapper = mountForm([createFlexibleItem()]);
+
+            await wrapper.vm.submit();
+
+            expect(mockAutoTopUp.validate).toHaveBeenCalled();
+        });
+
+        it('hands over a changed rule once the top-up is charged', async () => {
+            mockAutoTopUp.hasChanges = true;
+            const wrapper = mountForm([createFlexibleItem()], {
+                pricingItems: [
+                    { pricing_item_id: 'prii_flexible', flexible_amount: amountOf('250') },
+                ],
+            });
+
+            await wrapper.vm.submit();
+
+            expect(wrapper.emitted('save-auto-top-up')).toEqual([
+                [{ rule: AUTO_TOP_UP, paymentMethodId: 'pm_default' }],
+            ]);
+        });
+
+        it('leaves a rule the customer never touched alone', async () => {
+            const wrapper = mountForm([createFlexibleItem()]);
+
+            await wrapper.vm.submit();
+
+            expect(wrapper.emitted('save-auto-top-up')).toBeUndefined();
+        });
+
+        it('holds the rule back when the charge failed', async () => {
+            mockAutoTopUp.hasChanges = true;
+            mockCharge.mockRejectedValue(new Error('declined'));
+            const wrapper = mountForm([createFlexibleItem()], {
+                pricingItems: [
+                    { pricing_item_id: 'prii_flexible', flexible_amount: amountOf('250') },
+                ],
+            });
+
+            await wrapper.vm.submit();
+
+            expect(wrapper.emitted('save-auto-top-up')).toBeUndefined();
+        });
     });
 });

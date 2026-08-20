@@ -1,46 +1,35 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, ref } from 'vue';
 import { Modal, useIntl } from '@solvimon/solvimon-ui';
 import type {
     AddPaymentMethodModalEmits,
     AddPaymentMethodModalProps,
 } from './AddPaymentMethodModal.types';
-import PaymentMethodForm from '@/public/components/PaymentMethodForm/PaymentMethodForm.vue';
+import AddPaymentMethodPane from '@/components/payments/AddPaymentMethodPane/AddPaymentMethodPane.vue';
 
-const props = defineProps<AddPaymentMethodModalProps>();
+defineProps<AddPaymentMethodModalProps>();
 const emit = defineEmits<AddPaymentMethodModalEmits>();
 
 const { $t } = useIntl();
 
-const paymentMethodFormRef = ref<InstanceType<typeof PaymentMethodForm>>();
+/**
+ * The form itself, its deferred start-up and the flow it runs are the pane's; this modal is the chrome
+ * around it — a title, and a footer that submits it.
+ */
+const addPaymentMethodRef = ref<InstanceType<typeof AddPaymentMethodPane>>();
 
 /** True while the payment gateway is working, so the confirm button can show it. */
-const isSaving = computed(() => Boolean(paymentMethodFormRef.value?.isPaymentPending));
-
-/**
- * The form is only built once the modal is first opened: it starts up a payment gateway, which is
- * not worth doing for a customer who never adds a method.
- */
-const hasEverOpened = ref(false);
-
-watch(
-    () => props.showModal,
-    (showModal) => {
-        hasEverOpened.value = hasEverOpened.value || showModal;
-    },
-    { immediate: true },
-);
+const isSaving = computed(() => !!addPaymentMethodRef.value?.isSaving);
 
 /** The modal owns the submit, so the form's own button is hidden and driven from the footer. */
 const handleConfirm = () => {
-    paymentMethodFormRef.value?.submit();
+    addPaymentMethodRef.value?.submit();
 };
 </script>
 
 <template>
     <Modal
         no-click-away
-        class="sv-add-payment-method-modal"
         size="lg"
         :show-modal="showModal"
         :is-loading="isSaving"
@@ -76,14 +65,13 @@ const handleConfirm = () => {
         @close="emit('close')"
     >
         <template #body>
-            <PaymentMethodForm
-                v-if="customer && hasEverOpened"
-                ref="paymentMethodFormRef"
-                hide-submit-button
-                class="sv-add-payment-method-modal__form"
+            <AddPaymentMethodPane
+                ref="addPaymentMethodRef"
+                class="sv-add-payment-method-modal sv-add-payment-method-modal__form"
                 :customer="customer"
                 :payment-method-options="paymentMethodOptions"
                 :is-loading="isLoading"
+                :is-active="showModal"
                 @success="emit('success')"
                 @failure="(error) => emit('failure', error)"
             />

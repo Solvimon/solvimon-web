@@ -50,6 +50,8 @@ defineProps<SolvimonSubscriptionDetailsEntryProps>();
                     :is-loading="isLoading"
                     :error="error"
                     @top-up-charged="refreshWalletBalances"
+                    @auto-top-up-saved="refreshWalletBalances"
+                    @auto-top-up-cancelled="refreshWalletBalances"
                     @payment-method-stored="refreshPaymentMethods"
                     @subscription-changed="refreshSubscription"
                 />

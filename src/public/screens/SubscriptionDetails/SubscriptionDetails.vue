@@ -215,6 +215,8 @@ const title = computed<string>(() =>
                 :payment-methods="paymentMethods"
                 :subscriptions="topUpSubscriptions"
                 @top-up-charged="$emit('top-up-charged')"
+                @auto-top-up-saved="$emit('auto-top-up-saved')"
+                @auto-top-up-cancelled="$emit('auto-top-up-cancelled')"
                 @payment-method-stored="$emit('payment-method-stored')"
             />
 

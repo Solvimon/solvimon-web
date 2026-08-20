@@ -37,7 +37,6 @@ const SUBSCRIPTIONS_SHOWN = 2;
 const subscriptions = useSubscriptionsList({ customerId });
 const paymentMethods = usePaymentMethods({ customerId });
 const customerWalletBalances = useCustomerWalletBalances({ customerId });
-// Computed at the top level so the template unwraps the ref — nested access does not.
 const walletBalanceItems = computed(
     () => customerWalletBalances.walletBalances.value?.wallet_balances ?? [],
 );
@@ -52,24 +51,17 @@ const { isLoading } = useLoadInitialData(
     customerWalletBalances.fetch(),
 );
 
-/**
- * A payment method added from the top-up modal is not in the list yet, so reload it — the modal picks
- * the new one up from the refreshed list.
- */
 const handlePaymentMethodStored = () => {
     void paymentMethods.fetchAll();
 };
 
-/** The top-up was charged, so the balance it credited is out of date. */
-const handleTopUpCharged = () => {
+const handleWalletBalancesChanged = () => {
     void customerWalletBalances.fetch();
 };
 
 /** One-off charges such as a wallet top-up are invoiced on the schedule billed right now. */
 const activeScheduleId = computed(() => getActiveDefaultScheduleId(subscriptions.items.value));
 
-// Without a schedule a top-up can be entered but never previewed or charged, so report what the
-// customer's subscriptions offered when none of them qualifies.
 watch([activeScheduleId, () => subscriptions.items.value], ([scheduleId, activeSubscriptions]) => {
     if (scheduleId || activeSubscriptions.length === 0) {
         return;
@@ -119,7 +111,9 @@ watch([activeScheduleId, () => subscriptions.items.value], ([scheduleId, activeS
                 :customer="customer.customer.value"
                 :payment-methods="paymentMethods.items.value"
                 :subscriptions="subscriptions.items.value"
-                @top-up-charged="handleTopUpCharged"
+                @top-up-charged="handleWalletBalancesChanged"
+                @auto-top-up-saved="handleWalletBalancesChanged"
+                @auto-top-up-cancelled="handleWalletBalancesChanged"
                 @payment-method-stored="handlePaymentMethodStored"
             />
 

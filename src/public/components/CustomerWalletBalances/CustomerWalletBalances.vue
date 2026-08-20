@@ -1,35 +1,43 @@
 <script setup lang="ts">
 import { ErrorNotification, useIntl, WalletBalances } from '@solvimon/solvimon-ui';
-import type { CustomerWalletBalanceItem } from '@solvimon/solvimon-types';
-import { ref } from 'vue';
+import type { ChargeOnDemandPricingItem, WalletAutoTopUpConfig } from '@solvimon/solvimon-types';
+import { computed, ref } from 'vue';
 import type {
     CustomerWalletBalancesEmits,
     CustomerWalletBalancesProps,
 } from './CustomerWalletBalances.types';
+import { getWalletBalanceForTopUpItem } from './CustomerWalletBalances.lib';
 import Skeleton from '@/components/shared/Skeleton.vue';
 import TopUpModal from '@/components/wallets/TopUpModal/TopUpModal.vue';
-import { useTopUpModal } from '@/components/wallets/TopUpModal/useTopUpModal';
+import AutoTopUpModal from '@/components/wallets/AutoTopUpModal/AutoTopUpModal.vue';
+import AutoTopUpCancellationModal from '@/components/wallets/AutoTopUpCancellationModal/AutoTopUpCancellationModal.vue';
 
-/**
- * The modal makes this component multi-root, which would drop the class the screens style the block
- * with. The three branches are a v-if chain, so binding the attrs on each still lands them on
- * whichever one root renders.
- */
 defineOptions({ inheritAttrs: false });
 
-defineProps<CustomerWalletBalancesProps>();
+const props = defineProps<CustomerWalletBalancesProps>();
 const emit = defineEmits<CustomerWalletBalancesEmits>();
 
 const { $t } = useIntl();
 
-/**
- * Which wallet is being topped up, and so whether the modal is open at all. Kept here rather than
- * by the screen: the button that opens it is one of these rows, and every screen showing them
- * wired up the same modal behind it.
- */
-const selectedBalanceItem = ref<CustomerWalletBalanceItem | undefined>();
+const selectedTopUpItem = ref<ChargeOnDemandPricingItem | undefined>();
 
-const topUpModal = useTopUpModal(selectedBalanceItem);
+const selectedBalanceItem = computed(() =>
+    getWalletBalanceForTopUpItem(props.walletBalances, selectedTopUpItem.value),
+);
+
+const showTopUpModal = computed(() => !!selectedBalanceItem.value);
+
+const selectedAutoTopUpItem = ref<ChargeOnDemandPricingItem | undefined>();
+
+const showAutoTopUpModal = computed(() => !!selectedAutoTopUpItem.value);
+
+const autoTopUpWallet = computed(() =>
+    getWalletBalanceForTopUpItem(props.walletBalances, selectedAutoTopUpItem.value),
+);
+
+const cancellingAutoTopUpConfig = ref<WalletAutoTopUpConfig | undefined>();
+
+const showAutoTopUpCancellation = computed(() => !!cancellingAutoTopUpConfig.value);
 </script>
 
 <template>
@@ -57,7 +65,8 @@ const topUpModal = useTopUpModal(selectedBalanceItem);
         v-bind="$attrs"
         class="sv-wallet-balances sv-root sv-component"
         :customer-wallet-balances="walletBalances"
-        :show-top-up-button="showTopUpButton"
+        show-auto-top-up
+        show-manual-top-up
         :title="
             $t(
                 {
@@ -68,23 +77,42 @@ const topUpModal = useTopUpModal(selectedBalanceItem);
                 { count: String(walletBalances.length) },
             )
         "
-        @top-up="selectedBalanceItem = $event"
+        @top-up="selectedTopUpItem = $event"
+        @auto-top-up="selectedAutoTopUpItem = $event"
+        @cancel-auto-top-up="cancellingAutoTopUpConfig = $event"
     />
 
-    <!--
-        Only built where topping up is offered: the modal starts up the invoice and payment method
-        services, which is not worth doing for a screen that only reads balances out.
-    -->
     <TopUpModal
         v-if="showTopUpButton"
-        :show-modal="topUpModal.showModal.value"
+        :show-modal="showTopUpModal"
         :selected-balance-item="selectedBalanceItem"
         :payment-methods="paymentMethods"
         :customer="customer"
         :subscriptions="subscriptions"
-        @close="selectedBalanceItem = undefined"
+        @close="selectedTopUpItem = undefined"
         @confirm="emit('top-up-charged')"
         @payment-success="emit('payment-method-stored')"
         @payment-failed="(error) => emit('payment-failed', error)"
+    />
+
+    <AutoTopUpModal
+        v-if="showTopUpButton"
+        :show-modal="showAutoTopUpModal"
+        :wallet-balance-item="autoTopUpWallet"
+        :top-up-item="selectedAutoTopUpItem"
+        :payment-methods="paymentMethods"
+        :customer="customer"
+        @close="selectedAutoTopUpItem = undefined"
+        @saved="emit('auto-top-up-saved')"
+        @payment-success="emit('payment-method-stored')"
+        @payment-failed="(error) => emit('payment-failed', error)"
+    />
+
+    <AutoTopUpCancellationModal
+        v-if="showTopUpButton"
+        :show-modal="showAutoTopUpCancellation"
+        :config="cancellingAutoTopUpConfig"
+        @close="cancellingAutoTopUpConfig = undefined"
+        @confirmed="emit('auto-top-up-cancelled')"
     />
 </template>

@@ -7,15 +7,15 @@ defineProps<EmptyStatePlaceholderProps>();
 
 <template>
     <Section class="sv-empty-state">
-        <div class="sv-empty-state__body flex flex-col items-center justify-center py-4">
-            <Icon :icon="icon" size="lg" class="sv-empty-state__icon text-gray-500" />
+        <div class="sv-empty-state__body flex flex-col items-center justify-center py-2">
+            <Icon :icon="icon" size="md" class="sv-empty-state__icon text-gray-500" />
             <Typography
                 center
                 tag="span"
-                variant="body-sm"
+                variant="body-xs"
                 weight="semibold"
                 shade="lighter"
-                class="sv-empty-state__title mt-2"
+                class="sv-empty-state__title mt-1"
             >
                 <slot name="title" />
             </Typography>

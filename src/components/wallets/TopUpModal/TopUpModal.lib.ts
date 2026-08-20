@@ -11,6 +11,11 @@ import type {
 } from '@solvimon/solvimon-types';
 import { hasOneOfPricingTypes, isFlexiblePricing } from '@solvimon/solvimon-ui';
 import type { FlexiblePricingInputProps } from '@solvimon/solvimon-ui';
+import type {
+    AutoTopUpDenomination,
+    AutoTopUpEditorConfig,
+} from '@/components/wallets/AutoTopUpConfig/AutoTopUpConfig.types';
+import type { FlexibleTopUpBounds } from '@/components/wallets/ConvertedAmountInput/ConvertedAmountInput.types';
 
 /**
  * What `charge_on_demand_pricing_items` actually contains: an entry naming the pricing item and the
@@ -257,7 +262,7 @@ const getWalletGrants = (
     config: PricingItemConfigExtended,
     walletBalanceItem?: CustomerWalletBalanceItem,
 ) => {
-    const walletTypeId = walletBalanceItem?.wallet_type_id;
+    const walletTypeId = walletBalanceItem?.wallet?.wallet_type_id;
 
     return (config.wallet_grants ?? []).filter(
         ({ wallet_type_id }) => !walletTypeId || wallet_type_id === walletTypeId,
@@ -362,6 +367,101 @@ function getFlexiblePricing(
     };
 }
 
+const isCreditBasedTopUp = (item: TopUpPricingItem): boolean =>
+    !!item.fixedPricing?.value.credits ||
+    !!item.flexiblePricing?.creditsConfiguration ||
+    !!(item.flexiblePricing?.bounds.minimum ?? item.flexiblePricing?.bounds.maximum)?.credits;
+
+const getCreditTypeId = (items: TopUpPricingItem[]): string | undefined => {
+    for (const { fixedPricing, flexiblePricing } of items) {
+        const credits =
+            fixedPricing?.value.credits ??
+            (flexiblePricing?.bounds.minimum ?? flexiblePricing?.bounds.maximum)?.credits;
+
+        if (credits?.credit_type_id) {
+            return credits.credit_type_id;
+        }
+    }
+
+    return undefined;
+};
+
+/** Always a currency: the credits are what the charge grants, not what is paid. */
+export const getAutoTopUpChargeCurrency = (items: TopUpPricingItem[] = []): string | undefined => {
+    for (const { flexiblePricing, fixedPricing } of items) {
+        const currency = flexiblePricing?.currency ?? fixedPricing?.amount.currency;
+
+        if (currency) {
+            return currency;
+        }
+    }
+
+    return undefined;
+};
+
+export const getAutoTopUpCreditUnitName = (items: TopUpPricingItem[] = []): string | undefined => {
+    for (const { fixedPricing, flexiblePricing } of items) {
+        const credits =
+            fixedPricing?.value.credits ??
+            (flexiblePricing?.bounds.minimum ?? flexiblePricing?.bounds.maximum)?.credits;
+
+        if (credits?.credit_type?.unit_name?.plural) {
+            return credits.credit_type.unit_name.plural;
+        }
+    }
+
+    return undefined;
+};
+
+/**
+ * Credits granted per unit of money. Taken from the choose-your-amount top-up, the only kind that
+ * converts at all — a fixed pack grants its credits outright.
+ */
+export const getAutoTopUpConversionRate = (items: TopUpPricingItem[] = []): string | undefined => {
+    for (const { flexiblePricing } of items) {
+        const rate = flexiblePricing?.creditsConfiguration?.conversionRate;
+
+        if (rate) {
+            return rate;
+        }
+    }
+
+    return undefined;
+};
+
+export const getAutoTopUpBounds = (items: TopUpPricingItem[] = []): FlexibleTopUpBounds => {
+    for (const { flexiblePricing } of items) {
+        const { minimum_amount: minimum, maximum_amount: maximum } = flexiblePricing?.config ?? {};
+
+        if (minimum || maximum) {
+            return { ...(minimum && { minimum }), ...(maximum && { maximum }) };
+        }
+    }
+
+    return {};
+};
+
+/** The API takes one of the two per rule, so the first chargeable top-up decides it. */
+export const getAutoTopUpDenomination = (
+    items: TopUpPricingItem[] = [],
+): AutoTopUpDenomination | undefined => {
+    if (items.some(isCreditBasedTopUp)) {
+        const creditTypeId = getCreditTypeId(items);
+
+        return creditTypeId ? { creditTypeId } : undefined;
+    }
+
+    for (const { flexiblePricing, fixedPricing } of items) {
+        const currency = flexiblePricing?.currency ?? fixedPricing?.amount.currency;
+
+        if (currency) {
+            return { currency };
+        }
+    }
+
+    return undefined;
+};
+
 /**
  * What a top-up adds to the wallet, expressed the way the customer reads their balance: the credits it
  * grants for a credit based wallet, the money amount otherwise.
@@ -406,4 +506,26 @@ export const getFlexibleTopUpPricing = (
     }
 
     return undefined;
+};
+
+/**
+ * Nothing where a rule cannot be written at all. The charge currency falls back to empty rather than
+ * refusing: the endpoint reads an amount with no currency as no amount.
+ */
+export const getAutoTopUpEditorConfig = (
+    items: TopUpPricingItem[] = [],
+): AutoTopUpEditorConfig | undefined => {
+    const denomination = getAutoTopUpDenomination(items);
+
+    if (!denomination) {
+        return undefined;
+    }
+
+    return {
+        denomination,
+        chargeCurrency: getAutoTopUpChargeCurrency(items) ?? '',
+        creditUnitName: getAutoTopUpCreditUnitName(items),
+        conversionRate: getAutoTopUpConversionRate(items),
+        topUpBounds: getAutoTopUpBounds(items),
+    };
 };

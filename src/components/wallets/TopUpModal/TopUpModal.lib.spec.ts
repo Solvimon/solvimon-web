@@ -3,6 +3,10 @@ import type {
     PricingPlanSubscriptionExpanded,
 } from '@solvimon/solvimon-types';
 import {
+    getAutoTopUpBounds,
+    getAutoTopUpConversionRate,
+    getAutoTopUpCreditUnitName,
+    getAutoTopUpDenomination,
     getFlexibleTopUpPricing,
     getTopUpPricingItems,
     getTopUpSubscriptions,
@@ -32,7 +36,6 @@ const flexibleConfig = {
     ],
 };
 
-/** A quantity of the fixture wallet's own credit type, as the lib expresses credit values. */
 const creditsOf = (quantity: string) => ({
     credits: {
         quantity,
@@ -49,14 +52,12 @@ const createWalletBalanceItem = ({
 }: {
     configs?: unknown[];
     unitName?: { singular: string; plural: string } | null;
-    /** Overrides the credits balance, e.g. to describe a money based wallet. */
     balance?: unknown;
-    /** Null leaves the wallet type out entirely, as the balances endpoint does. */
     walletTypeId?: string | null;
 } = {}) =>
     ({
         wallet_id: 'wall_1',
-        ...(walletTypeId && { wallet_type_id: walletTypeId }),
+        ...(walletTypeId && { wallet: { wallet_type_id: walletTypeId } }),
         wallet_balance: {
             balance: balance ?? {
                 credits: {
@@ -66,8 +67,6 @@ const createWalletBalanceItem = ({
                 },
             },
         },
-        // The real response shape: the item and its configs sit under `pricing_item`, with the ids
-        // alongside — not on the entry itself, as the declared `PricingItemConfig[]` implies.
         charge_on_demand_pricing_items: [
             {
                 pricing_item_id: 'prii_1',
@@ -91,7 +90,6 @@ describe('getFlexibleTopUpPricing', () => {
                 unitNameSingle: 'bitcoin',
                 unitNamePlural: 'bitcoins',
             },
-            // A credit based wallet reads its bounds in credits: the money bound times the rate.
             bounds: {
                 minimum: creditsOf('50'),
                 maximum: creditsOf('5000'),
@@ -109,7 +107,6 @@ describe('getFlexibleTopUpPricing', () => {
                 maximum_amount: { quantity: '500.00', currency: 'EUR' },
             },
             currency: 'EUR',
-            // Nothing converts, so the bounds stay in money.
             bounds: {
                 minimum: { amount: { quantity: '5.00', currency: 'EUR' } },
                 maximum: { amount: { quantity: '500.00', currency: 'EUR' } },
@@ -178,7 +175,7 @@ describe('getFlexibleTopUpPricing', () => {
         expect(
             getFlexibleTopUpPricing({
                 wallet_id: 'wall_1',
-                wallet_type_id: WALLET_TYPE_ID,
+                wallet: { wallet_type_id: WALLET_TYPE_ID },
                 wallet_balance: {},
             } as unknown as CustomerWalletBalanceItem),
         ).toBeUndefined();
@@ -186,10 +183,6 @@ describe('getFlexibleTopUpPricing', () => {
 });
 
 describe('getTopUpPricingItems', () => {
-    /**
-     * Entries name the pricing item and its schedule, with the item and its configs nested under
-     * `pricing_item` — not the flat `PricingItemConfig` the types package declares.
-     */
     const createBalanceItem = (entries: unknown[]) =>
         ({
             wallet_id: 'wall_1',
@@ -253,7 +246,6 @@ describe('getTopUpPricingItems', () => {
     });
 
     it('keeps configs that do not carry the on_demand flag', () => {
-        // The field they arrived in already scopes them to on-demand.
         const result = getTopUpPricingItems(
             createBalanceItem([
                 createEntry({ configs: [{ id: 'pico_a' }, { id: 'pico_b', on_demand: false }] }),
@@ -309,7 +301,6 @@ describe('getTopUpPricingItems pricing kinds', () => {
 
         expect(result.fixedPricing).toEqual({
             amount: { quantity: '10.00', currency: 'EUR' },
-            // The wallet in this fixture holds no credits, so it reads as money.
             value: { amount: { quantity: '10.00', currency: 'EUR' } },
         });
         expect(result.flexiblePricing).toBeUndefined();
@@ -362,7 +353,7 @@ describe('getTopUpPricingItems pricing kinds', () => {
 describe('withTopUpPricingItemsForSchedules', () => {
     const balanceWith = (scheduleIds: (string | undefined)[]) =>
         ({
-            wallet_type_id: 'wtyp_1',
+            wallet: { wallet_type_id: 'wtyp_1' },
             wallet_balance: { balance: {} },
             charge_on_demand_pricing_items: scheduleIds.map((id, index) => ({
                 pricing_item_id: `prii_${index}`,
@@ -401,7 +392,6 @@ describe('withTopUpPricingItemsForSchedules', () => {
         expect(scheduleIdsOf(filtered)).toEqual([]);
     });
 
-    // The customer overview is not looking at one subscription, so it narrows to nothing.
     it('leaves the balance alone when no schedules are named', () => {
         const balance = balanceWith(['ppsc_1', 'ppsc_other']);
 
@@ -415,12 +405,11 @@ describe('withTopUpPricingItemsForSchedules', () => {
     it('leaves the rest of the balance untouched', () => {
         const filtered = withTopUpPricingItemsForSchedules(balanceWith(['ppsc_1']), ['ppsc_1']);
 
-        expect(filtered?.wallet_type_id).toBe('wtyp_1');
+        expect(filtered?.wallet?.wallet_type_id).toBe('wtyp_1');
     });
 });
 
 describe('getTopUpSubscriptions', () => {
-    /** Shaped like the balances response: one entry per schedule the wallet is topped up on. */
     const balanceOn = (scheduleIds: string[]) =>
         ({
             wallet_id: 'wall_1',
@@ -439,7 +428,6 @@ describe('getTopUpSubscriptions', () => {
             pricing_plan_schedule_infos: scheduleIds.map((scheduleId) => ({ id: scheduleId })),
         }) as unknown as PricingPlanSubscriptionExpanded;
 
-    // The same pricing item on two schedules resolves to the two subscriptions behind them.
     it('links each schedule to the subscription that carries it', () => {
         expect(
             getTopUpSubscriptions(balanceOn(['ppsc_a', 'ppsc_b']), [
@@ -491,7 +479,6 @@ describe('getTopUpSubscriptions', () => {
                     pricing_plan_schedule: { enabled_pricings: [{ pricing_id: 'pric_1' }] },
                 },
                 {
-                    // Not one this wallet is topped up on, so its pricing is left out.
                     id: 'ppsc_elsewhere',
                     pricing_plan_schedule: { enabled_pricings: [{ pricing_id: 'pric_other' }] },
                 },
@@ -534,5 +521,220 @@ describe('getTopUpSubscriptions', () => {
             getTopUpSubscriptions(undefined, [subscription('ppsu_1', 'Pro', ['ppsc_a'])]),
         ).toEqual([]);
         expect(getTopUpSubscriptions(balanceOn(['ppsc_a']), [])).toEqual([]);
+    });
+});
+
+describe('getAutoTopUpDenomination', () => {
+    const flexibleItem = (currency: string) =>
+        ({ pricingItemId: 'prii_1', flexiblePricing: { currency, bounds: {} } }) as never;
+
+    const fixedItem = (currency: string) =>
+        ({
+            pricingItemId: 'prii_2',
+            fixedPricing: {
+                amount: { quantity: '10.00', currency },
+                value: { amount: { quantity: '10.00', currency } },
+            },
+        }) as never;
+
+    const grantingItem = (creditTypeId = 'ctyp_1', unitName?: string) =>
+        ({
+            pricingItemId: 'prii_3',
+            fixedPricing: {
+                amount: { quantity: '10.00', currency: 'EUR' },
+                value: {
+                    credits: {
+                        quantity: '100',
+                        credit_type_id: creditTypeId,
+                        ...(unitName && { credit_type: { unit_name: { plural: unitName } } }),
+                    },
+                },
+            },
+        }) as never;
+
+    it('takes the currency of the choose-your-amount top-up', () => {
+        expect(getAutoTopUpDenomination([flexibleItem('USD')])).toEqual({ currency: 'USD' });
+    });
+
+    it('falls back to what a fixed top-up costs', () => {
+        expect(getAutoTopUpDenomination([fixedItem('GBP')])).toEqual({ currency: 'GBP' });
+    });
+
+    it('follows the first top-up on offer, since a wallet is topped up in one thing', () => {
+        expect(getAutoTopUpDenomination([fixedItem('GBP'), flexibleItem('USD')])).toEqual({
+            currency: 'GBP',
+        });
+    });
+
+    it('asks in credits for a wallet that grants credits outright', () => {
+        expect(getAutoTopUpDenomination([grantingItem()])).toEqual({ creditTypeId: 'ctyp_1' });
+    });
+
+    it('asks in credits for a wallet that converts what is paid into credits', () => {
+        const converting = {
+            pricingItemId: 'prii_4',
+            flexiblePricing: {
+                currency: 'EUR',
+                creditsConfiguration: { conversionRate: '10' },
+                bounds: { minimum: { credits: { quantity: '10', credit_type_id: 'ctyp_2' } } },
+            },
+        } as never;
+
+        expect(getAutoTopUpDenomination([converting])).toEqual({ creditTypeId: 'ctyp_2' });
+    });
+
+    it('offers nothing for a credit wallet whose credit type is missing', () => {
+        const anonymous = {
+            pricingItemId: 'prii_5',
+            fixedPricing: {
+                amount: { quantity: '10.00', currency: 'EUR' },
+                value: { credits: { quantity: '100' } },
+            },
+        } as never;
+
+        expect(getAutoTopUpDenomination([anonymous])).toBeUndefined();
+    });
+
+    it('offers nothing when the wallet cannot be topped up at all', () => {
+        expect(getAutoTopUpDenomination([])).toBeUndefined();
+        expect(getAutoTopUpDenomination()).toBeUndefined();
+    });
+});
+
+describe('getAutoTopUpCreditUnitName', () => {
+    it('names the credits in the plural, for labelling a threshold in them', () => {
+        const granting = {
+            pricingItemId: 'prii_1',
+            fixedPricing: {
+                amount: { quantity: '10.00', currency: 'EUR' },
+                value: {
+                    credits: {
+                        quantity: '100',
+                        credit_type_id: 'ctyp_1',
+                        credit_type: { unit_name: { singular: 'coin', plural: 'coins' } },
+                    },
+                },
+            },
+        } as never;
+
+        expect(getAutoTopUpCreditUnitName([granting])).toBe('coins');
+    });
+
+    it('has nothing to offer for a wallet counted in money', () => {
+        const fixed = {
+            pricingItemId: 'prii_2',
+            fixedPricing: {
+                amount: { quantity: '10.00', currency: 'EUR' },
+                value: { amount: { quantity: '10.00', currency: 'EUR' } },
+            },
+        } as never;
+
+        expect(getAutoTopUpCreditUnitName([fixed])).toBeUndefined();
+        expect(getAutoTopUpCreditUnitName()).toBeUndefined();
+    });
+});
+
+describe('getAutoTopUpConversionRate', () => {
+    it('takes the rate from the top-up a rule can charge', () => {
+        const flexible = {
+            pricingItemId: 'prii_1',
+            flexiblePricing: {
+                currency: 'EUR',
+                creditsConfiguration: { conversionRate: '10', unitNamePlural: 'coins' },
+            },
+        } as never;
+
+        expect(getAutoTopUpConversionRate([flexible])).toBe('10');
+    });
+
+    it('has no rate for a wallet counted in money, where there is nothing to convert', () => {
+        const flexible = {
+            pricingItemId: 'prii_2',
+            flexiblePricing: { currency: 'EUR' },
+        } as never;
+
+        expect(getAutoTopUpConversionRate([flexible])).toBeUndefined();
+        expect(getAutoTopUpConversionRate()).toBeUndefined();
+    });
+
+    it('looks past a fixed pack, which grants its credits outright rather than converting', () => {
+        const fixed = {
+            pricingItemId: 'prii_3',
+            fixedPricing: {
+                amount: { quantity: '10.00', currency: 'EUR' },
+                value: { credits: { quantity: '100', credit_type_id: 'ctyp_1' } },
+            },
+        } as never;
+        const flexible = {
+            pricingItemId: 'prii_4',
+            flexiblePricing: { currency: 'EUR', creditsConfiguration: { conversionRate: '10' } },
+        } as never;
+
+        expect(getAutoTopUpConversionRate([fixed, flexible])).toBe('10');
+    });
+});
+
+describe('getAutoTopUpBounds', () => {
+    it('takes what the top-up may be charged for from its flexible pricing', () => {
+        const flexible = {
+            pricingItemId: 'prii_1',
+            flexiblePricing: {
+                currency: 'EUR',
+                config: {
+                    minimum_amount: { quantity: '5.00', currency: 'EUR' },
+                    maximum_amount: { quantity: '500.00', currency: 'EUR' },
+                },
+            },
+        } as never;
+
+        expect(getAutoTopUpBounds([flexible])).toEqual({
+            minimum: { quantity: '5.00', currency: 'EUR' },
+            maximum: { quantity: '500.00', currency: 'EUR' },
+        });
+    });
+
+    it('keeps the end the pricing configures and leaves the other open', () => {
+        const flexible = {
+            pricingItemId: 'prii_2',
+            flexiblePricing: {
+                currency: 'EUR',
+                config: { minimum_amount: { quantity: '5.00', currency: 'EUR' } },
+            },
+        } as never;
+
+        expect(getAutoTopUpBounds([flexible])).toEqual({
+            minimum: { quantity: '5.00', currency: 'EUR' },
+        });
+    });
+
+    it('has nothing to state for a pricing that bounds neither end', () => {
+        const flexible = {
+            pricingItemId: 'prii_3',
+            flexiblePricing: { currency: 'EUR', config: {} },
+        } as never;
+
+        expect(getAutoTopUpBounds([flexible])).toEqual({});
+        expect(getAutoTopUpBounds()).toEqual({});
+    });
+
+    it('looks past a fixed pack, which is sold at one price rather than within a range', () => {
+        const fixed = {
+            pricingItemId: 'prii_4',
+            fixedPricing: {
+                amount: { quantity: '10.00', currency: 'EUR' },
+                value: { amount: { quantity: '10.00', currency: 'EUR' } },
+            },
+        } as never;
+        const flexible = {
+            pricingItemId: 'prii_5',
+            flexiblePricing: {
+                currency: 'EUR',
+                config: { maximum_amount: { quantity: '500.00', currency: 'EUR' } },
+            },
+        } as never;
+
+        expect(getAutoTopUpBounds([fixed, flexible])).toEqual({
+            maximum: { quantity: '500.00', currency: 'EUR' },
+        });
     });
 });

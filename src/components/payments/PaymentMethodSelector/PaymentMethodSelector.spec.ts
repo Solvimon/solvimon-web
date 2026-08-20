@@ -8,11 +8,6 @@ import type {
 } from '@solvimon/solvimon-types';
 import PaymentMethodSelector from './PaymentMethodSelector.vue';
 
-// ─── UI library mock ──────────────────────────────────────────────────────────
-
-// The real RadioGroupExtended is kept, so the `show-radio` / prefix-slot contract this component
-// relies on is genuinely exercised. Only the payment method row is stubbed, since its internal
-// useIntl deep-import bypasses the global mock.
 vi.mock('@solvimon/solvimon-ui', async () => {
     const { createSolvimonUiMock } = await import('@/test-utils/solvimonUiMock');
     return createSolvimonUiMock({
@@ -26,15 +21,12 @@ vi.mock('@solvimon/solvimon-ui', async () => {
                     (props as { paymentMethod?: { id?: string } }).paymentMethod?.id,
                 ),
         }),
-        // No declared props, so `disabled` and the click listener land on the button itself.
         Button: defineComponent({
             name: 'ButtonStub',
             template: '<button data-testid="add-button"><slot /></button>',
         }),
     });
 });
-
-// ─── Fixtures ─────────────────────────────────────────────────────────────────
 
 const createPaymentMethod = (overrides: Partial<PaymentMethod> = {}) =>
     ({
@@ -46,8 +38,6 @@ const createPaymentMethod = (overrides: Partial<PaymentMethod> = {}) =>
         card: { brand: 'VISA', last_four_digits: '4242' },
         ...overrides,
     }) as unknown as PaymentMethod;
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const mountComponent = (
     props: Partial<InstanceType<typeof PaymentMethodSelector>['$props']> = {},
@@ -62,8 +52,6 @@ const rows = (wrapper: ReturnType<typeof mountComponent>) =>
 
 const radios = (wrapper: ReturnType<typeof mountComponent>) =>
     wrapper.findAll<HTMLInputElement>('input[type="radio"]');
-
-// ─── Tests ────────────────────────────────────────────────────────────────────
 
 describe('PaymentMethodSelector', () => {
     it('renders one radio option per saved payment method', () => {
@@ -92,7 +80,6 @@ describe('PaymentMethodSelector', () => {
     it('hides the radio dot, putting the payment method row in its place', () => {
         const wrapper = mountComponent();
 
-        // The dot is the only thing the group renders when showRadio is true.
         expect(wrapper.find('.rounded-full').exists()).toBe(false);
         expect(rows(wrapper)).toHaveLength(1);
     });
@@ -107,18 +94,57 @@ describe('PaymentMethodSelector', () => {
             ],
         });
 
-        // The group falls back to rendering `label` when the label slot is empty, so the accessible
-        // name has to be present but screen-reader only. Scoped to a span: the group also hides its
-        // own radio input with `sr-only`.
         const srOnly = wrapper.find('span.sr-only');
         expect(srOnly.exists()).toBe(true);
         expect(srOnly.text()).toBe('Visa 4242');
     });
 
+    describe('with nothing to choose and nothing to add', () => {
+        const gatewayOffering = () =>
+            ({ options: [{ type: 'CARD' }] }) as unknown as PaymentMethodOptionsResponse[number];
+
+        const mountEmpty = (props: Record<string, unknown> = {}) =>
+            mountComponent({ paymentMethods: [], paymentMethodOptions: [], ...props });
+
+        it('says so in place of the choice', () => {
+            const wrapper = mountEmpty();
+
+            expect(wrapper.text()).toContain('No payment methods available');
+            expect(wrapper.find('.sv-payment-method-selector__options').exists()).toBe(false);
+            expect(wrapper.find('.sv-payment-method-selector__add').exists()).toBe(false);
+        });
+
+        it('leaves out the required error, which nothing could resolve', () => {
+            const wrapper = mountEmpty({ error: [{ $message: 'Select a payment method.' }] });
+
+            expect(wrapper.find('.sv-payment-method-selector__error').exists()).toBe(false);
+        });
+
+        it('offers the choice again once the gateway has something', () => {
+            const wrapper = mountComponent({
+                paymentMethods: [],
+                paymentMethodOptions: [gatewayOffering()],
+            });
+
+            expect(wrapper.text()).not.toContain('No payment methods available');
+            expect(wrapper.find('.sv-payment-method-selector__add').exists()).toBe(true);
+        });
+
+        it('keeps the choice when a method is stored', () => {
+            const wrapper = mountComponent({ paymentMethodOptions: [] });
+
+            expect(wrapper.text()).not.toContain('No payment methods available');
+            expect(wrapper.find('.sv-payment-method-selector__options').exists()).toBe(true);
+        });
+    });
+
+    // Scoped to the group: the block's own title is a label too, and it comes first in the DOM.
     it('gives each option an accessible name even though the row is a component', () => {
         const wrapper = mountComponent();
 
-        expect(wrapper.find('label').attributes('aria-label')).toBe('Visa 4242');
+        expect(
+            wrapper.find('.sv-payment-method-selector__options label').attributes('aria-label'),
+        ).toBe('Visa 4242');
     });
 
     it('marks the selected payment method as checked', () => {
@@ -157,7 +183,6 @@ describe('PaymentMethodSelector', () => {
 
         await wrapper.find('[data-testid="add-button"]').trigger('click');
 
-        // The form for adding lives with the parent, which usually swaps its whole body over.
         expect(wrapper.emitted('add-payment-method')).toHaveLength(1);
         expect(wrapper.emitted('update:modelValue')).toBeUndefined();
     });
@@ -223,7 +248,6 @@ describe('PaymentMethodSelector', () => {
 });
 
 describe('PaymentMethodSelector — reporting an error', () => {
-    // Only the message is read; the rest of a vuelidate ErrorObject is irrelevant here.
     const requiredError = [
         { $message: 'Select a payment method to pay for this top-up.' },
     ] as unknown as ErrorObject[];
@@ -234,10 +258,6 @@ describe('PaymentMethodSelector — reporting an error', () => {
         expect(wrapper.text()).toContain('Select a payment method to pay for this top-up.');
     });
 
-    /**
-     * The group carries the error, and there is no group without options — which is precisely the
-     * case a required payment method is missing in, so the error has to survive it.
-     */
     it('shows the error when there are no payment methods to choose from', () => {
         const wrapper = mountComponent({ paymentMethods: [], error: requiredError });
 

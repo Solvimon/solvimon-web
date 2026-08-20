@@ -3,13 +3,14 @@ import { defineComponent, h, ref } from 'vue';
 import type { PricingPlanSubscriptionExpanded } from '@solvimon/solvimon-types';
 import CustomerOverview from './CustomerOverview.vue';
 
-// ─── Mocks ────────────────────────────────────────────────────────────────────
-
-const { subscriptionsState, mockFetchAll, mockFetchInitial } = vi.hoisted(() => ({
-    subscriptionsState: {} as { items: { value: unknown[] } },
-    mockFetchAll: vi.fn(),
-    mockFetchInitial: vi.fn(),
-}));
+const { subscriptionsState, mockFetchAll, mockFetchInitial, mockFetchWalletBalances } = vi.hoisted(
+    () => ({
+        subscriptionsState: {} as { items: { value: unknown[] } },
+        mockFetchAll: vi.fn(),
+        mockFetchInitial: vi.fn(),
+        mockFetchWalletBalances: vi.fn(),
+    }),
+);
 
 vi.mock('@/composables/useSubscriptionsList', async () => {
     const { ref: createRef } = await import('vue');
@@ -53,7 +54,7 @@ vi.mock('@/composables/useCustomerWalletBalances', () => ({
     useCustomerWalletBalances: () => ({
         walletBalances: ref({ wallet_balances: [] }),
         apiStatus: ref('DONE'),
-        fetch: vi.fn().mockResolvedValue(undefined),
+        fetch: mockFetchWalletBalances,
     }),
 }));
 
@@ -110,8 +111,6 @@ vi.mock('@solvimon/solvimon-ui', async () => {
     return createSolvimonUiMock();
 });
 
-// ─── Fixtures ─────────────────────────────────────────────────────────────────
-
 const subscriptionsOf = (count: number) =>
     Array.from(
         { length: count },
@@ -130,8 +129,6 @@ const mountOverview = async () => {
     return wrapper;
 };
 
-// ─── Tests ────────────────────────────────────────────────────────────────────
-
 describe('CustomerOverview — subscriptions', () => {
     beforeEach(() => {
         vi.clearAllMocks();
@@ -145,7 +142,6 @@ describe('CustomerOverview — subscriptions', () => {
         expect(mockFetchInitial).not.toHaveBeenCalled();
     });
 
-    // The block stays a summary even though everything is loaded.
     it('shows only the first two in the list', async () => {
         const wrapper = await mountOverview();
 
@@ -156,8 +152,6 @@ describe('CustomerOverview — subscriptions', () => {
         expect(shown.map(({ id }) => id)).toEqual(['ppsu_1', 'ppsu_2']);
     });
 
-    // The top-up modal links a wallet's schedules to subscriptions, so a capped list would lose
-    // options.
     it('hands the wallet balances every subscription, not just the shown ones', async () => {
         const wrapper = await mountOverview();
 
@@ -166,5 +160,18 @@ describe('CustomerOverview — subscriptions', () => {
             .props('subscriptions') as { id: string }[];
 
         expect(handed).toHaveLength(5);
+    });
+    describe('reloading the wallet balances', () => {
+        it.each([['top-up-charged'], ['auto-top-up-saved'], ['auto-top-up-cancelled']])(
+            'reads the balance again after %s',
+            async (event) => {
+                const wrapper = await mountOverview();
+                mockFetchWalletBalances.mockClear();
+
+                wrapper.findComponent({ name: 'CustomerWalletBalancesStub' }).vm.$emit(event);
+
+                expect(mockFetchWalletBalances).toHaveBeenCalledTimes(1);
+            },
+        );
     });
 });

@@ -17,6 +17,8 @@ const emit = defineEmits<WalletBalancesEmits>();
         :payment-methods="paymentMethods"
         :subscriptions="subscriptions"
         @top-up-charged="emit('top-up-charged')"
+        @auto-top-up-saved="emit('auto-top-up-saved')"
+        @auto-top-up-cancelled="emit('auto-top-up-cancelled')"
         @payment-method-stored="emit('payment-method-stored')"
         @payment-failed="(error) => emit('payment-failed', error)"
     />

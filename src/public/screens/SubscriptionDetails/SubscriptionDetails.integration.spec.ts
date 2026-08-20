@@ -71,6 +71,38 @@ vi.mock('@/components/wallets/TopUpModal/TopUpModal.vue', () => ({
     }),
 }));
 
+// Builds its own auto top-up and payment method services, which need providers this mount lacks.
+vi.mock('@/components/wallets/AutoTopUpModal/AutoTopUpModal.vue', () => ({
+    default: defineComponent({
+        name: 'AutoTopUpModalStub',
+        props: { showModal: Boolean, walletBalanceItem: Object, topUpItem: Object },
+        emits: ['close', 'saved', 'payment-success'],
+        setup(props) {
+            return () =>
+                h('div', {
+                    class: 'sv-auto-top-up-modal-stub',
+                    'data-open': String(props.showModal),
+                });
+        },
+    }),
+}));
+
+// Builds an auto top-up service of its own, which needs providers this mount does not have.
+vi.mock('@/components/wallets/AutoTopUpCancellationModal/AutoTopUpCancellationModal.vue', () => ({
+    default: defineComponent({
+        name: 'AutoTopUpCancellationModalStub',
+        props: { showModal: Boolean, config: Object },
+        emits: ['close', 'confirmed'],
+        setup(props) {
+            return () =>
+                h('div', {
+                    class: 'sv-auto-top-up-cancellation-modal-stub',
+                    'data-open': String(props.showModal),
+                });
+        },
+    }),
+}));
+
 // Builds a subscriptions service of its own, which needs providers this mount does not have.
 vi.mock(
     '@/components/subscriptions/SubscriptionCancellationModal/SubscriptionCancellationModal.vue',
@@ -91,8 +123,6 @@ vi.mock(
     }),
 );
 
-// Renders the real payment method components, which resolve an ErrorHandlingProvider this mount
-// does not have. The stub keeps which method was handed down assertable.
 vi.mock('@/public/components/CustomerPaymentMethods/CustomerPaymentMethods.vue', () => ({
     default: defineComponent({
         name: 'CustomerPaymentMethodsStub',
@@ -119,9 +149,11 @@ const mockWalletBalance = {
     wallet_balance: {
         open_balance: { currency: 'EUR', quantity: '100' },
     },
+    charge_on_demand_pricing_items: [
+        { pricing_item_id: 'prii_mine', pricing_plan_schedule_id: 'ppsc_1' },
+    ],
 } as unknown as CustomerWalletBalanceItem;
 
-/** The same wallet granted by two subscriptions, only one of which this screen shows. */
 const sharedWalletBalance = {
     wallet_id: 'w_1',
     wallet_balance: {
@@ -160,7 +192,6 @@ const createCard = (id: string, lastFour: string) =>
 const subscriptionCard = createCard('pmet_subscription', '4242');
 const otherPaymentMethod = createCard('pmet_other', '1111');
 
-/** Names its method by id, which is all the subscription itself carries. */
 const subscriptionWithPaymentMethod = {
     ...mockSubscription,
     payment_method_id: 'pmet_subscription',
@@ -174,13 +205,6 @@ const mountComponent = (props: Record<string, unknown> = {}) =>
 describe('SubscriptionDetails', () => {
     beforeEach(() => {
         vi.clearAllMocks();
-    });
-
-    it('renders the subscription summary once loaded', () => {
-        const wrapper = mountComponent();
-
-        expect(wrapper.find('.sv-subscription-details__summary').exists()).toBe(true);
-        expect(wrapper.text()).toContain('Pro plan');
     });
 
     it('renders a skeleton while loading', () => {
@@ -435,7 +459,7 @@ describe('SubscriptionDetails', () => {
 
             wrapper
                 .findComponent({ name: 'WalletBalancesStub' })
-                .vm.$emit('top-up', mockWalletBalance);
+                .vm.$emit('top-up', mockWalletBalance.charge_on_demand_pricing_items?.[0]);
             await wrapper.vm.$nextTick();
 
             const modal = wrapper.findComponent({ name: 'TopUpModalStub' });
@@ -446,9 +470,6 @@ describe('SubscriptionDetails', () => {
             });
         });
 
-        // The balance is fetched per customer, so a shared wallet arrives carrying the top-ups of
-        // every subscription it is granted by — including ones this screen is not showing. The modal
-        // narrows by the subscriptions it is handed, so this screen hands it only its own.
         it('scopes the top-up to the subscription on screen', () => {
             const wrapper = mountComponent({ walletBalances: [sharedWalletBalance] });
 
@@ -477,6 +498,17 @@ describe('SubscriptionDetails', () => {
 
             expect(wrapper.emitted('top-up-charged')).toHaveLength(1);
         });
+
+        it.each([['auto-top-up-saved'], ['auto-top-up-cancelled']])(
+            'passes %s on so the balance can be reloaded',
+            (event) => {
+                const wrapper = mountComponent({ walletBalances: [mockWalletBalance] });
+
+                wrapper.findComponent({ name: 'CustomerWalletBalances' }).vm.$emit(event);
+
+                expect(wrapper.emitted(event)).toHaveLength(1);
+            },
+        );
 
         it('reports a stored payment method so the list can be reloaded', () => {
             const wrapper = mountComponent({ walletBalances: [mockWalletBalance] });

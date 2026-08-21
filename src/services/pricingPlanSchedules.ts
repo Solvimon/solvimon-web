@@ -51,6 +51,7 @@ export function createPricingPlanSchedulesService() {
             data: {
                 pricing_plan_subscription_id: pricingPlanSubscriptionId,
                 enabled_pricings: enabledPricings,
+                start_at: new Date().toJSON(),
             },
         });
     }

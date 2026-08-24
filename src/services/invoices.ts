@@ -80,25 +80,9 @@ export function createInvoicesService(): InvoicesService {
             pagination,
         );
 
-        const url = new URL(`${config.apiUrls.transaction}/portal/invoices`);
-
-        Object.entries(queryParams).forEach(([key, value]) => {
-            if (value === null || value === undefined) {
-                return;
-            }
-
-            if (Array.isArray(value)) {
-                value.forEach((entry) => {
-                    url.searchParams.append(`${key}[]`, `${entry}`);
-                });
-                return;
-            }
-
-            url.searchParams.append(key, `${value}`);
-        });
-
         return request<Invoice>({
-            url: url.toString(),
+            url: `${config.apiUrls.transaction}/portal/invoices`,
+            query: queryParams,
             isCollection: true,
         });
     }

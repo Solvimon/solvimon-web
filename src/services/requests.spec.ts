@@ -172,6 +172,26 @@ describe('createRequestService', () => {
             expect.anything(),
         );
     });
+    it('Expands array query params and leaves out empty ones', async () => {
+        const request = createRequestService();
+
+        await request({
+            url: CALLED_URL,
+            query: {
+                expand: ['ALL'],
+                statuses: ['ACTIVE', 'DRAFT'],
+                customer_id: 'cust_1',
+                page: 1,
+                missing: undefined,
+                cleared: null,
+            },
+        });
+
+        expect(mockFetch).toHaveBeenCalledWith(
+            `${CALLED_URL}?expand%5B%5D=ALL&statuses%5B%5D=ACTIVE&statuses%5B%5D=DRAFT&customer_id=cust_1&page=1`,
+            expect.anything(),
+        );
+    });
     it('Calls onError when fetch fails', async () => {
         const request = createRequestService();
         const errorResponse = new Error('Network error');

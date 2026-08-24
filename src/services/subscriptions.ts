@@ -2,12 +2,7 @@ import type {
     ApiSuccessCollectionResponse,
     PricingPlanSubscription,
 } from '@solvimon/solvimon-types';
-import {
-    serializeQueryParams,
-    withExpand,
-    withPagination,
-    type WithPagination,
-} from '@solvimon/solvimon-ui';
+import { withExpand, withPagination, type WithPagination } from '@solvimon/solvimon-ui';
 import { createRequestService } from './requests';
 import { useConfig } from '@/components/providers/ConfigProvider/composables/useConfig';
 import { EXPAND_ALL } from '@/constants';
@@ -65,9 +60,8 @@ export function createSubscriptionsService(): SubscriptionsService {
         expanded?: boolean;
     }): Promise<PricingPlanSubscription | PricingPlanSubscriptionExpanded> {
         return request<PricingPlanSubscription>({
-            url: `${config.apiUrls.config}${ENDPOINT}/${id}${serializeQueryParams(
-                withExpand({ expandParams: EXPAND_ALL, expand: expanded }),
-            )}`,
+            url: `${config.apiUrls.config}${ENDPOINT}/${id}`,
+            query: withExpand({ expandParams: EXPAND_ALL, expand: expanded }),
         });
     }
 
@@ -87,10 +81,9 @@ export function createSubscriptionsService(): SubscriptionsService {
             },
             expandParams: EXPAND_ALL,
         });
-        const queryString = serializeQueryParams(withPagination(queryWithExpand, paginationParams));
-
         return request<PricingPlanSubscriptionExpanded>({
-            url: `${config.apiUrls.config}${ENDPOINT}${queryString}`,
+            url: `${config.apiUrls.config}${ENDPOINT}`,
+            query: withPagination(queryWithExpand, paginationParams),
             isCollection: true,
         });
     }

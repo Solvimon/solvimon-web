@@ -8,9 +8,13 @@ export type RequestOptions = {
     method?: 'GET' | 'POST' | 'PATCH';
 };
 
+export type QueryParamValue = string | number | boolean | null | undefined | (string | number)[];
+
+export type QueryParams = Record<string, QueryParamValue>;
+
 interface BaseRequestParams {
     url: string;
-    query?: Record<string, string | number>;
+    query?: QueryParams;
     data?: object;
     options?: RequestOptions;
 }

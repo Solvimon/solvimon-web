@@ -71,11 +71,11 @@ describe('paymentMethods service', () => {
                 pagination: { page: 2, pageSize: 15 },
             });
 
-            const { url, isCollection } = mockRequest.mock.calls[0][0];
+            const { url, query, isCollection } = mockRequest.mock.calls[0][0];
 
             expect(isCollection).toBe(true);
-            expect(url).toContain('customer_id=cust_1');
-            expect(url).toContain('page=2');
+            expect(url).toBe('https://api.test/portal/payment-methods');
+            expect(query).toMatchObject({ customer_id: 'cust_1', page: '2', limit: 15 });
         });
     });
 

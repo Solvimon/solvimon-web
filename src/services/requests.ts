@@ -9,7 +9,7 @@ import type {
     GetDefaultHeaders,
 } from './requests.types';
 import { useLogger } from '@/components/providers/LoggerProvider/composables/useLogger';
-import { Headers } from '@/services/requests.lib';
+import { appendQueryParams, Headers } from '@/services/requests.lib';
 import { useAuth } from '@/components/providers/AuthProvider';
 
 const defaultOptions: RequestOptions = {
@@ -56,9 +56,7 @@ export function createRequestService({ enableAccessCheck } = { enableAccessCheck
         const options = { ...defaultOptions, ...rawOptions };
 
         const fullUrl = new URL(url);
-        Object.entries(query ?? {}).forEach(([key, value]) => {
-            fullUrl.searchParams.append(key, `${value}`);
-        });
+        appendQueryParams(fullUrl, query);
 
         try {
             const response = await fetch(fullUrl.toString(), {

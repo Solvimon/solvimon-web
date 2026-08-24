@@ -7,7 +7,6 @@ import {
     Input,
     isValidCountryCode,
     Section,
-    Toggle,
     Typography,
     useIntl,
 } from '@solvimon/solvimon-ui';
@@ -16,6 +15,8 @@ import type { CountryCode } from '@solvimon/solvimon-types';
 import { isEUCountry } from '@solvimon/solvimon-ui';
 import type { CheckoutFormState, CheckoutFormProps, CheckoutFormEmits } from './CheckoutForm.types';
 import TaxIDCheckNotice from './TaxIDCheckNotice.vue';
+import CompanyPurchaseToggle from '@/components/customer/CompanyPurchaseToggle.vue';
+import { useCustomerFormLabels } from '@/components/customer/useCustomerFormLabels';
 import { useTaxIDValidationCheck } from '@/composables/useTaxIDValidationCheck';
 
 const FORM_ID = 'checkout-form';
@@ -48,6 +49,7 @@ const { isTaxIDCheckEnabled, isTaxIDCheckPending, taxIdValidationData, runTaxIDC
     useTaxIDValidationCheck(model);
 
 const { $t } = useIntl();
+const labels = useCustomerFormLabels();
 
 const getOptionalSuffix = (field: keyof CheckoutFormState): string => {
     if (props.getIsFieldRequired(field)) {
@@ -72,16 +74,7 @@ const readableCountryName = computed(() =>
 <template>
     <form :id="FORM_ID" @submit.prevent="$emit('submit', model)">
         <div class="grid grid-cols-1 gap-1">
-            <Section
-                :title="
-                    $t({
-                        defaultMessage: 'Customer information',
-                        id: 'checkout.contact_information_block.title',
-                        description:
-                            'The title of the contact information block in the checkout form',
-                    })
-                "
-            >
+            <Section :title="labels.contactInformationTitle">
                 <div class="grid grid-cols-1 gap-2">
                     <template v-if="readOnly">
                         <Typography variant="body" tag="span" weight="semibold" no-spacing>
@@ -98,22 +91,8 @@ const readableCountryName = computed(() =>
                             type="email"
                             name="email"
                             :disabled="!!readOnlyEmail"
-                            :label="
-                                $t({
-                                    defaultMessage: 'Email address',
-                                    id: 'checkout.email_address.label',
-                                    description:
-                                        'The email address of the customer in the checkout form',
-                                })
-                            "
-                            :placeholder="
-                                $t({
-                                    defaultMessage: 'Email address...',
-                                    id: 'checkout.email_address.placeholder',
-                                    description:
-                                        'The email address of the customer in the checkout form',
-                                }) + getOptionalSuffix('email')
-                            "
+                            :label="labels.emailLabel"
+                            :placeholder="labels.emailPlaceholder + getOptionalSuffix('email')"
                             :error="validation.value.email.$errors"
                         />
 
@@ -121,13 +100,7 @@ const readableCountryName = computed(() =>
                             v-model:single-model-value="country"
                             required
                             name="country"
-                            :label="
-                                $t({
-                                    defaultMessage: 'Billing country',
-                                    id: 'checkout.country.label',
-                                    description: 'The country of the customer in the checkout form',
-                                }) + getOptionalSuffix('country')
-                            "
+                            :label="labels.countryLabel + getOptionalSuffix('country')"
                             :error="validation.value.country.$errors"
                         >
                             <template #label-suffix>
@@ -211,12 +184,8 @@ const readableCountryName = computed(() =>
                                     v-model="model.postalCode"
                                     name="postal_code"
                                     :placeholder="
-                                        $t({
-                                            defaultMessage: 'Postal code...',
-                                            id: 'checkout.address.portal_code.placeholder',
-                                            description:
-                                                'Postal code of the customer address in the checkout form',
-                                        }) + getOptionalSuffix('postalCode')
+                                        labels.postalCodePlaceholder +
+                                        getOptionalSuffix('postalCode')
                                     "
                                     :error="validation.value.addressLine1.$errors"
                                 />
@@ -224,24 +193,14 @@ const readableCountryName = computed(() =>
                                     v-model="model.city"
                                     name="city"
                                     :placeholder="
-                                        $t({
-                                            defaultMessage: 'City...',
-                                            id: 'checkout.address.city.placeholder',
-                                            description:
-                                                'City of the customer address in the checkout form',
-                                        }) + getOptionalSuffix('city')
+                                        labels.cityPlaceholder + getOptionalSuffix('city')
                                     "
                                 />
                                 <Input
                                     v-model="model.state"
                                     name="state"
                                     :placeholder="
-                                        $t({
-                                            defaultMessage: 'State...',
-                                            id: 'checkout.address.state.placeholder',
-                                            description:
-                                                'State of the customer address in the checkout form',
-                                        }) + getOptionalSuffix('state')
+                                        labels.statePlaceholder + getOptionalSuffix('state')
                                     "
                                     :error="validation.value.state.$errors"
                                 />
@@ -252,35 +211,7 @@ const readableCountryName = computed(() =>
             </Section>
 
             <Section v-if="!readOnly">
-                <Toggle
-                    v-model="companyPurchaseModel"
-                    no-spacing
-                    label-position="before"
-                    class="!flex"
-                >
-                    <template #inline-label>
-                        <div class="flex grow flex-col">
-                            <Typography tag="span">{{
-                                $t({
-                                    defaultMessage: 'Company purchase',
-                                    id: 'checkout.company_purchase_toggle.title',
-                                    description:
-                                        'The title of the company purchase toggle in the checkout',
-                                })
-                            }}</Typography>
-                            <Typography tag="span" variant="body-xs" shade="lighter">
-                                {{
-                                    $t({
-                                        defaultMessage: 'I am purchasing on behalf of a company',
-                                        id: 'checkout.company_purchase_toggle.sub_title',
-                                        description:
-                                            'The subtitle of the company purchase toggle in the checkout',
-                                    })
-                                }}
-                            </Typography>
-                        </div>
-                    </template>
-                </Toggle>
+                <CompanyPurchaseToggle v-model="companyPurchaseModel" no-spacing class="!flex" />
 
                 <Expand :is-open="isCompanyPurchase">
                     <div v-if="isCompanyPurchase">
@@ -289,22 +220,8 @@ const readableCountryName = computed(() =>
                                 v-model="model.companyLegalName"
                                 required
                                 name="legal_name"
-                                :label="
-                                    $t({
-                                        defaultMessage: 'Legal entity name',
-                                        id: 'checkout.legal_name.label',
-                                        description:
-                                            'The legal name of the organization customer in the checkout form',
-                                    })
-                                "
-                                :placeholder="
-                                    $t({
-                                        defaultMessage: 'Legal entity name...',
-                                        id: 'checkout.legal_name.placeholder',
-                                        description:
-                                            'The legal name of the organization customer in the checkout form',
-                                    })
-                                "
+                                :label="labels.legalNameLabel"
+                                :placeholder="labels.legalNamePlaceholder"
                             />
 
                             <Input
@@ -312,22 +229,8 @@ const readableCountryName = computed(() =>
                                 v-model="model.companyVatNumber"
                                 name="vat_number"
                                 input-class="focus:outline-none focus:ring-0"
-                                :label="
-                                    $t({
-                                        defaultMessage: 'VAT number',
-                                        id: 'checkout.vat_number.label',
-                                        description:
-                                            'The label for the vat number in the checkout form',
-                                    })
-                                "
-                                :placeholder="
-                                    $t({
-                                        defaultMessage: 'VAT number...',
-                                        id: 'checkout.vat_number.placeholder',
-                                        description:
-                                            'The label for the vat number in the checkout form',
-                                    })
-                                "
+                                :label="labels.vatNumberLabel"
+                                :placeholder="labels.vatNumberPlaceholder"
                                 :error="validation.value.companyVatNumber.$errors"
                                 suffix-class="px-2 border-l-0"
                             >

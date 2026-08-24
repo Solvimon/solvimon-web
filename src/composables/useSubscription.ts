@@ -1,10 +1,11 @@
 import type {
     PricingPlanScheduleWithPlanData,
     PricingPlanSubscription,
-    PricingPlanSubscriptionExpanded,
 } from '@solvimon/solvimon-types';
 import { useService } from '@/composables/useService';
 import { createSubscriptionsService } from '@/services/subscriptions';
+import type { PricingPlanSubscriptionExpanded } from '@/types/subscription';
+import { getSchedulesWithPlanData } from '@/utils/pricingPlanScheduleOverrides';
 
 export function useSubscription({
     subscriptionId,
@@ -22,17 +23,14 @@ export function useSubscription({
         service: () => getSubscription({ id: subscriptionId, expanded: true }),
     });
 
+    /**
+     * The schedules as `PricingPlanSchedules` renders them, with the price customizations the
+     * schedule carries merged into the plan version — the portal endpoints do not serve the
+     * combined version desk reads them from.
+     */
     const withPlanData = (
         subscription: PricingPlanSubscriptionExpanded,
-    ): PricingPlanScheduleWithPlanData[] => {
-        return subscription.pricing_plan_schedule_infos.map((schedule) => {
-            return {
-                schedule: schedule.pricing_plan_schedule,
-                selectedPricingPlan: schedule.pricing_plan_version.pricing_plan,
-                selectedPricingPlanVersion: schedule.pricing_plan_version,
-            };
-        });
-    };
+    ): PricingPlanScheduleWithPlanData[] => getSchedulesWithPlanData(subscription);
 
     return { subscription: data, withPlanData, apiStatus, error, get, isPending };
 }

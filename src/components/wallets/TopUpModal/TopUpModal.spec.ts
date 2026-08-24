@@ -1,4 +1,4 @@
-import { mount } from '@vue/test-utils';
+import { flushPromises, mount } from '@vue/test-utils';
 import { defineComponent, nextTick } from 'vue';
 import type {
     Customer,
@@ -201,7 +201,8 @@ const atStep = (index: number) =>
 
 const startAddingPaymentMethod = async (wrapper: ReturnType<typeof mountModal>) => {
     await wrapper.findComponent({ name: 'TopUpModalForm' }).vm.$emit('add-payment-method');
-    await nextTick();
+    // The form is fetched on demand, so it lands a tick after the step over rather than with it.
+    await flushPromises();
 };
 
 const selector = (wrapper: ReturnType<typeof mountModal>) =>

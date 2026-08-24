@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import type { Pricing } from '@solvimon/solvimon-types';
-import { Button, Section, useIntl, usePricingItem } from '@solvimon/solvimon-ui';
+import { Button, Section, useIntl } from '@solvimon/solvimon-ui';
 import { toRef } from 'vue';
 import PricingGroupTitle from './PricingGroupTitle.vue';
+import { usePricingDescription } from './usePricingDescription';
 import PricingGroupContent from './PricingGroupContent.vue';
 import type { PricingGroupEditorBaseProps } from './PricingGroupEditorBase.types';
 import { getNameFromPricing } from '@/utils/pricing';
@@ -13,7 +14,7 @@ const props = defineProps<
 const model = defineModel<Pricing['id'][]>('modelValue', { required: true });
 
 const { $t } = useIntl();
-const { renderPricingForPricingItem } = usePricingItem({
+const { describePricing } = usePricingDescription({
     currency: toRef(props, 'currency'),
     billingPeriod: toRef(props, 'billingPeriod'),
 });
@@ -53,18 +54,7 @@ const handleToggle = (pricingId: Pricing['id']) => {
                     >
                         <PricingGroupContent
                             :name="getNameFromPricing(pricing) ?? ''"
-                            :description="
-                                pricing.items?.[0]
-                                    ? renderPricingForPricingItem({
-                                          pricingItem: pricing.items?.[0],
-                                      })
-                                    : $t({
-                                          defaultMessage: 'Unsupported pricing',
-                                          id: 'addon_multiple_editor.unsupported_pricing_error',
-                                          description:
-                                              'Text displayed when the pricing item pricing is unsupported',
-                                      })
-                            "
+                            :description="describePricing(pricing)"
                         >
                             <template #default>
                                 <Button

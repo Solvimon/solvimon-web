@@ -5,12 +5,11 @@ import {
     RadioGroupExtended,
     Section,
     SelectExtended,
-    useIntl,
-    usePricingItem,
     type RadioGroupExtendedProps,
     type SelectExtendedOptionEntry,
 } from '@solvimon/solvimon-ui';
 import PricingGroupTitle from './PricingGroupTitle.vue';
+import { usePricingDescription } from './usePricingDescription';
 import type { PricingGroupEditorBaseProps } from './PricingGroupEditorBase.types';
 import { getNameFromPricing } from '@/utils/pricing';
 import { useViewport } from '@/composables/useViewport';
@@ -23,8 +22,7 @@ const model = defineModel<PricingGroupEditorBaseProps['modelValue']>('modelValue
     required: true,
 });
 
-const { $t } = useIntl();
-const { renderPricingForPricingItem } = usePricingItem({
+const { describePricing } = usePricingDescription({
     currency: toRef(props, 'currency'),
     billingPeriod: toRef(props, 'billingPeriod'),
 });
@@ -43,21 +41,11 @@ const singleModelValue = computed<string | undefined>({
 });
 
 const options = computed<{ label: string; value: string; description: string }[]>(() => {
-    return props.pricings.map((pricing) => {
-        const pricingItem = pricing.items?.[0];
-
-        return {
-            label: getNameFromPricing(pricing) ?? '',
-            value: pricing.id,
-            description: pricingItem
-                ? renderPricingForPricingItem({ pricingItem })
-                : $t({
-                      defaultMessage: 'Unsupported pricing',
-                      id: 'pricing_item_pricing.unsupported_pricing_error',
-                      description: 'Text displayed when the pricing item pricing is unsupported',
-                  }),
-        };
-    });
+    return props.pricings.map((pricing) => ({
+        label: getNameFromPricing(pricing) ?? '',
+        value: pricing.id,
+        description: describePricing(pricing),
+    }));
 });
 
 const getRadioGroupOptions = (): RadioGroupExtendedProps['options'] => {

@@ -5,7 +5,6 @@
     "add_payment_method_modal.title": "Betaalmethode toevoegen",
     "addon_multiple_editor.add_to_subscription_button": "Toevoegen aan abonnement",
     "addon_multiple_editor.description": "Selecteer een of meer producten",
-    "addon_multiple_editor.unsupported_pricing_error": "Niet-ondersteunde prijsstelling",
     "addon_single_editor.description.at_least_one": "Selecteer minimaal één product",
     "addon_single_editor.description.at_most_one": "Selecteer maximaal één product",
     "addon_single_editor.description.exactly_one": "Selecteer één product",

@@ -4,6 +4,7 @@ import type {
     Customer,
     Invoice,
     PaymentGatewayVariant,
+    PaymentMethodOptionResponseEntry,
     PaymentMethodOptionsResponse,
 } from '@solvimon/solvimon-types';
 import type { Error } from '@/types/errors';
@@ -72,3 +73,19 @@ export interface PaymentIntegrationFormEmits {
      */
     (e: 'ready'): void;
 }
+
+/** What every gateway-specific form is handed for the one option it renders. */
+export interface PaymentIntegrationVariantProps {
+    countryCode: string;
+    customerId?: Customer['id'];
+    invoiceId?: Invoice['id'];
+    paymentMethodOptionResponseEntry: PaymentMethodOptionResponseEntry;
+    variant: 'TOKENIZE' | 'AUTHORIZE';
+    selected: boolean;
+    amount: Amount;
+    validateOnSubmit?: () => Promise<boolean>;
+    context?: PaymentAuthorizationContext;
+    forceStorePaymentMethod?: boolean;
+}
+
+export type PaymentIntegrationVariantEmits = PaymentIntegrationFormEmits;

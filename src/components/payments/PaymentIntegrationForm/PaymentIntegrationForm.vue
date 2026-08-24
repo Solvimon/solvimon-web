@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, defineAsyncComponent, ref } from 'vue';
 import { FormMessage, useIntl } from '@solvimon/solvimon-ui';
 import type {
     PaymentGatewayVariant,
@@ -14,8 +14,17 @@ import {
     isSelectedIntegration,
     isStripePaymentIntegration,
 } from './PaymentIntegrationForm.lib';
-import PaymentIntegrationFormStripe from '@/components/payments/PaymentIntegrationFormStripe/PaymentIntegrationFormStripe.vue';
-import PaymentIntegrationFormAdyen from '@/components/payments/PaymentIntegrationFormAdyen/PaymentIntegrationFormAdyen.vue';
+
+const PaymentIntegrationFormStripe = defineAsyncComponent(() =>
+    import('@/components/payments/PaymentIntegrationFormStripe/PaymentIntegrationFormStripe.vue').then(
+        (m) => m.default,
+    ),
+);
+const PaymentIntegrationFormAdyen = defineAsyncComponent(() =>
+    import('@/components/payments/PaymentIntegrationFormAdyen/PaymentIntegrationFormAdyen.vue').then(
+        (m) => m.default,
+    ),
+);
 
 const props = defineProps<PaymentIntegrationFormProps>();
 const emit = defineEmits<PaymentIntegrationFormEmits>();

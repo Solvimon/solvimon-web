@@ -1,4 +1,4 @@
-import { mount } from '@vue/test-utils';
+import { flushPromises, mount } from '@vue/test-utils';
 import { defineComponent, nextTick } from 'vue';
 import type { Customer, CustomerWalletBalanceItem, PaymentMethod } from '@solvimon/solvimon-types';
 import AutoTopUpModal from './AutoTopUpModal.vue';
@@ -390,7 +390,7 @@ describe('AutoTopUpModal', () => {
         const wrapper = mountModal();
 
         selector(wrapper).vm.$emit('add-payment-method');
-        await nextTick();
+        await flushPromises();
 
         expect(wrapper.find('[data-testid="payment-method-form"]').exists()).toBe(true);
     });

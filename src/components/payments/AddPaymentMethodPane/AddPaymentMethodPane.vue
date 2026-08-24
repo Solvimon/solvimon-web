@@ -1,11 +1,15 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, defineAsyncComponent, ref, watch } from 'vue';
 import type {
     AddPaymentMethodPaneEmits,
     AddPaymentMethodPaneProps,
 } from './AddPaymentMethodPane.types';
-import PaymentMethodForm from '@/public/components/PaymentMethodForm/PaymentMethodForm.vue';
+import type PaymentMethodFormComponent from '@/public/components/PaymentMethodForm/PaymentMethodForm.vue';
 import type { TokenizePaymentMethodFormConfiguration } from '@/public/components/PaymentMethodForm/PaymentMethodForm.types';
+
+const PaymentMethodForm = defineAsyncComponent(() =>
+    import('@/public/components/PaymentMethodForm/PaymentMethodForm.vue').then((m) => m.default),
+);
 
 const props = defineProps<AddPaymentMethodPaneProps>();
 defineEmits<AddPaymentMethodPaneEmits>();
@@ -33,7 +37,7 @@ watch(
     { immediate: true },
 );
 
-const formRef = ref<InstanceType<typeof PaymentMethodForm>>();
+const formRef = ref<InstanceType<typeof PaymentMethodFormComponent>>();
 
 defineExpose({
     /** Submits the form, for a host whose own chrome owns the button — a modal footer, say. */

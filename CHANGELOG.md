@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0-alpha.18] - 2026-08-24
+
+### Added
+
+- Added automatic wallet top-ups: a customer can set a balance to top itself back up, choosing the level it may drop to, the amount that buys it back and the payment method to charge, and is asked to confirm before an existing one is switched off.
+- Added cancelling and renewing a subscription from inside the SDK, confirmation modal included, so the host no longer has to handle either itself.
+- Added deleting a saved payment method.
+- The Subscription Details screen now shows the payment method a subscription is billed to.
+- A wallet top-up now asks which subscription it is bought for when more than one could carry it, and offers only the on-demand items that subscription actually prices.
+
+### Changed
+
+- A top-up now requires a payment method before it can be charged, and says so plainly when the customer has none to choose from — in the checkout as well as the top-up modal.
+- The wallet top-up and automatic top-up flows now step sideways between panes, so a customer who leaves to add a payment method returns to the choice they were part-way through rather than starting it again.
+- Expanded resources are now requested with a single "expand all" parameter rather than listing each relation, which means responses carry every expandable relation.
+- A subscription now always starts at the moment it is created.
+- The delete payment method confirmation now matches the subscription cancellation one.
+- Tightened the spacing of empty states and of the rows listing enabled pricings.
+- Updated the shared Solvimon UI package to 1.7.8.
+
+### Fixed
+
+- Fixed the payment method error being hidden when the customer had no methods to choose from.
+- Fixed an error left over on a modal after it was closed and opened again.
+- Fixed a class passed to a modal being dropped instead of applied.
+- Fixed reported dependency security advisories.
+
 ## [0.1.0-alpha.17] - 2026-08-13
 
 ### Added

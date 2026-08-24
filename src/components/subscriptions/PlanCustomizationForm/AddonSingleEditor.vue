@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { Section, Toggle, useIntl, usePricingItem } from '@solvimon/solvimon-ui';
+import { Section, Toggle, useIntl } from '@solvimon/solvimon-ui';
 import { computed, toRef } from 'vue';
 import type { Pricing } from '@solvimon/solvimon-types';
 import type { AddonSingleEditorProps } from './AddonSingleEditor.types';
 import PricingGroupTitle from './PricingGroupTitle.vue';
+import { usePricingDescription } from './usePricingDescription';
 import PricingGroupContent from './PricingGroupContent.vue';
 import { getNameFromPricing } from '@/utils/pricing';
 
@@ -11,7 +12,7 @@ const props = defineProps<AddonSingleEditorProps>();
 const model = defineModel<Pricing['id'][]>('modelValue', { required: true });
 
 const { $t } = useIntl();
-const { renderPricingForPricingItem } = usePricingItem({
+const { describePricing } = usePricingDescription({
     currency: toRef(props, 'currency'),
     billingPeriod: toRef(props, 'billingPeriod'),
 });
@@ -76,18 +77,7 @@ const handleToggle = (pricingId: Pricing['id']) => {
                     >
                         <PricingGroupContent
                             :name="getNameFromPricing(pricing) ?? ''"
-                            :description="
-                                pricing.items?.[0]
-                                    ? renderPricingForPricingItem({
-                                          pricingItem: pricing.items?.[0],
-                                      })
-                                    : $t({
-                                          defaultMessage: 'Unsupported pricing',
-                                          id: 'pricing_item_pricing.unsupported_pricing_error',
-                                          description:
-                                              'Text displayed when the pricing item pricing is unsupported',
-                                      })
-                            "
+                            :description="describePricing(pricing)"
                         >
                             <template #default>
                                 <Toggle

@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { Section, useIntl, usePricingItem, useValidation } from '@solvimon/solvimon-ui';
+import { Section, useIntl, useValidation } from '@solvimon/solvimon-ui';
 import { CheckboxGroupExtended } from '@solvimon/solvimon-ui';
 import { computed, toRef } from 'vue';
 import { containsAtLeastOneOf } from '@solvimon/solvimon-ui/validators';
 import PricingGroupTitle from './PricingGroupTitle.vue';
+import { usePricingDescription } from './usePricingDescription';
 import type { PricingGroupEditorBaseProps } from './PricingGroupEditorBase.types';
 import { getNameFromPricing } from '@/utils/pricing';
 import { useViewport } from '@/composables/useViewport';
@@ -15,7 +16,7 @@ const model = defineModel<PricingGroupEditorBaseProps['modelValue']>('modelValue
 });
 
 const { $t } = useIntl();
-const { renderPricingForPricingItem } = usePricingItem({
+const { describePricing } = usePricingDescription({
     currency: toRef(props, 'currency'),
     billingPeriod: toRef(props, 'billingPeriod'),
 });
@@ -51,16 +52,7 @@ const validation = useValidation(rules, validationState);
                     :options="
                         pricings.map((pricing) => ({
                             label: getNameFromPricing(pricing) ?? '',
-                            description: pricing.items?.[0]
-                                ? renderPricingForPricingItem({
-                                      pricingItem: pricing.items?.[0],
-                                  })
-                                : $t({
-                                      defaultMessage: 'Unsupported pricing',
-                                      id: 'pricing_item_pricing.unsupported_pricing_error',
-                                      description:
-                                          'Text displayed when the pricing item pricing is unsupported',
-                                  }),
+                            description: describePricing(pricing),
                             value: pricing.id,
                         }))
                     "

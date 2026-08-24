@@ -23,10 +23,6 @@
     "defaultMessage": "Select any number of products",
     "description": "The description of the addon multiple editor"
   },
-  "addon_multiple_editor.unsupported_pricing_error": {
-    "defaultMessage": "Unsupported pricing",
-    "description": "Text displayed when the pricing item pricing is unsupported"
-  },
   "addon_single_editor.description.at_least_one": {
     "defaultMessage": "Select at least one product",
     "description": "The description of the addon single editor for at least one product"

@@ -19,7 +19,7 @@ import {
     DEFAULT_TAX_IDENTIFIER_TYPE,
     toCustomer,
 } from '@/components/customer/CheckoutForm/CheckoutForm.lib';
-import { usePaymentMethodOptions } from '@/composables/useCheckoutPaymentMethodOptions';
+import { usePaymentMethodOptions } from '@/composables/usePaymentMethodOptions';
 import type { CheckoutFormState } from '@/components/customer/CheckoutForm/CheckoutForm.types';
 import {
     getFirstPricingPlanScheduleOfType,
@@ -57,7 +57,7 @@ export function useCheckoutView({
 
     const {
         paymentMethodOptions,
-        loadPaymentMethodOptions,
+        get: loadPaymentMethodOptions,
         isPending: isPaymentMethodsPending,
     } = usePaymentMethodOptions();
 

@@ -100,7 +100,7 @@ const mockUseCheckoutForm = vi.fn<
 const mockUsePaymentMethodOptions = vi.fn(() => ({
     paymentMethodOptions: { value: [] },
     isPending: { value: false },
-    loadPaymentMethodOptions: mockLoadPaymentMethodOptions,
+    get: mockLoadPaymentMethodOptions,
 }));
 
 vi.mock('@/services/subscriptions', () => ({
@@ -120,7 +120,7 @@ vi.mock('@/components/customer/CheckoutForm/useCheckoutForm', () => ({
     }) => mockUseCheckoutForm(args),
 }));
 
-vi.mock('@/composables/useCheckoutPaymentMethodOptions', () => ({
+vi.mock('@/composables/usePaymentMethodOptions', () => ({
     usePaymentMethodOptions: () => mockUsePaymentMethodOptions(),
 }));
 

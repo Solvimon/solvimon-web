@@ -1,4 +1,6 @@
 import type { PaymentMethodOptionsResponse } from '@solvimon/solvimon-types';
+import { isEqual } from '@solvimon/solvimon-ui';
+import { ref } from 'vue';
 import { useService } from './useService';
 import { createPaymentMethodsService } from '@/services/paymentMethods';
 import type {
@@ -28,16 +30,28 @@ export function usePaymentMethodOptions() {
               });
 
     const initialValue: PaymentMethodOptionsResponse = [];
-    const {
-        data,
-        execute: get,
-        apiStatus,
-        error,
-        isPending,
-    } = useService({
+    const { data, execute, apiStatus, error, isPending } = useService({
         initialValue,
         service,
     });
+
+    const cachedPayload = ref<GetPaymentMethodOptionsPayload>();
+
+    /**
+     * Callers watch country and amount and ask again on every change, so a payload already looked
+     * up is answered from what is held rather than re-requested.
+     */
+    const get = async (
+        payload: GetPaymentMethodOptionsPayload,
+    ): Promise<PaymentMethodOptionsResponse> => {
+        if (isEqual(payload, cachedPayload.value)) {
+            return data.value;
+        }
+
+        cachedPayload.value = payload;
+
+        return execute(payload);
+    };
 
     return { paymentMethodOptions: data, get, apiStatus, error, isPending };
 }

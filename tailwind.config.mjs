@@ -57,6 +57,11 @@ export default {
                     100: '#00FEF9',
                 },
             },
+            zIndex: {
+                60: 60,
+                70: 70,
+                80: 80,
+            },
             width: {},
             maxWidth: {
                 'screen-3xl': '1800px',

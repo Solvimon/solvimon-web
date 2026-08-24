@@ -3,10 +3,8 @@ import { computed } from 'vue';
 import type { SolvimonInvoiceHeaderEntryProps } from './InvoiceHeader.entry.types';
 import InvoiceHeaderEntryView from './InvoiceHeader.entry.view.vue';
 import InvoiceHeader from './InvoiceHeader.vue';
+import { COMPONENT_NAME } from './InvoiceHeader.entry.ce';
 import { EntryProvider } from '@/components/providers';
-import { getComponentName } from '@/utils/component';
-
-const COMPONENT_NAME = getComponentName('invoice-header');
 
 const props = defineProps<SolvimonInvoiceHeaderEntryProps>();
 

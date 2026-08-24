@@ -1,12 +1,8 @@
 import BillingInformationFormVue from './BillingInformationForm.entry.vue';
-import { defineCustomElement } from '@/utils/customElements';
-import { getComponentName } from '@/utils/component';
+import { createSolvimonElement } from '@/utils/customElements';
 
-export const SolvimonBillingInformationForm = defineCustomElement(BillingInformationFormVue);
-export const COMPONENT_NAME = getComponentName('billing-information-form');
-
-export const defineSolvimonBillingInformationForm = () => {
-    if (!customElements.get(COMPONENT_NAME)) {
-        customElements.define(COMPONENT_NAME, SolvimonBillingInformationForm);
-    }
-};
+export const {
+    element: SolvimonBillingInformationForm,
+    componentName: COMPONENT_NAME,
+    define: defineSolvimonBillingInformationForm,
+} = createSolvimonElement(BillingInformationFormVue, 'billing-information-form');

@@ -1,12 +1,8 @@
 import SolvimonCheckoutVue from './Checkout.entry.vue';
-import { defineCustomElement } from '@/utils/customElements';
-import { getComponentName } from '@/utils/component';
+import { createSolvimonElement } from '@/utils/customElements';
 
-export const SolvimonCheckout = defineCustomElement(SolvimonCheckoutVue);
-export const COMPONENT_NAME = getComponentName('checkout');
-
-export const defineSolvimonCheckout = () => {
-    if (!customElements.get(COMPONENT_NAME)) {
-        customElements.define(COMPONENT_NAME, SolvimonCheckout);
-    }
-};
+export const {
+    element: SolvimonCheckout,
+    componentName: COMPONENT_NAME,
+    define: defineSolvimonCheckout,
+} = createSolvimonElement(SolvimonCheckoutVue, 'checkout');

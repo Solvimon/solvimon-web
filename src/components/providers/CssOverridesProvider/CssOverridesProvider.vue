@@ -2,6 +2,12 @@
 import { computed, onUnmounted, watchEffect } from 'vue';
 import type { CssOverridesProviderProps } from './CssOverridesProvider.types';
 import { useHostElementProvider } from '@/components/providers/HostElementProvider/composables/useHostElementProvider';
+import {
+    adoptStyleSheet,
+    createStyleSheet,
+    releaseStyleSheet,
+    supportsConstructedStyleSheets,
+} from '@/utils/styleSheets';
 
 const props = defineProps<CssOverridesProviderProps>();
 const { hostRef } = useHostElementProvider();
@@ -19,23 +25,52 @@ const normalizedCssOverrides = computed(() => {
 });
 
 let styleElement: HTMLStyleElement | undefined;
+let styleSheet: CSSStyleSheet | undefined;
+let styleSheetRoot: ShadowRoot | undefined;
 
-// Remove our injected style tag when overrides are cleared or the SDK component unmounts.
-const removeStyleElement = () => {
+// Remove our injected CSS when overrides are cleared or the SDK component unmounts.
+const removeStyles = () => {
     styleElement?.remove();
     styleElement = undefined;
+
+    if (styleSheet && styleSheetRoot) {
+        releaseStyleSheet(styleSheetRoot, styleSheet);
+    }
+
+    styleSheet = undefined;
+    styleSheetRoot = undefined;
 };
 
-// Create the style tag once per shadow root and reuse it when the CSS changes.
-const getStyleElement = (root: ShadowRoot) => {
+/**
+ * The customer's own sheet, adopted after the base ones the element adopted while constructing. That
+ * order is what makes an override an override: adopted sheets cascade in the order they arrive, so a
+ * sheet adopted later wins against the SDK's own rules at equal specificity.
+ */
+const applyStyleSheet = (root: ShadowRoot, css: string) => {
+    if (!styleSheet || styleSheetRoot !== root) {
+        removeStyles();
+        styleSheet = createStyleSheet(css);
+        styleSheetRoot = root;
+        adoptStyleSheet(root, styleSheet);
+
+        return;
+    }
+
+    styleSheet.replaceSync(css);
+};
+
+// Create the style tag once per shadow root and reuse it when the CSS changes. Used where a browser
+// cannot adopt a stylesheet; appending puts it after the base `<style>` elements, which is the same
+// order the adopted route relies on.
+const applyStyleElement = (root: ShadowRoot, css: string) => {
     if (!styleElement || styleElement.getRootNode() !== root) {
-        removeStyleElement();
+        removeStyles();
         styleElement = document.createElement('style');
         styleElement.setAttribute('data-solvimon-css-overrides', '');
         root.appendChild(styleElement);
     }
 
-    return styleElement;
+    styleElement.textContent = css;
 };
 
 watchEffect(() => {
@@ -45,14 +80,19 @@ watchEffect(() => {
     const css = normalizedCssOverrides.value;
 
     if (!root || !css) {
-        removeStyleElement();
+        removeStyles();
         return;
     }
 
-    getStyleElement(root).textContent = css;
+    if (supportsConstructedStyleSheets) {
+        applyStyleSheet(root, css);
+        return;
+    }
+
+    applyStyleElement(root, css);
 });
 
-onUnmounted(removeStyleElement);
+onUnmounted(removeStyles);
 </script>
 
 <template>

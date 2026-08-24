@@ -1,22 +1,23 @@
 <script setup lang="ts">
-import { ref, watch, onMounted, onUnmounted } from 'vue';
+import { computed, ref, watch, onMounted, onUnmounted } from 'vue';
 import type { ActionRequestDetail } from '@solvimon/solvimon-web/core';
 import type { StoryEntry } from '../registry';
+import { EMBED_QUERY_PARAM, configStorageKey } from '../playgroundState';
+import type { PlaygroundCore, PlaygroundMountConfig } from '../playgroundState';
+import { useViewportPreview } from '../useViewportPreview';
+import ViewportToolbar from './ViewportToolbar.vue';
 
 const props = defineProps<{
     entry: StoryEntry;
     portalObject: Record<string, unknown> | null;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    solvimon: any;
+    solvimon: PlaygroundCore;
 }>();
+
+const viewport = useViewportPreview();
 
 // ---------------------------------------------------------------------------
 // Configuration JSON editor
 // ---------------------------------------------------------------------------
-
-function configStorageKey(entryId: string) {
-    return `solvimon-playground:config:${entryId}`;
-}
 
 function loadConfigJson(entry: typeof props.entry): string {
     const stored = sessionStorage.getItem(configStorageKey(entry.id));
@@ -70,6 +71,24 @@ function applyConfig() {
 // Mount / unmount
 // ---------------------------------------------------------------------------
 
+/**
+ * Anything but the desktop frames the page rather than narrowing a box, so that the SDK actually sees
+ * the viewport: it reads `window.matchMedia`, and Tailwind's breakpoints are media queries, so both
+ * answer for the frame they are in. Narrowing a container would leave the components laid out for a
+ * desktop inside a phone-sized box.
+ *
+ * The frame reads what it needs from session storage, which it shares with this page. The key rebuilds
+ * it whenever any of that changes, since it only reads on load — resizing deliberately is not part of
+ * the key, so dragging keeps the same document rather than reloading on every pixel.
+ */
+const frameSrc = computed(() => `?${EMBED_QUERY_PARAM}=1&entry=${props.entry.id}`);
+
+const frameKey = computed(() =>
+    [props.entry.id, JSON.stringify(props.portalObject), JSON.stringify(appliedConfig.value)].join(
+        '|',
+    ),
+);
+
 const container = ref<HTMLDivElement | null>(null);
 let unmount: (() => void) | null = null;
 
@@ -77,9 +96,9 @@ function mountEntry() {
     unmount?.();
     unmount = null;
 
-    if (!container.value || !props.portalObject) return;
+    if (viewport.isFramed.value || !container.value || !props.portalObject) return;
 
-    const mountConfig: Record<string, unknown> = {
+    const mountConfig: PlaygroundMountConfig = {
         container: container.value,
         portalObject: props.portalObject,
     };
@@ -95,9 +114,11 @@ function mountEntry() {
     }
 }
 
-watch([() => props.entry, () => props.portalObject, appliedConfig, container], mountEntry, {
-    flush: 'post',
-});
+watch(
+    [() => props.entry, () => props.portalObject, appliedConfig, container, viewport.isFramed],
+    mountEntry,
+    { flush: 'post' },
+);
 
 onUnmounted(() => unmount?.());
 
@@ -145,9 +166,51 @@ onUnmounted(() => document.removeEventListener('action-request', handleActionReq
             </div>
         </header>
 
+        <ViewportToolbar
+            :selection="viewport.selection.value"
+            :size="viewport.size.value"
+            :is-framed="viewport.isFramed.value"
+            @select="viewport.select"
+            @resize="viewport.resize"
+            @rotate="viewport.rotate"
+        />
+
         <div class="canvas-body">
             <div v-if="!portalObject" class="placeholder">
                 <p>Paste a portal object in the sidebar and click <strong>Apply</strong>.</p>
+            </div>
+            <div
+                v-else-if="viewport.isFramed.value"
+                class="device"
+                :class="{ resizing: viewport.isResizing.value }"
+                :style="{
+                    width: `${viewport.size.value.width}px`,
+                    height: `${viewport.size.value.height}px`,
+                }"
+            >
+                <iframe
+                    :key="frameKey"
+                    :src="frameSrc"
+                    class="device-frame"
+                    title="Viewport preview"
+                />
+
+                <!-- Edges and corner, as the frame is resized by in devtools. -->
+                <span
+                    class="handle handle-right"
+                    title="Drag to resize width"
+                    @pointerdown="viewport.startResize($event, 'horizontal')"
+                />
+                <span
+                    class="handle handle-bottom"
+                    title="Drag to resize height"
+                    @pointerdown="viewport.startResize($event, 'vertical')"
+                />
+                <span
+                    class="handle handle-corner"
+                    title="Drag to resize"
+                    @pointerdown="viewport.startResize($event, 'both')"
+                />
             </div>
             <div v-else ref="container" class="mount-root" />
         </div>
@@ -220,7 +283,7 @@ onUnmounted(() => document.removeEventListener('action-request', handleActionReq
 /* Body */
 .canvas-body {
     flex: 1;
-    overflow-y: auto;
+    overflow: auto;
     padding: 28px 32px;
 }
 
@@ -236,6 +299,96 @@ onUnmounted(() => document.removeEventListener('action-request', handleActionReq
 
 .mount-root {
     max-width: 960px;
+}
+
+/* Framed preview */
+.device {
+    position: relative;
+    /* The wrapper carries the size so the frame itself can fill it exactly: the page sets border-box
+       globally, and a border on the iframe would otherwise come out of the viewport the preview gets. */
+    box-sizing: content-box;
+    margin: 0 auto;
+    border-radius: 14px;
+    background: #ffffff;
+    box-shadow: 0 8px 24px rgb(15 23 42 / 10%);
+    outline: 1px solid #e2e8f0;
+}
+
+.device-frame {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border: none;
+    border-radius: 14px;
+    background: #ffffff;
+}
+
+/* An iframe swallows the pointer, so it stops taking events for the length of a drag. */
+.device.resizing .device-frame {
+    pointer-events: none;
+}
+
+.handle {
+    position: absolute;
+    background: transparent;
+}
+
+.handle::after {
+    content: '';
+    position: absolute;
+    border-radius: 999px;
+    background: #cbd5e1;
+}
+
+.handle:hover::after {
+    background: #1d4ed8;
+}
+
+.handle-right {
+    top: 0;
+    right: -8px;
+    width: 16px;
+    height: 100%;
+    cursor: ew-resize;
+}
+
+.handle-right::after {
+    top: 50%;
+    left: 6px;
+    width: 4px;
+    height: 32px;
+    transform: translateY(-50%);
+}
+
+.handle-bottom {
+    bottom: -8px;
+    left: 0;
+    width: 100%;
+    height: 16px;
+    cursor: ns-resize;
+}
+
+.handle-bottom::after {
+    top: 6px;
+    left: 50%;
+    width: 32px;
+    height: 4px;
+    transform: translateX(-50%);
+}
+
+.handle-corner {
+    right: -8px;
+    bottom: -8px;
+    width: 16px;
+    height: 16px;
+    cursor: nwse-resize;
+}
+
+.handle-corner::after {
+    top: 6px;
+    left: 6px;
+    width: 6px;
+    height: 6px;
 }
 
 /* Config panel */

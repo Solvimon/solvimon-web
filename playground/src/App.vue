@@ -4,41 +4,35 @@ import { createSolvimonCore } from '@solvimon/solvimon-web/core';
 import { screens, components, allEntries } from './registry';
 import type { StoryEntry } from './registry';
 import StoryCanvas from './components/StoryCanvas.vue';
+import EmbedPreview from './components/EmbedPreview.vue';
+import {
+    BRANDING,
+    ENVIRONMENTS,
+    STORAGE_KEYS,
+    isEmbedded,
+    parseEnvironment,
+    parseJson,
+    portalStorageKey,
+} from './playgroundState';
+import type { Environment } from './playgroundState';
 import { SUPPORTED_LOCALES } from '@/translations/supported';
 
-const LOCALE_STORAGE_KEY = 'solvimon-playground:locale';
-const ENVIRONMENT_STORAGE_KEY = 'solvimon-playground:environment';
+/** Framed by the mobile viewport to render a single entry; the chrome below is not wanted in there. */
+const embedded = isEmbedded();
 
-type Environment = 'CI' | 'LIVE' | 'TEST' | 'BETA' | 'DEV';
-const ENVIRONMENTS: Array<'LIVE' | 'TEST' | 'DEV'> = ['LIVE', 'TEST', 'DEV'];
-
-function parseEnvironment(value: string | null): Environment {
-    if (value === 'LIVE' || value === 'TEST' || value === 'DEV') {
-        return value;
-    }
-    return 'TEST';
-}
-
-const locale = ref(sessionStorage.getItem(LOCALE_STORAGE_KEY) ?? SUPPORTED_LOCALES[0]);
-watch(locale, (value) => sessionStorage.setItem(LOCALE_STORAGE_KEY, value));
+const locale = ref(sessionStorage.getItem(STORAGE_KEYS.locale) ?? SUPPORTED_LOCALES[0]);
+watch(locale, (value) => sessionStorage.setItem(STORAGE_KEYS.locale, value));
 
 const environment = ref<Environment>(
-    parseEnvironment(sessionStorage.getItem(ENVIRONMENT_STORAGE_KEY)),
+    parseEnvironment(sessionStorage.getItem(STORAGE_KEYS.environment)),
 );
-watch(environment, (value) => sessionStorage.setItem(ENVIRONMENT_STORAGE_KEY, value));
-
-const branding = {
-    colors: {
-        primary: '#1d4ed8',
-        secondary: '#0f172a',
-    },
-};
+watch(environment, (value) => sessionStorage.setItem(STORAGE_KEYS.environment, value));
 
 const solvimon = ref(
     createSolvimonCore({
         environment: environment.value,
         logLevel: 'info',
-        branding,
+        branding: BRANDING,
         locale: locale.value,
     }),
 );
@@ -47,15 +41,13 @@ watch([locale, environment], ([newLocale, newEnvironment]) => {
     solvimon.value = createSolvimonCore({
         environment: newEnvironment,
         logLevel: 'info',
-        branding,
+        branding: BRANDING,
         locale: newLocale,
     });
 });
 
-const ACTIVE_ENTRY_STORAGE_KEY = 'solvimon-playground:active-entry';
-
 function restoreActiveEntry(): StoryEntry {
-    const stored = sessionStorage.getItem(ACTIVE_ENTRY_STORAGE_KEY);
+    const stored = sessionStorage.getItem(STORAGE_KEYS.activeEntry);
     if (stored) {
         const found = allEntries.find((e) => e.id === stored);
         if (found) return found;
@@ -65,11 +57,7 @@ function restoreActiveEntry(): StoryEntry {
 
 const activeEntry = ref<StoryEntry>(restoreActiveEntry());
 
-watch(activeEntry, (entry) => sessionStorage.setItem(ACTIVE_ENTRY_STORAGE_KEY, entry.id));
-
-function portalStorageKey(entryId: string) {
-    return `solvimon-playground:portal:${entryId}`;
-}
+watch(activeEntry, (entry) => sessionStorage.setItem(STORAGE_KEYS.activeEntry, entry.id));
 
 function loadPortalJson(entry: StoryEntry): string {
     return sessionStorage.getItem(portalStorageKey(entry.id)) ?? '';
@@ -84,13 +72,10 @@ function parsePortalJson(json: string): Record<string, unknown> | null {
         return null;
     }
 
-    try {
-        portalError.value = '';
-        return JSON.parse(json);
-    } catch {
-        portalError.value = 'Invalid JSON';
-        return null;
-    }
+    const parsed = parseJson(json);
+    portalError.value = parsed ? '' : 'Invalid JSON';
+
+    return parsed;
 }
 
 const portalObject = ref<Record<string, unknown> | null>(parsePortalJson(portalJson.value));
@@ -115,7 +100,9 @@ function applyPortal() {
 </script>
 
 <template>
-    <div class="layout">
+    <EmbedPreview v-if="embedded" />
+
+    <div v-else class="layout">
         <!-- Sidebar -->
         <aside class="sidebar">
             <div class="sidebar-header">
@@ -192,7 +179,7 @@ function applyPortal() {
         <!-- Main canvas -->
         <main class="main">
             <StoryCanvas
-                :key="`${activeEntry.id}-${locale}`"
+                :key="`${activeEntry.id}-${locale}-${environment}`"
                 :entry="activeEntry"
                 :portal-object="portalObject"
                 :solvimon="solvimon"

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { PaymentMethodOptionResponseEntry } from '@solvimon/solvimon-types';
 import { createPaymentMethodsService } from '@/services/paymentMethods';
-import { useData } from '@/utils/useData';
+import { useData } from '@/composables/useData';
 import PaymentProviderFormAdyen from '@/components/paymentProviders/PaymentProviderFormAdyen/PaymentProviderFormAdyen.vue';
 import { usePortal } from '@/components/providers/PortalProvider/composables/usePortal';
 

@@ -7,6 +7,7 @@ import { ref, type Ref } from 'vue';
 import { createInvoicesService } from '@/services/invoices';
 import { useWatchDebounced } from '@/composables/useWatchDebounced';
 import { useLogger } from '@/components/providers/LoggerProvider/composables/useLogger';
+import { createLatestGuard } from '@/utils/async';
 
 const PREVIEW_DEBOUNCE_MS = 400;
 
@@ -29,11 +30,11 @@ export function useTopUpInvoicePreview({
     const isPreviewPending = ref(false);
 
     // Only the newest request may write the preview: a slower earlier one must not overwrite it.
-    let latestRequestId = 0;
+    const latestGuard = createLatestGuard();
 
     const loadPreview = async () => {
         const scheduleId = pricingPlanScheduleId.value;
-        const requestId = ++latestRequestId;
+        const isLatest = latestGuard();
 
         if (!scheduleId || !pricingItems.value) {
             // Items to charge but nowhere to charge them means the customer sees an amount that
@@ -59,11 +60,11 @@ export function useTopUpInvoicePreview({
                 pricingItems: pricingItems.value,
             });
 
-            if (requestId === latestRequestId) {
+            if (isLatest()) {
                 invoicePreview.value = invoice;
             }
         } catch (error) {
-            if (requestId === latestRequestId) {
+            if (isLatest()) {
                 invoicePreview.value = undefined;
             }
 
@@ -74,7 +75,7 @@ export function useTopUpInvoicePreview({
                 error,
             );
         } finally {
-            if (requestId === latestRequestId) {
+            if (isLatest()) {
                 isPreviewPending.value = false;
             }
         }

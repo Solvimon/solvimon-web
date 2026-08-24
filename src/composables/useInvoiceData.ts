@@ -2,7 +2,7 @@ import type { ApiSuccessCollectionResponse, Invoice, Payment } from '@solvimon/s
 import type { Ref } from 'vue';
 import { createInvoicesService } from '@/services/invoices';
 import { createPaymentsService } from '@/services/payments';
-import { useData } from '@/utils/useData';
+import { useData } from '@/composables/useData';
 
 type InvoiceData = { invoice: Invoice; paymentAttempts: ApiSuccessCollectionResponse<Payment> };
 

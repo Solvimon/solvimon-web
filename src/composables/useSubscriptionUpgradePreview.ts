@@ -4,12 +4,13 @@ import type { PricingPlanSubscriptionExpanded } from '@/types/subscription';
 import { createInvoicesService } from '@/services/invoices';
 import { useLogger } from '@/components/providers';
 import { getScheduleCustomizations } from '@/utils/pricingPlanSchedule';
+import { createLatestGuard } from '@/utils/async';
 
 /**
  * What the customer would be invoiced if the subscription's enabled pricings were changed to the
  * ones given. Nothing is created — the preview endpoint only calculates.
  *
- * Requests are numbered so a slow one cannot overwrite the answer to a later choice.
+ * Only the newest request may write the result, so a slow one cannot overwrite a later choice.
  */
 export function useSubscriptionUpgradePreview(): {
     invoice: Ref<Invoice | undefined>;
@@ -27,7 +28,7 @@ export function useSubscriptionUpgradePreview(): {
     const isPending = ref(false);
     const error = ref<unknown>();
 
-    let latestRequestId = 0;
+    const latestGuard = createLatestGuard();
 
     const load = async ({
         subscription,
@@ -47,7 +48,7 @@ export function useSubscriptionUpgradePreview(): {
             return;
         }
 
-        const requestId = ++latestRequestId;
+        const isLatest = latestGuard();
 
         isPending.value = true;
         error.value = undefined;
@@ -61,11 +62,11 @@ export function useSubscriptionUpgradePreview(): {
                 customizations,
             });
 
-            if (requestId !== latestRequestId) return;
+            if (!isLatest()) return;
 
             invoice.value = response.invoice;
         } catch (previewError) {
-            if (requestId !== latestRequestId) return;
+            if (!isLatest()) return;
 
             logger.error(
                 'INVOICE_PREVIEW_FAILED',
@@ -76,7 +77,7 @@ export function useSubscriptionUpgradePreview(): {
             error.value = previewError;
             invoice.value = undefined;
         } finally {
-            if (requestId === latestRequestId) {
+            if (isLatest()) {
                 isPending.value = false;
             }
         }

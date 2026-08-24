@@ -1,10 +1,7 @@
 import { ApiStatus, type ApiCollectionResponse } from '@solvimon/solvimon-types';
 import { getPaginatedFullList, isApiSuccessCollectionResponse } from '@solvimon/solvimon-ui';
 import { computed, ref, shallowRef } from 'vue';
-
-function toError(error: unknown) {
-    return error instanceof Error ? error : new Error('Something went wrong while fetching data.');
-}
+import { toError } from '@/utils/error';
 
 export function useIncrementalLoading<T>({
     initialData = [],

@@ -1,6 +1,7 @@
 import { ApiStatus } from '@solvimon/solvimon-types';
 import { computed, ref, shallowRef } from 'vue';
 import type { ComputedRef, Ref } from 'vue';
+import { toError } from '@/utils/error';
 import { updateRefIfChanged } from '@/utils/ref';
 
 type CollectionResponse<TData> = {
@@ -19,10 +20,6 @@ type UseServiceState<TData, TArgs extends unknown[], TFetchResult = TData> = {
     isPending: ComputedRef<boolean>;
     error: Ref<Error | null>;
 };
-
-function toError(error: unknown) {
-    return error instanceof Error ? error : new Error('Something went wrong while fetching data.');
-}
 
 function isCollectionResponse<TData>(
     response: TData | CollectionResponse<TData>,

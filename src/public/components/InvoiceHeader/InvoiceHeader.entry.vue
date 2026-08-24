@@ -3,7 +3,7 @@ import { computed } from 'vue';
 import type { SolvimonInvoiceHeaderEntryProps } from './InvoiceHeader.entry.types';
 import InvoiceHeaderEntryView from './InvoiceHeader.entry.view.vue';
 import InvoiceHeader from './InvoiceHeader.vue';
-import { Provider } from '@/components/providers';
+import { EntryProvider } from '@/components/providers';
 import { getComponentName } from '@/utils/component';
 
 const COMPONENT_NAME = getComponentName('invoice-header');
@@ -24,18 +24,10 @@ const resolvedProps = computed<SolvimonInvoiceHeaderEntryProps>(() => ({
 </script>
 
 <template>
-    <Provider
-        :custom-element-name="COMPONENT_NAME"
-        :environment="environment"
-        :locale="locale"
-        :portal-object="portalObject"
+    <EntryProvider
+        :entry="$props"
+        :component-name="COMPONENT_NAME"
         :allowed-portal-types="['CUSTOMER']"
-        :primary-color="branding?.colors?.primary"
-        :secondary-color="branding?.colors?.secondary"
-        :experimental-features="experimentalFeatures"
-        :log-level="logLevel"
-        :on-log="onLog"
-        :css-overrides="cssOverrides"
         @error="(error) => $emit('error', error)"
     >
         <InvoiceHeaderEntryView v-bind="resolvedProps">
@@ -50,5 +42,5 @@ const resolvedProps = computed<SolvimonInvoiceHeaderEntryProps>(() => ({
                 />
             </template>
         </InvoiceHeaderEntryView>
-    </Provider>
+    </EntryProvider>
 </template>

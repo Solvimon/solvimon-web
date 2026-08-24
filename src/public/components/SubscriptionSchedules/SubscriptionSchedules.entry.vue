@@ -3,24 +3,16 @@ import type { SolvimonSubscriptionSchedulesEntryProps } from './SubscriptionSche
 import { COMPONENT_NAME } from './SubscriptionSchedules.entry.ce';
 import SubscriptionSchedules from './SubscriptionSchedules.vue';
 import SubscriptionSchedulesEntryView from './SubscriptionSchedules.entry.view.vue';
-import { Provider } from '@/components/providers';
+import { EntryProvider } from '@/components/providers';
 
 const props = defineProps<SolvimonSubscriptionSchedulesEntryProps>();
 </script>
 
 <template>
-    <Provider
-        :custom-element-name="COMPONENT_NAME"
-        :environment="environment"
-        :locale="locale"
-        :portal-object="portalObject"
+    <EntryProvider
+        :entry="$props"
+        :component-name="COMPONENT_NAME"
         :allowed-portal-types="['CUSTOMER']"
-        :primary-color="branding?.colors?.primary"
-        :secondary-color="branding?.colors?.secondary"
-        :experimental-features="experimentalFeatures"
-        :log-level="logLevel"
-        :on-log="onLog"
-        :css-overrides="cssOverrides"
         @error="(error: Error) => $emit('error', error)"
     >
         <SubscriptionSchedulesEntryView v-bind="props">
@@ -33,5 +25,5 @@ const props = defineProps<SolvimonSubscriptionSchedulesEntryProps>();
                 />
             </template>
         </SubscriptionSchedulesEntryView>
-    </Provider>
+    </EntryProvider>
 </template>

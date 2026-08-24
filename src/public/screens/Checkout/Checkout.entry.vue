@@ -3,7 +3,7 @@ import { isValidCountryCode } from '@solvimon/solvimon-ui';
 import type { CountryCode } from '@solvimon/solvimon-types';
 import type { SolvimonCheckoutEmits, SolvimonCheckoutEntryProps } from './Checkout.entry.types';
 import { COMPONENT_NAME } from './Checkout.entry.ce';
-import Provider from '@/components/providers/Provider/Provider.vue';
+import { EntryProvider } from '@/components/providers';
 import Checkout from '@/public/screens/Checkout/Checkout.vue';
 import { useLogger } from '@/components/providers';
 import { getQueryParam } from '@/utils/url';
@@ -45,18 +45,10 @@ const couponCode = props.configuration?.couponCode ?? getQueryParam('coupon_code
 </script>
 
 <template>
-    <Provider
-        :custom-element-name="COMPONENT_NAME"
-        :environment="environment"
-        :locale="locale"
-        :portal-object="portalObject"
+    <EntryProvider
+        :entry="$props"
+        :component-name="COMPONENT_NAME"
         :allowed-portal-types="['INIT_PRICING_PLAN_SUBSCRIPTION']"
-        :primary-color="branding?.colors?.primary"
-        :secondary-color="branding?.colors?.secondary"
-        :experimental-features="experimentalFeatures"
-        :log-level="logLevel"
-        :on-log="onLog"
-        :css-overrides="cssOverrides"
         @error="(error) => $emit('error', error)"
     >
         <Checkout
@@ -73,5 +65,5 @@ const couponCode = props.configuration?.couponCode ?? getQueryParam('coupon_code
                 ><slot name="terms-and-conditions"
             /></template>
         </Checkout>
-    </Provider>
+    </EntryProvider>
 </template>

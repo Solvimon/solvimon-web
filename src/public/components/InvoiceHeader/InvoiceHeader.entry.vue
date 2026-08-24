@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import type { SolvimonInvoiceHeaderEntryProps } from './InvoiceHeader.entry.types';
-import InvoiceHeaderEntryView from './InvoiceHeader.entry.view.vue';
 import InvoiceHeader from './InvoiceHeader.vue';
 import { COMPONENT_NAME } from './InvoiceHeader.entry.ce';
+import InvoiceEntryView from '@/components/invoices/InvoiceEntryView.vue';
 import { EntryProvider } from '@/components/providers';
 
 const props = defineProps<SolvimonInvoiceHeaderEntryProps>();
@@ -28,7 +28,7 @@ const resolvedProps = computed<SolvimonInvoiceHeaderEntryProps>(() => ({
         :allowed-portal-types="['CUSTOMER']"
         @error="(error) => $emit('error', error)"
     >
-        <InvoiceHeaderEntryView v-bind="resolvedProps">
+        <InvoiceEntryView :invoice-id="resolvedProps.configuration.invoiceId">
             <template #default="{ invoice, payments, isLoading, invoiceDownloadService }">
                 <InvoiceHeader
                     v-if="invoice"
@@ -39,6 +39,6 @@ const resolvedProps = computed<SolvimonInvoiceHeaderEntryProps>(() => ({
                     :configuration="resolvedProps.configuration"
                 />
             </template>
-        </InvoiceHeaderEntryView>
+        </InvoiceEntryView>
     </EntryProvider>
 </template>

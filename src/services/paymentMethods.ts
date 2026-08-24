@@ -61,25 +61,9 @@ export function createPaymentMethodsService() {
             pagination,
         );
 
-        const url = new URL(`${config.apiUrls.config}${BASE_URL}`);
-
-        Object.entries(queryParams).forEach(([key, value]) => {
-            if (value === null || value === undefined) {
-                return;
-            }
-
-            if (Array.isArray(value)) {
-                value.forEach((entry) => {
-                    url.searchParams.append(`${key}[]`, `${entry}`);
-                });
-                return;
-            }
-
-            url.searchParams.append(key, `${value}`);
-        });
-
         const response = await request<PaymentMethod>({
-            url: url.toString(),
+            url: `${config.apiUrls.config}${BASE_URL}`,
+            query: queryParams,
             isCollection: true,
         });
 

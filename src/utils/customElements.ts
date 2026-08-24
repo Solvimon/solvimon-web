@@ -7,6 +7,7 @@ import {
     createStyleSheet,
     supportsConstructedStyleSheets,
 } from '@/utils/styleSheets';
+import { getComponentName } from '@/utils/component';
 
 type CustomElementComponent = Parameters<typeof defineCustomElementVue>[0] & {
     styles?: string[];
@@ -65,5 +66,24 @@ export function defineCustomElement(
                 sheets.forEach((sheet) => adoptStyleSheet(root, sheet));
             }
         }
+    };
+}
+
+/**
+ * The element, its tag name and an idempotent define for it — the three things every SDK entry
+ * exports.
+ */
+export function createSolvimonElement(component: CustomElementComponent, tagName: string) {
+    const element = defineCustomElement(component);
+    const componentName = getComponentName(tagName);
+
+    return {
+        element,
+        componentName,
+        define: (): void => {
+            if (!customElements.get(componentName)) {
+                customElements.define(componentName, element);
+            }
+        },
     };
 }

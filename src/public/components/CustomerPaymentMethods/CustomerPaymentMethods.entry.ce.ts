@@ -1,14 +1,8 @@
 import SolvimonCustomerPaymentMethodsVue from './CustomerPaymentMethods.entry.vue';
-import { defineCustomElement } from '@/utils/customElements';
-import { getComponentName } from '@/utils/component';
+import { createSolvimonElement } from '@/utils/customElements';
 
-export const SolvimonCustomerPaymentMethods = defineCustomElement(
-    SolvimonCustomerPaymentMethodsVue,
-);
-export const COMPONENT_NAME = getComponentName('customer-payment-methods');
-
-export const defineSolvimonCustomerPaymentMethods = () => {
-    if (!customElements.get(COMPONENT_NAME)) {
-        customElements.define(COMPONENT_NAME, SolvimonCustomerPaymentMethods);
-    }
-};
+export const {
+    element: SolvimonCustomerPaymentMethods,
+    componentName: COMPONENT_NAME,
+    define: defineSolvimonCustomerPaymentMethods,
+} = createSolvimonElement(SolvimonCustomerPaymentMethodsVue, 'customer-payment-methods');

@@ -1,12 +1,8 @@
 import SubscriptionSchedulesVue from './SubscriptionSchedules.entry.vue';
-import { defineCustomElement } from '@/utils/customElements';
-import { getComponentName } from '@/utils/component';
+import { createSolvimonElement } from '@/utils/customElements';
 
-export const SolvimonSubscriptionSchedules = defineCustomElement(SubscriptionSchedulesVue);
-export const COMPONENT_NAME = getComponentName('subscription-schedules');
-
-export const defineSolvimonSubscriptionSchedules = (): void => {
-    if (!customElements.get(COMPONENT_NAME)) {
-        customElements.define(COMPONENT_NAME, SolvimonSubscriptionSchedules);
-    }
-};
+export const {
+    element: SolvimonSubscriptionSchedules,
+    componentName: COMPONENT_NAME,
+    define: defineSolvimonSubscriptionSchedules,
+} = createSolvimonElement(SubscriptionSchedulesVue, 'subscription-schedules');

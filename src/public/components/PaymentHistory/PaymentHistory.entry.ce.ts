@@ -1,12 +1,8 @@
 import PaymentHistoryVue from './PaymentHistory.entry.vue';
-import { defineCustomElement } from '@/utils/customElements';
-import { getComponentName } from '@/utils/component';
+import { createSolvimonElement } from '@/utils/customElements';
 
-export const SolvimonPaymentHistory = defineCustomElement(PaymentHistoryVue);
-export const COMPONENT_NAME = getComponentName('payment-history');
-
-export const defineSolvimonPaymentHistory = () => {
-    if (!customElements.get(COMPONENT_NAME)) {
-        customElements.define(COMPONENT_NAME, SolvimonPaymentHistory);
-    }
-};
+export const {
+    element: SolvimonPaymentHistory,
+    componentName: COMPONENT_NAME,
+    define: defineSolvimonPaymentHistory,
+} = createSolvimonElement(PaymentHistoryVue, 'payment-history');

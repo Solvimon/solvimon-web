@@ -11,7 +11,10 @@ import type {
     PaymentIntegrationFormAdyenEmits,
     PaymentIntegrationFormAdyenProps,
 } from './PaymentIntegrationFormAdyen.types';
-import { getOverriddenTranslations } from './PaymentIntegrationFormAdyen.lib';
+import {
+    DROP_IN_PAYMENT_METHOD_COMPONENTS,
+    getOverriddenTranslations,
+} from './PaymentIntegrationFormAdyen.lib';
 import PaymentCompletedCard from '@/components/payments/PaymentCompletedCard/PaymentCompletedCard.vue';
 import PaymentErrorCard from '@/components/payments/PaymentErrorCard/PaymentErrorCard.vue';
 import type { Error } from '@/types/errors';
@@ -140,28 +143,7 @@ async function mountDropIn() {
             import('@adyen/adyen-web'),
             import('@adyen/adyen-web/styles/adyen.css?inline'),
         ]);
-        const {
-            AdyenCheckout,
-            Dropin,
-            Card,
-            Bancontact,
-            Ach,
-            AmazonPay,
-            ApplePay,
-            BcmcMobile,
-            BacsDirectDebit,
-            CashAppPay,
-            EPS,
-            GooglePay,
-            Klarna,
-            PayByBank,
-            PayPal,
-            SepaDirectDebit,
-            Trustly,
-            Twint,
-            PayByBankUS,
-            Redirect,
-        } = adyenModule;
+        const { AdyenCheckout, Dropin } = adyenModule;
 
         const { checkoutConfig, dropInConfig } = await getConfiguration();
 
@@ -169,26 +151,9 @@ async function mountDropIn() {
 
         dropInInstance = new Dropin(checkoutInstance, {
             ...dropInConfig,
-            paymentMethodComponents: [
-                Card,
-                Bancontact,
-                Ach,
-                AmazonPay,
-                ApplePay,
-                BcmcMobile,
-                BacsDirectDebit,
-                CashAppPay,
-                EPS,
-                GooglePay,
-                Klarna,
-                PayByBank,
-                PayPal,
-                SepaDirectDebit,
-                Trustly,
-                Twint,
-                PayByBankUS,
-                Redirect,
-            ],
+            paymentMethodComponents: DROP_IN_PAYMENT_METHOD_COMPONENTS.map(
+                (name) => adyenModule[name],
+            ),
         }).mount(dropInContainerRef.value);
 
         injectStylesToShadowRoot(adyenCss);
@@ -327,6 +292,54 @@ function injectStylesToShadowRoot(adyenCss: string) {
     }
 }
 
+type SubmitActions = Parameters<NonNullable<CoreConfiguration['onSubmit']>>[2];
+
+/**
+ * Turns an authorize or tokenize response into the drop-in's next step. Both take the same three
+ * paths; only what they call the failure differs, which is why the caller logs it.
+ */
+function applyPaymentResult(
+    paymentResult: AuthorizePaymentResponse,
+    {
+        paymentMethodType,
+        actions,
+        logFailure,
+    }: {
+        paymentMethodType: string;
+        actions: SubmitActions;
+        logFailure: (error: unknown) => void;
+    },
+): void {
+    if (
+        paymentResult.status === 'ACTION_REQUIRED' &&
+        paymentResult.action.payment_gateway_variant === PAYMENT_GATEWAY_VARIANT_ADYEN
+    ) {
+        const requiredAction = handleActionRequiredPaymentAction(paymentResult, paymentMethodType);
+
+        if (!requiredAction) {
+            logFailure(paymentResult);
+            return;
+        }
+
+        dropInInstance.handleAction(requiredAction);
+
+        actions.resolve({
+            resultCode: paymentResult.action.adyen.result_code,
+            action: requiredAction,
+        });
+        return;
+    }
+
+    if (paymentResult.payment.result === 'AUTHORIZED') {
+        showPaymentSuccess.value = true;
+        actions.resolve({ resultCode: 'Authorised' });
+        return;
+    }
+
+    logFailure(paymentResult);
+    actions.resolve({ resultCode: 'Error' });
+}
+
 function handleOnSubmit(
     ...args: Parameters<NonNullable<CoreConfiguration['onSubmit']>>
 ): ReturnType<NonNullable<CoreConfiguration['onSubmit']>> {
@@ -366,50 +379,18 @@ function handleOnSubmit(
                     ...(props.context ? { context: props.context } : {}),
                     return_url: returnUrl,
                 })
-                    .then((paymentResult) => {
-                        const paymentMethodType = state.data.paymentMethod.type;
-
-                        if (
-                            paymentResult.status === 'ACTION_REQUIRED' &&
-                            paymentResult.action.payment_gateway_variant ===
-                                PAYMENT_GATEWAY_VARIANT_ADYEN
-                        ) {
-                            const requiredAction = handleActionRequiredPaymentAction(
-                                paymentResult,
-                                paymentMethodType,
-                            );
-
-                            if (!requiredAction) {
+                    .then((paymentResult) =>
+                        applyPaymentResult(paymentResult, {
+                            paymentMethodType: state.data.paymentMethod.type,
+                            actions,
+                            logFailure: (error) =>
                                 logger.error(
                                     'PAYMENT_AUTHORIZATION_FAILED',
                                     `Failed payment authorization for payment acceptor with id ${paymentAcceptorId}`,
-                                    { error: paymentResult },
-                                );
-                                return;
-                            }
-
-                            dropInInstance.handleAction(requiredAction);
-
-                            actions.resolve({
-                                resultCode: paymentResult.action.adyen.result_code,
-                                action: requiredAction,
-                            });
-                            return;
-                        }
-
-                        if (paymentResult.payment.result === 'AUTHORIZED') {
-                            showPaymentSuccess.value = true;
-                            actions.resolve({ resultCode: 'Authorised' });
-                            return;
-                        }
-
-                        logger.error(
-                            'PAYMENT_AUTHORIZATION_FAILED',
-                            `Failed payment authorization for payment acceptor with id ${paymentAcceptorId}`,
-                            { error: paymentResult },
-                        );
-                        actions.resolve({ resultCode: 'Error' });
-                    })
+                                    { error },
+                                ),
+                        }),
+                    )
                     .catch((error) => {
                         logger.error(
                             'PAYMENT_AUTHORIZATION_FAILED',
@@ -442,50 +423,18 @@ function handleOnSubmit(
                     adyen,
                     return_url: returnUrl,
                 })
-                    .then((paymentResult) => {
-                        const paymentMethodType = state.data.paymentMethod.type;
-
-                        if (
-                            paymentResult.status === 'ACTION_REQUIRED' &&
-                            paymentResult.action.payment_gateway_variant ===
-                                PAYMENT_GATEWAY_VARIANT_ADYEN
-                        ) {
-                            const requiredAction = handleActionRequiredPaymentAction(
-                                paymentResult,
-                                paymentMethodType,
-                            );
-
-                            if (!requiredAction) {
+                    .then((paymentResult) =>
+                        applyPaymentResult(paymentResult, {
+                            paymentMethodType: state.data.paymentMethod.type,
+                            actions,
+                            logFailure: (error) =>
                                 logger.error(
                                     'TOKENIZATION_FAILED',
                                     `Tokenization failed for payment acceptor with id ${paymentAcceptorId}`,
-                                    { error: paymentResult },
-                                );
-                                return;
-                            }
-
-                            dropInInstance.handleAction(requiredAction);
-
-                            actions.resolve({
-                                resultCode: paymentResult.action.adyen.result_code,
-                                action: requiredAction,
-                            });
-                            return;
-                        }
-
-                        if (paymentResult.payment.result === 'AUTHORIZED') {
-                            showPaymentSuccess.value = true;
-                            actions.resolve({ resultCode: 'Authorised' });
-                            return;
-                        }
-
-                        logger.error(
-                            'TOKENIZATION_FAILED',
-                            `Tokenization failed for payment acceptor with id ${paymentAcceptorId}`,
-                            { error: paymentResult },
-                        );
-                        actions.resolve({ resultCode: 'Error' });
-                    })
+                                    { error },
+                                ),
+                        }),
+                    )
                     .catch((error) => {
                         logger.error(
                             'TOKENIZATION_FAILED',

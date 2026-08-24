@@ -132,3 +132,25 @@ export const getOverriddenTranslations = (variant: 'TOKENIZE' | 'AUTHORIZE') => 
 
     return result;
 };
+
+/** The payment methods the drop-in is built with, named so they can be pulled off the module once. */
+export const DROP_IN_PAYMENT_METHOD_COMPONENTS = [
+    'Card',
+    'Bancontact',
+    'Ach',
+    'AmazonPay',
+    'ApplePay',
+    'BcmcMobile',
+    'BacsDirectDebit',
+    'CashAppPay',
+    'EPS',
+    'GooglePay',
+    'Klarna',
+    'PayByBank',
+    'PayPal',
+    'SepaDirectDebit',
+    'Trustly',
+    'Twint',
+    'PayByBankUS',
+    'Redirect',
+] as const satisfies readonly (keyof typeof import('@adyen/adyen-web'))[];

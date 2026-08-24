@@ -3,7 +3,7 @@ import PaymentHistory from './PaymentHistory.vue';
 import PaymentHistoryEntryView from './PaymentHistory.entry.view.vue';
 import type { SolvimonPaymentHistoryEntryProps } from './PaymentHistory.entry.types';
 import { COMPONENT_NAME } from './PaymentHistory.entry.ce';
-import { Provider } from '@/components/providers';
+import { EntryProvider } from '@/components/providers';
 
 const props = defineProps<SolvimonPaymentHistoryEntryProps>();
 
@@ -13,18 +13,10 @@ if (!props.configuration?.invoiceId) {
 </script>
 
 <template>
-    <Provider
-        :custom-element-name="COMPONENT_NAME"
-        :environment="environment"
-        :locale="locale"
-        :portal-object="portalObject"
+    <EntryProvider
+        :entry="$props"
+        :component-name="COMPONENT_NAME"
         :allowed-portal-types="['CUSTOMER']"
-        :primary-color="branding?.colors?.primary"
-        :secondary-color="branding?.colors?.secondary"
-        :experimental-features="experimentalFeatures"
-        :log-level="logLevel"
-        :on-log="onLog"
-        :css-overrides="cssOverrides"
         @error="(error) => $emit('error', error)"
     >
         <PaymentHistoryEntryView v-bind="$props">
@@ -38,5 +30,5 @@ if (!props.configuration?.invoiceId) {
                 />
             </template>
         </PaymentHistoryEntryView>
-    </Provider>
+    </EntryProvider>
 </template>

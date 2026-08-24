@@ -3,23 +3,16 @@ import type { SolvimonPayInvoiceEntryProps } from './PayInvoice.entry.types';
 import { COMPONENT_NAME } from './PayInvoice.entry.ce';
 import PayInvoice from './PayInvoice.vue';
 import PayInvoiceEntryView from './PayInvoice.entry.view.vue';
-import { Provider } from '@/components/providers';
+import { EntryProvider } from '@/components/providers';
 
 defineProps<SolvimonPayInvoiceEntryProps>();
 </script>
 
 <template>
-    <Provider
-        :custom-element-name="COMPONENT_NAME"
-        :environment="environment"
-        :locale="locale"
-        :portal-object="portalObject"
+    <EntryProvider
+        :entry="$props"
+        :component-name="COMPONENT_NAME"
         :allowed-portal-types="['CUSTOMER']"
-        :primary-color="branding?.colors?.primary"
-        :secondary-color="branding?.colors?.secondary"
-        :experimental-features="experimentalFeatures"
-        :log-level="logLevel"
-        :on-log="onLog"
         @error="(error) => $emit('error', error)"
     >
         <PayInvoiceEntryView v-bind="$props">
@@ -46,5 +39,5 @@ defineProps<SolvimonPayInvoiceEntryProps>();
                 />
             </template>
         </PayInvoiceEntryView>
-    </Provider>
+    </EntryProvider>
 </template>

@@ -3,23 +3,16 @@ import type { SolvimonPaymentMethodsManagementEntryProps } from './PaymentMethod
 import { COMPONENT_NAME } from './PaymentMethodsManagement.entry.ce';
 import PaymentMethodsManagement from './PaymentMethodsManagement.vue';
 import PaymentMethodsManagementEntryView from './PaymentMethodsManagement.entry.view.vue';
-import { Provider } from '@/components/providers';
+import { EntryProvider } from '@/components/providers';
 
 defineProps<SolvimonPaymentMethodsManagementEntryProps>();
 </script>
 
 <template>
-    <Provider
-        :custom-element-name="COMPONENT_NAME"
-        :environment="environment"
-        :locale="locale"
-        :portal-object="portalObject"
+    <EntryProvider
+        :entry="$props"
+        :component-name="COMPONENT_NAME"
         :allowed-portal-types="['CUSTOMER']"
-        :primary-color="branding?.colors?.primary"
-        :secondary-color="branding?.colors?.secondary"
-        :experimental-features="experimentalFeatures"
-        :log-level="logLevel"
-        :on-log="onLog"
         @error="(error) => $emit('error', error)"
     >
         <PaymentMethodsManagementEntryView v-bind="$props">
@@ -43,5 +36,5 @@ defineProps<SolvimonPaymentMethodsManagementEntryProps>();
                 />
             </template>
         </PaymentMethodsManagementEntryView>
-    </Provider>
+    </EntryProvider>
 </template>

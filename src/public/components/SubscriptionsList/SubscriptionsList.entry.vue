@@ -3,24 +3,16 @@ import SubscriptionsList from './SubscriptionsList.vue';
 import SubscriptionsListView from './SubscriptionsList.entry.view.vue';
 import type { SolvimonSubscriptionsListEntryProps } from './SubscriptionsList.entry.types';
 import { COMPONENT_NAME } from './SubscriptionsList.entry.ce';
-import { Provider } from '@/components/providers';
+import { EntryProvider } from '@/components/providers';
 
 defineProps<SolvimonSubscriptionsListEntryProps>();
 </script>
 
 <template>
-    <Provider
-        :custom-element-name="COMPONENT_NAME"
-        :environment="environment"
-        :locale="locale"
-        :portal-object="portalObject"
+    <EntryProvider
+        :entry="$props"
+        :component-name="COMPONENT_NAME"
         :allowed-portal-types="['CUSTOMER']"
-        :primary-color="branding?.colors?.primary"
-        :secondary-color="branding?.colors?.secondary"
-        :experimental-features="experimentalFeatures"
-        :log-level="logLevel"
-        :on-log="onLog"
-        :css-overrides="cssOverrides"
         @error="(error) => $emit('error', error)"
     >
         <SubscriptionsListView v-bind="$props">
@@ -35,5 +27,5 @@ defineProps<SolvimonSubscriptionsListEntryProps>();
                 />
             </template>
         </SubscriptionsListView>
-    </Provider>
+    </EntryProvider>
 </template>

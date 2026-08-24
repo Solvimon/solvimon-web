@@ -1,13 +1,17 @@
 import { defineComponent } from 'vue';
 import { vi } from 'vitest';
 
-export const createProviderMock = () => ({
-    Provider: defineComponent({
+const passThrough = () =>
+    defineComponent({
         inheritAttrs: false,
         setup(_, { slots }) {
             return () => slots.default?.();
         },
-    }),
+    });
+
+export const createProviderMock = () => ({
+    Provider: passThrough(),
+    EntryProvider: passThrough(),
     useActionDispatchProvider: () => ({
         dispatchAction: vi.fn(),
     }),

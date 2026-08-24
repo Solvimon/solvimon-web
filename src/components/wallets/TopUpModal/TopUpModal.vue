@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { Invoice, WalletBalanceValue } from '@solvimon/solvimon-types';
-import { Button, Modal, RadioGroupExtended, useIntl } from '@solvimon/solvimon-ui';
+import { Button, RadioGroupExtended, useIntl } from '@solvimon/solvimon-ui';
 import { computed, ref, watch } from 'vue';
 import type { TopUpModalEmits, TopUpModalProps, TopUpModalStep } from './TopUpModal.types';
 import { TOP_UP_MODAL_STEPS } from './TopUpModal.types';
@@ -15,8 +15,7 @@ import { useTopUpModalLabels } from './useTopUpModalLabels';
 import SubscriptionSummary from '@/components/subscriptions/SubscriptionSummary.vue';
 import { useCustomerPaymentMethodOptions } from '@/composables/useCustomerPaymentMethodOptions';
 import { useWalletBalanceFormat } from '@/composables/useWalletBalanceFormat';
-import AddPaymentMethodPane from '@/components/payments/AddPaymentMethodPane/AddPaymentMethodPane.vue';
-import SlidingPanes from '@/components/shared/SlidingPanes/SlidingPanes.vue';
+import WalletModalShell from '@/components/wallets/WalletModalShell.vue';
 import {
     getActiveAutoTopUpConfig,
     getAutoTopUpChargeTarget,
@@ -229,93 +228,82 @@ watch(
 </script>
 
 <template>
-    <Modal
-        no-click-away
+    <WalletModalShell
+        ref="addPaymentMethodRef"
         :show-modal="showModal"
-        size="lg"
         :title="title"
         :sub-title="subTitle"
         :cancel-button-text="cancelButtonText"
         :confirm-button-text="confirmButtonText"
-        :is-loading="isPending"
+        :is-pending="isPending"
+        :panes="TOP_UP_MODAL_STEPS"
+        :step="step"
+        add-payment-method-pane="ADD_PAYMENT_METHOD"
+        :customer="customer"
+        :payment-method-options="paymentMethodOptions"
+        :is-payment-method-options-pending="isPaymentMethodOptionsPending"
+        :is-adding-payment-method="isAddingPaymentMethod"
         @confirm="handleConfirm"
-        @close="handleCancel"
+        @cancel="handleCancel"
+        @payment-success="handlePaymentSuccess"
+        @payment-failed="(error) => $emit('payment-failed', error)"
     >
-        <template #body>
-            <div class="grid grid-cols-1 gap-4 pb-4">
-                <SlidingPanes :panes="TOP_UP_MODAL_STEPS" :current="step">
-                    <template #TOP_UP>
-                        <div v-if="hasSubscriptionChoice" class="mb-4">
-                            <RadioGroupExtended
-                                v-model="selectedSubscriptionId"
-                                class="sv-topup-modal__subscription"
-                                name="top-up-subscription"
-                                direction="column"
-                                required
-                                :options="subscriptionOptions"
-                                :show-radio="false"
-                                :label="
-                                    $t({
-                                        defaultMessage: 'Subscription to top up',
-                                        description:
-                                            'Label above the list of subscriptions a top-up can be charged against, in the top-up modal',
-                                        id: 'topup_modal.subscriptions.label',
-                                    })
-                                "
-                            >
-                                <template #prefix="{ optionValue }">
-                                    <SubscriptionSummary
-                                        v-if="summaryById[String(optionValue)]"
-                                        class="sv-topup-modal__subscription-option grow"
-                                        no-spacing
-                                        :subscription="
-                                            summaryById[String(optionValue)].subscription
-                                        "
-                                        :enabled-pricing-ids="
-                                            summaryById[String(optionValue)].enabledPricingIds
-                                        "
-                                    />
-                                </template>
-
-                                <template #label="{ option }">
-                                    <span class="sr-only">{{ option.label }}</span>
-                                </template>
-                            </RadioGroupExtended>
-                        </div>
-
-                        <TopUpModalForm
-                            :key="topUpFormKey"
-                            ref="topUpFormRef"
-                            :top-up-pricing-items="topUpPricingItems"
-                            :payment-methods="paymentMethods"
-                            :auto-top-up-config="savedAutoTopUpRule"
-                            :payment-method-options="settledOptions"
-                            @add-payment-method="openAddPaymentMethod"
-                            @success="handleTopUpSuccess"
-                            @save-auto-top-up="handleSaveAutoTopUp"
+        <template #TOP_UP>
+            <div v-if="hasSubscriptionChoice" class="mb-4">
+                <RadioGroupExtended
+                    v-model="selectedSubscriptionId"
+                    class="sv-topup-modal__subscription"
+                    name="top-up-subscription"
+                    direction="column"
+                    required
+                    :options="subscriptionOptions"
+                    :show-radio="false"
+                    :label="
+                        $t({
+                            defaultMessage: 'Subscription to top up',
+                            description:
+                                'Label above the list of subscriptions a top-up can be charged against, in the top-up modal',
+                            id: 'topup_modal.subscriptions.label',
+                        })
+                    "
+                >
+                    <template #prefix="{ optionValue }">
+                        <SubscriptionSummary
+                            v-if="summaryById[String(optionValue)]"
+                            class="sv-topup-modal__subscription-option grow"
+                            no-spacing
+                            :subscription="summaryById[String(optionValue)].subscription"
+                            :enabled-pricing-ids="
+                                summaryById[String(optionValue)].enabledPricingIds
+                            "
                         />
                     </template>
 
-                    <template #ADD_PAYMENT_METHOD>
-                        <AddPaymentMethodPane
-                            ref="addPaymentMethodRef"
-                            :customer="customer"
-                            :payment-method-options="paymentMethodOptions"
-                            :is-loading="isPaymentMethodOptionsPending"
-                            :is-active="isAddingPaymentMethod"
-                            @success="handlePaymentSuccess"
-                            @failure="(error) => $emit('payment-failed', error)"
-                        />
+                    <template #label="{ option }">
+                        <span class="sr-only">{{ option.label }}</span>
                     </template>
-                    <template #SUCCESS>
-                        <TopUpModalSuccess
-                            v-if="chargedInvoice"
-                            :added-value="chargedValue"
-                            :invoice="chargedInvoice"
-                        />
-                    </template>
-                </SlidingPanes>
+                </RadioGroupExtended>
             </div>
+
+            <TopUpModalForm
+                :key="topUpFormKey"
+                ref="topUpFormRef"
+                :top-up-pricing-items="topUpPricingItems"
+                :payment-methods="paymentMethods"
+                :auto-top-up-config="savedAutoTopUpRule"
+                :payment-method-options="settledOptions"
+                @add-payment-method="openAddPaymentMethod"
+                @success="handleTopUpSuccess"
+                @save-auto-top-up="handleSaveAutoTopUp"
+            />
+        </template>
+
+        <template #SUCCESS>
+            <TopUpModalSuccess
+                v-if="chargedInvoice"
+                :added-value="chargedValue"
+                :invoice="chargedInvoice"
+            />
         </template>
 
         <template v-if="step === 'SUCCESS' || isTopUpUnavailable" #footer>
@@ -343,5 +331,5 @@ watch(
                 </template>
             </div>
         </template>
-    </Modal>
+    </WalletModalShell>
 </template>

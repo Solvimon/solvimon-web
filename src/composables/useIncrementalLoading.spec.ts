@@ -100,12 +100,21 @@ describe('useIncrementalLoading', () => {
         expect(items.value).toStrictEqual([{ id: 'existing' }]);
     });
 
-    it('returns items as a deep clone (nonMutableItems) so internal ref is not exposed', async () => {
-        const service = vi.fn().mockResolvedValue(createSuccessResponse([{ id: '1' }], 1));
-        const { items, fetchInitial } = useIncrementalLoading<{ id: string }>({ service });
+    it('hands out a copy, so appending to it cannot reach the list paging reads from', async () => {
+        const service = vi
+            .fn()
+            .mockResolvedValueOnce(createSuccessResponse([{ id: '1' }], 1, true))
+            .mockResolvedValueOnce(createSuccessResponse([{ id: '2' }], 2));
+        const { items, fetchInitial, fetchMore } = useIncrementalLoading<{ id: string }>({
+            service,
+        });
 
         await fetchInitial();
-        expect(items.value).toStrictEqual([{ id: '1' }]);
+        items.value.push({ id: 'injected' });
+
+        await fetchMore();
+
+        expect(items.value).toStrictEqual([{ id: '1' }, { id: '2' }]);
     });
 
     it('fetchAll loads full list via getPaginatedFullList and replaces items', async () => {

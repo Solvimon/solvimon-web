@@ -72,7 +72,7 @@ export function useIncrementalLoading<T>({
         return await loadPage(page.value + 1);
     };
 
-    const nonMutableItems = computed(() => structuredClone(items.value));
+    const nonMutableItems = computed(() => [...items.value]);
 
     const fetchInitial = async () => {
         return await loadPage(1, { replace: true });

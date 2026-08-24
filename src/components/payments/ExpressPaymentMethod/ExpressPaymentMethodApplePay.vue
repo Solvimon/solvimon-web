@@ -10,12 +10,9 @@ import type {
 import type { AddressData, ApplePayConfiguration } from '@adyen/adyen-web';
 import type { ExpressPaymentMethodEmits } from './ExpressPaymentMethod.types';
 import type { ExpressPaymentMethodApplePayProps } from './ExpressPaymentMethodApplePay.types';
+import { createExpressCheckout } from './useExpressPaymentMethod';
 import ExpressPaymentMethodButton from '@/components/payments/ExpressPaymentMethodButton/ExpressPaymentMethodButton.vue';
-import {
-    createReturnUrl,
-    getAdyenExpressCheckoutConfiguration,
-    transformObjectToAdyenObject,
-} from '@/utils/adyen';
+import { createReturnUrl, transformObjectToAdyenObject } from '@/utils/adyen';
 import { useLogger } from '@/components/providers';
 import { createPaymentsService } from '@/services/payments';
 
@@ -32,17 +29,9 @@ const { authorizePayment } = createPaymentsService();
 const paymentAcceptorId = props.paymentMethodOptionsResponse.payment_acceptor.id;
 
 const initApplePay = async () => {
-    const { AdyenCheckout, ApplePay } = await import('@adyen/adyen-web');
+    const { ApplePay } = await import('@adyen/adyen-web');
 
-    const checkout = await AdyenCheckout(
-        getAdyenExpressCheckoutConfiguration({
-            amount: props.amount,
-            locale: props.locale,
-            countryCode: props.countryCode,
-            paymentMethodOptionResponse: props.paymentMethodOptionsResponse,
-            logger,
-        }),
-    );
+    const checkout = await createExpressCheckout(props, logger);
 
     const applePay = new ApplePay(checkout, {
         isExpress: true,

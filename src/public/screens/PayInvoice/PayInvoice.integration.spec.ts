@@ -1,4 +1,4 @@
-import { mount } from '@vue/test-utils';
+import { flushPromises, mount } from '@vue/test-utils';
 import { defineComponent, nextTick, ref } from 'vue';
 import type { Invoice, PaymentMethodOptionsResponse } from '@solvimon/solvimon-types';
 import PayInvoice from './PayInvoice.vue';
@@ -166,7 +166,12 @@ const amount = { currency: 'EUR', quantity: '99.00' };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
+beforeAll(async () => {
+    await import('@/components/payments/PaymentIntegrationFormAdyen/PaymentIntegrationFormAdyen.vue');
+});
+
 async function waitForAdyenMount() {
+    await flushPromises();
     await nextTick();
     await nextTick();
     await new Promise((resolve) => setTimeout(resolve, 0));
@@ -190,7 +195,9 @@ describe('PayInvoice', () => {
             global: { stubs: { teleport: true } },
         });
 
-    beforeEach(() => {
+    beforeEach(async () => {
+        await waitForAdyenMount();
+
         vi.clearAllMocks();
     });
 

@@ -1,6 +1,6 @@
 import type { Customer, PaymentMethodOptionsResponse } from '@solvimon/solvimon-types';
 import type { Ref } from 'vue';
-import { mount } from '@vue/test-utils';
+import { flushPromises, mount } from '@vue/test-utils';
 import AddPaymentMethodPane from './AddPaymentMethodPane.vue';
 
 // ─── Mocks ────────────────────────────────────────────────────────────────────
@@ -50,16 +50,21 @@ const PAYMENT_METHOD_OPTIONS = [
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const mountPane = (props: Record<string, unknown> = {}) =>
-    mount(AddPaymentMethodPane, {
+const mountPane = async (props: Record<string, unknown> = {}) => {
+    const wrapper = mount(AddPaymentMethodPane, {
         props: { customer: CUSTOMER, paymentMethodOptions: PAYMENT_METHOD_OPTIONS, ...props },
     });
 
-const form = (wrapper: ReturnType<typeof mountPane>) =>
-    wrapper.find('[data-testid="payment-method-form"]');
+    await flushPromises();
 
-const formStub = (wrapper: ReturnType<typeof mountPane>) =>
-    wrapper.findComponent({ name: 'PaymentMethodFormStub' });
+    return wrapper;
+};
+
+type Wrapper = Awaited<ReturnType<typeof mountPane>>;
+
+const form = (wrapper: Wrapper) => wrapper.find('[data-testid="payment-method-form"]');
+
+const formStub = (wrapper: Wrapper) => wrapper.findComponent({ name: 'PaymentMethodFormStub' });
 
 // ─── Specs ────────────────────────────────────────────────────────────────────
 
@@ -70,37 +75,38 @@ describe('AddPaymentMethodPane', () => {
 
     // The form starts up a payment gateway, so a customer who never comes here never pays for one.
     it('builds nothing until the pane is first shown', async () => {
-        const wrapper = mountPane({ isActive: false });
+        const wrapper = await mountPane({ isActive: false });
 
         expect(form(wrapper).exists()).toBe(false);
 
         await wrapper.setProps({ isActive: true });
+        await flushPromises();
 
         expect(form(wrapper).exists()).toBe(true);
     });
 
     it('keeps the form once built, so stepping away and back does not start over', async () => {
-        const wrapper = mountPane({ isActive: true });
+        const wrapper = await mountPane({ isActive: true });
 
         await wrapper.setProps({ isActive: false });
 
         expect(form(wrapper).exists()).toBe(true);
     });
 
-    it('builds nothing without a customer to store the method for', () => {
-        expect(form(mountPane({ isActive: true, customer: undefined })).exists()).toBe(false);
+    it('builds nothing without a customer to store the method for', async () => {
+        expect(form(await mountPane({ isActive: true, customer: undefined })).exists()).toBe(false);
     });
 
     // The method is stored for later rather than paid with now, which is a different flow entirely.
-    it('runs the tokenization flow', () => {
-        const wrapper = mountPane({ isActive: true });
+    it('runs the tokenization flow', async () => {
+        const wrapper = await mountPane({ isActive: true });
 
         expect(formStub(wrapper).props('configuration')).toEqual({ variant: 'TOKENIZE' });
         expect(formStub(wrapper).props('hideSubmitButton')).toBe(true);
     });
 
-    it('submits the form for a host whose own chrome owns the button', () => {
-        const wrapper = mountPane({ isActive: true });
+    it('submits the form for a host whose own chrome owns the button', async () => {
+        const wrapper = await mountPane({ isActive: true });
 
         wrapper.vm.submit();
 
@@ -108,7 +114,7 @@ describe('AddPaymentMethodPane', () => {
     });
 
     it('reports the gateway working, so the host can show it', async () => {
-        const wrapper = mountPane({ isActive: true });
+        const wrapper = await mountPane({ isActive: true });
 
         expect(wrapper.vm.isSaving).toBe(false);
 
@@ -119,7 +125,7 @@ describe('AddPaymentMethodPane', () => {
 
     // A form left behind on a pane nobody is looking at is not what the host is waiting for.
     it('reports nothing pending once the host has moved on', async () => {
-        const wrapper = mountPane({ isActive: true });
+        const wrapper = await mountPane({ isActive: true });
         gateway.isPaymentPending.value = true;
 
         await wrapper.setProps({ isActive: false });
@@ -128,7 +134,7 @@ describe('AddPaymentMethodPane', () => {
     });
 
     it('passes on what the form reports', async () => {
-        const wrapper = mountPane({ isActive: true });
+        const wrapper = await mountPane({ isActive: true });
 
         await formStub(wrapper).vm.$emit('success');
         await formStub(wrapper).vm.$emit('failure', new Error('declined'));

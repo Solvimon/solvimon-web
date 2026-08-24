@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue';
 import { helpers, required } from '@vuelidate/validators';
-import { Modal, useIntl, useValidation } from '@solvimon/solvimon-ui';
+import { useIntl, useValidation } from '@solvimon/solvimon-ui';
 import type { AutoTopUpModalEmits, AutoTopUpModalProps } from './AutoTopUpModal.types';
 import { AUTO_TOP_UP_MODAL_STEPS, type AutoTopUpModalStep } from './AutoTopUpModal.types';
 import {
@@ -17,8 +17,7 @@ import {
     getTopUpPricingItems,
 } from '@/components/wallets/TopUpModal/TopUpModal.lib';
 import PaymentMethodSelector from '@/components/payments/PaymentMethodSelector/PaymentMethodSelector.vue';
-import AddPaymentMethodPane from '@/components/payments/AddPaymentMethodPane/AddPaymentMethodPane.vue';
-import SlidingPanes from '@/components/shared/SlidingPanes/SlidingPanes.vue';
+import WalletModalShell from '@/components/wallets/WalletModalShell.vue';
 import TopUpInvoicePreview from '@/components/wallets/TopUpModal/TopUpInvoicePreview.vue';
 import { useCustomerPaymentMethodOptions } from '@/composables/useCustomerPaymentMethodOptions';
 import { useDefaultPaymentMethod } from '@/composables/useDefaultPaymentMethod';
@@ -252,72 +251,62 @@ watch(
 </script>
 
 <template>
-    <Modal
-        no-click-away
+    <WalletModalShell
+        ref="addPaymentMethodRef"
         :show-modal="showModal"
-        size="lg"
         :title="title"
         :sub-title="subTitle"
         :cancel-button-text="cancelButtonText"
         :confirm-button-text="confirmButtonText"
-        :is-loading="isPending"
+        :is-pending="isPending"
+        :panes="AUTO_TOP_UP_MODAL_STEPS"
+        :step="step"
+        add-payment-method-pane="ADD_PAYMENT_METHOD"
+        :customer="customer"
+        :payment-method-options="paymentMethodOptions"
+        :is-payment-method-options-pending="isPaymentMethodOptionsPending"
+        :is-adding-payment-method="isAddingPaymentMethod"
         @confirm="handleConfirm"
-        @close="handleCancel"
+        @cancel="handleCancel"
+        @payment-success="handlePaymentSuccess"
+        @payment-failed="(error) => $emit('payment-failed', error)"
     >
-        <template #body>
-            <div class="grid grid-cols-1 gap-4 pb-4">
-                <SlidingPanes :panes="AUTO_TOP_UP_MODAL_STEPS" :current="step">
-                    <template #AUTO_TOP_UP>
-                        <div class="grid grid-cols-1 gap-4">
-                            <AutoTopUpConfigEditor
-                                v-if="autoTopUpEditor"
-                                :key="formKey"
-                                ref="autoTopUpFormRef"
-                                class="sv-auto-topup-modal__rule"
-                                v-bind="autoTopUpEditor"
-                                :config="savedRule"
-                                always-enabled
-                                :disabled="isPending"
-                            />
+        <template #AUTO_TOP_UP>
+            <div class="grid grid-cols-1 gap-4">
+                <AutoTopUpConfigEditor
+                    v-if="autoTopUpEditor"
+                    :key="formKey"
+                    ref="autoTopUpFormRef"
+                    class="sv-auto-topup-modal__rule"
+                    v-bind="autoTopUpEditor"
+                    :config="savedRule"
+                    always-enabled
+                    :disabled="isPending"
+                />
 
-                            <TopUpInvoicePreview
-                                :pricing-plan-schedule-id="previewScheduleId"
-                                :pricing-items="previewPricingItems"
-                            />
+                <TopUpInvoicePreview
+                    :pricing-plan-schedule-id="previewScheduleId"
+                    :pricing-items="previewPricingItems"
+                />
 
-                            <PaymentMethodSelector
-                                v-model="selectedPaymentMethodId"
-                                class="sv-auto-topup-modal__payment-method"
-                                :payment-methods="sortedPaymentMethods"
-                                :payment-method-options="settledOptions"
-                                :disabled="isPending"
-                                :error="validation.paymentMethodId.$errors"
-                                :label="
-                                    $t({
-                                        defaultMessage: 'Pay automatic top-ups with',
-                                        description:
-                                            'Label above the payment method an automatic top-up is charged to',
-                                        id: 'auto_topup_modal.payment_method.label',
-                                    })
-                                "
-                                @add-payment-method="openAddPaymentMethod"
-                            />
-                        </div>
-                    </template>
-
-                    <template #ADD_PAYMENT_METHOD>
-                        <AddPaymentMethodPane
-                            ref="addPaymentMethodRef"
-                            :customer="customer"
-                            :payment-method-options="paymentMethodOptions"
-                            :is-loading="isPaymentMethodOptionsPending"
-                            :is-active="isAddingPaymentMethod"
-                            @success="handlePaymentSuccess"
-                            @failure="(error) => $emit('payment-failed', error)"
-                        />
-                    </template>
-                </SlidingPanes>
+                <PaymentMethodSelector
+                    v-model="selectedPaymentMethodId"
+                    class="sv-auto-topup-modal__payment-method"
+                    :payment-methods="sortedPaymentMethods"
+                    :payment-method-options="settledOptions"
+                    :disabled="isPending"
+                    :error="validation.paymentMethodId.$errors"
+                    :label="
+                        $t({
+                            defaultMessage: 'Pay automatic top-ups with',
+                            description:
+                                'Label above the payment method an automatic top-up is charged to',
+                            id: 'auto_topup_modal.payment_method.label',
+                        })
+                    "
+                    @add-payment-method="openAddPaymentMethod"
+                />
             </div>
         </template>
-    </Modal>
+    </WalletModalShell>
 </template>

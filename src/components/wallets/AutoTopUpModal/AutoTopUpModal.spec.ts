@@ -3,9 +3,10 @@ import { defineComponent, nextTick } from 'vue';
 import type { Customer, CustomerWalletBalanceItem, PaymentMethod } from '@solvimon/solvimon-types';
 import AutoTopUpModal from './AutoTopUpModal.vue';
 
-const { mockCreate, mockPreview, mockAutoTopUp } = vi.hoisted(() => ({
+const { mockCreate, mockPreview, mockAutoTopUp, mockSubmitPaymentMethod } = vi.hoisted(() => ({
     mockCreate: vi.fn(),
     mockPreview: vi.fn(),
+    mockSubmitPaymentMethod: vi.fn(),
     mockAutoTopUp: { validate: vi.fn() } as {
         validate: ReturnType<typeof vi.fn>;
         rule: { value: unknown };
@@ -73,7 +74,7 @@ vi.mock('@/public/components/PaymentMethodForm/PaymentMethodForm.vue', () => ({
         ],
         emits: ['success', 'failure'],
         setup(_props, { expose }) {
-            expose({ submit: vi.fn(), isPaymentPending: false });
+            expose({ submit: mockSubmitPaymentMethod, isPaymentPending: false });
         },
         template: '<div data-testid="payment-method-form" />',
     }),
@@ -202,6 +203,7 @@ describe('AutoTopUpModal', () => {
     beforeEach(() => {
         mockCreate.mockReset();
         mockCreate.mockResolvedValue({ id: 'atuc_1' });
+        mockSubmitPaymentMethod.mockReset();
         mockPreview.mockReset();
         mockPreview.mockResolvedValue({ id: 'inv_preview' });
         mockAutoTopUp.rule.value = undefined;
@@ -393,6 +395,17 @@ describe('AutoTopUpModal', () => {
         await flushPromises();
 
         expect(wrapper.find('[data-testid="payment-method-form"]').exists()).toBe(true);
+    });
+
+    it('submits the payment method form when confirmed while adding one', async () => {
+        const wrapper = mountModal();
+
+        selector(wrapper).vm.$emit('add-payment-method');
+        await flushPromises();
+        await confirm(wrapper);
+
+        expect(mockSubmitPaymentMethod).toHaveBeenCalled();
+        expect(mockCreate).not.toHaveBeenCalled();
     });
 
     it('steps back to the rule rather than closing when cancelled while adding', async () => {

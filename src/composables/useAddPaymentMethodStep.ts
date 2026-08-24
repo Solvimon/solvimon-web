@@ -1,5 +1,10 @@
 import { computed, ref, type Ref } from 'vue';
-import type AddPaymentMethodPane from '@/components/payments/AddPaymentMethodPane/AddPaymentMethodPane.vue';
+
+/** Whatever renders the pane — the pane itself, or a shell that passes these through. */
+type AddPaymentMethodHost = {
+    submit: () => void;
+    isSaving: boolean;
+};
 
 /**
  * Adding a payment method as a detour from whatever the customer came to do.
@@ -17,7 +22,7 @@ export function useAddPaymentMethodStep<TStep extends string>({
     name: TStep;
     returnTo: TStep;
 }) {
-    const paneRef = ref<InstanceType<typeof AddPaymentMethodPane>>();
+    const paneRef = ref<AddPaymentMethodHost>();
 
     return {
         paneRef,

@@ -1,15 +1,18 @@
 import type { PricingExtended, PricingPlanScheduleInfoExpanded } from '@solvimon/solvimon-types';
 import { isEmpty } from '@solvimon/solvimon-ui';
 
+export function getPricingsFromScheduleInfo(
+    scheduleInfo: PricingPlanScheduleInfoExpanded,
+): PricingExtended[] {
+    const categories = scheduleInfo.pricing_plan_version.pricing_categories ?? [];
+
+    return categories.flatMap((category) => category.pricings ?? []);
+}
+
 export function getAllPricingsFromScheduleInfos(
     scheduleInfos: PricingPlanScheduleInfoExpanded[],
 ): PricingExtended[] {
-    return scheduleInfos.flatMap(
-        (scheduleInfo) =>
-            scheduleInfo.pricing_plan_version.pricing_categories?.flatMap(
-                (category) => category.pricings ?? [],
-            ) ?? [],
-    );
+    return scheduleInfos.flatMap(getPricingsFromScheduleInfo);
 }
 
 export function getNameFromPricing(pricing: PricingExtended): string | undefined {

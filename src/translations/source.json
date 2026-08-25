@@ -343,10 +343,6 @@
     "defaultMessage": "Payment method",
     "description": "The title of the payment method block in the checkout form"
   },
-  "checkout.payment_methods.no_country_selected_message": {
-    "defaultMessage": "Select a country to see the available payment methods",
-    "description": "The message shown when no country is selected in the checkout"
-  },
   "checkout.promotion_code.add_label": {
     "defaultMessage": "Add promotion code",
     "description": "Label for adding a promotion code in checkout"
@@ -459,18 +455,6 @@
     "defaultMessage": "Subscription details",
     "description": "The label for the subscription details button in the subscriptions block"
   },
-  "customer_overview.billing_information_block.load_failed.subtitle": {
-    "defaultMessage": "Please refresh or contact support.",
-    "description": "Subtitle when payments methods fail to load"
-  },
-  "customer_overview.billing_information_block.load_failed.title": {
-    "defaultMessage": "We can’t load your billing information",
-    "description": "Title when payments methods fail to load"
-  },
-  "customer_overview.billing_information_block.title": {
-    "defaultMessage": "Billing information",
-    "description": "Title for the billing information block on the customer overview page"
-  },
   "customer_overview.billing_information_block.view_all_payment_methods_link_label": {
     "defaultMessage": "Edit",
     "description": "The link text that links to the overview page of the customer billing information"
@@ -514,10 +498,6 @@
   "customer_overview.wallet_balances_block.title": {
     "defaultMessage": "{count,plural,one{Wallet} other{Wallets}}",
     "description": "Title for the wallets block on the customer overview page"
-  },
-  "empty_state.retry.button": {
-    "defaultMessage": "Refresh",
-    "description": "Label of the button in the error state that lets you retry your action"
   },
   "empty_value_placeholder": {
     "defaultMessage": "-",
@@ -582,22 +562,6 @@
   "invoices_list.title": {
     "defaultMessage": "Schedules",
     "description": "Invoices list title"
-  },
-  "on_demand_pricing_list.category_fallback_title": {
-    "defaultMessage": "Items",
-    "description": "Fallback title for the selectable pricing items when no product category name is available"
-  },
-  "on_demand_pricing_row.add_to_cart_button_label": {
-    "defaultMessage": "Add to cart",
-    "description": "Label for the add to cart button in an on-demand pricing row"
-  },
-  "on_demand_pricing_row.one_off_label": {
-    "defaultMessage": "one-off",
-    "description": "One-off label shown next to the price in an on-demand pricing row"
-  },
-  "on_demand_pricing_row.remove_button_label": {
-    "defaultMessage": "Remove",
-    "description": "Label for the remove button in an on-demand pricing row"
   },
   "pay_button.label.amount_and_payment_method": {
     "defaultMessage": "Pay {amount} with {type}",
@@ -686,14 +650,6 @@
   "payments.retry_button.label": {
     "defaultMessage": "Try again",
     "description": "Retry button text when an error has happened during a payment"
-  },
-  "pricing_group_multiple_editor.at_least_one_description": {
-    "defaultMessage": "Select at least one product",
-    "description": "The description of the pricing group multiple editor for at least one product"
-  },
-  "pricing_item_pricing": {
-    "defaultMessage": "{pricing} per {billing_period}",
-    "description": "The pricing item pricing"
   },
   "pricing_item_pricing.unsupported_pricing_error": {
     "defaultMessage": "Unsupported pricing",
@@ -855,53 +811,9 @@
     "defaultMessage": "Done",
     "description": "Label of the button that leaves the manage subscription screen once the change is committed"
   },
-  "subscription_management.order_summary.empty_state": {
-    "defaultMessage": "Select your items",
-    "description": "Placeholder shown when no items are selected in the order summary"
-  },
-  "subscription_management.order_summary.item_count": {
-    "defaultMessage": "{count} items",
-    "description": "Subtitle shown below the product name when multiple one-off items are selected"
-  },
-  "subscription_management.order_summary.one_off_label": {
-    "defaultMessage": "one-off",
-    "description": "One-off payment label next to a line item in order summary"
-  },
-  "subscription_management.order_summary.selected_item_count": {
-    "defaultMessage": "{count} items",
-    "description": "Temporary order summary subtitle shown while the invoice preview is loading"
-  },
-  "subscription_management.order_summary.selected_items_title": {
-    "defaultMessage": "Selected items",
-    "description": "Temporary order summary title shown while the invoice preview is loading"
-  },
-  "subscription_management.order_summary.title": {
-    "defaultMessage": "Order summary",
-    "description": "Title for the order summary section on the upgrade subscription page"
-  },
   "subscription_management.payment_method_selector.label": {
     "defaultMessage": "Payment method",
     "description": "Label above the payment method that pays for the subscription change"
-  },
-  "subscription_management.payment_picker.all_title": {
-    "defaultMessage": "All payment methods",
-    "description": "Heading for the all payment methods section in the upgrade subscription payment picker"
-  },
-  "subscription_management.payment_picker.saved_title": {
-    "defaultMessage": "Saved payment methods",
-    "description": "Heading for the saved payment methods section in the upgrade subscription payment picker"
-  },
-  "subscription_management.pricing_row.add_button_label": {
-    "defaultMessage": "Add to cart",
-    "description": "Button to add a pricing item to the cart"
-  },
-  "subscription_management.pricing_row.one_off_label": {
-    "defaultMessage": "one-off",
-    "description": "Label indicating a one-time charge on a pricing row"
-  },
-  "subscription_management.pricing_row.remove_button_label": {
-    "defaultMessage": "Remove",
-    "description": "Button to remove a pricing item from the cart"
   },
   "subscription_management.success.message": {
     "defaultMessage": "Your {subject} has been changed. Please be aware that it can take some time to reflect this change in your subscription.",

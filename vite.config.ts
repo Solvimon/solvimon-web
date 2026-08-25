@@ -121,15 +121,10 @@ const coreEntry = resolve(__dirname, 'src/public/core/index.ts');
 const rootEntry = resolve(__dirname, 'src/index.ts');
 
 export default defineConfig({
+    // Applies to both output formats, unlike terser, which Vite only ran over the cjs build.
+    esbuild: { drop: ['console', 'debugger'] },
     build: {
-        minify: 'terser',
-        terserOptions: {
-            compress: {
-                drop_console: true,
-                drop_debugger: true,
-                pure_funcs: ['console.log', 'console.info', 'console.debug'],
-            },
-        },
+        minify: 'esbuild',
         outDir: fileURLToPath(new URL('./dist', import.meta.url)),
         chunkSizeWarningLimit: 1000,
         lib: {

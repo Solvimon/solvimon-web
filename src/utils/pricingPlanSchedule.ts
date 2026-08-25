@@ -3,7 +3,6 @@ import type {
     ConfiguredMeterValue,
     EnabledPricing,
     Pricing,
-    PricingExtended,
     PricingGroupExtended,
     PricingPlanScheduleCustomization,
     PricingPlanScheduleInfo,
@@ -90,15 +89,6 @@ export function getPricingGroupByPricingId({
     return (pricingPlanScheduleInfo.pricing_plan_version?.pricing_categories ?? [])
         .flatMap((category) => category.pricing_groups ?? [])
         .find((group) => (group.pricings ?? []).some((pricing) => pricing.id === pricingId));
-}
-
-export function getAllPricingsFromScheduleInfos({
-    pricingPlanScheduleInfo,
-}: {
-    pricingPlanScheduleInfo: PricingPlanScheduleInfoExpanded;
-}): PricingExtended[] {
-    const categories = pricingPlanScheduleInfo.pricing_plan_version.pricing_categories ?? [];
-    return categories.flatMap((category) => category.pricings ?? []);
 }
 
 export type PricingItemConfigMeta = {

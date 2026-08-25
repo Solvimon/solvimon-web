@@ -1,7 +1,6 @@
 import {
     getActiveDefaultScheduleId,
     getActiveDefaultScheduleInfo,
-    getAllPricingsFromScheduleInfos,
     getFirstPricingPlanScheduleOfType,
     getPricingGroupByPricingId,
     getPricingItemConfigMetaById,
@@ -535,43 +534,6 @@ describe('pricingPlanSchedule utils', () => {
 
         it('returns undefined without subscriptions', () => {
             expect(getActiveDefaultScheduleId([])).toBeUndefined();
-        });
-    });
-
-    describe('getAllPricingsFromScheduleInfos', () => {
-        const makeInfo = (
-            categories: PricingCategoryExtended[] | undefined,
-        ): PricingPlanScheduleInfoExpanded =>
-            ({
-                pricing_plan_version: { pricing_categories: categories },
-            }) as unknown as PricingPlanScheduleInfoExpanded;
-
-        it('returns all pricings from categories', () => {
-            const info = makeInfo([
-                { product_category_id: 'cat-1', pricings: [{ id: 'p1' }, { id: 'p2' }] } as any,
-                { product_category_id: 'cat-2', pricings: [{ id: 'p3' }] } as any,
-            ]);
-
-            const result = getAllPricingsFromScheduleInfos({ pricingPlanScheduleInfo: info });
-
-            expect(result).toHaveLength(3);
-            expect(result.map((p) => p.id)).toEqual(['p1', 'p2', 'p3']);
-        });
-
-        it('returns empty array when pricing_categories is undefined', () => {
-            expect(
-                getAllPricingsFromScheduleInfos({ pricingPlanScheduleInfo: makeInfo(undefined) }),
-            ).toEqual([]);
-        });
-
-        it('returns empty array when all categories have no pricings', () => {
-            expect(
-                getAllPricingsFromScheduleInfos({
-                    pricingPlanScheduleInfo: makeInfo([
-                        { product_category_id: 'cat-1', pricings: undefined } as any,
-                    ]),
-                }),
-            ).toEqual([]);
         });
     });
 

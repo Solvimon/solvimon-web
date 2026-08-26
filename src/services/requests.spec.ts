@@ -8,6 +8,7 @@ const CLIENT_VERSION = `solvimon-web-v${version}`;
 const CALLED_URL = 'https://domain.com/test';
 const TOKEN = 'some-token-123';
 const onError = vi.fn();
+const loggerError = vi.fn();
 
 vi.mock('@solvimon/solvimon-ui', async () => {
     const actual =
@@ -22,6 +23,15 @@ vi.mock('@solvimon/solvimon-ui', async () => {
 });
 vi.mock('@/components/providers/AuthProvider', () => ({
     useAuth: vi.fn(() => ({ accessToken: { value: TOKEN } })),
+}));
+vi.mock('@/components/providers/LoggerProvider/composables/useLogger', () => ({
+    useLogger: () => ({
+        debug: vi.fn(),
+        info: vi.fn(),
+        warn: vi.fn(),
+        error: loggerError,
+        capture: vi.fn(),
+    }),
 }));
 
 describe('createRequestService', () => {
@@ -40,6 +50,7 @@ describe('createRequestService', () => {
 
     afterEach(() => {
         onError.mockClear();
+        loggerError.mockClear();
     });
 
     describe('headers', () => {
@@ -199,5 +210,89 @@ describe('createRequestService', () => {
 
         await expect(request({ url: CALLED_URL })).rejects.toThrow(errorResponse);
         expect(onError).toHaveBeenCalledWith(expect.objectContaining({ cause: errorResponse }));
+    });
+    describe('error responses', () => {
+        const jsonErrorResponse = (
+            status: number,
+            body: unknown,
+            requestId = 'req_123',
+        ): Partial<Response> => ({
+            ok: false,
+            status,
+            json: () => Promise.resolve(body),
+            headers: new Headers({
+                'Content-Type': 'application/json',
+                [HeadersConst.X_REQUEST_ID]: requestId,
+            }),
+        });
+
+        it('rejects with the message and field the API sent', async () => {
+            const request = createRequestService();
+            mockFetch.mockResolvedValueOnce(
+                jsonErrorResponse(422, {
+                    message: 'VAT number is invalid',
+                    field: 'vat_number',
+                }),
+            );
+
+            await expect(request({ url: CALLED_URL })).rejects.toEqual({
+                hasError: true,
+                statusCode: 422,
+                message: 'VAT number is invalid',
+                requestId: 'req_123',
+                field: 'vat_number',
+            });
+        });
+
+        it('does not report an API error as a parse failure', async () => {
+            const request = createRequestService();
+            mockFetch.mockResolvedValueOnce(jsonErrorResponse(500, { message: 'Server error' }));
+
+            await expect(request({ url: CALLED_URL })).rejects.toMatchObject({
+                statusCode: 500,
+                message: 'Server error',
+            });
+            expect(loggerError).not.toHaveBeenCalled();
+        });
+
+        it('rejects with a parse failure when the body is not valid JSON', async () => {
+            const request = createRequestService();
+            const parseError = new SyntaxError('Unexpected token < in JSON at position 0');
+            mockFetch.mockResolvedValueOnce({
+                ok: false,
+                status: 502,
+                json: () => Promise.reject(parseError),
+                headers: new Headers({
+                    'Content-Type': 'application/json',
+                    [HeadersConst.X_REQUEST_ID]: 'req_456',
+                }),
+            });
+
+            await expect(request({ url: CALLED_URL })).rejects.toEqual({
+                hasError: true,
+                statusCode: 502,
+                requestId: 'req_456',
+            });
+            expect(loggerError).toHaveBeenCalledWith(
+                'REQUEST_PARSE_FAILED',
+                'Failed to parse JSON response',
+                {},
+                parseError,
+            );
+        });
+
+        it('leaves message and field undefined when the error body has neither', async () => {
+            const request = createRequestService();
+            mockFetch.mockResolvedValueOnce(jsonErrorResponse(404, {}));
+
+            await expect(request({ url: CALLED_URL })).rejects.toEqual({
+                hasError: true,
+                statusCode: 404,
+                message: undefined,
+                requestId: 'req_123',
+                field: undefined,
+            });
+            expect(loggerError).not.toHaveBeenCalled();
+        });
     });
 });

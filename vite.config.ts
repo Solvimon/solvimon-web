@@ -52,6 +52,12 @@ const componentEntries = getLibEntries(
     'components/',
 );
 
+/**
+ * Extensions that state the format outright, so node reads each entry as what it is without the
+ * package declaring a `type`. Rollup already names shared chunks this way; the entries did not.
+ */
+const MODULE_EXTENSIONS: Record<string, string> = { es: 'mjs', cjs: 'cjs' };
+
 const coreEntry = resolve(__dirname, 'src/public/core/index.ts');
 const rootEntry = resolve(__dirname, 'src/index.ts');
 
@@ -76,10 +82,13 @@ export default defineConfig({
                 core: coreEntry,
             },
             formats: ['es', 'cjs'],
-            fileName: (format, name) =>
-                name === 'core'
-                    ? `core/index.${format}.js`
-                    : `${name.replace(/^[/\\]+/, '').replace('.ce', '')}.${format}.js`,
+            fileName: (format, name) => {
+                const extension = MODULE_EXTENSIONS[format] ?? `${format}.js`;
+
+                return name === 'core'
+                    ? `core/index.${extension}`
+                    : `${name.replace(/^[/\\]+/, '').replace('.ce', '')}.${extension}`;
+            },
         },
         rollupOptions: {
             external: ['vue'],

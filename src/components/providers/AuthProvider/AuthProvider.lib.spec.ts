@@ -1,12 +1,21 @@
+import type { Token } from '@solvimon/solvimon-types';
 import { defineComponent } from 'vue';
 import { mount } from '@vue/test-utils';
 import { getAuth } from './AuthProvider.lib';
 
 const { mockGetAccessToken, mockRefreshAccessToken, mockLogError } = vi.hoisted(() => ({
     mockGetAccessToken: vi.fn().mockResolvedValue({ access_token: 'access-token-123' }),
-    mockRefreshAccessToken: vi.fn<() => Promise<void>>().mockResolvedValue(undefined),
+    mockRefreshAccessToken: vi.fn<() => Promise<Token>>(),
     mockLogError: vi.fn(),
 }));
+
+const REFRESHED_TOKEN = 'refreshed-token-456';
+
+const tokenResponse = (accessToken: string): Token => ({
+    access_token: accessToken,
+    expires_in: 3600,
+    token_type: 'bearer',
+});
 
 vi.mock('@/components/providers/LoggerProvider/composables/useLogger', () => ({
     useLogger: () => ({
@@ -126,6 +135,39 @@ describe('getAuth', () => {
     });
 
     describe('refresh interval', () => {
+        it('applies the refreshed access token', async () => {
+            mockRefreshAccessToken.mockResolvedValue(tokenResponse(REFRESHED_TOKEN));
+
+            const { auth, wrapper } = withSetup(uniqueToken());
+            await vi.advanceTimersByTimeAsync(0);
+            expect(auth.accessToken.value).toBe('access-token-123');
+
+            await vi.advanceTimersByTimeAsync(30_000);
+
+            expect(auth.accessToken.value).toBe(REFRESHED_TOKEN);
+            wrapper.unmount();
+        });
+
+        it('reports SESSION_EXPIRED once it gives up refreshing', async () => {
+            const unauthorized = { statusCode: 401, hasError: true };
+            mockRefreshAccessToken.mockRejectedValue(unauthorized);
+
+            const { wrapper } = withSetup(uniqueToken());
+
+            await vi.advanceTimersByTimeAsync(30_000); // 401 #1 — still trying
+            expect(mockLogError).not.toHaveBeenCalled();
+
+            await vi.advanceTimersByTimeAsync(30_000); // 401 #2 — gives up
+
+            expect(mockLogError).toHaveBeenCalledWith(
+                'SESSION_EXPIRED',
+                'Stopped refreshing the access token after repeated 401 responses',
+                {},
+                unauthorized,
+            );
+            wrapper.unmount();
+        });
+
         it('stops the interval after 2 consecutive 401 responses', async () => {
             mockRefreshAccessToken.mockRejectedValue({ statusCode: 401, hasError: true });
 
@@ -142,9 +184,9 @@ describe('getAuth', () => {
         it('resets the 401 counter after a successful refresh', async () => {
             mockRefreshAccessToken
                 .mockRejectedValueOnce({ statusCode: 401, hasError: true }) // tick 1: counter → 1
-                .mockResolvedValueOnce(undefined) //                           tick 2: counter reset to 0
+                .mockResolvedValueOnce(tokenResponse(REFRESHED_TOKEN)) //      tick 2: counter reset to 0
                 .mockRejectedValueOnce({ statusCode: 401, hasError: true }) // tick 3: counter → 1 (not 2)
-                .mockResolvedValue(undefined); //                              tick 4+: running
+                .mockResolvedValue(tokenResponse(REFRESHED_TOKEN)); //         tick 4+: running
 
             const { wrapper } = withSetup(uniqueToken());
 

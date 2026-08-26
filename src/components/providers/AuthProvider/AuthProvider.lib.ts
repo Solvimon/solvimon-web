@@ -52,14 +52,24 @@ export const getAuth = (token: string) => {
 
         const tryRefresh = async () => {
             try {
-                await refreshAccessToken();
+                state.accessToken.value = (await refreshAccessToken()).access_token;
                 state.consecutiveRefresh401s = 0;
             } catch (err) {
                 if (isUnauthorizedError(err)) {
                     state.consecutiveRefresh401s++;
+
                     if (state.consecutiveRefresh401s >= 2) {
                         clearInterval(state.refreshInterval);
                         state.refreshInterval = undefined;
+
+                        // Nothing will renew the session from here, so the host has to be told:
+                        // it holds the portal token and is the only side that can issue a new one.
+                        logger.error(
+                            'SESSION_EXPIRED',
+                            'Stopped refreshing the access token after repeated 401 responses',
+                            {},
+                            err,
+                        );
                     }
                 }
             }

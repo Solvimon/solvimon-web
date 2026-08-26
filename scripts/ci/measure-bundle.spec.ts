@@ -57,7 +57,7 @@ describe('measureEntryGraph', () => {
         const dist = tmpDir();
         writeChunk(dist, 'shared.mjs', 'import"./deep.mjs";', 100);
         writeChunk(dist, 'deep.mjs', '', 100);
-        const entry = writeChunk(dist, 'screens/A/A.es.js', 'import"../../shared.mjs";', 100);
+        const entry = writeChunk(dist, 'screens/A/A.mjs', 'import"../../shared.mjs";', 100);
 
         expect(measureEntryGraph(entry, dist)).toEqual({ eager: 300, lazy: 0 });
     });
@@ -65,7 +65,7 @@ describe('measureEntryGraph', () => {
     it('counts dynamically imported chunks as lazy, not eager', () => {
         const dist = tmpDir();
         writeChunk(dist, 'lazy.mjs', '', 500);
-        const entry = writeChunk(dist, 'screens/A/A.es.js', 'import("../../lazy.mjs")', 100);
+        const entry = writeChunk(dist, 'screens/A/A.mjs', 'import("../../lazy.mjs")', 100);
 
         expect(measureEntryGraph(entry, dist)).toEqual({ eager: 100, lazy: 500 });
     });
@@ -74,7 +74,7 @@ describe('measureEntryGraph', () => {
         const dist = tmpDir();
         writeChunk(dist, 'lazy.mjs', 'import"./lazy-dep.mjs";', 200);
         writeChunk(dist, 'lazy-dep.mjs', '', 300);
-        const entry = writeChunk(dist, 'screens/A/A.es.js', 'import("../../lazy.mjs")', 100);
+        const entry = writeChunk(dist, 'screens/A/A.mjs', 'import("../../lazy.mjs")', 100);
 
         expect(measureEntryGraph(entry, dist)).toEqual({ eager: 100, lazy: 500 });
     });
@@ -84,7 +84,7 @@ describe('measureEntryGraph', () => {
         writeChunk(dist, 'shared.mjs', '', 400);
         const entry = writeChunk(
             dist,
-            'screens/A/A.es.js',
+            'screens/A/A.mjs',
             'import"../../shared.mjs";import("../../shared.mjs")',
             100,
         );
@@ -96,7 +96,7 @@ describe('measureEntryGraph', () => {
         const dist = tmpDir();
         writeChunk(dist, 'a.mjs', 'import"./b.mjs";', 100);
         writeChunk(dist, 'b.mjs', 'import"./a.mjs";', 100);
-        const entry = writeChunk(dist, 'screens/A/A.es.js', 'import"../../a.mjs";', 100);
+        const entry = writeChunk(dist, 'screens/A/A.mjs', 'import"../../a.mjs";', 100);
 
         expect(measureEntryGraph(entry, dist)).toEqual({ eager: 300, lazy: 0 });
     });
@@ -105,7 +105,7 @@ describe('measureEntryGraph', () => {
         const dist = tmpDir();
         const entry = writeChunk(
             dist,
-            'screens/A/A.es.js',
+            'screens/A/A.mjs',
             'import{ref}from"vue";import"./missing.mjs";',
             100,
         );
@@ -116,7 +116,7 @@ describe('measureEntryGraph', () => {
     it('ignores imports that escape distDir', () => {
         const dist = tmpDir();
         fs.writeFileSync(path.join(dist, '..', 'outside.mjs'), 'x'.repeat(999), 'utf-8');
-        const entry = writeChunk(dist, 'screens/A/A.es.js', 'import"../../../outside.mjs";', 100);
+        const entry = writeChunk(dist, 'screens/A/A.mjs', 'import"../../../outside.mjs";', 100);
 
         expect(measureEntryGraph(entry, dist)).toEqual({ eager: 100, lazy: 0 });
         fs.rmSync(path.join(dist, '..', 'outside.mjs'), { force: true });
@@ -127,8 +127,8 @@ describe('measureBundle', () => {
     it('reports eager and lazy sizes per screen and component', () => {
         const dist = tmpDir();
         writeChunk(dist, 'vendor.mjs', '', 1000);
-        writeChunk(dist, 'screens/Checkout/Checkout.es.js', 'import"../../vendor.mjs";', 100);
-        writeChunk(dist, 'components/InvoicesList/InvoicesList.es.js', '', 50);
+        writeChunk(dist, 'screens/Checkout/Checkout.mjs', 'import"../../vendor.mjs";', 100);
+        writeChunk(dist, 'components/InvoicesList/InvoicesList.mjs', '', 50);
 
         const { entries } = measureBundle(dist);
 
@@ -139,8 +139,8 @@ describe('measureBundle', () => {
     it('shows a shared chunk against every entry that statically imports it', () => {
         const dist = tmpDir();
         writeChunk(dist, 'vendor.mjs', '', 1000);
-        writeChunk(dist, 'screens/A/A.es.js', 'import"../../vendor.mjs";', 100);
-        writeChunk(dist, 'screens/B/B.es.js', 'import"../../vendor.mjs";', 100);
+        writeChunk(dist, 'screens/A/A.mjs', 'import"../../vendor.mjs";', 100);
+        writeChunk(dist, 'screens/B/B.mjs', 'import"../../vendor.mjs";', 100);
 
         const { entries } = measureBundle(dist);
 
@@ -150,7 +150,7 @@ describe('measureBundle', () => {
 
     it('reports total as the on-disk size of distDir', () => {
         const dist = tmpDir();
-        writeChunk(dist, 'screens/A/A.es.js', '', 100);
+        writeChunk(dist, 'screens/A/A.mjs', '', 100);
         writeChunk(dist, 'stray.mjs', '', 250);
 
         expect(measureBundle(dist).total).toBe(350);
@@ -174,7 +174,7 @@ describe('measureBundle', () => {
     it('follows imports when distDir is relative', () => {
         const dist = tmpDir();
         writeChunk(dist, 'vendor.mjs', '', 1000);
-        writeChunk(dist, 'screens/A/A.es.js', 'import"../../vendor.mjs";', 100);
+        writeChunk(dist, 'screens/A/A.mjs', 'import"../../vendor.mjs";', 100);
 
         const cwd = process.cwd();
         try {

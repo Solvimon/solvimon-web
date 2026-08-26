@@ -76,20 +76,10 @@ export function createRequestService({ enableAccessCheck } = { enableAccessCheck
                 return response.text();
             }
 
+            let json;
+
             try {
-                const json = await response.json();
-
-                if (!response.ok) {
-                    throw {
-                        hasError: true,
-                        statusCode: response.status,
-                        message: json?.message,
-                        requestId: response.headers.get(Headers.X_REQUEST_ID),
-                        field: json?.field,
-                    };
-                }
-
-                return json;
+                json = await response.json();
             } catch (error) {
                 logger.error('REQUEST_PARSE_FAILED', 'Failed to parse JSON response', {}, error);
                 onError?.(new Error('Failed to parse JSON response', { cause: error }));
@@ -100,6 +90,18 @@ export function createRequestService({ enableAccessCheck } = { enableAccessCheck
                     requestId: response.headers.get(Headers.X_REQUEST_ID),
                 };
             }
+
+            if (!response.ok) {
+                throw {
+                    hasError: true,
+                    statusCode: response.status,
+                    message: json?.message,
+                    requestId: response.headers.get(Headers.X_REQUEST_ID),
+                    field: json?.field,
+                };
+            }
+
+            return json;
         } catch (error) {
             onError?.(new Error('Request failed', { cause: error }));
             return Promise.reject(error);

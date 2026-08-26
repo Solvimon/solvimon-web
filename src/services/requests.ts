@@ -19,15 +19,15 @@ const defaultOptions: RequestOptions = {
 export function createRequestService({ enableAccessCheck } = { enableAccessCheck: true }) {
     const { onError } = useErrorHandling();
     const logger = useLogger();
-    const authHeaders = enableAccessCheck
-        ? { [Headers.AUTHORIZATION]: `Bearer ${useAuth().accessToken.value}` }
-        : {};
+    // Resolved here because inject() is only valid during setup, but read per request: the token
+    // is refreshed in the background, and a value captured now would never be replaced.
+    const auth = enableAccessCheck ? useAuth() : undefined;
 
     const getDefaultHeaders: GetDefaultHeaders = ({ headers: overrides = {} }) => {
         const headers = {
             [Headers.CONTENT_TYPE]: 'application/json',
             [Headers.X_CLIENT_VERSION]: `solvimon-web-v${version}`,
-            ...authHeaders,
+            ...(auth ? { [Headers.AUTHORIZATION]: `Bearer ${auth.accessToken.value}` } : {}),
         };
 
         if (overrides) {

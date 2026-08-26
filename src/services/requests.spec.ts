@@ -21,8 +21,9 @@ vi.mock('@solvimon/solvimon-ui', async () => {
         }),
     };
 });
+const authState = { accessToken: { value: TOKEN } };
 vi.mock('@/components/providers/AuthProvider', () => ({
-    useAuth: vi.fn(() => ({ accessToken: { value: TOKEN } })),
+    useAuth: vi.fn(() => authState),
 }));
 vi.mock('@/components/providers/LoggerProvider/composables/useLogger', () => ({
     useLogger: () => ({
@@ -51,6 +52,7 @@ describe('createRequestService', () => {
     afterEach(() => {
         onError.mockClear();
         loggerError.mockClear();
+        authState.accessToken.value = TOKEN;
     });
 
     describe('headers', () => {
@@ -211,6 +213,35 @@ describe('createRequestService', () => {
         await expect(request({ url: CALLED_URL })).rejects.toThrow(errorResponse);
         expect(onError).toHaveBeenCalledWith(expect.objectContaining({ cause: errorResponse }));
     });
+    it('sends the token current at request time, not the one captured at construction', async () => {
+        const REFRESHED = 'refreshed-token-456';
+        const request = createRequestService({ enableAccessCheck: true });
+
+        await request({ url: CALLED_URL });
+
+        expect(mockFetch).toHaveBeenLastCalledWith(
+            CALLED_URL,
+            expect.objectContaining({
+                headers: expect.objectContaining({
+                    [HeadersConst.AUTHORIZATION]: `Bearer ${TOKEN}`,
+                }),
+            }),
+        );
+
+        // What the background refresh does to the shared ref, mid-session.
+        authState.accessToken.value = REFRESHED;
+        await request({ url: CALLED_URL });
+
+        expect(mockFetch).toHaveBeenLastCalledWith(
+            CALLED_URL,
+            expect.objectContaining({
+                headers: expect.objectContaining({
+                    [HeadersConst.AUTHORIZATION]: `Bearer ${REFRESHED}`,
+                }),
+            }),
+        );
+    });
+
     describe('error responses', () => {
         const jsonErrorResponse = (
             status: number,

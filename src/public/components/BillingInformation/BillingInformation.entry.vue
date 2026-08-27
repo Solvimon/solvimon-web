@@ -17,7 +17,11 @@ defineProps<SolvimonBillingInformationEntryProps>();
     >
         <BillingInformationView v-bind="$props">
             <template #default="{ customer, isLoading }">
-                <BillingInformation :is-loading="isLoading" :customer="customer.customer.value" />
+                <BillingInformation
+                    :configuration="configuration"
+                    :is-loading="isLoading"
+                    :customer="customer.customer.value"
+                />
             </template>
         </BillingInformationView>
     </EntryProvider>

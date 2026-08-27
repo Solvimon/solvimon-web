@@ -1,20 +1,26 @@
 <script setup lang="ts">
 import { Section, useIntl } from '@solvimon/solvimon-ui';
+import { computed } from 'vue';
 import type { InvoicesListEmits, InvoicesListProps } from './InvoicesList.types';
 import InvoiceTable from '@/components/InvoiceTable/InvoiceTable.vue';
 import { useActionDispatchProvider } from '@/components/providers';
+import { resolveConfiguration } from '@/utils/configuration';
 
-withDefaults(defineProps<InvoicesListProps>(), {
-    configuration: () => ({
-        showPayButton: true,
-        showViewButton: true,
-        pagination: {
-            batchSize: 15,
-            enabled: true,
-        },
-    }),
-});
+/** Only the options this component reads — the batch size is resolved where the invoices are fetched. */
+const DEFAULT_CONFIGURATION = {
+    showPayButton: true,
+    showViewButton: true,
+    pagination: {
+        enabled: true,
+    },
+};
+
+const props = defineProps<InvoicesListProps>();
 defineEmits<InvoicesListEmits>();
+
+const configuration = computed(() =>
+    resolveConfiguration(DEFAULT_CONFIGURATION, props.configuration),
+);
 
 const { $t } = useIntl();
 const { dispatchAction } = useActionDispatchProvider();
@@ -37,7 +43,7 @@ const { dispatchAction } = useActionDispatchProvider();
         <InvoiceTable
             class="sv-invoices-list__table"
             :configuration="configuration"
-            :has-more-items="hasMoreItems"
+            :has-more-items="configuration.pagination.enabled && hasMoreItems"
             :invoices="invoices"
             :is-loading="isLoading"
             @load-more="$emit('load-more')"

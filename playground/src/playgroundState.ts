@@ -1,3 +1,5 @@
+import type { CoreConfiguration } from '@solvimon/solvimon-web/core';
+
 /** Only what the switcher offers, which is also all `parseEnvironment` below ever returns. */
 export type Environment = 'LIVE' | 'TEST' | 'DEV';
 
@@ -77,6 +79,11 @@ export interface PlaygroundMountConfig {
 export interface PlaygroundCore {
     createScreen(id: string, configuration: PlaygroundMountConfig): () => void;
     createComponent(id: string, configuration: PlaygroundMountConfig): () => void;
+}
+
+export function asPlaygroundCore(core: CoreConfiguration): PlaygroundCore {
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    return core as unknown as PlaygroundCore;
 }
 
 export const BRANDING = {

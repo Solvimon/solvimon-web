@@ -1,6 +1,14 @@
 import { fileURLToPath, URL } from 'node:url';
 import { resolve, relative, dirname } from 'node:path';
-import { copyFileSync, mkdirSync, existsSync, rmSync, readdirSync } from 'node:fs';
+import {
+    mkdirSync,
+    existsSync,
+    rmSync,
+    readdirSync,
+    readFileSync,
+    writeFileSync,
+    renameSync,
+} from 'node:fs';
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import vueDevTools from 'vite-plugin-vue-devtools';
@@ -97,7 +105,10 @@ export default defineConfig({
             outDir: './dist',
             include: [
                 'env.d.ts',
-                'src/types/**/*.d.ts',
+                'src/types/**/*.ts',
+                // Every type module the public entry props reach through, so the published
+                // declarations resolve instead of quietly falling back to `any`.
+                'src/**/*.types.ts',
                 'src/index.ts',
                 'src/entries/**/*.ce.ts',
                 'src/public/screens/**/*.entry.ce.ts',
@@ -107,7 +118,7 @@ export default defineConfig({
             exclude: ['**/*.spec.ts', '**/*.test.ts', '**/node_modules/**'],
             copyDtsFiles: false,
         }),
-        copyEntryDeclarations(),
+        publishDeclarations(),
     ],
     resolve: {
         alias: {
@@ -120,86 +131,95 @@ export default defineConfig({
 });
 
 /**
- * Copy generated .d.ts from dist/src/entries/ into the same folders as the built JS
- * (dist/EntryName/ for legacy entries, dist/screens/X/ for screen entries).
+ * Turn the declarations vite-plugin-dts emits into declarations a consumer can actually resolve.
+ *
+ * The emitted tree mirrors `src/`, so every file in it imports its neighbours by a path that is
+ * only correct inside that tree. Copying single files out of it to the paths `package.json` points
+ * at broke each of those imports, and because consumers build with `skipLibCheck` the breakage was
+ * swallowed and the types silently degraded to `any`. So the tree is published as-is under
+ * `dist/types/`, and every published path becomes a one-line re-export of the file inside it.
  */
-function copyEntryDeclarations() {
+function publishDeclarations() {
     const outDir = fileURLToPath(new URL('./dist', import.meta.url));
+    /** Where the emitted tree lives once it has been moved out of `dist/src`. */
+    const treeDir = 'types';
+
+    /** `dist/a/b/c.d.ts` re-exporting `dist/types/x/y.d.ts` needs `../../types/x/y`. */
+    const writeShim = (outPath: string, treeModule: string) => {
+        const upToDist = relative(dirname(outPath), outDir) || '.';
+        const specifier = `${upToDist}/${treeDir}/${treeModule}`.replace(/\\/g, '/');
+        mkdirSync(dirname(outPath), { recursive: true });
+        writeFileSync(outPath, `export * from '${specifier}';\n`);
+    };
+
+    /**
+     * TypeScript writes `vue` as a path into `node_modules` because `tsconfig.json` maps it there,
+     * and that path does not exist in a consumer's tree. Point it back at the bare package, which
+     * every consumer has as a peer dependency.
+     */
+    const rewriteVueImports = (dir: string) => {
+        for (const entry of readdirSync(dir, { withFileTypes: true })) {
+            const entryPath = resolve(dir, entry.name);
+            if (entry.isDirectory()) {
+                rewriteVueImports(entryPath);
+            } else if (entry.name.endsWith('.d.ts')) {
+                const source = readFileSync(entryPath, 'utf8');
+                const rewritten = source.replace(
+                    /(['"])(?:\.\.\/)+node_modules\/vue\/dist\/vue\.d\.ts\1/g,
+                    "'vue'",
+                );
+                if (rewritten !== source) {
+                    writeFileSync(entryPath, rewritten);
+                }
+            }
+        }
+    };
+
     return {
-        name: 'copy-entry-declarations',
+        name: 'publish-declarations',
         closeBundle() {
-            // Component entries: copy from dist/src/entries/X/X.ce.d.ts to dist/X/X.ce.d.ts
+            const emittedDir = resolve(outDir, 'src');
+            if (!existsSync(emittedDir)) {
+                return;
+            }
+
+            const publishedTreeDir = resolve(outDir, treeDir);
+            rmSync(publishedTreeDir, { recursive: true, force: true });
+            renameSync(emittedDir, publishedTreeDir);
+            rewriteVueImports(publishedTreeDir);
+
+            // Legacy entries: dist/X/X.ce.d.ts
             for (const entryKey of Object.keys(legacyEntries)) {
-                const srcPath = resolve(outDir, 'src/entries', `${entryKey}.ce.d.ts`);
-                const outPath = resolve(outDir, `${entryKey}.ce.d.ts`);
-                if (existsSync(srcPath)) {
-                    mkdirSync(dirname(outPath), { recursive: true });
-                    copyFileSync(srcPath, outPath);
-                }
+                writeShim(resolve(outDir, `${entryKey}.ce.d.ts`), `entries/${entryKey}.ce`);
             }
-            // Screen entries: copy from dist/src/public/screens/X/X.entry.ce.d.ts to dist/screens/X/X.ce.d.ts
-            for (const entryKey of Object.keys(screenEntries)) {
-                const match = /^screens\/([^/]+)\//.exec(entryKey);
+
+            // Screen and component entries: dist/screens/X/X.ce.d.ts, dist/components/X/X.ce.d.ts
+            for (const entryKey of [
+                ...Object.keys(screenEntries),
+                ...Object.keys(componentEntries),
+            ]) {
+                const match = /^(screens|components)\/([^/]+)\//.exec(entryKey);
                 if (!match) continue;
-                const screenName = match[1];
-                const srcPath = resolve(
-                    outDir,
-                    'src/public/screens',
-                    screenName,
-                    `${screenName}.entry.ce.d.ts`,
+                const [, group, name] = match;
+                writeShim(
+                    resolve(outDir, group, name, `${name}.ce.d.ts`),
+                    `public/${group}/${name}/${name}.entry.ce`,
                 );
-                const outPath = resolve(outDir, 'screens', screenName, `${screenName}.ce.d.ts`);
-                if (existsSync(srcPath)) {
-                    mkdirSync(dirname(outPath), { recursive: true });
-                    copyFileSync(srcPath, outPath);
-                }
             }
-            // Component entries: copy from dist/src/public/components/X/X.entry.ce.d.ts to dist/components/X/X.ce.d.ts
-            for (const entryKey of Object.keys(componentEntries)) {
-                const match = /^components\/([^/]+)\//.exec(entryKey);
-                if (!match) continue;
-                const componentName = match[1];
-                const srcPath = resolve(
-                    outDir,
-                    'src/public/components',
-                    componentName,
-                    `${componentName}.entry.ce.d.ts`,
-                );
-                const outPath = resolve(
-                    outDir,
-                    'components',
-                    componentName,
-                    `${componentName}.ce.d.ts`,
-                );
-                if (existsSync(srcPath)) {
-                    mkdirSync(dirname(outPath), { recursive: true });
-                    copyFileSync(srcPath, outPath);
-                }
-            }
-            // Core entry: copy all .d.ts from dist/src/public/core/ to dist/core/
-            const coreSrcDir = resolve(outDir, 'src/public/core');
-            const coreOutDir = resolve(outDir, 'core');
-            if (existsSync(coreSrcDir)) {
-                mkdirSync(coreOutDir, { recursive: true });
-                for (const name of readdirSync(coreSrcDir)) {
+
+            // Core entry: one shim per emitted core declaration, so deep imports keep working.
+            const coreTreeDir = resolve(publishedTreeDir, 'public/core');
+            if (existsSync(coreTreeDir)) {
+                for (const name of readdirSync(coreTreeDir)) {
                     if (name.endsWith('.d.ts')) {
-                        copyFileSync(resolve(coreSrcDir, name), resolve(coreOutDir, name));
+                        const moduleName = name.slice(0, -'.d.ts'.length);
+                        writeShim(resolve(outDir, 'core', name), `public/core/${moduleName}`);
                     }
                 }
             }
 
-            // Root entry: copy dist/src/index.d.ts to dist/index.d.ts
-            const rootSrcPath = resolve(outDir, 'src/index.d.ts');
-            const rootOutPath = resolve(outDir, 'index.d.ts');
-            if (existsSync(rootSrcPath)) {
-                copyFileSync(rootSrcPath, rootOutPath);
-            }
-
-            // Remove dist/src (vite-plugin-dts output) now that declarations are copied
-            const srcDir = resolve(outDir, 'src');
-            if (existsSync(srcDir)) {
-                rmSync(srcDir, { recursive: true });
-            }
+            // Root entry: dist/index.d.ts
+            writeShim(resolve(outDir, 'index.d.ts'), 'index');
         },
     };
 }

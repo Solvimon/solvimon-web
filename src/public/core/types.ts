@@ -92,12 +92,6 @@ type InferPortalObject<TProps> = TProps extends { portalObject: infer TPortalObj
       ? TPortalObject | undefined
       : undefined;
 
-type MountContext<TPortalObject> = [TPortalObject] extends [undefined]
-    ? Record<never, never>
-    : undefined extends TPortalObject
-      ? { portalObject?: Exclude<TPortalObject, undefined> }
-      : { portalObject: TPortalObject };
-
 export type ComponentConfigurationById = {
     [TId in RegisteredComponentId]: InferConfiguration<RegisteredComponentEntryPropsById[TId]>;
 };
@@ -106,27 +100,29 @@ export type ScreenConfigurationById = {
     [TId in RegisteredScreenId]: InferConfiguration<RegisteredScreenEntryPropsById[TId]>;
 };
 
-type ComponentConfigurationProp<TConfiguration> = [TConfiguration] extends [undefined]
+type ConfigurationProp<TConfiguration> = [TConfiguration] extends [undefined]
     ? { configuration?: undefined }
     : undefined extends TConfiguration
       ? { configuration?: Exclude<TConfiguration, undefined> }
       : { configuration: TConfiguration };
 
-type ScreenConfigurationProp<TConfiguration> = [TConfiguration] extends [undefined]
-    ? { configuration?: undefined }
-    : undefined extends TConfiguration
-      ? { configuration?: Exclude<TConfiguration, undefined> }
-      : { configuration: TConfiguration };
-
+/**
+ * `portalObject` is spelled out here rather than derived through a conditional type, because every
+ * entry requires it and a conditional would take the whole mount configuration down with it when
+ * the portal type cannot be resolved. Consumers hit exactly that: the portal types come from
+ * `@solvimon/solvimon-types`, which lives in a registry they cannot install from, and a conditional
+ * over the resulting `any` collapses to `any` — which would take `configuration` unchecked with it.
+ * As a property type it only makes `portalObject` itself unchecked.
+ */
 export type ComponentMountConfiguration<TId extends RegisteredComponentId> = {
     container: Element | string;
-} & MountContext<InferPortalObject<RegisteredComponentEntryPropsById[TId]>> &
-    ComponentConfigurationProp<ComponentConfigurationById[TId]>;
+    portalObject: InferPortalObject<RegisteredComponentEntryPropsById[TId]>;
+} & ConfigurationProp<ComponentConfigurationById[TId]>;
 
 export type ScreenMountConfiguration<TId extends RegisteredScreenId> = {
     container: Element | string;
-} & MountContext<InferPortalObject<RegisteredScreenEntryPropsById[TId]>> &
-    ScreenConfigurationProp<ScreenConfigurationById[TId]>;
+    portalObject: InferPortalObject<RegisteredScreenEntryPropsById[TId]>;
+} & ConfigurationProp<ScreenConfigurationById[TId]>;
 
 export interface CoreConfiguration<TConfig extends SolvimonMountConfig = SolvimonMountConfig> {
     config: TConfig;

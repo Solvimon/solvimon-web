@@ -8,6 +8,7 @@ import EmbedPreview from './components/EmbedPreview.vue';
 import {
     BRANDING,
     ENVIRONMENTS,
+    asPlaygroundCore,
     STORAGE_KEYS,
     isEmbedded,
     parseEnvironment,
@@ -29,21 +30,25 @@ const environment = ref<Environment>(
 watch(environment, (value) => sessionStorage.setItem(STORAGE_KEYS.environment, value));
 
 const solvimon = ref(
-    createSolvimonCore({
-        environment: environment.value,
-        logLevel: 'info',
-        branding: BRANDING,
-        locale: locale.value,
-    }),
+    asPlaygroundCore(
+        createSolvimonCore({
+            environment: environment.value,
+            logLevel: 'info',
+            branding: BRANDING,
+            locale: locale.value,
+        }),
+    ),
 );
 
 watch([locale, environment], ([newLocale, newEnvironment]) => {
-    solvimon.value = createSolvimonCore({
-        environment: newEnvironment,
-        logLevel: 'info',
-        branding: BRANDING,
-        locale: newLocale,
-    });
+    solvimon.value = asPlaygroundCore(
+        createSolvimonCore({
+            environment: newEnvironment,
+            logLevel: 'info',
+            branding: BRANDING,
+            locale: newLocale,
+        }),
+    );
 });
 
 function restoreActiveEntry(): StoryEntry {

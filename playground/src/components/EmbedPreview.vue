@@ -4,6 +4,7 @@ import { createSolvimonCore } from '@solvimon/solvimon-web/core';
 import { allEntries } from '../registry';
 import {
     BRANDING,
+    asPlaygroundCore,
     DEFAULT_LOCALE,
     STORAGE_KEYS,
     configStorageKey,
@@ -11,7 +12,7 @@ import {
     parseJson,
     portalStorageKey,
 } from '../playgroundState';
-import type { PlaygroundCore, PlaygroundMountConfig } from '../playgroundState';
+import type { PlaygroundMountConfig } from '../playgroundState';
 
 const entryId = new URLSearchParams(window.location.search).get('entry');
 const entry = allEntries.find((candidate) => candidate.id === entryId);
@@ -26,12 +27,14 @@ onMounted(() => {
 
     if (!portalObject) return;
 
-    const solvimon: PlaygroundCore = createSolvimonCore({
-        environment: parseEnvironment(sessionStorage.getItem(STORAGE_KEYS.environment)),
-        logLevel: 'info',
-        branding: BRANDING,
-        locale: sessionStorage.getItem(STORAGE_KEYS.locale) ?? DEFAULT_LOCALE,
-    });
+    const solvimon = asPlaygroundCore(
+        createSolvimonCore({
+            environment: parseEnvironment(sessionStorage.getItem(STORAGE_KEYS.environment)),
+            logLevel: 'info',
+            branding: BRANDING,
+            locale: sessionStorage.getItem(STORAGE_KEYS.locale) ?? DEFAULT_LOCALE,
+        }),
+    );
 
     const mountConfig: PlaygroundMountConfig = { container: container.value, portalObject };
     const configuration = parseJson(sessionStorage.getItem(configStorageKey(entry.id)));

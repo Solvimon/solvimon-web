@@ -1,6 +1,7 @@
 import { mount } from '@vue/test-utils';
 import type { Invoice } from '@solvimon/solvimon-types';
 import InvoicesList from './InvoicesList.vue';
+import type { InvoicesListConfiguration } from './InvoicesList.types';
 
 const { mockDispatchAction } = vi.hoisted(() => ({
     mockDispatchAction: vi.fn(),
@@ -45,10 +46,7 @@ describe('InvoicesList component', () => {
         isLoading = false,
     }: {
         invoices?: Invoice[];
-        configuration?: {
-            showPayButton?: boolean;
-            showViewButton?: boolean;
-        };
+        configuration?: InvoicesListConfiguration;
         hasMoreItems?: boolean;
         isLoading?: boolean;
     } = {}) =>
@@ -73,6 +71,11 @@ describe('InvoicesList component', () => {
 
         return button!;
     };
+
+    const getRowOverlayButton = (wrapper: ReturnType<typeof mountComponent>) =>
+        wrapper
+            .findAll('button')
+            .find((item) => item.attributes('class')?.includes('absolute inset-0 h-full w-full'));
 
     beforeEach(() => {
         vi.clearAllMocks();
@@ -143,9 +146,7 @@ describe('InvoicesList component', () => {
             },
         });
 
-        const rowOverlayButton = wrapper
-            .findAll('button')
-            .find((item) => item.attributes('class')?.includes('absolute inset-0 h-full w-full'));
+        const rowOverlayButton = getRowOverlayButton(wrapper);
 
         expect(rowOverlayButton).toBeDefined();
         await rowOverlayButton!.trigger('click');
@@ -163,9 +164,7 @@ describe('InvoicesList component', () => {
             },
         });
 
-        const rowOverlayButton = wrapper
-            .findAll('button')
-            .find((item) => item.attributes('class')?.includes('absolute inset-0 h-full w-full'));
+        const rowOverlayButton = getRowOverlayButton(wrapper);
 
         expect(rowOverlayButton).toBeUndefined();
     });
@@ -186,5 +185,29 @@ describe('InvoicesList component', () => {
         await getButtonByText(wrapper, 'Load more').trigger('click');
 
         expect(wrapper.emitted('load-more')).toEqual([[]]);
+    });
+
+    it('keeps the options a partial configuration leaves out at their default', () => {
+        const wrapper = mountComponent({
+            configuration: {
+                pagination: { batchSize: 20 },
+            },
+            hasMoreItems: true,
+        });
+
+        expect(wrapper.text()).toContain('Pay');
+        expect(wrapper.text()).toContain('Load more');
+        expect(getRowOverlayButton(wrapper)).toBeDefined();
+    });
+
+    it('does not render the load more button when pagination is disabled', () => {
+        const wrapper = mountComponent({
+            configuration: {
+                pagination: { enabled: false },
+            },
+            hasMoreItems: true,
+        });
+
+        expect(wrapper.text()).not.toContain('Load more');
     });
 });

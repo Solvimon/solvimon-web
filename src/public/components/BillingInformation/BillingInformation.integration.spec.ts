@@ -2,6 +2,7 @@ import { mount } from '@vue/test-utils';
 import { defineComponent, h } from 'vue';
 import type { Customer } from '@solvimon/solvimon-types';
 import BillingInformation from './BillingInformation.vue';
+import type { BillingInformationConfiguration } from './BillingInformation.types';
 
 const { mockDispatchAction } = vi.hoisted(() => ({
     mockDispatchAction: vi.fn(),
@@ -59,9 +60,7 @@ describe('BillingInformation component', () => {
         configuration,
     }: {
         isLoading?: boolean;
-        configuration?: {
-            showEditButton?: boolean;
-        };
+        configuration?: BillingInformationConfiguration;
     } = {}) =>
         mount(BillingInformation, {
             props: {
@@ -137,5 +136,13 @@ describe('BillingInformation component', () => {
         expect(mockDispatchAction).toHaveBeenCalledWith({
             action: 'edit-billing-information',
         });
+    });
+
+    it('keeps the options a partial configuration leaves out at their default', () => {
+        const wrapper = mountComponent({
+            configuration: {},
+        });
+
+        expect(wrapper.text()).toContain('Edit');
     });
 });

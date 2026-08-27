@@ -2,6 +2,7 @@ import { mount } from '@vue/test-utils';
 import { defineComponent, h } from 'vue';
 import type { PaymentMethod, PaymentMethodOption } from '@solvimon/solvimon-types';
 import CustomerPaymentMethods from './CustomerPaymentMethods.vue';
+import type { CustomerPaymentMethodsConfiguration } from './CustomerPaymentMethods.types';
 
 const { mockDispatchAction } = vi.hoisted(() => ({
     mockDispatchAction: vi.fn(),
@@ -84,11 +85,7 @@ describe('CustomerPaymentMethods component', () => {
         isLoading = false,
     }: {
         paymentMethods?: PaymentMethod[];
-        configuration?: {
-            maxItems?: number;
-            showViewAllButton?: boolean;
-            showAddButton?: boolean;
-        };
+        configuration?: CustomerPaymentMethodsConfiguration;
         isLoading?: boolean;
     } = {}) =>
         mount(CustomerPaymentMethods, {
@@ -194,5 +191,17 @@ describe('CustomerPaymentMethods component', () => {
         expect(mockDispatchAction).toHaveBeenCalledWith({
             action: 'add-payment-method',
         });
+    });
+
+    it('keeps the options a partial configuration leaves out at their default', () => {
+        const wrapper = mountComponent({
+            paymentMethods: [],
+            configuration: {
+                maxItems: 5,
+            },
+        });
+
+        expect(wrapper.text()).toContain('Add payment method');
+        expect(wrapper.text()).toContain('View all');
     });
 });

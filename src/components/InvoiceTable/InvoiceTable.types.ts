@@ -5,8 +5,8 @@ export interface InvoiceTableProps {
     isLoading?: boolean;
     hasMoreItems?: boolean;
     configuration: {
-        showPayButton?: boolean;
-        showViewButton?: boolean;
+        showPayButton: boolean;
+        showViewButton: boolean;
     };
 }
 

@@ -9,10 +9,6 @@ import PaymentMethodsList from '@/components/payments/PaymentMethodsList/Payment
 
 const props = withDefaults(defineProps<CustomerPaymentMethodsBlockProps>(), {
     limit: 2,
-    configuration: () => ({
-        showViewAllButton: true,
-        showAddButton: true,
-    }),
 });
 defineEmits<CustomerPaymentMethodsBlockEmits>();
 

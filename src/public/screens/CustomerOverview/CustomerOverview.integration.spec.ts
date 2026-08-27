@@ -1,16 +1,22 @@
 import { flushPromises, mount } from '@vue/test-utils';
 import { defineComponent, h, ref } from 'vue';
-import type { PricingPlanSubscriptionExpanded } from '@solvimon/solvimon-types';
+import type { PaymentMethod, PricingPlanSubscriptionExpanded } from '@solvimon/solvimon-types';
 import CustomerOverview from './CustomerOverview.vue';
+import type { CustomerPaymentMethodsConfiguration } from '@/public/components/CustomerPaymentMethods/CustomerPaymentMethods.types';
 
-const { subscriptionsState, mockFetchAll, mockFetchInitial, mockFetchWalletBalances } = vi.hoisted(
-    () => ({
-        subscriptionsState: {} as { items: { value: unknown[] } },
-        mockFetchAll: vi.fn(),
-        mockFetchInitial: vi.fn(),
-        mockFetchWalletBalances: vi.fn(),
-    }),
-);
+const {
+    subscriptionsState,
+    paymentMethodsState,
+    mockFetchAll,
+    mockFetchInitial,
+    mockFetchWalletBalances,
+} = vi.hoisted(() => ({
+    subscriptionsState: {} as { items: { value: unknown[] } },
+    paymentMethodsState: {} as { items: { value: unknown[] } },
+    mockFetchAll: vi.fn(),
+    mockFetchInitial: vi.fn(),
+    mockFetchWalletBalances: vi.fn(),
+}));
 
 vi.mock('@/composables/useSubscriptionsList', async () => {
     const { ref: createRef } = await import('vue');
@@ -41,7 +47,16 @@ const emptyList = () => ({
 });
 
 vi.mock('@/composables/useInvoicesList', () => ({ useInvoicesList: () => emptyList() }));
-vi.mock('@/composables/usePaymentMethods', () => ({ usePaymentMethods: () => emptyList() }));
+
+vi.mock('@/composables/usePaymentMethods', async () => {
+    const { ref: createRef } = await import('vue');
+
+    paymentMethodsState.items = createRef<unknown[]>([]);
+
+    return {
+        usePaymentMethods: () => ({ ...emptyList(), items: paymentMethodsState.items }),
+    };
+});
 
 vi.mock('@/composables/useCustomer', () => ({
     useCustomer: () => ({
@@ -94,7 +109,7 @@ vi.mock('@/public/components/CustomerWalletBalances/CustomerWalletBalances.vue',
 vi.mock('@/public/components/CustomerPaymentMethods/CustomerPaymentMethods.vue', () => ({
     default: defineComponent({
         name: 'CustomerPaymentMethodsStub',
-        props: ['paymentMethods', 'isLoading'],
+        props: ['paymentMethods', 'isLoading', 'configuration'],
         setup: () => () => h('div'),
     }),
 }));
@@ -122,17 +137,29 @@ const subscriptionsOf = (count: number) =>
             }) as unknown as PricingPlanSubscriptionExpanded,
     );
 
-const mountOverview = async () => {
-    const wrapper = mount(CustomerOverview, { props: { isLoading: false } });
+const paymentMethodsOf = (count: number) =>
+    Array.from(
+        { length: count },
+        (_, index) => ({ id: `pm_${index + 1}` }) as unknown as PaymentMethod,
+    );
+
+const mountOverview = async (configuration?: CustomerPaymentMethodsConfiguration) => {
+    const wrapper = mount(CustomerOverview, { props: { configuration } });
     await flushPromises();
 
     return wrapper;
 };
 
+const shownPaymentMethods = (wrapper: Awaited<ReturnType<typeof mountOverview>>) =>
+    wrapper.findComponent({ name: 'CustomerPaymentMethodsStub' }).props('paymentMethods') as {
+        id: string;
+    }[];
+
 describe('CustomerOverview — subscriptions', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         subscriptionsState.items.value = subscriptionsOf(5);
+        paymentMethodsState.items.value = paymentMethodsOf(5);
     });
 
     it('loads every active subscription rather than the first page', async () => {
@@ -173,5 +200,33 @@ describe('CustomerOverview — subscriptions', () => {
                 expect(mockFetchWalletBalances).toHaveBeenCalledTimes(1);
             },
         );
+    });
+});
+
+describe('CustomerOverview — payment methods', () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+        subscriptionsState.items.value = subscriptionsOf(5);
+        paymentMethodsState.items.value = paymentMethodsOf(5);
+    });
+
+    it('hands its configuration to the payment methods block', async () => {
+        const wrapper = await mountOverview({ showAddButton: false });
+
+        expect(
+            wrapper.findComponent({ name: 'CustomerPaymentMethodsStub' }).props('configuration'),
+        ).toEqual({ showAddButton: false });
+    });
+
+    it('shows the first three when no maxItems is given', async () => {
+        const wrapper = await mountOverview();
+
+        expect(shownPaymentMethods(wrapper).map(({ id }) => id)).toEqual(['pm_1', 'pm_2', 'pm_3']);
+    });
+
+    it('shows as many as maxItems asks for', async () => {
+        const wrapper = await mountOverview({ maxItems: 1 });
+
+        expect(shownPaymentMethods(wrapper).map(({ id }) => id)).toEqual(['pm_1']);
     });
 });

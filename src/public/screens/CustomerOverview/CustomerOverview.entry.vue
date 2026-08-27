@@ -14,6 +14,6 @@ defineProps<SolvimonCustomerOverviewEntryProps>();
         :allowed-portal-types="['CUSTOMER']"
         @error="(error) => $emit('error', error)"
     >
-        <CustomerOverview />
+        <CustomerOverview :configuration="configuration" />
     </EntryProvider>
 </template>

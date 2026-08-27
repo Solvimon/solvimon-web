@@ -1,9 +1,8 @@
 <script setup lang="ts">
 import type { SolvimonCustomerPaymentMethodsEntryProps } from './CustomerPaymentMethods.entry.types';
+import { DEFAULT_MAX_ITEMS } from './CustomerPaymentMethods.lib';
 import { useLoadInitialData } from '@/composables/useLoadInitialData';
 import { usePaymentMethods } from '@/composables/usePaymentMethods';
-
-const DEFAULT_MAX_ITEMS = 3;
 
 const props = defineProps<SolvimonCustomerPaymentMethodsEntryProps>();
 

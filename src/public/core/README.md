@@ -37,6 +37,32 @@ const unmount = solvimon.createScreen('customer-overview', {
 
 Use `getRegisteredScreenIds()` and `getRegisteredComponentIds()` from `@solvimon/solvimon-web/core` to get the list at runtime.
 
+## Types
+
+`@solvimon/solvimon-web/core` exports the types you write against, so an option you misspell is a build error rather than a feature that quietly stays off:
+
+```ts
+import type {
+    CustomerPortalUrl,
+    CheckoutPagePortalUrl,
+    PortalUrl,
+    Environment,
+    PlatformBranding,
+    IntlMessages,
+    CountryCode,
+    Amount,
+    ComponentConfigurationById,
+    ScreenConfigurationById,
+} from '@solvimon/solvimon-web/core';
+
+// The options a given id accepts:
+type InvoicesListOptions = ComponentConfigurationById['invoices-list'];
+```
+
+Every option a `configuration` leaves out stays at its documented default, so passing only the ones you care about is safe.
+
+Nothing else needs installing: the types the SDK's own dependencies contribute are published inside the package.
+
 ## Component example
 
 ```ts

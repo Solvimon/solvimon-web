@@ -1,5 +1,5 @@
 import type { Environment, PlatformBranding } from '@solvimon/solvimon-types';
-import type { IntlMessages } from '@solvimon/solvimon-ui';
+import type { IntlMessages } from '@/public/types';
 import type { LogLevel, LogSink } from '@/components/providers/LoggerProvider/LoggerProvider.types';
 import type { SolvimonBillingInformationEntryProps } from '@/public/components/BillingInformation/BillingInformation.entry.types';
 import type { SolvimonBillingInformationFormEntryProps } from '@/public/components/BillingInformationForm/BillingInformationForm.entry.types';

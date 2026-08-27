@@ -20,6 +20,19 @@ export type {
 } from './types';
 export type { ActionRequestDetail, RequestActionEvent } from './action-request.types';
 export type {
+    Amount,
+    CheckoutPagePortalUrl,
+    CheckoutPagePortalUrlPayload,
+    CountryCode,
+    CustomerPortalUrl,
+    CustomerPortalUrlPayload,
+    Environment,
+    PlatformBranding,
+    PortalUrl,
+} from '@solvimon/solvimon-types';
+export type { IntlMessages } from '@/public/types';
+
+export type {
     LogEntry,
     LogLevel,
     LogSink,

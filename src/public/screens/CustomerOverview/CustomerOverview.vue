@@ -14,11 +14,12 @@ import { usePaymentMethods } from '@/composables/usePaymentMethods';
 import BillingInformation from '@/public/components/BillingInformation/BillingInformation.vue';
 import { useLoadInitialData } from '@/composables/useLoadInitialData';
 import CustomerPaymentMethods from '@/public/components/CustomerPaymentMethods/CustomerPaymentMethods.vue';
+import { DEFAULT_MAX_ITEMS } from '@/public/components/CustomerPaymentMethods/CustomerPaymentMethods.lib';
 import { useCustomerWalletBalances } from '@/composables/useCustomerWalletBalances';
 import CustomerWalletBalances from '@/public/components/CustomerWalletBalances/CustomerWalletBalances.vue';
 import { getActiveDefaultScheduleId } from '@/utils/pricingPlanSchedule';
 
-defineProps<CustomerOverviewProps>();
+const props = defineProps<CustomerOverviewProps>();
 
 const portal = usePortal();
 const logger = useLogger();
@@ -42,6 +43,11 @@ const walletBalanceItems = computed(
 );
 
 const shownSubscriptions = computed(() => subscriptions.items.value.slice(0, SUBSCRIPTIONS_SHOWN));
+
+/** The payment methods block is a summary here too, so it caps at what its own configuration asks for. */
+const shownPaymentMethods = computed(() =>
+    paymentMethods.items.value.slice(0, props.configuration?.maxItems ?? DEFAULT_MAX_ITEMS),
+);
 
 const { isLoading } = useLoadInitialData(
     customer.get.execute(),
@@ -119,8 +125,9 @@ watch([activeScheduleId, () => subscriptions.items.value], ([scheduleId, activeS
 
             <CustomerPaymentMethods
                 class="sv-customer-overview__payment-methods"
+                :configuration="configuration"
                 :is-loading="isLoading"
-                :payment-methods="paymentMethods.items.value"
+                :payment-methods="shownPaymentMethods"
             />
 
             <BillingInformation

@@ -391,6 +391,10 @@
     "defaultMessage": "You will be billed <strong>{price}</strong> per {period_name}, starting today.",
     "description": "The description of the subscription"
   },
+  "checkout.subscription_description_without_price": {
+    "defaultMessage": "per {period_name}, starting today",
+    "description": "The description of the subscription, while the price is still being determined"
+  },
   "checkout.trial.label": {
     "defaultMessage": "Trial",
     "description": "The label of the trial"
@@ -398,6 +402,10 @@
   "checkout.trial_period_description": {
     "defaultMessage": "You will be billed <strong>{price}</strong> per {period_name}, starting {startDate, date, long}.",
     "description": "The description of the trial period"
+  },
+  "checkout.trial_period_description_without_price": {
+    "defaultMessage": "per {period_name} starting, {startDate, date, long}",
+    "description": "The description of the trial period, while the price is still being determined"
   },
   "checkout.vat_number.check_button.label": {
     "defaultMessage": "Check",
@@ -560,7 +568,7 @@
     "description": "The title of the invoice status header column of the invoice table"
   },
   "invoices_list.title": {
-    "defaultMessage": "Schedules",
+    "defaultMessage": "Invoices",
     "description": "Invoices list title"
   },
   "pay_button.label.amount_and_payment_method": {
@@ -866,6 +874,10 @@
   "subscription_payment_completed_card.title": {
     "defaultMessage": "Payment successful",
     "description": "The title for when a payment has been successful"
+  },
+  "subscription_schedules.title": {
+    "defaultMessage": "Schedules",
+    "description": "Subscription schedules list title"
   },
   "tax_check.invalid_vat_number": {
     "defaultMessage": "VAT number is invalid.",

@@ -16,8 +16,8 @@ const { $t } = useIntl();
         :title="
             $t({
                 defaultMessage: 'Schedules',
-                description: 'Invoices list title',
-                id: 'invoices_list.title',
+                description: 'Subscription schedules list title',
+                id: 'subscription_schedules.title',
             })
         "
     >

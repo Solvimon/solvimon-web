@@ -3,6 +3,8 @@ import {
     isTranslationRecord,
     parseTranslationFile,
     checkTranslations,
+    findMessages,
+    findDuplicateMessageIds,
 } from './check-translations.mjs';
 
 describe('isTranslationRecord', () => {
@@ -103,5 +105,113 @@ describe('checkTranslations', () => {
         const readFile = () => JSON.stringify({});
         const results = checkTranslations(sourceKeys, ['a.json', 'b.json', 'c.json'], readFile);
         expect(results).toHaveLength(3);
+    });
+});
+
+describe('findMessages', () => {
+    it('reads a message declared as defaultMessage before id', () => {
+        const source = `$t({ defaultMessage: 'Invoices', description: 'A title', id: 'list.title' })`;
+
+        expect(findMessages(source)).toEqual([{ id: 'list.title', message: 'Invoices' }]);
+    });
+
+    it('reads a message declared as id before defaultMessage', () => {
+        const source = `$t({ id: 'list.title', defaultMessage: 'Invoices' })`;
+
+        expect(findMessages(source)).toEqual([{ id: 'list.title', message: 'Invoices' }]);
+    });
+
+    it('reads a message split across lines', () => {
+        const source = [
+            '$t({',
+            '    defaultMessage:',
+            "        'You will be billed {price} per {period_name}.',",
+            "    id: 'checkout.description',",
+            '})',
+        ].join('\n');
+
+        expect(findMessages(source)).toEqual([
+            {
+                id: 'checkout.description',
+                message: 'You will be billed {price} per {period_name}.',
+            },
+        ]);
+    });
+
+    it('ignores an id that is not part of a message', () => {
+        expect(findMessages(`const portal = { id: 'purl_example', url: 'https://x' };`)).toEqual(
+            [],
+        );
+    });
+});
+
+describe('findDuplicateMessageIds', () => {
+    const readFrom =
+        (files: Record<string, string>) =>
+        (file: string): string =>
+            files[file];
+
+    it('reports an id used for two different messages', () => {
+        const files = {
+            'InvoicesList.vue': `$t({ defaultMessage: 'Invoices', id: 'list.title' })`,
+            'Schedules.vue': `$t({ defaultMessage: 'Schedules', id: 'list.title' })`,
+        };
+
+        expect(findDuplicateMessageIds(Object.keys(files), readFrom(files))).toEqual([
+            {
+                id: 'list.title',
+                messages: [
+                    { message: 'Invoices', file: 'InvoicesList.vue' },
+                    { message: 'Schedules', file: 'Schedules.vue' },
+                ],
+            },
+        ]);
+    });
+
+    it('reports an id used twice in one file', () => {
+        const files = {
+            'CheckoutTitle.vue': [
+                `$t({ defaultMessage: 'per {period_name}', id: 'checkout.description' })`,
+                `$t({ defaultMessage: 'billed {price} per {period_name}', id: 'checkout.description' })`,
+            ].join('\n'),
+        };
+
+        const [duplicate] = findDuplicateMessageIds(Object.keys(files), readFrom(files));
+
+        expect(duplicate.id).toBe('checkout.description');
+        expect(duplicate.messages).toHaveLength(2);
+    });
+
+    it('accepts the same message reused under one id', () => {
+        const files = {
+            'a.vue': `$t({ defaultMessage: 'Cancel', id: 'shared.cancel' })`,
+            'b.vue': `$t({ defaultMessage: 'Cancel', id: 'shared.cancel' })`,
+        };
+
+        expect(findDuplicateMessageIds(Object.keys(files), readFrom(files))).toEqual([]);
+    });
+
+    it('accepts different messages under different ids', () => {
+        const files = {
+            'a.vue': `$t({ defaultMessage: 'Invoices', id: 'invoices.title' })`,
+            'b.vue': `$t({ defaultMessage: 'Schedules', id: 'schedules.title' })`,
+        };
+
+        expect(findDuplicateMessageIds(Object.keys(files), readFrom(files))).toEqual([]);
+    });
+
+    it('sorts the duplicates by id', () => {
+        const files = {
+            'a.vue': [
+                `$t({ defaultMessage: 'One', id: 'z.title' })`,
+                `$t({ defaultMessage: 'Two', id: 'z.title' })`,
+                `$t({ defaultMessage: 'Three', id: 'a.title' })`,
+                `$t({ defaultMessage: 'Four', id: 'a.title' })`,
+            ].join('\n'),
+        };
+
+        expect(
+            findDuplicateMessageIds(Object.keys(files), readFrom(files)).map(({ id }) => id),
+        ).toEqual(['a.title', 'z.title']);
     });
 });

@@ -66,8 +66,9 @@ const { $t } = useIntl();
                                   {
                                       defaultMessage:
                                           'per {period_name} starting, {startDate, date, long}',
-                                      id: 'checkout.trial_period_description',
-                                      description: 'The description of the trial period',
+                                      id: 'checkout.trial_period_description_without_price',
+                                      description:
+                                          'The description of the trial period, while the price is still being determined',
                                   },
                                   {
                                       // @ts-expect-error formatjs does not support this type yet
@@ -81,8 +82,9 @@ const { $t } = useIntl();
                             : $t(
                                   {
                                       defaultMessage: 'per {period_name}, starting today',
-                                      id: 'checkout.subscription_description',
-                                      description: 'The description of the subscription',
+                                      id: 'checkout.subscription_description_without_price',
+                                      description:
+                                          'The description of the subscription, while the price is still being determined',
                                   },
                                   {
                                       period_name: formatBillingPeriod(billingPeriod, {

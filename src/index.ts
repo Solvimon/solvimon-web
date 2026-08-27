@@ -16,6 +16,18 @@ export type {
     ActionRequestDetail,
     RequestActionEvent,
 } from './public/core';
+export type {
+    Amount,
+    CheckoutPagePortalUrl,
+    CheckoutPagePortalUrlPayload,
+    CountryCode,
+    CustomerPortalUrl,
+    CustomerPortalUrlPayload,
+    Environment,
+    PlatformBranding,
+    PortalUrl,
+} from '@solvimon/solvimon-types';
+export type { IntlMessages } from './public/types';
 
 export {
     SolvimonCheckout,

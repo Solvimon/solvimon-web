@@ -1,6 +1,11 @@
+import { execFileSync } from 'node:child_process';
 import { fileURLToPath, URL } from 'node:url';
-import { resolve, relative, dirname } from 'node:path';
+import { resolve, relative, dirname, sep } from 'node:path';
 import {
+    cpSync,
+    statSync,
+    mkdtempSync,
+    realpathSync,
     mkdirSync,
     existsSync,
     rmSync,
@@ -106,9 +111,19 @@ export default defineConfig({
             include: [
                 'env.d.ts',
                 'src/types/**/*.ts',
-                // Every type module the public entry props reach through, so the published
-                // declarations resolve instead of quietly falling back to `any`.
+                // The public type contract, and every type module the public entry props reach
+                // through, so the published declarations resolve instead of quietly falling back
+                // to `any`.
+                'src/public/types/**/*.ts',
                 'src/**/*.types.ts',
+                // Modules those type files import from that are not themselves `*.types.ts`.
+                // Kept to the ones that resolve on their own: chasing the rest would mean emitting
+                // declarations for all of `src`, and nothing a consumer writes goes through them.
+                'src/translations/supported.js',
+                'src/public/screens/types.ts',
+                'src/config/**/*.ts',
+                'src/components/providers/**/*.ts',
+                'src/components/providers/**/*.vue',
                 'src/index.ts',
                 'src/entries/**/*.ce.ts',
                 'src/public/screens/**/*.entry.ce.ts',
@@ -143,6 +158,9 @@ function publishDeclarations() {
     const outDir = fileURLToPath(new URL('./dist', import.meta.url));
     /** Where the emitted tree lives once it has been moved out of `dist/src`. */
     const treeDir = 'types';
+    /** Where declarations copied from a package a consumer cannot install go, inside that tree. */
+    const VENDOR_DIR = 'vendor';
+    const PRIVATE_TYPES_PACKAGE = '@solvimon/solvimon-types';
 
     /** `dist/a/b/c.d.ts` re-exporting `dist/types/x/y.d.ts` needs `../../types/x/y`. */
     const writeShim = (outPath: string, treeModule: string) => {
@@ -152,27 +170,125 @@ function publishDeclarations() {
         writeFileSync(outPath, `export * from '${specifier}';\n`);
     };
 
-    /**
-     * TypeScript writes `vue` as a path into `node_modules` because `tsconfig.json` maps it there,
-     * and that path does not exist in a consumer's tree. Point it back at the bare package, which
-     * every consumer has as a peer dependency.
-     */
-    const rewriteVueImports = (dir: string) => {
+    /** Applies `rewrite` to every declaration under `dir`. */
+    const rewriteDeclarations = (
+        dir: string,
+        rewrite: (source: string, file: string) => string,
+    ) => {
         for (const entry of readdirSync(dir, { withFileTypes: true })) {
             const entryPath = resolve(dir, entry.name);
             if (entry.isDirectory()) {
-                rewriteVueImports(entryPath);
+                rewriteDeclarations(entryPath, rewrite);
             } else if (entry.name.endsWith('.d.ts')) {
                 const source = readFileSync(entryPath, 'utf8');
-                const rewritten = source.replace(
-                    /(['"])(?:\.\.\/)+node_modules\/vue\/dist\/vue\.d\.ts\1/g,
-                    "'vue'",
-                );
+                const rewritten = rewrite(source, entryPath);
                 if (rewritten !== source) {
                     writeFileSync(entryPath, rewritten);
                 }
             }
         }
+    };
+
+    /**
+     * TypeScript writes `vue` as a path into `node_modules` because `tsconfig.json` maps it there,
+     * and that path does not exist in a consumer's tree. Point it back at the bare package, which
+     * every consumer has as a peer dependency.
+     */
+    const rewriteVueImports = (source: string) =>
+        source.replace(/(['"])(?:\.\.\/)+node_modules\/vue\/dist\/vue\.d\.ts\1/g, "'vue'");
+
+    /**
+     * `@solvimon/solvimon-types` is published to a registry consumers cannot reach, so a
+     * declaration that imports from it by name resolves to `any` on their side — silently, since
+     * they build with `skipLibCheck`. Emit the package's declarations into the published tree and
+     * point every import at that copy instead.
+     *
+     * Its own declarations are emitted rather than its files copied: the package ships `.ts`, and
+     * `skipLibCheck` does not cover `.ts`, so shipping the source would hand every consumer's
+     * compiler a few thousand lines to type-check under settings we do not control.
+     */
+    const vendorPrivateTypes = (treeRoot: string) => {
+        const vendorDir = resolve(treeRoot, VENDOR_DIR, PRIVATE_TYPES_PACKAGE);
+        const packageDir = realpathSync(resolve(__dirname, 'node_modules', PRIVATE_TYPES_PACKAGE));
+
+        // TypeScript treats anything under `node_modules` as an external library and emits nothing
+        // for it, so the sources are copied out first. Copying also makes this behave the same
+        // whether the package is a registry install or a symlinked local checkout. The copy sits
+        // inside the repository so that what the package imports — `@adyen/adyen-web`, and itself —
+        // still resolves through the repository's own `node_modules`.
+        mkdirSync(resolve(__dirname, '.sdk'), { recursive: true });
+        const sourceDir = mkdtempSync(resolve(__dirname, '.sdk', 'vendor-types-'));
+
+        try {
+            cpSync(packageDir, sourceDir, {
+                recursive: true,
+                dereference: true,
+                // Relative to the package, not absolute: an installed package lives under
+                // `node_modules` itself, so testing the absolute path would skip every file in it
+                // and leave `tsc` an empty directory.
+                filter: (path) => !relative(packageDir, path).split(sep).includes('node_modules'),
+            });
+
+            if (!existsSync(resolve(sourceDir, 'index.ts'))) {
+                throw new Error(
+                    `Copied no sources out of ${packageDir}; there is nothing to emit declarations from.`,
+                );
+            }
+
+            try {
+                execFileSync(
+                    resolve(__dirname, 'node_modules/.bin/tsc'),
+                    [
+                        '--declaration',
+                        '--emitDeclarationOnly',
+                        '--skipLibCheck',
+                        '--strict',
+                        '--target',
+                        'esnext',
+                        '--module',
+                        'esnext',
+                        '--moduleResolution',
+                        'bundler',
+                        '--rootDir',
+                        sourceDir,
+                        '--outDir',
+                        vendorDir,
+                        resolve(sourceDir, 'index.ts'),
+                    ],
+                    { stdio: 'pipe', encoding: 'utf8' },
+                );
+            } catch (error) {
+                // Without this the failure reads only as "Command failed", which says nothing
+                // about which declaration would not emit.
+                const output = ['stdout', 'stderr']
+                    .map((stream) => String(Reflect.get(Object(error), stream) ?? ''))
+                    .join('')
+                    .trim();
+
+                throw new Error(
+                    `Could not emit declarations for ${PRIVATE_TYPES_PACKAGE}:\n${output || String(error)}`,
+                );
+            }
+            // Declarations the package already ships are not re-emitted by tsc, so they would be
+            // missing from the copy — `utils.d.ts`, which two dozen of its own types import.
+            cpSync(sourceDir, vendorDir, {
+                recursive: true,
+                filter: (path) => statSync(path).isDirectory() || path.endsWith('.d.ts'),
+            });
+        } finally {
+            rmSync(sourceDir, { recursive: true, force: true });
+        }
+
+        rewriteDeclarations(treeRoot, (source, file) => {
+            const toVendor = relative(dirname(file), resolve(vendorDir, 'index'));
+            const specifier = (toVendor.startsWith('.') ? toVendor : `./${toVendor}`).replace(
+                /\\/g,
+                '/',
+            );
+            // Two files inside the package import it by name rather than relatively, so this also
+            // resolves the vendored copy's references to itself.
+            return source.replaceAll(`'${PRIVATE_TYPES_PACKAGE}'`, `'${specifier}'`);
+        });
     };
 
     return {
@@ -186,7 +302,8 @@ function publishDeclarations() {
             const publishedTreeDir = resolve(outDir, treeDir);
             rmSync(publishedTreeDir, { recursive: true, force: true });
             renameSync(emittedDir, publishedTreeDir);
-            rewriteVueImports(publishedTreeDir);
+            rewriteDeclarations(publishedTreeDir, rewriteVueImports);
+            vendorPrivateTypes(publishedTreeDir);
 
             // Legacy entries: dist/X/X.ce.d.ts
             for (const entryKey of Object.keys(legacyEntries)) {

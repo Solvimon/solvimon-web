@@ -190,6 +190,10 @@ jobs:
                   path: node_modules
                   key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json') }}
             - run: npm run build
+            - name: Check the published types reach no unresolvable private types
+              run: npm run types:check-published
+            - name: Check what a consumer of the packed package gets
+              run: npm run types:check-consumer
             - name: Measure bundle
               run: node scripts/ci/measure-bundle.mjs > bundle-sizes.json
             - uses: actions/upload-artifact@v6

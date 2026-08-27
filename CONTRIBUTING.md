@@ -29,6 +29,10 @@ npm run build          # Full SDK build
 CI runs the non-mutating variants of these (`lint:ci`, `format:check`) on every PR, along with
 coverage and bundle size comparisons posted as PR comments. All checks must be green before merge.
 
+After the build, CI also checks the types a consumer of the published package gets
+(`types:check-published`, `types:check-consumer`). Run them locally after `npm run build` when you
+touch anything on the public surface — see [Public Types](docs/development/public-types.md).
+
 A `pre-commit` hook runs ESLint and Prettier over staged files via `lint-staged`, so committed code
 is formatted and lint-clean by default. It fails the commit on any lint error that cannot be
 auto-fixed. Set `SKIP_LINT_STAGED=1` to bypass it for a work-in-progress commit — CI will still

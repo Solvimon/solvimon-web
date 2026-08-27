@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'path';
 import { fileURLToPath } from 'node:url';
 import { resolveSafePath } from './safe-path.mjs';
+import { glob } from 'glob';
 import { SUPPORTED_LOCALES } from '../src/translations/supported.js';
 
 export function isTranslationRecord(value) {
@@ -23,6 +24,40 @@ export function parseTranslationFile(content, file) {
     }
 
     return parsed;
+}
+
+const MESSAGE_PATTERNS = [
+    /\{\s*defaultMessage:\s*(?<quote>['"`])(?<message>[\s\S]*?)\k<quote>[\s\S]*?id:\s*'(?<id>[^']+)'/g,
+    /\{\s*id:\s*'(?<id>[^']+)'[\s\S]*?defaultMessage:\s*(?<quote>['"`])(?<message>[\s\S]*?)\k<quote>/g,
+];
+
+export function findMessages(content) {
+    return MESSAGE_PATTERNS.flatMap((pattern) =>
+        [...content.matchAll(pattern)].map(({ groups }) => ({
+            id: groups.id,
+            message: groups.message,
+        })),
+    );
+}
+
+export function findDuplicateMessageIds(files, readFile) {
+    const byId = new Map();
+
+    for (const file of files) {
+        for (const { id, message } of findMessages(readFile(file))) {
+            if (!byId.has(id)) byId.set(id, new Map());
+            const messages = byId.get(id);
+            if (!messages.has(message)) messages.set(message, file);
+        }
+    }
+
+    return [...byId]
+        .filter(([, messages]) => messages.size > 1)
+        .map(([id, messages]) => ({
+            id,
+            messages: [...messages].map(([message, file]) => ({ message, file })),
+        }))
+        .sort((a, b) => a.id.localeCompare(b.id));
 }
 
 export function checkTranslations(sourceKeys, localeFiles, readFile) {
@@ -51,6 +86,23 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
         }
     }).filter(Boolean);
 
+    const sourceFiles = glob
+        .sync('src/**/*.{ts,vue}', { cwd: path.join(__dirname, '..'), absolute: true })
+        .filter((file) => !file.includes('.spec.'));
+
+    const duplicates = findDuplicateMessageIds(sourceFiles, (f) => fs.readFileSync(f, 'utf-8'));
+
+    for (const { id, messages } of duplicates) {
+        console.log(`❌ Duplicate message id "${id}" with different messages:`);
+        messages.forEach(({ message, file }) =>
+            console.log(`  - ${JSON.stringify(message)} in ${path.relative(process.cwd(), file)}`),
+        );
+    }
+
+    if (duplicates.length === 0) {
+        console.log('✅ Every message id carries one message.');
+    }
+
     const results = checkTranslations(sourceKeys, files, (f) => fs.readFileSync(f, 'utf-8'));
 
     let hasMissing = false;
@@ -64,5 +116,5 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
         }
     }
 
-    if (hasMissing) process.exit(1);
+    if (hasMissing || duplicates.length > 0) process.exit(1);
 }

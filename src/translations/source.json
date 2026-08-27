@@ -327,6 +327,18 @@
     "defaultMessage": "Start trial",
     "description": "The label of the start trial button in the checkout form"
   },
+  "checkout.payment_method_block.load_failed_message": {
+    "defaultMessage": "Check your connection and try again.",
+    "description": "The message shown when the payment methods failed to load"
+  },
+  "checkout.payment_method_block.load_failed_retry_button.label": {
+    "defaultMessage": "Try again",
+    "description": "The label of the button that loads the payment methods again"
+  },
+  "checkout.payment_method_block.load_failed_title": {
+    "defaultMessage": "Could not load payment methods",
+    "description": "The title shown when the payment methods failed to load"
+  },
   "checkout.payment_method_block.no_country_selected_message": {
     "defaultMessage": "Payment methods will be shown after you select the billing country.",
     "description": "The message shown when no country is selected"

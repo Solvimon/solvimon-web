@@ -219,6 +219,7 @@ The SDK emits structured log entries via the [`onLog`](#error-logging) callback.
 | `PAYMENT_AUTHORIZATION_FAILED`              | Failed payment authorization for payment acceptor with id…         |
 | `PAYMENT_DETAILS_CALL_FAILED`               | Failed fetching payment details                                    |
 | `PAYMENT_INTEGRATION_INITIALIZATION_FAILED` | Failed to mount Adyen web drop-in                                  |
+| `PAYMENT_METHOD_OPTIONS_LOAD_FAILED`        | Failed to load the payment methods the checkout can offer          |
 | `REQUEST_PARSE_FAILED`                      | Failed to parse JSON response                                      |
 | `RESOURCE_REVOKED`                          | Failed to load portal resource                                     |
 | `SESSION_EXPIRED`                           | Stopped refreshing the access token after repeated 401 responses   |

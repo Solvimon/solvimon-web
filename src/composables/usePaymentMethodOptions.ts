@@ -48,9 +48,11 @@ export function usePaymentMethodOptions() {
             return data.value;
         }
 
+        const options = await execute(payload);
+
         cachedPayload.value = payload;
 
-        return execute(payload);
+        return options;
     };
 
     return { paymentMethodOptions: data, get, apiStatus, error, isPending };

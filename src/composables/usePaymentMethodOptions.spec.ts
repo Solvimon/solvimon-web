@@ -77,6 +77,22 @@ describe('usePaymentMethodOptions', () => {
         expect(paymentMethodOptions.paymentMethodOptions.value).toEqual(response);
     });
 
+    it('requests again after a failed lookup, so a retry is not answered from the cache', async () => {
+        const payload: GetPaymentMethodOptionsPayload = { customerId: 'cust_123', country: 'NL' };
+        const response = [{ id: 'pm_1' }] as unknown as PaymentMethodOptionsResponse;
+
+        mockGetPaymentMethodOptions.mockRejectedValueOnce(new Error('failed'));
+        mockGetPaymentMethodOptions.mockResolvedValueOnce(response);
+
+        const paymentMethodOptions = usePaymentMethodOptions();
+
+        await expect(paymentMethodOptions.get(payload)).rejects.toBeUndefined();
+        await paymentMethodOptions.get({ ...payload });
+
+        expect(mockGetPaymentMethodOptions).toHaveBeenCalledTimes(2);
+        expect(paymentMethodOptions.paymentMethodOptions.value).toEqual(response);
+    });
+
     it('requests again when the payload changes', async () => {
         mockGetPaymentMethodOptions.mockResolvedValue(
             [] as unknown as PaymentMethodOptionsResponse,

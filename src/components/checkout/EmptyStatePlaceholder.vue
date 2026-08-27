@@ -28,6 +28,9 @@ defineProps<EmptyStatePlaceholderProps>();
             >
                 <slot name="message" />
             </Typography>
+            <div class="sv-empty-state__action mt-3 empty:hidden">
+                <slot name="action" />
+            </div>
         </div>
     </Section>
 </template>

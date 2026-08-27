@@ -59,7 +59,37 @@ export function useCheckoutView({
         paymentMethodOptions,
         get: loadPaymentMethodOptions,
         isPending: isPaymentMethodsPending,
+        error: paymentMethodOptionsError,
     } = usePaymentMethodOptions();
+
+    const loadPaymentMethodOptionsFor = async (country: CountryCode, amountValue: Amount) => {
+        try {
+            await loadPaymentMethodOptions({
+                subscriptionId: subscription.value!.id,
+                country,
+                amount: amountValue,
+            });
+        } catch {
+            logger.error(
+                'PAYMENT_METHOD_OPTIONS_LOAD_FAILED',
+                'Failed to load the payment methods the checkout can offer',
+                {},
+                paymentMethodOptionsError.value,
+            );
+        }
+    };
+
+    const hasPaymentMethodOptionsError = computed(() => paymentMethodOptionsError.value !== null);
+
+    const loadPaymentMethodOptionsIfReady = () => {
+        const { country } = checkoutForm.form.value;
+
+        if (!subscription.value || !country || !amount.value) {
+            return;
+        }
+
+        void loadPaymentMethodOptionsFor(country, amount.value);
+    };
 
     const loadInvoicePreview = () => {
         const formState = checkoutForm.form.value;
@@ -313,14 +343,7 @@ export function useCheckoutView({
                 return;
             }
 
-            loadPaymentMethodOptions({
-                subscriptionId: subscription.value.id,
-                country,
-                amount: amountValue,
-            }).catch((err) => {
-                // eslint-disable-next-line
-                console.log(err);
-            });
+            void loadPaymentMethodOptionsFor(country, amountValue);
         },
     );
 
@@ -390,11 +413,7 @@ export function useCheckoutView({
         shouldLoadPaymentMethodOptions,
         (shouldLoad) => {
             if (shouldLoad) {
-                void loadPaymentMethodOptions({
-                    subscriptionId: subscription.value!.id,
-                    country: checkoutForm.form.value.country!,
-                    amount: amount.value,
-                });
+                loadPaymentMethodOptionsIfReady();
             }
         },
         { once: true },
@@ -409,6 +428,8 @@ export function useCheckoutView({
         updateInvoicePreviewOnBillingInformationChange,
         lastPreviewScheduleId: invoicePreview.lastPreviewScheduleId,
         paymentMethodOptions,
+        hasPaymentMethodOptionsError,
+        retryPaymentMethodOptions: loadPaymentMethodOptionsIfReady,
         isPaymentMethodsPending: isPaymentMethodsPending,
         isInvoicePreviewPending: invoicePreview.isPending,
         subscription,

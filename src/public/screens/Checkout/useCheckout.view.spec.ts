@@ -1,4 +1,4 @@
-import { nextTick, defineComponent, h } from 'vue';
+import { nextTick, defineComponent, h, ref } from 'vue';
 import { flushPromises, mount } from '@vue/test-utils';
 import type {
     PricingPlanSubscription,
@@ -97,10 +97,13 @@ const mockUseCheckoutForm = vi.fn<
     }) => createMockCheckoutForm(),
 );
 
+const paymentMethodOptionsError = ref<Error | null>(null);
+
 const mockUsePaymentMethodOptions = vi.fn(() => ({
     paymentMethodOptions: { value: [] },
     isPending: { value: false },
     get: mockLoadPaymentMethodOptions,
+    error: paymentMethodOptionsError,
 }));
 
 vi.mock('@/services/subscriptions', () => ({
@@ -185,6 +188,7 @@ describe('useCheckoutView', () => {
         mockGetSubscription.mockResolvedValue(mockSubscription);
         mockLoadInvoicePreview.mockResolvedValue(undefined);
         mockLoadPaymentMethodOptions.mockResolvedValue(undefined);
+        paymentMethodOptionsError.value = null;
         mockTaxIdValidator.mockReturnValue(true);
         mockGetFirstPricingPlanScheduleOfType.mockReturnValue({
             ...mockSubscription.pricing_plan_schedule_infos[0],
@@ -917,6 +921,83 @@ describe('useCheckoutView', () => {
         expect(
             context.init_pricing_plan_subscription.customer_details.organization?.tax_ids,
         ).toBeUndefined();
+    });
+
+    describe('payment method options failing to load', () => {
+        const mountCheckout = async () => {
+            const form = createMockCheckoutForm();
+            form.form.value.country = 'NL' as CountryCode;
+            mockUseCheckoutForm.mockImplementation(() => form);
+            mockUseInvoicePreview.mockReturnValue({
+                invoicePreview: {
+                    value: {
+                        invoice_amount_including_tax: {
+                            quantity: '1000',
+                            currency: 'EUR',
+                        } as Amount,
+                    },
+                },
+                trialInvoicePreview: { value: null },
+                trialPeriod: { value: null },
+                isPending: { value: false },
+                loadInvoicePreview: mockLoadInvoicePreview,
+            });
+
+            let view!: ReturnType<typeof useCheckoutView>;
+            const component = defineComponent({
+                setup() {
+                    view = useCheckoutView({
+                        initialCountry: 'NL' as CountryCode,
+                        initialEmail: undefined,
+                        subscriptionId: 'sub_123' as PricingPlanSubscription['id'],
+                    });
+                    return () => h('div');
+                },
+            });
+
+            mount(component);
+            await flushPromises();
+
+            return view;
+        };
+
+        it('reports the failure instead of leaving the checkout silent', async () => {
+            paymentMethodOptionsError.value = new Error('network down');
+            mockLoadPaymentMethodOptions.mockRejectedValue(undefined);
+
+            const view = await mountCheckout();
+            view.checkoutForm.form.value.country = 'DE' as CountryCode;
+            await flushPromises();
+
+            expect(view.hasPaymentMethodOptionsError.value).toBe(true);
+        });
+
+        it('has no error to report while the options load', async () => {
+            const view = await mountCheckout();
+
+            expect(view.hasPaymentMethodOptionsError.value).toBe(false);
+        });
+
+        it('asks for the options again when retried', async () => {
+            const view = await mountCheckout();
+            mockLoadPaymentMethodOptions.mockClear();
+
+            view.retryPaymentMethodOptions();
+            await flushPromises();
+
+            expect(mockLoadPaymentMethodOptions).toHaveBeenCalled();
+        });
+
+        it('does not retry before the checkout knows what to ask for', async () => {
+            const view = await mountCheckout();
+            view.checkoutForm.form.value.country = undefined;
+            mockLoadPaymentMethodOptions.mockClear();
+
+            view.retryPaymentMethodOptions();
+            await flushPromises();
+
+            expect(mockLoadPaymentMethodOptions).not.toHaveBeenCalled();
+        });
     });
 
     describe('onMounted', () => {

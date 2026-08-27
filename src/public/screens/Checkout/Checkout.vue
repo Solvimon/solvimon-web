@@ -84,6 +84,8 @@ const successRedirectUrl = portal.value?.init_pricing_plan_subscription?.success
 
 const {
     paymentMethodOptions,
+    hasPaymentMethodOptionsError,
+    retryPaymentMethodOptions,
     subscription,
     isPaymentMethodsPending,
     isInvoicePreviewPending,
@@ -607,6 +609,51 @@ onMounted(() => {
                                                 'The message shown when no country is selected',
                                         })
                                     }}
+                                </template>
+                            </EmptyStatePlaceholder>
+                            <EmptyStatePlaceholder
+                                v-else-if="hasPaymentMethodOptionsError"
+                                class="sv-checkout__payment-methods-error"
+                                icon="error"
+                            >
+                                <template #title>
+                                    {{
+                                        $t({
+                                            defaultMessage: 'Could not load payment methods',
+                                            id: 'checkout.payment_method_block.load_failed_title',
+                                            description:
+                                                'The title shown when the payment methods failed to load',
+                                        })
+                                    }}
+                                </template>
+                                <template #message>
+                                    {{
+                                        $t({
+                                            defaultMessage: 'Check your connection and try again.',
+                                            id: 'checkout.payment_method_block.load_failed_message',
+                                            description:
+                                                'The message shown when the payment methods failed to load',
+                                        })
+                                    }}
+                                </template>
+                                <template #action>
+                                    <Button
+                                        type="button"
+                                        color="gray"
+                                        variant="outline"
+                                        size="sm"
+                                        class="sv-action sv-action--secondary sv-checkout__payment-methods-retry"
+                                        @click="retryPaymentMethodOptions"
+                                    >
+                                        {{
+                                            $t({
+                                                defaultMessage: 'Try again',
+                                                id: 'checkout.payment_method_block.load_failed_retry_button.label',
+                                                description:
+                                                    'The label of the button that loads the payment methods again',
+                                            })
+                                        }}
+                                    </Button>
                                 </template>
                             </EmptyStatePlaceholder>
                             <EmptyStatePlaceholder

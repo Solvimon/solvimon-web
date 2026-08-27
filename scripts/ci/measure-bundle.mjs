@@ -124,9 +124,11 @@ export function measureEntryGraph(entryFile, distDir) {
     return { eager: sum(eager), lazy: sum(lazy) };
 }
 
+const ESM_ENTRY = /\.(?:mjs|es\.js)$/;
+
 function findEsmEntry(dir) {
     try {
-        const name = readdirSync(dir).find((file) => file.endsWith('.mjs'));
+        const name = readdirSync(dir).find((file) => ESM_ENTRY.test(file));
         return name ? join(dir, name) : null;
     } catch {
         return null;

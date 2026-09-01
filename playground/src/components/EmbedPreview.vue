@@ -5,6 +5,7 @@ import { allEntries } from '../registry';
 import {
     BRANDING,
     asPlaygroundCore,
+    asSdkEnvironment,
     DEFAULT_LOCALE,
     STORAGE_KEYS,
     configStorageKey,
@@ -29,7 +30,9 @@ onMounted(() => {
 
     const solvimon = asPlaygroundCore(
         createSolvimonCore({
-            environment: parseEnvironment(sessionStorage.getItem(STORAGE_KEYS.environment)),
+            environment: asSdkEnvironment(
+                parseEnvironment(sessionStorage.getItem(STORAGE_KEYS.environment)),
+            ),
             logLevel: 'info',
             branding: BRANDING,
             locale: sessionStorage.getItem(STORAGE_KEYS.locale) ?? DEFAULT_LOCALE,

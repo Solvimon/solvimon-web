@@ -9,6 +9,7 @@ import {
     BRANDING,
     ENVIRONMENTS,
     asPlaygroundCore,
+    asSdkEnvironment,
     STORAGE_KEYS,
     isEmbedded,
     parseEnvironment,
@@ -32,7 +33,7 @@ watch(environment, (value) => sessionStorage.setItem(STORAGE_KEYS.environment, v
 const solvimon = ref(
     asPlaygroundCore(
         createSolvimonCore({
-            environment: environment.value,
+            environment: asSdkEnvironment(environment.value),
             logLevel: 'info',
             branding: BRANDING,
             locale: locale.value,
@@ -43,7 +44,7 @@ const solvimon = ref(
 watch([locale, environment], ([newLocale, newEnvironment]) => {
     solvimon.value = asPlaygroundCore(
         createSolvimonCore({
-            environment: newEnvironment,
+            environment: asSdkEnvironment(newEnvironment),
             logLevel: 'info',
             branding: BRANDING,
             locale: newLocale,

@@ -26,11 +26,10 @@ export type {
     CountryCode,
     CustomerPortalUrl,
     CustomerPortalUrlPayload,
-    Environment,
     PlatformBranding,
     PortalUrl,
 } from '@solvimon/solvimon-types';
-export type { IntlMessages } from '@/public/types';
+export type { IntlMessages, Environment } from '@/public/types';
 
 export type {
     LogEntry,

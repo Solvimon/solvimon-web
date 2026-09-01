@@ -23,15 +23,22 @@ npm run type-check     # TypeScript + Vue template types
 npm run lint           # ESLint (auto-fixes on save)
 npm run format         # Prettier (rewrites files in place)
 npm run test:unit      # Vitest unit tests
-npm run build          # Full SDK build
+npm run build          # Full SDK build (what gets published)
 ```
+
+`npm run build` produces the publishable artifact, in which `TEST` and `LIVE` are the only
+environments that resolve. The playground and the e2e test app run against `DEV`, so they need
+`npm run build:internal` (or `npm run watch`, which sets the same flag) — see
+[Environments](docs/development/environments.md).
 
 CI runs the non-mutating variants of these (`lint:ci`, `format:check`) on every PR, along with
 coverage and bundle size comparisons posted as PR comments. All checks must be green before merge.
 
 After the build, CI also checks the types a consumer of the published package gets
-(`types:check-published`, `types:check-consumer`). Run them locally after `npm run build` when you
-touch anything on the public surface — see [Public Types](docs/development/public-types.md).
+(`types:check-published`, `types:check-consumer`) and that the bundle names no internal
+infrastructure (`bundle:check-contents`). Run them locally after `npm run build` when you touch
+anything on the public surface — see [Public Types](docs/development/public-types.md) and
+[Environments](docs/development/environments.md).
 
 A `pre-commit` hook runs ESLint and Prettier over staged files via `lint-staged`, so committed code
 is formatted and lint-clean by default. It fails the commit on any lint error that cannot be

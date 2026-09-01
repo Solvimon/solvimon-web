@@ -1,4 +1,4 @@
-import type { CoreConfiguration } from '@solvimon/solvimon-web/core';
+import type { CoreConfiguration, Environment as SdkEnvironment } from '@solvimon/solvimon-web/core';
 
 /** Only what the switcher offers, which is also all `parseEnvironment` below ever returns. */
 export type Environment = 'LIVE' | 'TEST' | 'DEV';
@@ -84,6 +84,15 @@ export interface PlaygroundCore {
 export function asPlaygroundCore(core: CoreConfiguration): PlaygroundCore {
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     return core as unknown as PlaygroundCore;
+}
+
+/**
+ * The playground runs against `npm run build:internal`, the only build in which DEV resolves. The
+ * published `Environment` is `TEST | LIVE`, so handing the SDK an internal one needs a cast.
+ */
+export function asSdkEnvironment(environment: Environment): SdkEnvironment {
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    return environment as unknown as SdkEnvironment;
 }
 
 export const BRANDING = {

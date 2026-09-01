@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import type { SolvimonPayInvoiceEntryProps } from './PayInvoice.entry.types';
-import { COMPONENT_NAME } from './PayInvoice.entry.ce';
 import PayInvoice from './PayInvoice.vue';
 import PayInvoiceEntryView from './PayInvoice.entry.view.vue';
 import { EntryProvider } from '@/components/providers';
+import { getComponentName } from '@/utils/component';
+
+const componentName = getComponentName('pay-invoice');
 
 defineProps<SolvimonPayInvoiceEntryProps>();
 </script>
@@ -11,7 +13,7 @@ defineProps<SolvimonPayInvoiceEntryProps>();
 <template>
     <EntryProvider
         :entry="$props"
-        :component-name="COMPONENT_NAME"
+        :component-name="componentName"
         :allowed-portal-types="['CUSTOMER']"
         @error="(error) => $emit('error', error)"
     >

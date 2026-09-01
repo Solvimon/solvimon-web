@@ -11,12 +11,6 @@ const { mockUseCustomer, mockGetExecute, mockUpdateExecute } = vi.hoisted(() => 
     mockUpdateExecute: vi.fn(),
 }));
 
-vi.mock('./BillingInformationForm.entry.ce', () => ({
-    COMPONENT_NAME: 'solvimon-billing-information-form',
-    SolvimonBillingInformationForm: {},
-    defineSolvimonBillingInformationForm: () => {},
-}));
-
 vi.mock('@/composables/useCustomer', () => ({
     useCustomer: mockUseCustomer,
 }));

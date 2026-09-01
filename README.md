@@ -19,11 +19,12 @@ Every component requires at minimum:
 
 ## Usage
 
-The SDK exports web components (Custom Elements). There are two ways to register them.
+The SDK ships web components (Custom Elements), and there are two ways to put one on a page.
 
-### Auto-register via define function
+### Register the element yourself
 
-Call the `define` function once — it registers the custom element globally.
+Call the entry's `define` function once — it registers the custom element globally and is safe to
+call more than once.
 
 ```tsx
 import { defineSolvimonCheckout } from '@solvimon/solvimon-web/screens/checkout';
@@ -35,21 +36,35 @@ export default function Page() {
 }
 ```
 
-### Manual registration (recommended for Vue — enables typed components)
+This is the lighter of the two: you download only the entries you name.
 
-```vue
-<script setup lang="ts">
-import { SolvimonCheckout } from '@solvimon/solvimon-web/screens/checkout';
+If the page already has an element called `solvimon-checkout` — two copies of the SDK, say — pass
+your own tag name instead. Registering a name that is already taken does nothing, so without this
+the second registration is silently ignored.
 
-if (!customElements.get('solvimon-checkout')) {
-    customElements.define('solvimon-checkout', SolvimonCheckout);
-}
-</script>
-
-<template>
-    <solvimon-checkout token="<token>" environment="LIVE" />
-</template>
+```ts
+defineSolvimonCheckout('acme-checkout');
 ```
+
+### Mount through the core
+
+`createSolvimonCore` configures once and mounts by id, and is the only way to pass `cssOverrides`.
+It loads each entry on demand, so you pay for what you mount, and it hands back an unmount
+function.
+
+```ts
+import { createSolvimonCore } from '@solvimon/solvimon-web/core';
+
+const solvimon = createSolvimonCore({ environment: 'TEST' });
+
+const unmount = solvimon.createScreen('checkout', {
+    container: '#checkout',
+    portalObject,
+});
+```
+
+`createScreen` and `createComponent` return synchronously; the element is appended once its entry
+has loaded. An unknown id or a container that matches nothing throws straight away.
 
 ### Server-side rendering (SSR / isomorphic)
 

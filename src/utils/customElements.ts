@@ -70,19 +70,20 @@ export function defineCustomElement(
 }
 
 /**
- * The element, its tag name and an idempotent define for it — the three things every SDK entry
- * exports.
+ * The one thing every SDK entry exports: an idempotent define for its custom element.
+ *
+ * `tagName` is the escape hatch for a page that already has an element by the canonical name, and
+ * is the only thing exporting the class itself ever bought a host. Registering a name twice throws,
+ * so a name already taken is left alone.
  */
-export function createSolvimonElement(component: CustomElementComponent, tagName: string) {
+export function createSolvimonElement(component: CustomElementComponent, id: string) {
     const element = defineCustomElement(component);
-    const componentName = getComponentName(tagName);
+    const defaultTagName = getComponentName(id);
 
     return {
-        element,
-        componentName,
-        define: (): void => {
-            if (!customElements.get(componentName)) {
-                customElements.define(componentName, element);
+        define: (tagName: string = defaultTagName): void => {
+            if (!customElements.get(tagName)) {
+                customElements.define(tagName, element);
             }
         },
     };

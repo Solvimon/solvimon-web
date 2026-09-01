@@ -12,12 +12,6 @@ const { mockUseCustomerWalletBalances, mockUseLoadInitialData, mockFetch } = vi.
     mockFetch: vi.fn(),
 }));
 
-vi.mock('./WalletBalances.entry.ce', () => ({
-    COMPONENT_NAME: 'solvimon-wallet-balances',
-    SolvimonWalletBalances: {},
-    defineSolvimonWalletBalances: () => {},
-}));
-
 vi.mock('@/composables/useCustomerWalletBalances', () => ({
     useCustomerWalletBalances: mockUseCustomerWalletBalances,
 }));

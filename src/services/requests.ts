@@ -9,7 +9,7 @@ import type {
     GetDefaultHeaders,
 } from './requests.types';
 import { useLogger } from '@/components/providers/LoggerProvider/composables/useLogger';
-import { appendQueryParams, Headers } from '@/services/requests.lib';
+import { appendQueryParams, getMediaType, Headers, MediaType } from '@/services/requests.lib';
 import { useAuth } from '@/components/providers/AuthProvider';
 
 const defaultOptions: RequestOptions = {
@@ -68,29 +68,35 @@ export function createRequestService({ enableAccessCheck } = { enableAccessCheck
                 body: data ? JSON.stringify(data) : undefined,
             });
 
-            if (response.headers.get('Content-Type') === 'application/pdf') {
-                return response.blob();
-            }
-
-            if (!(response.headers.get('Content-Type') === 'application/json')) {
-                return response.text();
-            }
+            const mediaType = getMediaType(response.headers.get(Headers.CONTENT_TYPE));
+            const isJson = mediaType === MediaType.JSON;
 
             let json;
 
-            try {
-                json = await response.json();
-            } catch (error) {
-                logger.error('REQUEST_PARSE_FAILED', 'Failed to parse JSON response', {}, error);
-                onError?.(new Error('Failed to parse JSON response', { cause: error }));
+            // Parsed before the status is checked, because an error body is where the message and
+            // the field it belongs to come from.
+            if (isJson) {
+                try {
+                    json = await response.json();
+                } catch (error) {
+                    logger.error(
+                        'REQUEST_PARSE_FAILED',
+                        'Failed to parse JSON response',
+                        {},
+                        error,
+                    );
+                    onError?.(new Error('Failed to parse JSON response', { cause: error }));
 
-                throw {
-                    hasError: true,
-                    statusCode: response.status,
-                    requestId: response.headers.get(Headers.X_REQUEST_ID),
-                };
+                    throw {
+                        hasError: true,
+                        statusCode: response.status,
+                        requestId: response.headers.get(Headers.X_REQUEST_ID),
+                    };
+                }
             }
 
+            // Checked once, for every content type: a PDF endpoint answering with an HTML error
+            // page has to reject, not resolve with the page as if it were the file.
             if (!response.ok) {
                 throw {
                     hasError: true,
@@ -99,6 +105,14 @@ export function createRequestService({ enableAccessCheck } = { enableAccessCheck
                     requestId: response.headers.get(Headers.X_REQUEST_ID),
                     field: json?.field,
                 };
+            }
+
+            if (mediaType === MediaType.PDF) {
+                return response.blob();
+            }
+
+            if (!isJson) {
+                return response.text();
             }
 
             return json;

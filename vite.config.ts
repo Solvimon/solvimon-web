@@ -15,11 +15,13 @@ import {
     renameSync,
 } from 'node:fs';
 import { defineConfig } from 'vite';
+import type { PluginOption } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import vueDevTools from 'vite-plugin-vue-devtools';
 import { glob } from 'glob';
 import dts from 'vite-plugin-dts';
 import type { TemplateChildNode, RootNode } from '@vue/compiler-core';
+import { selectorsMissingFrom } from './scripts/css-duplication.mjs';
 
 function getLibEntries(
     basePath: string,
@@ -67,6 +69,56 @@ const MODULE_EXTENSIONS: Record<string, string> = { es: 'mjs', cjs: 'cjs' };
  * hostnames to every customer.
  */
 const withInternalEnvironments = process.env.SOLVIMON_INTERNAL_ENVIRONMENTS === '1';
+
+/**
+ * Removes the stylesheet vite extracts from the library build.
+ *
+ * Every component renders in a shadow root, which a stylesheet on the host page cannot reach, so
+ * styles are adopted as strings instead (see `src/utils/customElements.ts`). The extracted file is
+ * the discarded half of the Solvimon UI components importing their styles twice — once as a side
+ * effect, once as a string. Nothing in `dist` references it, no `exports` entry makes it
+ * importable, and a consumer who found it anyway would download bytes that style nothing.
+ *
+ * It is deleted only after checking it is wholly redundant. If a dependency ever ships styles the
+ * plain way alone, those rules would be the one copy there is, and dropping them would quietly
+ * unstyle a component — so that case fails the build instead.
+ */
+function dropRedundantStylesheet(): PluginOption {
+    return {
+        name: 'solvimon:drop-redundant-stylesheet',
+        // After vite's own css plugin, which is what emits the asset in the first place.
+        enforce: 'post',
+        generateBundle(_options, bundle) {
+            const js = Object.values(bundle)
+                .filter((output) => output.type === 'chunk')
+                .map((output) => output.code)
+                .join('\n');
+
+            for (const [fileName, output] of Object.entries(bundle)) {
+                if (output.type !== 'asset' || !fileName.endsWith('.css')) continue;
+
+                const css = String(output.source);
+                const missing = selectorsMissingFrom(css, js);
+
+                if (missing.length) {
+                    this.error(
+                        [
+                            `${fileName} holds ${missing.length} rule(s) that reach no shadow root:`,
+                            ...missing.slice(0, 10).map((selector) => `    ${selector}`),
+                            '',
+                            'These styles exist only in a stylesheet no consumer can import, so the',
+                            'components they target render unstyled. Whatever ships them needs to',
+                            'expose them as a string that `baseStyles` can adopt, the way',
+                            '`@solvimon/solvimon-ui/component-styles` does, before this file can go.',
+                        ].join('\n'),
+                    );
+                }
+
+                delete bundle[fileName];
+            }
+        },
+    };
+}
 
 const coreEntry = resolve(__dirname, 'src/public/core/index.ts');
 const rootEntry = resolve(__dirname, 'src/index.ts');
@@ -124,6 +176,7 @@ export default defineConfig({
             },
         }),
         vueDevTools(),
+        dropRedundantStylesheet(),
         dts({
             rollupTypes: false,
             outDir: './dist',

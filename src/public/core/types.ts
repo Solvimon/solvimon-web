@@ -2,6 +2,7 @@ import type { PlatformBranding } from '@solvimon/solvimon-types';
 import type { Environment } from '@/public/types';
 import type { IntlMessages } from '@/public/types';
 import type { LogLevel, LogSink } from '@/components/providers/LoggerProvider/LoggerProvider.types';
+import type { ExperimentalFeature } from '@/components/providers/ExperimentalFeatureProvider/ExperimentalFeatureProvider.lib';
 import type { SolvimonBillingInformationEntryProps } from '@/public/components/BillingInformation/BillingInformation.entry.types';
 import type { SolvimonBillingInformationFormEntryProps } from '@/public/components/BillingInformationForm/BillingInformationForm.entry.types';
 import type { SolvimonCustomerPaymentMethodsEntryProps } from '@/public/components/CustomerPaymentMethods/CustomerPaymentMethods.entry.types';
@@ -30,7 +31,7 @@ export interface SharedSolvimonMountConfig {
     locale?: string;
     dateLocale?: string;
     messages?: IntlMessages;
-    experimentalFeatures?: unknown[];
+    experimentalFeatures?: ExperimentalFeature[];
     logLevel?: LogLevel;
     onLog?: LogSink;
     branding?: PlatformBranding;

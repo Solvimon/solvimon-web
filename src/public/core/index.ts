@@ -30,6 +30,7 @@ export type {
     PortalUrl,
 } from '@solvimon/solvimon-types';
 export type { IntlMessages, Environment } from '@/public/types';
+export type { ExperimentalFeature } from '@/components/providers/ExperimentalFeatureProvider/ExperimentalFeatureProvider.lib';
 
 export type {
     LogEntry,

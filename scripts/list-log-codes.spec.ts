@@ -2,7 +2,13 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { describe, it, expect, afterEach } from 'vitest';
-import { scanLogCodes, buildMarkdownSection, updateReadme } from './list-log-codes.mjs';
+import {
+    scanLogCodes,
+    buildMarkdownSection,
+    updateReadme,
+    parseDeclaredCodes,
+    mergeCodes,
+} from './list-log-codes.mjs';
 
 function makeTmpDir(): string {
     return fs.mkdtempSync(path.join(os.tmpdir(), 'list-log-codes-'));
@@ -51,6 +57,22 @@ describe('scanLogCodes', () => {
                 }),
             ]),
         );
+    });
+
+    it('extracts a code emitted through logger.capture, not just logger.error', () => {
+        const dir = tmpDir();
+        writeFile(
+            dir,
+            'promotion.ts',
+            `logger.capture(error, {\n    code: 'PROMO_FAILED',\n    message: 'Failed to apply promotion code',\n});`,
+        );
+
+        const entries = scanLogCodes(dir, dir);
+        expect(entries).toHaveLength(1);
+        expect(entries[0]).toMatchObject({
+            code: 'PROMO_FAILED',
+            message: 'Failed to apply promotion code',
+        });
     });
 
     it('extracts codes from a .vue file', () => {
@@ -193,6 +215,72 @@ describe('scanLogCodes', () => {
     });
 });
 
+describe('parseDeclaredCodes', () => {
+    const source = `
+        export type WarnCode =
+            | 'SLOW_RESPONSE'
+            | 'RETRYING';
+
+        export type ErrorCode =
+            | 'REQUEST_FAILED'
+            | 'SESSION_EXPIRED'
+            | 'NEVER_EMITTED';
+    `;
+
+    it('reads both unions', () => {
+        expect(parseDeclaredCodes(source)).toStrictEqual({
+            error: ['REQUEST_FAILED', 'SESSION_EXPIRED', 'NEVER_EMITTED'],
+            warn: ['SLOW_RESPONSE', 'RETRYING'],
+        });
+    });
+
+    it('throws when a union is missing rather than reporting an empty contract', () => {
+        expect(() => parseDeclaredCodes("export type WarnCode = | 'A';")).toThrow(/ErrorCode/);
+    });
+});
+
+describe('mergeCodes', () => {
+    const declared = { error: ['REQUEST_FAILED', 'NEVER_EMITTED'], warn: ['SLOW_RESPONSE'] };
+    const scanned = [
+        { level: 'error', code: 'REQUEST_FAILED', message: 'Request failed', file: 'a.ts' },
+        { level: 'warn', code: 'SLOW_RESPONSE', message: 'Slow response', file: 'b.ts' },
+    ];
+
+    it('lists every declared code, not only the ones with a call site', () => {
+        const { entries } = mergeCodes(declared, scanned);
+        expect(entries.map((e) => e.code).sort()).toStrictEqual([
+            'NEVER_EMITTED',
+            'REQUEST_FAILED',
+            'SLOW_RESPONSE',
+        ]);
+    });
+
+    it('takes the level from the union rather than from the call site', () => {
+        const miscategorised = [{ ...scanned[0], level: 'warn' }];
+        const { entries } = mergeCodes(declared, miscategorised);
+        expect(entries.find((e) => e.code === 'REQUEST_FAILED')?.level).toBe('error');
+    });
+
+    it('describes a declared code nothing emits, and reports it', () => {
+        const { entries, notEmitted } = mergeCodes(declared, scanned);
+        expect(entries.find((e) => e.code === 'NEVER_EMITTED')?.message).toMatch(/not currently/i);
+        expect(notEmitted).toStrictEqual(['NEVER_EMITTED']);
+    });
+
+    it('reports a code that is emitted but not declared', () => {
+        const { undeclared } = mergeCodes(declared, [
+            ...scanned,
+            { level: 'error', code: 'ROGUE_CODE', message: 'Rogue', file: 'c.ts' },
+        ]);
+        expect(undeclared).toStrictEqual(['ROGUE_CODE']);
+    });
+
+    it('uses the scanned message when there is one', () => {
+        const { entries } = mergeCodes(declared, scanned);
+        expect(entries.find((e) => e.code === 'REQUEST_FAILED')?.message).toBe('Request failed');
+    });
+});
+
 describe('buildMarkdownSection', () => {
     it('generates a section with error and warn tables', () => {
         const entries = [
@@ -327,5 +415,30 @@ describe('updateReadme', () => {
         const dir = makeTmpDir();
         dirs.push(dir);
         expect(() => updateReadme('/etc/passwd', 'content', dir)).toThrow(/traversal/i);
+    });
+});
+
+/**
+ * The generator is only useful if someone runs it. This is what notices when they have not: the
+ * README's error-code table drifted from the `ErrorCode` union by five codes before anyone looked.
+ */
+describe('the committed README', () => {
+    const root = path.resolve(__dirname, '..');
+    const read = (relativePath: string) => fs.readFileSync(path.join(root, relativePath), 'utf-8');
+
+    it('lists every declared log code, so `npm run logs:list` has been run', () => {
+        const declared = parseDeclaredCodes(
+            read('src/components/providers/LoggerProvider/LoggerProvider.types.ts'),
+        );
+        const readme = read('README.md');
+
+        expect(declared.error.length + declared.warn.length).toBeGreaterThan(0);
+
+        // Prettier pads the table columns, so match the cell rather than an exact string.
+        const missing = [...declared.error, ...declared.warn].filter(
+            (code) => !new RegExp(`\\|\\s*\`${code}\`\\s*\\|`).test(readme),
+        );
+
+        expect(missing).toStrictEqual([]);
     });
 });

@@ -53,21 +53,26 @@ if (!customElements.get('solvimon-checkout')) {
 
 ### Server-side rendering (SSR / isomorphic)
 
-The define functions access browser APIs and must only run client-side. Lazy-import them inside a client-only lifecycle hook:
+Importing an entry on the server is safe — the module has no top-level browser access. It is
+`define()` that needs a browser, because `customElements` does not exist in Node, so call it from a
+client-only lifecycle hook:
 
 ```tsx
 import { useEffect } from 'react';
+// Importing at the top level is fine; only the call below has to wait for the browser.
+import { defineSolvimonCheckout } from '@solvimon/solvimon-web/screens/checkout';
 
 export default function Page() {
     useEffect(() => {
-        import('@solvimon/solvimon-web/screens/checkout').then(({ defineSolvimonCheckout }) =>
-            defineSolvimonCheckout(),
-        );
+        defineSolvimonCheckout();
     }, []);
 
     return <solvimon-checkout token="<token>" environment="LIVE" />;
 }
 ```
+
+A lazy `import()` inside the hook also works, and is worth keeping if you want the entry out of your
+server bundle for size reasons rather than correctness ones.
 
 ## CSS overrides
 
@@ -207,6 +212,7 @@ The SDK emits structured log entries via the [`onLog`](#error-logging) callback.
 | `APPLE_PAY_ERROR`                           | Apple Pay error                                                    |
 | `AUTO_TOP_UP_CANCELLATION_FAILED`           | Failed to turn off a wallet                                        |
 | `AUTO_TOP_UP_SAVE_FAILED`                   | Failed to save the automatic top-up rule                           |
+| `CUSTOMER_FETCH_FAILED`                     | Reserved — not currently emitted                                   |
 | `EXPRESS_CHECKOUT_GOOGLE_PAY_ERROR`         | The Google Pay button reference is not found and cannot be mounted |
 | `EXPRESS_CHECKOUT_PAYPAL_ERROR`             | The PayPal button reference is not found and cannot be mounted     |
 | `INITIAL_DATA_LOAD_FAILED`                  | Failed to load initial data                                        |
@@ -220,6 +226,9 @@ The SDK emits structured log entries via the [`onLog`](#error-logging) callback.
 | `PAYMENT_DETAILS_CALL_FAILED`               | Failed fetching payment details                                    |
 | `PAYMENT_INTEGRATION_INITIALIZATION_FAILED` | Failed to mount Adyen web drop-in                                  |
 | `PAYMENT_METHOD_OPTIONS_LOAD_FAILED`        | Failed to load the payment methods the checkout can offer          |
+| `PROMOTION_CODE_APPLY_FAILED`               | Failed to apply promotion code                                     |
+| `PROMOTION_CODE_REMOVE_FAILED`              | Failed to remove promotion code                                    |
+| `PURCHASE_FAILED`                           | Reserved — not currently emitted                                   |
 | `REQUEST_PARSE_FAILED`                      | Failed to parse JSON response                                      |
 | `RESOURCE_REVOKED`                          | Failed to load portal resource                                     |
 | `SESSION_EXPIRED`                           | Stopped refreshing the access token after repeated 401 responses   |
@@ -232,6 +241,7 @@ The SDK emits structured log entries via the [`onLog`](#error-logging) callback.
 | `SUBSCRIPTION_UPDATE_FAILED`                | Failed to start a new pricing plan schedule                        |
 | `TOKENIZATION_FAILED`                       | Missing customer id for payment acceptor with id…                  |
 | `TOP_UP_FAILED`                             | Failed to charge the wallet top-up                                 |
+| `UNHANDLED_ERROR`                           | An error that reached the SDK with no more specific code           |
 
 ### Warning codes
 

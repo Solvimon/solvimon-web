@@ -17,6 +17,12 @@ const README_END_MARKER =
 // captured up to the first `${` (shown as a truncated description with … in the README).
 const LOG_CALL_RE = /logger\.(error|warn)\(\s*['"]([A-Z_]+)['"]\s*,\s*['"`]([^'"`$\n]+)/gs;
 
+// `logger.capture(error, { code: 'CODE', message: 'message' })` — the other shape a code reaches a
+// consumer through, and the one that kept the promotion-code errors out of the table. The level
+// comes from the union rather than from here, so this only has to find the message.
+const CAPTURE_CALL_RE =
+    /logger\.capture\([^;]*?code:\s*['"]([A-Z_]+)['"]\s*,\s*message:\s*['"`]([^'"`$\n]+)/gs;
+
 function* walkSrc(dir) {
     for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
         const full = resolveSafePath(entry.name, dir);
@@ -39,8 +45,20 @@ export function scanLogCodes(srcDir, baseDir = ROOT) {
 
     for (const file of walkSrc(srcDir)) {
         const content = fs.readFileSync(file, 'utf-8');
-        for (const match of content.matchAll(LOG_CALL_RE)) {
-            const [, level, code, message] = match;
+        const matches = [
+            ...[...content.matchAll(LOG_CALL_RE)].map(([, level, code, message]) => ({
+                level,
+                code,
+                message,
+            })),
+            ...[...content.matchAll(CAPTURE_CALL_RE)].map(([, code, message]) => ({
+                level: 'error',
+                code,
+                message,
+            })),
+        ];
+
+        for (const { level, code, message } of matches) {
             if (!byCode.has(code)) {
                 // When the original string was a template literal with ${...}, the regex
                 // stops before the $, leaving a trailing space — add … to signal truncation.
@@ -60,6 +78,61 @@ export function scanLogCodes(srcDir, baseDir = ROOT) {
         if (a.level !== b.level) return a.level < b.level ? -1 : 1;
         return a.code.localeCompare(b.code);
     });
+}
+
+/**
+ * Descriptions for codes a consumer can receive but that carry no literal message at the point
+ * they are emitted, so the scan cannot find one.
+ */
+const DESCRIPTION_OVERRIDES = {
+    UNHANDLED_ERROR: 'An error that reached the SDK with no more specific code',
+};
+
+/** Shown for a code the contract declares but nothing emits. */
+const NOT_EMITTED = 'Reserved — not currently emitted';
+
+/**
+ * The `ErrorCode` and `WarnCode` unions, which are the contract a consumer filters on.
+ *
+ * The table used to be built from call sites alone, so a code declared here but emitted through
+ * some other shape — or not emitted at all — simply went missing: five of thirty-five were absent.
+ * The union decides what is listed and at what level; the scan only supplies descriptions.
+ */
+export function parseDeclaredCodes(typesSource) {
+    const union = (name) => {
+        const declaration = new RegExp(`export type ${name} =([^;]*);`).exec(typesSource);
+        if (!declaration) throw new Error(`${name} union not found`);
+        return [...declaration[1].matchAll(/'([A-Z_]+)'/g)].map((match) => match[1]);
+    };
+
+    return { error: union('ErrorCode'), warn: union('WarnCode') };
+}
+
+/**
+ * Every declared code, at the level its union gives it, described by the scan where possible.
+ *
+ * Also reports the two ways the contract and the code can drift: a declared code nothing emits,
+ * and an emitted code the contract does not declare.
+ */
+export function mergeCodes(declared, scanned) {
+    const messageByCode = new Map(scanned.map((entry) => [entry.code, entry.message]));
+
+    const entries = ['error', 'warn'].flatMap((level) =>
+        [...declared[level]].sort().map((code) => ({
+            level,
+            code,
+            message: messageByCode.get(code) ?? DESCRIPTION_OVERRIDES[code] ?? NOT_EMITTED,
+            file: '',
+        })),
+    );
+
+    const allDeclared = new Set([...declared.error, ...declared.warn]);
+
+    return {
+        entries,
+        notEmitted: entries.filter((entry) => entry.message === NOT_EMITTED).map((e) => e.code),
+        undeclared: scanned.map((e) => e.code).filter((code) => !allDeclared.has(code)),
+    };
 }
 
 export function buildMarkdownSection(entries) {
@@ -110,16 +183,38 @@ export function updateReadme(readmePath, section, baseDir = ROOT) {
     return 'appended';
 }
 
+const LOG_CODE_TYPES = 'src/components/providers/LoggerProvider/LoggerProvider.types.ts';
+
 if (process.argv[1] === __filename) {
     const srcDir = path.join(ROOT, 'src');
     const readmePath = path.join(ROOT, 'README.md');
 
-    const entries = scanLogCodes(srcDir);
-    const section = buildMarkdownSection(entries);
-    const result = updateReadme(readmePath, section);
+    const declared = parseDeclaredCodes(fs.readFileSync(path.join(ROOT, LOG_CODE_TYPES), 'utf-8'));
+    const { entries, notEmitted, undeclared } = mergeCodes(declared, scanLogCodes(srcDir));
+
+    const result = updateReadme(readmePath, buildMarkdownSection(entries));
 
     const errorCount = entries.filter((e) => e.level === 'error').length;
     const warnCount = entries.filter((e) => e.level === 'warn').length;
 
     console.log(`✅ README ${result}: ${errorCount} error code(s), ${warnCount} warning code(s).`);
+
+    if (notEmitted.length) {
+        console.warn(
+            `\n⚠️  Declared but never emitted, so listed as "${NOT_EMITTED}":\n` +
+                notEmitted.map((code) => `     ${code}`).join('\n') +
+                `\n   Each is either a code that lost its last call site or one that was never wired` +
+                `\n   up. Removing one from the union is a breaking change after 1.0.`,
+        );
+    }
+
+    // The contract cannot describe a code it does not declare, so this one is a mistake rather
+    // than a decision: the emit site will not type-check against ErrorCode or WarnCode.
+    if (undeclared.length) {
+        console.error(
+            `\n❌ Emitted but not declared in ${LOG_CODE_TYPES}:\n` +
+                undeclared.map((code) => `     ${code}`).join('\n'),
+        );
+        process.exit(1);
+    }
 }

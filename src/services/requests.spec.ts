@@ -325,5 +325,97 @@ describe('createRequestService', () => {
             });
             expect(loggerError).not.toHaveBeenCalled();
         });
+
+        it('rejects when an error status arrives as an HTML page', async () => {
+            const request = createRequestService();
+            mockFetch.mockResolvedValueOnce({
+                ok: false,
+                status: 500,
+                text: () => Promise.resolve('<html>Internal Server Error</html>'),
+                headers: new Headers({
+                    'Content-Type': 'text/html; charset=utf-8',
+                    [HeadersConst.X_REQUEST_ID]: 'req_789',
+                }),
+            });
+
+            await expect(request({ url: CALLED_URL })).rejects.toEqual({
+                hasError: true,
+                statusCode: 500,
+                message: undefined,
+                requestId: 'req_789',
+                field: undefined,
+            });
+        });
+
+        it('rejects instead of handing back an error response as a PDF', async () => {
+            const request = createRequestService();
+            const blob = vi.fn();
+            mockFetch.mockResolvedValueOnce({
+                ok: false,
+                status: 403,
+                blob,
+                headers: new Headers({
+                    'Content-Type': 'application/pdf',
+                    [HeadersConst.X_REQUEST_ID]: 'req_pdf',
+                }),
+            });
+
+            await expect(request({ url: CALLED_URL })).rejects.toMatchObject({
+                hasError: true,
+                statusCode: 403,
+                requestId: 'req_pdf',
+            });
+            expect(blob).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('content types', () => {
+        const jsonResponse = (body: unknown, contentType: string) => ({
+            ok: true,
+            status: 200,
+            json: () => Promise.resolve(body),
+            headers: new Headers({ 'Content-Type': contentType }),
+        });
+
+        it('parses a JSON body sent with a charset parameter', async () => {
+            const request = createRequestService();
+            mockFetch.mockResolvedValueOnce(
+                jsonResponse({ id: 'inv_1' }, 'application/json; charset=utf-8'),
+            );
+
+            await expect(request({ url: CALLED_URL })).resolves.toEqual({ id: 'inv_1' });
+        });
+
+        it('matches the media type regardless of casing', async () => {
+            const request = createRequestService();
+            mockFetch.mockResolvedValueOnce(jsonResponse({ id: 'inv_2' }, 'Application/JSON'));
+
+            await expect(request({ url: CALLED_URL })).resolves.toEqual({ id: 'inv_2' });
+        });
+
+        it('returns the body as text when the response is genuinely not JSON', async () => {
+            const request = createRequestService();
+            mockFetch.mockResolvedValueOnce({
+                ok: true,
+                status: 200,
+                text: () => Promise.resolve('plain body'),
+                headers: new Headers({ 'Content-Type': 'text/plain' }),
+            });
+
+            await expect(request({ url: CALLED_URL })).resolves.toBe('plain body');
+        });
+
+        it('returns a blob for a successful PDF response', async () => {
+            const request = createRequestService();
+            const pdf = new Blob(['%PDF-1.4'], { type: 'application/pdf' });
+            mockFetch.mockResolvedValueOnce({
+                ok: true,
+                status: 200,
+                blob: () => Promise.resolve(pdf),
+                headers: new Headers({ 'Content-Type': 'application/pdf' }),
+            });
+
+            await expect(request({ url: CALLED_URL })).resolves.toBe(pdf);
+        });
     });
 });

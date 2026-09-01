@@ -1,4 +1,3 @@
-import type { ApiErrorResponse } from '@solvimon/solvimon-types';
 import type { QueryParams } from './requests.types';
 
 export const Headers = {
@@ -20,17 +19,6 @@ export const MediaType = {
  */
 export const getMediaType = (contentType: string | null | undefined): string =>
     (contentType ?? '').split(';')[0].trim().toLowerCase();
-
-export const isApiErrorResponse = (
-    error: ApiErrorResponse | unknown,
-): error is ApiErrorResponse => {
-    return (
-        !!error &&
-        typeof error === 'object' &&
-        'message' in error &&
-        typeof error.message === 'string'
-    );
-};
 
 /** Nulls and undefineds are left out entirely; arrays go out as repeated `key[]` entries. */
 export const appendQueryParams = (url: URL, query: QueryParams = {}): void => {

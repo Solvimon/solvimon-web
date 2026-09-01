@@ -17,7 +17,6 @@ import {
 import { defineConfig } from 'vite';
 import type { PluginOption } from 'vite';
 import vue from '@vitejs/plugin-vue';
-import vueDevTools from 'vite-plugin-vue-devtools';
 import { glob } from 'glob';
 import dts from 'vite-plugin-dts';
 import type { TemplateChildNode, RootNode } from '@vue/compiler-core';
@@ -37,8 +36,6 @@ function getLibEntries(
         return acc;
     }, {});
 }
-
-const legacyEntries = getLibEntries('src/entries', '**/*.ce.ts', /\.ce\.ts$/, '');
 
 const screenEntries = getLibEntries(
     'src/public/screens',
@@ -138,7 +135,6 @@ export default defineConfig({
         lib: {
             entry: {
                 index: rootEntry,
-                ...legacyEntries,
                 ...screenEntries,
                 ...componentEntries,
                 core: coreEntry,
@@ -175,7 +171,6 @@ export default defineConfig({
                 },
             },
         }),
-        vueDevTools(),
         dropRedundantStylesheet(),
         dts({
             rollupTypes: false,
@@ -197,7 +192,6 @@ export default defineConfig({
                 'src/components/providers/**/*.ts',
                 'src/components/providers/**/*.vue',
                 'src/index.ts',
-                'src/entries/**/*.ce.ts',
                 'src/public/screens/**/*.entry.ce.ts',
                 'src/public/components/**/*.entry.ce.ts',
                 'src/public/core/**/*.ts',
@@ -391,11 +385,6 @@ function publishDeclarations() {
             renameSync(emittedDir, publishedTreeDir);
             rewriteDeclarations(publishedTreeDir, rewriteVueImports);
             vendorPrivateTypes(publishedTreeDir);
-
-            // Legacy entries: dist/X/X.ce.d.ts
-            for (const entryKey of Object.keys(legacyEntries)) {
-                writeShim(resolve(outDir, `${entryKey}.ce.d.ts`), `entries/${entryKey}.ce`);
-            }
 
             // Screen and component entries: dist/screens/X/X.ce.d.ts, dist/components/X/X.ce.d.ts
             for (const entryKey of [

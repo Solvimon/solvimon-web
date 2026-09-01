@@ -13,12 +13,6 @@ const { mockUseInvoiceData } = vi.hoisted(() => ({
     mockUseInvoiceData: vi.fn(),
 }));
 
-vi.mock('./PaymentHistory.entry.ce', () => ({
-    COMPONENT_NAME: 'solvimon-payment-history',
-    SolvimonPaymentHistory: {},
-    defineSolvimonPaymentHistory: () => {},
-}));
-
 vi.mock('@/composables/useInvoiceData', () => ({
     useInvoiceData: mockUseInvoiceData,
 }));

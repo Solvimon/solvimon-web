@@ -2,8 +2,10 @@
 import InvoiceDetails from './InvoiceDetails.vue';
 import InvoiceDetailsEntryView from './InvoiceDetails.entry.view.vue';
 import type { SolvimonInvoiceDetailsEntryProps } from './InvoiceDetails.entry.types';
-import { COMPONENT_NAME } from './InvoiceDetails.entry.ce';
 import { EntryProvider } from '@/components/providers';
+import { getComponentName } from '@/utils/component';
+
+const componentName = getComponentName('invoice-details');
 
 const props = defineProps<SolvimonInvoiceDetailsEntryProps>();
 
@@ -15,7 +17,7 @@ if (!props.configuration?.invoiceId) {
 <template>
     <EntryProvider
         :entry="$props"
-        :component-name="COMPONENT_NAME"
+        :component-name="componentName"
         :allowed-portal-types="['CUSTOMER']"
         @error="(error) => $emit('error', error)"
     >

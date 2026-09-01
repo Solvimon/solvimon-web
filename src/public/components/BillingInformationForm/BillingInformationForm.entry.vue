@@ -5,8 +5,10 @@ import type {
     SolvimonBillingInformationFormEntryEmits,
     SolvimonBillingInformationFormEntryProps,
 } from './BillingInformationForm.entry.types';
-import { COMPONENT_NAME } from './BillingInformationForm.entry.ce';
 import { EntryProvider } from '@/components/providers';
+import { getComponentName } from '@/utils/component';
+
+const componentName = getComponentName('billing-information-form');
 
 defineProps<SolvimonBillingInformationFormEntryProps>();
 defineEmits<SolvimonBillingInformationFormEntryEmits>();
@@ -15,7 +17,7 @@ defineEmits<SolvimonBillingInformationFormEntryEmits>();
 <template>
     <EntryProvider
         :entry="$props"
-        :component-name="COMPONENT_NAME"
+        :component-name="componentName"
         :allowed-portal-types="['CUSTOMER']"
         @error="(error) => $emit('error', error)"
     >

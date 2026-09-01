@@ -2,8 +2,10 @@
 import BillingInformation from './BillingInformation.vue';
 import type { SolvimonBillingInformationEntryProps } from './BillingInformation.entry.types';
 import BillingInformationView from './BillingInformation.entry.view.vue';
-import { COMPONENT_NAME } from './BillingInformation.entry.ce';
 import { EntryProvider } from '@/components/providers';
+import { getComponentName } from '@/utils/component';
+
+const componentName = getComponentName('billing-information');
 
 defineProps<SolvimonBillingInformationEntryProps>();
 </script>
@@ -11,7 +13,7 @@ defineProps<SolvimonBillingInformationEntryProps>();
 <template>
     <EntryProvider
         :entry="$props"
-        :component-name="COMPONENT_NAME"
+        :component-name="componentName"
         :allowed-portal-types="['CUSTOMER']"
         @error="(error) => $emit('error', error)"
     >

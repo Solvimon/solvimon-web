@@ -17,12 +17,6 @@ const { mockUseSubscription, mockUseLoadInitialData, mockGet, mockWithPlanData }
     }),
 );
 
-vi.mock('./SubscriptionSchedules.entry.ce', () => ({
-    COMPONENT_NAME: 'solvimon-subscription-schedules',
-    SolvimonSubscriptionSchedules: {},
-    defineSolvimonSubscriptionSchedules: () => {},
-}));
-
 vi.mock('@/composables/useSubscription', () => ({
     useSubscription: mockUseSubscription,
 }));

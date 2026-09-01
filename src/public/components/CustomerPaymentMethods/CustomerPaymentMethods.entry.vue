@@ -2,8 +2,10 @@
 import type { SolvimonCustomerPaymentMethodsEntryProps } from './CustomerPaymentMethods.entry.types';
 import CustomerPaymentMethods from './CustomerPaymentMethods.vue';
 import CustomerPaymentMethodsView from './CustomerPaymentMethods.entry.view.vue';
-import { COMPONENT_NAME } from './CustomerPaymentMethods.entry.ce';
 import { EntryProvider } from '@/components/providers';
+import { getComponentName } from '@/utils/component';
+
+const componentName = getComponentName('customer-payment-methods');
 
 defineProps<SolvimonCustomerPaymentMethodsEntryProps>();
 </script>
@@ -11,7 +13,7 @@ defineProps<SolvimonCustomerPaymentMethodsEntryProps>();
 <template>
     <EntryProvider
         :entry="$props"
-        :component-name="COMPONENT_NAME"
+        :component-name="componentName"
         :allowed-portal-types="['CUSTOMER']"
         @error="(error) => $emit('error', error)"
     >

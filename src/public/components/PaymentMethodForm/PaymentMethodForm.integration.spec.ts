@@ -19,12 +19,6 @@ const {
     mockPaymentMethodOptionsGet: vi.fn(),
 }));
 
-vi.mock('./PaymentMethodForm.entry.ce', () => ({
-    COMPONENT_NAME: 'solvimon-payment-method-form',
-    SolvimonPaymentMethodForm: {},
-    defineSolvimonPaymentMethodForm: () => {},
-}));
-
 vi.mock('@/composables/useCustomer', () => ({
     useCustomer: mockUseCustomer,
 }));

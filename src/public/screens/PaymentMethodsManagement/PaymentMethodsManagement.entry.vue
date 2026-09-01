@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import type { SolvimonPaymentMethodsManagementEntryProps } from './PaymentMethodsManagement.entry.types';
-import { COMPONENT_NAME } from './PaymentMethodsManagement.entry.ce';
 import PaymentMethodsManagement from './PaymentMethodsManagement.vue';
 import PaymentMethodsManagementEntryView from './PaymentMethodsManagement.entry.view.vue';
 import { EntryProvider } from '@/components/providers';
+import { getComponentName } from '@/utils/component';
+
+const componentName = getComponentName('payment-methods-management');
 
 defineProps<SolvimonPaymentMethodsManagementEntryProps>();
 </script>
@@ -11,7 +13,7 @@ defineProps<SolvimonPaymentMethodsManagementEntryProps>();
 <template>
     <EntryProvider
         :entry="$props"
-        :component-name="COMPONENT_NAME"
+        :component-name="componentName"
         :allowed-portal-types="['CUSTOMER']"
         @error="(error) => $emit('error', error)"
     >

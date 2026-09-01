@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import type { SolvimonSubscriptionSchedulesEntryProps } from './SubscriptionSchedules.entry.types';
-import { COMPONENT_NAME } from './SubscriptionSchedules.entry.ce';
 import SubscriptionSchedules from './SubscriptionSchedules.vue';
 import SubscriptionSchedulesEntryView from './SubscriptionSchedules.entry.view.vue';
 import { EntryProvider } from '@/components/providers';
+import { getComponentName } from '@/utils/component';
+
+const componentName = getComponentName('subscription-schedules');
 
 const props = defineProps<SolvimonSubscriptionSchedulesEntryProps>();
 </script>
@@ -11,7 +13,7 @@ const props = defineProps<SolvimonSubscriptionSchedulesEntryProps>();
 <template>
     <EntryProvider
         :entry="$props"
-        :component-name="COMPONENT_NAME"
+        :component-name="componentName"
         :allowed-portal-types="['CUSTOMER']"
         @error="(error: Error) => $emit('error', error)"
     >

@@ -41,8 +41,10 @@ export const brandingColour: PlatformBranding = {
     colors: { primary: 0x0066cc },
 };
 
-/* The custom element entry points still export what they always did. */
+/* The custom element entry points export one define function, and it takes an optional tag name. */
 export const defineInvoicesList = defineSolvimonInvoicesList;
+defineSolvimonInvoicesList();
+defineSolvimonInvoicesList('acme-invoices-list');
 export const componentIds: string[] = getRegisteredComponentIds();
 
 const core = createSolvimonCore({ environment, locale: 'en-US', branding, messages });

@@ -21,12 +21,6 @@ const {
     mockPaymentsGet: vi.fn(),
 }));
 
-vi.mock('./Invoice.entry.ce', () => ({
-    COMPONENT_NAME: 'solvimon-invoice',
-    SolvimonInvoice: {},
-    defineSolvimonInvoice: () => {},
-}));
-
 vi.mock('@/composables/useInvoice', () => ({ useInvoice: mockUseInvoice }));
 vi.mock('@/composables/usePayments', () => ({ usePayments: mockUsePayments }));
 vi.mock('@/composables/useLoadInitialData', () => ({ useLoadInitialData: mockUseLoadInitialData }));

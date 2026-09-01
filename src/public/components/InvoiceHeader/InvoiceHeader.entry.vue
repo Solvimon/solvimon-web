@@ -2,9 +2,11 @@
 import { computed } from 'vue';
 import type { SolvimonInvoiceHeaderEntryProps } from './InvoiceHeader.entry.types';
 import InvoiceHeader from './InvoiceHeader.vue';
-import { COMPONENT_NAME } from './InvoiceHeader.entry.ce';
 import InvoiceEntryView from '@/components/invoices/InvoiceEntryView.vue';
 import { EntryProvider } from '@/components/providers';
+import { getComponentName } from '@/utils/component';
+
+const componentName = getComponentName('invoice-header');
 
 const props = defineProps<SolvimonInvoiceHeaderEntryProps>();
 
@@ -24,7 +26,7 @@ const resolvedProps = computed<SolvimonInvoiceHeaderEntryProps>(() => ({
 <template>
     <EntryProvider
         :entry="$props"
-        :component-name="COMPONENT_NAME"
+        :component-name="componentName"
         :allowed-portal-types="['CUSTOMER']"
         @error="(error) => $emit('error', error)"
     >

@@ -3,8 +3,10 @@ import { ApiStatus } from '@solvimon/solvimon-types';
 import type { SolvimonWalletBalancesEntryProps } from './WalletBalances.entry.types';
 import WalletBalances from './WalletBalances.vue';
 import WalletBalancesEntryView from './WalletBalances.entry.view.vue';
-import { COMPONENT_NAME } from './WalletBalances.entry.ce';
 import { EntryProvider } from '@/components/providers';
+import { getComponentName } from '@/utils/component';
+
+const componentName = getComponentName('wallet-balances');
 
 defineProps<SolvimonWalletBalancesEntryProps>();
 </script>
@@ -12,7 +14,7 @@ defineProps<SolvimonWalletBalancesEntryProps>();
 <template>
     <EntryProvider
         :entry="$props"
-        :component-name="COMPONENT_NAME"
+        :component-name="componentName"
         :allowed-portal-types="['CUSTOMER']"
         @error="(error) => $emit('error', error)"
     >

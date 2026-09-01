@@ -2,8 +2,10 @@
 import SubscriptionsList from './SubscriptionsList.vue';
 import SubscriptionsListView from './SubscriptionsList.entry.view.vue';
 import type { SolvimonSubscriptionsListEntryProps } from './SubscriptionsList.entry.types';
-import { COMPONENT_NAME } from './SubscriptionsList.entry.ce';
 import { EntryProvider } from '@/components/providers';
+import { getComponentName } from '@/utils/component';
+
+const componentName = getComponentName('subscriptions-list');
 
 defineProps<SolvimonSubscriptionsListEntryProps>();
 </script>
@@ -11,7 +13,7 @@ defineProps<SolvimonSubscriptionsListEntryProps>();
 <template>
     <EntryProvider
         :entry="$props"
-        :component-name="COMPONENT_NAME"
+        :component-name="componentName"
         :allowed-portal-types="['CUSTOMER']"
         @error="(error) => $emit('error', error)"
     >

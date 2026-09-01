@@ -2,8 +2,10 @@
 import InvoicesList from './InvoicesList.vue';
 import type { SolvimonInvoicesListEntryProps } from './InvoicesList.entry.types';
 import InvoicesListView from './InvoicesList.entry.view.vue';
-import { COMPONENT_NAME } from './InvoicesList.entry.ce';
 import { EntryProvider } from '@/components/providers';
+import { getComponentName } from '@/utils/component';
+
+const componentName = getComponentName('invoices-list');
 
 defineProps<SolvimonInvoicesListEntryProps>();
 </script>
@@ -11,7 +13,7 @@ defineProps<SolvimonInvoicesListEntryProps>();
 <template>
     <EntryProvider
         :entry="$props"
-        :component-name="COMPONENT_NAME"
+        :component-name="componentName"
         :allowed-portal-types="['CUSTOMER']"
         @error="(error) => $emit('error', error)"
     >

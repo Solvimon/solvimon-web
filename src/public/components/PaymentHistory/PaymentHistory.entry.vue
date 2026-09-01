@@ -2,8 +2,10 @@
 import PaymentHistory from './PaymentHistory.vue';
 import PaymentHistoryEntryView from './PaymentHistory.entry.view.vue';
 import type { SolvimonPaymentHistoryEntryProps } from './PaymentHistory.entry.types';
-import { COMPONENT_NAME } from './PaymentHistory.entry.ce';
 import { EntryProvider } from '@/components/providers';
+import { getComponentName } from '@/utils/component';
+
+const componentName = getComponentName('payment-history');
 
 const props = defineProps<SolvimonPaymentHistoryEntryProps>();
 
@@ -15,7 +17,7 @@ if (!props.configuration?.invoiceId) {
 <template>
     <EntryProvider
         :entry="$props"
-        :component-name="COMPONENT_NAME"
+        :component-name="componentName"
         :allowed-portal-types="['CUSTOMER']"
         @error="(error) => $emit('error', error)"
     >

@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import type { SolvimonInvoiceEntryProps } from './Invoice.entry.types';
-import { COMPONENT_NAME } from './Invoice.entry.ce';
 import Invoice from './Invoice.vue';
 import InvoiceEntryView from '@/components/invoices/InvoiceEntryView.vue';
 import { EntryProvider } from '@/components/providers';
+import { getComponentName } from '@/utils/component';
+
+const componentName = getComponentName('invoice');
 
 const props = defineProps<SolvimonInvoiceEntryProps>();
 
@@ -26,7 +28,7 @@ const resolvedProps = computed<SolvimonInvoiceEntryProps>(() => ({
 <template>
     <EntryProvider
         :entry="$props"
-        :component-name="COMPONENT_NAME"
+        :component-name="componentName"
         :allowed-portal-types="['CUSTOMER']"
         @error="(error) => $emit('error', error)"
     >

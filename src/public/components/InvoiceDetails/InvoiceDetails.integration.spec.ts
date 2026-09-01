@@ -9,12 +9,6 @@ const { mockUseInvoiceData } = vi.hoisted(() => ({
     mockUseInvoiceData: vi.fn(),
 }));
 
-vi.mock('./InvoiceDetails.entry.ce', () => ({
-    COMPONENT_NAME: 'solvimon-invoice-details',
-    SolvimonInvoiceDetails: {},
-    defineSolvimonInvoiceDetails: () => {},
-}));
-
 vi.mock('@/composables/useInvoiceData', () => ({
     useInvoiceData: mockUseInvoiceData,
 }));

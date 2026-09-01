@@ -212,7 +212,6 @@ The SDK emits structured log entries via the [`onLog`](#error-logging) callback.
 | `APPLE_PAY_ERROR`                           | Apple Pay error                                                    |
 | `AUTO_TOP_UP_CANCELLATION_FAILED`           | Failed to turn off a wallet                                        |
 | `AUTO_TOP_UP_SAVE_FAILED`                   | Failed to save the automatic top-up rule                           |
-| `CUSTOMER_FETCH_FAILED`                     | Reserved — not currently emitted                                   |
 | `EXPRESS_CHECKOUT_GOOGLE_PAY_ERROR`         | The Google Pay button reference is not found and cannot be mounted |
 | `EXPRESS_CHECKOUT_PAYPAL_ERROR`             | The PayPal button reference is not found and cannot be mounted     |
 | `INITIAL_DATA_LOAD_FAILED`                  | Failed to load initial data                                        |
@@ -228,7 +227,6 @@ The SDK emits structured log entries via the [`onLog`](#error-logging) callback.
 | `PAYMENT_METHOD_OPTIONS_LOAD_FAILED`        | Failed to load the payment methods the checkout can offer          |
 | `PROMOTION_CODE_APPLY_FAILED`               | Failed to apply promotion code                                     |
 | `PROMOTION_CODE_REMOVE_FAILED`              | Failed to remove promotion code                                    |
-| `PURCHASE_FAILED`                           | Reserved — not currently emitted                                   |
 | `REQUEST_PARSE_FAILED`                      | Failed to parse JSON response                                      |
 | `RESOURCE_REVOKED`                          | Failed to load portal resource                                     |
 | `SESSION_EXPIRED`                           | Stopped refreshing the access token after repeated 401 responses   |

@@ -120,11 +120,14 @@ For more details, see [`@solvimon/solvimon-web/core`](./src/public/core/README.m
 
 Full-page experiences.
 
-| Export path                                              | Custom element                       |
-| -------------------------------------------------------- | ------------------------------------ |
-| `@solvimon/solvimon-web/screens/checkout`                | `<solvimon-checkout>`                |
-| `@solvimon/solvimon-web/screens/customer-overview`       | `<solvimon-customer-overview>`       |
-| `@solvimon/solvimon-web/screens/subscription-management` | `<solvimon-subscription-management>` |
+| Export path                                                 | Custom element                          |
+| ----------------------------------------------------------- | --------------------------------------- |
+| `@solvimon/solvimon-web/screens/checkout`                   | `<solvimon-checkout>`                   |
+| `@solvimon/solvimon-web/screens/customer-overview`          | `<solvimon-customer-overview>`          |
+| `@solvimon/solvimon-web/screens/pay-invoice`                | `<solvimon-pay-invoice>`                |
+| `@solvimon/solvimon-web/screens/payment-methods-management` | `<solvimon-payment-methods-management>` |
+| `@solvimon/solvimon-web/screens/subscription-details`       | `<solvimon-subscription-details>`       |
+| `@solvimon/solvimon-web/screens/subscription-management`    | `<solvimon-subscription-management>`    |
 
 ### Components
 
@@ -137,6 +140,7 @@ Embeddable building blocks.
 | `@solvimon/solvimon-web/components/customer-payment-methods` | `<solvimon-customer-payment-methods>` |
 | `@solvimon/solvimon-web/components/invoice`                  | `<solvimon-invoice>`                  |
 | `@solvimon/solvimon-web/components/invoice-details`          | `<solvimon-invoice-details>`          |
+| `@solvimon/solvimon-web/components/invoice-header`           | `<solvimon-invoice-header>`           |
 | `@solvimon/solvimon-web/components/invoices-list`            | `<solvimon-invoices-list>`            |
 | `@solvimon/solvimon-web/components/payment-history`          | `<solvimon-payment-history>`          |
 | `@solvimon/solvimon-web/components/payment-method-form`      | `<solvimon-payment-method-form>`      |

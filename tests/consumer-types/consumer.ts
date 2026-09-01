@@ -9,9 +9,12 @@ import type {
     LogEntry,
     PlatformBranding,
     PortalUrl,
+    ExperimentalFeature,
     ScreenConfigurationById,
 } from '@solvimon/solvimon-web/core';
 import { defineSolvimonInvoicesList } from '@solvimon/solvimon-web/components/invoices-list';
+import { defineSolvimonInvoiceHeader } from '@solvimon/solvimon-web/components/invoice-header';
+import { defineSolvimonPaymentMethodsManagement } from '@solvimon/solvimon-web/screens/payment-methods-management';
 
 declare const portalObject: CustomerPortalUrl;
 
@@ -41,10 +44,18 @@ export const brandingColour: PlatformBranding = {
     colors: { primary: 0x0066cc },
 };
 
-/* The custom element entry points export one define function, and it takes an optional tag name. */
+/* Everything the registry can mount has a subpath a consumer can import, and each entry exports one
+   define function, which takes an optional tag name. */
 export const defineInvoicesList = defineSolvimonInvoicesList;
+export const defineInvoiceHeader = defineSolvimonInvoiceHeader;
+export const definePaymentMethodsManagement = defineSolvimonPaymentMethodsManagement;
 defineSolvimonInvoicesList();
 defineSolvimonInvoicesList('acme-invoices-list');
+
+/* `experimentalFeatures` names a real union rather than accepting anything. */
+export const features: ExperimentalFeature[] = ['express-checkout'];
+// @ts-expect-error - not an experimental feature the SDK knows about
+export const notAFeature: ExperimentalFeature[] = ['teleportation'];
 export const componentIds: string[] = getRegisteredComponentIds();
 
 const core = createSolvimonCore({ environment, locale: 'en-US', branding, messages });

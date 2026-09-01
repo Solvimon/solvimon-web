@@ -100,6 +100,11 @@
             "import": "./dist/screens/PayInvoice/PayInvoice.mjs",
             "require": "./dist/screens/PayInvoice/PayInvoice.cjs"
         },
+        "./screens/payment-methods-management": {
+            "types": "./dist/screens/PaymentMethodsManagement/PaymentMethodsManagement.ce.d.ts",
+            "import": "./dist/screens/PaymentMethodsManagement/PaymentMethodsManagement.mjs",
+            "require": "./dist/screens/PaymentMethodsManagement/PaymentMethodsManagement.cjs"
+        },
         "./components/subscriptions-list": {
             "types": "./dist/components/SubscriptionsList/SubscriptionsList.ce.d.ts",
             "import": "./dist/components/SubscriptionsList/SubscriptionsList.mjs",
@@ -129,6 +134,11 @@
             "types": "./dist/components/Invoice/Invoice.ce.d.ts",
             "import": "./dist/components/Invoice/Invoice.mjs",
             "require": "./dist/components/Invoice/Invoice.cjs"
+        },
+        "./components/invoice-header": {
+            "types": "./dist/components/InvoiceHeader/InvoiceHeader.ce.d.ts",
+            "import": "./dist/components/InvoiceHeader/InvoiceHeader.mjs",
+            "require": "./dist/components/InvoiceHeader/InvoiceHeader.cjs"
         },
         "./components/invoice-details": {
             "types": "./dist/components/InvoiceDetails/InvoiceDetails.ce.d.ts",

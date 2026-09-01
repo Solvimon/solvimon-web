@@ -1,0 +1,5 @@
+/*
+ * Stands in for `.sdk/tailwind.css`, which `npm run build:css` generates and `.gitignore` keeps
+ * out of the repository. Nothing in the unit suite asserts on the generated CSS, so resolving it
+ * to nothing keeps the suite runnable on a fresh clone and in CI, where that build has not run.
+ */

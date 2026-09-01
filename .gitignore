@@ -17,3 +17,6 @@ tests/playwright/results.xml
 
 # Scratch files
 /scratch.*
+
+# TypeScript incremental build info
+*.tsbuildinfo

@@ -121,11 +121,10 @@ or GitHub App. Do not use an individual developer's personal token for this.
 `ci.yml` runs on pull requests and validates the change before it is merged.
 
 `create-release-tag.yml` runs on `main` when release metadata changes. It checks
-whether `package.json` changed version, verifies the changelog, and creates the
-matching `v<version>` tag.
-
-`release.yml` runs on `v*` tags. It installs dependencies, verifies that the tag
-matches the `package.json` version, and publishes to npm.
+whether `package.json` changed version, verifies the changelog, creates the
+matching `v<version>` tag, publishes to npm and opens the GitHub release. There
+is no second workflow: `release.yml` used to do the publishing half and was
+folded into this one.
 
 ## Consuming The SDK
 

@@ -58,6 +58,16 @@ const componentEntries = getLibEntries(
  */
 const MODULE_EXTENSIONS: Record<string, string> = { es: 'mjs', cjs: 'cjs' };
 
+/**
+ * Whether BETA and DEV resolve to real configuration, opted into with
+ * `SOLVIMON_INTERNAL_ENVIRONMENTS=1` for the playground, the e2e test app and `npm run watch`.
+ *
+ * Off by default so that the artifact `npm run build` produces is the publishable one. A forgotten
+ * variable then costs a developer their DEV environment locally, rather than shipping internal
+ * hostnames to every customer.
+ */
+const withInternalEnvironments = process.env.SOLVIMON_INTERNAL_ENVIRONMENTS === '1';
+
 const coreEntry = resolve(__dirname, 'src/public/core/index.ts');
 const rootEntry = resolve(__dirname, 'src/index.ts');
 
@@ -145,9 +155,24 @@ export default defineConfig({
         publishDeclarations(),
     ],
     resolve: {
-        alias: {
-            '@': fileURLToPath(new URL('./src', import.meta.url)),
-        },
+        // Array form, most specific first: the first match wins, and a bare '@' would otherwise
+        // swallow '@/config/internalEnvironments' before it could be redirected.
+        alias: [
+            ...(withInternalEnvironments
+                ? []
+                : [
+                      {
+                          find: '@/config/internalEnvironments',
+                          replacement: fileURLToPath(
+                              new URL(
+                                  './src/config/internalEnvironments.published.ts',
+                                  import.meta.url,
+                              ),
+                          ),
+                      },
+                  ]),
+            { find: '@', replacement: fileURLToPath(new URL('./src', import.meta.url)) },
+        ],
     },
     test: {
         setupFiles: ['./vitest.setup.ts', 'vitest-localstorage-mock'],

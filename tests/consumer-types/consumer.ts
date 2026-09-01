@@ -32,6 +32,8 @@ export const log: LogEntry = {
 
 // @ts-expect-error - only the Solvimon environments are accepted
 export const notAnEnvironment: Environment = 'PRODUCTION';
+// @ts-expect-error - DEV and BETA are internal, and are stripped from the published build
+export const notAPublishedEnvironment: Environment = 'DEV';
 // @ts-expect-error - only ISO 3166-1 alpha-2 codes are accepted
 export const notACountry: CountryCode = 'Netherlands';
 export const brandingColour: PlatformBranding = {

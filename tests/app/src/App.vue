@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { createSolvimonCore } from '@solvimon/solvimon-web/core';
+import type { Environment } from '@solvimon/solvimon-web/core';
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 
 const checkoutContainer = ref<HTMLDivElement | null>(null);
@@ -26,7 +27,10 @@ const portalObject = {
 };
 
 const solvimon = createSolvimonCore({
-    environment: 'DEV' as const,
+    // The test app runs against `npm run build:internal`, the only build in which DEV resolves.
+    // The published `Environment` is `TEST | LIVE`, so naming an internal one needs a cast.
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    environment: 'DEV' as unknown as Environment,
     locale: 'en-US',
     logLevel: 'info',
     onError: handleError,

@@ -13,3 +13,13 @@
 
 /** Translation overrides, keyed by message id. */
 export type IntlMessages = Record<string, string>;
+
+/**
+ * The environments the published package supports.
+ *
+ * Narrowed from the union in `@solvimon/solvimon-types` with `Extract` rather than restated, so a
+ * rename upstream is a compile error here instead of a surface that quietly drifts. The remaining
+ * environments are development infrastructure and are stripped from the published build; see
+ * `src/config/internalEnvironments.ts`.
+ */
+export type { PublicEnvironment as Environment } from '@/config/types';

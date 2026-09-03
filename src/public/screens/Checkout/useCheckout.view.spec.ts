@@ -254,6 +254,61 @@ describe('useCheckoutView', () => {
         expect(result.subscription.value).toEqual(mockSubscription);
     });
 
+    it('seeds the seats the plan defaults to, so the preview is priced on the seats shown', async () => {
+        // A schedule the customer has not customized lists its seat configs without a number.
+        mockGetFirstPricingPlanScheduleOfType.mockReturnValue({
+            ...mockSubscription.pricing_plan_schedule_infos[0],
+            pricing_plan_schedule: {
+                ...mockSubscription.pricing_plan_schedule_infos[0].pricing_plan_schedule,
+                seats_values: [
+                    { pricing_item_config_id: 'pic_1' },
+                    { pricing_item_config_id: 'pic_2' },
+                ],
+            },
+            pricing_plan_version: {
+                pricing_categories: [
+                    {
+                        pricings: [
+                            {
+                                items: [
+                                    {
+                                        configs: [
+                                            { id: 'pic_1', default_seats_value: { number: '3' } },
+                                            { id: 'pic_2' },
+                                        ],
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                ],
+            },
+        });
+
+        const checkoutFormMock = createMockCheckoutForm();
+        mockUseCheckoutForm.mockReturnValue(checkoutFormMock);
+
+        const [, wrapper] = withSetup(() =>
+            useCheckoutView({
+                initialCountry: undefined,
+                initialEmail: undefined,
+                subscriptionId: 'sub_123' as PricingPlanSubscription['id'],
+            }),
+        );
+
+        await flushPromises();
+
+        expect(checkoutFormMock.updateInitialState).toHaveBeenCalledWith(
+            expect.objectContaining({
+                seatsValues: [
+                    { pricing_item_config_id: 'pic_1', number: '3' },
+                    { pricing_item_config_id: 'pic_2', number: '1' },
+                ],
+            }),
+        );
+        wrapper.unmount();
+    });
+
     it('loads invoice preview and payment method options when subscription is loaded', async () => {
         const subscriptionId = 'sub_123' as PricingPlanSubscription['id'];
         const initialCountry = 'NL' as CountryCode;

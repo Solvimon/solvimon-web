@@ -26,6 +26,7 @@ import {
     getScheduleCustomizations,
 } from '@/utils/pricingPlanSchedule';
 import { withPreselectedEnabledPricings } from '@/utils/enabledPricings';
+import { getInitialSeatsValues } from '@/utils/seatsValues';
 import { getQueryParam } from '@/utils/url';
 import { PAYMENT_ACCEPTOR_ID_QUERY_STRING } from '@/utils/adyen';
 
@@ -167,19 +168,13 @@ export function useCheckoutView({
             ...response,
             billing_period: defaultBillingPeriod ?? response.billing_period,
         };
+
+        const seatsValues = getInitialSeatsValues(subscriptionSchedule);
+
         checkoutForm.updateInitialState({
             ...checkoutForm.form.value,
             enabledPricingIds: withPreselectedEnabledPricings(response, enabledPricingIds),
-            ...(subscriptionSchedule?.pricing_plan_schedule?.seats_values
-                ? {
-                      seatsValues: subscriptionSchedule?.pricing_plan_schedule?.seats_values.map(
-                          ({ pricing_item_config_id, number }) => ({
-                              pricing_item_config_id,
-                              number,
-                          }),
-                      ),
-                  }
-                : {}),
+            ...(seatsValues ? { seatsValues } : {}),
         });
     };
 

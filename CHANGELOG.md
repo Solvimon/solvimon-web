@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0-alpha.19] - 2026-09-03
+
+### Added
+
+- The published package now carries its own type declarations, so building against the SDK no longer requires access to Solvimon's private type packages.
+- Pricing plan schedules now show the price customizations that apply to them.
+- Added the z-index steps the shared Tailwind config was missing.
+
+### Changed
+
+- Each entry is now loaded on demand and exposes a single export, so a host only pays for the screens and components it actually mounts.
+- The shared UI library is now split per entry, which cuts what mounting a single screen pulls in.
+- The checkout now confirms a successful sign-up only once the payment has gone through.
+- Removed the superseded subscription management screens, along with a number of components nothing mounted: the placeholder components, the payment provider form, the invoice block content components and the customer billing information block.
+- Consolidated duplicated internals — one way to read pricings off a schedule, one payment method options composable, one custom element factory, one query string builder, one shell for both wallet modals and one contract for the gateway forms — with no change to behavior.
+
+### Fixed
+
+- Fixed every entry the registry can mount being reachable in the published package, and ESM and CJS entries now carry the file extensions that identify them.
+- Fixed the published type declarations not resolving for a consumer.
+- Fixed a refreshed access token not being applied, and the token now being read per request.
+- Fixed API error messages being reported as a parse failure, and every response now has its media type and status checked.
+- Fixed the payment method lookup failing silently in the checkout, which now reports the failure and offers to retry.
+- Fixed a partial configuration dropping the options it left out, and the customer overview not passing its configuration to the payment methods block.
+- Fixed the Provider being mounted twice in two entry components.
+- Fixed translated strings sharing message ids, so each string is translated on its own.
+- Stopped shipping a stylesheet that a consumer could not use, and kept the internal environments out of the published package.
+
 ## [0.1.0-alpha.18] - 2026-08-24
 
 ### Added

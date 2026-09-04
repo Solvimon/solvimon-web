@@ -220,6 +220,18 @@
         "vitest-localstorage-mock": "^0.1.2",
         "vue-tsc": "^2.1.10"
     },
+    "overrides": {
+        "@tiptap/core": "^3.31.2",
+        "@tiptap/pm": "^3.31.2",
+        "@tiptap/vue-3": "^3.31.2",
+        "@tiptap/extensions": "^3.31.2",
+        "@tiptap/suggestion": "^3.31.2",
+        "@tiptap/extension-collaboration": "^3.31.2",
+        "@tiptap/extension-drag-handle": "^3.31.2",
+        "@tiptap/extension-drag-handle-vue-3": "^3.31.2",
+        "@tiptap/extension-node-range": "^3.31.2",
+        "@tiptap/extension-placeholder": "^3.31.2"
+    },
     "optionalDependencies": {
         "vite-bundle-visualizer": "^1.2.1"
     }

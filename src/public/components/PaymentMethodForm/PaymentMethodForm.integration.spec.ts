@@ -4,6 +4,10 @@ import type { Customer, PaymentMethodOptionsResponse } from '@solvimon/solvimon-
 import PaymentMethodFormEntry from './PaymentMethodForm.entry.vue';
 import type { SolvimonPaymentMethodFormEntryProps } from './PaymentMethodForm.entry.types';
 import { createTestPortalObject } from '@/test-utils/portalObjectFixture';
+import {
+    createPaymentMethodOptionEntry,
+    createPaymentMethodOptionsResponseWithoutOptions,
+} from '@/test-utils/paymentMethodOptionsFixture';
 
 const {
     mockUseCustomer,
@@ -57,7 +61,7 @@ describe('PaymentMethodForm entry component', () => {
     const mountComponent = ({
         withCustomer = true,
         isLoading = false,
-        paymentMethodOptions = [] as PaymentMethodOptionsResponse,
+        paymentMethodOptions = [createPaymentMethodOptionEntry()] as PaymentMethodOptionsResponse,
     }: {
         withCustomer?: boolean;
         isLoading?: boolean;
@@ -118,5 +122,35 @@ describe('PaymentMethodForm entry component', () => {
         const wrapper = mountComponent();
 
         expect(wrapper.text()).toContain('Available payment methods');
+    });
+
+    describe('when nothing offered would render', () => {
+        it('says so rather than showing a section with an empty form in it', () => {
+            const wrapper = mountComponent({
+                paymentMethodOptions: createPaymentMethodOptionsResponseWithoutOptions(),
+            });
+
+            expect(wrapper.find('[data-testid="payment-methods-unavailable"]').exists()).toBe(true);
+            expect(wrapper.text()).toContain('No payment methods can be added');
+            expect(wrapper.text()).not.toContain('Available payment methods');
+        });
+
+        it('offers no retry, since nothing the customer does from here changes it', () => {
+            const wrapper = mountComponent({
+                paymentMethodOptions: createPaymentMethodOptionsResponseWithoutOptions(),
+            });
+
+            expect(wrapper.text()).not.toContain('Try again');
+            expect(wrapper.find('button').exists()).toBe(false);
+        });
+
+        it('holds the loading state while the options are still out, rather than judging early', () => {
+            const wrapper = mountComponent({ isLoading: true, paymentMethodOptions: [] });
+
+            expect(wrapper.find('[data-testid="payment-methods-unavailable"]').exists()).toBe(
+                false,
+            );
+            expect(wrapper.get('[data-testid="payment-method-form-skeleton"]')).toBeTruthy();
+        });
     });
 });

@@ -15,6 +15,8 @@ import type {
 } from './PaymentMethodForm.types';
 import Skeleton from '@/components/shared/Skeleton.vue';
 import PaymentIntegrationForm from '@/components/payments/PaymentIntegrationForm/PaymentIntegrationForm.vue';
+import PaymentMethodsUnavailableCard from '@/components/payments/PaymentMethodsUnavailableCard/PaymentMethodsUnavailableCard.vue';
+import { usePaymentMethodAvailability } from '@/composables/usePaymentMethodAvailability';
 import type {
     AuthorizePaymentIntegrationFormProps,
     PaymentIntegrationFormProps,
@@ -35,6 +37,12 @@ const props = withDefaults(defineProps<PaymentMethodFormProps>(), {
 const emit = defineEmits<PaymentMethodFormEmits>();
 
 const { $t } = useIntl();
+
+const { availability } = usePaymentMethodAvailability({
+    paymentMethodOptions: () => props.paymentMethodOptions,
+    isLoading: () => props.isLoading,
+    context: () => ({ invoiceId: props.configuration?.invoiceId }),
+});
 
 const paymentIntegrationFormRef = ref<InstanceType<typeof PaymentIntegrationForm>>();
 const selectedPaymentMethod = ref<SelectedPaymentMethod>();
@@ -140,6 +148,11 @@ const paymentIntegrationProps = computed<PaymentIntegrationFormProps>(() => {
         variant="section"
         class="sv-payment-method-form sv-root sv-component sv-loading min-h-[180px]"
         data-testid="payment-method-form-skeleton"
+    />
+    <PaymentMethodsUnavailableCard
+        v-else-if="availability === 'UNAVAILABLE'"
+        class="sv-payment-method-form sv-root sv-component"
+        :variant="configuration.variant ?? 'TOKENIZE'"
     />
     <Section
         v-else

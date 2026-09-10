@@ -2,7 +2,10 @@ import { flushPromises, mount } from '@vue/test-utils';
 import { defineComponent, nextTick, ref } from 'vue';
 import type { Invoice, PaymentMethodOptionsResponse } from '@solvimon/solvimon-types';
 import PayInvoice from './PayInvoice.vue';
-import { createPaymentMethodOptionEntry } from '@/test-utils/paymentMethodOptionsFixture';
+import {
+    createPaymentMethodOptionEntry,
+    createPaymentMethodOptionsResponseWithoutOptions,
+} from '@/test-utils/paymentMethodOptionsFixture';
 
 // ─── Adyen SDK mocks ──────────────────────────────────────────────────────────
 
@@ -89,12 +92,10 @@ vi.mock(
 vi.mock('@solvimon/solvimon-ui', async () => {
     const actual =
         await vi.importActual<typeof import('@solvimon/solvimon-ui')>('@solvimon/solvimon-ui');
+    const { mockUseIntl } = await import('@/test-utils/useIntlMock');
     return {
         ...actual,
-        useIntl: () => ({
-            $t: (message: { defaultMessage: string }) => message.defaultMessage,
-            locale: 'en-US',
-        }),
+        useIntl: () => ({ ...mockUseIntl(), locale: 'en-US' }),
         formatAmount: (amount: { currency: string; quantity: string }) =>
             `${amount.currency} ${amount.quantity}`,
         InvoiceHeader: defineComponent({
@@ -114,9 +115,14 @@ const mockPaymentMethodOptions: PaymentMethodOptionsResponse = [
     createPaymentMethodOptionEntry({ paymentAcceptorId: 'pa_123' }),
 ];
 
+const paymentMethodOptionsWithoutOptions = createPaymentMethodOptionsResponseWithoutOptions({
+    paymentAcceptorId: 'pa_123',
+});
+
 const mockInvoice = {
     id: 'inv_123',
     invoice_number: 'INV-001',
+    billing_entity: { legal_name: 'AIAIAI B.V.' },
     customer: {
         id: 'cus_123',
         email: 'customer@example.com',
@@ -240,7 +246,7 @@ describe('PayInvoice', () => {
         expect(wrapper.find('button').attributes('disabled')).toBeUndefined();
     });
 
-    it('shows "Select a payment method" error when submitted without selecting a payment method', async () => {
+    it('shows the unavailable state for an entry whose integration names no gateway', async () => {
         const optionsWithNoVariant = [
             {
                 ...mockPaymentMethodOptions[0],
@@ -253,10 +259,85 @@ describe('PayInvoice', () => {
         const wrapper = mountComponent({ paymentMethodOptions: optionsWithNoVariant });
         await waitForAdyenMount();
 
-        await wrapper.findComponent({ name: 'PaymentIntegrationForm' }).vm.submit();
-        await nextTick();
+        expect(wrapper.find('[data-testid="payment-methods-unavailable"]').exists()).toBe(true);
+        expect(MockDropIn).not.toHaveBeenCalled();
+    });
 
-        expect(wrapper.text()).toContain('Select a payment method');
+    describe('when the options entry arrives without its options array', () => {
+        const mountWithoutOptions = (props: Record<string, unknown> = {}) =>
+            mountComponent({ paymentMethodOptions: paymentMethodOptionsWithoutOptions, ...props });
+
+        it('never mounts a drop-in that would have no payment methods in it', async () => {
+            mountWithoutOptions();
+            await waitForAdyenMount();
+
+            expect(MockDropIn).not.toHaveBeenCalled();
+            expect(mockAdyenCheckout).not.toHaveBeenCalled();
+        });
+
+        it('says the invoice cannot be paid online instead of leaving the region blank', async () => {
+            const wrapper = mountWithoutOptions();
+            await waitForAdyenMount();
+
+            expect(wrapper.find('[data-testid="payment-methods-unavailable"]').exists()).toBe(true);
+            expect(wrapper.text()).toContain('This invoice cannot be paid online');
+            expect(wrapper.text()).not.toContain('Payment methods');
+        });
+
+        it('names the seller and offers the invoice download, and never a retry', async () => {
+            const wrapper = mountWithoutOptions({ downloadService: vi.fn() });
+            await waitForAdyenMount();
+
+            expect(wrapper.text()).toContain('AIAIAI B.V.');
+            expect(wrapper.text()).toContain('Download invoice');
+            expect(wrapper.text()).not.toContain('Try again');
+        });
+
+        it('downloads the invoice when that is pressed', async () => {
+            const downloadService = vi.fn().mockResolvedValue(undefined);
+            const wrapper = mountWithoutOptions({ downloadService });
+            await waitForAdyenMount();
+
+            await wrapper
+                .get('[data-testid="payment-methods-unavailable"] button')
+                .trigger('click');
+
+            expect(downloadService).toHaveBeenCalledWith('inv_123');
+        });
+
+        it('drops the pay button, which could only ever have been dead', async () => {
+            const wrapper = mountWithoutOptions();
+            await waitForAdyenMount();
+
+            expect(wrapper.findComponent({ name: 'PayButton' }).exists()).toBe(false);
+        });
+
+        it('reports it grouped by payment acceptor, with the ids needed to chase it', async () => {
+            mountWithoutOptions();
+            await waitForAdyenMount();
+
+            expect(mockLogger.error).toHaveBeenCalledWith(
+                'NO_PAYMENT_METHODS_AVAILABLE',
+                expect.any(String),
+                expect.objectContaining({
+                    fingerprint: ['NO_PAYMENT_METHODS_AVAILABLE', 'pa_123'],
+                    paymentAcceptorIds: ['pa_123'],
+                    integrationIds: ['int_123'],
+                    invoiceId: 'inv_123',
+                }),
+            );
+        });
+    });
+
+    it('shows the loading skeleton rather than the unavailable state while options are still out', async () => {
+        const wrapper = mountComponent({
+            isLoading: true,
+            paymentMethodOptions: [],
+        });
+        await waitForAdyenMount();
+
+        expect(wrapper.find('[data-testid="payment-methods-unavailable"]').exists()).toBe(false);
+        expect(mockLogger.error).not.toHaveBeenCalled();
     });
 
     it('calls onPaymentSuccess when the Adyen drop-in completes a payment', async () => {

@@ -611,6 +611,10 @@
     "defaultMessage": "Payment methods",
     "description": "Section title for the payment method selector on the pay invoice screen"
   },
+  "pay_invoice.unavailable.download_invoice": {
+    "defaultMessage": "Download invoice",
+    "description": "Button that downloads the invoice when it cannot be paid online"
+  },
   "payment_completed_card.redirect_message": {
     "defaultMessage": "You are being redirected...",
     "description": "The text shown after a successful message before a redirect"
@@ -666,6 +670,30 @@
   "payment_methods_list.delete_modal.title": {
     "defaultMessage": "Delete payment method",
     "description": "Title of the delete payment method confirmation modal"
+  },
+  "payment_methods_unavailable_card.description.authorize": {
+    "defaultMessage": "Online payment is not set up for this invoice. The party that issued it can settle it with you directly.",
+    "description": "Body text shown when an invoice cannot be paid online"
+  },
+  "payment_methods_unavailable_card.description.authorize_with_seller": {
+    "defaultMessage": "Online payment is not set up for this invoice. {sellerName} can settle it with you directly.",
+    "description": "Body text shown when an invoice cannot be paid online, naming the seller"
+  },
+  "payment_methods_unavailable_card.description.tokenize": {
+    "defaultMessage": "No online payment methods are set up.",
+    "description": "Body text shown when no payment method can be stored"
+  },
+  "payment_methods_unavailable_card.description.tokenize_with_seller": {
+    "defaultMessage": "No online payment methods are set up. {sellerName} can arrange payment with you directly.",
+    "description": "Body text shown when no payment method can be stored, naming the seller"
+  },
+  "payment_methods_unavailable_card.title.authorize": {
+    "defaultMessage": "This invoice cannot be paid online",
+    "description": "Title shown when no payment method can be offered for paying an invoice"
+  },
+  "payment_methods_unavailable_card.title.tokenize": {
+    "defaultMessage": "No payment methods can be added",
+    "description": "Title shown when no payment method can be offered for storing a payment method"
   },
   "payments.retry_button.label": {
     "defaultMessage": "Try again",

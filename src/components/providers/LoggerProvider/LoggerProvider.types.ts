@@ -5,11 +5,29 @@ export type SerializedError =
     | undefined;
 
 export type LogEntry = {
+    /**
+     * The shape of this entry. Bumped when a field changes meaning or goes away, so a consumer can
+     * guard against a version they were not written for rather than reading a field that moved.
+     */
     schemaVersion: 1;
+    /** How severe the SDK considers it. Entries below `LoggerProvider`'s `logLevel` never arrive. */
     level: LogLevel;
-    code: ErrorCode | WarnCode | string; // stable, consumer-filterable
-    message: string; // human readable
-    timestamp: string; // ISO
+    /**
+     * What happened, as a stable identifier. Filter and branch on this rather than on `message`:
+     * codes are part of the SDK's contract and are listed in the README, messages are not and are
+     * reworded freely. A `string` is accepted alongside the known codes because `debug` and `info`
+     * entries carry ad-hoc ones.
+     */
+    code: ErrorCode | WarnCode | string;
+    /** A human-readable line for a person reading logs. Not stable — never match on it. */
+    message: string;
+    /** When the entry was created, as an ISO 8601 string. */
+    timestamp: string;
+    /**
+     * Whatever the call site thought was worth knowing, plus the `componentName`, `environment` and
+     * `url` every entry is enriched with. The URL is origin and path only — the query string is
+     * left off because it tends to carry customer data. Never contains tokens or credentials.
+     */
     context?: Record<string, unknown>;
     /**
      * How the entry should be grouped where a consumer aggregates them — Sentry's `fingerprint`, or
@@ -17,8 +35,14 @@ export type LogEntry = {
      * into one issue, or split one across many. Passed as a `fingerprint` key on the log context.
      */
     fingerprint?: string[];
-    error?: unknown; // may be an Error object (not JSON-safe)
-    errorSerialized?: SerializedError; // JSON-safe summary
+    /**
+     * The thrown value behind the entry, untouched — usually an `Error`, but the SDK passes on
+     * whatever it caught. Not JSON-safe: serializing it directly tends to yield `{}`, so use
+     * `errorSerialized` for anything that leaves the browser.
+     */
+    error?: unknown;
+    /** The same failure flattened to plain fields, for sending onwards or writing down. */
+    errorSerialized?: SerializedError;
 };
 
 export type LogSink = (entry: LogEntry) => void;

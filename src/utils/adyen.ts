@@ -6,6 +6,7 @@ import type {
 } from '@solvimon/solvimon-types';
 import type { Logger } from '@/components/providers/LoggerProvider/LoggerProvider.types';
 import { toMinorUnitAmount } from '@/utils/amount';
+import { filterOutExpressPaymentMethods } from '@/utils/paymentMethods';
 
 export const PAYMENT_ACCEPTOR_ID_QUERY_STRING = 'payment_acceptor_id';
 export const REDIRECT_RESULT_QUERY_STRING = 'redirectResult';
@@ -33,6 +34,17 @@ export function mapAdyenPaymentMethods(
                 mapAdyenPaymentMethod(adyenPaymentMethodOption.adyen),
             ) ?? []
     );
+}
+
+export function getAdyenDropInPaymentMethods(
+    paymentMethodOptionResponse: PaymentMethodOptionResponseEntry,
+    { excludeExpressPaymentMethods = false }: { excludeExpressPaymentMethods?: boolean } = {},
+): RawPaymentMethod[] {
+    const paymentMethods = mapAdyenPaymentMethods(paymentMethodOptionResponse);
+
+    return excludeExpressPaymentMethods
+        ? filterOutExpressPaymentMethods(paymentMethods)
+        : paymentMethods;
 }
 
 /**

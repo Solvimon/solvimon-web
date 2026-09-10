@@ -5,6 +5,7 @@ import {
     createCustomElementLogSink,
     createLogger,
     createLoggingContext,
+    extractFingerprint,
     serializeError,
 } from './LoggerProvider.lib';
 import type { LogEntry, LogSink } from './LoggerProvider.types';
@@ -47,6 +48,29 @@ describe('serializeError', () => {
     it('falls back to String() for primitives', () => {
         expect(serializeError(42)).toEqual({ message: '42' });
         expect(serializeError(true)).toEqual({ message: 'true' });
+    });
+});
+
+describe('extractFingerprint', () => {
+    it('leaves a context without one untouched', () => {
+        expect(extractFingerprint({ invoiceId: 'invo_1' })).toEqual({
+            context: { invoiceId: 'invo_1' },
+        });
+    });
+
+    it('lifts a string array out of the context', () => {
+        expect(
+            extractFingerprint({ fingerprint: ['CODE', 'paya_1'], invoiceId: 'invo_1' }),
+        ).toEqual({ fingerprint: ['CODE', 'paya_1'], context: { invoiceId: 'invo_1' } });
+    });
+
+    it('drops anything that is not a list of strings rather than passing it on as a grouping key', () => {
+        expect(extractFingerprint({ fingerprint: 'paya_1' })).toEqual({ context: {} });
+        expect(extractFingerprint({ fingerprint: ['paya_1', 7] })).toEqual({ context: {} });
+    });
+
+    it('handles no context at all', () => {
+        expect(extractFingerprint()).toEqual({ context: undefined });
     });
 });
 
@@ -129,6 +153,28 @@ describe('createLogger', () => {
             expect(entry.code).toBe('INFO_CODE');
             expect(entry.message).toBe('hello');
             expect(entry.timestamp).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+        });
+
+        it('carries a fingerprint as a field of its own, not buried in the context', () => {
+            const logger = createLogger(sink);
+            logger.error('NO_PAYMENT_METHODS_AVAILABLE', 'nothing to pay with', {
+                fingerprint: ['NO_PAYMENT_METHODS_AVAILABLE', 'paya_1'],
+                paymentAcceptorIds: ['paya_1'],
+            });
+
+            const entry = lastEntry();
+            expect(entry.fingerprint).toEqual(['NO_PAYMENT_METHODS_AVAILABLE', 'paya_1']);
+            expect((entry.context as Record<string, unknown>).fingerprint).toBeUndefined();
+            expect((entry.context as Record<string, unknown>).paymentAcceptorIds).toEqual([
+                'paya_1',
+            ]);
+        });
+
+        it('leaves the field off entries that did not ask to be grouped', () => {
+            const logger = createLogger(sink);
+            logger.error('INTEGRATION_ERROR', 'something broke');
+
+            expect(lastEntry().fingerprint).toBeUndefined();
         });
 
         it('attaches serialized error on error()', () => {

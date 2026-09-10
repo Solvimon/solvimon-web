@@ -77,6 +77,25 @@ export function serializeError(err: unknown): SerializedError {
     return { message: String(err) };
 }
 
+/**
+ * A fingerprint travels in the context because that is the only channel `logger.error` has, and is
+ * lifted back out because a consumer needs it as a grouping key, not as one more context tag.
+ */
+export function extractFingerprint(context?: Record<string, unknown>): {
+    fingerprint?: string[];
+    context?: Record<string, unknown>;
+} {
+    if (!context || !('fingerprint' in context)) {
+        return { context };
+    }
+
+    const { fingerprint, ...rest } = context;
+    const isStringArray =
+        Array.isArray(fingerprint) && fingerprint.every((part) => typeof part === 'string');
+
+    return isStringArray ? { fingerprint, context: rest } : { context: rest };
+}
+
 export function createLogger(
     sink: LogSink,
     opts?: { logLevel?: LogLevel; customElementName?: string; environment?: Environment },
@@ -93,13 +112,16 @@ export function createLogger(
     ) => {
         if (order[level] < order[min]) return;
 
+        const { fingerprint, context: entryContext } = extractFingerprint(context);
+
         const entry: LogEntry = {
             schemaVersion: 1,
             level,
             code,
             message,
             timestamp: new Date().toISOString(),
-            context,
+            context: entryContext,
+            ...(fingerprint ? { fingerprint } : {}),
             error: err,
             errorSerialized: serializeError(err),
         };

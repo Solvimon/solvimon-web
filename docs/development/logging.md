@@ -91,6 +91,26 @@ const logger = useLogger();
 doSomething(input, logger);
 ```
 
+## Grouping entries with a fingerprint
+
+A `code` alone is a coarse grouping key. Where one misconfigured merchant would otherwise show up as
+one issue per invoice — or every merchant's problem would pile into a single issue — pass a
+`fingerprint` on the context and the logger lifts it onto the entry as a field of its own:
+
+```ts
+logger.error('NO_PAYMENT_METHODS_AVAILABLE', 'No payment method can be offered to the customer', {
+    fingerprint: ['NO_PAYMENT_METHODS_AVAILABLE', paymentAcceptorId],
+    paymentAcceptorIds,
+    integrationIds,
+    invoiceId,
+});
+```
+
+Consumers receive it as `entry.fingerprint` and can hand it straight to their reporter — Sentry's
+`fingerprint`, or whatever theirs calls the same thing. It has to be an array of strings; anything
+else is dropped rather than passed on as a grouping key. Leave it off when the code already groups
+the entry the way it should be grouped.
+
 ## Adding a new log code
 
 1. Add the code string to `ErrorCode` or `WarnCode` in [LoggerProvider.types.ts](../../src/components/providers/LoggerProvider/LoggerProvider.types.ts).

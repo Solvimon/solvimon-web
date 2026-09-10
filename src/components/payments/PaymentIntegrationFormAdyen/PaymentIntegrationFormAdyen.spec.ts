@@ -42,7 +42,17 @@ const adyen = vi.hoisted(() => {
         dropInConfig?: { paymentMethodComponents?: { name: string }[] };
     } = {};
 
-    return { componentNames, handleAction, dropIn, checkout: vi.fn(), captured };
+    /** Empty stands for the live entry that arrives with no options. */
+    const getDropInPaymentMethods = vi.fn(() => [{ type: 'scheme', name: 'Card' }]);
+
+    return {
+        componentNames,
+        handleAction,
+        dropIn,
+        checkout: vi.fn(),
+        captured,
+        getDropInPaymentMethods,
+    };
 });
 
 const mockAuthorizePayment = vi.fn();
@@ -50,6 +60,7 @@ const mockGetPaymentDetails = vi.fn();
 const mockTokenizePaymentMethod = vi.fn();
 const mockLogger = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() };
 
+const mockGetAdyenDropInPaymentMethods = adyen.getDropInPaymentMethods;
 const mockHandleAction = adyen.handleAction;
 const mockAdyenCheckout = adyen.checkout;
 const captured = adyen.captured;
@@ -86,8 +97,8 @@ vi.mock('@/services/paymentMethods', () => ({
 vi.mock('@/utils/adyen', () => ({
     createReturnUrl: vi.fn(() => 'https://example.com/return'),
     getAdyenClientKeyFromPaymentMethodOptionsResponse: vi.fn(() => 'test_client_key'),
+    getAdyenDropInPaymentMethods: adyen.getDropInPaymentMethods,
     getAdyenEnvironmentFromPaymentMethodOptionsResponse: vi.fn(() => 'test'),
-    mapAdyenPaymentMethods: vi.fn(() => []),
     PAYMENT_ACCEPTOR_ID_QUERY_STRING: 'payment_acceptor_id',
     REDIRECT_RESULT_QUERY_STRING: 'redirectResult',
     transformObjectToAdyenObject: vi.fn((value: unknown) => value),
@@ -96,8 +107,6 @@ vi.mock('@/utils/adyen', () => ({
 vi.mock('@/utils/amount', () => ({
     toMinorUnitAmount: vi.fn(() => ({ value: 999, currency: 'EUR' })),
 }));
-
-vi.mock('@/utils/paymentMethods', () => ({ filterOutExpressPaymentMethods: vi.fn(() => []) }));
 
 vi.mock('@/utils/url', () => ({ getQueryParam: vi.fn(() => null) }));
 
@@ -121,8 +130,7 @@ const mockProps: PaymentIntegrationFormAdyenProps = {
     customerId: 'cust_123',
     paymentMethodOptionResponseEntry: {
         payment_acceptor: { id: 'paya_123' },
-        integration: { payment_gateway: { variant: 'ADYEN' } },
-        options: [],
+        integration: { id: 'int_123', payment_gateway: { variant: 'ADYEN' } },
     } as unknown as PaymentIntegrationFormAdyenProps['paymentMethodOptionResponseEntry'],
     variant: 'AUTHORIZE',
     selected: true,
@@ -184,6 +192,7 @@ async function submitThroughDropIn() {
 describe('PaymentIntegrationFormAdyen', () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        mockGetAdyenDropInPaymentMethods.mockReturnValue([{ type: 'scheme', name: 'Card' }]);
         captured.checkoutConfig = undefined;
         captured.dropInConfig = undefined;
     });
@@ -200,6 +209,40 @@ describe('PaymentIntegrationFormAdyen', () => {
                 (c) => (c as { name: string }).name,
             ),
         ).toEqual(adyen.componentNames);
+    });
+
+    describe('with no payment methods to build a drop-in from', () => {
+        beforeEach(() => {
+            mockGetAdyenDropInPaymentMethods.mockReturnValue([]);
+        });
+
+        it('mounts nothing rather than an empty drop-in', async () => {
+            await mountComponent();
+
+            expect(mockAdyenCheckout).not.toHaveBeenCalled();
+            expect(captured.dropInConfig).toBeUndefined();
+        });
+
+        it('renders nothing at all, leaving the verdict to the screen around it', async () => {
+            const wrapper = await mountComponent();
+
+            expect(wrapper.find('div').exists()).toBe(false);
+        });
+
+        it('reports it as degraded, grouped by the acceptor that is misconfigured', async () => {
+            await mountComponent({ invoiceId: 'invo_123' });
+
+            expect(mockLogger.warn).toHaveBeenCalledWith(
+                'PAYMENT_INTEGRATION_NOT_RENDERABLE',
+                expect.any(String),
+                {
+                    fingerprint: ['PAYMENT_INTEGRATION_NOT_RENDERABLE', 'paya_123'],
+                    paymentAcceptorId: 'paya_123',
+                    integrationId: 'int_123',
+                    invoiceId: 'invo_123',
+                },
+            );
+        });
     });
 
     describe('AUTHORIZE', () => {

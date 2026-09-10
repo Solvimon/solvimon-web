@@ -1,5 +1,6 @@
 import {
     getAdyenClientKeyFromPaymentMethodOptionsResponse,
+    getAdyenDropInPaymentMethods,
     mapAdyenPaymentMethods,
     mapAdyenPaymentMethod,
     createReturnUrl,
@@ -267,6 +268,58 @@ describe('adyen utils', () => {
             const result = mapAdyenPaymentMethods(paymentMethodOptionResponse);
 
             expect(result).toEqual([]);
+        });
+    });
+
+    describe('getAdyenDropInPaymentMethods', () => {
+        const entryWith = (options: PaymentMethodOptionResponseEntry['options']) => ({
+            payment_acceptor: createMockPaymentAcceptor(),
+            integration: createMockPaymentIntegration(),
+            ...(options ? { options } : {}),
+        });
+
+        const cardOption = {
+            name: 'Credit Card',
+            payment_method_variant: 'CARD',
+            payment_gateway_variant: 'ADYEN' as const,
+            adyen: { type: 'scheme', name: 'Credit Card' },
+        };
+
+        const applePayOption = {
+            name: 'Apple Pay',
+            payment_method_variant: 'APPLE_PAY',
+            payment_gateway_variant: 'ADYEN' as const,
+            adyen: { type: 'applepay', name: 'Apple Pay' },
+        };
+
+        it('returns what the drop-in would be built from', () => {
+            expect(getAdyenDropInPaymentMethods(entryWith([cardOption]))).toEqual([
+                { type: 'scheme', name: 'Credit Card' },
+            ]);
+        });
+
+        it('returns nothing for an entry that arrived without its options array', () => {
+            expect(getAdyenDropInPaymentMethods(entryWith(undefined))).toEqual([]);
+        });
+
+        it('keeps express methods in by default', () => {
+            expect(getAdyenDropInPaymentMethods(entryWith([applePayOption]))).toHaveLength(1);
+        });
+
+        it('drops express methods when they are offered on their own buttons instead', () => {
+            expect(
+                getAdyenDropInPaymentMethods(entryWith([cardOption, applePayOption]), {
+                    excludeExpressPaymentMethods: true,
+                }),
+            ).toEqual([{ type: 'scheme', name: 'Credit Card' }]);
+        });
+
+        it('can be left with nothing once the express ones are taken out', () => {
+            expect(
+                getAdyenDropInPaymentMethods(entryWith([applePayOption]), {
+                    excludeExpressPaymentMethods: true,
+                }),
+            ).toEqual([]);
         });
     });
 

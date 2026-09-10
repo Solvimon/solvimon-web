@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import {
+    Button,
     formatAmount,
     Icon,
     InvoiceHeader,
@@ -16,11 +17,19 @@ import Skeleton from '@/components/shared/Skeleton.vue';
 import PaymentFeedbackCard from '@/components/payments/PaymentFeedbackCard/PaymentFeedbackCard.vue';
 import type { SelectedPaymentMethod } from '@/components/payments/PaymentIntegrationForm/PaymentIntegrationForm.types';
 import PayButton from '@/components/payments/PayButton/PayButton.vue';
+import PaymentMethodsUnavailableCard from '@/components/payments/PaymentMethodsUnavailableCard/PaymentMethodsUnavailableCard.vue';
+import { usePaymentMethodAvailability } from '@/composables/usePaymentMethodAvailability';
 
 const { $t } = useIntl();
 
 const props = withDefaults(defineProps<PayInvoiceProps>(), {
     paymentAttempts: () => [],
+});
+
+const { availability } = usePaymentMethodAvailability({
+    paymentMethodOptions: () => props.paymentMethodOptions,
+    isLoading: () => props.isLoading,
+    context: () => ({ invoiceId: props.invoice?.id }),
 });
 
 const selectedPaymentMethod = ref<SelectedPaymentMethod>();
@@ -107,7 +116,7 @@ const handlePaymentFailed = () => {
             <!-- payment method form -->
             <template v-else-if="!isLoading && countryCode && amount && invoice">
                 <Section
-                    v-if="paymentMethodOptions?.length"
+                    v-if="availability === 'READY'"
                     :title="
                         $t({
                             id: 'pay_invoice.payment_methods.title',
@@ -137,7 +146,7 @@ const handlePaymentFailed = () => {
                             :customer-id="invoice.customer.id"
                             force-store-payment-method
                             :invoice-id="invoice.id"
-                            :payment-method-options="paymentMethodOptions"
+                            :payment-method-options="paymentMethodOptions ?? []"
                             variant="AUTHORIZE"
                             @payment-success="handlePaymentSuccess"
                             @payment-failed="handlePaymentFailed"
@@ -145,6 +154,30 @@ const handlePaymentFailed = () => {
                         />
                     </div>
                 </Section>
+
+                <!-- nothing the customer can pay with -->
+                <PaymentMethodsUnavailableCard
+                    v-else
+                    variant="AUTHORIZE"
+                    :seller-name="invoice.billing_entity?.legal_name"
+                >
+                    <Button
+                        v-if="downloadService"
+                        type="button"
+                        color="gray"
+                        variant="outline"
+                        @click="() => downloadService?.(invoice!.id)"
+                    >
+                        {{
+                            $t({
+                                defaultMessage: 'Download invoice',
+                                description:
+                                    'Button that downloads the invoice when it cannot be paid online',
+                                id: 'pay_invoice.unavailable.download_invoice',
+                            })
+                        }}
+                    </Button>
+                </PaymentMethodsUnavailableCard>
             </template>
         </template>
         <template #aside>
@@ -152,7 +185,7 @@ const handlePaymentFailed = () => {
                 <InvoiceSummary v-if="invoice" :invoice="invoice" />
             </Skeleton>
 
-            <div v-if="invoice">
+            <div v-if="invoice && availability === 'READY'">
                 <PayButton
                     :disabled="!selectedPaymentMethod || isPaymentPending"
                     :loading="isPaymentPending"

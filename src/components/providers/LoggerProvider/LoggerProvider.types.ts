@@ -11,6 +11,12 @@ export type LogEntry = {
     message: string; // human readable
     timestamp: string; // ISO
     context?: Record<string, unknown>;
+    /**
+     * How the entry should be grouped where a consumer aggregates them — Sentry's `fingerprint`, or
+     * whatever theirs calls it. Set it when the `code` alone would collapse unrelated incidents
+     * into one issue, or split one across many. Passed as a `fingerprint` key on the log context.
+     */
+    fingerprint?: string[];
     error?: unknown; // may be an Error object (not JSON-safe)
     errorSerialized?: SerializedError; // JSON-safe summary
 };

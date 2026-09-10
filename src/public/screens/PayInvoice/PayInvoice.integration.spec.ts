@@ -2,6 +2,7 @@ import { flushPromises, mount } from '@vue/test-utils';
 import { defineComponent, nextTick, ref } from 'vue';
 import type { Invoice, PaymentMethodOptionsResponse } from '@solvimon/solvimon-types';
 import PayInvoice from './PayInvoice.vue';
+import { createPaymentMethodOptionEntry } from '@/test-utils/paymentMethodOptionsFixture';
 
 // ─── Adyen SDK mocks ──────────────────────────────────────────────────────────
 
@@ -110,35 +111,7 @@ vi.mock('@solvimon/solvimon-ui', async () => {
 // ─── Test fixtures ────────────────────────────────────────────────────────────
 
 const mockPaymentMethodOptions: PaymentMethodOptionsResponse = [
-    {
-        payment_acceptor: {
-            id: 'pa_123',
-            object_type: 'PAYMENT_ACCEPTOR',
-            name: 'Test Acceptor',
-            reference: 'test-ref',
-            status: 'ACTIVE',
-        } as PaymentMethodOptionsResponse[0]['payment_acceptor'],
-        integration: {
-            id: 'int_123',
-            object_type: 'INTEGRATION',
-            reference: 'int-ref',
-            name: 'Test Integration',
-            description: '',
-            status: 'ACTIVE',
-            type: 'PAYMENT_GATEWAY',
-            payment_gateway: {
-                variant: 'ADYEN',
-                adyen: {
-                    company_account: 'TestCompany',
-                    environment: 'TEST',
-                    merchant_accounts: ['TestMerchant'],
-                    public_key: 'test-client-key',
-                    live_prefix: '',
-                },
-            },
-        } as PaymentMethodOptionsResponse[0]['integration'],
-        options: [],
-    },
+    createPaymentMethodOptionEntry({ paymentAcceptorId: 'pa_123' }),
 ];
 
 const mockInvoice = {

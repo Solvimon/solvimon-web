@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import type { CoreConfiguration, DropinConfiguration, PaymentAction } from '@adyen/adyen-web';
 import type {
     AuthorizePaymentPayload,
@@ -24,15 +24,14 @@ import { createPaymentMethodsService } from '@/services/paymentMethods';
 import {
     createReturnUrl,
     getAdyenClientKeyFromPaymentMethodOptionsResponse,
+    getAdyenDropInPaymentMethods,
     getAdyenEnvironmentFromPaymentMethodOptionsResponse,
-    mapAdyenPaymentMethods,
     PAYMENT_ACCEPTOR_ID_QUERY_STRING,
     REDIRECT_RESULT_QUERY_STRING,
     transformObjectToAdyenObject,
 } from '@/utils/adyen';
 import { toMinorUnitAmount } from '@/utils/amount';
 import { useExperimentalFeature } from '@/components/providers/ExperimentalFeatureProvider/composables/useExperimentalFeature';
-import { filterOutExpressPaymentMethods } from '@/utils/paymentMethods';
 import { useLogger } from '@/components/providers';
 
 /**
@@ -67,6 +66,20 @@ const { authorizePayment, getPaymentDetails } = createPaymentsService();
 const { tokenizePaymentMethod } = createPaymentMethodsService();
 const experimentalFeatures = useExperimentalFeature();
 
+// Express methods get buttons of their own when that feature is on, so the drop-in leaves them out.
+const dropInPaymentMethods = computed(() =>
+    getAdyenDropInPaymentMethods(props.paymentMethodOptionResponseEntry, {
+        excludeExpressPaymentMethods: !!experimentalFeatures?.value?.['express-checkout'],
+    }),
+);
+
+/**
+ * A drop-in built from nothing mounts an empty container and only writes a line to the console, so
+ * the customer is left staring at a void. Nothing is rendered here rather than an error: this
+ * component knows only its own gateway, and the screen around it may still have a working one.
+ */
+const canMountDropIn = computed(() => dropInPaymentMethods.value.length > 0);
+
 function submit() {
     try {
         dropInInstance?.submit();
@@ -80,11 +93,7 @@ async function getConfiguration(): Promise<{
     dropInConfig: DropinConfiguration;
 }> {
     const adyenAmount = toMinorUnitAmount(props.amount);
-    const paymentMethods = experimentalFeatures?.value?.['express-checkout']
-        ? filterOutExpressPaymentMethods(
-              mapAdyenPaymentMethods(props.paymentMethodOptionResponseEntry),
-          )
-        : mapAdyenPaymentMethods(props.paymentMethodOptionResponseEntry);
+    const paymentMethods = dropInPaymentMethods.value;
 
     return {
         checkoutConfig: {
@@ -133,11 +142,27 @@ async function getConfiguration(): Promise<{
 }
 
 async function mountDropIn() {
+    await unmountDropIn();
+
+    if (!canMountDropIn.value) {
+        const { payment_acceptor: paymentAcceptor, integration } =
+            props.paymentMethodOptionResponseEntry;
+
+        logger.warn('PAYMENT_INTEGRATION_NOT_RENDERABLE', 'No Adyen payment methods to offer', {
+            fingerprint: ['PAYMENT_INTEGRATION_NOT_RENDERABLE', paymentAcceptor.id],
+            paymentAcceptorId: paymentAcceptor.id,
+            integrationId: integration.id,
+            ...(props.invoiceId ? { invoiceId: props.invoiceId } : {}),
+        });
+        return;
+    }
+
+    // The container renders only once there is something to put in it.
+    await nextTick();
+
     if (!dropInContainerRef.value) return;
 
     try {
-        await unmountDropIn();
-
         // Dynamically import Adyen SDK and styles to enable code splitting
         const [adyenModule, { default: adyenCss }] = await Promise.all([
             import('@adyen/adyen-web'),
@@ -658,5 +683,5 @@ watch(
 <template>
     <PaymentCompletedCard v-if="showPaymentSuccess" :variant="variant" />
     <PaymentErrorCard v-else-if="integrationError" :error="integrationError" />
-    <div ref="dropInContainerRef"></div>
+    <div v-if="canMountDropIn" ref="dropInContainerRef"></div>
 </template>

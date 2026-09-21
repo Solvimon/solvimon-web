@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - A payment gateway that offers no payment methods no longer renders as a blank region. Adyen's drop-in is not mounted when there is nothing to put in it, and the pay-invoice and payment-method-form surfaces say the payment cannot be taken — naming the seller and offering the invoice download — instead of showing an empty form. They also tell loading apart from unavailable, rather than rendering both the same way.
+- The add-payment-method form now stays shut once the payment method is stored. It reopened the moment the gateway reported success, so the Save button was live again under the "you are being redirected" message; a second click submitted to a drop-in the gateway had already torn down, which never reported back and left the form spinning for good.
 - The promotion code toggle's aria label is now translatable. It built its message and id with a ternary, so FormatJS never extracted either string and the label stayed English in every locale.
 
 ### Added

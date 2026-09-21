@@ -47,8 +47,19 @@ const { availability } = usePaymentMethodAvailability({
 const paymentIntegrationFormRef = ref<InstanceType<typeof PaymentIntegrationForm>>();
 const selectedPaymentMethod = ref<SelectedPaymentMethod>();
 const isPaymentPending = ref(false);
+/**
+ * A stored method is the end of the road for this form: the gateway has torn its drop-in down, so a
+ * second submit reaches nothing and no result ever comes back to clear the pending state. The host
+ * redirects away on success, but that takes a moment, and the form stays shut for it.
+ */
+const isPaymentCompleted = ref(false);
+const isFormLocked = computed(() => isPaymentPending.value || isPaymentCompleted.value);
 
 function handleSubmit() {
+    if (isFormLocked.value) {
+        return;
+    }
+
     isPaymentPending.value = true;
     paymentIntegrationFormRef.value?.submit();
 }
@@ -66,6 +77,7 @@ defineExpose({ submit: handleSubmit, isPaymentPending });
 
 function handlePaymentSuccess() {
     isPaymentPending.value = false;
+    isPaymentCompleted.value = true;
     emit('success');
 }
 
@@ -169,7 +181,7 @@ const paymentIntegrationProps = computed<PaymentIntegrationFormProps>(() => {
             })
         "
     >
-        <div :class="{ 'pointer-events-none opacity-60': isPaymentPending }">
+        <div :class="{ 'pointer-events-none opacity-60': isFormLocked }">
             <PaymentIntegrationForm
                 ref="paymentIntegrationFormRef"
                 class="sv-payment-method-form__integration"
@@ -183,7 +195,7 @@ const paymentIntegrationProps = computed<PaymentIntegrationFormProps>(() => {
             v-if="!hideSubmitButton"
             intent="primary"
             class="mt-4 w-full"
-            :loading="isPaymentPending"
+            :loading="isFormLocked"
             @click="handleSubmit"
             >{{ submitLabel }}</Button
         >

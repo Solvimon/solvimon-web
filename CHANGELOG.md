@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Log entries can carry a `fingerprint`, so a consumer forwarding them to their own reporter can group by something narrower than the log code — a misconfigured merchant as one issue rather than one per invoice.
 - German (`de-DE`) and Italian (`it-IT`) are now supported locales, fully translated and selectable wherever `en-US` and `nl-NL` already were.
 
+### Changed
+
+- Moved to the `@solvimon/solvimon-ui` 1.9.0 component API, which replaces `Typography`'s `shade` and `Button`'s `color`/`variant` with the semantic `color` and `intent` roles, and the same on `Chip`. Two surfaces shift with it: the invoice table loses its zebra striping and row hover, which the table now decides for itself, and the VAT check button is no longer green, there being no green intent to map it to.
+
 ## [0.1.0-alpha.19] - 2026-09-03
 
 ### Added

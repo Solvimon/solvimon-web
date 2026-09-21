@@ -10,10 +10,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - A payment gateway that offers no payment methods no longer renders as a blank region. Adyen's drop-in is not mounted when there is nothing to put in it, and the pay-invoice and payment-method-form surfaces say the payment cannot be taken — naming the seller and offering the invoice download — instead of showing an empty form. They also tell loading apart from unavailable, rather than rendering both the same way.
+- The promotion code toggle's aria label is now translatable. It built its message and id with a ternary, so FormatJS never extracted either string and the label stayed English in every locale.
 
 ### Added
 
 - Log entries can carry a `fingerprint`, so a consumer forwarding them to their own reporter can group by something narrower than the log code — a misconfigured merchant as one issue rather than one per invoice.
+- German (`de-DE`) and Italian (`it-IT`) are now supported locales, fully translated and selectable wherever `en-US` and `nl-NL` already were.
 
 ## [0.1.0-alpha.19] - 2026-09-03
 

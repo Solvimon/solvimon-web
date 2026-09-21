@@ -40,15 +40,19 @@ const appliedLabel = computed(
         }),
 );
 const toggleAriaLabel = computed(() =>
-    $t({
-        defaultMessage: isExpanded.value
-            ? 'Collapse promotion code input'
-            : 'Expand promotion code input',
-        id: isExpanded.value
-            ? 'checkout.promotion_code.collapse_aria_label'
-            : 'checkout.promotion_code.expand_aria_label',
-        description: 'Aria label for the promotion code toggle button in checkout',
-    }),
+    isExpanded.value
+        ? $t({
+              defaultMessage: 'Collapse promotion code input',
+              id: 'checkout.promotion_code.collapse_aria_label',
+              description:
+                  'Aria label for the promotion code toggle button in checkout, while the input is open',
+          })
+        : $t({
+              defaultMessage: 'Expand promotion code input',
+              id: 'checkout.promotion_code.expand_aria_label',
+              description:
+                  'Aria label for the promotion code toggle button in checkout, while the input is closed',
+          }),
 );
 const applyAriaLabel = computed(() =>
     $t({

@@ -379,6 +379,14 @@
     "defaultMessage": "Promotion code could not be applied. Please try again.",
     "description": "Error message when applying a promotion code in checkout failed"
   },
+  "checkout.promotion_code.collapse_aria_label": {
+    "defaultMessage": "Collapse promotion code input",
+    "description": "Aria label for the promotion code toggle button in checkout, while the input is open"
+  },
+  "checkout.promotion_code.expand_aria_label": {
+    "defaultMessage": "Expand promotion code input",
+    "description": "Aria label for the promotion code toggle button in checkout, while the input is closed"
+  },
   "checkout.promotion_code.input_aria_label": {
     "defaultMessage": "Promotion code",
     "description": "Aria label for promotion code input in checkout"

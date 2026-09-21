@@ -94,6 +94,8 @@
     "checkout.promotion_code.apply_aria_label": "Promotiecode toepassen",
     "checkout.promotion_code.apply_button": "Toepassen",
     "checkout.promotion_code.apply_failed": "Promotiecode kon niet worden toegepast. Probeer het opnieuw.",
+    "checkout.promotion_code.collapse_aria_label": "Invoerveld voor promotiecode samenvouwen",
+    "checkout.promotion_code.expand_aria_label": "Invoerveld voor promotiecode uitvouwen",
     "checkout.promotion_code.input_aria_label": "Promotiecode",
     "checkout.promotion_code.placeholder": "Promotiecode",
     "checkout.promotion_code.remove_aria_label": "Promotiecode verwijderen",

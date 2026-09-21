@@ -37,7 +37,7 @@ const { $t } = useIntl();
                     class="-translate-y-0.5"
             /></Typography>
         </div>
-        <Typography variant="body-sm" shade="lighter" no-spacing>
+        <Typography variant="body-sm" color="subtle" no-spacing>
             <span v-if="!countryCode" class="flex items-center">
                 <Tooltip is-dark-mode>
                     <Skeleton

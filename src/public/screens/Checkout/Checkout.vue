@@ -639,8 +639,7 @@ onMounted(() => {
                                 <template #action>
                                     <Button
                                         type="button"
-                                        color="gray"
-                                        variant="outline"
+                                        intent="secondary"
                                         size="sm"
                                         class="sv-action sv-action--secondary sv-checkout__payment-methods-retry"
                                         @click="retryPaymentMethodOptions"

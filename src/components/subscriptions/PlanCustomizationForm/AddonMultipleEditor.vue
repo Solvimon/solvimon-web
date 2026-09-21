@@ -59,8 +59,7 @@ const handleToggle = (pricingId: Pricing['id']) => {
                             <template #default>
                                 <Button
                                     v-if="isSelected(pricing.id)"
-                                    color="gray"
-                                    variant="outline"
+                                    intent="secondary"
                                     square
                                     size="sm"
                                     icon-prefix="remove_shopping_cart"
@@ -68,7 +67,7 @@ const handleToggle = (pricingId: Pricing['id']) => {
                                 />
                                 <Button
                                     v-else
-                                    color="primary"
+                                    intent="primary"
                                     icon-prefix="add"
                                     size="sm"
                                     @click="handleToggle(pricing.id)"

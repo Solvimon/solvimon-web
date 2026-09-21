@@ -80,7 +80,7 @@ const readableCountryName = computed(() =>
                         <Typography variant="body" tag="span" weight="semibold" no-spacing>
                             {{ model.email }}
                         </Typography>
-                        <Typography variant="body-sm" tag="span" shade="lighter" no-spacing>
+                        <Typography variant="body-sm" tag="span" color="subtle" no-spacing>
                             {{ readableCountryName }}
                         </Typography>
                     </template>
@@ -107,7 +107,7 @@ const readableCountryName = computed(() =>
                                 <Button
                                     v-if="!showBillingDetails && !isBillingInformationMandatory"
                                     size="xs"
-                                    variant="ghost"
+                                    intent="subtle"
                                     icon-prefix="add"
                                     class="py-0.5"
                                     @click="showBillingDetails = true"
@@ -124,7 +124,7 @@ const readableCountryName = computed(() =>
                                 <Button
                                     v-if="showBillingDetails && !isBillingInformationMandatory"
                                     size="sm"
-                                    variant="ghost"
+                                    intent="subtle"
                                     icon-prefix="close"
                                     class="py-0.5"
                                     @click="showBillingDetails = false"
@@ -238,7 +238,7 @@ const readableCountryName = computed(() =>
                                     <Button
                                         type="button"
                                         size="sm"
-                                        color="green"
+                                        intent="secondary"
                                         :disabled="
                                             !isTaxIDCheckEnabled ||
                                             isTaxIDCheckPending ||

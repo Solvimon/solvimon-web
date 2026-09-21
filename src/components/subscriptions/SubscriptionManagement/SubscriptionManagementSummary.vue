@@ -62,7 +62,7 @@ const invoicePreviewMessages = computed(() => ({
             <Typography
                 v-if="!isPending"
                 variant="body-sm"
-                shade="lighter"
+                color="subtle"
                 tag="div"
                 class="sv-subscription-management-summary__empty-state"
                 >{{

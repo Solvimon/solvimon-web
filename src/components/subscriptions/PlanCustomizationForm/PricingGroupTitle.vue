@@ -10,7 +10,7 @@ import { Typography } from '@solvimon/solvimon-ui';
             /></Typography>
         </div>
         <div>
-            <Typography tag="span" variant="body-xs" shade="lighter"
+            <Typography tag="span" variant="body-xs" color="subtle"
                 ><slot name="description"
             /></Typography>
         </div>

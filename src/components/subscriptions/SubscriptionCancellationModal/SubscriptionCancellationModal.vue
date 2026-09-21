@@ -150,7 +150,7 @@ const handleClose = () => {
             >
                 <Typography
                     variant="body-sm"
-                    shade="lighter"
+                    color="subtle"
                     tag="p"
                     class="sv-subscription-cancellation-modal__explanation"
                 >
@@ -179,7 +179,7 @@ const handleClose = () => {
                             <Typography
                                 tag="span"
                                 variant="body-xs"
-                                shade="light"
+                                color="secondary"
                                 weight="semibold"
                             >
                                 {{
@@ -191,7 +191,7 @@ const handleClose = () => {
                                     })
                                 }}
                             </Typography>
-                            <Typography tag="span" variant="body-xs" shade="light">
+                            <Typography tag="span" variant="body-xs" color="secondary">
                                 {{ renewsOn }}
                             </Typography>
                         </div>

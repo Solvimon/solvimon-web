@@ -19,7 +19,7 @@ const { $t } = useIntl();
                         description: 'The title of the company purchase toggle in the checkout',
                     })
                 }}</Typography>
-                <Typography tag="span" variant="body-xs" shade="lighter">
+                <Typography tag="span" variant="body-xs" color="subtle">
                     {{
                         $t({
                             defaultMessage: 'I am purchasing on behalf of a company',

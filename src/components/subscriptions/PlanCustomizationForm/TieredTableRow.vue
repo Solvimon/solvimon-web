@@ -32,7 +32,7 @@ const tierTopBoundNumber = computed<string | undefined>(() => {
 <template>
     <div class="grid grid-cols-2 gap-2">
         <!-- count -->
-        <Typography variant="body-xs" shade="lighter" tag="div">
+        <Typography variant="body-xs" color="subtle" tag="div">
             <template v-if="tierTopBoundNumber">
                 {{
                     $t(
@@ -67,7 +67,7 @@ const tierTopBoundNumber = computed<string | undefined>(() => {
         </Typography>
 
         <!-- price -->
-        <Typography variant="body-xs" shade="lighter" tag="div" class="text-right">
+        <Typography variant="body-xs" color="subtle" tag="div" class="text-right">
             {{
                 band.amount &&
                 $t(

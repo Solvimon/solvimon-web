@@ -86,8 +86,7 @@ const canAddPaymentMethod = computed(() => props.paymentMethodOptions?.length !=
             <Button
                 v-if="showAddOption && canAddPaymentMethod"
                 class="sv-action sv-action--secondary sv-action--full-width sv-payment-method-selector__add w-full"
-                variant="outline"
-                color="gray"
+                intent="secondary"
                 icon-prefix="add"
                 type="button"
                 size="sm"
@@ -106,7 +105,7 @@ const canAddPaymentMethod = computed(() => props.paymentMethodOptions?.length !=
             <Typography
                 v-else-if="showAddOption"
                 variant="body-sm"
-                shade="lighter"
+                color="subtle"
                 tag="p"
                 class="sv-payment-method-selector__unavailable"
             >

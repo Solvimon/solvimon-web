@@ -9,7 +9,7 @@ defineEmits<PayButtonEmits>();
 const { $t } = useIntl();
 
 const buttonProps = computed(() => ({
-    color: props.color ?? 'primary',
+    intent: props.intent ?? 'primary',
     disabled: props.disabled,
     iconPrefix: props.iconPrefix,
     iconSuffix: props.iconSuffix,
@@ -19,7 +19,6 @@ const buttonProps = computed(() => ({
     square: props.square,
     tag: props.tag,
     type: props.type,
-    variant: props.variant,
 }));
 
 const paymentMethodTypeLabel = computed(() => {

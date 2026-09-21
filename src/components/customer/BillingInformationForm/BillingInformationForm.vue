@@ -201,7 +201,7 @@ watch(
 
         <Button
             type="submit"
-            color="primary"
+            intent="primary"
             :disabled="!hasChanges"
             :loading="isLoading"
             class="mt-4"

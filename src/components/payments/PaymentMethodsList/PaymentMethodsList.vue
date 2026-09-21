@@ -101,7 +101,7 @@ async function handleConfirmDelete() {
             <div class="sv-payment-methods__delete-modal-body flex flex-col gap-3">
                 <Typography
                     variant="body-sm"
-                    shade="lighter"
+                    color="subtle"
                     tag="p"
                     class="sv-payment-methods__delete-modal-explanation"
                 >

@@ -143,7 +143,7 @@ const handleClose = () => {
             >
                 <Typography
                     variant="body-sm"
-                    shade="lighter"
+                    color="subtle"
                     tag="p"
                     class="sv-auto-topup-cancellation-modal__explanation"
                 >

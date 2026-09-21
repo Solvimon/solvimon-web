@@ -54,7 +54,7 @@ const price = computed<string | undefined>(() => {
                 <Typography
                     tag="span"
                     variant="body-xs"
-                    shade="lighter"
+                    color="subtle"
                     class="sv-enabled-pricings-list__item-group"
                     >{{ entry.groupName }}</Typography
                 >
@@ -69,15 +69,14 @@ const price = computed<string | undefined>(() => {
                     v-if="price"
                     tag="span"
                     variant="body-sm"
-                    shade="lighter"
+                    color="subtle"
                     class="sv-enabled-pricings-list__item-price"
                     >{{ price }}</Typography
                 >
             </div>
 
             <Button
-                variant="outline"
-                color="gray"
+                intent="secondary"
                 class="sv-action sv-action--secondary sv-enabled-pricings-list__item-upgrade shrink-0"
                 type="button"
                 size="xs"

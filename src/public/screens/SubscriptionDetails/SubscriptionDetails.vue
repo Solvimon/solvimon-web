@@ -108,8 +108,7 @@ const title = computed<string>(() =>
 
                 <Button
                     v-if="isRenewable"
-                    variant="outline"
-                    color="gray"
+                    intent="secondary"
                     class="sv-action sv-action--secondary sv-subscription-details__renew w-full md:w-auto"
                     type="button"
                     @click="handleRenew"
@@ -126,8 +125,7 @@ const title = computed<string>(() =>
 
                 <Button
                     v-if="isCancellable"
-                    variant="outline"
-                    color="gray"
+                    intent="secondary"
                     class="sv-action sv-action--secondary sv-subscription-details__cancel w-full md:w-auto"
                     type="button"
                     @click="handleCancel"

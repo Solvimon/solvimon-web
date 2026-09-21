@@ -320,14 +320,9 @@ watch(
                     <Button size="lg" disabled data-testid="confirm">{{
                         confirmButtonText
                     }}</Button>
-                    <Button
-                        size="lg"
-                        color="gray"
-                        variant="ghost"
-                        data-testid="cancel"
-                        @click="handleCancel"
-                        >{{ cancelButtonText }}</Button
-                    >
+                    <Button size="lg" intent="subtle" data-testid="cancel" @click="handleCancel">{{
+                        cancelButtonText
+                    }}</Button>
                 </template>
             </div>
         </template>

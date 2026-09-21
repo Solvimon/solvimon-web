@@ -45,8 +45,7 @@ const isViewAllButtonVisible = computed<boolean>(() => props.showViewAllButton);
         <template v-if="isViewAllButtonVisible" #right>
             <Button
                 size="sm"
-                variant="ghost"
-                color="gray"
+                intent="subtle"
                 icon-suffix="arrow_right_alt"
                 class="sv-action sv-action--ghost sv-subscriptions-list__view-all"
                 type="button"
@@ -72,7 +71,7 @@ const isViewAllButtonVisible = computed<boolean>(() => props.showViewAllButton);
                     })
                 }}</Typography
             >
-            <Typography variant="body-xs" shade="lighter">
+            <Typography variant="body-xs" color="subtle">
                 {{
                     $t({
                         defaultMessage: 'There’s no active subscription to display.',

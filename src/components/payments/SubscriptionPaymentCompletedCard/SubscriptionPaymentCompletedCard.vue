@@ -19,7 +19,7 @@ const { $t } = useIntl();
             })
         "
     >
-        <Typography variant="body-xs" shade="lighter" tag="span">
+        <Typography variant="body-xs" color="subtle" tag="span">
             {{
                 $t({
                     defaultMessage: 'Thank you for subscribing.',

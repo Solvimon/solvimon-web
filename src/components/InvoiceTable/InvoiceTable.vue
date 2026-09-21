@@ -28,7 +28,7 @@ const showLoadMoreButton = computed(() => props.hasMoreItems);
 
 <template>
     <div class="sv-table sv-invoices-list__table grid-cols-1 gap-4">
-        <Table striped no-border rounded hoverable stripe-class="group-odd:bg-gray-50/50">
+        <Table>
             <TableHead>
                 <TableHeadRow class="sv-table__head">
                     <TableHeadCell class="sv-table__cell sv-invoices-list__cell--invoice">
@@ -89,7 +89,6 @@ const showLoadMoreButton = computed(() => props.hasMoreItems);
                         />
                     </template>
                     <TableCell
-                        has-padding
                         class="sv-table__cell sv-invoices-list__cell sv-invoices-list__cell--invoice h-14"
                     >
                         <div class="flex flex-col">
@@ -103,7 +102,7 @@ const showLoadMoreButton = computed(() => props.hasMoreItems);
                                     })
                                 }}
                             </Typography>
-                            <Typography tag="span" variant="body-xs" shade="lighter">
+                            <Typography tag="span" variant="body-xs" color="subtle">
                                 {{ invoice.invoice_number }}</Typography
                             >
                         </div>
@@ -128,7 +127,7 @@ const showLoadMoreButton = computed(() => props.hasMoreItems);
                     <TableCell
                         class="sv-table__cell sv-invoices-list__cell sv-invoices-list__cell--status h-14 text-right"
                     >
-                        <Chip v-if="invoice.paid" color="green">
+                        <Chip v-if="invoice.paid" intent="success">
                             {{
                                 $t({
                                     defaultMessage: 'Paid',
@@ -139,8 +138,7 @@ const showLoadMoreButton = computed(() => props.hasMoreItems);
                         </Chip>
                         <Button
                             v-else-if="showPayButton"
-                            variant="outline"
-                            color="gray"
+                            intent="secondary"
                             size="sm"
                             class="sv-action sv-action--secondary sv-invoices-list__pay"
                             type="button"
@@ -160,8 +158,7 @@ const showLoadMoreButton = computed(() => props.hasMoreItems);
         <div class="sv-invoices-list__load-more mt-2 flex items-center justify-center">
             <Button
                 v-if="showLoadMoreButton"
-                variant="outline"
-                color="gray"
+                intent="secondary"
                 size="sm"
                 class="sv-action sv-action--secondary sv-action--full-width w-full"
                 :loading="isLoading"

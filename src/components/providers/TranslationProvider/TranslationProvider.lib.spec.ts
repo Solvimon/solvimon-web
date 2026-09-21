@@ -33,6 +33,8 @@ describe('supportedLocaleSet', () => {
     it('contains all supported locales', () => {
         expect(supportedLocaleSet.has('en-US')).toBe(true);
         expect(supportedLocaleSet.has('nl-NL')).toBe(true);
+        expect(supportedLocaleSet.has('de-DE')).toBe(true);
+        expect(supportedLocaleSet.has('it-IT')).toBe(true);
     });
 
     it('does not contain unsupported locales', () => {
@@ -45,6 +47,8 @@ describe('isSupportedLocale', () => {
     it('returns true for supported locales', () => {
         expect(isSupportedLocale('en-US')).toBe(true);
         expect(isSupportedLocale('nl-NL')).toBe(true);
+        expect(isSupportedLocale('de-DE')).toBe(true);
+        expect(isSupportedLocale('it-IT')).toBe(true);
     });
 
     it('returns false for unsupported locales', () => {

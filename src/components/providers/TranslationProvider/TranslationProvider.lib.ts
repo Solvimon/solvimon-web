@@ -22,11 +22,15 @@ export function isSupportedLocale(locale: string): locale is SupportedLocale {
 const APP_LOCALE_IMPORTS: Record<SupportedLocale, LocaleLoader> = {
     'en-US': () => import('@/translations/locales/en-US.json'),
     'nl-NL': () => import('@/translations/locales/nl-NL.json'),
+    'de-DE': () => import('@/translations/locales/de-DE.json'),
+    'it-IT': () => import('@/translations/locales/it-IT.json'),
 };
 
 const UI_LOCALE_IMPORTS: Record<SupportedLocale, LocaleLoader> = {
     'en-US': () => import('@solvimon/solvimon-ui/translations/en-US'),
     'nl-NL': () => import('@solvimon/solvimon-ui/translations/nl-NL'),
+    'de-DE': () => import('@solvimon/solvimon-ui/translations/de-DE'),
+    'it-IT': () => import('@solvimon/solvimon-ui/translations/it-IT'),
 };
 
 export async function loadLocaleMessages(locale: string, logger: Logger): Promise<IntlMessages> {

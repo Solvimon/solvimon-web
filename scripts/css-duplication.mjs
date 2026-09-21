@@ -14,8 +14,12 @@
 
 /**
  * Strips everything that differs between the two copies without any rule differing: the asset is
- * minified while the embedded strings are not, so escaped newlines, whitespace and quote style all
- * vary on their own.
+ * minified while the embedded strings are not, so escaped newlines, whitespace, quote style and
+ * pseudo-element notation all vary on their own.
+ *
+ * `::before` and `:before` select the same thing, and the minifier writes the shorter CSS2 form
+ * for the four pseudo-elements that allow it. Folding both to one colon keeps a rule that only
+ * differs that way from reading as one the bundle has never heard of.
  *
  * @param {string} source
  * @returns {string}
@@ -24,7 +28,8 @@ export function normalizeCss(source) {
     return source
         .replace(/\\[nrt]/g, '')
         .replace(/["']/g, '')
-        .replace(/\s+/g, '');
+        .replace(/\s+/g, '')
+        .replace(/::/g, ':');
 }
 
 /**

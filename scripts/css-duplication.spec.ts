@@ -17,6 +17,12 @@ describe('normalizeCss', () => {
     it('treats escaped newlines in a JS string like real whitespace', () => {
         expect(normalizeCss('a {\\n  color: red;\\n}')).toBe('a{color:red;}');
     });
+
+    it('reads a minified :before as the ::before the source writes', () => {
+        expect(normalizeCss('td:first-of-type::before')).toBe(
+            normalizeCss('td:first-of-type:before'),
+        );
+    });
 });
 
 describe('cssRuleSelectors', () => {
@@ -42,6 +48,18 @@ describe('selectorsMissingFrom', () => {
 
     it('is not fooled by quote style or whitespace differing between the copies', () => {
         expect(selectorsMissingFrom("input[type='range']{width:100%}", js)).toStrictEqual([]);
+    });
+
+    /** The minifier shortens `::after` to `:after`; the embedded string keeps the long form. */
+    it('is not fooled by pseudo-element notation differing between the copies', () => {
+        const embedded = String.raw`const s = ".solvimon-table thead th:first-of-type::after {\n    content: '';\n}";`;
+
+        expect(
+            selectorsMissingFrom(
+                '.solvimon-table thead th:first-of-type:after{content:""}',
+                embedded,
+            ),
+        ).toStrictEqual([]);
     });
 
     it('reports a rule that exists only in the stylesheet', () => {

@@ -181,7 +181,7 @@ const paymentIntegrationProps = computed<PaymentIntegrationFormProps>(() => {
         </div>
         <Button
             v-if="!hideSubmitButton"
-            color="primary"
+            intent="primary"
             class="mt-4 w-full"
             :loading="isPaymentPending"
             @click="handleSubmit"

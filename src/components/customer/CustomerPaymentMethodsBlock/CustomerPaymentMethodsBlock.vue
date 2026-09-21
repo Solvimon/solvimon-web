@@ -37,8 +37,7 @@ const hasPaymentMethods = computed<boolean>(() => props.paymentMethods.length > 
         <template v-if="showViewAllButton" #right>
             <Button
                 size="sm"
-                variant="ghost"
-                color="gray"
+                intent="subtle"
                 icon-suffix="arrow_right_alt"
                 class="sv-action sv-action--ghost sv-payment-methods__view-all"
                 type="button"
@@ -58,7 +57,7 @@ const hasPaymentMethods = computed<boolean>(() => props.paymentMethods.length > 
         <Section v-else class="sv-empty-state sv-payment-methods__empty">
             <Typography
                 variant="body-sm"
-                shade="lighter"
+                color="subtle"
                 no-spacing
                 class="sv-payment-methods__empty-message"
                 >{{
@@ -73,8 +72,7 @@ const hasPaymentMethods = computed<boolean>(() => props.paymentMethods.length > 
             <Button
                 v-if="showAddButton"
                 class="sv-action sv-action--secondary sv-action--full-width sv-payment-methods__add mt-4 w-full"
-                variant="outline"
-                color="gray"
+                intent="secondary"
                 icon-prefix="add"
                 type="button"
                 @click="$emit('add-payment-method')"

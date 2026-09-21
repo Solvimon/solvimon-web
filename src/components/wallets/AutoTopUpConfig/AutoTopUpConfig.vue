@@ -252,7 +252,7 @@ defineExpose({
                             id: 'auto_topup_config.title',
                         })
                     }}</Typography>
-                    <Typography tag="span" variant="body-xs" shade="lighter">{{
+                    <Typography tag="span" variant="body-xs" color="subtle">{{
                         $t({
                             defaultMessage: 'Automatically top up your balance when it runs low.',
                             description: 'Subtitle of the automatic wallet top-up settings',

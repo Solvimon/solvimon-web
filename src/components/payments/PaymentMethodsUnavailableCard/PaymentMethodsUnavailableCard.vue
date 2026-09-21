@@ -73,9 +73,7 @@ const description = computed(() => {
         data-testid="payment-methods-unavailable"
     >
         <div class="flex flex-col items-center gap-4">
-            <Typography variant="body-xs" shade="lighter" class="mt-3">{{
-                description
-            }}</Typography>
+            <Typography variant="body-xs" color="subtle" class="mt-3">{{ description }}</Typography>
             <slot name="default" />
         </div>
     </PaymentFeedbackCard>

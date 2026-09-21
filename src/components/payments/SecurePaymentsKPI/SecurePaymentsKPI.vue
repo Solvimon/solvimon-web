@@ -46,7 +46,7 @@ const securePaymentsText = computed(() => {
     <div class="flex justify-around">
         <div class="flex items-center gap-0.5">
             <Icon icon="lock" size="xs" />
-            <Typography tag="span" variant="body-xs" shade="lighter">
+            <Typography tag="span" variant="body-xs" color="subtle">
                 <span>{{ securePaymentsText }}</span
                 >{{ ' ' }}
                 <span

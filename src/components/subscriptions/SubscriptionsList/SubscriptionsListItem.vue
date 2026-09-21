@@ -46,7 +46,7 @@ const isDetailButtonVisible = computed<boolean>(() => props.showViewSubscription
                     v-if="subscriptionDescription"
                     variant="body-sm"
                     tag="span"
-                    shade="lighter"
+                    color="subtle"
                     class="sv-subscriptions-list__item-description"
                     >{{ subscriptionDescription }}</Typography
                 >
@@ -61,7 +61,12 @@ const isDetailButtonVisible = computed<boolean>(() => props.showViewSubscription
                         v-if="subscription.next_invoice"
                         class="sv-subscriptions-list__item-next-invoice flex gap-1"
                     >
-                        <Typography tag="span" variant="body-xs" shade="light" weight="semibold">
+                        <Typography
+                            tag="span"
+                            variant="body-xs"
+                            color="secondary"
+                            weight="semibold"
+                        >
                             {{
                                 $t({
                                     defaultMessage: 'Next billing date',
@@ -70,7 +75,7 @@ const isDetailButtonVisible = computed<boolean>(() => props.showViewSubscription
                                 })
                             }}
                         </Typography>
-                        <Typography tag="span" variant="body-xs" shade="light">{{
+                        <Typography tag="span" variant="body-xs" color="secondary">{{
                             formatDate({
                                 date: subscription.next_invoice.invoice_date,
                                 format: 'date',
@@ -86,7 +91,7 @@ const isDetailButtonVisible = computed<boolean>(() => props.showViewSubscription
             >
                 <Button
                     v-if="isDetailButtonVisible"
-                    color="primary"
+                    intent="primary"
                     class="sv-action sv-action--primary sv-subscriptions-list__item-details w-full md:w-auto"
                     type="button"
                     @click="$emit('view-subscription-details', { subscriptionId: subscription.id })"

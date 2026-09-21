@@ -37,8 +37,7 @@ const { dispatchAction } = useActionDispatchProvider();
         <template v-if="configuration.showEditButton" #settings>
             <Button
                 size="sm"
-                variant="ghost"
-                color="gray"
+                intent="subtle"
                 icon-prefix="edit"
                 class="sv-action sv-action--ghost sv-billing-information__edit"
                 @click="dispatchAction({ action: 'edit-billing-information' })"

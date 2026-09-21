@@ -422,7 +422,7 @@ const { sortedPaymentMethods } = useDefaultPaymentMethod({
                             v-if="getCostLabel(optionValue)"
                             tag="span"
                             variant="body-sm"
-                            shade="lighter"
+                            color="subtle"
                             weight="normal"
                             no-spacing
                             class="sv-top-up-form__option-cost"
@@ -436,7 +436,7 @@ const { sortedPaymentMethods } = useDefaultPaymentMethod({
                                 v-if="option.description && !isFlexibleOption(optionValue)"
                                 tag="span"
                                 variant="body-xs"
-                                shade="lighter"
+                                color="subtle"
                                 no-spacing
                                 >{{ option.description }}</Typography
                             >
@@ -456,7 +456,7 @@ const { sortedPaymentMethods } = useDefaultPaymentMethod({
                                         v-if="option.description"
                                         tag="span"
                                         variant="body-xs"
-                                        shade="lighter"
+                                        color="subtle"
                                         no-spacing
                                         >{{ option.description }}</Typography
                                     >

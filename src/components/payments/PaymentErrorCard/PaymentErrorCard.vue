@@ -19,14 +19,13 @@ const reload = () => {
 <template>
     <PaymentFeedbackCard status="error" :title="errorConfig.title">
         <div class="flex flex-col items-center gap-6">
-            <Typography variant="body-xs" shade="lighter" class="mt-3">{{
+            <Typography variant="body-xs" color="subtle" class="mt-3">{{
                 errorConfig.message
             }}</Typography>
             <Button
                 v-if="errorConfig.isReloadButtonVisible"
                 type="button"
-                color="gray"
-                variant="outline"
+                intent="secondary"
                 @click="reload"
             >
                 {{

@@ -18,7 +18,7 @@ const handleReload = () => {
                     description: 'The title of the checkout not available page',
                 })
             }}</Typography>
-            <Typography variant="body-sm" shade="lighter">
+            <Typography variant="body-sm" color="subtle">
                 {{
                     $t({
                         defaultMessage: 'The checkout is currently not available.',

@@ -14,7 +14,7 @@ defineProps<EmptyStatePlaceholderProps>();
                 tag="span"
                 variant="body-xs"
                 weight="semibold"
-                shade="lighter"
+                color="subtle"
                 class="sv-empty-state__title mt-1"
             >
                 <slot name="title" />
@@ -23,7 +23,7 @@ defineProps<EmptyStatePlaceholderProps>();
                 center
                 tag="span"
                 variant="body-xs"
-                shade="lightest"
+                color="subtle"
                 class="sv-empty-state__message mt-1"
             >
                 <slot name="message" />

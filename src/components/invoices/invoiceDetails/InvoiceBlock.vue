@@ -27,7 +27,7 @@ const { isMobileViewport: isSmallScreen } = useViewport();
         <div class="sv-invoice__summary-body" :class="{ 'p-6 pt-2': !isSmallScreen }">
             <InfoBlock
                 v-if="isSmallScreen"
-                variant="default"
+                variant="info"
                 has-icon
                 class="sv-invoice__download-hint justify-center border-gray-100 bg-gray-50 font-semibold text-gray-800"
                 >{{

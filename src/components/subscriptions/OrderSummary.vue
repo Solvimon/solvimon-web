@@ -386,7 +386,7 @@ const handleBinaryBillingToggle = (checked: boolean) => {
                         >
                             <template v-if="toggleSaveText" #badge>
                                 <Chip
-                                    color="primary"
+                                    intent="brand"
                                     :content="toggleSaveText"
                                     :size="saveBadgeSize"
                                     class="whitespace-nowrap text-left leading-tight"
@@ -420,7 +420,7 @@ const handleBinaryBillingToggle = (checked: boolean) => {
             <!-- usage based -->
             <Section v-if="isUsageBased" no-spacing class="sv-order-summary__usage">
                 <div class="px-3 py-2">
-                    <Typography no-spacing variant="body-sm" shade="lighter">
+                    <Typography no-spacing variant="body-sm" color="subtle">
                         {{
                             $t({
                                 defaultMessage: '+ Usage',
@@ -451,7 +451,7 @@ const handleBinaryBillingToggle = (checked: boolean) => {
                     :is-preview-without-taxes="!countryCode"
                     is-customer-facing
                 />
-                <Typography v-else variant="body-sm" shade="lighter" class="sv-order-summary__empty"
+                <Typography v-else variant="body-sm" color="subtle" class="sv-order-summary__empty"
                     >{{
                         $t({
                             defaultMessage: 'Please select a country first',

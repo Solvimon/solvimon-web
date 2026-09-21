@@ -3,7 +3,7 @@ import {
     Typography,
     formatEnum,
     Chip,
-    type ChipColor,
+    type ChipIntent,
     PaymentMethod,
     useIntl,
     Section,
@@ -17,15 +17,15 @@ defineProps<{
     customer: Customer;
 }>();
 
-const colorMapping: Record<Payment['result'], ChipColor> = {
-    AUTHORIZED: 'green',
-    CANCELLED: 'red',
-    ERROR: 'red',
-    PENDING: 'orange',
-    PENDING_REFUND: 'orange',
-    REFUNDED: 'orange',
-    CHARGED_BACK: 'orange',
-    REFUSED: 'red',
+const intentMapping: Record<Payment['result'], ChipIntent> = {
+    AUTHORIZED: 'success',
+    CANCELLED: 'danger',
+    ERROR: 'danger',
+    PENDING: 'warning',
+    PENDING_REFUND: 'warning',
+    REFUNDED: 'warning',
+    CHARGED_BACK: 'warning',
+    REFUSED: 'danger',
 };
 </script>
 
@@ -56,7 +56,7 @@ const colorMapping: Record<Payment['result'], ChipColor> = {
                     </Typography>
                     <Chip
                         class="sv-payment-history__item-status"
-                        :color="colorMapping[paymentAttempt.result]"
+                        :intent="intentMapping[paymentAttempt.result]"
                         >{{ formatEnum(paymentAttempt.result) }}</Chip
                     >
                 </div>

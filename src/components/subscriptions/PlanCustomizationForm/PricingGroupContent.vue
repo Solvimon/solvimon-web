@@ -12,7 +12,7 @@ defineProps<PricingGroupContentProps>();
                 <Typography tag="span" variant="body-sm" weight="semibold">{{ name }}</Typography>
                 <slot name="badge" />
             </div>
-            <Typography tag="span" variant="body-xs" shade="lighter">{{ description }}</Typography>
+            <Typography tag="span" variant="body-xs" color="subtle">{{ description }}</Typography>
         </div>
         <div class="ml-4 flex items-center self-center">
             <slot name="default" />

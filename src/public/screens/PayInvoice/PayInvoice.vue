@@ -164,8 +164,7 @@ const handlePaymentFailed = () => {
                     <Button
                         v-if="downloadService"
                         type="button"
-                        color="gray"
-                        variant="outline"
+                        intent="secondary"
                         @click="() => downloadService?.(invoice!.id)"
                     >
                         {{

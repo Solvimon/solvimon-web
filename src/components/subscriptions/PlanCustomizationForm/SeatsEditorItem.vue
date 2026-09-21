@@ -69,7 +69,7 @@ const isCollapsible = computed(() => !!seats.value.pricing?.tiered?.bands);
                     v-if="seats.pricing.amount"
                     tag="span"
                     variant="body-xs"
-                    shade="lighter"
+                    color="subtle"
                     >{{
                         $t(
                             {
@@ -92,7 +92,7 @@ const isCollapsible = computed(() => !!seats.value.pricing?.tiered?.bands);
                 >
                 <template v-else-if="seats.pricing.tiered">
                     <!-- heading -->
-                    <Typography tag="span" variant="body-xs" shade="lighter">
+                    <Typography tag="span" variant="body-xs" color="subtle">
                         {{
                             $t({
                                 defaultMessage: 'Tiered pricing',

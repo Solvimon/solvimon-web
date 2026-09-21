@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, isRef, ref, watch } from 'vue';
 import type { Amount } from '@solvimon/solvimon-types';
 import { formatAmount, Input, Typography, useIntl } from '@solvimon/solvimon-ui';
 import type { ConvertedAmountInputProps } from './ConvertedAmountInput.types';
@@ -99,10 +99,23 @@ const formatMoney = (quantity: number, currency: Amount['currency']) =>
 
 const formatCredits = (quantity: number) => `${formatNumber(quantity)} ${creditUnitName.value}`;
 
+/** `error` is a message, a ref to one, or a vuelidate array — an empty array still being truthy. */
+const hasError = computed(() => {
+    const error = props.error;
+
+    if (Array.isArray(error)) {
+        return error.length > 0;
+    }
+
+    return Boolean(isRef(error) ? error.value : error);
+});
+
 const helperText = computed(() => {
     const converted = convertedQuantity.value;
 
-    if (!props.showConversionHint || converted === undefined) {
+    // An errored field cannot be trusted to convert, so the error takes the helper slot on its
+    // own. `Input` used to drop the slot itself; since 1.9.0 it renders both, so we withhold it.
+    if (hasError.value || !props.showConversionHint || converted === undefined) {
         return undefined;
     }
 
@@ -200,7 +213,7 @@ const boundsText = computed(() => {
             <Typography
                 tag="span"
                 variant="body-xs"
-                shade="lighter"
+                color="subtle"
                 no-spacing
                 :data-testid="`${name}-bounds`"
                 >{{ boundsText }}</Typography
@@ -215,7 +228,7 @@ const boundsText = computed(() => {
             <Typography
                 tag="span"
                 variant="body-xs"
-                shade="lighter"
+                color="subtle"
                 no-spacing
                 :data-testid="`${name}-conversion`"
                 >{{ helperText }}</Typography

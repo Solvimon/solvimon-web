@@ -49,10 +49,10 @@ const selectedPricings = computed(() => {
         <Avatar v-if="avatar" :image-src="avatar" size="lg" class="my-1" />
         <div class="grow">
             <Typography variant="body" weight="semibold" no-spacing>{{ name }}</Typography>
-            <Typography v-if="selectedPricings" variant="body-xs" shade="lighter" no-spacing>{{
+            <Typography v-if="selectedPricings" variant="body-xs" color="subtle" no-spacing>{{
                 selectedPricings
             }}</Typography>
-            <Typography v-if="description" variant="body-xs" shade="lighter" no-spacing>
+            <Typography v-if="description" variant="body-xs" color="subtle" no-spacing>
                 <template v-if="selectedPricings"> • </template>
                 {{ description }}</Typography
             >

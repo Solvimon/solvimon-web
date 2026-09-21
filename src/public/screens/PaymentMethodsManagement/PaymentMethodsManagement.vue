@@ -53,12 +53,10 @@ const showPaymentMethodForm = ref(false);
             />
 
             <template v-if="showPaymentMethodForm">
-                <Button color="gray" variant="outline" @click="showPaymentMethodForm = false"
-                    >Cancel</Button
-                >
+                <Button intent="secondary" @click="showPaymentMethodForm = false">Cancel</Button>
             </template>
             <template v-else>
-                <Button color="gray" variant="outline" @click="showPaymentMethodForm = true"
+                <Button intent="secondary" @click="showPaymentMethodForm = true"
                     >Add payment method</Button
                 >
             </template>

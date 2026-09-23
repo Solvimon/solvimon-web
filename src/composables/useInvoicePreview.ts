@@ -33,6 +33,7 @@ export const useInvoicePreview = () => {
         subscriptionStartAt,
         customer = {},
         seatsValues,
+        unitsValues,
         enabledPricingIds,
         promotionCode,
     }: LoadInvoicePreviewParams) => {
@@ -90,6 +91,7 @@ export const useInvoicePreview = () => {
                         pricing_id: enabledPricingId,
                     })),
                     seatsValues,
+                    unitsValues,
                     pricingPlanScheduleInfos: subscription.pricing_plan_schedule_infos,
                     pricingCurrency: hasMultiplePricingCurrencies ? pricingCurrency : undefined,
                     billingPeriod: hasMultipleBillingPeriods ? period : undefined,

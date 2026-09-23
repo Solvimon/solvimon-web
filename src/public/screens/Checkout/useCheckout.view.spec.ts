@@ -309,6 +309,155 @@ describe('useCheckoutView', () => {
         wrapper.unmount();
     });
 
+    it('seeds the one-off unit quantities the plan defaults to, so the preview is priced on the units shown', async () => {
+        mockGetFirstPricingPlanScheduleOfType.mockReturnValue({
+            ...mockSubscription.pricing_plan_schedule_infos[0],
+            pricing_plan_schedule: {
+                ...mockSubscription.pricing_plan_schedule_infos[0].pricing_plan_schedule,
+                units: [
+                    { pricing_item_config_id: 'setup_fee' },
+                    { pricing_item_config_id: 'onboarding' },
+                ],
+            },
+            pricing_plan_version: {
+                pricing_categories: [
+                    {
+                        pricings: [
+                            {
+                                items: [
+                                    {
+                                        configs: [
+                                            { id: 'setup_fee', default_units: { number: '2' } },
+                                            { id: 'onboarding' },
+                                        ],
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                ],
+            },
+        });
+
+        const checkoutFormMock = createMockCheckoutForm();
+        mockUseCheckoutForm.mockReturnValue(checkoutFormMock);
+
+        const [, wrapper] = withSetup(() =>
+            useCheckoutView({
+                initialCountry: undefined,
+                initialEmail: undefined,
+                subscriptionId: 'sub_123' as PricingPlanSubscription['id'],
+            }),
+        );
+
+        await flushPromises();
+
+        expect(checkoutFormMock.updateInitialState).toHaveBeenCalledWith(
+            expect.objectContaining({
+                unitsValues: [
+                    { pricing_item_config_id: 'setup_fee', number: '2' },
+                    { pricing_item_config_id: 'onboarding', number: '1' },
+                ],
+            }),
+        );
+        wrapper.unmount();
+    });
+
+    it('prices the invoice preview on the unit quantities in the form', async () => {
+        const unitsValues = [{ pricing_item_config_id: 'setup_fee', number: '3' }];
+        let onRequiredFieldChangeCallback: ((form: CheckoutFormState) => void) | undefined;
+
+        const checkoutFormMock = createMockCheckoutForm({
+            country: 'NL' as CountryCode,
+            unitsValues,
+        });
+
+        mockUseCheckoutForm.mockImplementation(
+            (args?: {
+                initialState?: Partial<CheckoutFormState>;
+                onRequiredFieldChange?: (form: CheckoutFormState) => void;
+            }) => {
+                onRequiredFieldChangeCallback = args?.onRequiredFieldChange;
+                return checkoutFormMock;
+            },
+        );
+
+        const result = useCheckoutView({
+            initialCountry: undefined,
+            initialEmail: undefined,
+            subscriptionId: 'sub_123' as PricingPlanSubscription['id'],
+        });
+        result.subscription.value = mockSubscription;
+
+        onRequiredFieldChangeCallback?.(checkoutFormMock.form.value);
+        await nextTick();
+
+        expect(mockLoadInvoicePreview).toHaveBeenCalledWith(
+            expect.objectContaining({ unitsValues }),
+        );
+    });
+
+    it('passes the unit quantities in the form to the authorization customizations', () => {
+        const unitsValues = [{ pricing_item_config_id: 'setup_fee', number: '3' }];
+
+        mockUseCheckoutForm.mockReturnValue(
+            createMockCheckoutForm({
+                type: 'INDIVIDUAL' as const,
+                country: 'NL' as CountryCode,
+                unitsValues,
+            }),
+        );
+        mockGetScheduleCustomizations.mockReturnValue(undefined);
+
+        const result = useCheckoutView({
+            initialCountry: undefined,
+            initialEmail: undefined,
+            subscriptionId: 'sub_123' as PricingPlanSubscription['id'],
+        });
+        result.subscription.value = mockSubscription;
+
+        void result.authorizationContext.value;
+
+        expect(mockGetScheduleCustomizations).toHaveBeenCalledWith(
+            expect.objectContaining({ unitsValues }),
+        );
+    });
+
+    it('keeps the unit quantities when a promotion code is applied', () => {
+        const units = [{ pricing_item_config_id: 'setup_fee', number: '3' }];
+
+        mockUseCheckoutForm.mockReturnValue(
+            createMockCheckoutForm({
+                type: 'INDIVIDUAL' as const,
+                country: 'NL' as CountryCode,
+                promotionCode: 'WELCOME',
+            }),
+        );
+        mockGetScheduleCustomizations.mockReturnValue([
+            { pricing_plan_schedule_id: 'schedule_1', units },
+        ]);
+
+        const result = useCheckoutView({
+            initialCountry: undefined,
+            initialEmail: undefined,
+            subscriptionId: 'sub_123' as PricingPlanSubscription['id'],
+        });
+        result.subscription.value = mockSubscription;
+
+        const context = result.authorizationContext
+            .value as AuthorizePaymentInitPricingPlanSubscriptionContext;
+
+        expect(
+            context.init_pricing_plan_subscription.pricing_plan_schedule_customizations,
+        ).toContainEqual(
+            expect.objectContaining({
+                pricing_plan_schedule_id: 'schedule_1',
+                units,
+                promotion_codes: ['WELCOME'],
+            }),
+        );
+    });
+
     it('loads invoice preview and payment method options when subscription is loaded', async () => {
         const subscriptionId = 'sub_123' as PricingPlanSubscription['id'];
         const initialCountry = 'NL' as CountryCode;

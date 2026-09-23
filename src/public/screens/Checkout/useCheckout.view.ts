@@ -100,6 +100,7 @@ export function useCheckoutView({
             subscription: subscription.value!,
             customer: toCustomer(formState),
             seatsValues: formState.seatsValues,
+            unitsValues: formState.unitsValues,
             enabledPricingIds: formState.enabledPricingIds ?? enabledPricingIds,
             promotionCode: formState.promotionCode,
         });
@@ -124,6 +125,7 @@ export function useCheckoutView({
             subscription: subscription.value!,
             customer: toCustomer(mergedState),
             seatsValues: mergedState.seatsValues,
+            unitsValues: mergedState.unitsValues,
             enabledPricingIds,
             promotionCode,
         });
@@ -232,6 +234,7 @@ export function useCheckoutView({
                 pricing_id: enabledPricingId,
             })),
             seatsValues: checkoutForm.form.value.seatsValues,
+            unitsValues: checkoutForm.form.value.unitsValues,
             pricingPlanScheduleInfos: subscription.value?.pricing_plan_schedule_infos ?? [],
             pricingCurrency: hasMultiplePricingCurrencies
                 ? subscription.value?.billing_currency
@@ -276,6 +279,9 @@ export function useCheckoutView({
                               }),
                               ...(baseCustomization?.seats_values && {
                                   seats_values: baseCustomization.seats_values,
+                              }),
+                              ...(baseCustomization?.units && {
+                                  units: baseCustomization.units,
                               }),
                               promotion_codes: [promotionCode],
                           });

@@ -11,6 +11,7 @@ export interface LoadInvoicePreviewParams {
     subscriptionStartAt?: PricingPlanSchedule['start_at'];
     customer?: Partial<Customer>;
     seatsValues?: ConfiguredMeterValue[];
+    unitsValues?: ConfiguredMeterValue[];
     enabledPricingIds?: Pricing['id'][];
     promotionCode?: string | null;
 }

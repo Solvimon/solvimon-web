@@ -162,27 +162,42 @@ export function getPricingItemConfigMetaById({
 }
 
 /**
+ * `PricingPlanScheduleCustomization` is a type alias upstream, so MD-5439's `units` can't be
+ * declaration-merged onto it like the interfaces in `@/types/units.d.ts`.
+ */
+export type PricingPlanScheduleCustomizationWithUnits = PricingPlanScheduleCustomization & {
+    units?: ConfiguredMeterValue[];
+};
+
+const toMeterValuePayload = ({ pricing_item_config_id, number }: ConfiguredMeterValue) => ({
+    pricing_item_config_id,
+    number,
+});
+
+/**
  * Get the schedule customizations for a given pricing plan schedule.
  */
 export function getScheduleCustomizations({
     enabledPricings,
     seatsValues,
+    unitsValues,
     pricingPlanScheduleInfos,
     pricingCurrency,
     billingPeriod,
 }: {
     enabledPricings?: EnabledPricing[];
     seatsValues?: ConfiguredMeterValue[];
+    unitsValues?: ConfiguredMeterValue[];
     pricingPlanScheduleInfos: PricingPlanScheduleInfoExpanded[];
     pricingCurrency?: string;
     billingPeriod?: BillingPeriod;
-}): PricingPlanScheduleCustomization[] | undefined {
+}): PricingPlanScheduleCustomizationWithUnits[] | undefined {
     const subscriptionSchedule = getFirstPricingPlanScheduleOfType({
         pricingPlanScheduleInfos,
         type: 'DEFAULT',
     });
 
-    if (!subscriptionSchedule || (!enabledPricings && !seatsValues)) {
+    if (!subscriptionSchedule || (!enabledPricings && !seatsValues && !unitsValues)) {
         return undefined;
     }
 
@@ -190,10 +205,8 @@ export function getScheduleCustomizations({
         {
             pricing_plan_schedule_id: subscriptionSchedule.id,
             enabled_pricings: enabledPricings,
-            seats_values: seatsValues?.map(({ pricing_item_config_id, number }) => ({
-                pricing_item_config_id,
-                number,
-            })),
+            seats_values: seatsValues?.map(toMeterValuePayload),
+            ...(unitsValues && { units: unitsValues.map(toMeterValuePayload) }),
             ...(pricingCurrency && { pricing_currency: pricingCurrency }),
             ...(billingPeriod && { billing_period: billingPeriod }),
         },

@@ -83,6 +83,8 @@ const subscriptionId = portal.value?.init_pricing_plan_subscription?.pricing_pla
 const successRedirectUrl = portal.value?.init_pricing_plan_subscription?.success_url;
 
 const {
+    validatedEmail,
+    validatedCountry,
     paymentMethodOptions,
     hasPaymentMethodOptionsError,
     retryPaymentMethodOptions,
@@ -338,9 +340,7 @@ const handleUpdateBillingInformation = (billingInformation: Partial<Address>) =>
     });
 };
 
-const showCustomerInfoOnTop = computed(
-    () => !(props.configuration?.email && props.configuration?.countryCode),
-);
+const showCustomerInfoOnTop = computed(() => !(validatedEmail && validatedCountry));
 
 const trialStartDate = computed<Date | undefined>(() => {
     const firstPeriod = trialInvoicePreview.value?.periods?.[0];
@@ -554,7 +554,7 @@ onMounted(() => {
                     v-model="checkoutForm.form.value"
                     class="sv-checkout__customer-form"
                     :validation="checkoutForm.validation"
-                    :read-only-email="props.configuration?.email"
+                    :read-only-email="validatedEmail"
                     :show-customer-info-on-top="showCustomerInfoOnTop || isPaid"
                     :is-billing-information-mandatory="isBillingInformationMandatory"
                     :get-is-field-required="checkoutForm.getIsFieldRequired"

@@ -11,6 +11,7 @@ import type {
 } from '@solvimon/solvimon-types';
 import { computed, onMounted, ref, watch } from 'vue';
 import { taxId } from '@solvimon/solvimon-ui/validators';
+import { isValidCountryCode } from '@solvimon/solvimon-ui';
 import { useLogger } from '@/components/providers';
 import { createSubscriptionsService } from '@/services/subscriptions';
 import { useInvoicePreview } from '@/composables/useInvoicePreview';
@@ -44,6 +45,27 @@ export function useCheckoutView({
     enabledPricingIds?: Pricing['id'][];
 }) {
     const logger = useLogger();
+
+    /**
+     * What the host configured is validated here, inside the provider tree, because rejecting a
+     * value has to be reported: a logger resolved above `LoggerProvider` is the no-op fallback, and
+     * anything it is told never reaches the sink the host passed.
+     */
+    const validatedCountry = (() => {
+        if (!initialCountry) return undefined;
+        if (isValidCountryCode(initialCountry)) return initialCountry;
+
+        logger.error('INVALID_COUNTRY_CODE', `invalid country code provided: "${initialCountry}"`);
+        return undefined;
+    })();
+
+    const validatedEmail = (() => {
+        if (!initialEmail) return undefined;
+        if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(initialEmail)) return initialEmail;
+
+        logger.error('INVALID_EMAIL', `invalid email provided: "${initialEmail}"`);
+        return undefined;
+    })();
 
     const isPaid = ref<boolean>(false);
     const subscription = ref<PricingPlanSubscriptionExpanded>();
@@ -135,8 +157,8 @@ export function useCheckoutView({
 
     const checkoutForm = useCheckoutForm({
         initialState: {
-            country: initialCountry,
-            email: initialEmail,
+            country: validatedCountry,
+            email: validatedEmail,
         },
         onRequiredFieldChange: () => {
             if (!subscription.value) {
@@ -415,6 +437,9 @@ export function useCheckoutView({
     );
 
     return {
+        /** What the host configured, once anything unusable has been dropped and reported. */
+        validatedEmail,
+        validatedCountry,
         invoicePreview: invoicePreview.invoicePreview,
         invoicePreviewByBillingPeriod: invoicePreview.invoicePreviewByBillingPeriod,
         trialInvoicePreview: invoicePreview.trialInvoicePreview,

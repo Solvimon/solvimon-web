@@ -174,8 +174,8 @@ const activePricingCurrency = computed(() => {
     });
 });
 
-// Filter seat configs by the selected currency + billing period.
-const seatConfigIdsForSelection = computed(() => {
+// Filter seat/units configs by the selected currency + billing period.
+const configIdsForSelection = computed(() => {
     if (!scheduleInfo.value || !subscription.value) {
         return new Set<string>();
     }
@@ -209,7 +209,7 @@ const seatConfigIdsForSelection = computed(() => {
 const seatsValuesModel = computed({
     get: () => {
         const all = checkoutForm.form.value.seatsValues ?? [];
-        const ids = seatConfigIdsForSelection.value;
+        const ids = configIdsForSelection.value;
         if (!ids.size) {
             return all;
         }
@@ -217,7 +217,7 @@ const seatsValuesModel = computed({
     },
     set: (value) => {
         const current = checkoutForm.form.value.seatsValues ?? [];
-        const ids = seatConfigIdsForSelection.value;
+        const ids = configIdsForSelection.value;
         if (!ids.size) {
             checkoutForm.form.value.seatsValues = value;
             return;
@@ -227,6 +227,31 @@ const seatsValuesModel = computed({
             ({ pricing_item_config_id }) => !ids.has(pricing_item_config_id),
         );
         checkoutForm.form.value.seatsValues = filtered.concat(value);
+    },
+});
+
+// Only expose unit values that match the active currency + billing period, but keep all values in state.
+const unitsValuesModel = computed({
+    get: () => {
+        const all = checkoutForm.form.value.unitsValues ?? [];
+        const ids = configIdsForSelection.value;
+        if (!ids.size) {
+            return all;
+        }
+        return all.filter(({ pricing_item_config_id }) => ids.has(pricing_item_config_id));
+    },
+    set: (value) => {
+        const current = checkoutForm.form.value.unitsValues ?? [];
+        const ids = configIdsForSelection.value;
+        if (!ids.size) {
+            checkoutForm.form.value.unitsValues = value;
+            return;
+        }
+
+        const filtered = current.filter(
+            ({ pricing_item_config_id }) => !ids.has(pricing_item_config_id),
+        );
+        checkoutForm.form.value.unitsValues = filtered.concat(value);
     },
 });
 
@@ -370,6 +395,11 @@ const subscriptionStartDate = computed<Date | undefined>(() => {
 const showPlanCustomizationEditor = computed(() => {
     // Check if the subscription contains seats values
     if (checkoutForm.form.value.seatsValues && checkoutForm.form.value.seatsValues.length > 0) {
+        return true;
+    }
+
+    // Check if the subscription contains one-off flat item unit values
+    if (checkoutForm.form.value.unitsValues && checkoutForm.form.value.unitsValues.length > 0) {
         return true;
     }
 
@@ -524,10 +554,12 @@ onMounted(() => {
                 <PlanCustomizationEditor
                     v-if="showPlanCustomizationEditor && subscription"
                     v-model:seats-values="seatsValuesModel"
+                    v-model:units-values="unitsValuesModel"
                     v-model:enabled-pricing-ids="enabledPricingIdsModel"
                     class="sv-checkout__plan-customization"
                     :subscription="subscription"
                     :initial-seats-values="checkoutForm.initialState?.value.seatsValues"
+                    :initial-units-values="checkoutForm.initialState?.value.unitsValues"
                     :billing-period="subscription.billing_period"
                     :currency="activePricingCurrency"
                 />

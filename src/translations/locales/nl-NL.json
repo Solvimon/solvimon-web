@@ -253,6 +253,8 @@
     "topup_modal.success.modal_title": "Opwaardering voltooid",
     "topup_modal.success.receipt.heading": "Bon",
     "topup_modal.title": "Saldo opwaarderen",
+    "units.label": "Eenheden",
+    "units.price_per_unit": "{amount} per eenheid",
     "wallet_balance.credit_type_fallback_label": "Tegoed",
     "wallet_balance.details.header": "Walletsaldo",
     "wallet_balance.load_failed": "Walletsaldi konden niet worden geladen",

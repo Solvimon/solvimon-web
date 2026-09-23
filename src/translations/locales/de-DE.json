@@ -253,6 +253,8 @@
     "topup_modal.success.modal_title": "Aufladung abgeschlossen",
     "topup_modal.success.receipt.heading": "Beleg",
     "topup_modal.title": "Guthaben aufladen",
+    "units.label": "Einheiten",
+    "units.price_per_unit": "{amount} pro Einheit",
     "wallet_balance.credit_type_fallback_label": "Guthaben",
     "wallet_balance.details.header": "Wallet-Guthaben",
     "wallet_balance.load_failed": "Wallet-Guthaben konnten nicht geladen werden",

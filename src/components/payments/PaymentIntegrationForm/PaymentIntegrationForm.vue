@@ -26,7 +26,9 @@ const PaymentIntegrationFormAdyen = defineAsyncComponent(() =>
     ),
 );
 
-const props = defineProps<PaymentIntegrationFormProps>();
+const props = withDefaults(defineProps<PaymentIntegrationFormProps>(), {
+    storePaymentMethod: undefined,
+});
 const emit = defineEmits<PaymentIntegrationFormEmits>();
 defineExpose({ submit });
 
@@ -88,6 +90,7 @@ function submit() {
             :selected="isSelectedIntegration({ selectedIntegration, paymentMethodOption })"
             :validate-on-submit="validateOnSubmit"
             :force-store-payment-method="forceStorePaymentMethod"
+            :store-payment-method="storePaymentMethod"
             @select="handleSelect"
             @payment-failed="$emit('payment-failed', $event)"
             @payment-success="$emit('payment-success')"
@@ -110,6 +113,7 @@ function submit() {
             :name="name"
             :validate-on-submit="validateOnSubmit"
             :force-store-payment-method="forceStorePaymentMethod"
+            :store-payment-method="storePaymentMethod"
             @select="handleSelect"
             @payment-failed="$emit('payment-failed', $event)"
             @payment-success="$emit('payment-success')"

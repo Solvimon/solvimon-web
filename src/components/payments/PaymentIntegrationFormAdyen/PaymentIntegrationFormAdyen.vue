@@ -49,6 +49,7 @@ let checkoutInstance: any | null = null;
 
 const props = withDefaults(defineProps<PaymentIntegrationFormAdyenProps>(), {
     validateOnSubmit: () => Promise.resolve(true),
+    storePaymentMethod: undefined,
 });
 const emit = defineEmits<PaymentIntegrationFormAdyenEmits>();
 defineExpose({ submit });
@@ -124,7 +125,9 @@ async function getConfiguration(): Promise<{
                     hasHolderName: true,
                     holderNameRequired: true,
                     enableStoreDetails:
-                        !props.forceStorePaymentMethod && props.variant === 'AUTHORIZE',
+                        !props.forceStorePaymentMethod &&
+                        props.storePaymentMethod === undefined &&
+                        props.variant === 'AUTHORIZE',
                 },
                 paypal: {
                     intent: adyenAmount.value > 0 ? 'authorize' : 'tokenize',
@@ -398,7 +401,8 @@ function handleOnSubmit(
                     adyen: {
                         ...adyen,
                         store_payment_method:
-                            props.forceStorePaymentMethod || state.data.storePaymentMethod,
+                            props.storePaymentMethod ??
+                            (props.forceStorePaymentMethod || state.data.storePaymentMethod),
                     },
                     amount: props.amount,
                     ...(props.context ? { context: props.context } : {}),

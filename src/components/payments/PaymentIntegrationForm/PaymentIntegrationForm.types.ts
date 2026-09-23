@@ -33,6 +33,7 @@ interface BasePaymentIntegrationFormProps {
     validateOnSubmit?: () => Promise<boolean>;
     context?: PaymentAuthorizationContext;
     forceStorePaymentMethod?: boolean;
+    storePaymentMethod?: boolean;
 }
 
 export interface AuthorizePaymentIntegrationFormProps extends BasePaymentIntegrationFormProps {
@@ -86,6 +87,7 @@ export interface PaymentIntegrationVariantProps {
     validateOnSubmit?: () => Promise<boolean>;
     context?: PaymentAuthorizationContext;
     forceStorePaymentMethod?: boolean;
+    storePaymentMethod?: boolean;
 }
 
 export type PaymentIntegrationVariantEmits = PaymentIntegrationFormEmits;

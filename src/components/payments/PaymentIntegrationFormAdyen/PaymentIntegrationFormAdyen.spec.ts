@@ -39,7 +39,10 @@ const adyen = vi.hoisted(() => {
 
     const captured: {
         checkoutConfig?: { onSubmit?: SubmitHandler };
-        dropInConfig?: { paymentMethodComponents?: { name: string }[] };
+        dropInConfig?: {
+            paymentMethodComponents?: { name: string }[];
+            paymentMethodsConfiguration?: { card?: { enableStoreDetails?: boolean } };
+        };
     } = {};
 
     /** Empty stands for the live entry that arrives with no options. */
@@ -180,10 +183,10 @@ async function mountComponent(props: Partial<PaymentIntegrationFormAdyenProps> =
 }
 
 /** Drives the drop-in's submit the way Adyen does, and reports what it was answered with. */
-async function submitThroughDropIn() {
+async function submitThroughDropIn(state: unknown = submitState) {
     const actions = { resolve: vi.fn(), reject: vi.fn() };
 
-    await captured.checkoutConfig?.onSubmit?.(submitState, {}, actions);
+    await captured.checkoutConfig?.onSubmit?.(state, {}, actions);
     await flushPromises();
 
     return actions;
@@ -297,6 +300,65 @@ describe('PaymentIntegrationFormAdyen', () => {
                 { error },
             );
             expect(actions.resolve).toHaveBeenCalledWith({ resultCode: 'Error' });
+        });
+
+        describe('storing the payment method', () => {
+            const cardConfig = () => captured.dropInConfig?.paymentMethodsConfiguration?.card;
+
+            /** What the drop-in reports when its own save-details checkbox is ticked. */
+            const dropInWantsToStore = {
+                data: { ...submitState.data, storePaymentMethod: true },
+            };
+
+            beforeEach(() => {
+                mockAuthorizePayment.mockResolvedValue(authorizedResponse);
+            });
+
+            it('asks the same call that pays to store the method when the screen says so', async () => {
+                await mountComponent({ storePaymentMethod: true });
+                await submitThroughDropIn();
+
+                expect(mockAuthorizePayment).toHaveBeenCalledTimes(1);
+                expect(mockAuthorizePayment).toHaveBeenCalledWith(
+                    expect.objectContaining({
+                        adyen: expect.objectContaining({ store_payment_method: true }),
+                    }),
+                );
+            });
+
+            it('stores nothing when the screen says not to, whatever the drop-in reports', async () => {
+                await mountComponent({ storePaymentMethod: false });
+                await submitThroughDropIn(dropInWantsToStore);
+
+                expect(mockAuthorizePayment).toHaveBeenCalledWith(
+                    expect.objectContaining({
+                        adyen: expect.objectContaining({ store_payment_method: false }),
+                    }),
+                );
+            });
+
+            it('leaves the answer to the drop-in when no screen has settled it', async () => {
+                await mountComponent();
+                await submitThroughDropIn(dropInWantsToStore);
+
+                expect(mockAuthorizePayment).toHaveBeenCalledWith(
+                    expect.objectContaining({
+                        adyen: expect.objectContaining({ store_payment_method: true }),
+                    }),
+                );
+            });
+
+            it('keeps its own save-details checkbox out of the way when the screen owns it', async () => {
+                await mountComponent({ storePaymentMethod: false });
+
+                expect(cardConfig()?.enableStoreDetails).toBe(false);
+            });
+
+            it('offers its own save-details checkbox when nothing above it asks the question', async () => {
+                await mountComponent();
+
+                expect(cardConfig()?.enableStoreDetails).toBe(true);
+            });
         });
     });
 

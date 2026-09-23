@@ -1,35 +1,13 @@
 import type {
     ConfiguredMeterValue,
     PricingItemConfig,
-    PricingItemConfigBillingPeriodConfig,
-    PricingItemExtended,
     PricingPlanScheduleInfoExpanded,
 } from '@solvimon/solvimon-types';
 import { getPricingsFromScheduleInfo } from './pricing';
+import { getPricingItemConfigs } from './pricingItem';
 
 /** What a seat count falls back to when neither the schedule nor the plan names one. */
 export const FALLBACK_SEATS_NUMBER = '1';
-
-const getConfigsOfBillingPeriods = (
-    billingPeriodConfigs: PricingItemConfigBillingPeriodConfig<PricingItemConfig>[] | undefined,
-): PricingItemConfig[] =>
-    (billingPeriodConfigs ?? []).flatMap(
-        (billingPeriodConfig) => billingPeriodConfig.configs ?? [],
-    );
-
-/**
- * Every config of a pricing item. Which of the three lists holds them depends on the plan: one
- * price for everyone sits directly on the item, and a price per currency or per billing period
- * sits one or two levels down.
- */
-const getPricingItemConfigs = (item: PricingItemExtended): PricingItemConfig[] => [
-    ...(item.configs ?? []),
-    ...getConfigsOfBillingPeriods(item.billing_period_configs),
-    ...(item.pricing_currency_configs ?? []).flatMap((currencyConfig) => [
-        ...(currencyConfig.configs ?? []),
-        ...getConfigsOfBillingPeriods(currencyConfig.billing_period_configs),
-    ]),
-];
 
 /**
  * The seat count the plan itself defines per pricing item config, which is what a schedule listing

@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Paying an invoice now asks whether to keep the payment method. The checkbox is offered ticked, and the one authorization that pays the invoice stores the method with it, so the next invoice can be paid without entering the card again. Unticking it pays the invoice and stores nothing — where the method was stored regardless before.
 - Log entries can carry a `fingerprint`, so a consumer forwarding them to their own reporter can group by something narrower than the log code — a misconfigured merchant as one issue rather than one per invoice.
 - German (`de-DE`) and Italian (`it-IT`) are now supported locales, fully translated and selectable wherever `en-US` and `nl-NL` already were.
 

@@ -59,16 +59,6 @@ jobs:
                       exit 1
                   fi
 
-            - name: Create release tag
-              if: steps.version.outputs.changed == 'true'
-              run: |
-                  tag_name="v${{ steps.version.outputs.current }}"
-
-                  git config user.name "github-actions[bot]"
-                  git config user.email "github-actions[bot]@users.noreply.github.com"
-                  git tag "$tag_name" -m "Release $tag_name"
-                  git push origin "refs/tags/$tag_name"
-
             - uses: actions/setup-node@v6
               if: steps.version.outputs.changed == 'true'
               with:
@@ -94,6 +84,19 @@ jobs:
               env:
                   NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
                   NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+            # Tagged only once the publish has gone through: a tag pointing at a version
+            # that never reached the registry is what the release has to be dug out of by
+            # hand, and `gh release create --verify-tag` below would cut a release from it.
+            - name: Create release tag
+              if: steps.version.outputs.changed == 'true'
+              run: |
+                  tag_name="v${{ steps.version.outputs.current }}"
+
+                  git config user.name "github-actions[bot]"
+                  git config user.email "github-actions[bot]@users.noreply.github.com"
+                  git tag "$tag_name" -m "Release $tag_name"
+                  git push origin "refs/tags/$tag_name"
 
             - name: Extract changelog section
               if: steps.version.outputs.changed == 'true'

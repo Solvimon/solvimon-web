@@ -7,10 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Fixed
-
-- A payment gateway that offers no payment methods no longer renders as a blank region. Adyen's drop-in is not mounted when there is nothing to put in it, and the pay-invoice and payment-method-form surfaces say the payment cannot be taken — naming the seller and offering the invoice download — instead of showing an empty form. They also tell loading apart from unavailable, rather than rendering both the same way.
-- The promotion code toggle's aria label is now translatable. It built its message and id with a ternary, so FormatJS never extracted either string and the label stayed English in every locale.
+## [0.1.0-alpha.20] - 2026-09-23
 
 ### Added
 
@@ -21,6 +18,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Moved to the `@solvimon/solvimon-ui` 1.9.0 component API, which replaces `Typography`'s `shade` and `Button`'s `color`/`variant` with the semantic `color` and `intent` roles, and the same on `Chip`. Two surfaces shift with it: the invoice table loses its zebra striping and row hover, which the table now decides for itself, and the VAT check button is no longer green, there being no green intent to map it to.
+- The invoice table's pay button is now sized to the status chip it stands in for, so the status column keeps one height from row to row.
+
+### Fixed
+
+- A payment gateway that offers no payment methods no longer renders as a blank region. Adyen's drop-in is not mounted when there is nothing to put in it, and the pay-invoice and payment-method-form surfaces say the payment cannot be taken — naming the seller and offering the invoice download — instead of showing an empty form. They also tell loading apart from unavailable, rather than rendering both the same way.
+- The promotion code toggle's aria label is now translatable. It built its message and id with a ternary, so FormatJS never extracted either string and the label stayed English in every locale.
 
 ## [0.1.0-alpha.19] - 2026-09-03
 

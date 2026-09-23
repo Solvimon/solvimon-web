@@ -1,7 +1,7 @@
 import { objectDiff, useValidation } from '@solvimon/solvimon-ui';
 import { taxId } from '@solvimon/solvimon-ui/validators';
 import { email, required, requiredIf } from '@vuelidate/validators';
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, toRaw } from 'vue';
 import type { CountryCode } from '@solvimon/solvimon-types';
 import type { CheckoutFormState } from './CheckoutForm.types';
 import { getRequiredFieldsForCountry } from './CheckoutForm.lib';
@@ -19,7 +19,7 @@ export function useCheckoutForm({
     const initialFormState = ref<CheckoutFormState>(getInitialState(initialState));
 
     const updateInitialState = (state: Partial<CheckoutFormState>) => {
-        const newState = getInitialState({ ...form.value, ...state });
+        const newState = getInitialState({ ...toRaw(form.value), ...state });
 
         form.value = newState;
         initialFormState.value = structuredClone(newState);

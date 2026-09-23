@@ -46,6 +46,7 @@ provide(TRANSLATION_SETTINGS_KEY, {
         :messages="localizedMessages"
         :show-timezones="false"
     >
-        <slot />
+        <!-- Rendered once the catalogue is in, so the tree below renders translated the first time. -->
+        <slot v-if="intlKey > 0" />
     </IntlProvider>
 </template>

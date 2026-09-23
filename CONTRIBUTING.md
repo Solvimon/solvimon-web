@@ -161,13 +161,9 @@ The test app (`tests/app`) takes its scenario from `window.__SOLVIMON_TEST_CONFI
 object, screen configuration, environment — and records what the host is told in
 `window.__SOLVIMON_EVENTS__`, so log codes and the `ready`/`error` events can be asserted on too.
 
-Two things to know when reading or writing these tests:
-
-- Screens mount twice. `TranslationProvider` re-keys its subtree once the locale messages resolve,
-  which tears the screen down and mounts it again, so every request made on mount is made twice.
-  Assert on the last call, and only count calls a test itself triggers.
-- Requests are answered with a wildcard `access-control-allow-origin`, which a credentialed request
-  cannot use. A screen that loads at all is therefore a screen whose requests carry no credentials.
+One thing to know when reading or writing these tests: requests are answered with a wildcard
+`access-control-allow-origin`, which a credentialed request cannot use. A screen that loads at all
+is therefore a screen whose requests carry no credentials.
 
 ## Public API and package hygiene
 

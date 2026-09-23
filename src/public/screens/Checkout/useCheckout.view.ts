@@ -27,6 +27,7 @@ import {
 } from '@/utils/pricingPlanSchedule';
 import { withPreselectedEnabledPricings } from '@/utils/enabledPricings';
 import { getInitialSeatsValues } from '@/utils/seatsValues';
+import { getInitialUnitsValues } from '@/utils/unitsValues';
 import { getQueryParam } from '@/utils/url';
 import { PAYMENT_ACCEPTOR_ID_QUERY_STRING } from '@/utils/adyen';
 
@@ -170,11 +171,13 @@ export function useCheckoutView({
         };
 
         const seatsValues = getInitialSeatsValues(subscriptionSchedule);
+        const unitsValues = getInitialUnitsValues(subscriptionSchedule);
 
         checkoutForm.updateInitialState({
             ...checkoutForm.form.value,
             enabledPricingIds: withPreselectedEnabledPricings(response, enabledPricingIds),
             ...(seatsValues ? { seatsValues } : {}),
+            ...(unitsValues ? { unitsValues } : {}),
         });
     };
 

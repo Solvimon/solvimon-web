@@ -154,6 +154,7 @@
     "pay_invoice.error.title": "Er is iets misgegaan",
     "pay_invoice.paid.title": "Bedankt voor je betaling!",
     "pay_invoice.payment_methods.title": "Betaalmethoden",
+    "pay_invoice.store_payment_method.label": "Deze betaalmethode opslaan voor toekomstige betalingen",
     "pay_invoice.unavailable.download_invoice": "Factuur downloaden",
     "payment_completed_card.redirect_message": "Je wordt doorgestuurd...",
     "payment_completed_card.title.authorize": "Betaling geslaagd",

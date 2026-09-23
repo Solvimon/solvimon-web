@@ -154,6 +154,7 @@
     "pay_invoice.error.title": "Qualcosa è andato storto",
     "pay_invoice.paid.title": "Grazie per il tuo pagamento!",
     "pay_invoice.payment_methods.title": "Metodi di pagamento",
+    "pay_invoice.store_payment_method.label": "Salva questo metodo di pagamento per i pagamenti futuri",
     "pay_invoice.unavailable.download_invoice": "Scarica la fattura",
     "payment_completed_card.redirect_message": "Reindirizzamento in corso...",
     "payment_completed_card.title.authorize": "Pagamento riuscito",

@@ -154,6 +154,7 @@
     "pay_invoice.error.title": "Etwas ist schiefgelaufen",
     "pay_invoice.paid.title": "Vielen Dank für Ihre Zahlung!",
     "pay_invoice.payment_methods.title": "Zahlungsmethoden",
+    "pay_invoice.store_payment_method.label": "Diese Zahlungsmethode für zukünftige Zahlungen speichern",
     "pay_invoice.unavailable.download_invoice": "Rechnung herunterladen",
     "payment_completed_card.redirect_message": "Sie werden weitergeleitet...",
     "payment_completed_card.title.authorize": "Zahlung erfolgreich",

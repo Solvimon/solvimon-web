@@ -211,7 +211,7 @@ test.describe('Checkout', () => {
             expect(api.lastCall('paymentMethodOptions')?.body).toMatchObject({ country: 'DE' });
         });
 
-        test('ignores an invalid country code', async ({ page }) => {
+        test('ignores an invalid country code and reports it to the host', async ({ page }) => {
             api = await mountCheckout(page, {
                 configuration: { email: 'customer@example.com', countryCode: 'XX' },
                 mocks: { geoLocation: { body: { ip: '203.0.113.9', country: 'BE' } } },
@@ -220,17 +220,23 @@ test.describe('Checkout', () => {
 
             // Dropped rather than passed on, and the country is looked up instead.
             await expect(checkout(page).country).toHaveAttribute('placeholder', 'Belgium');
+            expect((await hostEvents(page)).logs.map(({ code }) => code)).toContain(
+                'INVALID_COUNTRY_CODE',
+            );
             expect(api.calls('geoLocation').length).toBeGreaterThan(0);
             expect(api.lastCall('paymentMethodOptions')?.body).toMatchObject({ country: 'BE' });
         });
 
-        test('ignores an invalid email and lets the customer type their own', async ({ page }) => {
+        test('ignores an invalid email and reports it to the host', async ({ page }) => {
             api = await mountLoaded(page, {
                 configuration: { email: 'not-an-email', countryCode: 'NL' },
             });
 
             await expect(checkout(page).email).toHaveValue('');
             await expect(checkout(page).email).toBeEnabled();
+            expect((await hostEvents(page)).logs.map(({ code }) => code)).toContain(
+                'INVALID_EMAIL',
+            );
         });
 
         test('applies a coupon code passed in the query string', async ({ page }) => {

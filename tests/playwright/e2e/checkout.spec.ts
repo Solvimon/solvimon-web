@@ -24,13 +24,7 @@ import {
  * is as much the subject of a test as what the screen renders off the response. Nothing reaches a
  * real host — the `afterEach` below fails the test if a single request escapes the mocks.
  *
- * Two things worth knowing before reading the assertions:
- *
- * - The screen loads twice. `TranslationProvider` re-keys its subtree once the locale messages
- *   resolve, which tears the checkout down and mounts it again, so every request made on mount is
- *   made twice. That is the SDK's behaviour, not the harness's; the assertions below read the last
- *   call rather than counting initial ones, and only count calls the test itself triggers.
- * - Stripe is the gateway these tests drive. It is loaded from a URL the SDK names, so the suite
+ * Worth knowing before reading the assertions: Stripe is the gateway these tests drive. It is loaded from a URL the SDK names, so the suite
  *   serves a stub in its place (`../support/stripe-stub.ts`) and everything between the form and
  *   `/payments/authorize` stays real. Adyen is bundled and talks to Adyen's own hosts over a
  *   private protocol, so there is no seam to stand in at; its behaviour is covered by
@@ -169,10 +163,19 @@ test.describe('Checkout', () => {
             await expect(ui.submit).toBeVisible();
         });
 
+        test('asks for each thing it needs exactly once', async ({ page }) => {
+            api = await mountLoaded(page);
+            // Nothing else is in flight by now, so a second copy of any of these would have landed.
+            await page.waitForTimeout(500);
+
+            expect(api.calls('accessToken')).toHaveLength(1);
+            expect(api.calls('subscription')).toHaveLength(1);
+            expect(api.calls('invoicePreview')).toHaveLength(1);
+        });
+
         test('tells the host when the screen is ready', async ({ page }) => {
             api = await mountLoaded(page);
 
-            // Not an exact count: the screen mounts twice, and every mount reports itself ready.
             expect((await hostEvents(page)).ready).toBeGreaterThan(0);
         });
     });
@@ -872,9 +875,7 @@ test.describe('Checkout', () => {
             api = await mountCheckout(page, {
                 configuration: { email: 'customer@example.com', countryCode: 'NL' },
                 mocks: {
-                    // One failure per mount — the screen mounts twice — and then a good response.
                     invoicePreview: [
-                        { status: 500, body: { message: 'Boom' } },
                         { status: 500, body: { message: 'Boom' } },
                         { body: anInvoicePreview({ total: '20.00' }) },
                     ],

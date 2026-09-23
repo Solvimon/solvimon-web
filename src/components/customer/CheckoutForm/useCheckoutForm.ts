@@ -84,6 +84,14 @@ export function useCheckoutForm({
         }
 
         /**
+         * Update when one-off flat item unit values change.
+         */
+        if (fieldName === 'unitsValues') {
+            onRequiredFieldChange(newValue);
+            return;
+        }
+
+        /**
          * Update when enabled pricing ids change.
          */
         if (fieldName === 'enabledPricingIds') {
@@ -135,6 +143,7 @@ const getInitialState = (initialState: Partial<CheckoutFormState> = {}): Checkou
         state: undefined,
         companyVatNumber: undefined,
         seatsValues: undefined,
+        unitsValues: undefined,
         enabledPricingIds: undefined,
         ...initialState,
     };

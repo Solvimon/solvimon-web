@@ -1023,6 +1023,14 @@
     "defaultMessage": "Top up balance",
     "description": "Title of the wallet top-up modal"
   },
+  "units.label": {
+    "defaultMessage": "Units",
+    "description": "The label for the one-off flat item units input field"
+  },
+  "units.price_per_unit": {
+    "defaultMessage": "{amount} per unit",
+    "description": "The price per unit label for one-off flat pricing"
+  },
   "wallet_balance.credit_type_fallback_label": {
     "defaultMessage": "Credits",
     "description": "Fallback label for wallet balance credit types when no name is available"

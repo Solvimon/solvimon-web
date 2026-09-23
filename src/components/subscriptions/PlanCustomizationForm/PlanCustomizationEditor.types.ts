@@ -10,6 +10,7 @@ export interface PlanCustomizationEditorProps {
     subscription: PricingPlanSubscriptionExpanded;
     enabledPricingIds: Pricing['id'][];
     initialSeatsValues?: ConfiguredMeterValue[];
+    initialUnitsValues?: ConfiguredMeterValue[];
     billingPeriod: BillingPeriod;
     currency?: Currency['currencyCode'];
 }

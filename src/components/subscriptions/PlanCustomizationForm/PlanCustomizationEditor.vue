@@ -3,6 +3,7 @@ import { Section, useIntl } from '@solvimon/solvimon-ui';
 import type { ConfiguredMeterValue, Pricing } from '@solvimon/solvimon-types';
 import { computed } from 'vue';
 import SeatsEditor from './SeatsEditor.vue';
+import UnitsEditor from './UnitsEditor.vue';
 import type { PlanCustomizationEditorProps } from './PlanCustomizationEditor.types';
 import AddonSingleEditor from './AddonSingleEditor.vue';
 import AddonMultipleEditor from './AddonMultipleEditor.vue';
@@ -14,6 +15,7 @@ import { getAllPricingsFromPricingPlanVersion } from '@/utils/pricingPlanVersion
 const props = defineProps<PlanCustomizationEditorProps>();
 
 const seatsModel = defineModel<ConfiguredMeterValue[]>('seatsValues', { required: true });
+const unitsModel = defineModel<ConfiguredMeterValue[]>('unitsValues', { required: true });
 const enabledPricingIdsModel = defineModel<Pricing['id'][]>('enabledPricingIds', {
     required: true,
 });
@@ -62,6 +64,14 @@ const pricingGroups = computed(() =>
                 v-model="seatsModel"
                 class="sv-plan-customization__seats"
                 :initial-seats-values="initialSeatsValues"
+                :pricings="pricings"
+            />
+
+            <!-- one-off flat item units -->
+            <UnitsEditor
+                v-model="unitsModel"
+                class="sv-plan-customization__units"
+                :initial-units-values="initialUnitsValues"
                 :pricings="pricings"
             />
 

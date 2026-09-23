@@ -255,6 +255,8 @@
     "topup_modal.success.modal_title": "Ricarica completata",
     "topup_modal.success.receipt.heading": "Ricevuta",
     "topup_modal.title": "Ricarica saldo",
+    "units.label": "Unità",
+    "units.price_per_unit": "{amount} per unità",
     "wallet_balance.credit_type_fallback_label": "Crediti",
     "wallet_balance.details.header": "Saldo del wallet",
     "wallet_balance.load_failed": "Impossibile caricare i saldi dei wallet",

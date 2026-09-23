@@ -137,6 +137,38 @@ Run end-to-end tests:
 npm run test:e2e
 ```
 
+### End-to-end tests
+
+There is no API and no test environment to run against, so the e2e suite answers every request in
+the browser and asserts on it. With a mocked backend the payload the SDK sends is as much the
+subject of a test as what the screen renders off the response, so tests assert on both.
+
+The pieces live in `tests/playwright/support/`:
+
+- `api-mock.ts` — routes every request the page makes. Endpoints the screen under test reaches are
+  answered from the test; anything else is recorded as unmatched and aborted, so a call added to a
+  screen cannot escape to a real host. Every test ends by asserting `unmatchedCalls()` is empty.
+- `fixtures.ts` — response builders. Wire-format stubs carrying only the fields the screen reads,
+  built per test rather than stored as JSON dumps that drift from the contract without failing.
+- `checkout.ts` — the per-screen harness: default mocks, the scenario handed to the test app, and
+  the locators the specs share. A new screen gets its own file of this shape.
+- `stripe-stub.ts` — stands in for Stripe.js, which the SDK loads from a URL it names. Everything
+  between the payment form and `/payments/authorize` stays real. Adyen is bundled and talks to
+  Adyen's hosts over a private protocol, so there is no seam to stand in at; it stays covered by
+  the component specs.
+
+The test app (`tests/app`) takes its scenario from `window.__SOLVIMON_TEST_CONFIG__` — portal
+object, screen configuration, environment — and records what the host is told in
+`window.__SOLVIMON_EVENTS__`, so log codes and the `ready`/`error` events can be asserted on too.
+
+Two things to know when reading or writing these tests:
+
+- Screens mount twice. `TranslationProvider` re-keys its subtree once the locale messages resolve,
+  which tears the screen down and mounts it again, so every request made on mount is made twice.
+  Assert on the last call, and only count calls a test itself triggers.
+- Requests are answered with a wildcard `access-control-allow-origin`, which a credentialed request
+  cannot use. A screen that loads at all is therefore a screen whose requests carry no credentials.
+
 ## Public API and package hygiene
 
 Any change that affects what consumers see when they install `@solvimon/solvimon-web` requires extra care:

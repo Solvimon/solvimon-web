@@ -784,15 +784,7 @@ test.describe('Checkout', () => {
             await expect(checkout(page).email).toHaveValue('returning@example.com');
         });
 
-        /**
-         * Known defect, so this is left failing rather than asserted as it behaves: restoring the
-         * saved state a second time (after the subscription has loaded) throws inside
-         * `updateInitialState` — `structuredClone` cannot clone the reactive arrays the form holds
-         * by then — which aborts the rest of `onMounted` and leaves the key in place. The customer
-         * keeps their details, so the restore itself looks fine, but the next plain visit to the
-         * checkout is silently filled in with the previous one.
-         */
-        test.fixme('clears the saved details once they have been restored', async ({ page }) => {
+        test('clears the saved details once they have been restored', async ({ page }) => {
             api = await mountCheckout(page, {
                 portalObject: aPortalObject({ successUrl: '' }),
                 configuration: { countryCode: 'NL' },

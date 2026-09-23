@@ -139,7 +139,7 @@ const showLoadMoreButton = computed(() => props.hasMoreItems);
                         <Button
                             v-else-if="showPayButton"
                             intent="secondary"
-                            size="sm"
+                            size="xs"
                             class="sv-action sv-action--secondary sv-invoices-list__pay"
                             type="button"
                             @click.stop="$emit('pay-invoice', { invoiceId: invoice.id })"

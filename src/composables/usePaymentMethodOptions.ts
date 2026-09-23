@@ -38,8 +38,21 @@ export function usePaymentMethodOptions() {
     const cachedPayload = ref<GetPaymentMethodOptionsPayload>();
 
     /**
+     * The request a lookup is waiting on. Held outside a ref because it is a promise to share, not
+     * state to render, and cleared once it settles.
+     */
+    let inFlight:
+        | {
+              payload: GetPaymentMethodOptionsPayload;
+              options: Promise<PaymentMethodOptionsResponse>;
+          }
+        | undefined;
+
+    /**
      * Callers watch country and amount and ask again on every change, so a payload already looked
-     * up is answered from what is held rather than re-requested.
+     * up is answered from what is held, and one still being looked up is joined. Both are needed:
+     * two callers reacting to the same change ask in the same tick, before there is an answer to
+     * hold on to.
      */
     const get = async (
         payload: GetPaymentMethodOptionsPayload,
@@ -48,11 +61,24 @@ export function usePaymentMethodOptions() {
             return data.value;
         }
 
-        const options = await execute(payload);
+        if (inFlight && isEqual(payload, inFlight.payload)) {
+            return inFlight.options;
+        }
 
-        cachedPayload.value = payload;
+        const options = execute(payload).then((response) => {
+            cachedPayload.value = payload;
+            return response;
+        });
 
-        return options;
+        inFlight = { payload, options };
+
+        try {
+            return await options;
+        } finally {
+            if (inFlight?.payload === payload) {
+                inFlight = undefined;
+            }
+        }
     };
 
     return { paymentMethodOptions: data, get, apiStatus, error, isPending };

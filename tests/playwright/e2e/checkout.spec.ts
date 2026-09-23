@@ -171,6 +171,7 @@ test.describe('Checkout', () => {
             expect(api.calls('accessToken')).toHaveLength(1);
             expect(api.calls('subscription')).toHaveLength(1);
             expect(api.calls('invoicePreview')).toHaveLength(1);
+            expect(api.calls('paymentMethodOptions')).toHaveLength(1);
         });
 
         test('tells the host when the screen is ready', async ({ page }) => {

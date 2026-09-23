@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import {
     Button,
+    Checkbox,
     formatAmount,
     Icon,
     InvoiceHeader,
@@ -33,6 +34,7 @@ const { availability } = usePaymentMethodAvailability({
 });
 
 const selectedPaymentMethod = ref<SelectedPaymentMethod>();
+const storePaymentMethod = ref(true);
 const paymentIntegrationFormRef = ref<InstanceType<typeof PaymentIntegrationForm>>();
 const isPaymentPending = ref(false);
 
@@ -144,7 +146,7 @@ const handlePaymentFailed = () => {
                                 ],
                             }"
                             :customer-id="invoice.customer.id"
-                            force-store-payment-method
+                            :store-payment-method="storePaymentMethod"
                             :invoice-id="invoice.id"
                             :payment-method-options="paymentMethodOptions ?? []"
                             variant="AUTHORIZE"
@@ -152,6 +154,21 @@ const handlePaymentFailed = () => {
                             @payment-failed="handlePaymentFailed"
                             @select="(payload) => (selectedPaymentMethod = payload)"
                         />
+                        <div class="mt-4">
+                            <Checkbox
+                                id="pay-invoice-store-payment-method"
+                                v-model="storePaymentMethod"
+                                :label="
+                                    $t({
+                                        id: 'pay_invoice.store_payment_method.label',
+                                        defaultMessage:
+                                            'Save this payment method for future payments',
+                                        description:
+                                            'Label of the checkbox that stores the payment method while paying an invoice',
+                                    })
+                                "
+                            />
+                        </div>
                     </div>
                 </Section>
 

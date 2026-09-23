@@ -156,6 +156,24 @@ async function waitForAdyenMount() {
     await new Promise((resolve) => setTimeout(resolve, 0));
 }
 
+/** Drives the drop-in's submit the way Adyen does once the customer has pressed pay. */
+async function submitThroughDropIn() {
+    const [checkoutConfig] = mockAdyenCheckout.mock.calls[0];
+
+    await checkoutConfig.onSubmit(
+        {
+            data: {
+                paymentMethod: { type: 'scheme' },
+                riskData: {},
+                browserInfo: {},
+            },
+        },
+        {},
+        { resolve: vi.fn(), reject: vi.fn() },
+    );
+    await flushPromises();
+}
+
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
 describe('PayInvoice', () => {
@@ -338,6 +356,54 @@ describe('PayInvoice', () => {
 
         expect(wrapper.find('[data-testid="payment-methods-unavailable"]').exists()).toBe(false);
         expect(mockLogger.error).not.toHaveBeenCalled();
+    });
+
+    describe('storing the payment method', () => {
+        const STORE_CHECKBOX = '#pay-invoice-store-payment-method';
+
+        beforeEach(() => {
+            mockAuthorizePayment.mockResolvedValue({
+                status: 'SUCCESS',
+                payment: { result: 'AUTHORIZED' },
+            });
+        });
+
+        it('offers to save the payment method, ticked, alongside the drop-in', async () => {
+            const wrapper = mountComponent();
+            await waitForAdyenMount();
+
+            expect(wrapper.text()).toContain('Save this payment method for future payments');
+            expect((wrapper.get(STORE_CHECKBOX).element as HTMLInputElement).checked).toBe(true);
+        });
+
+        it('pays and stores the method in the one call while the box stays ticked', async () => {
+            mountComponent();
+            await waitForAdyenMount();
+
+            await submitThroughDropIn();
+
+            expect(mockAuthorizePayment).toHaveBeenCalledTimes(1);
+            expect(mockAuthorizePayment).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    adyen: expect.objectContaining({ store_payment_method: true }),
+                }),
+            );
+        });
+
+        it('pays without storing the method once the box is unticked', async () => {
+            const wrapper = mountComponent();
+            await waitForAdyenMount();
+
+            await wrapper.get(STORE_CHECKBOX).setValue(false);
+            await submitThroughDropIn();
+
+            expect(mockAuthorizePayment).toHaveBeenCalledTimes(1);
+            expect(mockAuthorizePayment).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    adyen: expect.objectContaining({ store_payment_method: false }),
+                }),
+            );
+        });
     });
 
     it('calls onPaymentSuccess when the Adyen drop-in completes a payment', async () => {

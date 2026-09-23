@@ -619,6 +619,10 @@
     "defaultMessage": "Payment methods",
     "description": "Section title for the payment method selector on the pay invoice screen"
   },
+  "pay_invoice.store_payment_method.label": {
+    "defaultMessage": "Save this payment method for future payments",
+    "description": "Label of the checkbox that stores the payment method while paying an invoice"
+  },
   "pay_invoice.unavailable.download_invoice": {
     "defaultMessage": "Download invoice",
     "description": "Button that downloads the invoice when it cannot be paid online"

@@ -37,7 +37,7 @@
         "types:check-consumer": "node ./scripts/ci/check-consumer-types.mjs",
         "bundle:check-contents": "node ./scripts/ci/check-bundle-contents.mjs",
         "logs:list": "node ./scripts/list-log-codes.mjs",
-        "test:e2e:run-app": "node scripts/start-test-app.mjs",
+        "test:e2e:run-app": "node scripts/generate-ssl-cert.mjs && node scripts/start-test-app.mjs",
         "test:e2e": "playwright test",
         "test:e2e:ui": "playwright test --ui",
         "test:e2e:ci": "playwright test",

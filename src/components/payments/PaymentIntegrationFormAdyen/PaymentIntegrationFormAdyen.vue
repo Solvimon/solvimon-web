@@ -11,10 +11,7 @@ import type {
     PaymentIntegrationFormAdyenEmits,
     PaymentIntegrationFormAdyenProps,
 } from './PaymentIntegrationFormAdyen.types';
-import {
-    DROP_IN_PAYMENT_METHOD_COMPONENTS,
-    getOverriddenTranslations,
-} from './PaymentIntegrationFormAdyen.lib';
+import { getOverriddenTranslations } from './PaymentIntegrationFormAdyen.lib';
 import PaymentCompletedCard from '@/components/payments/PaymentCompletedCard/PaymentCompletedCard.vue';
 import PaymentErrorCard from '@/components/payments/PaymentErrorCard/PaymentErrorCard.vue';
 import type { Error } from '@/types/errors';
@@ -31,6 +28,7 @@ import {
     transformObjectToAdyenObject,
 } from '@/utils/adyen';
 import { toMinorUnitAmount } from '@/utils/amount';
+import { loadAdyenSdk } from '@/utils/adyenSdk';
 import { useExperimentalFeature } from '@/components/providers/ExperimentalFeatureProvider/composables/useExperimentalFeature';
 import { useLogger } from '@/components/providers';
 
@@ -144,6 +142,18 @@ async function getConfiguration(): Promise<{
     };
 }
 
+/**
+ * The Adyen SDK and its styles, loaded on demand so neither sits in the chunk a screen pulls in up
+ * front. The SDK itself comes from `@/utils/adyenSdk`, which documents why it is the SDK's only
+ * `import('@adyen/adyen-web')`.
+ */
+function loadAdyen() {
+    return Promise.all([
+        loadAdyenSdk(),
+        import('@adyen/adyen-web/styles/adyen.css?inline').then((module) => module.default),
+    ]);
+}
+
 async function mountDropIn() {
     await unmountDropIn();
 
@@ -166,22 +176,15 @@ async function mountDropIn() {
     if (!dropInContainerRef.value) return;
 
     try {
-        // Dynamically import Adyen SDK and styles to enable code splitting
-        const [adyenModule, { default: adyenCss }] = await Promise.all([
-            import('@adyen/adyen-web'),
-            import('@adyen/adyen-web/styles/adyen.css?inline'),
-        ]);
-        const { AdyenCheckout, Dropin } = adyenModule;
+        const [adyen, adyenCss] = await loadAdyen();
 
         const { checkoutConfig, dropInConfig } = await getConfiguration();
 
-        checkoutInstance = await AdyenCheckout(checkoutConfig);
+        checkoutInstance = await adyen.AdyenCheckout(checkoutConfig);
 
-        dropInInstance = new Dropin(checkoutInstance, {
+        dropInInstance = new adyen.Dropin(checkoutInstance, {
             ...dropInConfig,
-            paymentMethodComponents: DROP_IN_PAYMENT_METHOD_COMPONENTS.map(
-                (name) => adyenModule[name],
-            ),
+            paymentMethodComponents: adyen.dropInPaymentMethodComponents,
         }).mount(dropInContainerRef.value);
 
         injectStylesToShadowRoot(adyenCss);

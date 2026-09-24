@@ -6,6 +6,7 @@ import type {
 import { useExpressPaymentMethod } from './useExpressPaymentMethod';
 import ExpressPaymentMethodButton from '@/components/payments/ExpressPaymentMethodButton/ExpressPaymentMethodButton.vue';
 import { useLogger } from '@/components/providers';
+import { loadAdyenSdk } from '@/utils/adyenSdk';
 
 const props = defineProps<ExpressPaymentMethodProps>();
 const emit = defineEmits<ExpressPaymentMethodEmits>();
@@ -24,7 +25,7 @@ const { buttonRef: paypalButtonRef } = useExpressPaymentMethod({
             error,
         }),
     create: async (checkout) => {
-        const { PayPal } = await import('@adyen/adyen-web');
+        const { PayPal } = await loadAdyenSdk();
 
         return new PayPal(checkout, {
             isExpress: true,

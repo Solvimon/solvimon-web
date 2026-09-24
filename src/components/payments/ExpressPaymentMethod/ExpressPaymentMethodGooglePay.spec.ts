@@ -11,9 +11,14 @@ const mockGooglePayInstance = {
 const mockGooglePay = vi.fn().mockReturnValue(mockGooglePayInstance);
 const mockAdyenCheckout = vi.fn().mockResolvedValue({});
 
-vi.mock('@adyen/adyen-web', () => ({
-    AdyenCheckout: mockAdyenCheckout,
-    GooglePay: mockGooglePay,
+// The components reach the SDK through this loader, which is the SDK's only
+// `import('@adyen/adyen-web')`; mocking it keeps this spec to the names it uses.
+vi.mock('@/utils/adyenSdk', () => ({
+    loadAdyenSdk: () =>
+        Promise.resolve({
+            AdyenCheckout: mockAdyenCheckout,
+            GooglePay: mockGooglePay,
+        }),
 }));
 
 const mockLogger = {

@@ -150,16 +150,20 @@ The pieces live in `tests/playwright/support/`:
   screen cannot escape to a real host. Every test ends by asserting `unmatchedCalls()` is empty.
 - `fixtures.ts` — response builders. Wire-format stubs carrying only the fields the screen reads,
   built per test rather than stored as JSON dumps that drift from the contract without failing.
-- `checkout.ts` — the per-screen harness: default mocks, the scenario handed to the test app, and
-  the locators the specs share. A new screen gets its own file of this shape.
+- `screen.ts` — what every screen shares: installing the mocks, handing the app its scenario, and
+  reading back what the host was told.
+- one file per screen (`checkout.ts`, `payInvoice.ts`, …) — its default mocks and its locators. A
+  new screen gets its own file of that shape and a spec beside the others.
 - `stripe-stub.ts` — stands in for Stripe.js, which the SDK loads from a URL it names. Everything
   between the payment form and `/payments/authorize` stays real. Adyen is bundled and talks to
   Adyen's hosts over a private protocol, so there is no seam to stand in at; it stays covered by
   the component specs.
 
-The test app (`tests/app`) takes its scenario from `window.__SOLVIMON_TEST_CONFIG__` — portal
-object, screen configuration, environment — and records what the host is told in
-`window.__SOLVIMON_EVENTS__`, so log codes and the `ready`/`error` events can be asserted on too.
+The test app (`tests/app`) takes its scenario from `window.__SOLVIMON_TEST_CONFIG__` — which screen
+to mount, the portal object, the screen configuration, the environment — and records what the host
+is told in `window.__SOLVIMON_EVENTS__`: log entries, the `ready` and `error` events, and the
+`action-request` events a screen hands back. Several flows end there rather than in the SDK, so
+that is where they are asserted.
 
 One thing to know when reading or writing these tests: requests are answered with a wildcard
 `access-control-allow-origin`, which a credentialed request cannot use. A screen that loads at all

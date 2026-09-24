@@ -201,7 +201,7 @@ const handlePaymentFailed = () => {
                 <InvoiceSummary v-if="invoice" :invoice="invoice" />
             </Skeleton>
 
-            <div v-if="invoice && availability === 'READY'">
+            <div v-if="invoice && !invoice.paid && availability === 'READY'">
                 <PayButton
                     :disabled="!selectedPaymentMethod || isPaymentPending"
                     :loading="isPaymentPending"

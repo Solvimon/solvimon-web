@@ -21,6 +21,8 @@ interface RecordedEvents {
     logs: { level: string; code: string; message: string }[];
     errors: string[];
     ready: number;
+    /** The actions a screen hands back to the host, which is where those flows end. */
+    actions: { action: string; detail: Record<string, unknown> }[];
 }
 
 declare global {
@@ -32,7 +34,7 @@ declare global {
 
 const screenContainer = ref<HTMLDivElement | null>(null);
 
-const events: RecordedEvents = { logs: [], errors: [], ready: 0 };
+const events: RecordedEvents = { logs: [], errors: [], ready: 0, actions: [] };
 window.__SOLVIMON_EVENTS__ = events;
 
 const testConfig = window.__SOLVIMON_TEST_CONFIG__;
@@ -92,8 +94,25 @@ const getErrorMessage = (event: Event): string => {
     return 'unknown error';
 };
 
+const getActionDetail = (event: Event): { action: string; detail: Record<string, unknown> } => {
+    if (!('detail' in event)) return { action: 'unknown', detail: {} };
+
+    const detail = event.detail;
+    if (typeof detail === 'object' && detail !== null && 'action' in detail) {
+        const { action, ...rest } = detail;
+        return { action: String(action), detail: rest };
+    }
+
+    return { action: 'unknown', detail: {} };
+};
+
 const recordScreenEvents = (container: HTMLElement) => {
     container.addEventListener('ready', () => (events.ready += 1), true);
+    container.addEventListener(
+        'action-request',
+        (event) => events.actions.push(getActionDetail(event)),
+        true,
+    );
     container.addEventListener(
         'error',
         (event) => events.errors.push(getErrorMessage(event)),

@@ -14,6 +14,7 @@ const {
     invoice,
     get: getInvoice,
     downloadInvoicePdf,
+    error,
 } = useInvoice({ invoiceId: props.configuration.invoiceId });
 const { payments, get: getPayments } = usePayments();
 const { fetchInitial } = usePaymentMethods({
@@ -51,5 +52,6 @@ const countryCode = computed(() =>
         :payment-method-options="paymentMethodOptions"
         :payment-attempts="payments"
         :download-service="downloadInvoicePdf"
+        :error="error"
     />
 </template>

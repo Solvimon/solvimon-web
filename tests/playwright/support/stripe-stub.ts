@@ -63,7 +63,19 @@ export function stripeStubScript(config: StripeStubConfig): string {
 
     window.Stripe = function () {
         return {
-            elements: function () {
+            elements: function (options) {
+                // Recorded on the page the frame belongs to, since the options are what the SDK
+                // asks Stripe for — whether to keep the method among them — and a test can only
+                // reach them from outside the frame.
+                try {
+                    var top = window.parent || window;
+                    top.__STRIPE_STUB_ELEMENTS__ = (top.__STRIPE_STUB_ELEMENTS__ || []).concat([
+                        options,
+                    ]);
+                } catch (error) {
+                    // A frame that cannot see its parent records nothing, which is not a failure.
+                }
+
                 return {
                     create: createPaymentElement,
                     submit: function () {

@@ -78,6 +78,17 @@ export async function mountScreen(
     return api;
 }
 
+/**
+ * The options the SDK initialised the stubbed Stripe with, in order. `setup_future_usage` among
+ * them is what asks Stripe to keep the method for later.
+ */
+export function stripeElementsOptions(page: Page): Promise<Record<string, unknown>[]> {
+    return page.evaluate(() => {
+        const recorded: unknown = Reflect.get(window, '__STRIPE_STUB_ELEMENTS__');
+        return Array.isArray(recorded) ? recorded : [];
+    });
+}
+
 export interface HostEvents {
     logs: { level: string; code: string; message: string }[];
     errors: string[];

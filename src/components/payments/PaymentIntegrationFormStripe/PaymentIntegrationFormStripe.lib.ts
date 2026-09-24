@@ -30,11 +30,14 @@ export function getFrameOptions({
     email,
     name,
     variant,
+    storePaymentMethod = false,
 }: {
     amount: Amount;
     email?: string;
     name?: string;
     variant: 'TOKENIZE' | 'AUTHORIZE';
+    /** Whether the method is to be kept for later. Tokenizing is always keeping it. */
+    storePaymentMethod?: boolean;
 }): StripeFrameOptions {
     const currency = amount.currency.toLowerCase();
     const fields = getFields(email, name);
@@ -54,7 +57,7 @@ export function getFrameOptions({
         mode: 'payment',
         currency,
         amount: toMinorUnitAmount(amount).value,
-        setup_future_usage: 'off_session',
+        ...(storePaymentMethod ? { setup_future_usage: 'off_session' as const } : {}),
         wallets: STRIPE_WALLETS,
         fields,
         appearance: STRIPE_APPEARANCE,

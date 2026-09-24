@@ -82,6 +82,8 @@ export interface HostEvents {
     logs: { level: string; code: string; message: string }[];
     errors: string[];
     ready: number;
+    /** The actions a screen handed back to the host, in order. */
+    actions: { action: string; detail: Record<string, unknown> }[];
 }
 
 /** What the host was told: the log sink it passed, and the events the custom element dispatched. */
@@ -94,11 +96,13 @@ export function hostEvents(page: Page): Promise<HostEvents> {
         const logs = read('logs');
         const errors = read('errors');
         const ready = read('ready');
+        const actions = read('actions');
 
         return {
             logs: Array.isArray(logs) ? logs : [],
             errors: Array.isArray(errors) ? errors : [],
             ready: typeof ready === 'number' ? ready : 0,
+            actions: Array.isArray(actions) ? actions : [],
         };
     });
 }

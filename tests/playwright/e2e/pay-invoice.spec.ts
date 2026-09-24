@@ -89,12 +89,7 @@ test.describe('Pay invoice', () => {
             await expect(ui.stripeElement).toHaveCount(0);
         });
 
-        /**
-         * The pay button is rendered from the payment methods on offer alone, without regard for
-         * whether anything is still owed, so a paid invoice is presented with "Pay €0.00" under the
-         * thank-you note. The form it would submit is not rendered, so pressing it throws.
-         */
-        test.fixme('offers nothing to pay', async ({ page }) => {
+        test('offers nothing to pay', async ({ page }) => {
             api = await mountPayInvoice(page, {
                 invoice: anInvoiceRecord({ paid: true, openAmount: '0.00' }),
             });

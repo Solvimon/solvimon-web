@@ -27,6 +27,7 @@ defineProps<SolvimonPayInvoiceEntryProps>();
                     paymentMethodOptions,
                     paymentAttempts,
                     downloadService,
+                    error,
                 }"
             >
                 <PayInvoice
@@ -38,6 +39,7 @@ defineProps<SolvimonPayInvoiceEntryProps>();
                     :configuration="configuration"
                     :payment-attempts="paymentAttempts ?? []"
                     :download-service="downloadService"
+                    :error="error"
                 />
             </template>
         </PayInvoiceEntryView>

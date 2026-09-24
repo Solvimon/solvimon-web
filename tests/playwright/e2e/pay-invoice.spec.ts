@@ -218,12 +218,7 @@ test.describe('Pay invoice', () => {
     // ─── Failure modes ────────────────────────────────────────────────────────
 
     test.describe('failure modes', () => {
-        /**
-         * The screen renders a "Something went wrong" card on an `error` prop, but nothing ever
-         * passes one: the entry does not expose it, so an invoice that fails to load leaves the
-         * customer on an empty screen with a payment link that looks broken.
-         */
-        test.fixme('says so when the invoice cannot be loaded', async ({ page }) => {
+        test('says so when the invoice cannot be loaded', async ({ page }) => {
             api = await mountPayInvoice(page, {
                 mocks: { invoice: { status: 404, body: { message: 'Not found' } } },
             });

@@ -15,6 +15,7 @@ import ExpressPaymentMethodButton from '@/components/payments/ExpressPaymentMeth
 import { createReturnUrl, transformObjectToAdyenObject } from '@/utils/adyen';
 import { useLogger } from '@/components/providers';
 import { createPaymentsService } from '@/services/payments';
+import { loadAdyenSdk } from '@/utils/adyenSdk';
 
 const PAYMENT_GATEWAY_VARIANT_ADYEN = 'ADYEN';
 
@@ -29,7 +30,7 @@ const { authorizePayment } = createPaymentsService();
 const paymentAcceptorId = props.paymentMethodOptionsResponse.payment_acceptor.id;
 
 const initApplePay = async () => {
-    const { ApplePay } = await import('@adyen/adyen-web');
+    const { ApplePay } = await loadAdyenSdk();
 
     const checkout = await createExpressCheckout(props, logger);
 

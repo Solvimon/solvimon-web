@@ -3,8 +3,9 @@ import type { ExpressPaymentMethodProps } from './ExpressPaymentMethod.types';
 import { useLogger } from '@/components/providers';
 import type { Logger } from '@/components/providers/LoggerProvider/LoggerProvider.types';
 import { getAdyenExpressCheckoutConfiguration } from '@/utils/adyen';
+import { loadAdyenSdk, type AdyenSdk } from '@/utils/adyenSdk';
 
-type AdyenCheckout = Awaited<ReturnType<typeof import('@adyen/adyen-web').AdyenCheckout>>;
+type AdyenCheckout = Awaited<ReturnType<AdyenSdk['AdyenCheckout']>>;
 
 type MountableExpressComponent = {
     isAvailable: () => Promise<void>;
@@ -16,7 +17,7 @@ export async function createExpressCheckout(
     props: ExpressPaymentMethodProps,
     logger: Logger,
 ): Promise<AdyenCheckout> {
-    const { AdyenCheckout: createCheckout } = await import('@adyen/adyen-web');
+    const { AdyenCheckout: createCheckout } = await loadAdyenSdk();
 
     return createCheckout(
         getAdyenExpressCheckoutConfiguration({

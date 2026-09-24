@@ -109,6 +109,7 @@
   "checkout.vat_number.check_button.label": "Check",
   "checkout.vat_number.label": "VAT number",
   "checkout.vat_number.placeholder": "VAT number...",
+  "components.payment_method_form.continue_button.label": "Continue",
   "components.payment_method_form.section_title": "Available payment methods",
   "components.payment_method_form.submit_button.label": "Save payment method",
   "converted_amount_input.bounds.maximum": "Up to {maximum} {unit}",

@@ -59,6 +59,7 @@ vi.mock('@solvimon/solvimon-ui', async () => {
 vi.mock('@/public/components/PaymentMethodForm/PaymentMethodForm.vue', () => ({
     default: defineComponent({
         name: 'PaymentMethodFormStub',
+        emits: ['success', 'failure'],
         template: '<div data-testid="payment-method-form" />',
     }),
 }));
@@ -160,6 +161,32 @@ describe('PaymentMethodsManagement', () => {
 
         expect(wrapper.find('[data-testid="payment-method-form"]').exists()).toBe(false);
         expect(wrapper.text()).toContain('Add payment method');
+    });
+
+    describe('once a payment method is added', () => {
+        const addPaymentMethod = async (wrapper: ReturnType<typeof mountComponent>) => {
+            await getButtonByText(wrapper, 'Add payment method').trigger('click');
+            wrapper.findComponent({ name: 'PaymentMethodFormStub' }).vm.$emit('success');
+            await nextTick();
+        };
+
+        // The method now in the list is the confirmation; a spent form below it is not.
+        it('closes the form', async () => {
+            const wrapper = mountComponent();
+
+            await addPaymentMethod(wrapper);
+
+            expect(wrapper.find('[data-testid="payment-method-form"]').exists()).toBe(false);
+            expect(wrapper.text()).toContain('Add payment method');
+        });
+
+        it('asks the host to reload the list', async () => {
+            const wrapper = mountComponent();
+
+            await addPaymentMethod(wrapper);
+
+            expect(wrapper.emitted('added')).toHaveLength(1);
+        });
     });
 
     it('emits "set-default" when the payment methods list signals a default was set', async () => {

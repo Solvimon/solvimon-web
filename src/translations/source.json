@@ -439,6 +439,10 @@
     "defaultMessage": "VAT number...",
     "description": "The label for the vat number in the checkout form"
   },
+  "components.payment_method_form.continue_button.label": {
+    "defaultMessage": "Continue",
+    "description": "Label of the button that leaves the form once the payment method is stored"
+  },
   "components.payment_method_form.section_title": {
     "defaultMessage": "Available payment methods",
     "description": "Title of the available payment methods form"

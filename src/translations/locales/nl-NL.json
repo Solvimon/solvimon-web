@@ -109,6 +109,7 @@
     "checkout.vat_number.check_button.label": "Controleren",
     "checkout.vat_number.label": "BTW-nummer",
     "checkout.vat_number.placeholder": "BTW-nummer...",
+    "components.payment_method_form.continue_button.label": "Doorgaan",
     "components.payment_method_form.section_title": "Beschikbare betaalmethoden",
     "components.payment_method_form.submit_button.label": "Betaalmethode opslaan",
     "converted_amount_input.bounds.maximum": "Tot {maximum} {unit}",

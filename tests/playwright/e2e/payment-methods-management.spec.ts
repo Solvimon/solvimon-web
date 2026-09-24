@@ -174,12 +174,7 @@ test.describe('Payment methods management', () => {
             await expect(ui.form).not.toContainText(/added/i);
         });
 
-        /**
-         * The screen renders the form with no listener on it, so nothing tells the list to load
-         * again. The customer stores a card, is told it worked, and does not see it until they
-         * reload the page — on the one screen whose purpose is adding them.
-         */
-        test.fixme('lists the new method without a reload', async ({ page }) => {
+        test('lists the new method without a reload', async ({ page }) => {
             api = await mountLoaded(page, {
                 paymentMethods: [],
                 mocks: { tokenizePaymentMethod: { body: { status: 'SUCCESS' } } },

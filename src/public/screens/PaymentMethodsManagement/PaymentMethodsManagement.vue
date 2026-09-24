@@ -8,7 +8,7 @@ import PaymentMethodsList from '@/components/payments/PaymentMethodsList/Payment
 import PaymentMethodForm from '@/public/components/PaymentMethodForm/PaymentMethodForm.vue';
 
 defineProps<PaymentMethodsManagementProps>();
-const emit = defineEmits<{ 'set-default': []; delete: [] }>();
+const emit = defineEmits<{ 'set-default': []; delete: []; added: [] }>();
 
 const { $t } = useIntl();
 
@@ -50,6 +50,7 @@ const showPaymentMethodForm = ref(false);
                 v-if="showPaymentMethodForm"
                 :customer="customer"
                 :payment-method-options="paymentMethodOptions"
+                @success="emit('added')"
             />
 
             <template v-if="showPaymentMethodForm">

@@ -35,6 +35,7 @@ defineProps<SolvimonPaymentMethodsManagementEntryProps>();
                     :customer="customer"
                     @set-default="refreshPaymentMethods"
                     @delete="refreshPaymentMethods"
+                    @added="refreshPaymentMethods"
                 />
             </template>
         </PaymentMethodsManagementEntryView>

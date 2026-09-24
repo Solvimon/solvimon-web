@@ -24,7 +24,8 @@ export type StripeFrameOptions =
           mode: 'payment';
           currency: string;
           amount: number;
-          setup_future_usage: 'off_session';
+          /** Only set when the method is to be kept: it is what asks Stripe to store it. */
+          setup_future_usage?: 'off_session';
           wallets?: StripeWalletsOption;
           fields?: StripeFieldsOption;
           appearance?: StripeAppearanceOption;

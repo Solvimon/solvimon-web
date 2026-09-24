@@ -30,12 +30,22 @@ const PAYMENT_GATEWAY_VARIANT_STRIPE = 'STRIPE';
 const showPaymentSuccess = ref<boolean>(false);
 const integrationError = ref<Error>();
 const frameRef = ref<InstanceType<typeof PaymentIntegrationFormStripeFrame>>();
+/**
+ * Whether the method is kept for later, read the way the Adyen integration reads it: an answer from
+ * the screen decides, and a screen that only ever stores says so with `forceStorePaymentMethod`.
+ * Stripe has no checkbox of its own to fall back to, so silence means not keeping it.
+ */
+const storePaymentMethod = computed(
+    () => props.storePaymentMethod ?? props.forceStorePaymentMethod ?? false,
+);
+
 const frameOptions = computed<PaymentIntegrationFormStripeFrameProps['options']>(() =>
     getFrameOptions({
         amount: props.amount,
         email: props.email,
         name: props.name,
         variant: props.variant,
+        storePaymentMethod: storePaymentMethod.value,
     }),
 );
 

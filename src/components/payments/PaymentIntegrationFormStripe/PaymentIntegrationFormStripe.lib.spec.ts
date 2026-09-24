@@ -10,6 +10,13 @@ describe('getFrameOptions', () => {
             expect(result.mode).toBe('setup');
         });
 
+        it('always asks to keep the method, which is what tokenizing is', () => {
+            expect(getFrameOptions({ amount: EUR_10, variant: 'TOKENIZE' })).toHaveProperty(
+                'setup_future_usage',
+                'off_session',
+            );
+        });
+
         it('does not include amount', () => {
             const result = getFrameOptions({ amount: EUR_10, variant: 'TOKENIZE' });
             expect(result).not.toHaveProperty('amount');
@@ -26,6 +33,19 @@ describe('getFrameOptions', () => {
             const result = getFrameOptions({ amount: EUR_10, variant: 'AUTHORIZE' });
             if (result.mode !== 'payment') throw new Error('expected payment mode');
             expect(result.amount).toBe(1000);
+        });
+
+        it('asks to keep the method only when it is to be kept', () => {
+            expect(
+                getFrameOptions({ amount: EUR_10, variant: 'AUTHORIZE', storePaymentMethod: true }),
+            ).toHaveProperty('setup_future_usage', 'off_session');
+        });
+
+        it('does not ask to keep the method by default', () => {
+            // A payment is a payment: keeping the card is a separate thing the customer agrees to.
+            expect(getFrameOptions({ amount: EUR_10, variant: 'AUTHORIZE' })).not.toHaveProperty(
+                'setup_future_usage',
+            );
         });
     });
 

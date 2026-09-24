@@ -1,6 +1,12 @@
 import { test, expect, type Page } from '@playwright/test';
 import type { ApiMock } from '../support/api-mock';
-import { hostEvents, mountPayInvoice, payInvoice, type MountOptions } from '../support/payInvoice';
+import {
+    hostEvents,
+    mountPayInvoice,
+    payInvoice,
+    stripeElementsOptions,
+    type MountOptions,
+} from '../support/payInvoice';
 import {
     aCustomerPortalObject,
     aFailedAuthorization,
@@ -131,22 +137,22 @@ test.describe('Pay invoice', () => {
             await expect(page.getByRole('checkbox').first()).toBeChecked();
         });
 
-        /**
-         * The Stripe integration builds its authorization without the answer: the screen passes
-         * `store-payment-method` down, the Adyen form sends it on, and the Stripe form never reads
-         * it. A customer paying through Stripe ticks the box and the method is not kept.
-         */
-        test.fixme('sends the answer along with the payment', async ({ page }) => {
-            api = await mountLoaded(page, {
-                mocks: { authorizePayment: { body: aSuccessfulAuthorization() } },
-            });
-            const ui = payInvoice(page);
+        test('asks the gateway to keep the method while the box is ticked', async ({ page }) => {
+            api = await mountLoaded(page);
 
-            await ui.storePaymentMethod.click();
-            await ui.payButton.click();
-            const authorization = await api.waitForCall('authorizePayment');
+            // `setup_future_usage` is what asks Stripe to keep the method for later.
+            const [options] = await stripeElementsOptions(page);
+            expect(options).toMatchObject({ mode: 'payment', setup_future_usage: 'off_session' });
+        });
 
-            expect(authorization.body).toMatchObject({ store_payment_method: false });
+        test('does not ask the gateway to keep it when the customer opts out', async ({ page }) => {
+            api = await mountLoaded(page);
+
+            await payInvoice(page).storePaymentMethod.click();
+
+            await expect
+                .poll(async () => (await stripeElementsOptions(page)).at(-1))
+                .not.toHaveProperty('setup_future_usage');
         });
 
         test('reports a payment the gateway refuses', async ({ page }) => {

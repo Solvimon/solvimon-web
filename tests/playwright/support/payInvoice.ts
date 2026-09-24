@@ -57,4 +57,4 @@ export function payInvoice(page: Page) {
     };
 }
 
-export { hostEvents } from './screen';
+export { hostEvents, stripeElementsOptions } from './screen';

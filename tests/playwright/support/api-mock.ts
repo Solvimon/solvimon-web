@@ -25,10 +25,36 @@ export const ENDPOINTS = {
     accessToken: { method: 'POST', path: '/v1/oauth/token' },
     /** Fired on a 30s interval, so a long test will see it. */
     refreshToken: { method: 'POST', path: '/v1/oauth/refresh-token' },
+    customer: { method: 'GET', path: /^\/v1\/portal\/customers\/[^/]+$/ },
+    updateCustomer: { method: 'PATCH', path: /^\/v1\/portal\/customers\/[^/]+$/ },
+    validateTaxId: { method: 'POST', path: '/v1/portal/customers/validate-tax-id' },
+    walletBalances: { method: 'POST', path: /^\/v1\/portal\/customers\/[^/]+\/wallets\/balance$/ },
     subscription: { method: 'GET', path: /^\/v1\/portal\/pricing-plan-subscriptions\/[^/]+$/ },
+    subscriptions: { method: 'GET', path: '/v1/portal/pricing-plan-subscriptions' },
+    cancelSubscription: {
+        method: 'POST',
+        path: /^\/v1\/portal\/pricing-plan-subscriptions\/[^/]+\/cancel$/,
+    },
+    onDemandPricingItems: {
+        method: 'GET',
+        path: /^\/v1\/portal\/pricing-plan-schedules\/[^/]+\/on-demand-pricing-items$/,
+    },
+    chargeOnDemandPricingItems: {
+        method: 'POST',
+        path: /^\/v1\/portal\/pricing-plan-schedules\/[^/]+\/on-demand-pricing-items$/,
+    },
+    createPricingPlanSchedule: { method: 'POST', path: '/v1/portal/pricing-plan-schedules' },
+    invoices: { method: 'GET', path: '/v1/portal/invoices' },
+    invoice: { method: 'GET', path: /^\/v1\/portal\/invoices\/[^/]+$/ },
+    invoicePdf: { method: 'GET', path: /^\/v1\/portal\/invoices\/[^/]+\/pdf$/ },
     invoicePreview: { method: 'POST', path: '/v1/portal/invoices/preview' },
+    paymentMethods: { method: 'GET', path: '/v1/portal/payment-methods' },
+    updatePaymentMethod: { method: 'PATCH', path: /^\/v1\/portal\/payment-methods\/[^/]+$/ },
+    tokenizePaymentMethod: { method: 'POST', path: '/v1/portal/payment-methods/tokenize' },
     paymentMethodOptions: { method: 'POST', path: '/v1/portal/payment-method-options' },
+    payments: { method: 'GET', path: '/v1/portal/payments' },
     authorizePayment: { method: 'POST', path: '/v1/portal/payments/authorize' },
+    verifyPaymentDetails: { method: 'POST', path: '/v1/portal/payments/verify-details' },
     /** Third party: `useCheckoutForm` guesses the country when the host names none. */
     geoLocation: { method: 'GET', host: 'api.country.is' },
     /** Third party: stubbed in place of the real Stripe.js. See `stripe-stub.ts`. */

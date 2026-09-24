@@ -43,6 +43,46 @@ jobs:
                   key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json') }}
             - run: npm run test:unit -- --run
 
+    e2e:
+        name: E2E Tests
+        needs: install
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v6
+            - uses: actions/setup-node@v6
+              with:
+                  node-version-file: package.json
+            - uses: actions/cache/restore@v5
+              with:
+                  path: node_modules
+                  key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json') }}
+
+            # The test app imports the package rather than the sources, so the suite needs a build
+            # to run against. `build:internal` is the one in which `DEV` resolves, which is what the
+            # app falls back to when a test hands it no environment of its own.
+            - name: Build the SDK
+              run: npm run build:internal
+
+            # Its dependencies are its own, and the root install does not reach them.
+            - name: Install the test app
+              run: npm ci --prefix tests/app
+
+            - name: Install Playwright browsers
+              run: npx playwright install --with-deps chromium
+
+            - run: npm run test:e2e:ci
+
+            # Kept for a pass too: with retries on, a test that failed and then succeeded is only
+            # visible in the report.
+            - if: ${{ !cancelled() }}
+              uses: actions/upload-artifact@v6
+              with:
+                  name: playwright-report
+                  path: |
+                      tests/playwright/report
+                      tests/playwright/results.xml
+                  retention-days: 7
+
     coverage:
         name: Coverage
         needs: install

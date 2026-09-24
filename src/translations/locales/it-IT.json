@@ -109,6 +109,7 @@
     "checkout.vat_number.check_button.label": "Verifica",
     "checkout.vat_number.label": "Partita IVA",
     "checkout.vat_number.placeholder": "Partita IVA...",
+    "components.payment_method_form.continue_button.label": "Continua",
     "components.payment_method_form.section_title": "Metodi di pagamento disponibili",
     "components.payment_method_form.submit_button.label": "Salva metodo di pagamento",
     "converted_amount_input.bounds.maximum": "Fino a {maximum} {unit}",

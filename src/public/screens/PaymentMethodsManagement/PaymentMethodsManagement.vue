@@ -13,6 +13,15 @@ const emit = defineEmits<{ 'set-default': []; delete: []; added: [] }>();
 const { $t } = useIntl();
 
 const showPaymentMethodForm = ref(false);
+
+/**
+ * The new method appears in the list above, which is confirmation enough. Leaving the spent form
+ * open would sit a save button under it with nothing left to save.
+ */
+const handleAdded = () => {
+    showPaymentMethodForm.value = false;
+    emit('added');
+};
 </script>
 
 <template>
@@ -50,7 +59,7 @@ const showPaymentMethodForm = ref(false);
                 v-if="showPaymentMethodForm"
                 :customer="customer"
                 :payment-method-options="paymentMethodOptions"
-                @success="emit('added')"
+                @success="handleAdded"
             />
 
             <template v-if="showPaymentMethodForm">

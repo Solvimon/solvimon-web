@@ -109,6 +109,7 @@
     "checkout.vat_number.check_button.label": "Prüfen",
     "checkout.vat_number.label": "Umsatzsteuer-ID",
     "checkout.vat_number.placeholder": "Umsatzsteuer-ID...",
+    "components.payment_method_form.continue_button.label": "Weiter",
     "components.payment_method_form.section_title": "Verfügbare Zahlungsmethoden",
     "components.payment_method_form.submit_button.label": "Zahlungsmethode speichern",
     "converted_amount_input.bounds.maximum": "Bis zu {maximum} {unit}",

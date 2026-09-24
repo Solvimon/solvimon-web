@@ -17,6 +17,7 @@ import Skeleton from '@/components/shared/Skeleton.vue';
 import PaymentIntegrationForm from '@/components/payments/PaymentIntegrationForm/PaymentIntegrationForm.vue';
 import PaymentMethodsUnavailableCard from '@/components/payments/PaymentMethodsUnavailableCard/PaymentMethodsUnavailableCard.vue';
 import { usePaymentMethodAvailability } from '@/composables/usePaymentMethodAvailability';
+import { safeUrlRedirect } from '@/utils/url';
 import type {
     AuthorizePaymentIntegrationFormProps,
     PaymentIntegrationFormProps,
@@ -47,6 +48,11 @@ const { availability } = usePaymentMethodAvailability({
 const paymentIntegrationFormRef = ref<InstanceType<typeof PaymentIntegrationForm>>();
 const selectedPaymentMethod = ref<SelectedPaymentMethod>();
 const isPaymentPending = ref(false);
+/**
+ * Whether the form is through. The gateway swaps its own fields for a confirmation at that point,
+ * so what is left below it is a submit button with nothing to submit.
+ */
+const isCompleted = ref(false);
 
 function handleSubmit() {
     isPaymentPending.value = true;
@@ -62,10 +68,12 @@ const submitLabel = computed(() =>
 );
 
 // Lets a host submit the form from its own chrome, and mirror the pending state onto its button.
-defineExpose({ submit: handleSubmit, isPaymentPending });
+// `isCompleted` is there for the same reason: a host holding its own button has to retire it too.
+defineExpose({ submit: handleSubmit, isPaymentPending, isCompleted });
 
 function handlePaymentSuccess() {
     isPaymentPending.value = false;
+    isCompleted.value = true;
     emit('success');
 }
 
@@ -90,6 +98,33 @@ const resolveConfiguration = (
 const configuration = computed<PaymentMethodFormConfiguration>(() =>
     resolveConfiguration(props.configuration),
 );
+
+/**
+ * Where the customer goes from the confirmation. Only the host knows — the breadcrumb around this
+ * form is theirs — so with nothing configured the form ends on the confirmation and says no more.
+ * A host that hides the submit button owns the whole footer, this button included.
+ */
+const showContinueAction = computed(
+    () => isCompleted.value && !props.hideSubmitButton && !!configuration.value.successRedirectUrl,
+);
+
+const continueLabel = computed(
+    () =>
+        configuration.value.successRedirectLabel ??
+        $t({
+            defaultMessage: 'Continue',
+            description:
+                'Label of the button that leaves the form once the payment method is stored',
+            id: 'components.payment_method_form.continue_button.label',
+        }),
+);
+
+function handleContinue() {
+    const { successRedirectUrl } = configuration.value;
+    if (successRedirectUrl) {
+        safeUrlRedirect(successRedirectUrl);
+    }
+}
 
 const countryCode = computed<string>(() => {
     let result = FALLBACK_COUNTRY_CODE;
@@ -180,7 +215,15 @@ const paymentIntegrationProps = computed<PaymentIntegrationFormProps>(() => {
             />
         </div>
         <Button
-            v-if="!hideSubmitButton"
+            v-if="showContinueAction"
+            intent="primary"
+            class="mt-4 w-full"
+            data-testid="payment-method-form-continue"
+            @click="handleContinue"
+            >{{ continueLabel }}</Button
+        >
+        <Button
+            v-else-if="!hideSubmitButton && !isCompleted"
             intent="primary"
             class="mt-4 w-full"
             :loading="isPaymentPending"

@@ -10,7 +10,14 @@ interface PaymentMethodFormBaseConfiguration {
     invoiceId?: PaymentIntegrationFormProps['invoiceId'];
     amount?: Amount;
     selectedOption?: string;
+    /**
+     * Where the customer goes once the form is through. Given one, the completed form offers a
+     * button rather than leaving on its own: an instant redirect takes away the confirmation the
+     * customer just earned, and a delayed one races whoever reads faster.
+     */
     successRedirectUrl?: string;
+    /** Label for that button, for a host whose own wording says where it leads. */
+    successRedirectLabel?: string;
     validateOnSubmit?: PaymentIntegrationFormProps['validateOnSubmit'];
     forceStorePaymentMethod?: PaymentIntegrationFormProps['forceStorePaymentMethod'];
 }

@@ -648,6 +648,15 @@ export function anInvoiceRecord({
         paid,
         open_invoice_amount: { quantity: openAmount ?? (paid ? '0.00' : total), currency },
         payment_actions: [],
+        // The screens date everything in the customer's timezone and name the seller from the
+        // billing entity, so a record without either renders nothing at all.
+        customer: { ...aCustomer(), timezone: 'Europe/Amsterdam' },
+        billing_entity: {
+            object_type: 'BILLING_ENTITY',
+            id: 'bent_test',
+            legal_name: 'Solvimon B.V.',
+            timezone: 'Europe/Amsterdam',
+        },
     };
 }
 

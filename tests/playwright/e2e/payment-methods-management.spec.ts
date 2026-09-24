@@ -145,7 +145,9 @@ test.describe('Payment methods management', () => {
             expect(api.calls('authorizePayment')).toEqual([]);
         });
 
-        test('confirms the method was stored', async ({ page }) => {
+        // The method now in the list is the confirmation. A form left open once it is through has
+        // nothing left to save, and a cancel under it nothing left to abandon.
+        test('takes the spent form away once the method is stored', async ({ page }) => {
             api = await mountLoaded(page, {
                 mocks: { tokenizePaymentMethod: { body: { status: 'SUCCESS' } } },
             });
@@ -154,8 +156,10 @@ test.describe('Payment methods management', () => {
             await ui.addButton.click();
             await expect(ui.stripeElement).toBeVisible();
             await ui.submit.click();
+            await api.waitForCall('tokenizePaymentMethod');
 
-            await expect(ui.form).toContainText(/added/i);
+            await expect(ui.form).toHaveCount(0);
+            await expect(ui.addButton).toBeVisible();
         });
 
         test('reports a method the gateway would not store', async ({ page }) => {
@@ -171,7 +175,9 @@ test.describe('Payment methods management', () => {
             await ui.submit.click();
             await api.waitForCall('tokenizePaymentMethod');
 
-            await expect(ui.form).not.toContainText(/added/i);
+            // Nothing was stored, so the form stays up with its save, ready for another go.
+            await expect(ui.form).toBeVisible();
+            await expect(ui.submit).toBeVisible();
         });
 
         test('lists the new method without a reload', async ({ page }) => {

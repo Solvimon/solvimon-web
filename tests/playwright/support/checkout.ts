@@ -1,7 +1,7 @@
 import type { Page } from '@playwright/test';
-import { installApiMock, type ApiMock, type EndpointName, type Responder } from './api-mock';
+import type { ApiMock, EndpointName, Responder } from './api-mock';
+import { mountScreen, sharedMocks, type ScreenOptions } from './screen';
 import {
-    anAccessTokenResponse,
     anInvoicePreview,
     aPortalObject,
     aSubscription,
@@ -11,7 +11,6 @@ import {
     type BillingPeriod,
     type Json,
 } from './fixtures';
-import type { StripeStubConfig } from './stripe-stub';
 
 /**
  * What a working checkout answers with, before a test overrides the part it is about. The amounts
@@ -23,8 +22,7 @@ const DEFAULT_PERIOD_TOTALS: Record<string, string> = {
     'YEAR:1': '200.00',
 };
 
-export interface MountOptions {
-    portalObject?: Json;
+export interface MountOptions extends ScreenOptions {
     configuration?: {
         email?: string;
         countryCode?: string;
@@ -40,14 +38,6 @@ export interface MountOptions {
     /** Answers the preview with a usage-based invoice. */
     usageBased?: boolean;
     gateways?: ('STRIPE' | 'ADYEN')[];
-    /** Per-endpoint overrides, applied on top of the defaults. */
-    mocks?: Partial<Record<EndpointName, Responder>>;
-    /** How the stubbed Stripe.js behaves. */
-    stripe?: Partial<StripeStubConfig>;
-    /** Extra query parameters, for the redirect-return cases. */
-    query?: Record<string, string>;
-    /** Seeded before the app boots. */
-    sessionStorage?: Record<string, string>;
 }
 
 /** The billing period a preview request is asking about, which decides what it is answered with. */
@@ -70,8 +60,7 @@ function defaultMocks(options: MountOptions): Partial<Record<EndpointName, Respo
     const subscription = options.subscription ?? aSubscription();
 
     return {
-        accessToken: { body: anAccessTokenResponse() },
-        refreshToken: { body: anAccessTokenResponse() },
+        ...sharedMocks,
         subscription: { body: subscription },
         invoicePreview: (request) => {
             const period = requestedBillingPeriod(request.postDataJSON());
@@ -92,45 +81,13 @@ function defaultMocks(options: MountOptions): Partial<Record<EndpointName, Respo
     };
 }
 
-/**
- * Installs the mocks, hands the test app its scenario and navigates. The app reads
- * `window.__SOLVIMON_TEST_CONFIG__`, which an init script puts in place before it boots.
- */
-export async function mountCheckout(page: Page, options: MountOptions = {}): Promise<ApiMock> {
-    const api = await installApiMock(page, { ...defaultMocks(options), ...options.mocks });
-
-    if (options.stripe) {
-        api.stripe(options.stripe);
-    }
-
-    await page.addInitScript(
-        (config) => {
-            Object.assign(window, { __SOLVIMON_TEST_CONFIG__: config });
-        },
-        {
-            // The published environment, so nothing can resolve to internal infrastructure even if
-            // a request were ever to escape the mocks.
-            environment: 'TEST',
-            locale: 'en-US',
-            portalObject: options.portalObject ?? aPortalObject(),
-            configuration: options.configuration ?? {},
-        },
+export function mountCheckout(page: Page, options: MountOptions = {}): Promise<ApiMock> {
+    return mountScreen(
+        page,
+        'checkout',
+        { ...options, portalObject: options.portalObject ?? aPortalObject() },
+        defaultMocks(options),
     );
-
-    if (options.sessionStorage) {
-        await page.addInitScript((entries: Record<string, string>) => {
-            // Init scripts run in every frame, and the SDK's payment iframe is same-origin — seeding
-            // there too would write the entries back after the screen has cleared them.
-            if (window.top !== window) return;
-
-            Object.entries(entries).forEach(([key, value]) => sessionStorage.setItem(key, value));
-        }, options.sessionStorage);
-    }
-
-    const query = new URLSearchParams(options.query ?? {}).toString();
-    await page.goto(query ? `/?${query}` : '/');
-
-    return api;
 }
 
 /** The parts of the screen the specs reach for, named once so a class change lands in one place. */
@@ -170,27 +127,4 @@ export function checkout(page: Page) {
     };
 }
 
-export interface HostEvents {
-    logs: { level: string; code: string; message: string }[];
-    errors: string[];
-    ready: number;
-}
-
-/** What the host was told: the log sink it passed, and the events the custom element dispatched. */
-export function hostEvents(page: Page): Promise<HostEvents> {
-    return page.evaluate((): HostEvents => {
-        const events: unknown = Reflect.get(window, '__SOLVIMON_EVENTS__');
-        const read = (key: string): unknown =>
-            typeof events === 'object' && events !== null ? Reflect.get(events, key) : undefined;
-
-        const logs = read('logs');
-        const errors = read('errors');
-        const ready = read('ready');
-
-        return {
-            logs: Array.isArray(logs) ? logs : [],
-            errors: Array.isArray(errors) ? errors : [],
-            ready: typeof ready === 'number' ? ready : 0,
-        };
-    });
-}
+export { hostEvents } from './screen';

@@ -12,13 +12,13 @@
 export type Json = Record<string, unknown>;
 
 export const SUBSCRIPTION_ID = 'ppsu_test_subscription';
+export const CUSTOMER_ID = 'cus_test_customer';
 export const DEFAULT_SCHEDULE_ID = 'ppsi_default';
 export const TRIAL_SCHEDULE_ID = 'ppsi_trial';
 export const PAYMENT_ACCEPTOR_ID = 'paya_test_acceptor';
 export const SUCCESS_URL = 'https://merchant.example.com/welcome';
 
 const PLATFORM_ID = 'plat_test';
-const CUSTOMER_ID = 'cus_test';
 
 export interface BillingPeriod {
     type: 'DAY' | 'WEEK' | 'MONTH' | 'YEAR';
@@ -477,4 +477,192 @@ export const anActionRequiredAuthorization = (): Json => ({
         payment_gateway_variant: 'STRIPE',
         client_secret: 'pi_test_secret',
     },
+});
+
+// ─── Customer-scoped screens ──────────────────────────────────────────────────
+
+export const PAYMENT_METHOD_ID = 'pmet_test_card';
+export const INVOICE_ID = 'inv_test_invoice';
+
+/** The `ApiSuccessCollectionResponse` envelope every list endpoint answers with. */
+export const collection = (data: Json[]): Json => ({
+    data,
+    page: 1,
+    limit: 20,
+    total_number_of_pages: 1,
+    links: { current: '/v1/portal/resource?page=1' },
+});
+
+/**
+ * A portal object of type `CUSTOMER`, which is what every screen but the checkout is opened with.
+ * `display` and `options` are the host's own switches over what the customer may see and do, so
+ * they are what a test flips to assert a section is or is not on screen.
+ */
+export function aCustomerPortalObject({
+    customerId = CUSTOMER_ID,
+    status = 'PUBLISHED',
+    type = 'CUSTOMER',
+    display = {},
+    options = {},
+}: {
+    customerId?: string;
+    status?: string;
+    type?: string;
+    display?: Record<string, boolean>;
+    options?: Record<string, boolean>;
+} = {}): Json {
+    return {
+        object_type: 'PORTAL_URL',
+        id: 'purl_test_customer',
+        type,
+        status,
+        token: portalToken(),
+        customer_id: customerId,
+        embedded: false,
+        url: 'https://portal.example.com/customer',
+        created_at: '2026-01-01T00:00:00Z',
+        customer: {
+            display: {
+                usage: true,
+                invoices: true,
+                pricing_plan_subscriptions: true,
+                payment_acceptors: true,
+                ...display,
+            },
+            options: {
+                edit_customer_details: true,
+                download_invoice: true,
+                pay_open_invoice: true,
+                combine_open_invoices: true,
+                ...options,
+            },
+        },
+        widgets: { usage: '', invoices: '', pricing_plan_subscriptions: '' },
+    };
+}
+
+export function aCustomer({
+    id = CUSTOMER_ID,
+    name = 'Ada Lovelace',
+    email = 'ada@example.com',
+    type = 'INDIVIDUAL',
+    country = 'NL',
+}: {
+    id?: string;
+    name?: string;
+    email?: string;
+    type?: 'INDIVIDUAL' | 'ORGANIZATION';
+    country?: string;
+} = {}): Json {
+    const address = {
+        line1: 'Keizersgracht 1',
+        city: 'Amsterdam',
+        postal_code: '1015 CJ',
+        country,
+    };
+
+    return {
+        object_type: 'CUSTOMER',
+        id,
+        reference: 'customer-1',
+        status: 'ACTIVE',
+        platform_id: PLATFORM_ID,
+        email,
+        type,
+        created_at: '2026-01-01T00:00:00Z',
+        updated_at: '2026-01-01T00:00:00Z',
+        billing_currency: 'EUR',
+        ...(type === 'ORGANIZATION'
+            ? { organization: { legal_name: name, registered_address: address } }
+            : {
+                  individual: {
+                      name: { first_name: 'Ada', last_name: 'Lovelace' },
+                      residential_address: address,
+                  },
+              }),
+    };
+}
+
+export function aPaymentMethod({
+    id = PAYMENT_METHOD_ID,
+    isDefault = false,
+    status = 'ACTIVE',
+    lastFourDigits = '4242',
+    brand = 'VISA',
+}: {
+    id?: string;
+    isDefault?: boolean;
+    status?: string;
+    lastFourDigits?: string;
+    brand?: string;
+} = {}): Json {
+    return {
+        object_type: 'PAYMENT_METHOD',
+        id,
+        reference: `card-${lastFourDigits}`,
+        status,
+        is_default: isDefault,
+        type: 'CARD',
+        customer_id: CUSTOMER_ID,
+        created_at: '2026-01-01T00:00:00Z',
+        integration_id: 'int_test_0',
+        integration_details: {
+            payment_gateway_variant: 'STRIPE',
+            stripe: { payment_method_id: 'pm_test' },
+        },
+        card: {
+            brand,
+            name: 'Ada Lovelace',
+            last_four_digits: lastFourDigits,
+            expiry_date: { expiry_month: 3, expiry_year: 2030 },
+            country: 'NL',
+        },
+    };
+}
+
+/** An invoice as the list and detail endpoints return it, rather than as a preview envelope. */
+export function anInvoiceRecord({
+    id = INVOICE_ID,
+    number = 'INV-2026-001',
+    total = '20.00',
+    currency = 'EUR',
+    status = 'FINAL',
+    paid = false,
+    openAmount,
+}: {
+    id?: string;
+    number?: string;
+    total?: string;
+    currency?: string;
+    status?: string;
+    paid?: boolean;
+    openAmount?: string;
+} = {}): Json {
+    const invoice = anInvoice({ total, currency });
+
+    return {
+        ...invoice,
+        id,
+        invoice_number: number,
+        status,
+        paid,
+        open_invoice_amount: { quantity: openAmount ?? (paid ? '0.00' : total), currency },
+        payment_actions: [],
+    };
+}
+
+export const aWalletBalance = ({
+    walletId = 'wall_test',
+    quantity = '100',
+    currency = 'EUR',
+}: { walletId?: string; quantity?: string; currency?: string } = {}): Json => ({
+    wallet_id: walletId,
+    wallet_balance: {
+        balance: { amount: { quantity, currency } },
+        reserved_balance: { amount: { quantity: '0.00', currency } },
+    },
+});
+
+export const walletBalances = (balances: Json[] = [aWalletBalance()]): Json => ({
+    wallet_balances: balances,
 });

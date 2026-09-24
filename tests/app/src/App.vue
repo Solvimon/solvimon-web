@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { createSolvimonCore } from '@solvimon/solvimon-web/core';
-import type { Environment, LogEntry } from '@solvimon/solvimon-web/core';
+import type { Environment, LogEntry, RegisteredScreenId } from '@solvimon/solvimon-web/core';
 import { onMounted, onUnmounted, ref } from 'vue';
 
 /**
@@ -9,6 +9,7 @@ import { onMounted, onUnmounted, ref } from 'vue';
  * the DEV portal object below, steered by `?email=` and `?country=`.
  */
 interface TestConfig {
+    screen?: RegisteredScreenId;
     environment?: string;
     locale?: string;
     portalObject?: Record<string, unknown>;
@@ -29,7 +30,7 @@ declare global {
     }
 }
 
-const checkoutContainer = ref<HTMLDivElement | null>(null);
+const screenContainer = ref<HTMLDivElement | null>(null);
 
 const events: RecordedEvents = { logs: [], errors: [], ready: 0 };
 window.__SOLVIMON_EVENTS__ = events;
@@ -73,7 +74,7 @@ const solvimon = createSolvimonCore({
     onLog: handleLog,
 });
 
-let unmountCheckout: (() => void) | null = null;
+let unmountScreen: (() => void) | null = null;
 
 /**
  * `ready` and `error` are dispatched on the custom element, which the SDK appends asynchronously.
@@ -101,28 +102,30 @@ const recordScreenEvents = (container: HTMLElement) => {
 };
 
 onMounted(() => {
-    if (!checkoutContainer.value) return;
+    if (!screenContainer.value) return;
 
-    recordScreenEvents(checkoutContainer.value);
+    recordScreenEvents(screenContainer.value);
 
-    unmountCheckout = solvimon.createScreen('checkout', {
-        container: checkoutContainer.value,
-        // The portal object's type is only known to consumers that can install the types package.
+    unmountScreen = solvimon.createScreen(testConfig?.screen ?? 'checkout', {
+        container: screenContainer.value,
+        // Neither the portal object's type nor a screen's configuration is known to consumers that
+        // cannot install the types package, and this app mounts whichever screen a test names.
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         portalObject: portalObject as never,
-        configuration,
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        configuration: configuration as never,
     });
 });
 
 onUnmounted(() => {
-    unmountCheckout?.();
+    unmountScreen?.();
 });
 </script>
 
 <template>
     <div class="app">
-        <h1>Solvimon Checkout Test App</h1>
-        <div ref="checkoutContainer" class="checkout-root" />
+        <h1>Solvimon Test App</h1>
+        <div ref="screenContainer" class="screen-root" />
     </div>
 </template>
 
@@ -137,7 +140,7 @@ h1 {
     margin-bottom: 2rem;
 }
 
-.checkout-root {
+.screen-root {
     min-height: 320px;
 }
 </style>

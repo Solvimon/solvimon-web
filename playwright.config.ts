@@ -11,9 +11,11 @@ export default defineConfig({
     forbidOnly: !!process.env.CI,
     retries: process.env.CI ? 2 : 0,
     workers: process.env.CI ? 2 : undefined,
-    timeout: 30000,
+    // Longer in CI: the app is served by Vite in dev mode, so the first test to reach a screen
+    // pays for compiling the module graph behind it.
+    timeout: process.env.CI ? 60000 : 30000,
     expect: {
-        timeout: 10000,
+        timeout: process.env.CI ? 20000 : 10000,
     },
     reporter: process.env.CI
         ? [

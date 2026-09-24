@@ -184,6 +184,7 @@ export function aSubscription({
     seats = [],
     addons = [],
     trial = false,
+    cancelled = false,
 }: {
     id?: string;
     name?: string;
@@ -193,6 +194,8 @@ export function aSubscription({
     seats?: SeatPricing[];
     addons?: AddonPricing[];
     trial?: boolean;
+    /** A subscription with an inactive period ahead of it is one that has been cancelled. */
+    cancelled?: boolean;
 } = {}): Json {
     const startAt = '2026-01-01T00:00:00Z';
 
@@ -283,6 +286,10 @@ export function aSubscription({
         billing_period: billingPeriods[0],
         created_at: startAt,
         updated_at: startAt,
+        ...(cancelled
+            ? { inactive_periods: [{ start_at: '2026-02-01T00:00:00Z', type: 'CANCELLED' }] }
+            : {}),
+        payment_method_id: PAYMENT_METHOD_ID,
         pricing_plan_schedule_infos: [
             ...(trial ? [scheduleInfo(TRIAL_SCHEDULE_ID, 'TRIAL', '2026-01-15T00:00:00Z')] : []),
             scheduleInfo(DEFAULT_SCHEDULE_ID, 'DEFAULT'),
@@ -662,10 +669,20 @@ export function anInvoiceRecord({
 
 export const aWalletBalance = ({
     walletId = 'wall_test',
-    quantity = '100',
+    name = 'Credits',
+    quantity = '100.00',
     currency = 'EUR',
-}: { walletId?: string; quantity?: string; currency?: string } = {}): Json => ({
+}: { walletId?: string; name?: string; quantity?: string; currency?: string } = {}): Json => ({
     wallet_id: walletId,
+    wallet: {
+        object_type: 'WALLET',
+        id: walletId,
+        reference: 'credits',
+        status: 'ACTIVE',
+        customer_id: CUSTOMER_ID,
+        wallet_type_id: 'wtyp_test',
+        wallet_type: { id: 'wtyp_test', name, reference: 'credits', status: 'ACTIVE' },
+    },
     wallet_balance: {
         balance: { amount: { quantity, currency } },
         reserved_balance: { amount: { quantity: '0.00', currency } },

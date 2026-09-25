@@ -28,7 +28,7 @@ const title = computed(() =>
         <Typography v-if="amount" variant="body-sm" class="mt-1">
             <Icon icon="check" />{{ formatAmount(amount) }}
         </Typography>
-        <Typography variant="body-xs" color="subtle">{{
+        <Typography v-if="redirecting" variant="body-xs" color="subtle">{{
             $t({
                 defaultMessage: 'You are being redirected...',
                 description: 'The text shown after a successful message before a redirect',

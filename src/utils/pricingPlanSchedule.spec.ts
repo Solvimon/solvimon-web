@@ -455,6 +455,45 @@ describe('pricingPlanSchedule utils', () => {
             expect(result?.[0].seats_values?.[0]).not.toHaveProperty('end_at');
             expect(result?.[0].seats_values?.[0]).not.toHaveProperty('set_start_at_to_now');
         });
+
+        it('should return customizations with unitsValues mapped to id and number only', () => {
+            const schedules: PricingPlanScheduleInfoExpanded[] = [
+                createMockScheduleInfo('schedule-1', 'DEFAULT'),
+            ];
+            const unitsValues: ConfiguredMeterValue[] = [
+                {
+                    pricing_item_config_id: 'setup-fee',
+                    number: '2',
+                    amount: { quantity: '100', currency: 'USD' },
+                    start_at: '2024-01-01T00:00:00Z',
+                },
+            ];
+
+            const result = getScheduleCustomizations({
+                pricingPlanScheduleInfos: schedules,
+                unitsValues,
+            });
+
+            expect(result).toHaveLength(1);
+            expect(result?.[0].pricing_plan_schedule_id).toBe('schedule-1');
+            expect(result?.[0].units).toEqual([
+                { pricing_item_config_id: 'setup-fee', number: '2' },
+            ]);
+            expect(result?.[0].seats_values).toBeUndefined();
+        });
+
+        it('should leave units out of the customization when no unitsValues are provided', () => {
+            const schedules: PricingPlanScheduleInfoExpanded[] = [
+                createMockScheduleInfo('schedule-1', 'DEFAULT'),
+            ];
+
+            const result = getScheduleCustomizations({
+                pricingPlanScheduleInfos: schedules,
+                seatsValues: [{ pricing_item_config_id: 'config-1', number: '3' }],
+            });
+
+            expect(result?.[0]).not.toHaveProperty('units');
+        });
     });
 
     describe('getActiveDefaultScheduleId', () => {

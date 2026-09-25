@@ -1,4 +1,36 @@
 import defaultTheme from 'tailwindcss/defaultTheme';
+import tailwindColors from 'tailwindcss/colors';
+
+/**
+ * Semantic roles solvimon-ui's components emit classes for (`text-default`, `bg-feedback-info`,
+ * …). They are defined in solvimon-ui's own Tailwind config, which the SDK does not inherit, so
+ * they are restated here to match it. Without them those classes resolve to nothing and the
+ * element takes whatever color it inherits.
+ */
+const text = {
+    default: '#111928',
+    secondary: '#374151',
+    subtle: '#6B7280',
+    placeholder: '#6B7280',
+    disabled: '#9CA3AF',
+    'feedback-info': tailwindColors.blue[700],
+    'feedback-success': tailwindColors.green[700],
+    'feedback-warning': tailwindColors.yellow[700],
+    'feedback-danger': tailwindColors.red[700],
+};
+
+const feedbackBackground = {
+    'feedback-neutral': '#F3F4F6',
+    'feedback-info': tailwindColors.blue[50],
+    'feedback-success': tailwindColors.green[50],
+    'feedback-warning': tailwindColors.yellow[50],
+    'feedback-danger': tailwindColors.red[50],
+    'feedback-neutral-strong': '#374151',
+    'feedback-info-strong': tailwindColors.blue[700],
+    'feedback-success-strong': tailwindColors.green[700],
+    'feedback-warning-strong': tailwindColors.yellow[700],
+    'feedback-danger-strong': tailwindColors.red[700],
+};
 
 /** @type {import('tailwindcss').Config} */
 export default {
@@ -57,6 +89,8 @@ export default {
                     100: '#00FEF9',
                 },
             },
+            textColor: text,
+            backgroundColor: feedbackBackground,
             zIndex: {
                 60: 60,
                 70: 70,

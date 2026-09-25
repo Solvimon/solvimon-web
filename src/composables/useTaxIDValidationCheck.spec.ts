@@ -31,6 +31,7 @@ const createForm = (overrides: Partial<CheckoutFormState> = {}) =>
         city: undefined,
         state: undefined,
         seatsValues: undefined,
+        unitsValues: undefined,
         enabledPricingIds: undefined,
         ...overrides,
     });

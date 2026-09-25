@@ -1,4 +1,4 @@
-import { mount } from '@vue/test-utils';
+import { flushPromises, mount } from '@vue/test-utils';
 import { defineComponent, h } from 'vue';
 import type { CustomerWalletBalanceItem, PaymentMethod } from '@solvimon/solvimon-types';
 import SubscriptionDetails from './SubscriptionDetails.vue';
@@ -231,8 +231,14 @@ describe('SubscriptionDetails', () => {
         expect(wrapper.text()).toContain('Subscription not found');
     });
 
-    it('renders the schedules as the main content', () => {
+    it('renders the schedules as the main content', async () => {
         const wrapper = mountComponent();
+
+        // The schedules are loaded on demand, so they are still an unresolved import here.
+        // Waiting on the import itself keeps the assertion off a race the suite's size decides.
+        await flushPromises();
+        await vi.dynamicImportSettled();
+        await flushPromises();
 
         expect(wrapper.find('.sv-subscription-details__schedules').exists()).toBe(true);
     });

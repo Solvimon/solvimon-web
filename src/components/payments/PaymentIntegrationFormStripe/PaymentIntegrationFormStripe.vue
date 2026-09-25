@@ -286,7 +286,11 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-    <PaymentCompletedCard v-if="showPaymentSuccess" :variant="variant" />
+    <PaymentCompletedCard
+        v-if="showPaymentSuccess"
+        :variant="variant"
+        :redirecting="redirectsOnSuccess"
+    />
     <PaymentErrorCard v-else-if="integrationError" :error="integrationError" />
     <PaymentIntegrationFormStripeFrame
         v-else-if="publicKey"

@@ -427,6 +427,15 @@ const handleRedirect = () => {
     safeUrlRedirect(successRedirectUrl);
 };
 
+/**
+ * Whether a paid checkout leaves this page, which is what `handlePaymentSuccess` goes on to do.
+ * A host that supplies `onPaymentSuccess` takes the flow over and may navigate itself, but that is
+ * theirs to announce — all the success card can honestly promise is the redirect this screen does.
+ */
+const redirectsOnSuccess = computed(
+    () => !props.configuration?.onPaymentSuccess && !!successRedirectUrl,
+);
+
 const handlePaymentSuccess = () => {
     isPaid.value = true;
     promotionCodeErrorMessage.value = null;
@@ -687,6 +696,7 @@ onMounted(() => {
                                         variant="AUTHORIZE"
                                         :payment-method-options="paymentMethodOptions ?? []"
                                         :validate-on-submit="handleValidateOnSubmit"
+                                        :redirects-on-success="redirectsOnSuccess"
                                         force-store-payment-method
                                         @payment-success="handlePaymentSuccess"
                                         @payment-failed="handlePaymentFailed"

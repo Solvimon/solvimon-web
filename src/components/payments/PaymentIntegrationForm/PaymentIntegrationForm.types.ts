@@ -34,6 +34,12 @@ interface BasePaymentIntegrationFormProps {
     context?: PaymentAuthorizationContext;
     forceStorePaymentMethod?: boolean;
     storePaymentMethod?: boolean;
+    /**
+     * Whether the screen sends the customer somewhere else once the payment goes through, so the
+     * success card can say so. Only the screen knows: the same form ends a checkout that redirects
+     * to the merchant and an invoice payment that stays where it is.
+     */
+    redirectsOnSuccess?: boolean;
 }
 
 export interface AuthorizePaymentIntegrationFormProps extends BasePaymentIntegrationFormProps {
@@ -88,6 +94,7 @@ export interface PaymentIntegrationVariantProps {
     context?: PaymentAuthorizationContext;
     forceStorePaymentMethod?: boolean;
     storePaymentMethod?: boolean;
+    redirectsOnSuccess?: boolean;
 }
 
 export type PaymentIntegrationVariantEmits = PaymentIntegrationFormEmits;

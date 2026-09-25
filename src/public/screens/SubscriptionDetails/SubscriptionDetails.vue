@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, toRef, watch } from 'vue';
+import { computed, defineAsyncComponent, ref, toRef, watch } from 'vue';
 import { Alert, Button, Typography, useIntl, ErrorNotification } from '@solvimon/solvimon-ui';
 import type {
     SubscriptionDetailsEmits,
@@ -8,7 +8,6 @@ import type {
 import { ContentWithAsideLayout } from '@/layouts';
 import { useSubscriptionActions } from '@/composables/useSubscriptionActions';
 import { getMostRecentScheduleInfo, getSubscriptionName } from '@/utils/subscription';
-import SubscriptionSchedules from '@/public/components/SubscriptionSchedules/SubscriptionSchedules.vue';
 import CustomerWalletBalances from '@/public/components/CustomerWalletBalances/CustomerWalletBalances.vue';
 import CustomerPaymentMethods from '@/public/components/CustomerPaymentMethods/CustomerPaymentMethods.vue';
 import EmptyStatePlaceholder from '@/components/checkout/EmptyStatePlaceholder.vue';
@@ -16,6 +15,16 @@ import Skeleton from '@/components/shared/Skeleton.vue';
 import EnabledPricingsList from '@/components/subscriptions/EnabledPricingsList/EnabledPricingsList.vue';
 import SubscriptionCancellationModal from '@/components/subscriptions/SubscriptionCancellationModal/SubscriptionCancellationModal.vue';
 import type { SubscriptionCancellationVariant } from '@/services/subscriptions';
+
+/**
+ * Loaded on demand: the schedules are the heaviest thing this screen renders, and they sit behind
+ * the subscription having arrived, so they cannot be part of the first paint however eagerly they
+ * are imported. Fetching the chunk when there is finally something to draw keeps it out of the
+ * bundle a host pays for to show the skeleton.
+ */
+const SubscriptionSchedules = defineAsyncComponent(
+    () => import('@/public/components/SubscriptionSchedules/SubscriptionSchedules.vue'),
+);
 
 const props = withDefaults(defineProps<SubscriptionDetailsProps>(), {
     walletBalances: () => [],

@@ -26,7 +26,6 @@ import EmptyStatePlaceholder from '@/components/checkout/EmptyStatePlaceholder.v
 import Skeleton from '@/components/shared/Skeleton.vue';
 import ExpressPaymentMethods from '@/components/payments/ExpressPaymentMethods/ExpressPaymentMethods.vue';
 import { useLogger } from '@/components/providers';
-import PlanCustomizationEditor from '@/components/subscriptions/PlanCustomizationForm/PlanCustomizationEditor.vue';
 import {
     isSubscriptionWithAddonProducts,
     isSubscriptionWithEnabledPricings,
@@ -48,6 +47,19 @@ import { safeUrlRedirect } from '@/utils/url';
 
 const PaymentIntegrationForm = defineAsyncComponent(
     () => import('@/components/payments/PaymentIntegrationForm/PaymentIntegrationForm.vue'),
+);
+
+/**
+ * Loaded on demand, like the payment form above. It renders behind a subscription that has yet to
+ * arrive, so importing it eagerly only bought the checkout weight it had to carry before it could
+ * show anything.
+ *
+ * Its two neighbours behind the same kind of condition — the completed card and the unavailable
+ * notice — were measured and left alone: together they came to under 320 bytes, which does not pay
+ * for a request of their own.
+ */
+const PlanCustomizationEditor = defineAsyncComponent(
+    () => import('@/components/subscriptions/PlanCustomizationForm/PlanCustomizationEditor.vue'),
 );
 
 const props = defineProps<CheckoutProps>();

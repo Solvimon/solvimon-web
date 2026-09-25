@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Moved to `@solvimon/solvimon-ui` 1.9.1, a patch that leaves the component API as it was. One surface shifts with it: the invoice summary rows carry a smaller text size than before.
 - The subscription details screen now loads its schedules on demand rather than up front, which is a fifth less for a host to download to mount it. The schedules only ever rendered once the subscription had arrived, so nothing appears any later than it did.
+- The checkout now loads its plan customization editor on demand rather than up front, which is a twentieth less for a host to download to mount it. The editor only ever rendered once the subscription had arrived, so nothing appears any later than it did.
 
 ### Fixed
 

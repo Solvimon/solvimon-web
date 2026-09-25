@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Moved to `@solvimon/solvimon-ui` 1.9.1, a patch that leaves the component API as it was. One surface shifts with it: the invoice summary rows carry a smaller text size than before.
 
+### Fixed
+
+- The SDK no longer writes stray `console` output when loaded as ES modules. Those statements were only ever stripped from the CommonJS build, so the console noise an integration saw depended on which format its bundler picked. Logging through `onLog` and the `log` event is unaffected. The published package is also a tenth smaller to install.
+
 ## [0.1.0-alpha.20] - 2026-09-23
 
 ### Added

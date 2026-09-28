@@ -66,7 +66,7 @@ const handlePaymentFailed = () => {
                     v-if="invoice && downloadService"
                     :invoice="invoice"
                     :payment-attempts="paymentAttempts"
-                    :download-service="() => downloadService!(invoice!.id)"
+                    :download-service="() => downloadService!(invoice!)"
                 />
             </Skeleton>
         </template>
@@ -182,7 +182,7 @@ const handlePaymentFailed = () => {
                         v-if="downloadService"
                         type="button"
                         intent="secondary"
-                        @click="() => downloadService?.(invoice!.id)"
+                        @click="() => downloadService?.(invoice!)"
                     >
                         {{
                             $t({

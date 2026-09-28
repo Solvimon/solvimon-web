@@ -23,6 +23,6 @@ export interface InvoiceProps {
     isLoading: boolean;
     invoice: Invoice;
     payments?: Payment[];
-    invoiceDownloadService: (id: Invoice['id']) => Promise<void>;
+    invoiceDownloadService: (invoice: Pick<Invoice, 'id' | 'invoice_number'>) => Promise<void>;
     configuration: InvoiceConfiguration;
 }

@@ -10,7 +10,7 @@ defineProps<InvoiceHeaderProps>();
         class="sv-invoice-header sv-root sv-component"
         :payment-attempts="payments ?? []"
         :invoice="invoice"
-        :download-service="() => invoiceDownloadService(invoice.id)"
+        :download-service="() => invoiceDownloadService(invoice)"
         :show-download-button="configuration.enableDownloadButton"
         variant="external"
     />

@@ -25,6 +25,6 @@ export interface PayInvoiceProps extends BaseScreenProps {
     paymentAttempts?: Payment[];
     countryCode?: string;
     amount?: Amount;
-    downloadService?: (id: Invoice['id']) => Promise<void>;
+    downloadService?: (invoice: Pick<Invoice, 'id' | 'invoice_number'>) => Promise<void>;
     configuration: PayInvoiceConfiguration;
 }

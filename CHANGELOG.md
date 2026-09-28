@@ -7,14 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0-alpha.21] - 2026-09-28
+
+### Added
+
+- The payment method form now reports when it has finished. A host driving its own footer can read `isCompleted` and hide the built-in button, and `configuration.successRedirectUrl` — declared until now but read by nobody — puts a Continue button on the confirmation rather than navigating on its own.
+
 ### Changed
 
 - Moved to `@solvimon/solvimon-ui` 1.9.1, a patch that leaves the component API as it was. One surface shifts with it: the invoice summary rows carry a smaller text size than before.
 - The subscription details screen now loads its schedules on demand rather than up front, which is a fifth less for a host to download to mount it. The schedules only ever rendered once the subscription had arrived, so nothing appears any later than it did.
 - The checkout now loads its plan customization editor on demand rather than up front, which is a twentieth less for a host to download to mount it. The editor only ever rendered once the subscription had arrived, so nothing appears any later than it did.
+- The Adyen SDK is now loaded through a single entry point, so a bundler can drop the exports the SDK never reaches for. The shared chunk behind every screen that mounts a payment form goes from 581 kB to 444 kB raw, and from 160 kB to 126 kB gzipped.
 
 ### Fixed
 
+- A screen is no longer mounted twice while its translations load. Each one was built against the English fallback, then thrown away and built again once its catalogue arrived, so a single checkout asked for two subscriptions, two invoice previews and two sets of payment method options — and the first of each priced a screen the customer never saw. A screen now renders once its catalogue is in, and asks for what it needs once.
+- The checkout no longer starts filled in with details from a previous visit. Restoring a form after a payment return failed part way through and left the stored state behind, so the next checkout in that tab silently carried the entries of the one before it.
+- The checkout now tells the host about an email address or country code it cannot use. Both were rejected in silence — the value dropped and the field left empty — so an integrator had nothing to go on. A read-only email the checkout rejected also locked an empty field, leaving the customer unable to enter one at all.
+- A checkout no longer asks the gateway twice for the payment methods on offer when the country and the amount land in the same tick. A lookup now joins one already in flight for the same request.
+- Storing a payment method now updates the list on the payment methods screen. The card previously appeared only after a page reload, on the one screen whose purpose is adding them.
+- An invoice that has already been paid is no longer offered a pay button reading €0.00, which threw when pressed.
+- Following a payment link to an invoice that cannot be loaded now shows the error. The customer was left on an empty screen with no sign of whether the link was wrong, the invoice gone, or the page still loading.
+- Stripe now keeps a card only where the customer said it could. The option that stores the method was set on every payment regardless of the answer, so the pay-invoice checkbox changed nothing. Whether the method is ultimately stored also depends on the API honouring what the payment was created with.
+- The payment method form no longer offers a save once the method is stored. The gateway swaps its fields for a confirmation, but the submit button sits a level up and stayed put — most visible with SEPA, which completes without ever leaving the page.
+- The success card no longer promises a redirect that is not coming. Only a checkout goes on to redirect; paying an invoice and storing a payment method both end on that card and stay put.
 - The SDK no longer writes stray `console` output when loaded as ES modules. Those statements were only ever stripped from the CommonJS build, so the console noise an integration saw depended on which format its bundler picked. Logging through `onLog` and the `log` event is unaffected. The published package is also a tenth smaller to install.
 
 ## [0.1.0-alpha.20] - 2026-09-23

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A downloaded invoice PDF is now named after the invoice number the customer reads on the document — `invoice-INV-001.pdf` rather than `invoice-inv_01abc....pdf`. The download service takes the invoice it is downloading instead of just its id, and an invoice still waiting for a number falls back to that id.
+
 ## [0.1.0-alpha.21] - 2026-09-28
 
 ### Added

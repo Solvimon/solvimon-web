@@ -34,7 +34,7 @@ interface InvoicesService {
         };
         query?: Record<string, string | number | null | undefined>;
     }) => Promise<ApiSuccessCollectionResponse<Invoice>>;
-    getInvoicePdf: (id: string) => Promise<void>;
+    getInvoicePdf: (invoice: Pick<Invoice, 'id' | 'invoice_number'>) => Promise<void>;
     getInvoicePreview: (args: GetInvoicePreviewPayload) => Promise<InvoicePreview>;
     previewChargeOnDemandPricingItems: (
         args: ChargeOnDemandPricingItemsPreviewPayload,
@@ -87,9 +87,14 @@ export function createInvoicesService(): InvoicesService {
         });
     }
     /**
-     * Download the PDF version of the invoice.
+     * Download the PDF version of the invoice. The file is named after the invoice number the
+     * customer sees on the document itself; an invoice still waiting for one falls back to its id
+     * so the file is never named `invoice-.pdf`.
      */
-    async function getInvoicePdf(id: string): Promise<void> {
+    async function getInvoicePdf({
+        id,
+        invoice_number,
+    }: Pick<Invoice, 'id' | 'invoice_number'>): Promise<void> {
         return request<Blob>({
             url: `${config.apiUrls.transaction}/portal/invoices/${id}/pdf`,
             options: { headers: { 'Content-Type': 'application/pdf' } },
@@ -97,7 +102,7 @@ export function createInvoicesService(): InvoicesService {
             const newBlob = new Blob([response], {
                 type: 'application/pdf',
             });
-            downloadFile(newBlob, `invoice-${id}.pdf`);
+            downloadFile(newBlob, `invoice-${invoice_number || id}.pdf`);
         });
     }
 

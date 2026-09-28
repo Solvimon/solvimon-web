@@ -320,7 +320,9 @@ describe('PayInvoice', () => {
                 .get('[data-testid="payment-methods-unavailable"] button')
                 .trigger('click');
 
-            expect(downloadService).toHaveBeenCalledWith('inv_123');
+            expect(downloadService).toHaveBeenCalledWith(
+                expect.objectContaining({ id: 'inv_123', invoice_number: 'INV-001' }),
+            );
         });
 
         it('drops the pay button, which could only ever have been dead', async () => {

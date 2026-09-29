@@ -7,9 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0-alpha.22] - 2026-09-29
+
+### Added
+
+- The checkout now lets a customer choose how many units of a one-off flat item to buy, using a stepper under the seats editor that works the same way. The quantity reprices the invoice preview and is carried into the subscription created at payment. A plan with no such items sends the same requests as before.
+
 ### Changed
 
 - A downloaded invoice PDF is now named after the invoice number the customer reads on the document — `invoice-INV-001.pdf` rather than `invoice-inv_01abc....pdf`. The download service takes the invoice it is downloading instead of just its id, and an invoice still waiting for a number falls back to that id.
+
+### Fixed
+
+- The seat and unit counts in the checkout steppers are visible again. Text and feedback elements from `@solvimon/solvimon-ui` had lost their colours, and in the steppers that left the count transparent.
 
 ## [0.1.0-alpha.21] - 2026-09-28
 

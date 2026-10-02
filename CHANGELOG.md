@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - A failed payment now shows the customer a reference such as `SV-7F3K2A9Q`, with a button to copy it, and asks them to quote it to support. The same reference is on every log entry the visit emits, as `reference`, so one a customer sends leads straight to everything that session logged. It is kept for the browser session, so it survives the 3DS redirect and the error card's own reload, and identifies nothing but the visit.
 
+### Changed
+
+- `LogEntry` carries a required `reference`. A host that only reads entries is unaffected; one that constructs a `LogEntry` of its own — in a test double, say — now has to supply it. The schema version stays at 1, since no existing field changed meaning.
+
 ### Fixed
 
 - Failed payments reach `onLog` again. Several paths rendered the error card and emitted nothing at all — the Adyen drop-in reporting a failed payment among them — and those that did log passed the caught error as context rather than as the error, so entries arrived with `error` and `errorSerialized` empty and a host forwarding them to their reporter sent an exception with nothing in it.

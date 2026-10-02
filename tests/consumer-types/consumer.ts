@@ -31,6 +31,7 @@ export const log: LogEntry = {
     code: 'TRANSLATION_LOAD_FAILED',
     message: 'a message',
     timestamp: '2026-01-01T00:00:00.000Z',
+    reference: 'SV-7F3K2A9Q',
 };
 
 // @ts-expect-error - only the Solvimon environments are accepted

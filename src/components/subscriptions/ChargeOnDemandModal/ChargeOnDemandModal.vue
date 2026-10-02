@@ -163,9 +163,9 @@ const subscriptionName = computed(() =>
     getSubscriptionName({
         subscription: props.subscription,
         fallback: $t({
-            defaultMessage: 'your',
+            defaultMessage: 'your subscription',
             description:
-                'Stands in for the subscription name in "One-off items for {subscription} subscription" when it has none',
+                'Stands in for the subscription name in the on-demand order modal when the subscription has none',
             id: 'charge_on_demand_modal.subscription_name_fallback',
         }),
     }),
@@ -199,7 +199,7 @@ const subTitle = computed(() => {
         return $t(
             {
                 defaultMessage:
-                    'Your order for the {subscription} subscription is paid. The invoice is in your invoice list.',
+                    'Your order for {subscription} is paid. The invoice is in your invoice list.',
                 description: 'Subtitle of the on-demand order modal once the order has been paid',
                 id: 'charge_on_demand_modal.success.subtitle',
             },
@@ -216,8 +216,7 @@ const subTitle = computed(() => {
           })
         : $t(
               {
-                  defaultMessage:
-                      'One-off items for your {subscription} subscription. You pay once, today.',
+                  defaultMessage: 'One-off items for {subscription}. You pay once, today.',
                   description:
                       'Subtitle of the modal for ordering the on-demand items of a subscription',
                   id: 'charge_on_demand_modal.subtitle',

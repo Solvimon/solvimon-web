@@ -118,6 +118,25 @@ describe('createLogger', () => {
         lastEntry = () => sink.mock.calls[sink.mock.calls.length - 1][0];
     });
 
+    describe('session reference', () => {
+        it('stamps every entry with the reference, whatever its level', () => {
+            const logger = createLogger(sink, { logLevel: 'debug' });
+
+            logger.debug('DEBUG_CODE', 'msg');
+            logger.error('INTEGRATION_ERROR', 'msg');
+
+            const references = sink.mock.calls.map(([entry]) => entry.reference);
+            expect(references).toEqual([references[0], references[0]]);
+            expect(references[0]).toMatch(/^SV-/);
+        });
+
+        it('uses the reference it was given', () => {
+            const logger = createLogger(sink, { reference: 'SV-7F3K2A9Q' });
+            logger.error('INTEGRATION_ERROR', 'msg');
+            expect(lastEntry().reference).toBe('SV-7F3K2A9Q');
+        });
+    });
+
     describe('log level filtering', () => {
         it('emits entries at or above the configured logLevel', () => {
             const logger = createLogger(sink, { logLevel: 'warn' });

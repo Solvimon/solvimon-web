@@ -222,10 +222,42 @@ Want to contribute? Check the [developer documentation](./docs/development/readm
 
 The SDK emits structured log entries via the [`onLog`](#error-logging) callback. Subscribe to receive all log events and filter by `code` for programmatic handling.
 
+### Tracing a customer's report
+
+Every entry carries a `reference` — a short identifier such as `SV-7F3K2A9Q` that is the same for
+every entry from one customer's visit. It survives the 3DS redirect and a reload, and names no
+customer and no account. When a payment fails, the SDK shows that same reference on the error card
+and invites the customer to quote it, so a support message saying "it failed, reference SV-7F3K2A9Q"
+leads straight to everything that session logged.
+
+Forward it as a searchable tag, and pass the error on as an exception rather than as data — the
+thrown value is on `error`, and `errorSerialized` is the same failure flattened for transport:
+
+```js
+onLog: (entry) => {
+    Sentry.withScope((scope) => {
+        scope.setTag('solvimon.reference', entry.reference);
+        scope.setContext('solvimon', entry.context);
+        if (entry.fingerprint) scope.setFingerprint(entry.fingerprint);
+
+        if (entry.error) {
+            Sentry.captureException(entry.error);
+        } else {
+            Sentry.captureMessage(`${entry.code}: ${entry.message}`, entry.level);
+        }
+    });
+};
+```
+
+Failed payments are logged with the gateway, the payment acceptor, the payment method type and —
+where the failure came back from the Solvimon API — the `requestId` from its `X-Request-Id`
+response header, which is what joins the entry to its server-side logs.
+
 ### Error codes
 
 | Code                                        | Description                                                        |
 | :------------------------------------------ | :----------------------------------------------------------------- |
+| `ADYEN_PAYMENT_FAILED`                      | Adyen reported the payment as failed                               |
 | `ADYEN_SUBMIT_FAILED`                       | Failed to submit Adyen drop-in                                     |
 | `APPLE_PAY_AUTHORIZATION_FAILED`            | Payment authorization failed                                       |
 | `APPLE_PAY_ERROR`                           | Apple Pay error                                                    |
@@ -241,8 +273,10 @@ The SDK emits structured log entries via the [`onLog`](#error-logging) callback.
 | `INVALID_TOKEN`                             | Failed to fetch access token                                       |
 | `INVOICE_PREVIEW_FAILED`                    | Failed to load top-up invoice preview                              |
 | `NO_PAYMENT_METHODS_AVAILABLE`              | No payment method can be offered to the customer                   |
+| `PAYMENT_ACCEPTOR_MISSING`                  | Additional details arrived without a payment acceptor id           |
 | `PAYMENT_AUTHORIZATION_FAILED`              | Failed payment authorization for payment acceptor with id…         |
 | `PAYMENT_DETAILS_CALL_FAILED`               | Failed fetching payment details                                    |
+| `PAYMENT_DETAILS_REJECTED`                  | Payment details returned a failed payment                          |
 | `PAYMENT_INTEGRATION_INITIALIZATION_FAILED` | Failed to mount Adyen web drop-in                                  |
 | `PAYMENT_METHOD_OPTIONS_LOAD_FAILED`        | Failed to load the payment methods the checkout can offer          |
 | `PROMOTION_CODE_APPLY_FAILED`               | Failed to apply promotion code                                     |

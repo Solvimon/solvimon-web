@@ -31,6 +31,11 @@ import { toMinorUnitAmount } from '@/utils/amount';
 import { loadAdyenSdk } from '@/utils/adyenSdk';
 import { useExperimentalFeature } from '@/components/providers/ExperimentalFeatureProvider/composables/useExperimentalFeature';
 import { useLogger } from '@/components/providers';
+import {
+    createPaymentFailureContext,
+    createPaymentFailureError,
+    type PaymentFailureParams,
+} from '@/utils/paymentFailure';
 
 /**
  * The Adyen instances should be stored in plain objects to avoid issues with Vue's reactivity system.
@@ -79,11 +84,38 @@ const dropInPaymentMethods = computed(() =>
  */
 const canMountDropIn = computed(() => dropInPaymentMethods.value.length > 0);
 
+/** The context every failure in this form is logged with, filled in from what the form knows. */
+function failureContext(params: Omit<PaymentFailureParams, 'gateway'>): Record<string, unknown> {
+    return createPaymentFailureContext({
+        gateway: PAYMENT_GATEWAY_VARIANT_ADYEN,
+        paymentAcceptorId: props.paymentMethodOptionResponseEntry.payment_acceptor.id,
+        variant: props.variant,
+        invoiceId: props.invoiceId,
+        customerId: props.customerId,
+        ...params,
+    });
+}
+
+/**
+ * Every failure leaves through here, so the card the customer sees always carries the reference
+ * they can quote back to support.
+ */
+function emitError(err: Omit<Error, 'reference'>) {
+    const failure = createPaymentFailureError(err);
+    integrationError.value = failure;
+    emit('payment-failed', failure);
+}
+
 function submit() {
     try {
         dropInInstance?.submit();
     } catch (error) {
-        logger.error('ADYEN_SUBMIT_FAILED', 'Failed to submit Adyen drop-in', {}, error);
+        logger.error(
+            'ADYEN_SUBMIT_FAILED',
+            'Failed to submit Adyen drop-in',
+            failureContext({ reason: 'ADYEN_SUBMIT_FAILED', cause: error }),
+            error,
+        );
     }
 }
 
@@ -157,6 +189,10 @@ function loadAdyen() {
 async function mountDropIn() {
     await unmountDropIn();
 
+    // A fresh attempt supersedes whatever the last one failed with, so the card from it does not
+    // stay on screen above a drop-in that has since mounted.
+    integrationError.value = undefined;
+
     if (!canMountDropIn.value) {
         const { payment_acceptor: paymentAcceptor, integration } =
             props.paymentMethodOptionResponseEntry;
@@ -192,8 +228,14 @@ async function mountDropIn() {
         logger.error(
             'PAYMENT_INTEGRATION_INITIALIZATION_FAILED',
             'Failed to mount Adyen web drop-in',
-            { error },
+            failureContext({ reason: 'ADYEN_DROP_IN_MOUNT_FAILED', cause: error }),
+            error,
         );
+        emitError({
+            code: 'PAYMENT_INTEGRATION_INITIALIZATION_FAILED',
+            message: 'Failed to mount Adyen web drop-in',
+            error,
+        });
     }
 }
 
@@ -419,7 +461,12 @@ function handleOnSubmit(
                                 logger.error(
                                     'PAYMENT_AUTHORIZATION_FAILED',
                                     `Failed payment authorization for payment acceptor with id ${paymentAcceptorId}`,
-                                    { error },
+                                    failureContext({
+                                        reason: 'PAYMENT_AUTHORIZATION_REJECTED',
+                                        paymentMethodType: state.data.paymentMethod.type,
+                                        cause: error,
+                                    }),
+                                    error,
                                 ),
                         }),
                     )
@@ -427,7 +474,12 @@ function handleOnSubmit(
                         logger.error(
                             'PAYMENT_AUTHORIZATION_FAILED',
                             `Failed payment authorization for payment acceptor with id ${paymentAcceptorId}`,
-                            { error },
+                            failureContext({
+                                reason: 'PAYMENT_AUTHORIZATION_FAILED',
+                                paymentMethodType: state.data.paymentMethod.type,
+                                cause: error,
+                            }),
+                            error,
                         );
                         actions.resolve({ resultCode: 'Error' });
                     });
@@ -444,7 +496,11 @@ function handleOnSubmit(
                     logger.error(
                         'TOKENIZATION_FAILED',
                         `Missing customer id for payment acceptor with id ${paymentAcceptorId}`,
+                        failureContext({ reason: 'TOKENIZATION_FAILED_NO_CUSTOMER' }),
                     );
+                    // Returning quietly used to leave the customer looking at a form that had
+                    // already taken their details and would never do anything with them.
+                    emitError({ code: 'TOKENIZE_FAILED', message: 'Missing customer id' });
                     return;
                 }
 
@@ -463,7 +519,12 @@ function handleOnSubmit(
                                 logger.error(
                                     'TOKENIZATION_FAILED',
                                     `Tokenization failed for payment acceptor with id ${paymentAcceptorId}`,
-                                    { error },
+                                    failureContext({
+                                        reason: 'TOKENIZATION_REJECTED',
+                                        paymentMethodType: state.data.paymentMethod.type,
+                                        cause: error,
+                                    }),
+                                    error,
                                 ),
                         }),
                     )
@@ -471,7 +532,12 @@ function handleOnSubmit(
                         logger.error(
                             'TOKENIZATION_FAILED',
                             `Tokenization failed for payment acceptor with id ${paymentAcceptorId}`,
-                            { error },
+                            failureContext({
+                                reason: 'TOKENIZATION_FAILED',
+                                paymentMethodType: state.data.paymentMethod.type,
+                                cause: error,
+                            }),
+                            error,
                         );
                         actions.resolve({ resultCode: 'Error' });
                     });
@@ -481,7 +547,7 @@ function handleOnSubmit(
             logger.error(
                 'INTEGRATION_ERROR',
                 'Unhandled error in payment submission flow',
-                {},
+                failureContext({ reason: 'ADYEN_SUBMISSION_FLOW_FAILED', cause: error }),
                 error,
             );
         });
@@ -529,13 +595,16 @@ function handleOnAdditionalDetails(
         return;
     }
 
-    const error: Error = {
-        code: 'UNKNOWN_ERROR',
+    logger.error(
+        'PAYMENT_ACCEPTOR_MISSING',
+        'Additional details arrived without a payment acceptor id',
+        failureContext({ reason: 'PAYMENT_ACCEPTOR_MISSING' }),
+    );
+    emitError({
+        code: 'REDIRECT_RESULT_PAYMENT_ACCEPTOR_MISSING',
         message: 'Payment failed',
         error: args,
-    };
-    emit('payment-failed', error);
-    integrationError.value = error;
+    });
 }
 
 function removeEmptyValues(obj: Record<string, unknown>): Record<string, unknown> {
@@ -548,13 +617,19 @@ function handleOnPaymentFailed(
     ...args: Parameters<NonNullable<CoreConfiguration['onPaymentFailed']>>
 ): ReturnType<NonNullable<CoreConfiguration['onPaymentFailed']>> {
     const [data] = args;
-    const error: Error = {
-        code: 'UNKNOWN_ERROR',
-        message: 'Payment failed',
-        error: data,
-    };
-    emit('payment-failed', error);
-    integrationError.value = error;
+
+    // The drop-in reporting a failed payment is the single most common way a customer ends up on
+    // the error card, and until now it was the one path that emitted nothing at all.
+    logger.error(
+        'ADYEN_PAYMENT_FAILED',
+        'Adyen reported the payment as failed',
+        failureContext({
+            reason: 'ADYEN_PAYMENT_FAILED',
+            extra: { resultCode: data?.resultCode },
+        }),
+        data,
+    );
+    emitError({ code: 'AUTHORIZATION_FAILED', message: 'Payment failed', error: data });
 }
 
 function handleOnPaymentCompleted(
@@ -574,13 +649,17 @@ function handleOnError(
         return;
     }
 
-    const error: Error = {
-        code: 'UNKNOWN_ERROR',
-        message: 'Something went wrong',
-        error: data,
-    };
-    logger.error('INTEGRATION_ERROR', 'Something went wrong', { error: data });
-    integrationError.value = error;
+    logger.error(
+        'INTEGRATION_ERROR',
+        'The Adyen drop-in reported an error',
+        failureContext({
+            reason: 'ADYEN_INTEGRATION_ERROR',
+            cause: data,
+            extra: { adyenErrorName: data.name },
+        }),
+        data,
+    );
+    emitError({ code: 'UNKNOWN_ERROR', message: 'Something went wrong', error: data });
     component?.unmount();
 }
 
@@ -615,8 +694,19 @@ function handlePaymentDetails({
     })
         .then((result) => {
             if (result.payment_status === 'FAILURE') {
-                emit('payment-failed', {
-                    code: 'UNKNOWN_ERROR',
+                // The call went through; the payment it reports on did not. Worth its own code,
+                // because nothing is wrong with the integration here.
+                logger.error(
+                    'PAYMENT_DETAILS_REJECTED',
+                    'Payment details returned a failed payment',
+                    failureContext({
+                        reason: 'PAYMENT_DETAILS_REJECTED',
+                        paymentAcceptorId,
+                        extra: { paymentStatus: result.payment_status },
+                    }),
+                );
+                emitError({
+                    code: 'AUTHORIZATION_FAILED',
                     message: 'Failed getting payment details',
                     error: result,
                 });
@@ -629,7 +719,20 @@ function handlePaymentDetails({
             }
         })
         .catch((error) => {
-            logger.error('PAYMENT_DETAILS_CALL_FAILED', 'Failed fetching payment details', {
+            logger.error(
+                'PAYMENT_DETAILS_CALL_FAILED',
+                'Failed fetching payment details',
+                failureContext({
+                    reason: 'PAYMENT_DETAILS_CALL_FAILED',
+                    paymentAcceptorId,
+                    cause: error,
+                }),
+                error,
+            );
+            // The customer was left on a spinner that never resolved.
+            emitError({
+                code: 'PAYMENT_DETAILS_CALL_FAILED',
+                message: 'Failed fetching payment details',
                 error,
             });
         });
@@ -652,8 +755,12 @@ function handleRedirectResult() {
         logger.error(
             'INVALID_REDIRECT_RESULT',
             'Redirect result is set but payment acceptor id is missing',
-            { context: { redirectResult } },
+            failureContext({ reason: 'INVALID_REDIRECT_RESULT' }),
         );
+        emitError({
+            code: 'REDIRECT_RESULT_PAYMENT_ACCEPTOR_MISSING',
+            message: 'Redirect result is set but payment acceptor id is missing',
+        });
         return;
     }
 

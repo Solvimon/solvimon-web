@@ -24,7 +24,8 @@ const { buttonRef: googlePayButtonRef } = useExpressPaymentMethod({
         logger.error(
             'EXPRESS_CHECKOUT_GOOGLE_PAY_ERROR',
             'Failed mounting Google Pay express button',
-            { error },
+            {},
+            error,
         ),
     create: async (checkout) => {
         const { GooglePay } = await loadAdyenSdk();

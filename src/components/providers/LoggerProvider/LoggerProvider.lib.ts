@@ -1,6 +1,7 @@
 import type { InjectionKey, Ref } from 'vue';
 import type { Environment } from '@solvimon/solvimon-types';
 import type { LogEntry, Logger, LogLevel, LogSink, SerializedError } from './LoggerProvider.types';
+import { getSessionReference } from '@/utils/sessionReference';
 
 export const LOGGER_PROVIDER_INJECTION_KEY: InjectionKey<Logger> = Symbol('sdkLogger');
 
@@ -98,10 +99,17 @@ export function extractFingerprint(context?: Record<string, unknown>): {
 
 export function createLogger(
     sink: LogSink,
-    opts?: { logLevel?: LogLevel; customElementName?: string; environment?: Environment },
+    opts?: {
+        logLevel?: LogLevel;
+        customElementName?: string;
+        environment?: Environment;
+        /** Overridable so a test can assert against a known value; otherwise the session's own. */
+        reference?: string;
+    },
 ): Logger {
     const order: Record<LogLevel, number> = { debug: 10, info: 20, warn: 30, error: 40 };
     const min = opts?.logLevel ?? 'warn';
+    const reference = opts?.reference ?? getSessionReference();
 
     const emit = (
         level: LogLevel,
@@ -120,6 +128,7 @@ export function createLogger(
             code,
             message,
             timestamp: new Date().toISOString(),
+            reference,
             context: entryContext,
             ...(fingerprint ? { fingerprint } : {}),
             error: err,

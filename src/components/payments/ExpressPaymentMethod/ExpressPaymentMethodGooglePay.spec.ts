@@ -193,7 +193,8 @@ describe('ExpressPaymentMethodGooglePay', () => {
         expect(mockLogger.error).toHaveBeenCalledWith(
             'EXPRESS_CHECKOUT_GOOGLE_PAY_ERROR',
             'Failed mounting Google Pay express button',
-            expect.objectContaining({ error: expect.any(Error) }),
+            {},
+            expect.any(Error),
         );
     });
 

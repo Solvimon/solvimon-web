@@ -5,9 +5,44 @@ import type { ChargeOnDemandItem } from '@solvimon/solvimon-ui';
 import ChargeOnDemandModal from './ChargeOnDemandModal.vue';
 import type { PricingPlanSubscriptionExpanded } from '@/types/subscription';
 
-const { mockPreview, mockCharge } = vi.hoisted(() => ({
+const { mockPreview, mockCharge, mockLoadPaymentMethodOptions, gateway } = vi.hoisted(() => ({
     mockPreview: vi.fn(),
     mockCharge: vi.fn(),
+    mockLoadPaymentMethodOptions: vi.fn(),
+    gateway: {} as { options: { value: unknown[] }; isPending: { value: boolean } },
+}));
+
+vi.mock('@/composables/usePaymentMethodOptions', async () => {
+    const { ref } = await import('vue');
+
+    gateway.options = ref<unknown[]>([]);
+    gateway.isPending = ref(false);
+
+    return {
+        usePaymentMethodOptions: () => ({
+            paymentMethodOptions: gateway.options,
+            get: mockLoadPaymentMethodOptions,
+            isPending: gateway.isPending,
+        }),
+    };
+});
+
+vi.mock('@/public/components/PaymentMethodForm/PaymentMethodForm.vue', () => ({
+    default: defineComponent({
+        name: 'PaymentMethodFormStub',
+        props: [
+            'customer',
+            'paymentMethodOptions',
+            'isLoading',
+            'configuration',
+            'hideSubmitButton',
+        ],
+        emits: ['success', 'failure'],
+        setup(_props, { expose }) {
+            expose({ submit: vi.fn(), isPaymentPending: false });
+        },
+        template: '<div data-testid="payment-method-form" />',
+    }),
 }));
 
 vi.mock('@/services/invoices', () => ({
@@ -131,6 +166,11 @@ describe('ChargeOnDemandModal', () => {
         vi.useFakeTimers();
         vi.clearAllMocks();
         mockPreview.mockResolvedValue(preview);
+        mockLoadPaymentMethodOptions.mockResolvedValue([]);
+        gateway.options.value = [
+            { payment_acceptor: { id: 'pacc_stripe' }, integration: { id: 'int_stripe' } },
+            { payment_acceptor: { id: 'pacc_platform' }, integration: { id: 'int_platform' } },
+        ];
     });
 
     afterEach(() => {
@@ -182,5 +222,52 @@ describe('ChargeOnDemandModal', () => {
         expect(findForm(wrapper).exists()).toBe(false);
         expect(wrapper.find('.sv-charge-on-demand-modal__unavailable').exists()).toBe(true);
         expect(findConfirm(wrapper).exists()).toBe(false);
+    });
+
+    describe('adding a payment method', () => {
+        const openAddPaymentMethod = async (wrapper: ReturnType<typeof mountModal>) => {
+            findForm(wrapper).vm.$emit('add-payment-method');
+            await flushPromises();
+        };
+
+        it("loads the subscription's payment method options when it opens", () => {
+            mountModal();
+
+            expect(mockLoadPaymentMethodOptions).toHaveBeenCalledWith(
+                expect.objectContaining({ subscriptionId: 'ppsu_1' }),
+            );
+        });
+
+        it("offers only the options of the subscription's own payment acceptors", async () => {
+            const wrapper = mountModal();
+            await openAddPaymentMethod(wrapper);
+
+            const options = wrapper
+                .findComponent({ name: 'PaymentMethodFormStub' })
+                .props('paymentMethodOptions') as { payment_acceptor: { id: string } }[];
+
+            expect(options.map(({ payment_acceptor }) => payment_acceptor.id)).toEqual([
+                'pacc_stripe',
+            ]);
+            expect(
+                wrapper.find('[data-testid="charge-on-demand-save-payment-method"]').exists(),
+            ).toBe(true);
+        });
+
+        it('selects the stored payment method once it is reloaded', async () => {
+            const wrapper = mountModal();
+            await openAddPaymentMethod(wrapper);
+
+            wrapper.findComponent({ name: 'PaymentMethodFormStub' }).vm.$emit('success');
+            await flushPromises();
+
+            expect(wrapper.emitted('payment-method-stored')).toHaveLength(1);
+
+            await wrapper.setProps({
+                paymentMethods: [card('pmet_other'), card('pmet_subscription'), card('pmet_new')],
+            });
+
+            expect(findForm(wrapper).props('paymentMethodId')).toBe('pmet_new');
+        });
     });
 });

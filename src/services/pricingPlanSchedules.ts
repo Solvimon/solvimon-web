@@ -1,11 +1,11 @@
 import type {
     EnabledPricing,
+    OnDemandPricingItemsResponse,
     PricingPlanSchedule,
     PricingPlanSubscription,
 } from '@solvimon/solvimon-types';
 import { createRequestService } from './requests';
 import { useConfig } from '@/components/providers/ConfigProvider/composables/useConfig';
-import type { OnDemandPricingItemsResponse } from '@/components/subscriptions/SubscriptionManagement/SubscriptionManagement.types';
 
 export interface GetOnDemandPricingItemsPayload {
     scheduleId: string;
@@ -24,7 +24,7 @@ export function createPricingPlanSchedulesService() {
     /**
      * GET /v1/portal/pricing-plan-schedules/{id}/on-demand-pricing-items
      *
-     * Returns on-demand add-ons available for the pricing plan schedule.
+     * Returns the schedule's One Off items with an on-demand config, as pricing categories.
      */
     function getOnDemandPricingItems({
         scheduleId,

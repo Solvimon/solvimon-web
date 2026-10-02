@@ -14,6 +14,7 @@ import EmptyStatePlaceholder from '@/components/checkout/EmptyStatePlaceholder.v
 import Skeleton from '@/components/shared/Skeleton.vue';
 import EnabledPricingsList from '@/components/subscriptions/EnabledPricingsList/EnabledPricingsList.vue';
 import OnDemandItemsCard from '@/components/subscriptions/OnDemandItemsCard/OnDemandItemsCard.vue';
+import ChargeOnDemandModal from '@/components/subscriptions/ChargeOnDemandModal/ChargeOnDemandModal.vue';
 import SubscriptionCancellationModal from '@/components/subscriptions/SubscriptionCancellationModal/SubscriptionCancellationModal.vue';
 import type { SubscriptionCancellationVariant } from '@/services/subscriptions';
 
@@ -250,6 +251,17 @@ const title = computed<string>(() =>
                 :is-loading="isLoading"
                 :payment-methods="[subscriptionPaymentMethod]"
                 :configuration="{ showViewAllButton: false, showAddButton: false }"
+            />
+
+            <ChargeOnDemandModal
+                v-if="subscription && onDemandScheduleId"
+                :show-modal="isOnDemandOrderOpen"
+                :subscription="subscription"
+                :schedule-id="onDemandScheduleId"
+                :items="onDemandItems"
+                :customer="customer"
+                :payment-methods="paymentMethods"
+                @close="isOnDemandOrderOpen = false"
             />
 
             <SubscriptionCancellationModal

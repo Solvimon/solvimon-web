@@ -1,0 +1,30 @@
+import type {
+    Customer,
+    Invoice,
+    PaymentMethod,
+    PricingPlanSchedule,
+} from '@solvimon/solvimon-types';
+import type { ChargeOnDemandItem } from '@solvimon/solvimon-ui';
+import type { PricingPlanSubscriptionExpanded } from '@/types/subscription';
+
+export const CHARGE_ON_DEMAND_MODAL_STEPS = ['ORDER', 'ADD_PAYMENT_METHOD', 'SUCCESS'] as const;
+
+export type ChargeOnDemandModalStep = (typeof CHARGE_ON_DEMAND_MODAL_STEPS)[number];
+
+export interface ChargeOnDemandModalProps {
+    showModal: boolean;
+    subscription: PricingPlanSubscriptionExpanded;
+    /** The schedule the items are charged on: the one the subscription is billed on now. */
+    scheduleId: PricingPlanSchedule['id'];
+    items: ChargeOnDemandItem[];
+    customer?: Customer;
+    /** All of the customer's saved payment methods; the modal offers the ones that can pay. */
+    paymentMethods?: PaymentMethod[];
+}
+
+export interface ChargeOnDemandModalEmits {
+    (e: 'close'): void;
+    (e: 'charged', invoice: Invoice): void;
+    (e: 'payment-method-stored'): void;
+    (e: 'payment-failed', error: unknown): void;
+}

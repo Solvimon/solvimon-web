@@ -12,10 +12,11 @@ import { createLatestGuard } from '@/utils/async';
 const PREVIEW_DEBOUNCE_MS = 400;
 
 /**
- * Previews what topping up would be invoiced for. The preview is recalculated whenever the items
- * being charged change, and cleared while there is nothing to preview.
+ * Previews what charging on-demand pricing items would be invoiced for, such as a wallet top-up or
+ * an on-demand order. The preview is recalculated whenever the items being charged change, and
+ * cleared while there is nothing to preview.
  */
-export function useTopUpInvoicePreview({
+export function useChargeOnDemandInvoicePreview({
     pricingPlanScheduleId,
     pricingItems,
 }: {
@@ -42,7 +43,7 @@ export function useTopUpInvoicePreview({
             if (pricingItems.value && !scheduleId) {
                 logger.warn(
                     'INVOICE_PREVIEW_SKIPPED',
-                    'Skipped the top-up invoice preview: no schedule to charge it on',
+                    'Skipped the on-demand charge invoice preview: no schedule to charge it on',
                     { missing: ['pricingPlanScheduleId'] },
                 );
             }
@@ -70,7 +71,7 @@ export function useTopUpInvoicePreview({
 
             logger.error(
                 'INVOICE_PREVIEW_FAILED',
-                'Failed to load top-up invoice preview',
+                'Failed to load the on-demand charge invoice preview',
                 {},
                 error,
             );
@@ -86,10 +87,10 @@ export function useTopUpInvoicePreview({
         deep: true,
     });
 
-    // A watcher only sees changes, and a top-up chosen while the form is still being built is not one:
-    // the choose-your-amount option is selected and seeded with its minimum during setup, so without
-    // this first ask its placeholder would sit there for good. Undebounced — there is nothing yet to
-    // debounce against — and a no-op when there is nothing to price.
+    // A watcher only sees changes, and items chosen while the form is still being built are not one:
+    // a top-up's choose-your-amount option, for instance, is selected and seeded with its minimum
+    // during setup, so without this first ask its placeholder would sit there for good. Undebounced —
+    // there is nothing yet to debounce against — and a no-op when there is nothing to price.
     void loadPreview();
 
     return { invoicePreview, isPreviewPending, loadPreview };

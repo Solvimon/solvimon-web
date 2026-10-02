@@ -2,7 +2,7 @@
 import { computed } from 'vue';
 import { InvoicePreview, Label, Section, useIntl } from '@solvimon/solvimon-ui';
 import type { TopUpInvoicePreviewProps } from './TopUpInvoicePreview.types';
-import { useTopUpInvoicePreview } from './useTopUpInvoicePreview';
+import { useChargeOnDemandInvoicePreview } from '@/composables/useChargeOnDemandInvoicePreview';
 import Skeleton from '@/components/shared/Skeleton.vue';
 
 const props = defineProps<TopUpInvoicePreviewProps>();
@@ -17,7 +17,7 @@ const pricingItems = computed(() => props.pricingItems);
  * for the same reason, and a caller that only passes what it is charging cannot get the two out of
  * step with what is on screen.
  */
-const { invoicePreview } = useTopUpInvoicePreview({ pricingPlanScheduleId, pricingItems });
+const { invoicePreview } = useChargeOnDemandInvoicePreview({ pricingPlanScheduleId, pricingItems });
 </script>
 
 <template>

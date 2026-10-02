@@ -281,6 +281,7 @@ The SDK emits structured log entries via the [`onLog`](#error-logging) callback.
 | `INVALID_TOKEN`                             | Failed to fetch access token                                       |
 | `INVOICE_PREVIEW_FAILED`                    | Failed to load top-up invoice preview                              |
 | `NO_PAYMENT_METHODS_AVAILABLE`              | No payment method can be offered to the customer                   |
+| `ON_DEMAND_CHARGE_FAILED`                   | Failed to charge the on-demand order                               |
 | `ON_DEMAND_ITEMS_LOAD_FAILED`               | Failed to load the on-demand items of the subscription             |
 | `PAYMENT_ACCEPTOR_MISSING`                  | Additional details arrived without a payment acceptor id           |
 | `PAYMENT_AUTHORIZATION_FAILED`              | Failed payment authorization for payment acceptor with id…         |

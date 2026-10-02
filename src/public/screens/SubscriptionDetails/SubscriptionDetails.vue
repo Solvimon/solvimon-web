@@ -262,6 +262,7 @@ const title = computed<string>(() =>
                 :customer="customer"
                 :payment-methods="paymentMethods"
                 @close="isOnDemandOrderOpen = false"
+                @payment-method-stored="$emit('payment-method-stored')"
             />
 
             <SubscriptionCancellationModal

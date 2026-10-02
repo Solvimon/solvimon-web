@@ -22,6 +22,7 @@ import CheckoutNotAvailable from '@/components/checkout/CheckoutNotAvailable.vue
 import type { Error } from '@/types/errors';
 import SubscriptionPaymentCompletedCard from '@/components/payments/SubscriptionPaymentCompletedCard/SubscriptionPaymentCompletedCard.vue';
 import OrderSummary from '@/components/subscriptions/OrderSummary.vue';
+import MarkdownText from '@/components/shared/MarkdownText/MarkdownText.vue';
 import EmptyStatePlaceholder from '@/components/checkout/EmptyStatePlaceholder.vue';
 import Skeleton from '@/components/shared/Skeleton.vue';
 import ExpressPaymentMethods from '@/components/payments/ExpressPaymentMethods/ExpressPaymentMethods.vue';
@@ -93,6 +94,8 @@ if (portal.value.status === 'REVOKED') {
 
 const subscriptionId = portal.value?.init_pricing_plan_subscription?.pricing_plan_subscription_id;
 const successRedirectUrl = portal.value?.init_pricing_plan_subscription?.success_url;
+// Trimmed so a note of only whitespace renders nothing rather than an empty gap in the column.
+const termsAndConditions = portal.value?.init_pricing_plan_subscription?.note?.trim() || undefined;
 
 const {
     validatedEmail,
@@ -826,6 +829,17 @@ onMounted(() => {
                             }}
                         </Button>
                     </Skeleton>
+
+                    <!-- terms and conditions -->
+                    <Typography
+                        v-if="termsAndConditions"
+                        tag="div"
+                        variant="body-xs"
+                        color="subtle"
+                        class="sv-checkout__terms"
+                    >
+                        <MarkdownText :source="termsAndConditions" />
+                    </Typography>
 
                     <!-- kpis-->
                     <SecurePaymentsKPI :payment-method-options="paymentMethodOptions" />

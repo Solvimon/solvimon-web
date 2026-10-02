@@ -88,8 +88,12 @@ const PORTAL = {
     init_pricing_plan_subscription: {
         pricing_plan_subscription_id: 'sub_1',
         success_url: undefined,
+        note: undefined as string | undefined,
     },
 } as unknown as PortalUrl;
+
+const portalNote = (PORTAL as unknown as { init_pricing_plan_subscription: { note?: string } })
+    .init_pricing_plan_subscription;
 
 vi.mock('@/components/providers/PortalProvider/composables/usePortal', () => ({
     usePortal: () => ref(PORTAL),
@@ -149,6 +153,7 @@ const completed = (wrapper: Awaited<ReturnType<typeof mountCheckout>>) =>
 describe('Checkout', () => {
     beforeEach(() => {
         isPaid.value = false;
+        portalNote.note = undefined;
         subscription.value = CUSTOMISABLE_SUBSCRIPTION;
         invoicePreview.value = {
             id: 'inv_preview',
@@ -172,5 +177,39 @@ describe('Checkout', () => {
 
         expect(editor(wrapper).exists()).toBe(false);
         expect(completed(wrapper).exists()).toBe(true);
+    });
+
+    describe('terms and conditions', () => {
+        it('shows the merchant note beside the pay button', async () => {
+            portalNote.note = 'By subscribing you agree to the [terms](https://example.com).';
+
+            const wrapper = await mountCheckout();
+
+            expect(wrapper.find('.sv-checkout__terms').exists()).toBe(true);
+        });
+
+        it('shows nothing when the checkout page carries no note', async () => {
+            const wrapper = await mountCheckout();
+
+            expect(wrapper.find('.sv-checkout__terms').exists()).toBe(false);
+        });
+
+        it('shows nothing for a note of only whitespace', async () => {
+            portalNote.note = '   \n  ';
+
+            const wrapper = await mountCheckout();
+
+            expect(wrapper.find('.sv-checkout__terms').exists()).toBe(false);
+        });
+
+        // The note is only ever an agreement to pay, so it has no place once payment is done.
+        it('drops the note once the payment has gone through', async () => {
+            portalNote.note = 'By subscribing you agree.';
+            isPaid.value = true;
+
+            const wrapper = await mountCheckout();
+
+            expect(wrapper.find('.sv-checkout__terms').exists()).toBe(false);
+        });
     });
 });

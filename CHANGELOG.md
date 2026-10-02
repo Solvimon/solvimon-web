@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- The checkout screen shows the terms and conditions a merchant set on the checkout page, beside the pay button, where a customer sees them before paying rather than after. They support the subset the Desk editor can produce — text, bold, italic, underline and hyperlinks — and are rendered as components rather than as markup, so a note can never inject anything into a customer's checkout. Anything outside that subset, a raw tag included, shows as the text it is, and a link the browser should not follow keeps its words and loses its href. A checkout page with no note looks exactly as it did.
+
 ### Changed
 
 - A failed API call now rejects with an `ApiError` rather than a plain object. It carries the same `statusCode`, `requestId` and `field` as before, and adds what an object literal could not: a name, a message and a stack. A host forwarding it to their reporter was getting "Object captured as exception with keys: field, hasError, message, requestId, statusCode" as the title of their most important issue; it now reads as the error it is. An error body with no message of its own falls back to `Request failed with status <code>` instead of an empty one.

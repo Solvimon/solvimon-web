@@ -123,6 +123,22 @@ vi.mock(
     }),
 );
 
+// Builds its own invoice and payment method services, which need providers this mount does not have.
+vi.mock('@/components/subscriptions/ChargeOnDemandModal/ChargeOnDemandModal.vue', () => ({
+    default: defineComponent({
+        name: 'ChargeOnDemandModalStub',
+        props: { showModal: Boolean, scheduleId: String, items: Array },
+        emits: ['close', 'charged', 'payment-method-stored', 'payment-failed'],
+        setup(props) {
+            return () =>
+                h('div', {
+                    class: 'sv-charge-on-demand-modal-stub',
+                    'data-open': String(props.showModal),
+                });
+        },
+    }),
+}));
+
 vi.mock('@/public/components/CustomerPaymentMethods/CustomerPaymentMethods.vue', () => ({
     default: defineComponent({
         name: 'CustomerPaymentMethodsStub',
@@ -358,6 +374,16 @@ describe('SubscriptionDetails', () => {
             const wrapper = mountComponent({ onDemandItems, onDemandScheduleId: 'ppsc_1' });
 
             expect(wrapper.find('.sv-subscription-details__on-demand-items').exists()).toBe(true);
+        });
+
+        it('opens the order form from the block', async () => {
+            const wrapper = mountComponent({ onDemandItems, onDemandScheduleId: 'ppsc_1' });
+
+            await wrapper.find('.sv-on-demand-items-card__order').trigger('click');
+
+            expect(wrapper.find('.sv-charge-on-demand-modal-stub').attributes('data-open')).toBe(
+                'true',
+            );
         });
 
         it('hides the block when there is nothing to order', () => {

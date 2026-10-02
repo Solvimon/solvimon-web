@@ -75,6 +75,8 @@ export interface PortalUrlInitPricingPlanSubscription extends BasePortalUrl {
     init_pricing_plan_subscription: {
         pricing_plan_subscription_id: PricingPlanSubscription['id'];
         success_url?: string;
+        /** Merchant-authored terms and conditions, in a limited markdown subset. */
+        note?: string | null;
     };
 }
 

@@ -216,6 +216,14 @@ describe('Checkout', () => {
             expect(wrapper.find('.sv-checkout__terms').exists()).toBe(false);
         });
 
+        it('shows nothing for a note of only whitespace', async () => {
+            portalNote.note = '   \n  ';
+
+            const wrapper = await mountCheckout();
+
+            expect(wrapper.find('.sv-checkout__terms').exists()).toBe(false);
+        });
+
         // The note is only ever an agreement to pay, so it has no place once payment is done.
         it('drops the note once the payment has gone through', async () => {
             portalNote.note = 'By subscribing you agree.';

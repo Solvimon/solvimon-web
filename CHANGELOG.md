@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0-alpha.23] - 2026-10-02
+
 ### Added
 
 - A failed payment now shows the customer a reference such as `SV-7F3K2A9Q`, with a button to copy it, and asks them to quote it to support. The same reference is on every log entry the visit emits, as `reference`, so one a customer sends leads straight to everything that session logged. It is kept for the browser session, so it survives the 3DS redirect and the error card's own reload, and identifies nothing but the visit.

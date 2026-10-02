@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - The Adyen SEPA Direct Debit form now carries the direct debit mandate — a heading and the authorisation itself, naming the billing entity collecting the money — inside Adyen's own card under the IBAN field, where a customer reads it as they enter the account it applies to. Where the billing entity is not known to the screen, the mandate falls back to wording that does not need the name rather than leaving a gap in the sentence. It appears on no other payment method. Adyen offers no SEPA consent string to override and no slot in that card, so the notice is placed into it and re-placed if Adyen rebuilds the card; the selector that depends on Adyen's internals is pinned by a test, so an upgrade that moves it fails the build rather than quietly dropping a legal notice.
+- The checkout screen shows the terms and conditions a merchant set on the checkout page, beside the pay button, where a customer sees them before paying rather than after. They support the subset the Desk editor can produce — text, bold, italic, underline and hyperlinks — and are rendered as components rather than as markup, so a note can never inject anything into a customer's checkout. Anything outside that subset, a raw tag included, shows as the text it is, and a link the browser should not follow keeps its words and loses its href. A checkout page with no note looks exactly as it did.
 
 ### Changed
 

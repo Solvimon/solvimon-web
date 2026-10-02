@@ -342,6 +342,31 @@ describe('SubscriptionDetails', () => {
         });
     });
 
+    describe('on-demand items', () => {
+        const onDemandItems = [
+            {
+                pricingItemId: 'prii_onboarding',
+                pricingItemConfigId: 'pric_onboarding',
+                name: 'Onboarding package',
+                priceType: 'FIXED',
+                price: { quantity: '250', currency: 'EUR' },
+                defaultUnits: 1,
+            },
+        ];
+
+        it('offers the on-demand items when there is something to order', () => {
+            const wrapper = mountComponent({ onDemandItems, onDemandScheduleId: 'ppsc_1' });
+
+            expect(wrapper.find('.sv-subscription-details__on-demand-items').exists()).toBe(true);
+        });
+
+        it('hides the block when there is nothing to order', () => {
+            const wrapper = mountComponent({ onDemandItems: [] });
+
+            expect(wrapper.find('.sv-subscription-details__on-demand-items').exists()).toBe(false);
+        });
+    });
+
     describe('upgrades', () => {
         const withUpgrade = {
             ...mockSubscription,

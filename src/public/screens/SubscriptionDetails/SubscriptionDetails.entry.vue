@@ -25,6 +25,8 @@ defineProps<SolvimonSubscriptionDetailsEntryProps>();
                     customer,
                     paymentMethods,
                     walletBalances,
+                    onDemandItems,
+                    onDemandScheduleId,
                     hasWalletBalancesError,
                     isLoading,
                     error,
@@ -40,6 +42,8 @@ defineProps<SolvimonSubscriptionDetailsEntryProps>();
                     :avatar="configuration.avatar"
                     :payment-methods="paymentMethods"
                     :wallet-balances="walletBalances"
+                    :on-demand-items="onDemandItems"
+                    :on-demand-schedule-id="onDemandScheduleId"
                     :has-wallet-balances-error="hasWalletBalancesError"
                     :is-loading="isLoading"
                     :error="error"

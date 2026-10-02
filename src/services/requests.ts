@@ -1,6 +1,6 @@
 import type { ApiSuccessCollectionResponse } from '@solvimon/solvimon-types';
-import { useErrorHandling } from '@solvimon/solvimon-ui';
 import { version } from '../../package.json';
+import { ApiError } from './apiError';
 import type {
     CollectionRequestParams,
     RequestOptions,
@@ -17,7 +17,6 @@ const defaultOptions: RequestOptions = {
 };
 
 export function createRequestService({ enableAccessCheck } = { enableAccessCheck: true }) {
-    const { onError } = useErrorHandling();
     const logger = useLogger();
     // Resolved here because inject() is only valid during setup, but read per request: the token
     // is refreshed in the background, and a value captured now would never be replaced.
@@ -42,6 +41,28 @@ export function createRequestService({ enableAccessCheck } = { enableAccessCheck
 
         return headers;
     };
+
+    /** The one entry a failed request produces; callers add their own code on top. */
+    function reportFailure(url: URL, options: RequestOptions, error: unknown) {
+        const statusCode = error instanceof ApiError ? error.statusCode : undefined;
+        const isExpected = !!statusCode && !!options.expectedStatusCodes?.includes(statusCode);
+
+        const context = {
+            // Path only: a query string carries customer data.
+            path: url.pathname,
+            method: options.method,
+            ...(statusCode ? { statusCode } : {}),
+            ...(error instanceof ApiError && error.requestId ? { requestId: error.requestId } : {}),
+            fingerprint: ['REQUEST_FAILED', options.method ?? 'GET', url.pathname, `${statusCode}`],
+        };
+
+        if (isExpected) {
+            logger.warn('REQUEST_FAILED', 'Request failed with an expected status', context, error);
+            return;
+        }
+
+        logger.error('REQUEST_FAILED', 'Request failed', context, error);
+    }
 
     async function request<T>(params: SingleRequestParams): Promise<T>;
     async function request<T>(
@@ -85,26 +106,24 @@ export function createRequestService({ enableAccessCheck } = { enableAccessCheck
                         {},
                         error,
                     );
-                    onError?.(new Error('Failed to parse JSON response', { cause: error }));
 
-                    throw {
-                        hasError: true,
+                    throw new ApiError({
                         statusCode: response.status,
+                        message: 'Failed to parse JSON response',
                         requestId: response.headers.get(Headers.X_REQUEST_ID),
-                    };
+                    });
                 }
             }
 
             // Checked once, for every content type: a PDF endpoint answering with an HTML error
             // page has to reject, not resolve with the page as if it were the file.
             if (!response.ok) {
-                throw {
-                    hasError: true,
+                throw new ApiError({
                     statusCode: response.status,
                     message: json?.message,
                     requestId: response.headers.get(Headers.X_REQUEST_ID),
                     field: json?.field,
-                };
+                });
             }
 
             if (mediaType === MediaType.PDF) {
@@ -117,7 +136,7 @@ export function createRequestService({ enableAccessCheck } = { enableAccessCheck
 
             return json;
         } catch (error) {
-            onError?.(new Error('Request failed', { cause: error }));
+            reportFailure(fullUrl, options, error);
             return Promise.reject(error);
         }
     }

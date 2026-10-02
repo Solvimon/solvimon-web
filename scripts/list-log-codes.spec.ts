@@ -152,6 +152,25 @@ describe('scanLogCodes', () => {
         expect(entries[0].message).toBe('First message');
     });
 
+    it('keeps one entry per level, so a code emitted at both is described twice', () => {
+        const dir = tmpDir();
+        writeFile(
+            dir,
+            'both.ts',
+            `
+            logger.warn('REQUEST_FAILED', 'Request failed with an expected status');
+            logger.error('REQUEST_FAILED', 'Request failed');
+            `,
+        );
+
+        const entries = scanLogCodes(dir, dir);
+        expect(entries).toHaveLength(2);
+        expect(entries.find((e) => e.level === 'error')?.message).toBe('Request failed');
+        expect(entries.find((e) => e.level === 'warn')?.message).toBe(
+            'Request failed with an expected status',
+        );
+    });
+
     it('ignores .spec. files', () => {
         const dir = tmpDir();
         writeFile(dir, 'service.spec.ts', `logger.error('SPEC_ONLY', 'should be ignored');`);

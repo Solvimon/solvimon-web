@@ -17,7 +17,8 @@ export function createTokensService() {
         refreshAccessToken() {
             return request<Token>({
                 url: `${config.apiUrls.identity}/oauth/refresh-token`,
-                options: { method: 'POST' },
+                // A 401 is the expected end of a session; `AuthProvider` raises SESSION_EXPIRED.
+                options: { method: 'POST', expectedStatusCodes: [401] },
             });
         },
     };

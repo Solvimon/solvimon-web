@@ -1,6 +1,6 @@
 import type { Amount, Invoice } from '@solvimon/solvimon-types';
 import { computed, nextTick, ref } from 'vue';
-import { useTopUpInvoicePreview } from './useTopUpInvoicePreview';
+import { useChargeOnDemandInvoicePreview } from './useChargeOnDemandInvoicePreview';
 
 const { mockPreview } = vi.hoisted(() => ({ mockPreview: vi.fn() }));
 
@@ -24,14 +24,14 @@ const setup = ({
 
     return {
         amount,
-        ...useTopUpInvoicePreview({
+        ...useChargeOnDemandInvoicePreview({
             pricingPlanScheduleId: ref(scheduleId),
             pricingItems,
         }),
     };
 };
 
-describe('useTopUpInvoicePreview', () => {
+describe('useChargeOnDemandInvoicePreview', () => {
     beforeEach(() => {
         vi.useFakeTimers();
         mockPreview.mockReset();

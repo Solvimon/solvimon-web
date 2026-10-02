@@ -7,6 +7,7 @@ import { useCustomer } from '@/composables/useCustomer';
 import { usePaymentMethods } from '@/composables/usePaymentMethods';
 import { useCustomerWalletBalances } from '@/composables/useCustomerWalletBalances';
 import { useLoadInitialData } from '@/composables/useLoadInitialData';
+import { useChargeableOnDemandItems } from '@/composables/useChargeableOnDemandItems';
 
 const props = defineProps<SolvimonSubscriptionDetailsEntryProps>();
 
@@ -36,6 +37,10 @@ const { isLoading } = useLoadInitialData(
     fetchWalletBalances(),
 );
 
+const { items: onDemandItems, scheduleId: onDemandScheduleId } = useChargeableOnDemandItems({
+    subscription,
+});
+
 const schedulesData = computed(() => (subscription.value ? withPlanData(subscription.value) : []));
 
 const walletBalanceItems = computed(() => walletBalances.value?.wallet_balances ?? []);
@@ -51,6 +56,8 @@ const hasWalletBalancesError = computed(() => walletBalancesApiStatus.value === 
         :customer="customer"
         :payment-methods="paymentMethods"
         :wallet-balances="walletBalanceItems"
+        :on-demand-items="onDemandItems"
+        :on-demand-schedule-id="onDemandScheduleId"
         :has-wallet-balances-error="hasWalletBalancesError"
         :is-loading="isLoading"
         :error="error"

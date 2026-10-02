@@ -13,6 +13,7 @@ import CustomerPaymentMethods from '@/public/components/CustomerPaymentMethods/C
 import EmptyStatePlaceholder from '@/components/checkout/EmptyStatePlaceholder.vue';
 import Skeleton from '@/components/shared/Skeleton.vue';
 import EnabledPricingsList from '@/components/subscriptions/EnabledPricingsList/EnabledPricingsList.vue';
+import OnDemandItemsCard from '@/components/subscriptions/OnDemandItemsCard/OnDemandItemsCard.vue';
 import SubscriptionCancellationModal from '@/components/subscriptions/SubscriptionCancellationModal/SubscriptionCancellationModal.vue';
 import type { SubscriptionCancellationVariant } from '@/services/subscriptions';
 
@@ -28,6 +29,7 @@ const SubscriptionSchedules = defineAsyncComponent(
 
 const props = withDefaults(defineProps<SubscriptionDetailsProps>(), {
     walletBalances: () => [],
+    onDemandItems: () => [],
 });
 const emit = defineEmits<SubscriptionDetailsEmits>();
 
@@ -91,6 +93,8 @@ const subscriptionPaymentMethod = computed(() =>
  * top-ups billed on it.
  */
 const topUpSubscriptions = computed(() => (props.subscription ? [props.subscription] : []));
+
+const isOnDemandOrderOpen = ref(false);
 
 /** Falls back to the generic screen title while the subscription is loading or has no name. */
 const title = computed<string>(() =>
@@ -225,6 +229,12 @@ const title = computed<string>(() =>
                 @auto-top-up-saved="$emit('auto-top-up-saved')"
                 @auto-top-up-cancelled="$emit('auto-top-up-cancelled')"
                 @payment-method-stored="$emit('payment-method-stored')"
+            />
+
+            <OnDemandItemsCard
+                v-if="!isLoading && onDemandItems.length > 0"
+                class="sv-subscription-details__on-demand-items"
+                @order="isOnDemandOrderOpen = true"
             />
 
             <EnabledPricingsList

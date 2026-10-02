@@ -40,7 +40,11 @@ export function scanLogCodes(srcDir, baseDir = ROOT) {
     if (resolved !== resolvedBase && !resolved.startsWith(resolvedBase + path.sep)) {
         throw new Error(`Path traversal detected: "${srcDir}" is outside "${baseDir}"`);
     }
-    /** @type {Map<string, { level: string; code: string; message: string; file: string }>} */
+    /**
+     * Keyed by level and code: a code emitted at both levels needs a message for each.
+     *
+     * @type {Map<string, { level: string; code: string; message: string; file: string }>}
+     */
     const byCode = new Map();
 
     for (const file of walkSrc(srcDir)) {
@@ -59,12 +63,13 @@ export function scanLogCodes(srcDir, baseDir = ROOT) {
         ];
 
         for (const { level, code, message } of matches) {
-            if (!byCode.has(code)) {
+            const key = `${level}|${code}`;
+            if (!byCode.has(key)) {
                 // When the original string was a template literal with ${...}, the regex
                 // stops before the $, leaving a trailing space — add … to signal truncation.
                 const trimmed = message.trimEnd();
                 const display = trimmed !== message ? trimmed + '…' : trimmed;
-                byCode.set(code, {
+                byCode.set(key, {
                     level,
                     code,
                     message: display,
@@ -115,13 +120,26 @@ export function parseDeclaredCodes(typesSource) {
  * and an emitted code the contract does not declare.
  */
 export function mergeCodes(declared, scanned) {
-    const messageByCode = new Map(scanned.map((entry) => [entry.code, entry.message]));
+    const messageByLevelAndCode = new Map(
+        scanned.map((entry) => [`${entry.level}|${entry.code}`, entry.message]),
+    );
+
+    // Falls back across levels so a code declared at a level it is never emitted at is still
+    // described rather than reading as unemitted.
+    const messageByCode = new Map();
+    for (const entry of scanned) {
+        if (!messageByCode.has(entry.code)) messageByCode.set(entry.code, entry.message);
+    }
 
     const entries = ['error', 'warn'].flatMap((level) =>
         [...declared[level]].sort().map((code) => ({
             level,
             code,
-            message: messageByCode.get(code) ?? DESCRIPTION_OVERRIDES[code] ?? NOT_EMITTED,
+            message:
+                messageByLevelAndCode.get(`${level}|${code}`) ??
+                messageByCode.get(code) ??
+                DESCRIPTION_OVERRIDES[code] ??
+                NOT_EMITTED,
             file: '',
         })),
     );
@@ -131,7 +149,9 @@ export function mergeCodes(declared, scanned) {
     return {
         entries,
         notEmitted: entries.filter((entry) => entry.message === NOT_EMITTED).map((e) => e.code),
-        undeclared: scanned.map((e) => e.code).filter((code) => !allDeclared.has(code)),
+        undeclared: [...new Set(scanned.map((e) => e.code))].filter(
+            (code) => !allDeclared.has(code),
+        ),
     };
 }
 

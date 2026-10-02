@@ -194,7 +194,14 @@ npm run logs:list
 
 ## Updating the README log-code reference
 
-The `## Error logging` section in the root README is auto-generated. Never edit it by hand — it is surrounded by `DO NOT EDIT` markers. To regenerate it after adding or changing log calls:
+The `## Error logging` section in the root README is auto-generated. Never edit it by hand — it is surrounded by `DO NOT EDIT` markers.
+
+**Nothing hand-written may sit between those markers**, not even a paragraph beside the tables.
+`updateReadme` replaces everything from the start marker to the end marker, so prose added inside
+survives until the next time anyone runs the script and then disappears without a word. That has
+already cost one release its host-facing documentation: the section explaining the log `reference`
+was written inside the block and was gone by the time the branch merged. Put narrative sections
+above the start marker. To regenerate it after adding or changing log calls:
 
 ```sh
 npm run logs:list

@@ -89,6 +89,8 @@ export interface LoggerProviderProps {
 }
 
 export type WarnCode =
+    /** Also an `ErrorCode`: the level separates a failure the SDK absorbed from one it did not. */
+    | 'REQUEST_FAILED'
     | 'ACTIVE_SCHEDULE_NOT_FOUND'
     | 'ADYEN_INVALID_CONFIGURATION'
     | 'PAYMENT_INTEGRATION_NOT_RENDERABLE'
@@ -97,6 +99,7 @@ export type WarnCode =
     | 'TRANSLATION_LOAD_FAILED';
 
 export type ErrorCode =
+    | 'REQUEST_FAILED'
     | 'UNHANDLED_ERROR'
     | 'RESOURCE_REVOKED'
     | 'INVALID_EMAIL'

@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A failed API call now rejects with an `ApiError` rather than a plain object. It carries the same `statusCode`, `requestId` and `field` as before, and adds what an object literal could not: a name, a message and a stack. A host forwarding it to their reporter was getting "Object captured as exception with keys: field, hasError, message, requestId, statusCode" as the title of their most important issue; it now reads as the error it is. An error body with no message of its own falls back to `Request failed with status <code>` instead of an empty one.
+
+### Fixed
+
+- A request failure that the SDK handles no longer also reports as an anonymous `UNHANDLED_ERROR`. Every failed request was raised through the UI library's error channel as well as being handled by its caller, and came out under the same codeless code whether it was a declined payment, an expired session or a dropped connection — carrying no status, no request id and no useful stack. Hosts ended up alerting on that entry rather than on the one that said what had happened. A failed request now emits a single `REQUEST_FAILED` entry carrying the method, path, status code and request id, grouped by endpoint and status.
+- The token refresh answering 401 no longer raises an error-level entry. It is the expected end of a session, and `AuthProvider` already reports `SESSION_EXPIRED` once it is sure — which is the entry worth waking someone. A caller declares such a status with `expectedStatusCodes`, and the failure drops to `warn` while still rejecting.
+- The README's guidance on wiring `onLog` to a reporter is back, and this time outside the auto-generated log-code block that had silently eaten it. It now also guards against reporting a non-`Error` as an exception.
+
 ## [0.1.0-alpha.23] - 2026-10-02
 
 ### Added

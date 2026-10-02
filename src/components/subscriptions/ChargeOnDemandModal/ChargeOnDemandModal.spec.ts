@@ -75,6 +75,11 @@ vi.mock('@solvimon/solvimon-ui', async () => {
             emits: ['update:selection', 'update:paymentMethodId', 'add-payment-method'],
             template: '<div data-testid="charge-on-demand-form" />',
         }),
+        InvoicePreview: defineComponent({
+            name: 'InvoicePreviewStub',
+            props: ['invoice', 'isCustomerFacing', 'isPaid'],
+            template: '<div data-testid="invoice-preview" />',
+        }),
         Modal: defineComponent({
             name: 'ModalStub',
             props: [
@@ -222,6 +227,77 @@ describe('ChargeOnDemandModal', () => {
         expect(findForm(wrapper).exists()).toBe(false);
         expect(wrapper.find('.sv-charge-on-demand-modal__unavailable').exists()).toBe(true);
         expect(findConfirm(wrapper).exists()).toBe(false);
+    });
+
+    describe('paying', () => {
+        const addItemAndWaitForTotal = async (wrapper: ReturnType<typeof mountModal>) => {
+            findForm(wrapper).vm.$emit('update:selection', [
+                { pricingItemId: 'prii_consulting', units: 3 },
+            ]);
+            await vi.runAllTimersAsync();
+            await flushPromises();
+        };
+
+        const chargedInvoice = {
+            id: 'inv_charged',
+            payment_status: 'PAID',
+            invoice_amount_including_tax: { quantity: '435.60', currency: 'EUR' },
+        } as unknown as Invoice;
+
+        it('charges the items to the chosen payment method and finalizes the invoice', async () => {
+            mockCharge.mockResolvedValue(chargedInvoice);
+            const wrapper = mountModal();
+            await addItemAndWaitForTotal(wrapper);
+
+            await findConfirm(wrapper).trigger('click');
+            await flushPromises();
+
+            expect(mockCharge).toHaveBeenCalledWith({
+                pricing_plan_schedule_id: 'ppsc_1',
+                pricing_items: [{ pricing_item_id: 'prii_consulting', units: { number: '3' } }],
+                payment_method_id: 'pmet_subscription',
+                finalize_immediately: true,
+            });
+            expect(wrapper.text()).toContain('Payment successful');
+        });
+
+        it('reports the charged invoice when the customer is done', async () => {
+            mockCharge.mockResolvedValue(chargedInvoice);
+            const wrapper = mountModal();
+            await addItemAndWaitForTotal(wrapper);
+            await findConfirm(wrapper).trigger('click');
+            await flushPromises();
+
+            await wrapper.find('[data-testid="charge-on-demand-done"]').trigger('click');
+
+            expect(wrapper.emitted('charged')).toEqual([[chargedInvoice]]);
+            expect(wrapper.emitted('close')).toHaveLength(1);
+        });
+
+        it('holds the order while the charge is in flight', async () => {
+            mockCharge.mockReturnValue(new Promise(() => {}));
+            const wrapper = mountModal();
+            await addItemAndWaitForTotal(wrapper);
+
+            await findConfirm(wrapper).trigger('click');
+            await findConfirm(wrapper).trigger('click');
+
+            expect(mockCharge).toHaveBeenCalledTimes(1);
+            expect(findForm(wrapper).props('disabled')).toBe(true);
+        });
+
+        it('says the order could not be completed when the charge fails', async () => {
+            mockCharge.mockRejectedValue(new Error('boom'));
+            const wrapper = mountModal();
+            await addItemAndWaitForTotal(wrapper);
+
+            await findConfirm(wrapper).trigger('click');
+            await flushPromises();
+
+            expect(findForm(wrapper).props('errors')).toEqual({
+                form: expect.stringContaining("couldn't complete your order"),
+            });
+        });
     });
 
     describe('adding a payment method', () => {

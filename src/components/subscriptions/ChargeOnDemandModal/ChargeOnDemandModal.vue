@@ -2,6 +2,8 @@
 import {
     Button,
     ChargeOnDemandForm,
+    InvoicePreview,
+    Section,
     Typography,
     getCustomerCountry,
     getPayablePaymentMethods,
@@ -10,7 +12,7 @@ import {
     formatAmount,
 } from '@solvimon/solvimon-ui';
 import type { ChargeOnDemandSelectionItem } from '@solvimon/solvimon-ui';
-import type { PaymentMethod } from '@solvimon/solvimon-types';
+import type { Invoice, PaymentMethod } from '@solvimon/solvimon-types';
 import { computed, ref, watch } from 'vue';
 import type {
     ChargeOnDemandModalEmits,
@@ -24,6 +26,7 @@ import { useChargeOnDemandInvoicePreview } from '@/composables/useChargeOnDemand
 import { useAddPaymentMethodStep } from '@/composables/useAddPaymentMethodStep';
 import { usePaymentMethodOptions } from '@/composables/usePaymentMethodOptions';
 import { useLogger } from '@/components/providers/LoggerProvider/composables/useLogger';
+import { createInvoicesService } from '@/services/invoices';
 import { getSubscriptionName } from '@/utils/subscription';
 
 const props = defineProps<ChargeOnDemandModalProps>();
@@ -31,6 +34,7 @@ const emit = defineEmits<ChargeOnDemandModalEmits>();
 
 const { $t } = useIntl();
 const logger = useLogger();
+const { chargeOnDemandPricingItems } = createInvoicesService();
 
 const step = ref<ChargeOnDemandModalStep>('ORDER');
 
@@ -141,8 +145,13 @@ const { invoicePreview, isPreviewPending } = useChargeOnDemandInvoicePreview({
 
 const total = computed(() => invoicePreview.value?.invoice_amount_including_tax);
 
+const isCharging = ref(false);
+const chargedInvoice = ref<Invoice>();
+const chargeError = ref<string>();
+
 const canSubmit = computed(
     () =>
+        !isCharging.value &&
         canTakePayments.value &&
         selection.value.length > 0 &&
         !!paymentMethodId.value &&
@@ -162,8 +171,16 @@ const subscriptionName = computed(() =>
     }),
 );
 
-const title = computed(() =>
-    isAddingPaymentMethod.value
+const title = computed(() => {
+    if (step.value === 'SUCCESS') {
+        return $t({
+            defaultMessage: 'Payment successful',
+            description: 'Title of the on-demand order modal once the order has been paid',
+            id: 'charge_on_demand_modal.success.title',
+        });
+    }
+
+    return isAddingPaymentMethod.value
         ? $t({
               defaultMessage: 'Add payment method',
               description:
@@ -174,11 +191,23 @@ const title = computed(() =>
               defaultMessage: 'Order on-demand items',
               description: 'Title of the modal for ordering the on-demand items of a subscription',
               id: 'charge_on_demand_modal.title',
-          }),
-);
+          });
+});
 
-const subTitle = computed(() =>
-    isAddingPaymentMethod.value
+const subTitle = computed(() => {
+    if (step.value === 'SUCCESS') {
+        return $t(
+            {
+                defaultMessage:
+                    'Your order for the {subscription} subscription is paid. The invoice is in your invoice list.',
+                description: 'Subtitle of the on-demand order modal once the order has been paid',
+                id: 'charge_on_demand_modal.success.subtitle',
+            },
+            { subscription: subscriptionName.value },
+        );
+    }
+
+    return isAddingPaymentMethod.value
         ? $t({
               defaultMessage: 'Add a payment method to pay for this order.',
               description:
@@ -194,8 +223,8 @@ const subTitle = computed(() =>
                   id: 'charge_on_demand_modal.subtitle',
               },
               { subscription: subscriptionName.value },
-          ),
-);
+          );
+});
 
 const cancelButtonText = computed(() =>
     isAddingPaymentMethod.value
@@ -213,6 +242,14 @@ const cancelButtonText = computed(() =>
 );
 
 const confirmButtonText = computed(() => {
+    if (step.value === 'SUCCESS') {
+        return $t({
+            defaultMessage: 'Done',
+            description: 'Closes the on-demand order modal once the order has been paid',
+            id: 'charge_on_demand_modal.done_button.label',
+        });
+    }
+
     if (isAddingPaymentMethod.value) {
         return $t({
             defaultMessage: 'Save payment method',
@@ -248,14 +285,67 @@ const confirmButtonText = computed(() => {
     );
 });
 
-const handleConfirm = () => {
-    if (isAddingPaymentMethod.value) {
-        submitPaymentMethod();
+const charge = async () => {
+    const pricingItemsToCharge = pricingItems.value;
+
+    if (!canSubmit.value || !pricingItemsToCharge || !paymentMethodId.value) {
+        return;
+    }
+
+    isCharging.value = true;
+    chargeError.value = undefined;
+
+    try {
+        // Finalizing charges the invoice in the same request, so it is only asked for together with
+        // the payment method that pays it: without one the backend creates the invoice and then fails.
+        chargedInvoice.value = await chargeOnDemandPricingItems({
+            pricing_plan_schedule_id: props.scheduleId,
+            pricing_items: pricingItemsToCharge,
+            payment_method_id: paymentMethodId.value,
+            finalize_immediately: true,
+        });
+        step.value = 'SUCCESS';
+    } catch (error) {
+        chargeError.value = $t({
+            defaultMessage: "We couldn't complete your order. Please try again later.",
+            description: 'Shown on the on-demand order when charging it failed',
+            id: 'charge_on_demand_modal.charge_error',
+        });
+        logger.error(
+            'ON_DEMAND_CHARGE_FAILED',
+            'Failed to charge the on-demand order',
+            { scheduleId: props.scheduleId },
+            error,
+        );
+    } finally {
+        isCharging.value = false;
     }
 };
 
+const handleConfirm = () => {
+    if (isAddingPaymentMethod.value) {
+        submitPaymentMethod();
+        return;
+    }
+
+    void charge();
+};
+
+/** Reported on the way out, so nothing is reloaded under a receipt still being read. */
+const handleDone = () => {
+    if (chargedInvoice.value) {
+        emit('charged', chargedInvoice.value);
+    }
+    emit('close');
+};
+
 const handleCancel = () => {
-    if (isSavingPaymentMethod.value) {
+    if (isSavingPaymentMethod.value || isCharging.value) {
+        return;
+    }
+
+    if (step.value === 'SUCCESS') {
+        handleDone();
         return;
     }
 
@@ -277,6 +367,8 @@ watch(
         step.value = 'ORDER';
         selection.value = [];
         methodIdsBeforeAdding.value = undefined;
+        chargedInvoice.value = undefined;
+        chargeError.value = undefined;
     },
 );
 </script>
@@ -290,7 +382,7 @@ watch(
         :sub-title="subTitle"
         :cancel-button-text="cancelButtonText"
         :confirm-button-text="confirmButtonText"
-        :is-pending="isSavingPaymentMethod"
+        :is-pending="isSavingPaymentMethod || isCharging"
         :panes="CHARGE_ON_DEMAND_MODAL_STEPS"
         :step="step"
         add-payment-method-pane="ADD_PAYMENT_METHOD"
@@ -313,6 +405,8 @@ watch(
                 :preview="invoicePreview"
                 :is-preview-loading="isPreviewPending"
                 :payment-methods="payablePaymentMethods"
+                :errors="chargeError ? { form: chargeError } : undefined"
+                :disabled="isCharging"
                 can-add-payment-method
                 @add-payment-method="handleAddPaymentMethod"
             >
@@ -358,8 +452,31 @@ watch(
             </EmptyStatePlaceholder>
         </template>
 
+        <template #SUCCESS>
+            <Section
+                v-if="chargedInvoice"
+                class="sv-charge-on-demand-modal__receipt"
+                content-background="none"
+            >
+                <InvoicePreview
+                    :invoice="chargedInvoice"
+                    is-customer-facing
+                    :is-paid="chargedInvoice.payment_status === 'PAID'"
+                />
+            </Section>
+        </template>
+
         <template #footer>
-            <div class="flex flex-col gap-2">
+            <div v-if="step === 'SUCCESS'" class="flex flex-col gap-2">
+                <Button
+                    size="lg"
+                    class="sv-action sv-action--primary"
+                    data-testid="charge-on-demand-done"
+                    @click="handleDone"
+                    >{{ confirmButtonText }}</Button
+                >
+            </div>
+            <div v-else class="flex flex-col gap-2">
                 <Button
                     v-if="isAddingPaymentMethod"
                     size="lg"
@@ -375,6 +492,8 @@ watch(
                     class="sv-action sv-action--primary"
                     data-testid="charge-on-demand-confirm"
                     :disabled="!canSubmit"
+                    :loading="isCharging"
+                    @click="handleConfirm"
                     >{{ confirmButtonText }}</Button
                 >
                 <Button
@@ -382,6 +501,7 @@ watch(
                     intent="subtle"
                     class="sv-action sv-action--secondary"
                     data-testid="charge-on-demand-cancel"
+                    :disabled="isCharging"
                     @click="handleCancel"
                     >{{ cancelButtonText }}</Button
                 >

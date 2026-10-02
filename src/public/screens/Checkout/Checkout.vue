@@ -94,7 +94,8 @@ if (portal.value.status === 'REVOKED') {
 
 const subscriptionId = portal.value?.init_pricing_plan_subscription?.pricing_plan_subscription_id;
 const successRedirectUrl = portal.value?.init_pricing_plan_subscription?.success_url;
-const termsAndConditions = portal.value?.init_pricing_plan_subscription?.note;
+// Trimmed so a note of only whitespace renders nothing rather than an empty gap in the column.
+const termsAndConditions = portal.value?.init_pricing_plan_subscription?.note?.trim() || undefined;
 
 const {
     validatedEmail,

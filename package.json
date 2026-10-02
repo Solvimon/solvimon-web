@@ -46,6 +46,7 @@
         "version:patch": "npm version patch --no-git-tag-version",
         "version:minor": "npm version minor --no-git-tag-version",
         "version:major": "npm version major --no-git-tag-version",
+        "version:prerelease": "npm version prerelease --no-git-tag-version",
         "changelog:check": "node scripts/check-changelog.mjs",
         "publish:guard": "node scripts/publish-guard.mjs",
         "prepublishOnly": "npm run publish:guard && npm run changelog:check && npm run build && npm run bundle:check-contents",

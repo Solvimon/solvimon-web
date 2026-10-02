@@ -147,6 +147,78 @@
     "defaultMessage": "Save changes",
     "description": "The label for the submit button of the billing information form"
   },
+  "charge_on_demand_modal.add_payment_method.subtitle": {
+    "defaultMessage": "Add a payment method to pay for this order.",
+    "description": "Subtitle of the on-demand order modal while the customer is adding a payment method"
+  },
+  "charge_on_demand_modal.add_payment_method.title": {
+    "defaultMessage": "Add payment method",
+    "description": "Title of the on-demand order modal while the customer is adding a payment method"
+  },
+  "charge_on_demand_modal.back_button.label": {
+    "defaultMessage": "Back",
+    "description": "Leaves the add payment method step of the on-demand order modal for the order"
+  },
+  "charge_on_demand_modal.cancel_button.label": {
+    "defaultMessage": "Cancel",
+    "description": "Closes the modal for ordering on-demand items"
+  },
+  "charge_on_demand_modal.charge_error": {
+    "defaultMessage": "We couldn't complete your order. Please try again later.",
+    "description": "Shown on the on-demand order when charging it failed"
+  },
+  "charge_on_demand_modal.confirm_button.no_items": {
+    "defaultMessage": "Add an item to continue",
+    "description": "Disabled pay button of the on-demand order while no item is added"
+  },
+  "charge_on_demand_modal.confirm_button.pay": {
+    "defaultMessage": "Pay {total}",
+    "description": "Pay button of the on-demand order, with the total it charges"
+  },
+  "charge_on_demand_modal.confirm_button.updating": {
+    "defaultMessage": "Updating total…",
+    "description": "Disabled pay button of the on-demand order while its total is calculated"
+  },
+  "charge_on_demand_modal.done_button.label": {
+    "defaultMessage": "Done",
+    "description": "Closes the on-demand order modal once the order has been paid"
+  },
+  "charge_on_demand_modal.payment_methods.empty": {
+    "defaultMessage": "Add a payment method to pay for this order.",
+    "description": "Shown in the on-demand order when no saved payment method can pay for it"
+  },
+  "charge_on_demand_modal.save_payment_method.label": {
+    "defaultMessage": "Save payment method",
+    "description": "Confirm button of the on-demand order modal while the customer is adding a payment method"
+  },
+  "charge_on_demand_modal.subscription_name_fallback": {
+    "defaultMessage": "your subscription",
+    "description": "Stands in for the subscription name in the on-demand order modal when the subscription has none"
+  },
+  "charge_on_demand_modal.subtitle": {
+    "defaultMessage": "One-off items for {subscription}. You pay once, today.",
+    "description": "Subtitle of the modal for ordering the on-demand items of a subscription"
+  },
+  "charge_on_demand_modal.success.subtitle": {
+    "defaultMessage": "Your order for {subscription} is paid. The invoice is in your invoice list.",
+    "description": "Subtitle of the on-demand order modal once the order has been paid"
+  },
+  "charge_on_demand_modal.success.title": {
+    "defaultMessage": "Payment successful",
+    "description": "Title of the on-demand order modal once the order has been paid"
+  },
+  "charge_on_demand_modal.title": {
+    "defaultMessage": "Order on-demand items",
+    "description": "Title of the modal for ordering the on-demand items of a subscription"
+  },
+  "charge_on_demand_modal.unavailable.message": {
+    "defaultMessage": "This subscription can't take payments here. Contact us to order these items.",
+    "description": "Message shown instead of the on-demand order form when the subscription cannot take payments"
+  },
+  "charge_on_demand_modal.unavailable.title": {
+    "defaultMessage": "Ordering isn't available",
+    "description": "Title shown instead of the on-demand order form when the subscription cannot take payments"
+  },
   "checkout.address.city.placeholder": {
     "defaultMessage": "City...",
     "description": "City of the customer address in the checkout form"
@@ -594,6 +666,18 @@
   "invoices_list.title": {
     "defaultMessage": "Invoices",
     "description": "Invoices list title"
+  },
+  "on_demand_items_card.description": {
+    "defaultMessage": "Order one-off items, like consulting hours or an onboarding package. You pay once, today.",
+    "description": "Explains what on-demand items are, on the block that offers them"
+  },
+  "on_demand_items_card.order_button.label": {
+    "defaultMessage": "Order items",
+    "description": "Label for the button that opens the on-demand order form"
+  },
+  "on_demand_items_card.title": {
+    "defaultMessage": "On-demand items",
+    "description": "Title for the block that offers the on-demand items of a subscription"
   },
   "pay_button.label.amount_and_payment_method": {
     "defaultMessage": "Pay {amount} with {type}",

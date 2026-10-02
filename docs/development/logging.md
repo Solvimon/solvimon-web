@@ -91,6 +91,77 @@ const logger = useLogger();
 doSomething(input, logger);
 ```
 
+## Pass the error as the fourth argument, not in the context
+
+`logger.error(code, message, context, err)` reads the thrown value from its **fourth** parameter.
+That is what fills `entry.error` and `entry.errorSerialized`, and a consumer forwarding failures to
+their reporter sends `entry.error`. An error tucked into the context instead arrives as one more
+context field, and the entry looks to them like a message with no exception behind it:
+
+```ts
+// ✅ the failure reaches the consumer as a failure
+logger.error('PAYMENT_AUTHORIZATION_FAILED', 'Payment authorization failed', context, error);
+
+// ❌ entry.error is undefined — captureException(entry.error) reports nothing
+logger.error('PAYMENT_AUTHORIZATION_FAILED', 'Payment authorization failed', { error });
+```
+
+This is worth being deliberate about: it is how a whole class of live payment failures came to be
+invisible in Sentry while the SDK believed it was logging them.
+
+## Never log what the payment carries
+
+Payment callbacks hand over the credential alongside the detail worth logging — an Adyen state's
+`paymentMethod`, an Apple Pay event's `payment.token.paymentData`, a redirect's `redirectResult`.
+Log the shape, never the payload:
+
+```ts
+// ✅
+logger.info('APPLE_PAY_AUTHORIZED', 'Apple Pay authorized', {
+    hasPaymentData: !!event.payment.token.paymentData,
+});
+
+// ❌ ships an encrypted payment credential and the billing contact to the consumer's log sink
+logger.info('APPLE_PAY_AUTHORIZED', 'Apple Pay authorized', { event });
+```
+
+The same goes for the customer's own details: a billing contact is a name and an address.
+
+## Logging a failed payment
+
+Failed payments go through `createPaymentFailureContext` in [paymentFailure.ts](../../src/utils/paymentFailure.ts),
+which builds the context every gateway failure is logged with — the gateway, the payment acceptor,
+the variant, the session reference, a fingerprint, and the `requestId` and status code lifted off a
+failed API call. Each gateway form wraps it in a local `failureContext` that fills in what the form
+already knows:
+
+```ts
+logger.error(
+    'PAYMENT_AUTHORIZATION_FAILED',
+    `Failed payment authorization for payment acceptor with id ${paymentAcceptorId}`,
+    failureContext({ reason: 'PAYMENT_AUTHORIZATION_FAILED', cause: error }),
+    error,
+);
+```
+
+The helper deliberately does not call the logger itself: the code has to stay a string literal at
+the call site, or `npm run logs:list` cannot find it.
+
+Two rules for these paths. **Every failure the customer can see is logged** — a path that renders
+the error card and emits nothing leaves support with a screenshot and no entry to match it to. And
+**every failure the customer can see leaves through `emitError`**, which stamps the error with the
+session reference so the card can show it.
+
+## The session reference
+
+`getSessionReference()` in [sessionReference.ts](../../src/utils/sessionReference.ts) returns a short
+identifier for the visit — `SV-7F3K2A9Q` — created on first use and kept in `sessionStorage` so it
+survives the 3DS round trip and the error card's reload. Every `LogEntry` carries it, and the error
+card shows it to the customer.
+
+Its alphabet leaves out `I`, `O`, `0` and `1`, so a reference read down a phone line or retyped from
+a screenshot comes back as the one that was issued.
+
 ## Grouping entries with a fingerprint
 
 A `code` alone is a coarse grouping key. Where one misconfigured merchant would otherwise show up as

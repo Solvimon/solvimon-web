@@ -12,4 +12,9 @@ export interface Error {
     code: ErrorCode;
     message: string;
     error?: unknown;
+    /**
+     * The reference for this visit, shown to the customer so they can quote it when they report
+     * the failure. The same value is on every `LogEntry` the session emitted.
+     */
+    reference?: string;
 }

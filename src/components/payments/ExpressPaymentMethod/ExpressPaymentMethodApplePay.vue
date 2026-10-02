@@ -16,6 +16,7 @@ import { createReturnUrl, transformObjectToAdyenObject } from '@/utils/adyen';
 import { useLogger } from '@/components/providers';
 import { createPaymentsService } from '@/services/payments';
 import { loadAdyenSdk } from '@/utils/adyenSdk';
+import { createPaymentFailureContext, type PaymentFailureParams } from '@/utils/paymentFailure';
 
 const PAYMENT_GATEWAY_VARIANT_ADYEN = 'ADYEN';
 
@@ -28,6 +29,16 @@ const logger = useLogger();
 const { authorizePayment } = createPaymentsService();
 
 const paymentAcceptorId = props.paymentMethodOptionsResponse.payment_acceptor.id;
+
+/** The context every failure in this button is logged with. */
+function failureContext(params: Omit<PaymentFailureParams, 'gateway'>): Record<string, unknown> {
+    return createPaymentFailureContext({
+        gateway: 'ADYEN',
+        paymentAcceptorId,
+        paymentMethodType: 'applepay',
+        ...params,
+    });
+}
 
 const initApplePay = async () => {
     const { ApplePay } = await loadAdyenSdk();
@@ -102,21 +113,27 @@ const initApplePay = async () => {
             });
         },
         onError: (error) => {
-            logger.error('APPLE_PAY_ERROR', 'Apple Pay error', { error });
+            logger.error(
+                'APPLE_PAY_ERROR',
+                'Apple Pay error',
+                failureContext({ reason: 'APPLE_PAY_ERROR', cause: error }),
+                error,
+            );
         },
         onAuthorized: async (data, actions) => {
             try {
-                logger.info('APPLE_PAY_AUTHORIZED', 'Apple Pay authorized', { data });
-
                 // Transform payment data from Apple Pay authorizedEvent
                 // The authorizedEvent contains the payment data that needs to be sent to Adyen
                 const authorizedEvent = data.authorizedEvent;
 
-                logger.info('APPLE_PAY_EVENT_DATA', 'Apple Pay event data structure', {
-                    eventData: authorizedEvent,
+                // Only ever the shape of what arrived. The authorized event carries
+                // `payment.token.paymentData` — the encrypted Apple Pay credential — alongside the
+                // customer's billing contact, and neither belongs in a consumer's log sink.
+                logger.info('APPLE_PAY_AUTHORIZED', 'Apple Pay authorized', {
+                    paymentAcceptorId,
                     hasPaymentMethod: !!authorizedEvent.payment.token.paymentMethod,
-                    hasBrowserInfo: !!authorizedEvent.payment.token.paymentData,
-                    billingAddress: data.billingAddress,
+                    hasPaymentData: !!authorizedEvent.payment.token.paymentData,
+                    hasBillingContact: !!authorizedEvent.payment.billingContact,
                 });
 
                 // Extract billing information from multiple possible sources
@@ -145,16 +162,9 @@ const initApplePay = async () => {
                     ),
                 };
 
-                logger.info('APPLE_PAY_ADYEN_PAYLOAD', 'Adyen payload prepared', { adyen });
-
                 const returnUrl = createReturnUrl({
                     paymentAcceptorId,
                     redirectUrl: window.location.href,
-                });
-
-                logger.info('APPLE_PAY_CALLING_API', 'Calling authorizePayment API', {
-                    paymentAcceptorId,
-                    amount: props.amount,
                 });
 
                 // Call backend API to authorize payment
@@ -170,23 +180,33 @@ const initApplePay = async () => {
                 });
 
                 logger.info('APPLE_PAY_API_RESPONSE', 'Payment API response received', {
+                    paymentAcceptorId,
                     status: paymentResult.status,
-                    paymentResult,
                 });
 
                 if (paymentResult.status === 'FAILURE') {
-                    logger.error('APPLE_PAY_AUTHORIZATION_FAILED', 'Payment authorization failed', {
-                        error: paymentResult,
-                    });
+                    logger.error(
+                        'APPLE_PAY_AUTHORIZATION_FAILED',
+                        'Payment authorization failed',
+                        failureContext({
+                            reason: 'APPLE_PAY_AUTHORIZATION_REJECTED',
+                            extra: { paymentStatus: paymentResult.status },
+                        }),
+                    );
                     actions.reject();
                     return;
                 }
 
                 // Handle ACTION_REQUIRED if needed (e.g., 3DS)
                 if (paymentResult.status === 'ACTION_REQUIRED') {
-                    logger.warn('APPLE_PAY_ACTION_REQUIRED', 'Payment requires additional action', {
-                        action: paymentResult.action,
-                    });
+                    logger.warn(
+                        'APPLE_PAY_ACTION_REQUIRED',
+                        'Payment requires additional action',
+                        failureContext({
+                            reason: 'APPLE_PAY_ACTION_REQUIRED',
+                            extra: { actionType: paymentResult.action?.method },
+                        }),
+                    );
                     // For Apple Pay express checkout, we might need to handle this differently
                     // For now, reject if action is required
                     actions.reject();
@@ -197,9 +217,12 @@ const initApplePay = async () => {
                 logger.info('APPLE_PAY_SUCCESS', 'Apple Pay payment successful, resolving');
                 actions.resolve();
             } catch (error) {
-                logger.error('APPLE_PAY_AUTHORIZATION_FAILED', 'Apple Pay authorization failed', {
+                logger.error(
+                    'APPLE_PAY_AUTHORIZATION_FAILED',
+                    'Apple Pay authorization failed',
+                    failureContext({ reason: 'APPLE_PAY_AUTHORIZATION_FAILED', cause: error }),
                     error,
-                });
+                );
                 actions.reject();
             }
         },

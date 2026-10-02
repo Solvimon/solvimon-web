@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- A failed payment now shows the customer a reference such as `SV-7F3K2A9Q`, with a button to copy it, and asks them to quote it to support. The same reference is on every log entry the visit emits, as `reference`, so one a customer sends leads straight to everything that session logged. It is kept for the browser session, so it survives the 3DS redirect and the error card's own reload, and identifies nothing but the visit.
+
+### Fixed
+
+- Failed payments reach `onLog` again. Several paths rendered the error card and emitted nothing at all — the Adyen drop-in reporting a failed payment among them — and those that did log passed the caught error as context rather than as the error, so entries arrived with `error` and `errorSerialized` empty and a host forwarding them to their reporter sent an exception with nothing in it.
+- A failed payment is now logged with the gateway, the payment acceptor, the payment method type and, where the Solvimon API refused the call, the `requestId` from its `X-Request-Id` header, which is what joins the entry to its server-side logs.
+- The error card tells the customer what actually failed. Every gateway failure was shown as "Something went wrong — an unknown error has occurred", whether the card was declined, the form failed to load or the session had expired.
+- The error card is translated. Its titles and messages were hard-coded English and appeared untranslated inside an otherwise localised checkout.
+- Three failures that left the customer with no answer now say so: a payment whose details could not be confirmed, which used to leave a spinner that never resolved; a drop-in that failed to mount, which used to leave an empty container; and a drop-in error, which told the screen nothing and so left the pay button spinning for good — it now reaches `payment-failed` like any other failure.
+- Apple Pay no longer puts the payment credential in the log. The authorized event was logged whole at `info` level, carrying the encrypted Apple Pay token and the customer's billing contact into the host's log sink; only the shape of what arrived is logged now.
+
 ## [0.1.0-alpha.22] - 2026-09-29
 
 ### Added

@@ -38,7 +38,11 @@ const adyen = vi.hoisted(() => {
     Object.assign(dropIn, { mount: vi.fn(() => dropIn) });
 
     const captured: {
-        checkoutConfig?: { onSubmit?: SubmitHandler };
+        checkoutConfig?: {
+            onSubmit?: SubmitHandler;
+            onPaymentFailed?: (data: unknown, component?: unknown) => void;
+            onError?: (data: unknown, component?: unknown) => void;
+        };
         dropInConfig?: {
             paymentMethodComponents?: { name: string }[];
             paymentMethodsConfiguration?: { card?: { enableStoreDetails?: boolean } };
@@ -69,7 +73,7 @@ const mockAdyenCheckout = adyen.checkout;
 const captured = adyen.captured;
 
 vi.mock('@adyen/adyen-web', () => ({
-    AdyenCheckout: (config: { onSubmit?: SubmitHandler }) => {
+    AdyenCheckout: (config: Record<string, unknown>) => {
         adyen.captured.checkoutConfig = config;
         adyen.checkout(config);
         return Promise.resolve({ config });
@@ -282,7 +286,13 @@ describe('PaymentIntegrationFormAdyen', () => {
             expect(mockLogger.error).toHaveBeenCalledWith(
                 'PAYMENT_AUTHORIZATION_FAILED',
                 expect.stringContaining('paya_123'),
-                { error: refusedResponse },
+                expect.objectContaining({
+                    reason: 'PAYMENT_AUTHORIZATION_REJECTED',
+                    gateway: 'ADYEN',
+                    paymentAcceptorId: 'paya_123',
+                    reference: expect.stringMatching(/^SV-/),
+                }),
+                refusedResponse,
             );
             expect(actions.resolve).toHaveBeenCalledWith({ resultCode: 'Error' });
         });
@@ -297,7 +307,11 @@ describe('PaymentIntegrationFormAdyen', () => {
             expect(mockLogger.error).toHaveBeenCalledWith(
                 'PAYMENT_AUTHORIZATION_FAILED',
                 expect.stringContaining('paya_123'),
-                { error },
+                expect.objectContaining({
+                    reason: 'PAYMENT_AUTHORIZATION_FAILED',
+                    reference: expect.stringMatching(/^SV-/),
+                }),
+                error,
             );
             expect(actions.resolve).toHaveBeenCalledWith({ resultCode: 'Error' });
         });
@@ -398,7 +412,11 @@ describe('PaymentIntegrationFormAdyen', () => {
             expect(mockLogger.error).toHaveBeenCalledWith(
                 'TOKENIZATION_FAILED',
                 expect.stringContaining('paya_123'),
-                { error: refusedResponse },
+                expect.objectContaining({
+                    reason: 'TOKENIZATION_REJECTED',
+                    reference: expect.stringMatching(/^SV-/),
+                }),
+                refusedResponse,
             );
             expect(actions.resolve).toHaveBeenCalledWith({ resultCode: 'Error' });
         });
@@ -411,7 +429,91 @@ describe('PaymentIntegrationFormAdyen', () => {
             expect(mockLogger.error).toHaveBeenCalledWith(
                 'TOKENIZATION_FAILED',
                 expect.stringContaining('Missing customer id'),
+                expect.objectContaining({ reason: 'TOKENIZATION_FAILED_NO_CUSTOMER' }),
             );
+        });
+    });
+
+    describe('failures the drop-in reports', () => {
+        const reference = (wrapper: Awaited<ReturnType<typeof mountComponent>>) =>
+            wrapper.find('[data-testid="payment-error-reference"]');
+
+        it('reports a failed payment instead of only showing the card', async () => {
+            const wrapper = await mountComponent();
+            const failure = { resultCode: 'Refused' };
+
+            captured.checkoutConfig?.onPaymentFailed?.(failure);
+            await flushPromises();
+
+            expect(mockLogger.error).toHaveBeenCalledWith(
+                'ADYEN_PAYMENT_FAILED',
+                'Adyen reported the payment as failed',
+                expect.objectContaining({
+                    reason: 'ADYEN_PAYMENT_FAILED',
+                    gateway: 'ADYEN',
+                    paymentAcceptorId: 'paya_123',
+                    resultCode: 'Refused',
+                    reference: expect.stringMatching(/^SV-/),
+                }),
+                failure,
+            );
+            expect(reference(wrapper).exists()).toBe(true);
+        });
+
+        it('gives the customer the same reference the log carries', async () => {
+            const wrapper = await mountComponent();
+
+            captured.checkoutConfig?.onPaymentFailed?.({ resultCode: 'Refused' });
+            await flushPromises();
+
+            const [, , context] = mockLogger.error.mock.calls.at(-1) as [
+                string,
+                string,
+                { reference: string },
+            ];
+            expect(reference(wrapper).text()).toBe(context.reference);
+        });
+
+        it('passes the error itself on, so a consumer can report it', async () => {
+            await mountComponent();
+            const failure = { name: 'ERROR', message: 'drop-in blew up' };
+
+            captured.checkoutConfig?.onError?.(failure);
+            await flushPromises();
+
+            expect(mockLogger.error).toHaveBeenCalledWith(
+                'INTEGRATION_ERROR',
+                'The Adyen drop-in reported an error',
+                expect.objectContaining({ reason: 'ADYEN_INTEGRATION_ERROR' }),
+                failure,
+            );
+        });
+
+        it('clears the card when the form is rebuilt', async () => {
+            const wrapper = await mountComponent();
+
+            captured.checkoutConfig?.onPaymentFailed?.({ resultCode: 'Refused' });
+            await flushPromises();
+            expect(reference(wrapper).exists()).toBe(true);
+
+            await wrapper.setProps({
+                paymentMethodOptionResponseEntry: {
+                    ...mockProps.paymentMethodOptionResponseEntry,
+                    payment_acceptor: { id: 'paya_456' },
+                } as never,
+            });
+            await flushPromises();
+
+            expect(reference(wrapper).exists()).toBe(false);
+        });
+
+        it('stays quiet when the customer cancels', async () => {
+            await mountComponent();
+
+            captured.checkoutConfig?.onError?.({ name: 'CANCEL' });
+            await flushPromises();
+
+            expect(mockLogger.error).not.toHaveBeenCalled();
         });
     });
 });

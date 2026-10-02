@@ -24,6 +24,15 @@ export type LogEntry = {
     /** When the entry was created, as an ISO 8601 string. */
     timestamp: string;
     /**
+     * Identifies the customer's visit, and is the identifier the SDK shows them when a payment
+     * fails. Every entry from one session carries the same value, so a reference a customer quotes
+     * leads to the whole sequence that led up to the failure rather than a single line of it.
+     *
+     * It survives the 3DS round trip and a reload, and is meaningless outside this browser session:
+     * it names no customer and no account. Forward it to your reporter as a searchable tag.
+     */
+    reference: string;
+    /**
      * Whatever the call site thought was worth knowing, plus the `componentName`, `environment` and
      * `url` every entry is enriched with. The URL is origin and path only — the query string is
      * left off because it tends to carry customer data. Never contains tokens or credentials.
@@ -121,4 +130,7 @@ export type ErrorCode =
     | 'STRIPE_SUBMIT_FAILED'
     | 'STRIPE_CONFIRMATION_TOKEN_FAILED'
     | 'STRIPE_ACTION_FAILED'
-    | 'STRIPE_REDIRECT_RETURN_FAILED';
+    | 'STRIPE_REDIRECT_RETURN_FAILED'
+    | 'ADYEN_PAYMENT_FAILED'
+    | 'PAYMENT_DETAILS_REJECTED'
+    | 'PAYMENT_ACCEPTOR_MISSING';

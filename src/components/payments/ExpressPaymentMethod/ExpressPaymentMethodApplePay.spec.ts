@@ -339,9 +339,16 @@ describe('ExpressPaymentMethodApplePay', () => {
             const mockError = new Error('Test error');
             onError(mockError);
 
-            expect(mockLogger.error).toHaveBeenCalledWith('APPLE_PAY_ERROR', 'Apple Pay error', {
-                error: mockError,
-            });
+            expect(mockLogger.error).toHaveBeenCalledWith(
+                'APPLE_PAY_ERROR',
+                'Apple Pay error',
+                expect.objectContaining({
+                    reason: 'APPLE_PAY_ERROR',
+                    gateway: 'ADYEN',
+                    reference: expect.stringMatching(/^SV-/),
+                }),
+                mockError,
+            );
         }
     });
 

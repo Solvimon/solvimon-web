@@ -8,6 +8,7 @@ import type {
     SolvimonMountConfig,
 } from './types';
 import type { LogSink } from '@/components/providers/LoggerProvider/LoggerProvider.types';
+import { getSessionReference } from '@/utils/sessionReference';
 
 type ElementProps = Record<string, unknown>;
 
@@ -54,6 +55,9 @@ function reportLoadFailure(
         code: 'INITIAL_DATA_LOAD_FAILED',
         message: `Solvimon: failed to load the "${id}" ${type}`,
         timestamp: new Date().toISOString(),
+        // The same reference the logger inside the tree uses, so a load failure and whatever the
+        // customer did next are one session rather than two unconnected reports.
+        reference: getSessionReference(),
         context: { id, type },
         error,
     });

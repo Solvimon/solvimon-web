@@ -18,6 +18,11 @@ import { createPaymentMethodsService } from '@/services/paymentMethods';
 import { createReturnUrl, PAYMENT_ACCEPTOR_ID_QUERY_STRING } from '@/utils/adyen';
 import { getQueryParam } from '@/utils/url';
 import { useLogger } from '@/components/providers';
+import {
+    createPaymentFailureContext,
+    createPaymentFailureError,
+    type PaymentFailureParams,
+} from '@/utils/paymentFailure';
 
 const props = withDefaults(defineProps<PaymentIntegrationFormStripeProps>(), {
     validateOnSubmit: () => Promise.resolve(true),
@@ -61,12 +66,24 @@ const publicKey = computed(
     () => props.paymentMethodOptionResponseEntry.integration.payment_gateway?.stripe?.public_key,
 );
 
+/** The context every failure in this form is logged with, filled in from what the form knows. */
+function failureContext(params: Omit<PaymentFailureParams, 'gateway'>): Record<string, unknown> {
+    return createPaymentFailureContext({
+        gateway: PAYMENT_GATEWAY_VARIANT_STRIPE,
+        paymentAcceptorId: props.paymentMethodOptionResponseEntry.payment_acceptor.id,
+        variant: props.variant,
+        invoiceId: props.invoiceId,
+        customerId: props.customerId,
+        ...params,
+    });
+}
+
 function submit() {
     handleSubmit().catch((error) => {
         logger.error(
             'STRIPE_SUBMIT_FAILED',
             'Unexpected error during Stripe submission',
-            {},
+            failureContext({ reason: 'STRIPE_SUBMIT_FAILED', cause: error }),
             error,
         );
     });
@@ -142,9 +159,14 @@ async function handleConfirmationToken(confirmationTokenId: string) {
             logger.error(
                 'PAYMENT_AUTHORIZATION_FAILED',
                 `Failed payment authorization for payment acceptor with id ${paymentAcceptorId}`,
-                { error },
+                failureContext({ reason: 'PAYMENT_AUTHORIZATION_FAILED', cause: error }),
+                error,
             );
-            emitError({ code: 'UNKNOWN_ERROR', message: 'Payment authorization failed', error });
+            emitError({
+                code: 'AUTHORIZATION_FAILED',
+                message: 'Payment authorization failed',
+                error,
+            });
         }
         return;
     }
@@ -154,7 +176,11 @@ async function handleConfirmationToken(confirmationTokenId: string) {
             logger.error(
                 'TOKENIZATION_FAILED',
                 `Missing customer id for payment acceptor with id ${paymentAcceptorId}`,
+                failureContext({ reason: 'TOKENIZATION_FAILED_NO_CUSTOMER' }),
             );
+            // Returning quietly used to leave the customer looking at a form that had already
+            // taken their details and would never do anything with them.
+            emitError({ code: 'TOKENIZE_FAILED', message: 'Missing customer id' });
             return;
         }
         try {
@@ -170,9 +196,10 @@ async function handleConfirmationToken(confirmationTokenId: string) {
             logger.error(
                 'TOKENIZATION_FAILED',
                 `Tokenization failed for payment acceptor with id ${paymentAcceptorId}`,
-                { error },
+                failureContext({ reason: 'TOKENIZATION_FAILED', cause: error }),
+                error,
             );
-            emitError({ code: 'UNKNOWN_ERROR', message: 'Tokenization failed', error });
+            emitError({ code: 'TOKENIZE_FAILED', message: 'Tokenization failed', error });
         }
     }
 }
@@ -187,8 +214,16 @@ async function handlePaymentResult(result: AuthorizePaymentResponse) {
             logger.error(
                 'STRIPE_ACTION_FAILED',
                 'Missing client_secret in Stripe ACTION_REQUIRED response',
+                failureContext({
+                    reason: 'STRIPE_ACTION_MISSING_CLIENT_SECRET',
+                    extra: { paymentStatus: result.status },
+                }),
             );
-            emitError({ code: 'UNKNOWN_ERROR', message: 'Payment action failed', error: result });
+            emitError({
+                code: 'AUTHORIZATION_FAILED',
+                message: 'Payment action failed',
+                error: result,
+            });
             return;
         }
 
@@ -196,16 +231,30 @@ async function handlePaymentResult(result: AuthorizePaymentResponse) {
         try {
             stripe = await getStripeInstance();
         } catch (error) {
-            logger.error('STRIPE_ACTION_FAILED', 'Failed to load Stripe.js', { error });
-            emitError({ code: 'UNKNOWN_ERROR', message: 'Payment action failed', error });
+            logger.error(
+                'STRIPE_ACTION_FAILED',
+                'Failed to load Stripe.js',
+                failureContext({ reason: 'STRIPE_SDK_LOAD_FAILED', cause: error }),
+                error,
+            );
+            emitError({ code: 'AUTHORIZATION_FAILED', message: 'Payment action failed', error });
             return;
         }
 
         const { error } = await stripe.handleNextAction({ clientSecret });
 
         if (error) {
-            logger.error('STRIPE_ACTION_FAILED', 'Stripe handleNextAction failed', { error });
-            emitError({ code: 'UNKNOWN_ERROR', message: 'Payment action failed', error });
+            logger.error(
+                'STRIPE_ACTION_FAILED',
+                'Stripe handleNextAction failed',
+                failureContext({
+                    reason: 'STRIPE_NEXT_ACTION_FAILED',
+                    cause: error,
+                    extra: { stripeErrorCode: error.code, stripeErrorType: error.type },
+                }),
+                error,
+            );
+            emitError({ code: 'AUTHORIZATION_FAILED', message: 'Payment action failed', error });
             return;
         }
 
@@ -220,8 +269,15 @@ async function handlePaymentResult(result: AuthorizePaymentResponse) {
         return;
     }
 
-    logger.error('STRIPE_ACTION_FAILED', 'Unexpected payment result status', { error: result });
-    emitError({ code: 'UNKNOWN_ERROR', message: 'Payment failed', error: result });
+    logger.error(
+        'STRIPE_ACTION_FAILED',
+        'Unexpected payment result status',
+        failureContext({
+            reason: 'STRIPE_UNEXPECTED_PAYMENT_STATUS',
+            extra: { paymentStatus: result.status },
+        }),
+    );
+    emitError({ code: 'AUTHORIZATION_FAILED', message: 'Payment failed', error: result });
 }
 
 async function handleRedirectReturn() {
@@ -241,13 +297,22 @@ async function handleRedirectReturn() {
         return;
     }
 
-    logger.error('STRIPE_REDIRECT_RETURN_FAILED', 'Stripe redirect returned non-succeeded status', {
-        redirectStatus,
-    });
+    const redirectError = new globalThis.Error(
+        `Stripe redirect returned status: ${redirectStatus}`,
+    );
+    logger.error(
+        'STRIPE_REDIRECT_RETURN_FAILED',
+        'Stripe redirect returned non-succeeded status',
+        failureContext({
+            reason: 'STRIPE_REDIRECT_RETURN_FAILED',
+            extra: { redirectStatus },
+        }),
+        redirectError,
+    );
     emitError({
-        code: 'UNKNOWN_ERROR',
+        code: 'AUTHORIZATION_FAILED',
         message: 'Payment failed',
-        error: new globalThis.Error(`Stripe redirect returned status: ${redirectStatus}`),
+        error: redirectError,
     });
 }
 
@@ -260,23 +325,41 @@ function handleReady() {
 }
 
 function handleLoadError(error: { message?: string; type?: string }) {
+    logger.error(
+        'PAYMENT_INTEGRATION_INITIALIZATION_FAILED',
+        'Failed to load the Stripe payment form',
+        failureContext({
+            reason: 'STRIPE_FORM_LOAD_FAILED',
+            cause: error,
+            extra: { stripeErrorType: error.type },
+        }),
+        error,
+    );
     emitError({
-        code: 'UNKNOWN_ERROR',
+        code: 'PAYMENT_INTEGRATION_INITIALIZATION_FAILED',
         message: error.message ?? 'Failed to load payment form',
         error,
     });
 }
 
-function emitError(err: Error) {
-    integrationError.value = err;
-    emit('payment-failed', err);
+/**
+ * Every failure leaves through here, so the card the customer sees always carries the reference
+ * they can quote back to support.
+ */
+function emitError(err: Omit<Error, 'reference'>) {
+    const failure = createPaymentFailureError(err);
+    integrationError.value = failure;
+    emit('payment-failed', failure);
 }
 
 onMounted(() => {
     handleRedirectReturn().catch((error) => {
-        logger.error('STRIPE_REDIRECT_RETURN_FAILED', 'handleRedirectReturn threw unexpectedly', {
+        logger.error(
+            'STRIPE_REDIRECT_RETURN_FAILED',
+            'handleRedirectReturn threw unexpectedly',
+            failureContext({ reason: 'STRIPE_REDIRECT_RETURN_THREW', cause: error }),
             error,
-        });
+        );
     });
 });
 
@@ -312,9 +395,12 @@ onBeforeUnmount(() => {
         @submit-success="handleConfirmationToken"
         @submit-error="
             (error) =>
-                logger.error('STRIPE_CONFIRMATION_TOKEN_FAILED', 'Stripe submission failed', {
+                logger.error(
+                    'STRIPE_CONFIRMATION_TOKEN_FAILED',
+                    'Stripe submission failed',
+                    failureContext({ reason: 'STRIPE_CONFIRMATION_TOKEN_FAILED', cause: error }),
                     error,
-                })
+                )
         "
     />
 </template>

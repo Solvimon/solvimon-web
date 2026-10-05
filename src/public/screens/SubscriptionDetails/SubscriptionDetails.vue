@@ -233,8 +233,8 @@ const title = computed<string>(() =>
             />
 
             <OnDemandItemsCard
-                v-if="subscription && !isLoading && onDemandItems.length > 0"
-                :subscription="subscription"
+                v-if="!isLoading && onDemandItems.length > 0"
+                :items="onDemandItems"
                 class="sv-subscription-details__on-demand-items"
                 @order="isOnDemandOrderOpen = true"
             />

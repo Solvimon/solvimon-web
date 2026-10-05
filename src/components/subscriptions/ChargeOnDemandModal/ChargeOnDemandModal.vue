@@ -214,15 +214,7 @@ const subTitle = computed(() => {
                   'Subtitle of the on-demand order modal while the customer is adding a payment method',
               id: 'charge_on_demand_modal.add_payment_method.subtitle',
           })
-        : $t(
-              {
-                  defaultMessage: 'Make a one-off purchase of on-demand items in {subscription}.',
-                  description:
-                      'Subtitle of the modal for ordering the on-demand items of a subscription',
-                  id: 'charge_on_demand_modal.subtitle',
-              },
-              { subscription: subscriptionName.value },
-          );
+        : undefined;
 });
 
 const cancelButtonText = computed(() =>

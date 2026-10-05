@@ -1,25 +1,37 @@
 <script setup lang="ts">
-import { Button, Section, Typography, useIntl } from '@solvimon/solvimon-ui';
-import { computed } from 'vue';
+import { Button, Section, Typography, formatAmount, useIntl } from '@solvimon/solvimon-ui';
+import type { ChargeOnDemandItem } from '@solvimon/solvimon-ui';
 import type { OnDemandItemsCardEmits, OnDemandItemsCardProps } from './OnDemandItemsCard.types';
-import { getSubscriptionName } from '@/utils/subscription';
 
-const props = defineProps<OnDemandItemsCardProps>();
+defineProps<OnDemandItemsCardProps>();
 defineEmits<OnDemandItemsCardEmits>();
 
 const { $t } = useIntl();
 
-const subscriptionName = computed(() =>
-    getSubscriptionName({
-        subscription: props.subscription,
-        fallback: $t({
-            defaultMessage: 'your subscription',
-            description:
-                'Stands in for the subscription name on the on-demand items block when the subscription has none',
-            id: 'on_demand_items_card.subscription_name_fallback',
-        }),
-    }),
-);
+const getPriceLabel = (item: ChargeOnDemandItem) => {
+    if (!item.price) {
+        return undefined;
+    }
+    const price = formatAmount(item.price);
+
+    return item.priceType === 'FLAT'
+        ? $t(
+              {
+                  defaultMessage: '{price} per unit',
+                  id: 'on_demand_items_card.item.price_per_unit',
+                  description: 'The listed price of an on-demand item charged per unit',
+              },
+              { price },
+          )
+        : $t(
+              {
+                  defaultMessage: '{price} one-off',
+                  id: 'on_demand_items_card.item.price_one_off',
+                  description: 'The listed price of an on-demand item charged once',
+              },
+              { price },
+          );
+};
 </script>
 
 <template>
@@ -35,26 +47,27 @@ const subscriptionName = computed(() =>
         "
     >
         <div class="sv-on-demand-items-card__body flex flex-col gap-3">
-            <Typography
-                tag="p"
-                variant="body-sm"
-                color="secondary"
-                no-spacing
-                class="sv-on-demand-items-card__description"
-            >
-                {{
-                    $t(
-                        {
-                            defaultMessage:
-                                'Make a one-off purchase of on-demand items in {subscription}.',
-                            id: 'on_demand_items_card.description',
-                            description:
-                                'Explains what on-demand items are, on the block that offers them',
-                        },
-                        { subscription: subscriptionName },
-                    )
-                }}
-            </Typography>
+            <ul class="sv-on-demand-items-card__items flex flex-col gap-2">
+                <li
+                    v-for="item in items"
+                    :key="item.pricingItemId"
+                    class="sv-on-demand-items-card__item flex items-baseline justify-between gap-4"
+                >
+                    <Typography tag="span" variant="body-sm" no-spacing>
+                        {{ item.name }}
+                    </Typography>
+                    <Typography
+                        v-if="getPriceLabel(item)"
+                        tag="span"
+                        variant="body-sm"
+                        color="secondary"
+                        no-spacing
+                        class="shrink-0"
+                    >
+                        {{ getPriceLabel(item) }}
+                    </Typography>
+                </li>
+            </ul>
             <Button
                 class="sv-action sv-action--primary sv-on-demand-items-card__order w-full"
                 type="button"

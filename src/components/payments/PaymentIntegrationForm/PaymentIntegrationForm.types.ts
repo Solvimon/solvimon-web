@@ -40,6 +40,12 @@ interface BasePaymentIntegrationFormProps {
      * to the merchant and an invoice payment that stays where it is.
      */
     redirectsOnSuccess?: boolean;
+    /**
+     * Legal name of the party collecting the money, named in the SEPA mandate. Only the screen
+     * knows it — it comes off the invoice when paying one and off the subscription in checkout —
+     * and the mandate falls back to unnamed wording without it.
+     */
+    billingEntityName?: string;
 }
 
 export interface AuthorizePaymentIntegrationFormProps extends BasePaymentIntegrationFormProps {
@@ -95,6 +101,8 @@ export interface PaymentIntegrationVariantProps {
     forceStorePaymentMethod?: boolean;
     storePaymentMethod?: boolean;
     redirectsOnSuccess?: boolean;
+    /** Named in the SEPA mandate. See the note on the same prop in the base props. */
+    billingEntityName?: string;
 }
 
 export type PaymentIntegrationVariantEmits = PaymentIntegrationFormEmits;

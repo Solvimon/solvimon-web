@@ -742,6 +742,9 @@ onMounted(() => {
                                         :validate-on-submit="handleValidateOnSubmit"
                                         :redirects-on-success="redirectsOnSuccess"
                                         force-store-payment-method
+                                        :billing-entity-name="
+                                            subscription?.billing_entity?.legal_name
+                                        "
                                         @payment-success="handlePaymentSuccess"
                                         @payment-failed="handlePaymentFailed"
                                         @ready="emit('ready')"

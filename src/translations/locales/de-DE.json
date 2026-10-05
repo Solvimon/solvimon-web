@@ -165,7 +165,7 @@
     "invoice_table.header.invoice_number": "Rechnung",
     "invoice_table.header.status": "Status",
     "invoices_list.title": "Rechnungen",
-    "on_demand_items_card.order_button.label": "Artikel bestellen",
+    "on_demand_items_card.order_button.label": "Bestellen",
     "on_demand_items_card.title": "On-Demand-Artikel",
     "pay_button.label.amount_and_payment_method": "{amount} mit {type} bezahlen",
     "pay_button.label.amount_only": "{amount} bezahlen",

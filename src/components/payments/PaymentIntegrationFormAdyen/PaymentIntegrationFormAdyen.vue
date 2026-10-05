@@ -11,7 +11,12 @@ import type {
     PaymentIntegrationFormAdyenEmits,
     PaymentIntegrationFormAdyenProps,
 } from './PaymentIntegrationFormAdyen.types';
-import { getOverriddenTranslations } from './PaymentIntegrationFormAdyen.lib';
+import {
+    findSepaNoticeTarget,
+    getOverriddenTranslations,
+    hasLostSepaNotice,
+} from './PaymentIntegrationFormAdyen.lib';
+import SepaMandateNotice from './SepaMandateNotice.vue';
 import PaymentCompletedCard from '@/components/payments/PaymentCompletedCard/PaymentCompletedCard.vue';
 import PaymentErrorCard from '@/components/payments/PaymentErrorCard/PaymentErrorCard.vue';
 import type { Error } from '@/types/errors';
@@ -60,6 +65,9 @@ defineExpose({ submit });
 const PAYMENT_GATEWAY_VARIANT_ADYEN = 'ADYEN';
 
 const dropInContainerRef = ref();
+const sepaNoticeRef = ref<HTMLElement | null>(null);
+const sepaNoticeTarget = ref<HTMLElement | null>(null);
+let sepaObserver: MutationObserver | undefined;
 const showPaymentSuccess = ref(false);
 const integrationError = ref<Error>();
 
@@ -224,6 +232,7 @@ async function mountDropIn() {
         }).mount(dropInContainerRef.value);
 
         injectStylesToShadowRoot(adyenCss);
+        observeSepaNotice();
     } catch (error) {
         logger.error(
             'PAYMENT_INTEGRATION_INITIALIZATION_FAILED',
@@ -239,7 +248,44 @@ async function mountDropIn() {
     }
 }
 
+/**
+ * Keeps the mandate notice inside Adyen's SEPA card.
+ *
+ * Runs on every mutation of the drop-in, which is how it catches both the customer selecting SEPA
+ * and Adyen re-creating the card underneath us. Setting the same target again is a no-op for Vue,
+ * so the observer settles rather than looping on its own writes.
+ */
+function syncSepaNotice() {
+    const target = findSepaNoticeTarget(dropInContainerRef.value);
+
+    if (hasLostSepaNotice(target, sepaNoticeRef.value)) {
+        sepaNoticeTarget.value = null;
+        void nextTick(() => (sepaNoticeTarget.value = target));
+        return;
+    }
+
+    sepaNoticeTarget.value = target;
+}
+
+function observeSepaNotice() {
+    sepaObserver?.disconnect();
+
+    if (!dropInContainerRef.value) return;
+
+    sepaObserver = new MutationObserver(() => syncSepaNotice());
+    sepaObserver.observe(dropInContainerRef.value, { childList: true, subtree: true });
+    syncSepaNotice();
+}
+
+function stopObservingSepaNotice() {
+    sepaObserver?.disconnect();
+    sepaObserver = undefined;
+    sepaNoticeTarget.value = null;
+}
+
 async function unmountDropIn() {
+    stopObservingSepaNotice();
+
     if (dropInInstance) {
         dropInInstance.unmount();
         dropInInstance = null;
@@ -802,4 +848,10 @@ watch(
     />
     <PaymentErrorCard v-else-if="integrationError" :error="integrationError" />
     <div v-if="canMountDropIn" ref="dropInContainerRef"></div>
+
+    <!-- Adyen's SEPA card has no slot of its own, so the notice is placed into it. -->
+    <Teleport v-if="sepaNoticeTarget" :to="sepaNoticeTarget">
+        <!-- Reffed on an element, not the component: the re-attach check needs a real node. -->
+        <div ref="sepaNoticeRef"><SepaMandateNotice /></div>
+    </Teleport>
 </template>

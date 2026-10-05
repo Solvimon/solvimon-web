@@ -197,6 +197,7 @@
     "payments.error_card.unknown_error.message": "Si è verificato un errore sconosciuto",
     "payments.error_card.unknown_error.title": "Si è verificato un problema",
     "payments.retry_button.label": "Riprova",
+    "payments.sepa_mandate.notice": "Fornendo il tuo IBAN autorizzi noi a inviare istruzioni alla tua banca per addebitare il tuo conto, e la tua banca ad addebitare il tuo conto secondo tali istruzioni.",
     "pricing_item_pricing.unsupported_pricing_error": "Tariffa non supportata",
     "screens.payment_method_management.description": "Aggiungi un nuovo metodo di pagamento o imposta un metodo di pagamento predefinito per i tuoi pagamenti.",
     "screens.payment_method_management.title": "Metodi di pagamento",

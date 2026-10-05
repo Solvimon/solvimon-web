@@ -197,6 +197,7 @@
   "payments.error_card.unknown_error.message": "An unknown error has occurred",
   "payments.error_card.unknown_error.title": "Something went wrong",
   "payments.retry_button.label": "Try again",
+  "payments.sepa_mandate.notice": "By providing your IBAN you authorise us to send instructions to your bank to debit your account, and your bank to debit your account in accordance with those instructions.",
   "pricing_item_pricing.unsupported_pricing_error": "Unsupported pricing",
   "screens.payment_method_management.description": "Add a new payment method or set a default payment method for your payments.",
   "screens.payment_method_management.title": "Payment methods",

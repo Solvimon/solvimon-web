@@ -197,6 +197,7 @@
     "payments.error_card.unknown_error.message": "Er is een onbekende fout opgetreden",
     "payments.error_card.unknown_error.title": "Er is iets misgegaan",
     "payments.retry_button.label": "Opnieuw proberen",
+    "payments.sepa_mandate.notice": "Door je IBAN te verstrekken machtig je ons om opdrachten naar je bank te sturen om je rekening te debiteren, en je bank om je rekening overeenkomstig die opdrachten te debiteren.",
     "pricing_item_pricing.unsupported_pricing_error": "Niet-ondersteunde prijsstelling",
     "screens.payment_method_management.description": "Voeg een nieuwe betaalmethode toe of stel een standaard betaalmethode in voor uw betalingen.",
     "screens.payment_method_management.title": "Betaalmethoden",

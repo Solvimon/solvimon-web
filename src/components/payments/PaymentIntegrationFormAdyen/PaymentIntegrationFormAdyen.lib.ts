@@ -1,3 +1,34 @@
+/**
+ * Where the SEPA mandate notice is placed, inside Adyen's own card.
+ *
+ * Adyen builds the modifier from the payment method's type (`payment-method--${type}`), which is
+ * what scopes this to SEPA rather than every method's form. These class names are not a public
+ * API, so `findSepaNoticeTarget` is covered by a test: an Adyen upgrade that moves them fails
+ * loudly instead of silently dropping a legal notice.
+ */
+export const SEPA_NOTICE_SELECTOR =
+    '.adyen-checkout__payment-method--sepadirectdebit .adyen-checkout__payment-method__details__content';
+
+export function findSepaNoticeTarget(
+    container: HTMLElement | null | undefined,
+): HTMLElement | null {
+    return container?.querySelector<HTMLElement>(SEPA_NOTICE_SELECTOR) ?? null;
+}
+
+/**
+ * Whether the notice has to be mounted afresh rather than left where it is.
+ *
+ * The card belongs to Adyen's renderer, which re-creates it on its own schedule and takes our node
+ * with it. Vue has no way to notice that, so the teleport target is cleared and re-set to force a
+ * new node into the new card.
+ */
+export function hasLostSepaNotice(
+    target: HTMLElement | null,
+    notice: HTMLElement | null | undefined,
+): boolean {
+    return !!target && !!notice && !target.contains(notice);
+}
+
 export const getOverriddenTranslations = (variant: 'TOKENIZE' | 'AUTHORIZE') => {
     let result: Record<string, Record<string, string>> = {};
 

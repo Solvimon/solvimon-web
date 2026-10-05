@@ -833,21 +833,22 @@ onMounted(() => {
                         </Button>
                     </Skeleton>
 
-                    <!-- terms and conditions -->
-                    <Typography
-                        v-if="termsAndConditions"
-                        tag="div"
-                        variant="body-xs"
-                        color="subtle"
-                        class="sv-checkout__terms"
-                    >
-                        <MarkdownText :source="termsAndConditions" />
-                    </Typography>
-
                     <!-- kpis-->
                     <SecurePaymentsKPI :payment-method-options="paymentMethodOptions" />
                 </div>
             </template>
+        </template>
+
+        <template v-if="termsAndConditions && !isPaid" #footer>
+            <Typography
+                tag="div"
+                variant="body-xs"
+                color="subtle"
+                class="sv-checkout__terms"
+                data-testid="checkout-terms"
+            >
+                <MarkdownText :source="termsAndConditions" />
+            </Typography>
         </template>
     </ContentWithAsideLayout>
 </template>

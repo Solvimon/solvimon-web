@@ -16,5 +16,9 @@
                 <slot name="aside" />
             </aside>
         </div>
+
+        <div v-if="$slots.footer" class="sv-layout__footer">
+            <slot name="footer" />
+        </div>
     </div>
 </template>

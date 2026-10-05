@@ -491,6 +491,15 @@ describe('PaymentIntegrationFormAdyen', () => {
             expect(wrapper.find(`${SEPA_CARD} ${NOTICE}`).exists()).toBe(true);
         });
 
+        it('names the billing entity the screen gave it', async () => {
+            offering('sepadirectdebit');
+
+            const wrapper = await mountComponent({ billingEntityName: 'ACME B.V.' });
+            await settle();
+
+            expect(wrapper.find(NOTICE).text()).toContain('you authorise ACME B.V. to instruct');
+        });
+
         it('leaves every other payment method alone', async () => {
             offering('scheme', 'paypal');
 

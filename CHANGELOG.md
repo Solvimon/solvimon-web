@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- The Adyen SEPA Direct Debit form now carries the direct debit mandate authorisation, inside Adyen's own card under the IBAN field, where a customer reads it as they enter the account it applies to. It appears on no other payment method. Adyen offers no SEPA consent string to override and no slot in that card, so the notice is placed into it and re-placed if Adyen rebuilds the card; the selector that depends on Adyen's internals is pinned by a test, so an upgrade that moves it fails the build rather than quietly dropping a legal notice.
+- The Adyen SEPA Direct Debit form now carries the direct debit mandate — a heading and the authorisation itself, naming the billing entity collecting the money — inside Adyen's own card under the IBAN field, where a customer reads it as they enter the account it applies to. Where the billing entity is not known to the screen, the mandate falls back to wording that does not need the name rather than leaving a gap in the sentence. It appears on no other payment method. Adyen offers no SEPA consent string to override and no slot in that card, so the notice is placed into it and re-placed if Adyen rebuilds the card; the selector that depends on Adyen's internals is pinned by a test, so an upgrade that moves it fails the build rather than quietly dropping a legal notice.
 
 ### Changed
 

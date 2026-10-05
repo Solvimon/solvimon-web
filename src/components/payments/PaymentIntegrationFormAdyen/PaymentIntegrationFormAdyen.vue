@@ -852,6 +852,8 @@ watch(
     <!-- Adyen's SEPA card has no slot of its own, so the notice is placed into it. -->
     <Teleport v-if="sepaNoticeTarget" :to="sepaNoticeTarget">
         <!-- Reffed on an element, not the component: the re-attach check needs a real node. -->
-        <div ref="sepaNoticeRef"><SepaMandateNotice /></div>
+        <div ref="sepaNoticeRef">
+            <SepaMandateNotice :billing-entity-name="billingEntityName" />
+        </div>
     </Teleport>
 </template>

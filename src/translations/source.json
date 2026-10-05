@@ -791,9 +791,25 @@
     "defaultMessage": "Try again",
     "description": "Retry button text when an error has happened during a payment"
   },
-  "payments.sepa_mandate.notice": {
-    "defaultMessage": "By providing your IBAN you authorise us to send instructions to your bank to debit your account, and your bank to debit your account in accordance with those instructions.",
-    "description": "SEPA direct debit mandate authorisation, shown inside the SEPA payment method form"
+  "payments.sepa_mandate.authorisation": {
+    "defaultMessage": "By confirming this mandate, you authorise {billingEntityName} to instruct your bank to collect payments from your account, and you authorise your bank to carry out those instructions.",
+    "description": "SEPA direct debit mandate authorisation, naming the billing entity"
+  },
+  "payments.sepa_mandate.authorisation_unnamed": {
+    "defaultMessage": "By confirming this mandate, you authorise us to instruct your bank to collect payments from your account, and you authorise your bank to carry out those instructions.",
+    "description": "SEPA direct debit mandate authorisation, where the billing entity is not known"
+  },
+  "payments.sepa_mandate.recurrence": {
+    "defaultMessage": "This bank account will be used automatically to pay subsequent invoices from {billingEntityName} until you cancel this mandate.",
+    "description": "Explains that the SEPA mandate covers later invoices, naming the billing entity"
+  },
+  "payments.sepa_mandate.recurrence_unnamed": {
+    "defaultMessage": "This bank account will be used automatically to pay subsequent invoices until you cancel this mandate.",
+    "description": "Explains that the SEPA mandate covers later invoices, where the billing entity is not known"
+  },
+  "payments.sepa_mandate.title": {
+    "defaultMessage": "SEPA Direct Debit mandate — recurring payments",
+    "description": "Title of the SEPA direct debit mandate shown inside the SEPA payment form"
   },
   "pricing_item_pricing.unsupported_pricing_error": {
     "defaultMessage": "Unsupported pricing",

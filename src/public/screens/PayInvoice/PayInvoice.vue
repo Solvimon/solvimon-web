@@ -150,6 +150,7 @@ const handlePaymentFailed = () => {
                             :invoice-id="invoice.id"
                             :payment-method-options="paymentMethodOptions ?? []"
                             variant="AUTHORIZE"
+                            :billing-entity-name="invoice?.billing_entity?.legal_name"
                             @payment-success="handlePaymentSuccess"
                             @payment-failed="handlePaymentFailed"
                             @select="(payload) => (selectedPaymentMethod = payload)"

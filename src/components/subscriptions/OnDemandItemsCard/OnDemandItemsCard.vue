@@ -38,8 +38,7 @@ const { getPriceLabel } = useChargeOnDemandPriceLabel();
                     class="sv-on-demand-items-card__item grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-4"
                 >
                     <Typography
-                        tag="h3"
-                        variant="heading-3"
+                        weight="semibold"
                         no-spacing
                         class="sv-on-demand-items-card__item-name break-words"
                         >{{ item.name }}</Typography

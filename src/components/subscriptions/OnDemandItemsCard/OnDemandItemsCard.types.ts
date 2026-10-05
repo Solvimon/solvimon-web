@@ -1,7 +1,8 @@
-import type { PricingPlanSubscriptionExpanded } from '@/types/subscription';
+import type { ChargeOnDemandItem } from '@solvimon/solvimon-ui';
 
 export interface OnDemandItemsCardProps {
-    subscription: PricingPlanSubscriptionExpanded;
+    /** The items the customer can order, listed with the price they are offered at. */
+    items: ChargeOnDemandItem[];
 }
 
 export interface OnDemandItemsCardEmits {

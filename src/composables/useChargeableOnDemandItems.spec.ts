@@ -46,7 +46,7 @@ const response = {
                     items: [
                         {
                             id: 'prii_onboarding',
-                            product_item_ids: [],
+                            product_item_ids: ['proi_onboarding'],
                             configs: [config('pric_1')],
                         },
                     ],
@@ -81,6 +81,28 @@ const createSubscription = (variant: PricingPlanSubscriptionExpanded['variant'] 
                 type: 'DEFAULT',
                 start_at: '2020-01-01T00:00:00Z',
                 pricing_plan_schedule: { pricing_currency: 'EUR' },
+                pricing_plan_version: {
+                    pricing_categories: [
+                        {
+                            product_category_id: 'prca_1',
+                            pricings: [
+                                {
+                                    id: 'pri_onboarding',
+                                    product_ids: [],
+                                    items: [
+                                        {
+                                            id: 'prii_onboarding',
+                                            product_item_ids: ['proi_onboarding'],
+                                            product_items: [
+                                                { id: 'proi_onboarding', name: 'Kick-off session' },
+                                            ],
+                                        },
+                                    ],
+                                },
+                            ],
+                        },
+                    ],
+                },
             },
         ],
     }) as unknown as PricingPlanSubscriptionExpanded;
@@ -91,7 +113,7 @@ describe('useChargeableOnDemandItems', () => {
         mockGetOnDemandPricingItems.mockResolvedValue(response);
     });
 
-    it("lists the orderable items of the subscription's active schedule, without wallet top-ups", async () => {
+    it("lists the orderable items of the subscription's active schedule by their product items, without wallet top-ups", async () => {
         const { items, scheduleId } = useChargeableOnDemandItems({
             subscription: ref(createSubscription()),
         });
@@ -99,7 +121,9 @@ describe('useChargeableOnDemandItems', () => {
 
         expect(mockGetOnDemandPricingItems).toHaveBeenCalledWith({ scheduleId: 'ppsc_active' });
         expect(scheduleId.value).toBe('ppsc_active');
-        expect(items.value.map(({ pricingItemId }) => pricingItemId)).toEqual(['prii_onboarding']);
+        expect(items.value.map(({ pricingItemId, name }) => ({ pricingItemId, name }))).toEqual([
+            { pricingItemId: 'prii_onboarding', name: 'Kick-off session' },
+        ]);
     });
 
     it('offers nothing on a subscription that is not DEFAULT', async () => {

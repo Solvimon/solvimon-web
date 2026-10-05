@@ -30,7 +30,7 @@ vi.mock('./useCheckout.view', async () => {
 
     return {
         useCheckoutView: () => ({
-            paymentMethodOptions: r([]),
+            paymentMethodOptions: c(() => paymentMethodOptions.value),
             subscription: c(() => subscription.value),
             isPaymentMethodsPending: r(false),
             isInvoicePreviewPending: r(false),
@@ -97,10 +97,13 @@ vi.mock('@/components/providers/PortalProvider/composables/usePortal', () => ({
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
+const paymentMethodOptions = ref<unknown[]>([]);
+
 const CUSTOMISABLE_SUBSCRIPTION = {
     id: 'sub_1',
     billing_period: 'MONTHLY',
     pricing_plan_schedule_infos: [],
+    billing_entity: { legal_name: 'ACME B.V.' },
 } as unknown;
 
 /**
@@ -127,10 +130,13 @@ const STUBBED_CHILDREN = [
     'Typography',
 ];
 
-const mountCheckout = async () => {
+const mountCheckout = async (stubOverrides: Record<string, boolean> = {}) => {
     const wrapper = mount(Checkout, {
         global: {
-            stubs: Object.fromEntries(STUBBED_CHILDREN.map((name) => [name, true])),
+            stubs: {
+                ...Object.fromEntries(STUBBED_CHILDREN.map((name) => [name, true])),
+                ...stubOverrides,
+            },
         },
     });
     await flushPromises();
@@ -149,6 +155,7 @@ const completed = (wrapper: Awaited<ReturnType<typeof mountCheckout>>) =>
 describe('Checkout', () => {
     beforeEach(() => {
         isPaid.value = false;
+        paymentMethodOptions.value = [];
         subscription.value = CUSTOMISABLE_SUBSCRIPTION;
         invoicePreview.value = {
             id: 'inv_preview',
@@ -172,5 +179,20 @@ describe('Checkout', () => {
 
         expect(editor(wrapper).exists()).toBe(false);
         expect(completed(wrapper).exists()).toBe(true);
+    });
+
+    // The SEPA mandate names the party collecting the money, and only this screen knows it.
+    // Asserted on the rendered attribute rather than props(): the form is stubbed, and a stub
+    // declares no props of its own, so props() reads undefined for everything.
+    it('hands the billing entity name to the payment form', async () => {
+        paymentMethodOptions.value = [{ integration: { payment_gateway: { variant: 'ADYEN' } } }];
+
+        // Skeleton is stubbed for every other case, and a stub renders no slots — the payment form
+        // lives inside one, so it has to be real here or nothing below it mounts.
+        const wrapper = await mountCheckout({ Skeleton: false });
+
+        expect(
+            wrapper.find('payment-integration-form-stub').attributes('billing-entity-name'),
+        ).toBe('ACME B.V.');
     });
 });

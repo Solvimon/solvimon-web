@@ -48,10 +48,7 @@ export function useChargeableOnDemandItems({
 
     const items = computed(() =>
         scheduleId.value && data.value?.pricing_plan_schedule_id === scheduleId.value
-            ? getChargeableOnDemandItems(
-                  data.value,
-                  scheduleInfo.value?.pricing_plan_schedule?.pricing_currency,
-              )
+            ? getChargeableOnDemandItems(data.value)
             : [],
     );
 

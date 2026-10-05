@@ -202,18 +202,23 @@ describe('Checkout', () => {
     });
 
     describe('terms and conditions', () => {
-        it('shows the merchant note beside the pay button', async () => {
+        it('shows the merchant note in the footer, below both columns', async () => {
             portalNote.note = 'By subscribing you agree to the [terms](https://example.com).';
 
             const wrapper = await mountCheckout();
 
-            expect(wrapper.find('.sv-checkout__terms').exists()).toBe(true);
+            // Asserted by position, not just presence: the whole point of the change is where it
+            // sits, and `.sv-checkout__terms` exists either way.
+            expect(wrapper.find('.sv-layout__footer .sv-checkout__terms').exists()).toBe(true);
+            expect(wrapper.find('.sv-layout__aside .sv-checkout__terms').exists()).toBe(false);
         });
 
         it('shows nothing when the checkout page carries no note', async () => {
             const wrapper = await mountCheckout();
 
             expect(wrapper.find('.sv-checkout__terms').exists()).toBe(false);
+            // No note means no footer region at all, rather than an empty band under the columns.
+            expect(wrapper.find('.sv-layout__footer').exists()).toBe(false);
         });
 
         it('shows nothing for a note of only whitespace', async () => {

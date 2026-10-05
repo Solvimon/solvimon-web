@@ -216,7 +216,7 @@ const subTitle = computed(() => {
           })
         : $t(
               {
-                  defaultMessage: 'One-off items for {subscription}. You pay once, today.',
+                  defaultMessage: 'Make a one-off purchase of on-demand items in {subscription}.',
                   description:
                       'Subtitle of the modal for ordering the on-demand items of a subscription',
                   id: 'charge_on_demand_modal.subtitle',

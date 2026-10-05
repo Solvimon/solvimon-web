@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- The Adyen SEPA Direct Debit form now carries the direct debit mandate authorisation, inside Adyen's own card under the IBAN field, where a customer reads it as they enter the account it applies to. It appears on no other payment method. Adyen offers no SEPA consent string to override and no slot in that card, so the notice is placed into it and re-placed if Adyen rebuilds the card; the selector that depends on Adyen's internals is pinned by a test, so an upgrade that moves it fails the build rather than quietly dropping a legal notice.
+
 ### Changed
 
 - A failed API call now rejects with an `ApiError` rather than a plain object. It carries the same `statusCode`, `requestId` and `field` as before, and adds what an object literal could not: a name, a message and a stack. A host forwarding it to their reporter was getting "Object captured as exception with keys: field, hasError, message, requestId, statusCode" as the title of their most important issue; it now reads as the error it is. An error body with no message of its own falls back to `Request failed with status <code>` instead of an empty one.

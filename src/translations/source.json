@@ -791,6 +791,10 @@
     "defaultMessage": "Try again",
     "description": "Retry button text when an error has happened during a payment"
   },
+  "payments.sepa_mandate.notice": {
+    "defaultMessage": "By providing your IBAN you authorise us to send instructions to your bank to debit your account, and your bank to debit your account in accordance with those instructions.",
+    "description": "SEPA direct debit mandate authorisation, shown inside the SEPA payment method form"
+  },
   "pricing_item_pricing.unsupported_pricing_error": {
     "defaultMessage": "Unsupported pricing",
     "description": "Text displayed when the pricing item pricing is unsupported"

@@ -1,4 +1,5 @@
 import { flushPromises, mount } from '@vue/test-utils';
+import { nextTick } from 'vue';
 import PaymentIntegrationFormAdyen from './PaymentIntegrationFormAdyen.vue';
 import type { PaymentIntegrationFormAdyenProps } from './PaymentIntegrationFormAdyen.types';
 
@@ -34,11 +35,41 @@ const adyen = vi.hoisted(() => {
         'Redirect',
     ];
     const handleAction = vi.fn();
-    const dropIn = { handleAction, unmount: vi.fn(), submit: vi.fn() };
-    Object.assign(dropIn, { mount: vi.fn(() => dropIn) });
+
+    /**
+     * The drop-in writes a card per offered method, with the modifier Adyen builds from the type.
+     * Without it the container stays empty and nothing that depends on Adyen's DOM — the SEPA
+     * mandate notice — could be tested at all.
+     */
+    const renderCards = (container: HTMLElement, types: string[]) => {
+        container.innerHTML = types
+            .map(
+                (type) => `
+                <div class="adyen-checkout__payment-method adyen-checkout__payment-method--${type}">
+                    <div class="adyen-checkout__payment-method__details">
+                        <div class="adyen-checkout__payment-method__details__content"></div>
+                    </div>
+                </div>`,
+            )
+            .join('');
+    };
+
+    const dropIn = { handleAction, unmount: vi.fn(), submit: vi.fn(), renderCards };
+    Object.assign(dropIn, {
+        mount: vi.fn((container: HTMLElement) => {
+            const offered: { type: string }[] =
+                captured.checkoutConfig?.paymentMethodsResponse?.paymentMethods ?? [];
+            renderCards(
+                container,
+                offered.map(({ type }) => type),
+            );
+            return dropIn;
+        }),
+    });
 
     const captured: {
         checkoutConfig?: {
+            paymentMethodsResponse?: { paymentMethods: { type: string }[] };
             onSubmit?: SubmitHandler;
             onPaymentFailed?: (data: unknown, component?: unknown) => void;
             onError?: (data: unknown, component?: unknown) => void;
@@ -431,6 +462,71 @@ describe('PaymentIntegrationFormAdyen', () => {
                 expect.stringContaining('Missing customer id'),
                 expect.objectContaining({ reason: 'TOKENIZATION_FAILED_NO_CUSTOMER' }),
             );
+        });
+    });
+
+    describe('the SEPA mandate notice', () => {
+        const SEPA_CARD = '.adyen-checkout__payment-method--sepadirectdebit';
+        const NOTICE = '[data-testid="sepa-mandate-notice"]';
+
+        const offering = (...types: string[]) =>
+            mockGetAdyenDropInPaymentMethods.mockReturnValue(
+                types.map((type) => ({ type, name: type })),
+            );
+
+        /** The observer runs on a microtask, so the DOM settles a tick after Adyen changes it. */
+        const settle = async () => {
+            await flushPromises();
+            await nextTick();
+            await flushPromises();
+        };
+
+        it('places the notice inside the SEPA card, not loose in the form', async () => {
+            offering('sepadirectdebit');
+
+            const wrapper = await mountComponent();
+            await settle();
+
+            expect(wrapper.find(NOTICE).exists()).toBe(true);
+            expect(wrapper.find(`${SEPA_CARD} ${NOTICE}`).exists()).toBe(true);
+        });
+
+        it('leaves every other payment method alone', async () => {
+            offering('scheme', 'paypal');
+
+            const wrapper = await mountComponent();
+            await settle();
+
+            expect(wrapper.find(NOTICE).exists()).toBe(false);
+        });
+
+        it('shows once when SEPA sits beside other methods', async () => {
+            offering('scheme', 'sepadirectdebit', 'paypal');
+
+            const wrapper = await mountComponent();
+            await settle();
+
+            expect(wrapper.findAll(NOTICE)).toHaveLength(1);
+            expect(wrapper.find(`${SEPA_CARD} ${NOTICE}`).exists()).toBe(true);
+        });
+
+        // The card belongs to Adyen's renderer, which re-creates it whenever it likes and takes
+        // our node with it. Losing a legal notice to a re-render is the failure that matters.
+        it('comes back after Adyen re-creates the card', async () => {
+            offering('sepadirectdebit');
+
+            const wrapper = await mountComponent();
+            await settle();
+            expect(wrapper.find(NOTICE).exists()).toBe(true);
+
+            const dropInRoot = wrapper.find(SEPA_CARD).element.parentElement as HTMLElement;
+            adyen.dropIn.renderCards(dropInRoot, ['sepadirectdebit']);
+            expect(wrapper.find(NOTICE).exists()).toBe(false);
+
+            await settle();
+
+            expect(wrapper.findAll(NOTICE)).toHaveLength(1);
+            expect(wrapper.find(`${SEPA_CARD} ${NOTICE}`).exists()).toBe(true);
         });
     });
 

@@ -197,6 +197,7 @@
     "payments.error_card.unknown_error.message": "Es ist ein unbekannter Fehler aufgetreten",
     "payments.error_card.unknown_error.title": "Etwas ist schiefgelaufen",
     "payments.retry_button.label": "Erneut versuchen",
+    "payments.sepa_mandate.notice": "Indem Sie Ihre IBAN angeben, ermächtigen Sie uns, Ihrer Bank Aufträge zur Belastung Ihres Kontos zu erteilen, und Ihre Bank, Ihr Konto gemäß diesen Aufträgen zu belasten.",
     "pricing_item_pricing.unsupported_pricing_error": "Nicht unterstützte Preisgestaltung",
     "screens.payment_method_management.description": "Fügen Sie eine neue Zahlungsmethode hinzu oder legen Sie eine Standardzahlungsmethode für Ihre Zahlungen fest.",
     "screens.payment_method_management.title": "Zahlungsmethoden",

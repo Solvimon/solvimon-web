@@ -664,7 +664,7 @@
     "description": "Invoices list title"
   },
   "on_demand_items_card.order_button.label": {
-    "defaultMessage": "Order items",
+    "defaultMessage": "Order",
     "description": "Label for the button that opens the on-demand order form"
   },
   "on_demand_items_card.title": {

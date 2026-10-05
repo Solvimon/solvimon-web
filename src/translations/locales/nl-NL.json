@@ -165,7 +165,7 @@
     "invoice_table.header.invoice_number": "Factuur",
     "invoice_table.header.status": "Status",
     "invoices_list.title": "Facturen",
-    "on_demand_items_card.order_button.label": "Items bestellen",
+    "on_demand_items_card.order_button.label": "Bestellen",
     "on_demand_items_card.title": "On-demand items",
     "pay_button.label.amount_and_payment_method": "Betaal {amount} met {type}",
     "pay_button.label.amount_only": "Betaal {amount}",

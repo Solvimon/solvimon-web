@@ -62,7 +62,7 @@ const { getPriceLabel } = useChargeOnDemandPriceLabel();
             >
                 {{
                     $t({
-                        defaultMessage: 'Order items',
+                        defaultMessage: 'Order',
                         id: 'on_demand_items_card.order_button.label',
                         description: 'Label for the button that opens the on-demand order form',
                     })

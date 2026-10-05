@@ -1,42 +1,26 @@
 <script setup lang="ts">
-import { Button, Section, Typography, formatAmount, useIntl } from '@solvimon/solvimon-ui';
-import type { ChargeOnDemandItem } from '@solvimon/solvimon-ui';
+import {
+    Button,
+    Section,
+    Typography,
+    useChargeOnDemandPriceLabel,
+    useIntl,
+} from '@solvimon/solvimon-ui';
 import type { OnDemandItemsCardEmits, OnDemandItemsCardProps } from './OnDemandItemsCard.types';
 
 defineProps<OnDemandItemsCardProps>();
 defineEmits<OnDemandItemsCardEmits>();
 
 const { $t } = useIntl();
-
-const getPriceLabel = (item: ChargeOnDemandItem) => {
-    if (!item.price) {
-        return undefined;
-    }
-    const price = formatAmount(item.price);
-
-    return item.priceType === 'FLAT'
-        ? $t(
-              {
-                  defaultMessage: '{price} per unit',
-                  id: 'on_demand_items_card.item.price_per_unit',
-                  description: 'The listed price of an on-demand item charged per unit',
-              },
-              { price },
-          )
-        : $t(
-              {
-                  defaultMessage: '{price} one-off',
-                  id: 'on_demand_items_card.item.price_one_off',
-                  description: 'The listed price of an on-demand item charged once',
-              },
-              { price },
-          );
-};
+const { getPriceLabel } = useChargeOnDemandPriceLabel();
 </script>
 
 <template>
     <Section
         class="sv-on-demand-items-card"
+        content-background="none"
+        no-border
+        no-spacing
         :title="
             $t({
                 defaultMessage: 'On-demand items',
@@ -46,30 +30,33 @@ const getPriceLabel = (item: ChargeOnDemandItem) => {
             })
         "
     >
-        <div class="sv-on-demand-items-card__body flex flex-col gap-3">
-            <ul class="sv-on-demand-items-card__items flex flex-col gap-2">
+        <Section class="sv-on-demand-items-card__body">
+            <ul class="sv-on-demand-items-card__items grid grid-cols-1 gap-3">
                 <li
                     v-for="item in items"
                     :key="item.pricingItemId"
-                    class="sv-on-demand-items-card__item flex items-baseline justify-between gap-4"
+                    class="sv-on-demand-items-card__item grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-4"
                 >
-                    <Typography tag="span" variant="body-sm" no-spacing>
-                        {{ item.name }}
-                    </Typography>
+                    <Typography
+                        tag="h3"
+                        variant="heading-3"
+                        no-spacing
+                        class="sv-on-demand-items-card__item-name break-words"
+                        >{{ item.name }}</Typography
+                    >
                     <Typography
                         v-if="getPriceLabel(item)"
                         tag="span"
                         variant="body-sm"
-                        color="secondary"
-                        no-spacing
-                        class="shrink-0"
+                        color="subtle"
+                        class="sv-on-demand-items-card__item-price whitespace-nowrap text-right"
+                        >{{ getPriceLabel(item) }}</Typography
                     >
-                        {{ getPriceLabel(item) }}
-                    </Typography>
                 </li>
             </ul>
+
             <Button
-                class="sv-action sv-action--primary sv-on-demand-items-card__order w-full"
+                class="sv-action sv-action--primary sv-on-demand-items-card__order mt-4 w-full"
                 type="button"
                 @click="$emit('order')"
             >
@@ -81,6 +68,6 @@ const getPriceLabel = (item: ChargeOnDemandItem) => {
                     })
                 }}
             </Button>
-        </div>
+        </Section>
     </Section>
 </template>

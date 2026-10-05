@@ -663,14 +663,6 @@
     "defaultMessage": "Invoices",
     "description": "Invoices list title"
   },
-  "on_demand_items_card.item.price_one_off": {
-    "defaultMessage": "{price} one-off",
-    "description": "The listed price of an on-demand item charged once"
-  },
-  "on_demand_items_card.item.price_per_unit": {
-    "defaultMessage": "{price} per unit",
-    "description": "The listed price of an on-demand item charged per unit"
-  },
   "on_demand_items_card.order_button.label": {
     "defaultMessage": "Order items",
     "description": "Label for the button that opens the on-demand order form"

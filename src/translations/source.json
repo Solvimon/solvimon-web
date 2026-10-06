@@ -195,12 +195,8 @@
     "defaultMessage": "Save payment method",
     "description": "Confirm button of the on-demand order modal while the customer is adding a payment method"
   },
-  "charge_on_demand_modal.subscription_name_fallback": {
-    "defaultMessage": "your subscription",
-    "description": "Stands in for the subscription name in the on-demand order modal when the subscription has none"
-  },
   "charge_on_demand_modal.success.subtitle": {
-    "defaultMessage": "Your order for {subscription} is paid. The invoice is in your invoice list.",
+    "defaultMessage": "Your order is paid. The invoice is in your invoice list.",
     "description": "Subtitle of the on-demand order modal once the order has been paid"
   },
   "charge_on_demand_modal.success.title": {

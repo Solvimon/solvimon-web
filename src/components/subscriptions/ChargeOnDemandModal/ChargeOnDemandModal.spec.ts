@@ -283,6 +283,18 @@ describe('ChargeOnDemandModal', () => {
             expect(wrapper.emitted('close')).toHaveLength(1);
         });
 
+        it('says the order is paid', async () => {
+            mockCharge.mockResolvedValue(chargedInvoice);
+            const wrapper = mountModal();
+            await addItemAndWaitForTotal(wrapper);
+            await findConfirm(wrapper).trigger('click');
+            await flushPromises();
+
+            expect(wrapper.text()).toContain(
+                'Your order is paid. The invoice is in your invoice list.',
+            );
+        });
+
         it('holds the order while the charge is in flight', async () => {
             mockCharge.mockReturnValue(new Promise(() => {}));
             const wrapper = mountModal();

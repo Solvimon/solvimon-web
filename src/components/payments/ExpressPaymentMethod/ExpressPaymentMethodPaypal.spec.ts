@@ -8,7 +8,16 @@ const mockPayPalInstance = {
     mount: vi.fn(),
 };
 
-const mockPayPal = vi.fn().mockReturnValue(mockPayPalInstance);
+// The SDK calls these with `new`, which vitest rejects on a mock carrying a
+// `mockReturnValue`; a class implementation keeps the constructor-arg assertions.
+class PayPalStub {
+    constructor() {
+        return mockPayPalInstance;
+    }
+}
+
+const mockPayPal = vi.fn();
+mockPayPal.mockImplementation(PayPalStub as never);
 const mockAdyenCheckout = vi.fn().mockResolvedValue({});
 
 // The components reach the SDK through this loader, which is the SDK's only
@@ -107,7 +116,7 @@ describe('ExpressPaymentMethodPaypal', () => {
         mockPayPalInstance.isAvailable.mockResolvedValue(true);
         mockPayPalInstance.mount.mockClear();
         mockAdyenCheckout.mockResolvedValue({});
-        mockPayPal.mockReturnValue(mockPayPalInstance);
+        mockPayPal.mockImplementation(PayPalStub as never);
     });
 
     it('should initialize PayPal on mount', async () => {

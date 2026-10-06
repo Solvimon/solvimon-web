@@ -168,8 +168,9 @@ export default defineConfig({
         }),
         dropRedundantStylesheet(),
         dts({
-            rollupTypes: false,
-            outDir: './dist',
+            // `rollupTypes` in vite-plugin-dts 4; bundling stays off either way.
+            bundleTypes: false,
+            outDirs: './dist',
             include: [
                 'env.d.ts',
                 'src/types/**/*.ts',

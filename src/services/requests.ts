@@ -14,6 +14,7 @@ import { useAuth } from '@/components/providers/AuthProvider';
 
 const defaultOptions: RequestOptions = {
     method: 'GET',
+    credentials: 'omit',
 };
 
 export function createRequestService({ enableAccessCheck } = { enableAccessCheck: true }) {
@@ -85,7 +86,7 @@ export function createRequestService({ enableAccessCheck } = { enableAccessCheck
                 headers: getDefaultHeaders({
                     headers: options.headers,
                 }),
-                credentials: 'omit',
+                credentials: options.credentials,
                 body: data ? JSON.stringify(data) : undefined,
             });
 

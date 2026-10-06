@@ -31,7 +31,10 @@ if (!filePath.startsWith(baseDir + path.sep)) {
 
 - Always use `createRequestService` for API calls — it handles auth headers and error propagation consistently.
 - URL construction uses `new URL()` + `searchParams.append()` — never build URLs by string concatenation.
-- `credentials: 'omit'` must remain on all `fetch` calls to prevent credential leakage in cross-origin requests.
+- `credentials: 'omit'` is the default in `createRequestService` and must stay that way, to prevent
+  credential leakage in cross-origin requests. The only permitted exception is the identity token
+  pair — `/oauth/token` and `/oauth/refresh-token` in `src/services/tokens.ts` — which authenticate
+  on an `HttpOnly` refresh cookie and pass `credentials: 'include'`. Do not raise it anywhere else.
 
 ### Input validation
 

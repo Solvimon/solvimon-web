@@ -280,6 +280,7 @@ const title = computed<string>(() =>
                 @close="isOnDemandOrderOpen = false"
                 @payment-method-stored="$emit('payment-method-stored')"
                 @invoice-created="(invoice) => $emit('invoice-created', invoice)"
+                @order-paid="$emit('on-demand-order-paid')"
                 @view-invoice="
                     (invoiceId) => dispatchAction({ action: 'view-invoice', data: { invoiceId } })
                 "

@@ -271,16 +271,30 @@ describe('ChargeOnDemandModal', () => {
             expect(wrapper.text()).toContain('Payment successful');
         });
 
-        it('reports the created invoice when the customer is done', async () => {
+        it('reports the created invoice as soon as the order is placed', async () => {
             mockCharge.mockResolvedValue(chargedInvoice);
             const wrapper = mountModal();
             await addItemAndWaitForTotal(wrapper);
             await findConfirm(wrapper).trigger('click');
             await flushPromises();
 
+            expect(wrapper.emitted('invoice-created')).toEqual([[chargedInvoice]]);
+            expect(wrapper.emitted('close')).toBeUndefined();
+        });
+
+        it('reports the paid order when the customer is done', async () => {
+            mockCharge.mockResolvedValue(chargedInvoice);
+            const wrapper = mountModal();
+            await addItemAndWaitForTotal(wrapper);
+            await findConfirm(wrapper).trigger('click');
+            await flushPromises();
+
+            expect(wrapper.emitted('order-paid')).toBeUndefined();
+
             await wrapper.find('[data-testid="charge-on-demand-done"]').trigger('click');
 
-            expect(wrapper.emitted('invoice-created')).toEqual([[chargedInvoice]]);
+            expect(wrapper.emitted('order-paid')).toHaveLength(1);
+            expect(wrapper.emitted('invoice-created')).toHaveLength(1);
             expect(wrapper.emitted('close')).toHaveLength(1);
         });
 
@@ -293,7 +307,7 @@ describe('ChargeOnDemandModal', () => {
 
             await wrapper.find('[data-testid="charge-on-demand-view-invoice"]').trigger('click');
 
-            expect(wrapper.emitted('invoice-created')).toEqual([[chargedInvoice]]);
+            expect(wrapper.emitted('order-paid')).toHaveLength(1);
             expect(wrapper.emitted('close')).toHaveLength(1);
             expect(wrapper.emitted('view-invoice')).toEqual([[chargedInvoice.id]]);
         });
@@ -338,12 +352,14 @@ describe('ChargeOnDemandModal', () => {
                 expect(wrapper.emitted('view-invoice')).toEqual([[unpaidInvoice.id]]);
             });
 
-            it('reports the invoice on the way out', async () => {
+            it('reports the invoice, but not as paid', async () => {
                 const wrapper = await placeUnpaidOrder();
+
+                expect(wrapper.emitted('invoice-created')).toEqual([[unpaidInvoice]]);
 
                 await wrapper.find('[data-testid="charge-on-demand-done"]').trigger('click');
 
-                expect(wrapper.emitted('invoice-created')).toEqual([[unpaidInvoice]]);
+                expect(wrapper.emitted('order-paid')).toBeUndefined();
                 expect(wrapper.emitted('close')).toHaveLength(1);
             });
         });

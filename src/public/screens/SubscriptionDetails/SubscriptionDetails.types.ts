@@ -15,10 +15,14 @@ export interface SubscriptionDetailsConfiguration {
     subscriptionId: PricingPlanSubscription['id'];
     avatar?: string;
     /**
-     * Called when the customer places an on-demand order, once the order modal closes. The order
-     * created an invoice whether or not its payment went through, so `paymentStatus` says which:
-     * anything but `PAID` is an invoice still to be paid. Use it to refresh an invoice list or to
-     * follow up on the order.
+     * Called as soon as an on-demand order creates an invoice, while the customer still sees its
+     * receipt. The order created an invoice whether or not its payment went through, so
+     * `paymentStatus` says which: anything but `PAID` is an invoice still to be paid. Use it to
+     * refresh an invoice list or to follow up on the order.
+     *
+     * An order whose outcome is unknown — no response, or a failed payment that may or may not have
+     * left an invoice — is not reported here. It reaches `onLog` as `ON_DEMAND_CHARGE_FAILED` or
+     * `ON_DEMAND_CHARGE_REFUSED`, and the customer is sent to their invoice list.
      */
     onInvoiceCreated?: (invoice: {
         invoiceId: Invoice['id'];
@@ -47,4 +51,6 @@ export interface SubscriptionDetailsEmits {
     (e: 'subscription-changed'): void;
     /** An on-demand order placed an invoice, paid or not. */
     (e: 'invoice-created', invoice: Invoice): void;
+    /** The customer left the receipt of a paid on-demand order, which may have granted credits. */
+    (e: 'on-demand-order-paid'): void;
 }

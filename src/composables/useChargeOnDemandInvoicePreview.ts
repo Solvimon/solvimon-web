@@ -3,7 +3,7 @@ import type {
     Invoice,
     PricingPlanSchedule,
 } from '@solvimon/solvimon-types';
-import { ref, type Ref } from 'vue';
+import { ref, watch, type Ref } from 'vue';
 import { createInvoicesService } from '@/services/invoices';
 import { useWatchDebounced } from '@/composables/useWatchDebounced';
 import { useLogger } from '@/components/providers/LoggerProvider/composables/useLogger';
@@ -81,6 +81,21 @@ export function useChargeOnDemandInvoicePreview({
             }
         }
     };
+
+    // The request waits for the items to settle, but the total on screen is out of date from the
+    // first change. Pending is set here, undebounced, and a request still out is made stale so its
+    // answer cannot clear pending or write an old total while the next request is being waited on.
+    // Synchronous, so a request asked for right after the change is not the one made stale.
+    watch(
+        pricingItems,
+        (items) => {
+            if (items && pricingPlanScheduleId.value) {
+                latestGuard();
+                isPreviewPending.value = true;
+            }
+        },
+        { deep: true, flush: 'sync' },
+    );
 
     useWatchDebounced(pricingItems, () => void loadPreview(), {
         debounce: PREVIEW_DEBOUNCE_MS,

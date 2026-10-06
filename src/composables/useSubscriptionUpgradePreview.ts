@@ -70,8 +70,8 @@ export function useSubscriptionUpgradePreview(): {
 
             logger.error(
                 'INVOICE_PREVIEW_FAILED',
-                'Failed to preview the subscription upgrade',
-                {},
+                'Failed to load the invoice preview',
+                { preview: 'SUBSCRIPTION_UPGRADE' },
                 previewError,
             );
             error.value = previewError;

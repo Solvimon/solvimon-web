@@ -106,7 +106,7 @@ describe('useSubscriptionUpgradePreview', () => {
         expect(mockLoggerError).toHaveBeenCalledWith(
             'INVOICE_PREVIEW_FAILED',
             expect.any(String),
-            {},
+            { preview: 'SUBSCRIPTION_UPGRADE' },
             expect.any(Error),
         );
     });

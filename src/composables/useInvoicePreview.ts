@@ -187,7 +187,12 @@ export const useInvoicePreview = () => {
             invoicePreview.value = updatedPreviews[selectedPeriodKey];
         } catch (error) {
             status.value = ApiStatus.Failed;
-            logger.error('INVOICE_PREVIEW_FAILED', 'Failed to load invoice preview', {}, error);
+            logger.error(
+                'INVOICE_PREVIEW_FAILED',
+                'Failed to load the invoice preview',
+                { preview: 'CHECKOUT' },
+                error,
+            );
             throw error;
         } finally {
             status.value = ApiStatus.Done;

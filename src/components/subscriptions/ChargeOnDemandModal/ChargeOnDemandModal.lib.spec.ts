@@ -1,4 +1,4 @@
-import { canRetryCharge, getChargeFailure } from './ChargeOnDemandModal.lib';
+import { canRetryCharge, getChargeFailure, isInvoiceSettled } from './ChargeOnDemandModal.lib';
 import { ApiError } from '@/services/apiError';
 
 describe('getChargeFailure', () => {
@@ -30,5 +30,18 @@ describe('canRetryCharge', () => {
         expect(canRetryCharge('NOT_COMPLETED')).toBe(false);
         expect(canRetryCharge('IN_PROGRESS')).toBe(false);
         expect(canRetryCharge('UNCONFIRMED')).toBe(false);
+    });
+});
+
+describe('isInvoiceSettled', () => {
+    it.each([
+        ['PAID', true],
+        ['OVERPAID', true],
+        ['UNPAID', false],
+        ['PARTIALLY_PAID', false],
+        [null, false],
+        [undefined, false],
+    ] as const)('treats %s as settled: %s', (payment_status, settled) => {
+        expect(isInvoiceSettled({ payment_status })).toBe(settled);
     });
 });

@@ -17,8 +17,9 @@ export interface SubscriptionDetailsConfiguration {
     /**
      * Called as soon as an on-demand order creates an invoice, while the customer still sees its
      * receipt. The order created an invoice whether or not its payment went through, so
-     * `paymentStatus` says which: anything but `PAID` is an invoice still to be paid. Use it to
-     * refresh an invoice list or to follow up on the order.
+     * `paymentStatus` says which: `PAID` and `OVERPAID` are settled, while `UNPAID`,
+     * `PARTIALLY_PAID` and a missing status are an invoice still to be paid. Use it to refresh an
+     * invoice list or to follow up on the order.
      *
      * An order whose outcome is unknown — no response, or a failed payment that may or may not have
      * left an invoice — is not reported here. It reaches `onLog` as `ON_DEMAND_CHARGE_FAILED` or

@@ -82,14 +82,17 @@ export function useChargeOnDemandInvoicePreview({
         }
     };
 
-    // Debounced so typing an amount asks once, but only once there is a preview or a request out:
-    // the first total has nothing to settle against and should not wait.
+    // Debounced so that typing an amount sends one request, not one per keystroke. The first request
+    // is sent straight away: with no preview yet and none on its way, there is nothing to wait for.
     useWatchDebounced(pricingItems, () => void loadPreview(), {
         debounce: PREVIEW_DEBOUNCE_MS,
         debounceDisabled: () => !invoicePreview.value && !isPreviewPending.value,
         deep: true,
     });
 
+    // The watcher above only fires when the items change, not for the items the form starts with.
+    // A top-up, for example, preselects its choose-your-amount option with the minimum amount during
+    // setup, so the first preview has to be requested here. It does nothing while there are no items.
     void loadPreview();
 
     return { invoicePreview, isPreviewPending, loadPreview };

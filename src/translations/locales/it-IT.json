@@ -201,6 +201,7 @@
     "payments.sepa_mandate.authorisation_unnamed": "Confermando questo mandato ci autorizzi a dare istruzioni alla tua banca per incassare i pagamenti dal tuo conto, e autorizzi la tua banca a eseguire tali istruzioni.",
     "payments.sepa_mandate.recurrence": "Questo conto bancario sarà utilizzato automaticamente per pagare le fatture successive di {billingEntityName} fino a quando non revocherai questo mandato.",
     "payments.sepa_mandate.recurrence_unnamed": "Questo conto bancario sarà utilizzato automaticamente per pagare le fatture successive fino a quando non revocherai questo mandato.",
+    "payments.sepa_mandate.refund_rights": "Nell'ambito dei tuoi diritti, hai diritto a un rimborso dalla tua banca secondo i termini e le condizioni dell'accordo con la tua banca. Devi richiedere il rimborso entro 8 settimane dalla data di addebito sul tuo conto. Puoi richiedere alla tua banca una dichiarazione che illustri i tuoi diritti.",
     "payments.sepa_mandate.title": "Mandato SEPA Direct Debit — pagamenti ricorrenti",
     "pricing_item_pricing.unsupported_pricing_error": "Tariffa non supportata",
     "screens.payment_method_management.description": "Aggiungi un nuovo metodo di pagamento o imposta un metodo di pagamento predefinito per i tuoi pagamenti.",

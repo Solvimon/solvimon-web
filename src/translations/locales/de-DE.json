@@ -201,6 +201,7 @@
     "payments.sepa_mandate.authorisation_unnamed": "Mit der Bestätigung dieses Mandats ermächtigen Sie uns, Ihrer Bank Aufträge zum Einzug von Zahlungen von Ihrem Konto zu erteilen, und Ihre Bank, diese Aufträge auszuführen.",
     "payments.sepa_mandate.recurrence": "Dieses Bankkonto wird automatisch zur Zahlung weiterer Rechnungen von {billingEntityName} verwendet, bis Sie dieses Mandat widerrufen.",
     "payments.sepa_mandate.recurrence_unnamed": "Dieses Bankkonto wird automatisch zur Zahlung weiterer Rechnungen verwendet, bis Sie dieses Mandat widerrufen.",
+    "payments.sepa_mandate.refund_rights": "Im Rahmen Ihrer Rechte haben Sie Anspruch auf eine Erstattung durch Ihre Bank gemäß den Bedingungen Ihrer Vereinbarung mit Ihrer Bank. Sie müssen die Erstattung innerhalb von 8 Wochen ab dem Datum der Belastung Ihres Kontos beantragen. Sie können bei Ihrer Bank eine Erläuterung Ihrer Rechte anfordern.",
     "payments.sepa_mandate.title": "SEPA-Lastschriftmandat — wiederkehrende Zahlungen",
     "pricing_item_pricing.unsupported_pricing_error": "Nicht unterstützte Preisgestaltung",
     "screens.payment_method_management.description": "Fügen Sie eine neue Zahlungsmethode hinzu oder legen Sie eine Standardzahlungsmethode für Ihre Zahlungen fest.",

@@ -209,7 +209,7 @@ const paymentIntegrationProps = computed<PaymentIntegrationFormProps>(() => {
                 ref="paymentIntegrationFormRef"
                 class="sv-payment-method-form__integration"
                 v-bind="paymentIntegrationProps"
-                @select="(payload) => (selectedPaymentMethod = payload)"
+                @select="(payload: SelectedPaymentMethod) => (selectedPaymentMethod = payload)"
                 @payment-success="handlePaymentSuccess"
                 @payment-failed="handlePaymentFailed"
             />

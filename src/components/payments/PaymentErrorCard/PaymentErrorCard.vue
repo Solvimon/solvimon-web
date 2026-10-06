@@ -87,6 +87,8 @@ const copyReference = () => {
                     >
                         {{ error.reference }}
                     </Typography>
+                    <!-- @vue-expect-error `IconButton` spreads its attrs onto the `Button` that
+                         declares the `click` emit, but declares no emits of its own upstream. -->
                     <IconButton
                         type="button"
                         intent="subtle"

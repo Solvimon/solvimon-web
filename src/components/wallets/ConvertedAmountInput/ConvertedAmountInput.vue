@@ -11,6 +11,7 @@ import {
     toNumber,
     toOtherBase,
 } from './ConvertedAmountInput.lib';
+import { asText, type TextControlValue } from '@/utils/formControl';
 
 const props = defineProps<ConvertedAmountInputProps>();
 
@@ -50,27 +51,16 @@ watch(
     { immediate: true },
 );
 
-type InputQuantity = string | number | string[] | null | undefined;
-
-/** Whatever the input reported, as the text this field holds. Empty for anything it cannot mean. */
-function toEnteredText(quantity: InputQuantity): string {
-    if (typeof quantity === 'string') {
-        return quantity;
-    }
-
-    return typeof quantity === 'number' ? String(quantity) : '';
-}
-
 function toEnteredAsModel(quantity: string): string {
     const converted = toOtherBase(quantity, entryBase.value, props.modelBase, props.conversionRate);
 
     return converted === undefined ? '' : toFieldQuantity(converted, props.modelBase);
 }
 
-const enteredQuantity = computed<string, InputQuantity>({
+const enteredQuantity = computed<TextControlValue>({
     get: () => entered.value,
     set: (quantity) => {
-        entered.value = toEnteredText(quantity);
+        entered.value = asText(quantity);
         model.value = isConverted.value ? toEnteredAsModel(entered.value) : entered.value;
     },
 });

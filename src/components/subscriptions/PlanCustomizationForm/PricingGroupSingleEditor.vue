@@ -40,6 +40,22 @@ const singleModelValue = computed<string | undefined>({
     },
 });
 
+/** `RadioGroupExtended` reports `string | boolean`; only its string options are ever selectable. */
+const radioModelValue = computed<string | boolean | undefined>({
+    get: () => singleModelValue.value,
+    set: (value) => {
+        singleModelValue.value = typeof value === 'string' ? value : undefined;
+    },
+});
+
+/** `SelectExtended` reports `null` for a cleared selection. */
+const selectModelValue = computed<string | null | undefined>({
+    get: () => singleModelValue.value,
+    set: (value) => {
+        singleModelValue.value = value ?? undefined;
+    },
+});
+
 const options = computed<{ label: string; value: string; description: string }[]>(() => {
     return props.pricings.map((pricing) => ({
         label: getNameFromPricing(pricing) ?? '',
@@ -70,14 +86,14 @@ const getSelectOptions = (): SelectExtendedOptionEntry[] => {
             <div class="pt-1">
                 <RadioGroupExtended
                     v-if="options.length <= SHOW_RADIO_GROUP_MAX_OPTIONS"
-                    v-model="singleModelValue"
+                    v-model="radioModelValue"
                     :options="getRadioGroupOptions()"
                     :direction="isMobileViewport ? 'column' : 'row'"
                     :show-radio="false"
                 />
                 <SelectExtended
                     v-else-if="options.length <= SHOW_SELECT_MAX_OPTIONS"
-                    v-model:single-model-value="singleModelValue"
+                    v-model:single-model-value="selectModelValue"
                     :options="getSelectOptions()"
                     size="xl"
                     show-sub-label-in-input

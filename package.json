@@ -221,7 +221,7 @@
         "vitest": "^4.1.11",
         "vitest-localstorage-mock": "^0.1.2",
         "vue": "^3.5.43",
-        "vue-tsc": "^2.1.10"
+        "vue-tsc": "^3.1.5"
     },
     "overrides": {
         "@tiptap/core": "^3.31.2",

@@ -129,6 +129,7 @@ const card = (id: string, integrationId = 'int_stripe') =>
 
 const subscription = {
     id: 'ppsu_1',
+    customer_id: 'cust_1',
     name: 'Pro plan',
     variant: 'DEFAULT',
     payment_method_id: 'pmet_subscription',
@@ -306,11 +307,11 @@ describe('ChargeOnDemandModal', () => {
             await flushPromises();
         };
 
-        it("loads the subscription's payment method options when it opens", () => {
+        it("loads the subscription's payment method options through its customer when it opens", () => {
             mountModal();
 
             expect(mockLoadPaymentMethodOptions).toHaveBeenCalledWith(
-                expect.objectContaining({ subscriptionId: 'ppsu_1' }),
+                expect.objectContaining({ customerId: 'cust_1', subscriptionId: 'ppsu_1' }),
             );
         });
 

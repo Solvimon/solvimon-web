@@ -100,6 +100,7 @@ watch(
 
         try {
             await loadPaymentMethodOptions({
+                customerId: props.subscription.customer_id,
                 subscriptionId: props.subscription.id,
                 country: props.customer ? getCustomerCountry(props.customer) : undefined,
             });

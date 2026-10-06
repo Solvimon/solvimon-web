@@ -46,6 +46,21 @@ describe('usePaymentMethodOptions', () => {
         expect(paymentMethodOptions.apiStatus.value).toBe(ApiStatus.Done);
     });
 
+    it('scopes a customer lookup to a subscription when given one', async () => {
+        const subscriptionId = 'sub_123' as PricingPlanSubscription['id'];
+
+        mockGetPaymentMethodOptions.mockResolvedValue([]);
+
+        await usePaymentMethodOptions().get({ customerId: 'cust_123', subscriptionId });
+
+        expect(mockGetPaymentMethodOptions).toHaveBeenCalledWith({
+            customerId: 'cust_123',
+            subscriptionId,
+            amount: undefined,
+            country: undefined,
+        });
+    });
+
     it('captures errors when fetching fails', async () => {
         const error = new Error('failed');
         const payload: GetPaymentMethodOptionsPayload = {

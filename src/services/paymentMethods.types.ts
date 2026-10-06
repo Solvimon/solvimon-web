@@ -31,7 +31,12 @@ interface GetPaymentMethodOptionsBasePayload {
 
 export interface GetPaymentMethodOptionsByCustomerIdPayload extends GetPaymentMethodOptionsBasePayload {
     customerId: Customer['id'];
-    subscriptionId?: never;
+    /**
+     * Narrows the options to that subscription's payment acceptors. Sent alongside the customer
+     * because the portal authorises the lookup through the customer: a portal user has no access to
+     * a subscription on its own, so a subscription-only lookup comes back as not found.
+     */
+    subscriptionId?: PricingPlanSubscription['id'];
 }
 
 export interface GetPaymentMethodOptionsBySubscriptionIdPayload extends GetPaymentMethodOptionsBasePayload {

@@ -127,8 +127,8 @@ const loadSubscriptionPaymentMethodOptions = async () => {
         hasPaymentMethodOptionsLoadFailed.value = true;
         logger.error(
             'PAYMENT_METHOD_OPTIONS_LOAD_FAILED',
-            'Failed to load the payment methods an on-demand order can be paid with',
-            { subscriptionId: props.subscription.id },
+            'Failed to load the payment methods that can be offered',
+            { flow: 'ON_DEMAND_ORDER', subscriptionId: props.subscription.id },
             error,
         );
 

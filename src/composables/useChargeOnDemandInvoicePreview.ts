@@ -76,8 +76,8 @@ export function useChargeOnDemandInvoicePreview({
 
             logger.error(
                 'INVOICE_PREVIEW_FAILED',
-                'Failed to load the on-demand charge invoice preview',
-                {},
+                'Failed to load the invoice preview',
+                { preview: 'ON_DEMAND_CHARGE' },
                 error,
             );
         } finally {

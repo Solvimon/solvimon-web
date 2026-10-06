@@ -4,6 +4,7 @@ import type { Customer, Invoice, PaymentMethod } from '@solvimon/solvimon-types'
 import type { ChargeOnDemandItem } from '@solvimon/solvimon-ui';
 import ChargeOnDemandModal from './ChargeOnDemandModal.vue';
 import type { PricingPlanSubscriptionExpanded } from '@/types/subscription';
+import { ApiError } from '@/services/apiError';
 
 const { mockPreview, mockCharge, mockLoadPaymentMethodOptions, gateway } = vi.hoisted(() => ({
     mockPreview: vi.fn(),
@@ -371,17 +372,94 @@ describe('ChargeOnDemandModal', () => {
             expect(findForm(wrapper).props('disabled')).toBe(true);
         });
 
-        it('says the order could not be completed when the charge fails', async () => {
-            mockCharge.mockRejectedValue(new Error('boom'));
-            const wrapper = mountModal();
-            await addItemAndWaitForTotal(wrapper);
+        describe('when the charge fails', () => {
+            const failCharge = async (error: unknown) => {
+                mockCharge.mockRejectedValue(error);
+                const wrapper = mountModal();
+                await addItemAndWaitForTotal(wrapper);
+                await findConfirm(wrapper).trigger('click');
+                await flushPromises();
+                return wrapper;
+            };
 
-            await findConfirm(wrapper).trigger('click');
-            await flushPromises();
+            it('asks for another method when the chosen one cannot pay, and lets the customer retry', async () => {
+                const wrapper = await failCharge(
+                    new ApiError({ statusCode: 400, field: 'payment_method_id' }),
+                );
 
-            expect(findForm(wrapper).props('errors')).toEqual({
-                form: expect.stringContaining("couldn't complete your order"),
+                expect(findForm(wrapper).props('errors')).toEqual({
+                    form: expect.stringContaining('Choose another one'),
+                });
+                expect(findConfirm(wrapper).exists()).toBe(true);
+
+                findForm(wrapper).vm.$emit('update:paymentMethodId', 'pmet_other');
+                await flushPromises();
+
+                expect(findForm(wrapper).props('errors')).toBeUndefined();
             });
+
+            it('stops ordering when the subscription is not active', async () => {
+                const wrapper = await failCharge(
+                    new ApiError({ statusCode: 400, field: 'pricing_plan_subscription_id' }),
+                );
+
+                expect(findForm(wrapper).props('errors')).toEqual({
+                    form: expect.stringContaining("can't take orders right now"),
+                });
+                expect(findConfirm(wrapper).exists()).toBe(false);
+            });
+
+            it('keeps the order open to retry when the request itself was refused', async () => {
+                const wrapper = await failCharge(
+                    new ApiError({ statusCode: 400, field: 'pricing_items.0.units' }),
+                );
+
+                expect(findForm(wrapper).props('errors')).toEqual({
+                    form: expect.stringContaining("couldn't complete your order"),
+                });
+                expect(findConfirm(wrapper).exists()).toBe(true);
+            });
+
+            it.each([
+                [
+                    'the payment failed',
+                    new ApiError({ statusCode: 422 }),
+                    'Payment not completed',
+                    'If an invoice was created for this order',
+                ],
+                [
+                    'a payment is already in progress',
+                    new ApiError({ statusCode: 406 }),
+                    'Order already being processed',
+                    'already in progress',
+                ],
+                [
+                    'the server failed',
+                    new ApiError({ statusCode: 500 }),
+                    "We couldn't confirm your order",
+                    'Check your invoice list before trying again',
+                ],
+                [
+                    'no response came back',
+                    new TypeError('Failed to fetch'),
+                    "We couldn't confirm your order",
+                    'Check your invoice list before trying again',
+                ],
+            ])(
+                'sends the customer to their invoices without a retry when %s',
+                async (_case, error, title, message) => {
+                    const wrapper = await failCharge(error);
+
+                    expect(wrapper.text()).toContain(title);
+                    expect(wrapper.text()).toContain(message);
+                    expect(findConfirm(wrapper).exists()).toBe(false);
+
+                    await wrapper.find('[data-testid="charge-on-demand-close"]').trigger('click');
+
+                    expect(wrapper.emitted('close')).toHaveLength(1);
+                    expect(wrapper.emitted('charged')).toBeUndefined();
+                },
+            );
         });
     });
 

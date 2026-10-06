@@ -12,6 +12,7 @@ export const CHARGE_ON_DEMAND_MODAL_STEPS = [
     'ADD_PAYMENT_METHOD',
     'SUCCESS',
     'NOT_PAID',
+    'NOT_CONFIRMED',
 ] as const;
 
 export type ChargeOnDemandModalStep = (typeof CHARGE_ON_DEMAND_MODAL_STEPS)[number];

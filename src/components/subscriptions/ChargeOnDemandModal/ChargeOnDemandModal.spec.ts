@@ -283,6 +283,42 @@ describe('ChargeOnDemandModal', () => {
             expect(wrapper.emitted('close')).toHaveLength(1);
         });
 
+        describe('when the order is placed but the payment did not go through', () => {
+            const unpaidInvoice = { ...chargedInvoice, payment_status: 'UNPAID' } as Invoice;
+
+            const placeUnpaidOrder = async () => {
+                mockCharge.mockResolvedValue(unpaidInvoice);
+                const wrapper = mountModal();
+                await addItemAndWaitForTotal(wrapper);
+                await findConfirm(wrapper).trigger('click');
+                await flushPromises();
+                return wrapper;
+            };
+
+            it('says the payment is not completed rather than successful', async () => {
+                const wrapper = await placeUnpaidOrder();
+
+                expect(wrapper.text()).toContain('Payment not completed');
+                expect(wrapper.text()).not.toContain('Payment successful');
+                expect(wrapper.text()).toContain("You'll find the invoice in your invoice list.");
+            });
+
+            it('offers no way to pay again, which would place a second order', async () => {
+                const wrapper = await placeUnpaidOrder();
+
+                expect(findConfirm(wrapper).exists()).toBe(false);
+            });
+
+            it('reports the invoice on the way out', async () => {
+                const wrapper = await placeUnpaidOrder();
+
+                await wrapper.find('[data-testid="charge-on-demand-done"]').trigger('click');
+
+                expect(wrapper.emitted('charged')).toEqual([[unpaidInvoice]]);
+                expect(wrapper.emitted('close')).toHaveLength(1);
+            });
+        });
+
         it('says the order is paid', async () => {
             mockCharge.mockResolvedValue(chargedInvoice);
             const wrapper = mountModal();

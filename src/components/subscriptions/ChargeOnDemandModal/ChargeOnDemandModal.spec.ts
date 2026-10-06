@@ -229,6 +229,31 @@ describe('ChargeOnDemandModal', () => {
         expect(findConfirm(wrapper).attributes()).not.toHaveProperty('disabled');
     });
 
+    it('says the total failed to load and asks for it again from the pay button', async () => {
+        mockPreview.mockRejectedValueOnce(new Error('nope'));
+        const wrapper = mountModal();
+
+        findForm(wrapper).vm.$emit('update:selection', [
+            { pricingItemId: 'prii_consulting', units: 2 },
+        ]);
+        await vi.runAllTimersAsync();
+        await flushPromises();
+
+        expect(findForm(wrapper).props('errors')).toEqual({
+            form: "We couldn't calculate the total. Please try again.",
+        });
+        expect(findConfirm(wrapper).text()).toBe('Calculate total again');
+        expect(findConfirm(wrapper).attributes()).not.toHaveProperty('disabled');
+
+        await findConfirm(wrapper).trigger('click');
+        await flushPromises();
+
+        expect(mockPreview).toHaveBeenCalledTimes(2);
+        expect(mockCharge).not.toHaveBeenCalled();
+        expect(findForm(wrapper).props('errors')).toBeUndefined();
+        expect(findConfirm(wrapper).text()).toContain('290.40');
+    });
+
     it("says ordering isn't available when the subscription cannot take payments", () => {
         const wrapper = mountModal({
             subscription: { ...subscription, payment_acceptor_ids: [] },

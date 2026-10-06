@@ -177,10 +177,11 @@ const pricingItems = computed(() =>
     selection.value.length > 0 ? toChargePricingItems(selection.value, props.items) : undefined,
 );
 
-const { invoicePreview, isPreviewPending } = useChargeOnDemandInvoicePreview({
-    pricingPlanScheduleId: computed(() => props.scheduleId),
-    pricingItems,
-});
+const { invoicePreview, isPreviewPending, hasPreviewFailed, loadPreview } =
+    useChargeOnDemandInvoicePreview({
+        pricingPlanScheduleId: computed(() => props.scheduleId),
+        pricingItems,
+    });
 
 const total = computed(() => invoicePreview.value?.invoice_amount_including_tax);
 
@@ -225,7 +226,24 @@ watch(paymentMethodId, () => {
     }
 });
 
-const formError = computed(() => chargeError.value ?? paymentMethodOptionsError.value);
+const previewError = computed(() =>
+    hasPreviewFailed.value
+        ? $t({
+              defaultMessage: "We couldn't calculate the total. Please try again.",
+              description: 'Shown on the on-demand order when its total failed to load',
+              id: 'charge_on_demand_modal.preview_error',
+          })
+        : undefined,
+);
+
+/** A failed total is asked for again from the pay button, which has nothing to pay until then. */
+const canRetryPreview = computed(
+    () => hasPreviewFailed.value && !isPreviewPending.value && !isCharging.value,
+);
+
+const formError = computed(
+    () => chargeError.value ?? previewError.value ?? paymentMethodOptionsError.value,
+);
 
 /** The order is through, paid or not, and an invoice exists for it. */
 const isOrderPlaced = computed(() => step.value === 'SUCCESS' || step.value === 'NOT_PAID');
@@ -407,6 +425,14 @@ const confirmButtonText = computed(() => {
         });
     }
 
+    if (canRetryPreview.value) {
+        return $t({
+            defaultMessage: 'Calculate total again',
+            description: 'Pay button of the on-demand order when its total failed to load',
+            id: 'charge_on_demand_modal.confirm_button.retry_preview',
+        });
+    }
+
     if (!total.value || isPreviewPending.value) {
         return $t({
             defaultMessage: 'Updating total…',
@@ -495,6 +521,11 @@ const charge = async () => {
 const handleConfirm = () => {
     if (isAddingPaymentMethod.value) {
         submitPaymentMethod();
+        return;
+    }
+
+    if (canRetryPreview.value) {
+        void loadPreview();
         return;
     }
 
@@ -699,7 +730,7 @@ watch(
                     size="lg"
                     class="sv-action sv-action--primary"
                     data-testid="charge-on-demand-confirm"
-                    :disabled="!canSubmit"
+                    :disabled="!canSubmit && !canRetryPreview"
                     :loading="isCharging"
                     @click="handleConfirm"
                     >{{ confirmButtonText }}</Button

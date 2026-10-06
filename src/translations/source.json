@@ -187,6 +187,10 @@
     "defaultMessage": "Pay {total}",
     "description": "Pay button of the on-demand order, with the total it charges"
   },
+  "charge_on_demand_modal.confirm_button.retry_preview": {
+    "defaultMessage": "Calculate total again",
+    "description": "Pay button of the on-demand order when its total failed to load"
+  },
   "charge_on_demand_modal.confirm_button.updating": {
     "defaultMessage": "Updating total…",
     "description": "Disabled pay button of the on-demand order while its total is calculated"
@@ -219,9 +223,9 @@
     "defaultMessage": "We couldn't load the ways to add a payment method. Please try again.",
     "description": "Shown on the on-demand order when the payment methods that can be added failed to load"
   },
-  "charge_on_demand_modal.payment_methods.empty": {
-    "defaultMessage": "Add a payment method to pay for this order.",
-    "description": "Shown in the on-demand order when no saved payment method can pay for it"
+  "charge_on_demand_modal.preview_error": {
+    "defaultMessage": "We couldn't calculate the total. Please try again.",
+    "description": "Shown on the on-demand order when its total failed to load"
   },
   "charge_on_demand_modal.save_payment_method.label": {
     "defaultMessage": "Save payment method",

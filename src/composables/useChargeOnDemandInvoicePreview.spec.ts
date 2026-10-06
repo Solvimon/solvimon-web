@@ -160,4 +160,22 @@ describe('useChargeOnDemandInvoicePreview', () => {
         expect(invoicePreview.value).toBeUndefined();
         expect(isPreviewPending.value).toBe(false);
     });
+
+    it('reports a failed preview until the next request', async () => {
+        const { amount, hasPreviewFailed, loadPreview } = setup();
+
+        mockPreview.mockRejectedValueOnce(new Error('nope'));
+        amount.value = amountOf('25');
+        await vi.runAllTimersAsync();
+
+        expect(hasPreviewFailed.value).toBe(true);
+
+        const retry = loadPreview();
+
+        expect(hasPreviewFailed.value).toBe(false);
+
+        await retry;
+
+        expect(hasPreviewFailed.value).toBe(false);
+    });
 });

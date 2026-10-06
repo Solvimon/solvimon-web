@@ -265,6 +265,21 @@ describe('PaymentIntegrationFormAdyen', () => {
             expect(wrapper.emitted('invalid')).toHaveLength(1);
         });
 
+        it('fails the payment when the drop-in throws on submit', async () => {
+            adyen.dropIn.submit.mockImplementationOnce(() => {
+                throw new Error('No active payment method.');
+            });
+            const wrapper = await mountComponent();
+
+            (wrapper.vm as unknown as { submit: () => void }).submit();
+
+            expect(wrapper.emitted('invalid')).toBeUndefined();
+            expect(wrapper.emitted('payment-failed')).toHaveLength(1);
+            expect(wrapper.emitted('payment-failed')?.[0]?.[0]).toMatchObject({
+                code: 'AUTHORIZATION_FAILED',
+            });
+        });
+
         it('reports the submit as invalid when the screen rejects it', async () => {
             const wrapper = await mountComponent({
                 validateOnSubmit: () => Promise.resolve(false),

@@ -134,7 +134,11 @@ function submit() {
             failureContext({ reason: 'ADYEN_SUBMIT_FAILED', cause: error }),
             error,
         );
-        emit('invalid');
+        emitError({
+            code: props.variant === 'TOKENIZE' ? 'TOKENIZE_FAILED' : 'AUTHORIZATION_FAILED',
+            message: 'Failed to submit Adyen drop-in',
+            error,
+        });
     }
 }
 

@@ -1,4 +1,13 @@
+import type { Invoice } from '@solvimon/solvimon-types';
 import { isApiError } from '@/services/apiError';
+
+/**
+ * Whether nothing is left to pay on the invoice. `OVERPAID` is settled too; `UNPAID`,
+ * `PARTIALLY_PAID` and a missing status are not.
+ */
+export function isInvoiceSettled(invoice: Pick<Invoice, 'payment_status'>): boolean {
+    return invoice.payment_status === 'PAID' || invoice.payment_status === 'OVERPAID';
+}
 
 /**
  * What a failed charge means for the customer, read from the response of

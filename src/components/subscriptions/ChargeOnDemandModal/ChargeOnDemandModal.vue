@@ -19,7 +19,12 @@ import type {
     ChargeOnDemandModalStep,
 } from './ChargeOnDemandModal.types';
 import { CHARGE_ON_DEMAND_MODAL_STEPS } from './ChargeOnDemandModal.types';
-import { canRetryCharge, getChargeFailure, type ChargeFailure } from './ChargeOnDemandModal.lib';
+import {
+    canRetryCharge,
+    getChargeFailure,
+    isInvoiceSettled,
+    type ChargeFailure,
+} from './ChargeOnDemandModal.lib';
 import EmptyStatePlaceholder from '@/components/checkout/EmptyStatePlaceholder.vue';
 import OnDemandPaymentModalShell from '@/components/payments/OnDemandPaymentModalShell/OnDemandPaymentModalShell.vue';
 import { useChargeOnDemandInvoicePreview } from '@/composables/useChargeOnDemandInvoicePreview';
@@ -448,7 +453,7 @@ const charge = async () => {
         // - Adyen or Stripe leave it pending, such as a stored SEPA debit or Stripe `processing`,
         // - the gateway asks for an action, such as 3DS on a Stripe card, which nobody can complete here.
         // The invoice cannot tell these apart, so they share one outcome. See MD-5539, points 5 to 9.
-        step.value = invoice.payment_status === 'PAID' ? 'SUCCESS' : 'NOT_PAID';
+        step.value = isInvoiceSettled(invoice) ? 'SUCCESS' : 'NOT_PAID';
     } catch (error) {
         const failure = getChargeFailure(error);
         chargeFailure.value = failure;
@@ -498,7 +503,7 @@ const handleConfirm = () => {
 
 /** Reported on the way out, so nothing is reloaded under a receipt still being read. */
 const handleDone = () => {
-    if (chargedInvoice.value?.payment_status === 'PAID') {
+    if (chargedInvoice.value && isInvoiceSettled(chargedInvoice.value)) {
         emit('order-paid');
     }
     emit('close');
@@ -633,7 +638,7 @@ watch(
                 <InvoicePreview
                     :invoice="chargedInvoice"
                     is-customer-facing
-                    :is-paid="chargedInvoice.payment_status === 'PAID'"
+                    :is-paid="isInvoiceSettled(chargedInvoice)"
                 />
             </Section>
         </template>

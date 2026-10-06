@@ -376,6 +376,20 @@ describe('ChargeOnDemandModal', () => {
             );
         });
 
+        it('treats an overpaid order as paid', async () => {
+            mockCharge.mockResolvedValue({ ...chargedInvoice, payment_status: 'OVERPAID' });
+            const wrapper = mountModal();
+            await addItemAndWaitForTotal(wrapper);
+            await findConfirm(wrapper).trigger('click');
+            await flushPromises();
+
+            expect(wrapper.text()).toContain('Payment successful');
+
+            await wrapper.find('[data-testid="charge-on-demand-done"]').trigger('click');
+
+            expect(wrapper.emitted('order-paid')).toHaveLength(1);
+        });
+
         it('holds the order while the charge is in flight', async () => {
             mockCharge.mockReturnValue(new Promise(() => {}));
             const wrapper = mountModal();

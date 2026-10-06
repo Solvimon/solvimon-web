@@ -6,6 +6,7 @@ import type {
     SubscriptionDetailsProps,
 } from './SubscriptionDetails.types';
 import { ContentWithAsideLayout } from '@/layouts';
+import { useActionDispatchProvider } from '@/components/providers';
 import { useSubscriptionActions } from '@/composables/useSubscriptionActions';
 import { getMostRecentScheduleInfo, getSubscriptionName } from '@/utils/subscription';
 import CustomerWalletBalances from '@/public/components/CustomerWalletBalances/CustomerWalletBalances.vue';
@@ -40,6 +41,7 @@ const props = withDefaults(defineProps<SubscriptionDetailsProps>(), {
     onDemandItems: () => [],
 });
 const emit = defineEmits<SubscriptionDetailsEmits>();
+const { dispatchAction } = useActionDispatchProvider();
 
 const { $t } = useIntl();
 
@@ -277,6 +279,9 @@ const title = computed<string>(() =>
                 :payment-methods="paymentMethods"
                 @close="isOnDemandOrderOpen = false"
                 @payment-method-stored="$emit('payment-method-stored')"
+                @view-invoice="
+                    (invoiceId) => dispatchAction({ action: 'view-invoice', data: { invoiceId } })
+                "
             />
 
             <SubscriptionCancellationModal

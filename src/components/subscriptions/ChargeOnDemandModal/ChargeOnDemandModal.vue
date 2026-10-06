@@ -274,11 +274,20 @@ const cancelButtonText = computed(() =>
 );
 
 const confirmButtonText = computed(() => {
-    if (isOrderPlaced.value) {
+    if (step.value === 'SUCCESS') {
         return $t({
             defaultMessage: 'Done',
             description: 'Closes the on-demand order modal once the order has been paid',
             id: 'charge_on_demand_modal.done_button.label',
+        });
+    }
+
+    if (step.value === 'NOT_PAID') {
+        return $t({
+            defaultMessage: 'Close',
+            description:
+                'Closes the on-demand order modal when the order was placed but its payment did not go through',
+            id: 'charge_on_demand_modal.close_button.label',
         });
     }
 
@@ -377,6 +386,24 @@ const handleDone = () => {
         emit('charged', chargedInvoice.value);
     }
     emit('close');
+};
+
+const viewInvoiceButtonText = computed(() =>
+    $t({
+        defaultMessage: 'Go to invoice',
+        description: 'Opens the invoice of the on-demand order the customer just placed',
+        id: 'charge_on_demand_modal.view_invoice_button.label',
+    }),
+);
+
+const handleViewInvoice = () => {
+    const invoice = chargedInvoice.value;
+
+    handleDone();
+
+    if (invoice) {
+        emit('view-invoice', invoice.id);
+    }
 };
 
 const handleCancel = () => {
@@ -509,12 +536,34 @@ watch(
 
         <template #footer>
             <div v-if="isOrderPlaced" class="flex flex-col gap-2">
+                <!-- An unpaid order's way forward is its invoice, so that is what it leads with. -->
                 <Button
+                    v-if="step === 'NOT_PAID'"
                     size="lg"
                     class="sv-action sv-action--primary"
+                    data-testid="charge-on-demand-view-invoice"
+                    @click="handleViewInvoice"
+                    >{{ viewInvoiceButtonText }}</Button
+                >
+                <Button
+                    size="lg"
+                    :intent="step === 'NOT_PAID' ? 'subtle' : 'primary'"
+                    :class="[
+                        'sv-action',
+                        step === 'NOT_PAID' ? 'sv-action--secondary' : 'sv-action--primary',
+                    ]"
                     data-testid="charge-on-demand-done"
                     @click="handleDone"
                     >{{ confirmButtonText }}</Button
+                >
+                <Button
+                    v-if="step === 'SUCCESS'"
+                    size="lg"
+                    intent="subtle"
+                    class="sv-action sv-action--secondary"
+                    data-testid="charge-on-demand-view-invoice"
+                    @click="handleViewInvoice"
+                    >{{ viewInvoiceButtonText }}</Button
                 >
             </div>
             <div v-else class="flex flex-col gap-2">

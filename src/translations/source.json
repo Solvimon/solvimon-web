@@ -167,6 +167,10 @@
     "defaultMessage": "We couldn't complete your order. Please try again later.",
     "description": "Shown on the on-demand order when charging it failed"
   },
+  "charge_on_demand_modal.close_button.label": {
+    "defaultMessage": "Close",
+    "description": "Closes the on-demand order modal when the order was placed but its payment did not go through"
+  },
   "charge_on_demand_modal.confirm_button.no_items": {
     "defaultMessage": "Add an item to continue",
     "description": "Disabled pay button of the on-demand order while no item is added"
@@ -222,6 +226,10 @@
   "charge_on_demand_modal.unavailable.title": {
     "defaultMessage": "Ordering isn't available",
     "description": "Title shown instead of the on-demand order form when the subscription cannot take payments"
+  },
+  "charge_on_demand_modal.view_invoice_button.label": {
+    "defaultMessage": "Go to invoice",
+    "description": "Opens the invoice of the on-demand order the customer just placed"
   },
   "checkout.address.city.placeholder": {
     "defaultMessage": "City...",

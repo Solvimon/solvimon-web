@@ -54,7 +54,15 @@ const adyen = vi.hoisted(() => {
             .join('');
     };
 
-    const dropIn = { handleAction, unmount: vi.fn(), submit: vi.fn(), renderCards };
+    const dropIn = {
+        handleAction,
+        unmount: vi.fn(),
+        submit: vi.fn(),
+        showValidation: vi.fn(),
+        setStatus: vi.fn(),
+        isValid: true,
+        renderCards,
+    };
     Object.assign(dropIn, {
         mount: vi.fn((container: HTMLElement) => {
             const offered: { type: string }[] =
@@ -233,6 +241,42 @@ describe('PaymentIntegrationFormAdyen', () => {
         mockGetAdyenDropInPaymentMethods.mockReturnValue([{ type: 'scheme', name: 'Card' }]);
         captured.checkoutConfig = undefined;
         captured.dropInConfig = undefined;
+        adyen.dropIn.isValid = true;
+    });
+
+    describe('submitting', () => {
+        it('hands a valid submit to the drop-in', async () => {
+            const wrapper = await mountComponent();
+
+            (wrapper.vm as unknown as { submit: () => void }).submit();
+
+            expect(adyen.dropIn.submit).toHaveBeenCalledTimes(1);
+            expect(wrapper.emitted('invalid')).toBeUndefined();
+        });
+
+        it('shows what is missing and reports the submit as invalid', async () => {
+            adyen.dropIn.isValid = false;
+            const wrapper = await mountComponent();
+
+            (wrapper.vm as unknown as { submit: () => void }).submit();
+
+            expect(adyen.dropIn.showValidation).toHaveBeenCalledTimes(1);
+            expect(adyen.dropIn.submit).not.toHaveBeenCalled();
+            expect(wrapper.emitted('invalid')).toHaveLength(1);
+        });
+
+        it('reports the submit as invalid when the screen rejects it', async () => {
+            const wrapper = await mountComponent({
+                validateOnSubmit: () => Promise.resolve(false),
+            });
+
+            const actions = await submitThroughDropIn();
+
+            expect(adyen.dropIn.setStatus).toHaveBeenCalledWith('ready');
+            expect(wrapper.emitted('invalid')).toHaveLength(1);
+            expect(actions.resolve).not.toHaveBeenCalled();
+            expect(mockAuthorizePayment).not.toHaveBeenCalled();
+        });
     });
 
     it('builds the drop-in with every payment method component', async () => {

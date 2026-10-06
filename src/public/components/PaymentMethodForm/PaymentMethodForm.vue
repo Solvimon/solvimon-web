@@ -82,6 +82,10 @@ function handlePaymentFailed(error: unknown) {
     emit('failure', error);
 }
 
+function handleInvalid() {
+    isPaymentPending.value = false;
+}
+
 const resolveConfiguration = (
     configuration?: PaymentMethodFormConfiguration,
 ): PaymentMethodFormConfiguration => {
@@ -212,6 +216,7 @@ const paymentIntegrationProps = computed<PaymentIntegrationFormProps>(() => {
                 @select="(payload: SelectedPaymentMethod) => (selectedPaymentMethod = payload)"
                 @payment-success="handlePaymentSuccess"
                 @payment-failed="handlePaymentFailed"
+                @invalid="handleInvalid"
             />
         </div>
         <Button

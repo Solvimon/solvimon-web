@@ -7,7 +7,10 @@ import type {
     PaymentIntegrationFormStripeProps,
 } from './PaymentIntegrationFormStripe.types';
 import PaymentIntegrationFormStripeFrame from './PaymentIntegrationFormStripeFrame.vue';
-import type { PaymentIntegrationFormStripeFrameProps } from './PaymentIntegrationFormStripeFrame.types.ts';
+import type {
+    PaymentIntegrationFormStripeFrameProps,
+    StripeSubmitError,
+} from './PaymentIntegrationFormStripeFrame.types.ts';
 import { getFrameOptions } from './PaymentIntegrationFormStripe.lib.ts';
 import { STRIPE_SCRIPT_URL } from './PaymentIntegrationFormStripe.constants.ts';
 import PaymentCompletedCard from '@/components/payments/PaymentCompletedCard/PaymentCompletedCard.vue';
@@ -92,11 +95,35 @@ function submit() {
 async function handleSubmit() {
     const isValid = await props.validateOnSubmit();
 
-    if (!isValid) {
+    if (!isValid || !frameRef.value) {
+        emit('invalid');
         return;
     }
 
-    frameRef.value?.triggerSubmit();
+    frameRef.value.triggerSubmit();
+}
+
+/**
+ * Stripe checks the fields on submit and answers through the frame. A validation error is already
+ * shown on the fields, so it only ends the submit; anything else is a failure.
+ */
+function handleSubmitError(error: StripeSubmitError) {
+    if (error.type === 'validation_error') {
+        emit('invalid');
+        return;
+    }
+
+    logger.error(
+        'STRIPE_CONFIRMATION_TOKEN_FAILED',
+        'Stripe submission failed',
+        failureContext({ reason: 'STRIPE_CONFIRMATION_TOKEN_FAILED', cause: error }),
+        error,
+    );
+    emitError({
+        code: props.variant === 'TOKENIZE' ? 'TOKENIZE_FAILED' : 'AUTHORIZATION_FAILED',
+        message: error.message ?? 'Stripe submission failed',
+        error,
+    });
 }
 
 function loadStripeDahlia(key: string): Promise<Stripe> {
@@ -393,14 +420,6 @@ onBeforeUnmount(() => {
         "
         @loaderror="handleLoadError"
         @submit-success="handleConfirmationToken"
-        @submit-error="
-            (error) =>
-                logger.error(
-                    'STRIPE_CONFIRMATION_TOKEN_FAILED',
-                    'Stripe submission failed',
-                    failureContext({ reason: 'STRIPE_CONFIRMATION_TOKEN_FAILED', cause: error }),
-                    error,
-                )
-        "
+        @submit-error="handleSubmitError"
     />
 </template>

@@ -43,7 +43,7 @@ vi.mock('@/components/payments/PaymentIntegrationForm/PaymentIntegrationForm.vue
     return {
         default: defineComponent({
             name: 'PaymentIntegrationFormStub',
-            emits: ['select', 'payment-success', 'payment-failed', 'ready'],
+            emits: ['select', 'payment-success', 'payment-failed', 'invalid', 'ready'],
             setup(_props, { expose }) {
                 expose({ submit: mockIntegrationSubmit });
 
@@ -185,6 +185,20 @@ describe('PaymentMethodForm', () => {
             await completeForm(wrapper);
 
             expect(wrapper.vm.isCompleted).toBe(true);
+        });
+    });
+
+    describe('when the details are missing or invalid', () => {
+        it('stops saving, so the customer can fix them and try again', async () => {
+            const wrapper = mountForm({ hideSubmitButton: true });
+
+            wrapper.vm.submit();
+            expect(wrapper.vm.isPaymentPending).toBe(true);
+
+            wrapper.findComponent({ name: 'PaymentIntegrationFormStub' }).vm.$emit('invalid');
+            await nextTick();
+
+            expect(wrapper.vm.isPaymentPending).toBe(false);
         });
     });
 

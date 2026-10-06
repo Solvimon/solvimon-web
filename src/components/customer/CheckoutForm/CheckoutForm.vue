@@ -10,16 +10,20 @@ import {
     Typography,
     useIntl,
 } from '@solvimon/solvimon-ui';
-import { computed, ref } from 'vue';
-import type { CountryCode } from '@solvimon/solvimon-types';
+import { computed, reactive, ref } from 'vue';
 import { isEUCountry } from '@solvimon/solvimon-ui';
+import type { CountryCode } from '@solvimon/solvimon-types';
 import type { CheckoutFormState, CheckoutFormProps, CheckoutFormEmits } from './CheckoutForm.types';
 import TaxIDCheckNotice from './TaxIDCheckNotice.vue';
 import CompanyPurchaseToggle from '@/components/customer/CompanyPurchaseToggle.vue';
 import { useCustomerFormLabels } from '@/components/customer/useCustomerFormLabels';
 import { useTaxIDValidationCheck } from '@/composables/useTaxIDValidationCheck';
+import { asOptionalText, formControlModel, type SelectControlValue } from '@/utils/formControl';
 
 const FORM_ID = 'checkout-form';
+
+// `isValidCountryCode` answers with a plain boolean, so the narrowing is ours to state.
+const isCountryCode = (value: string): value is CountryCode => isValidCountryCode(value);
 
 const props = defineProps<CheckoutFormProps>();
 defineEmits<CheckoutFormEmits>();
@@ -36,10 +40,22 @@ const companyPurchaseModel = computed({
 
 const isCompanyPurchase = computed(() => model.value.type === 'ORGANIZATION');
 
-const country = computed<CountryCode | undefined>({
+const fields = reactive({
+    email: formControlModel(model, 'email', asOptionalText),
+    addressLine1: formControlModel(model, 'addressLine1', asOptionalText),
+    addressLine2: formControlModel(model, 'addressLine2', asOptionalText),
+    postalCode: formControlModel(model, 'postalCode', asOptionalText),
+    city: formControlModel(model, 'city', asOptionalText),
+    state: formControlModel(model, 'state', asOptionalText),
+    companyLegalName: formControlModel(model, 'companyLegalName', asOptionalText),
+    companyVatNumber: formControlModel(model, 'companyVatNumber', asOptionalText),
+});
+
+const country = computed<SelectControlValue>({
     get: () => model.value.country,
     set: (value) => {
-        model.value.country = value && isValidCountryCode(value) ? value : undefined;
+        const code = asOptionalText(value);
+        model.value.country = code !== undefined && isCountryCode(code) ? code : undefined;
     },
 });
 
@@ -86,7 +102,7 @@ const readableCountryName = computed(() =>
                     </template>
                     <template v-else>
                         <Input
-                            v-model="model.email"
+                            v-model="fields.email"
                             required
                             type="email"
                             name="email"
@@ -146,7 +162,7 @@ const readableCountryName = computed(() =>
                     <div v-if="showBillingDetails || isBillingInformationMandatory">
                         <div class="mt-2 flex flex-col gap-3">
                             <Input
-                                v-model="model.addressLine1"
+                                v-model="fields.addressLine1"
                                 name="address_line_1"
                                 :label="
                                     $t({
@@ -168,7 +184,7 @@ const readableCountryName = computed(() =>
                                 :error="validation.value.addressLine1.$errors"
                             />
                             <Input
-                                v-model="model.addressLine2"
+                                v-model="fields.addressLine2"
                                 name="address_line_2"
                                 :placeholder="
                                     $t({
@@ -181,7 +197,7 @@ const readableCountryName = computed(() =>
                             />
                             <div class="grid grid-cols-3 gap-2">
                                 <Input
-                                    v-model="model.postalCode"
+                                    v-model="fields.postalCode"
                                     name="postal_code"
                                     :placeholder="
                                         labels.postalCodePlaceholder +
@@ -190,14 +206,14 @@ const readableCountryName = computed(() =>
                                     :error="validation.value.addressLine1.$errors"
                                 />
                                 <Input
-                                    v-model="model.city"
+                                    v-model="fields.city"
                                     name="city"
                                     :placeholder="
                                         labels.cityPlaceholder + getOptionalSuffix('city')
                                     "
                                 />
                                 <Input
-                                    v-model="model.state"
+                                    v-model="fields.state"
                                     name="state"
                                     :placeholder="
                                         labels.statePlaceholder + getOptionalSuffix('state')
@@ -217,7 +233,7 @@ const readableCountryName = computed(() =>
                     <div v-if="isCompanyPurchase">
                         <div class="mt-4 grid grid-cols-1 gap-3">
                             <Input
-                                v-model="model.companyLegalName"
+                                v-model="fields.companyLegalName"
                                 required
                                 name="legal_name"
                                 :label="labels.legalNameLabel"
@@ -226,7 +242,7 @@ const readableCountryName = computed(() =>
 
                             <Input
                                 v-if="showVatIdInput"
-                                v-model="model.companyVatNumber"
+                                v-model="fields.companyVatNumber"
                                 name="vat_number"
                                 input-class="focus:outline-none focus:ring-0"
                                 :label="labels.vatNumberLabel"

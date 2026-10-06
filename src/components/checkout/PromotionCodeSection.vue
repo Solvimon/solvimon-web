@@ -6,6 +6,7 @@ import type {
     PromotionCodeSectionEmits,
     PromotionCodeSectionProps,
 } from './PromotionCodeSection.types';
+import { asText, type TextControlValue } from '@/utils/formControl';
 
 const { $t } = useIntl();
 
@@ -27,6 +28,11 @@ const panelRef = ref<HTMLElement | null>(null);
 const baseId = uniqueId('promotion-code-');
 const labelId = `${baseId}-label`;
 const panelId = `${baseId}-panel`;
+
+const inputModel = computed<TextControlValue>({
+    get: () => inputValue.value,
+    set: (value) => (inputValue.value = asText(value)),
+});
 
 const isApplied = computed(() => props.promotionCode !== null && props.promotionCode !== '');
 const canApply = computed(() => inputValue.value.trim().length > 0);
@@ -186,7 +192,7 @@ watch(
             @keydown.esc.prevent="collapseExpanded"
         >
             <Input
-                v-model="inputValue"
+                v-model="inputModel"
                 :placeholder="
                     $t({
                         defaultMessage: 'Promotion code',

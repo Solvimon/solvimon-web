@@ -7,11 +7,17 @@ import {
     Typography,
     useIntl,
 } from '@solvimon/solvimon-ui';
-import { computed, ref, watch } from 'vue';
+import { computed, reactive, ref, watch } from 'vue';
 import type { BillingInformationFormProps } from './BillingInformationForm.types';
 import { useBillingInformationForm } from './useBillingInformationForm';
 import CompanyPurchaseToggle from '@/components/customer/CompanyPurchaseToggle.vue';
 import { useCustomerFormLabels } from '@/components/customer/useCustomerFormLabels';
+import {
+    asOptionalText,
+    asText,
+    formControlModel,
+    type SelectControlValue,
+} from '@/utils/formControl';
 
 const props = defineProps<BillingInformationFormProps>();
 
@@ -19,6 +25,26 @@ const { $t } = useIntl();
 const labels = useCustomerFormLabels();
 const { validation, form, updateInitialState, submit, hasChanges } = useBillingInformationForm({
     onSubmit: ({ customerId, payload }) => props.updateCustomer({ customerId, payload }),
+});
+
+const fields = reactive({
+    email: formControlModel(form, 'email', asText),
+    companyVatNumber: formControlModel(form, 'companyVatNumber', asOptionalText),
+    companyLegalName: formControlModel(form, 'companyLegalName', asOptionalText),
+    firstName: formControlModel(form, 'firstName', asOptionalText),
+    lastName: formControlModel(form, 'lastName', asOptionalText),
+    addressLine1: formControlModel(form, 'addressLine1', asText),
+    addressLine2: formControlModel(form, 'addressLine2', asOptionalText),
+    postalCode: formControlModel(form, 'postalCode', asText),
+    city: formControlModel(form, 'city', asText),
+    state: formControlModel(form, 'state', asOptionalText),
+});
+
+const country = computed<SelectControlValue>({
+    get: () => form.value.country,
+    set: (value) => {
+        form.value.country = asText(value);
+    },
 });
 
 const hasHydratedFromCustomer = ref(false);
@@ -59,7 +85,7 @@ watch(
 
         <div class="grid grid-cols-1 gap-4">
             <Input
-                v-model="form.email"
+                v-model="fields.email"
                 required
                 type="email"
                 :label="labels.emailLabel"
@@ -68,7 +94,7 @@ watch(
             />
 
             <CountrySelect
-                v-model:single-model-value="form.country"
+                v-model:single-model-value="country"
                 :label="labels.countryLabel"
                 :error="apiError?.country"
             />
@@ -80,7 +106,7 @@ watch(
 
             <template v-if="isCompanyPurchase">
                 <Input
-                    v-model="form.companyVatNumber"
+                    v-model="fields.companyVatNumber"
                     name="vat_number"
                     :label="labels.vatNumberLabel"
                     :placeholder="labels.vatNumberPlaceholder"
@@ -88,7 +114,7 @@ watch(
                 />
 
                 <Input
-                    v-model="form.companyLegalName"
+                    v-model="fields.companyLegalName"
                     required
                     name="legal_name"
                     :label="labels.legalNameLabel"
@@ -111,7 +137,7 @@ watch(
         <div class="flex flex-col gap-2">
             <div v-if="!isCompanyPurchase" class="grid grid-cols-2 gap-2">
                 <Input
-                    v-model="form.firstName"
+                    v-model="fields.firstName"
                     name="first_name"
                     :label="
                         $t({
@@ -130,7 +156,7 @@ watch(
                     :error="apiError?.first_name"
                 />
                 <Input
-                    v-model="form.lastName"
+                    v-model="fields.lastName"
                     name="last_name"
                     :label="
                         $t({
@@ -151,7 +177,7 @@ watch(
             </div>
 
             <Input
-                v-model="form.addressLine1"
+                v-model="fields.addressLine1"
                 name="address_line_1"
                 :label="labels.addressTitle"
                 :placeholder="
@@ -164,7 +190,7 @@ watch(
                 :error="apiError?.address_line_1"
             />
             <Input
-                v-model="form.addressLine2"
+                v-model="fields.addressLine2"
                 name="address_line_2"
                 :placeholder="
                     $t({
@@ -177,19 +203,19 @@ watch(
             />
             <div class="grid grid-cols-3 gap-2">
                 <Input
-                    v-model="form.postalCode"
+                    v-model="fields.postalCode"
                     name="postal_code"
                     :placeholder="labels.postalCodePlaceholder"
                     :error="apiError?.postal_code"
                 />
                 <Input
-                    v-model="form.city"
+                    v-model="fields.city"
                     name="city"
                     :placeholder="labels.cityPlaceholder"
                     :error="apiError?.city"
                 />
                 <Input
-                    v-model="form.state"
+                    v-model="fields.state"
                     name="state"
                     :placeholder="labels.statePlaceholder"
                     :error="apiError?.state"

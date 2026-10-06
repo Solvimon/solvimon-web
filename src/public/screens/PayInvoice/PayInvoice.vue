@@ -153,7 +153,10 @@ const handlePaymentFailed = () => {
                             :billing-entity-name="invoice?.billing_entity?.legal_name"
                             @payment-success="handlePaymentSuccess"
                             @payment-failed="handlePaymentFailed"
-                            @select="(payload) => (selectedPaymentMethod = payload)"
+                            @select="
+                                (payload: SelectedPaymentMethod) =>
+                                    (selectedPaymentMethod = payload)
+                            "
                         />
                         <div class="mt-4">
                             <Checkbox

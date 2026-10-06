@@ -19,6 +19,7 @@ import type { OrderSummaryProps } from './OrderSummary.types';
 import PricingGroupContent from '@/components/subscriptions/PlanCustomizationForm/PricingGroupContent.vue';
 import { useViewport } from '@/composables/useViewport';
 import { getFirstPricingPlanScheduleOfType } from '@/utils/pricingPlanSchedule';
+import { asOptionalText, type SelectControlValue } from '@/utils/formControl';
 
 const props = defineProps<OrderSummaryProps>();
 const emit = defineEmits<{
@@ -61,6 +62,14 @@ const selectedBillingPeriodKey = computed<string | undefined>({
         if (!numericValue) return;
         if (!isBillingPeriodType(type)) return;
         emit('billing-period-change', { type, value: numericValue });
+    },
+});
+
+/** `SelectExtended` reports `null` for a cleared selection, which the key itself cannot hold. */
+const selectedBillingPeriodModel = computed<SelectControlValue>({
+    get: () => selectedBillingPeriodKey.value,
+    set: (value) => {
+        selectedBillingPeriodKey.value = asOptionalText(value);
     },
 });
 
@@ -408,7 +417,7 @@ const handleBinaryBillingToggle = (checked: boolean) => {
             <!-- billing period selector -->
             <SelectExtended
                 v-else-if="billingPeriodOptions.length > 2"
-                v-model:single-model-value="selectedBillingPeriodKey"
+                v-model:single-model-value="selectedBillingPeriodModel"
                 class="sv-order-summary__billing-period"
                 :options="billingPeriodOptions"
                 size="xl"

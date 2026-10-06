@@ -23,7 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Checkout, PayInvoice and the payment method form no longer keep the pay button loading after a submit that never reaches the payment provider, such as one with missing or invalid card details: the customer sees what to fix and can submit again. A Stripe submit that fails for any other reason now fails the payment and shows the failure state, instead of being only logged while the button kept loading.
+- Checkout, PayInvoice and the payment method form no longer keep the pay button loading after a submit that never reaches the payment provider, such as one with missing or invalid card details: the customer sees what to fix and can submit again. A Stripe or Adyen submit that fails for any other reason now fails the payment and shows the failure state, instead of being only logged while the button kept loading.
 
 ## [0.1.0-alpha.25] - 2026-10-06
 

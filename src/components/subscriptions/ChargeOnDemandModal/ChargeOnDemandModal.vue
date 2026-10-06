@@ -184,6 +184,9 @@ const chargeError = ref<string>();
 
 const formError = computed(() => chargeError.value ?? paymentMethodOptionsError.value);
 
+/** The order is through, paid or not, and an invoice exists for it. */
+const isOrderPlaced = computed(() => step.value === 'SUCCESS' || step.value === 'NOT_PAID');
+
 const canSubmit = computed(
     () =>
         !isCharging.value &&
@@ -200,6 +203,15 @@ const title = computed(() => {
             defaultMessage: 'Payment successful',
             description: 'Title of the on-demand order modal once the order has been paid',
             id: 'charge_on_demand_modal.success.title',
+        });
+    }
+
+    if (step.value === 'NOT_PAID') {
+        return $t({
+            defaultMessage: 'Payment not completed',
+            description:
+                'Title of the on-demand order modal when the order was placed but its payment did not go through',
+            id: 'charge_on_demand_modal.not_paid.title',
         });
     }
 
@@ -223,6 +235,16 @@ const subTitle = computed(() => {
             defaultMessage: 'Your order is paid. The invoice is in your invoice list.',
             description: 'Subtitle of the on-demand order modal once the order has been paid',
             id: 'charge_on_demand_modal.success.subtitle',
+        });
+    }
+
+    if (step.value === 'NOT_PAID') {
+        return $t({
+            defaultMessage:
+                "Your order was placed, but the payment didn't go through. You'll find the invoice in your invoice list.",
+            description:
+                'Subtitle of the on-demand order modal when the order was placed but its payment did not go through',
+            id: 'charge_on_demand_modal.not_paid.subtitle',
         });
     }
 
@@ -252,7 +274,7 @@ const cancelButtonText = computed(() =>
 );
 
 const confirmButtonText = computed(() => {
-    if (step.value === 'SUCCESS') {
+    if (isOrderPlaced.value) {
         return $t({
             defaultMessage: 'Done',
             description: 'Closes the on-demand order modal once the order has been paid',
@@ -308,13 +330,21 @@ const charge = async () => {
     try {
         // Finalizing charges the invoice in the same request, so it is only asked for together with
         // the payment method that pays it: without one the backend creates the invoice and then fails.
-        chargedInvoice.value = await chargeOnDemandPricingItems({
+        const invoice = await chargeOnDemandPricingItems({
             pricing_plan_schedule_id: props.scheduleId,
             pricing_items: pricingItemsToCharge,
             payment_method_id: paymentMethodId.value,
             finalize_immediately: true,
         });
-        step.value = 'SUCCESS';
+
+        chargedInvoice.value = invoice;
+        // A successful response only means the invoice was created and a payment attempted. The
+        // endpoint also answers 200 with the invoice left unpaid when:
+        // - Adyen refuses, errors on or cancels the payment (its result code is not mapped to a failure),
+        // - Adyen or Stripe leave it pending, such as a stored SEPA debit or Stripe `processing`,
+        // - the gateway asks for an action, such as 3DS on a Stripe card, which nobody can complete here.
+        // The invoice cannot tell these apart, so they share one outcome. See MD-5539, points 5 to 9.
+        step.value = invoice.payment_status === 'PAID' ? 'SUCCESS' : 'NOT_PAID';
     } catch (error) {
         chargeError.value = $t({
             defaultMessage: "We couldn't complete your order. Please try again later.",
@@ -354,7 +384,7 @@ const handleCancel = () => {
         return;
     }
 
-    if (step.value === 'SUCCESS') {
+    if (isOrderPlaced.value) {
         handleDone();
         return;
     }
@@ -463,7 +493,7 @@ watch(
             </EmptyStatePlaceholder>
         </template>
 
-        <template #SUCCESS>
+        <template v-for="placedStep in ['SUCCESS', 'NOT_PAID']" :key="placedStep" #[placedStep]>
             <Section
                 v-if="chargedInvoice"
                 class="sv-charge-on-demand-modal__receipt"
@@ -478,7 +508,7 @@ watch(
         </template>
 
         <template #footer>
-            <div v-if="step === 'SUCCESS'" class="flex flex-col gap-2">
+            <div v-if="isOrderPlaced" class="flex flex-col gap-2">
                 <Button
                     size="lg"
                     class="sv-action sv-action--primary"

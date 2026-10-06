@@ -183,6 +183,14 @@
     "defaultMessage": "Done",
     "description": "Closes the on-demand order modal once the order has been paid"
   },
+  "charge_on_demand_modal.not_paid.subtitle": {
+    "defaultMessage": "Your order was placed, but the payment didn't go through. You'll find the invoice in your invoice list.",
+    "description": "Subtitle of the on-demand order modal when the order was placed but its payment did not go through"
+  },
+  "charge_on_demand_modal.not_paid.title": {
+    "defaultMessage": "Payment not completed",
+    "description": "Title of the on-demand order modal when the order was placed but its payment did not go through"
+  },
   "charge_on_demand_modal.payment_method_options_error": {
     "defaultMessage": "We couldn't load the ways to add a payment method. Please try again.",
     "description": "Shown on the on-demand order when the payment methods that can be added failed to load"

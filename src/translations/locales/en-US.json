@@ -45,6 +45,7 @@
   "charge_on_demand_modal.confirm_button.pay": "Pay {total}",
   "charge_on_demand_modal.confirm_button.updating": "Updating total…",
   "charge_on_demand_modal.done_button.label": "Done",
+  "charge_on_demand_modal.payment_method_options_error": "We couldn't load the ways to add a payment method. Please try again.",
   "charge_on_demand_modal.payment_methods.empty": "Add a payment method to pay for this order.",
   "charge_on_demand_modal.save_payment_method.label": "Save payment method",
   "charge_on_demand_modal.subscription_name_fallback": "your subscription",

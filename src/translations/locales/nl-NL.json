@@ -45,6 +45,7 @@
     "charge_on_demand_modal.confirm_button.pay": "{total} betalen",
     "charge_on_demand_modal.confirm_button.updating": "Totaal bijwerken…",
     "charge_on_demand_modal.done_button.label": "Klaar",
+    "charge_on_demand_modal.payment_method_options_error": "We konden de manieren om een betaalmethode toe te voegen niet laden. Probeer het opnieuw.",
     "charge_on_demand_modal.payment_methods.empty": "Voeg een betaalmethode toe om deze bestelling te betalen.",
     "charge_on_demand_modal.save_payment_method.label": "Betaalmethode opslaan",
     "charge_on_demand_modal.subscription_name_fallback": "je abonnement",

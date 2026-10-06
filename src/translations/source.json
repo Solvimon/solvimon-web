@@ -183,6 +183,10 @@
     "defaultMessage": "Done",
     "description": "Closes the on-demand order modal once the order has been paid"
   },
+  "charge_on_demand_modal.payment_method_options_error": {
+    "defaultMessage": "We couldn't load the ways to add a payment method. Please try again.",
+    "description": "Shown on the on-demand order when the payment methods that can be added failed to load"
+  },
   "charge_on_demand_modal.payment_methods.empty": {
     "defaultMessage": "Add a payment method to pay for this order.",
     "description": "Shown in the on-demand order when no saved payment method can pay for it"

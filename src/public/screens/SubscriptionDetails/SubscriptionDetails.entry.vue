@@ -28,6 +28,7 @@ const props = defineProps<SolvimonSubscriptionDetailsEntryProps>();
                     walletBalances,
                     onDemandItems,
                     onDemandScheduleId,
+                    isOnDemandItemsLoading,
                     hasWalletBalancesError,
                     isLoading,
                     error,
@@ -45,6 +46,7 @@ const props = defineProps<SolvimonSubscriptionDetailsEntryProps>();
                     :wallet-balances="walletBalances"
                     :on-demand-items="onDemandItems"
                     :on-demand-schedule-id="onDemandScheduleId"
+                    :is-on-demand-items-loading="isOnDemandItemsLoading"
                     :has-wallet-balances-error="hasWalletBalancesError"
                     :is-loading="isLoading"
                     :error="error"

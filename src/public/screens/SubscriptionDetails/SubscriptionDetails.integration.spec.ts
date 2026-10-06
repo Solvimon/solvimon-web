@@ -440,6 +440,13 @@ describe('SubscriptionDetails', () => {
 
             expect(wrapper.find('.sv-subscription-details__on-demand-items').exists()).toBe(false);
         });
+
+        it('holds the place of the block while the items load', () => {
+            const wrapper = mountComponent({ onDemandItems: [], isOnDemandItemsLoading: true });
+
+            expect(wrapper.find('[data-testid="on-demand-items-skeleton"]').exists()).toBe(true);
+            expect(wrapper.find('.sv-subscription-details__on-demand-items').exists()).toBe(false);
+        });
     });
 
     describe('upgrades', () => {

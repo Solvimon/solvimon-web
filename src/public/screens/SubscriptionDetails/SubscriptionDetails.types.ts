@@ -19,6 +19,7 @@ export interface SubscriptionDetailsProps extends BaseScreenProps {
     /** What the customer can order on the schedule the subscription is billed on now. */
     onDemandItems?: ChargeOnDemandItem[];
     onDemandScheduleId?: PricingPlanSchedule['id'];
+    isOnDemandItemsLoading?: boolean;
     hasWalletBalancesError?: boolean;
     avatar?: string;
 }

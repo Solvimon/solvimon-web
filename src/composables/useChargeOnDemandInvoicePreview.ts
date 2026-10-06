@@ -3,7 +3,7 @@ import type {
     Invoice,
     PricingPlanSchedule,
 } from '@solvimon/solvimon-types';
-import { ref, watch, type Ref } from 'vue';
+import { ref, type Ref } from 'vue';
 import { createInvoicesService } from '@/services/invoices';
 import { useWatchDebounced } from '@/composables/useWatchDebounced';
 import { useLogger } from '@/components/providers/LoggerProvider/composables/useLogger';
@@ -82,30 +82,14 @@ export function useChargeOnDemandInvoicePreview({
         }
     };
 
-    // The request waits for the items to settle, but the total on screen is out of date from the
-    // first change. Pending is set here, undebounced, and a request still out is made stale so its
-    // answer cannot clear pending or write an old total while the next request is being waited on.
-    // Synchronous, so a request asked for right after the change is not the one made stale.
-    watch(
-        pricingItems,
-        (items) => {
-            if (items && pricingPlanScheduleId.value) {
-                latestGuard();
-                isPreviewPending.value = true;
-            }
-        },
-        { deep: true, flush: 'sync' },
-    );
-
+    // Debounced so typing an amount asks once, but only once there is a preview or a request out:
+    // the first total has nothing to settle against and should not wait.
     useWatchDebounced(pricingItems, () => void loadPreview(), {
         debounce: PREVIEW_DEBOUNCE_MS,
+        debounceDisabled: () => !invoicePreview.value && !isPreviewPending.value,
         deep: true,
     });
 
-    // A watcher only sees changes, and items chosen while the form is still being built are not one:
-    // a top-up's choose-your-amount option, for instance, is selected and seeded with its minimum
-    // during setup, so without this first ask its placeholder would sit there for good. Undebounced —
-    // there is nothing yet to debounce against — and a no-op when there is nothing to price.
     void loadPreview();
 
     return { invoicePreview, isPreviewPending, loadPreview };

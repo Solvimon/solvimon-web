@@ -65,9 +65,18 @@ function submit() {
     if (!selectedIntegration.value) {
         showIntegrationError.value = true;
         void props.validateOnSubmit?.();
+        emit('invalid');
+        return;
     }
 
-    integrationRefs.value.get(selectedIntegration.value)?.submit();
+    const integration = integrationRefs.value.get(selectedIntegration.value);
+
+    if (!integration) {
+        emit('invalid');
+        return;
+    }
+
+    integration.submit();
 }
 </script>
 
@@ -96,6 +105,7 @@ function submit() {
             @select="handleSelect"
             @payment-failed="$emit('payment-failed', $event)"
             @payment-success="$emit('payment-success')"
+            @invalid="$emit('invalid')"
             @ready="$emit('ready')"
         />
 
@@ -121,6 +131,7 @@ function submit() {
             @select="handleSelect"
             @payment-failed="$emit('payment-failed', $event)"
             @payment-success="$emit('payment-success')"
+            @invalid="$emit('invalid')"
             @ready="$emit('ready')"
         />
     </template>

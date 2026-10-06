@@ -1,4 +1,4 @@
-import { mount } from '@vue/test-utils';
+import { flushPromises, mount } from '@vue/test-utils';
 import { nextTick } from 'vue';
 import PaymentIntegrationFormStripe from './PaymentIntegrationFormStripe.vue';
 import type { PaymentIntegrationFormStripeProps } from './PaymentIntegrationFormStripe.types';
@@ -256,6 +256,44 @@ describe('PaymentIntegrationFormStripe', () => {
 
             expect(wrapper.emitted('payment-success')).toBeUndefined();
             expect(wrapper.emitted('payment-failed')).toBeUndefined();
+        });
+    });
+
+    describe('submitting', () => {
+        const findFrame = (wrapper: ReturnType<typeof mountComponent>) =>
+            wrapper.findComponent({ name: 'PaymentIntegrationFormStripeFrame' });
+
+        it('reports the submit as invalid when the screen rejects it', async () => {
+            const wrapper = mountComponent({ validateOnSubmit: () => Promise.resolve(false) });
+
+            (wrapper.vm as unknown as { submit: () => void }).submit();
+            await flushPromises();
+
+            expect(wrapper.emitted('invalid')).toHaveLength(1);
+        });
+
+        it('reports the submit as invalid when Stripe finds the fields incomplete', async () => {
+            const wrapper = mountComponent();
+
+            await findFrame(wrapper).vm.$emit('submit-error', {
+                type: 'validation_error',
+                message: 'Your card number is incomplete.',
+            });
+
+            expect(wrapper.emitted('invalid')).toHaveLength(1);
+            expect(wrapper.emitted('payment-failed')).toBeUndefined();
+        });
+
+        it('fails the payment on any other Stripe submit error', async () => {
+            const wrapper = mountComponent();
+
+            await findFrame(wrapper).vm.$emit('submit-error', {
+                type: 'api_error',
+                message: 'Something went wrong.',
+            });
+
+            expect(wrapper.emitted('payment-failed')).toHaveLength(1);
+            expect(wrapper.emitted('invalid')).toBeUndefined();
         });
     });
 

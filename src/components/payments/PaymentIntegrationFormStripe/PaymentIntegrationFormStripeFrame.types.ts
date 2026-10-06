@@ -39,10 +39,13 @@ export interface PaymentIntegrationFormStripeFrameProps {
     name?: string;
 }
 
+/** Stripe's error from submitting the elements or creating the confirmation token. */
+export type StripeSubmitError = { message?: string; type?: string; code?: string };
+
 export type PaymentIntegrationFormStripeFrameEmits = {
     ready: [];
     change: [paymentMethodType: string];
     loaderror: [error: { message?: string; type?: string }];
     'submit-success': [confirmationTokenId: string];
-    'submit-error': [error: { message?: string; type?: string; code?: string }];
+    'submit-error': [error: StripeSubmitError];
 };

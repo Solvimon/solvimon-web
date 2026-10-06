@@ -82,6 +82,12 @@ export interface PaymentIntegrationFormEmits {
      */
     (e: 'payment-success'): void;
     /**
+     * Emitted when a submit stops before it reaches the gateway: details missing or invalid. The
+     * form shows what is wrong itself, so a host only has to stop waiting for an outcome — neither
+     * `payment-success` nor `payment-failed` follows.
+     */
+    (e: 'invalid'): void;
+    /**
      * Emitted when the payment integration form is ready and the payment integration form is initialized.
      */
     (e: 'ready'): void;

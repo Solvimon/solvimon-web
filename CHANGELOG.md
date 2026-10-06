@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0-alpha.25] - 2026-10-06
+
+### Added
+
+- The SEPA Direct Debit mandate now also states the refund rights a customer holds against their own bank: that they are entitled to a refund under the terms of their agreement with that bank, that a claim must be made within 8 weeks of the date the account was debited, and that the bank can supply a statement explaining those rights. The rights are held against the customer's own bank rather than the party collecting the money, so the wording reads the same whether or not the screen knows the billing entity to name.
+
 ## [0.1.0-alpha.24] - 2026-10-05
 
 ### Added

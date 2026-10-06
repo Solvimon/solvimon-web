@@ -29,6 +29,8 @@ export function useChargeOnDemandInvoicePreview({
 
     const invoicePreview = ref<Invoice>();
     const isPreviewPending = ref(false);
+    /** The newest request failed, so there is no total to show until the preview is asked again. */
+    const hasPreviewFailed = ref(false);
 
     // Only the newest request may write the preview: a slower earlier one must not overwrite it.
     const latestGuard = createLatestGuard();
@@ -50,10 +52,12 @@ export function useChargeOnDemandInvoicePreview({
 
             invoicePreview.value = undefined;
             isPreviewPending.value = false;
+            hasPreviewFailed.value = false;
             return;
         }
 
         isPreviewPending.value = true;
+        hasPreviewFailed.value = false;
 
         try {
             const invoice = await previewChargeOnDemandPricingItems({
@@ -67,6 +71,7 @@ export function useChargeOnDemandInvoicePreview({
         } catch (error) {
             if (isLatest()) {
                 invoicePreview.value = undefined;
+                hasPreviewFailed.value = true;
             }
 
             logger.error(
@@ -94,5 +99,5 @@ export function useChargeOnDemandInvoicePreview({
     // setup, so the first preview has to be requested here. It does nothing while there are no items.
     void loadPreview();
 
-    return { invoicePreview, isPreviewPending, loadPreview };
+    return { invoicePreview, isPreviewPending, hasPreviewFailed, loadPreview };
 }

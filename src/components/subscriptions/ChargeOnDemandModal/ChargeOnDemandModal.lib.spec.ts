@@ -7,7 +7,7 @@ describe('getChargeFailure', () => {
         [400, 'pricing_plan_subscription_id', 'SUBSCRIPTION_INACTIVE'],
         [400, 'pricing_items.0.units', 'INVALID'],
         [400, undefined, 'INVALID'],
-        [404, undefined, 'INVALID'],
+        [404, undefined, 'UNCONFIRMED'],
         [406, undefined, 'IN_PROGRESS'],
         [422, undefined, 'NOT_COMPLETED'],
         [408, undefined, 'UNCONFIRMED'],

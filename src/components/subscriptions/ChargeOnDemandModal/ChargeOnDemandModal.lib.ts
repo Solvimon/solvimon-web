@@ -23,13 +23,16 @@ export type ChargeFailure =
     | 'PAYMENT_METHOD'
     /** 400 on `pricing_plan_subscription_id`: the subscription isn't active. */
     | 'SUBSCRIPTION_INACTIVE'
-    /** Any other 400 or 404: the request was wrong, which is a bug on our side. */
+    /** Any other 400: the request was wrong, which is a bug on our side. */
     | 'INVALID'
     /** 422: the payment failed after the invoice was created, or the customer can't be invoiced. */
     | 'NOT_COMPLETED'
     /** 406: the invoice is locked by a payment already in progress. */
     | 'IN_PROGRESS'
-    /** 408, 5xx or no response: whether the order went through is unknown. */
+    /**
+     * 404, 408, 5xx or no response: whether the order went through is unknown. A 404 can also come
+     * after the invoice was finalized and charged, when the backend fails to read it back.
+     */
     | 'UNCONFIRMED';
 
 export function getChargeFailure(error: unknown): ChargeFailure {
@@ -41,8 +44,6 @@ export function getChargeFailure(error: unknown): ChargeFailure {
         case 400:
             if (error.field === 'payment_method_id') return 'PAYMENT_METHOD';
             if (error.field === 'pricing_plan_subscription_id') return 'SUBSCRIPTION_INACTIVE';
-            return 'INVALID';
-        case 404:
             return 'INVALID';
         case 406:
             return 'IN_PROGRESS';

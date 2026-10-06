@@ -153,11 +153,18 @@ async function recordOf(request: Request, order: number): Promise<RecordedCall> 
     };
 }
 
-/** `credentials: 'omit'` means no cookies, so a wildcard origin is all the mocks need. */
+/**
+ * What identity itself answers with. The token calls are credentialed — they carry the
+ * `refresh-token` cookie — and a credentialed request rejects a wildcard in any of these three:
+ * the origin has to be named, and `*` in the method and header lists matches a method and a header
+ * literally called `*`. A wildcard here fails the calls in the browser rather than in a mock, so
+ * the screen never mounts and every test waits out its timeout.
+ */
 const CORS_HEADERS = {
-    'access-control-allow-origin': '*',
+    'access-control-allow-origin': APP_ORIGIN,
+    'access-control-allow-credentials': 'true',
     'access-control-allow-methods': 'GET,POST,PATCH,OPTIONS',
-    'access-control-allow-headers': '*',
+    'access-control-allow-headers': 'Authorization,Content-Type,X-Client-Version',
 };
 
 /**

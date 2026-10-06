@@ -13,7 +13,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- The subscription details screen takes an `onInvoiceCreated` callback in its `configuration`, called with `{ invoiceId, paymentStatus }` when the customer places an on-demand order. The order creates an invoice whether or not its payment went through, so anything but `PAID` is an invoice still to be paid. The order's "Go to invoice" button sends the existing `view-invoice` action request.
+- The subscription details screen offers the subscription's on-demand items. When the subscription has any, an "Available on demand items" block (`sv-on-demand-items-card`) opens an order form (`sv-charge-on-demand-modal`) where the customer picks items, sees the total and pays with a saved or new payment method. To find them, the screen now requests `GET /portal/pricing-plan-schedules/{id}/on-demand-pricing-items` on mount for a `DEFAULT` subscription; if that fails, the block is left out and `ON_DEMAND_ITEMS_LOAD_FAILED` is logged.
+- The subscription details screen takes an `onInvoiceCreated` callback in its `configuration`, called with `{ invoiceId, paymentStatus }` as soon as an on-demand order creates an invoice. The order creates an invoice whether or not its payment went through: `PAID` and `OVERPAID` are settled, while `UNPAID`, `PARTIALLY_PAID` and a missing status are an invoice still to be paid. An order whose outcome is unknown is not reported there; it reaches `onLog` as `ON_DEMAND_CHARGE_FAILED` (error) or `ON_DEMAND_CHARGE_REFUSED` (warning).
+- The order's "Go to invoice" button sends the existing `view-invoice` action request. Handle it to take the customer to the invoice; if nothing handles it, the button only closes the order.
+
+### Changed
+
+- `INVOICE_PREVIEW_FAILED` and `PAYMENT_METHOD_OPTIONS_LOAD_FAILED` carry the same message wherever they are logged, and name the flow in the context instead: `preview` (`CHECKOUT`, `SUBSCRIPTION_UPGRADE` or `ON_DEMAND_CHARGE`) and `flow` (`CHECKOUT` or `ON_DEMAND_ORDER`). Match on the code and context rather than the message.
+
+### Fixed
+
+- Checkout, PayInvoice and the payment method form no longer keep the pay button loading after a submit that never reaches the payment provider, such as one with missing or invalid card details: the customer sees what to fix and can submit again. A Stripe submit that fails for any other reason now fails the payment and shows the failure state, instead of being only logged while the button kept loading.
 
 ## [0.1.0-alpha.25] - 2026-10-06
 

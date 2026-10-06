@@ -14,7 +14,6 @@ import EmptyStatePlaceholder from '@/components/checkout/EmptyStatePlaceholder.v
 import Skeleton from '@/components/shared/Skeleton.vue';
 import EnabledPricingsList from '@/components/subscriptions/EnabledPricingsList/EnabledPricingsList.vue';
 import OnDemandItemsCard from '@/components/subscriptions/OnDemandItemsCard/OnDemandItemsCard.vue';
-import ChargeOnDemandModal from '@/components/subscriptions/ChargeOnDemandModal/ChargeOnDemandModal.vue';
 import SubscriptionCancellationModal from '@/components/subscriptions/SubscriptionCancellationModal/SubscriptionCancellationModal.vue';
 import type { SubscriptionCancellationVariant } from '@/services/subscriptions';
 
@@ -26,6 +25,14 @@ import type { SubscriptionCancellationVariant } from '@/services/subscriptions';
  */
 const SubscriptionSchedules = defineAsyncComponent(
     () => import('@/public/components/SubscriptionSchedules/SubscriptionSchedules.vue'),
+);
+
+/**
+ * Loaded and mounted the first time the customer opens it: the order form, its preview and the
+ * add-payment-method pane stay out of the bundle for everyone who never orders.
+ */
+const ChargeOnDemandModal = defineAsyncComponent(
+    () => import('@/components/subscriptions/ChargeOnDemandModal/ChargeOnDemandModal.vue'),
 );
 
 const props = withDefaults(defineProps<SubscriptionDetailsProps>(), {
@@ -96,6 +103,12 @@ const subscriptionPaymentMethod = computed(() =>
 const topUpSubscriptions = computed(() => (props.subscription ? [props.subscription] : []));
 
 const isOnDemandOrderOpen = ref(false);
+const hasOpenedOnDemandOrder = ref(false);
+
+const openOnDemandOrder = () => {
+    hasOpenedOnDemandOrder.value = true;
+    isOnDemandOrderOpen.value = true;
+};
 
 /** Falls back to the generic screen title while the subscription is loading or has no name. */
 const title = computed<string>(() =>
@@ -236,7 +249,7 @@ const title = computed<string>(() =>
                 v-if="!isLoading && onDemandItems.length > 0"
                 :items="onDemandItems"
                 class="sv-subscription-details__on-demand-items"
-                @order="isOnDemandOrderOpen = true"
+                @order="openOnDemandOrder"
             />
 
             <EnabledPricingsList
@@ -255,7 +268,7 @@ const title = computed<string>(() =>
             />
 
             <ChargeOnDemandModal
-                v-if="subscription && onDemandScheduleId"
+                v-if="hasOpenedOnDemandOrder && subscription && onDemandScheduleId"
                 :show-modal="isOnDemandOrderOpen"
                 :subscription="subscription"
                 :schedule-id="onDemandScheduleId"

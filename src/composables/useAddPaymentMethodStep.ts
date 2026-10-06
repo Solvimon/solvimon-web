@@ -9,8 +9,8 @@ type AddPaymentMethodHost = {
 /**
  * Adding a payment method as a detour from whatever the customer came to do.
  *
- * Both wallet modals keep every pane mounted and step sideways to one for adding a method, then back
- * to where they were — including the part that is easy to get wrong: the pane owns the request, so
+ * The modals built on `OnDemandPaymentModalShell` keep every pane mounted and step sideways to one
+ * for adding a method, then back to where they were — including the part that is easy to get wrong: the pane owns the request, so
  * only it knows whether one is out, and the host has to ask before letting anyone leave.
  */
 export function useAddPaymentMethodStep<TStep extends string>({

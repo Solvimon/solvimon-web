@@ -17,7 +17,7 @@ import {
     getTopUpPricingItems,
 } from '@/components/wallets/TopUpModal/TopUpModal.lib';
 import PaymentMethodSelector from '@/components/payments/PaymentMethodSelector/PaymentMethodSelector.vue';
-import WalletModalShell from '@/components/wallets/WalletModalShell.vue';
+import OnDemandPaymentModalShell from '@/components/payments/OnDemandPaymentModalShell/OnDemandPaymentModalShell.vue';
 import TopUpInvoicePreview from '@/components/wallets/TopUpModal/TopUpInvoicePreview.vue';
 import { useCustomerPaymentMethodOptions } from '@/composables/useCustomerPaymentMethodOptions';
 import { useDefaultPaymentMethod } from '@/composables/useDefaultPaymentMethod';
@@ -251,7 +251,7 @@ watch(
 </script>
 
 <template>
-    <WalletModalShell
+    <OnDemandPaymentModalShell
         ref="addPaymentMethodRef"
         :show-modal="showModal"
         :title="title"
@@ -308,5 +308,5 @@ watch(
                 />
             </div>
         </template>
-    </WalletModalShell>
+    </OnDemandPaymentModalShell>
 </template>

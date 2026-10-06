@@ -1,6 +1,6 @@
 import type { Customer, PaymentMethodOptionsResponse } from '@solvimon/solvimon-types';
 
-export interface WalletModalShellProps {
+export interface OnDemandPaymentModalShellProps {
     showModal: boolean;
     title: string;
     subTitle?: string;
@@ -18,7 +18,7 @@ export interface WalletModalShellProps {
     isAddingPaymentMethod?: boolean;
 }
 
-export interface WalletModalShellEmits {
+export interface OnDemandPaymentModalShellEmits {
     (e: 'confirm'): void;
     (e: 'cancel'): void;
     (e: 'payment-success'): void;

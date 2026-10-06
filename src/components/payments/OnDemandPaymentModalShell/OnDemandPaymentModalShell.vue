@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import { Modal } from '@solvimon/solvimon-ui';
 import { computed, ref } from 'vue';
-import type { WalletModalShellEmits, WalletModalShellProps } from './WalletModalShell.types';
+import type {
+    OnDemandPaymentModalShellEmits,
+    OnDemandPaymentModalShellProps,
+} from './OnDemandPaymentModalShell.types';
 import AddPaymentMethodPane from '@/components/payments/AddPaymentMethodPane/AddPaymentMethodPane.vue';
 import SlidingPanes from '@/components/shared/SlidingPanes/SlidingPanes.vue';
 
@@ -11,8 +14,8 @@ import SlidingPanes from '@/components/shared/SlidingPanes/SlidingPanes.vue';
  */
 defineOptions({ inheritAttrs: false });
 
-const props = defineProps<WalletModalShellProps>();
-defineEmits<WalletModalShellEmits>();
+const props = defineProps<OnDemandPaymentModalShellProps>();
+defineEmits<OnDemandPaymentModalShellEmits>();
 
 const paneRef = ref<InstanceType<typeof AddPaymentMethodPane>>();
 

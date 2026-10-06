@@ -21,3 +21,4 @@ tests/playwright/results.xml
 
 # TypeScript incremental build info
 *.tsbuildinfo
+.DS_Store

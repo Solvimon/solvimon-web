@@ -1,13 +1,14 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-
-vi.mock('fs');
-
-import { readFileSync, existsSync } from 'fs';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'fs';
+import { tmpdir } from 'os';
+import path from 'path';
 import { generateTranslationsReport } from './translations-report.mjs';
 
-const mockReadFileSync = vi.mocked(readFileSync);
-const mockExistsSync = vi.mocked(existsSync);
+let tmpDir: string;
+let defaultArgs: { translationsDir: string; sha: string };
 
+// The report walks a real translations directory, so each case lays one out on
+// disk; a locale left unwritten stands in for a missing locale file.
 function setup({
     source,
     supported,
@@ -17,18 +18,27 @@ function setup({
     supported: string[];
     locales: Record<string, Record<string, string>>;
 }) {
-    mockExistsSync.mockReturnValue(true as never);
-    mockReadFileSync.mockReturnValueOnce(JSON.stringify(source) as never);
-    supported.forEach((locale) => {
-        mockReadFileSync.mockReturnValueOnce(JSON.stringify(locales[locale] ?? {}) as never);
-    });
+    writeSource(source);
+    supported.forEach((locale) => writeLocale(locale, locales[locale] ?? {}));
     return { supported };
 }
 
-const defaultArgs = { translationsDir: '/fake/translations', sha: 'abc1234' };
+function writeSource(source: Record<string, string>) {
+    writeFileSync(path.join(tmpDir, 'source.json'), JSON.stringify(source));
+}
+
+function writeLocale(locale: string, translations: Record<string, string>) {
+    writeFileSync(path.join(tmpDir, 'locales', `${locale}.json`), JSON.stringify(translations));
+}
 
 describe('generateTranslationsReport', () => {
-    beforeEach(() => vi.clearAllMocks());
+    beforeEach(() => {
+        tmpDir = mkdtempSync(path.join(tmpdir(), 'translations-report-'));
+        mkdirSync(path.join(tmpDir, 'locales'));
+        defaultArgs = { translationsDir: tmpDir, sha: 'abc1234' };
+    });
+
+    afterEach(() => rmSync(tmpDir, { recursive: true, force: true }));
 
     it('includes the translations-report marker', () => {
         const { supported } = setup({ source: {}, supported: ['en-US'], locales: { 'en-US': {} } });
@@ -135,8 +145,7 @@ describe('generateTranslationsReport', () => {
     });
 
     it('treats a non-existent locale file as fully missing', () => {
-        mockExistsSync.mockReturnValue(false as never);
-        mockReadFileSync.mockReturnValueOnce(JSON.stringify({ greeting: 'Hello' }) as never);
+        writeSource({ greeting: 'Hello' });
 
         const report = generateTranslationsReport({ ...defaultArgs, supported: ['nl-NL'] });
 

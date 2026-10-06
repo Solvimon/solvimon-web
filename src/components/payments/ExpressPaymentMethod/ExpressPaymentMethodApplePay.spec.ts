@@ -9,7 +9,16 @@ const mockApplePayInstance = {
     mount: vi.fn(),
 };
 
-const mockApplePay = vi.fn().mockReturnValue(mockApplePayInstance);
+// The SDK calls these with `new`, which vitest rejects on a mock carrying a
+// `mockReturnValue`; a class implementation keeps the constructor-arg assertions.
+class ApplePayStub {
+    constructor() {
+        return mockApplePayInstance;
+    }
+}
+
+const mockApplePay = vi.fn();
+mockApplePay.mockImplementation(ApplePayStub as never);
 const mockAdyenCheckout = vi.fn().mockResolvedValue({});
 
 // The components reach the SDK through this loader, which is the SDK's only
@@ -142,7 +151,7 @@ describe('ExpressPaymentMethodApplePay', () => {
         mockApplePayInstance.isAvailable.mockResolvedValue(true);
         mockApplePayInstance.mount.mockClear();
         mockAdyenCheckout.mockResolvedValue({});
-        mockApplePay.mockReturnValue(mockApplePayInstance);
+        mockApplePay.mockImplementation(ApplePayStub as never);
         mockAuthorizePayment.mockResolvedValue({
             status: 'SUCCESS',
             payment: {

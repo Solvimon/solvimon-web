@@ -1,11 +1,8 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-
-vi.mock('fs');
-
-import { readFileSync } from 'fs';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { mkdtempSync, rmSync, writeFileSync } from 'fs';
+import { tmpdir } from 'os';
+import path from 'path';
 import { generateBundleSizeReport } from './bundle-size-report.mjs';
-
-const mockReadFileSync = vi.mocked(readFileSync);
 
 type Consumer = { raw: number; brotli: number; chunks: number } | null;
 type Entry = { eager: number; lazy: number; consumer: Consumer };
@@ -24,6 +21,15 @@ function makeSnapshot(total: number, entries: Record<string, Entry> = {}) {
     return { total, entries };
 }
 
+let tmpDir: string;
+let defaultArgs: {
+    prPath: string;
+    basePath: string;
+    sha: string;
+    baseRef: string;
+};
+
+// The report reads both snapshots off disk, so each case writes real files.
 function setup({
     pr,
     base,
@@ -31,19 +37,22 @@ function setup({
     pr: ReturnType<typeof makeSnapshot>;
     base: ReturnType<typeof makeSnapshot>;
 }) {
-    mockReadFileSync.mockReturnValueOnce(JSON.stringify(pr) as never);
-    mockReadFileSync.mockReturnValueOnce(JSON.stringify(base) as never);
+    writeFileSync(defaultArgs.prPath, JSON.stringify(pr));
+    writeFileSync(defaultArgs.basePath, JSON.stringify(base));
 }
 
-const defaultArgs = {
-    prPath: '/tmp/pr.json',
-    basePath: '/tmp/base.json',
-    sha: 'abc1234',
-    baseRef: 'main',
-};
-
 describe('generateBundleSizeReport', () => {
-    beforeEach(() => vi.clearAllMocks());
+    beforeEach(() => {
+        tmpDir = mkdtempSync(path.join(tmpdir(), 'bundle-size-report-'));
+        defaultArgs = {
+            prPath: path.join(tmpDir, 'pr.json'),
+            basePath: path.join(tmpDir, 'base.json'),
+            sha: 'abc1234',
+            baseRef: 'main',
+        };
+    });
+
+    afterEach(() => rmSync(tmpDir, { recursive: true, force: true }));
 
     it('shows unchanged note when the heaviest entry is identical', () => {
         setup({

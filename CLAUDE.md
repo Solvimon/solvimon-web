@@ -57,7 +57,7 @@ if (!filePath.startsWith(baseDir + path.sep)) {
 
 ## Bundle size
 
-Each public screen and component is its own build entry, and `@solvimon/solvimon-web/core` loads them with `import()` per registered id. A client that embeds only Checkout downloads Checkout's entry plus the shared chunks it imports. Keep that true:
+Each public screen and component is its own build entry, and `@solvimon/solvimon-web/core` loads them with `import()` per registered id. A client downloads only the entries for the screens and components it mounts, plus the shared chunks those entries import. Keep that true:
 
 - **Shared base chunk.** Everything imported by the providers, `src/utils/customElements.ts`, and other code every entry uses ends up in one chunk (`customElements-*.mjs`) that every entry loads. Adding to it costs every client; put entry-specific logic in the entry or the feature that uses it.
 - **Heavy or optional dependencies.** Payment SDKs, their stylesheets, and anything only one provider or branch needs are loaded with `import()` at the point of use, never as a static import from a module an entry loads up front.

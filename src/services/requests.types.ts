@@ -8,6 +8,11 @@ export type RequestOptions = {
     method?: 'GET' | 'POST' | 'PATCH';
     /** Statuses the caller handles itself. Still rejected; only the log entry drops to `warn`. */
     expectedStatusCodes?: number[];
+    /**
+     * Only the identity token endpoints may raise this to `include`: the refresh token lives in an
+     * `HttpOnly` cookie, which `omit` neither stores from the response nor sends back.
+     */
+    credentials?: 'omit' | 'include';
 };
 
 export type QueryParamValue = string | number | boolean | null | undefined | (string | number)[];

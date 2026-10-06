@@ -504,4 +504,26 @@ describe('createRequestService', () => {
             await expect(request({ url: CALLED_URL })).resolves.toBe(pdf);
         });
     });
+
+    describe('credentials', () => {
+        it('omits credentials by default', async () => {
+            const request = createRequestService();
+            await request({ url: CALLED_URL });
+
+            expect(mockFetch).toHaveBeenCalledWith(
+                CALLED_URL,
+                expect.objectContaining({ credentials: 'omit' }),
+            );
+        });
+
+        it('sends them when the caller asks for it', async () => {
+            const request = createRequestService();
+            await request({ url: CALLED_URL, options: { credentials: 'include' } });
+
+            expect(mockFetch).toHaveBeenCalledWith(
+                CALLED_URL,
+                expect.objectContaining({ credentials: 'include' }),
+            );
+        });
+    });
 });

@@ -283,6 +283,20 @@ describe('ChargeOnDemandModal', () => {
             expect(wrapper.emitted('close')).toHaveLength(1);
         });
 
+        it('takes the customer to the invoice of the paid order on the way out', async () => {
+            mockCharge.mockResolvedValue(chargedInvoice);
+            const wrapper = mountModal();
+            await addItemAndWaitForTotal(wrapper);
+            await findConfirm(wrapper).trigger('click');
+            await flushPromises();
+
+            await wrapper.find('[data-testid="charge-on-demand-view-invoice"]').trigger('click');
+
+            expect(wrapper.emitted('charged')).toEqual([[chargedInvoice]]);
+            expect(wrapper.emitted('close')).toHaveLength(1);
+            expect(wrapper.emitted('view-invoice')).toEqual([[chargedInvoice.id]]);
+        });
+
         describe('when the order is placed but the payment did not go through', () => {
             const unpaidInvoice = { ...chargedInvoice, payment_status: 'UNPAID' } as Invoice;
 
@@ -307,6 +321,20 @@ describe('ChargeOnDemandModal', () => {
                 const wrapper = await placeUnpaidOrder();
 
                 expect(findConfirm(wrapper).exists()).toBe(false);
+            });
+
+            it('leads with the invoice, where the order can be followed up', async () => {
+                const wrapper = await placeUnpaidOrder();
+
+                const buttons = wrapper.findAll('button[data-testid^="charge-on-demand-"]');
+                expect(buttons[0]?.attributes('data-testid')).toBe('charge-on-demand-view-invoice');
+
+                await wrapper
+                    .find('[data-testid="charge-on-demand-view-invoice"]')
+                    .trigger('click');
+
+                expect(wrapper.emitted('close')).toHaveLength(1);
+                expect(wrapper.emitted('view-invoice')).toEqual([[unpaidInvoice.id]]);
             });
 
             it('reports the invoice on the way out', async () => {

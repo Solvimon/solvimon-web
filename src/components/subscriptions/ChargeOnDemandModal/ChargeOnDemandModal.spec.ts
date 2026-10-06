@@ -512,6 +512,12 @@ describe('ChargeOnDemandModal', () => {
                     'Check your invoice list before trying again',
                 ],
                 [
+                    'the placed invoice could not be found',
+                    new ApiError({ statusCode: 404 }),
+                    "We couldn't confirm your order",
+                    'Check your invoice list before trying again',
+                ],
+                [
                     'no response came back',
                     new TypeError('Failed to fetch'),
                     "We couldn't confirm your order",

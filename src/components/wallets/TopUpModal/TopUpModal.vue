@@ -15,7 +15,7 @@ import { useTopUpModalLabels } from './useTopUpModalLabels';
 import SubscriptionSummary from '@/components/subscriptions/SubscriptionSummary.vue';
 import { useCustomerPaymentMethodOptions } from '@/composables/useCustomerPaymentMethodOptions';
 import { useWalletBalanceFormat } from '@/composables/useWalletBalanceFormat';
-import WalletModalShell from '@/components/wallets/WalletModalShell.vue';
+import OnDemandPaymentModalShell from '@/components/payments/OnDemandPaymentModalShell/OnDemandPaymentModalShell.vue';
 import {
     getActiveAutoTopUpConfig,
     getAutoTopUpChargeTarget,
@@ -228,7 +228,7 @@ watch(
 </script>
 
 <template>
-    <WalletModalShell
+    <OnDemandPaymentModalShell
         ref="addPaymentMethodRef"
         :show-modal="showModal"
         :title="title"
@@ -326,5 +326,5 @@ watch(
                 </template>
             </div>
         </template>
-    </WalletModalShell>
+    </OnDemandPaymentModalShell>
 </template>

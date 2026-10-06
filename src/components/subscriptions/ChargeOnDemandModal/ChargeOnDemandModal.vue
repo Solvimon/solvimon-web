@@ -21,7 +21,7 @@ import type {
 } from './ChargeOnDemandModal.types';
 import { CHARGE_ON_DEMAND_MODAL_STEPS } from './ChargeOnDemandModal.types';
 import EmptyStatePlaceholder from '@/components/checkout/EmptyStatePlaceholder.vue';
-import WalletModalShell from '@/components/wallets/WalletModalShell.vue';
+import OnDemandPaymentModalShell from '@/components/payments/OnDemandPaymentModalShell/OnDemandPaymentModalShell.vue';
 import { useChargeOnDemandInvoicePreview } from '@/composables/useChargeOnDemandInvoicePreview';
 import { useAddPaymentMethodStep } from '@/composables/useAddPaymentMethodStep';
 import { usePaymentMethodOptions } from '@/composables/usePaymentMethodOptions';
@@ -402,7 +402,7 @@ watch(
 </script>
 
 <template>
-    <WalletModalShell
+    <OnDemandPaymentModalShell
         ref="addPaymentMethodRef"
         class="sv-charge-on-demand-modal"
         :show-modal="showModal"
@@ -535,5 +535,5 @@ watch(
                 >
             </div>
         </template>
-    </WalletModalShell>
+    </OnDemandPaymentModalShell>
 </template>

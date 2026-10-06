@@ -144,6 +144,9 @@ const mountCheckout = async (stubOverrides: Record<string, boolean> = {}) => {
         },
     });
     await flushPromises();
+    // The screen's children are async components, and their dynamic imports outlive
+    // `flushPromises`: left pending, they resolve after the environment is torn down.
+    await vi.dynamicImportSettled();
 
     return wrapper;
 };

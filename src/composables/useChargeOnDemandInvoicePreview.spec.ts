@@ -55,6 +55,18 @@ describe('useChargeOnDemandInvoicePreview', () => {
         expect(invoicePreview.value).toEqual(invoice);
     });
 
+    it('previews the items the form starts with', () => {
+        useChargeOnDemandInvoicePreview({
+            pricingPlanScheduleId: ref('ppsc_1'),
+            pricingItems: ref([{ pricing_item_id: 'prii_1', flexible_amount: amountOf('10') }]),
+        });
+
+        expect(mockPreview).toHaveBeenCalledWith({
+            pricingPlanScheduleId: 'ppsc_1',
+            pricingItems: [{ pricing_item_id: 'prii_1', flexible_amount: amountOf('10') }],
+        });
+    });
+
     it('asks for the first preview straight away', async () => {
         mockPreview.mockReturnValue(new Promise(() => {}));
         const { amount, isPreviewPending } = setup();

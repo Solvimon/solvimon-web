@@ -59,14 +59,27 @@ const recurrence = computed(() =>
               id: 'payments.sepa_mandate.recurrence_unnamed',
           }),
 );
+
+/**
+ * No billing entity in this one: the refund right is held against the payer's own bank, not the
+ * creditor, so there is nothing here to name.
+ */
+const refundRights = computed(() =>
+    $t({
+        defaultMessage:
+            "As part of your rights, you're entitled to a refund from your bank under the terms and conditions of your agreement with your bank. You must claim a refund within 8 weeks from the date your account was debited. You can request a statement from your bank explaining your rights.",
+        description: "SEPA direct debit mandate refund rights, held against the payer's own bank",
+        id: 'payments.sepa_mandate.refund_rights',
+    }),
+);
 </script>
 
 <template>
     <div class="sv-sepa-mandate mt-3" data-testid="sepa-mandate-notice">
         <Typography tag="p" variant="body-xs" class="font-semibold">{{ title }}</Typography>
-        <!-- One paragraph: two sentences of the same mandate, not two statements. -->
+        <!-- One paragraph: sentences of the same mandate, not separate statements. -->
         <Typography tag="p" variant="body-xs" color="subtle">
-            {{ authorisation }} {{ recurrence }}
+            {{ authorisation }} {{ recurrence }} {{ refundRights }}
         </Typography>
     </div>
 </template>

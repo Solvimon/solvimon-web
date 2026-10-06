@@ -19,12 +19,25 @@ describe('SepaMandateNotice', () => {
         expect(text).toContain('subsequent invoices from AIAIAI B.V. until you cancel');
     });
 
-    it('runs the two sentences together in one paragraph', () => {
+    it('runs the sentences together in one paragraph', () => {
         const paragraphs = mountNotice('AIAIAI B.V.').findAll('p');
 
         // Title plus one body paragraph — the mandate reads as prose, not as a list.
         expect(paragraphs).toHaveLength(2);
         expect(paragraphs[1].text()).toContain('those instructions. This bank account');
+        expect(paragraphs[1].text()).toContain('this mandate. As part of your rights');
+    });
+
+    /**
+     * The refund right is held against the payer's own bank, so it is stated whether or not the
+     * creditor is known — the unnamed fallback must not quietly drop it.
+     */
+    it('states the refund rights, named or not', () => {
+        for (const text of [mountNotice('AIAIAI B.V.').text(), mountNotice(undefined).text()]) {
+            expect(text).toContain("you're entitled to a refund from your bank");
+            expect(text).toContain('within 8 weeks from the date your account was debited');
+            expect(text).toContain('request a statement from your bank explaining your rights');
+        }
     });
 
     /**

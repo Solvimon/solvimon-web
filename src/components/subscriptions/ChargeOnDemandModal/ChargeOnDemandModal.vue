@@ -4,7 +4,6 @@ import {
     ChargeOnDemandForm,
     InvoicePreview,
     Section,
-    Typography,
     getCustomerCountry,
     getPayablePaymentMethods,
     toChargePricingItems,
@@ -593,20 +592,8 @@ watch(
                 :disabled="isCharging"
                 can-add-payment-method
                 @add-payment-method="handleAddPaymentMethod"
-            >
-                <template #payment-methods-empty>
-                    <Typography tag="p" color="secondary" no-spacing>
-                        {{
-                            $t({
-                                defaultMessage: 'Add a payment method to pay for this order.',
-                                description:
-                                    'Shown in the on-demand order when no saved payment method can pay for it',
-                                id: 'charge_on_demand_modal.payment_methods.empty',
-                            })
-                        }}
-                    </Typography>
-                </template>
-            </ChargeOnDemandForm>
+            />
+
             <EmptyStatePlaceholder
                 v-else
                 class="sv-charge-on-demand-modal__unavailable"

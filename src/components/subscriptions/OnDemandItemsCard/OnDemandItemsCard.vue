@@ -60,7 +60,7 @@ const hiddenItemCount = computed(() => Math.max(props.items.length - MAX_VISIBLE
             </Button>
         </template>
 
-        <ul class="sv-on-demand-items-card__items grid grid-cols-1 gap-2">
+        <ul class="sv-on-demand-items-card__items grid grid-cols-1 gap-1">
             <li
                 v-for="{ item, priceLabel } in visibleItems"
                 :key="item.pricingItemId"

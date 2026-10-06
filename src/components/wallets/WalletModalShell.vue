@@ -5,6 +5,12 @@ import type { WalletModalShellEmits, WalletModalShellProps } from './WalletModal
 import AddPaymentMethodPane from '@/components/payments/AddPaymentMethodPane/AddPaymentMethodPane.vue';
 import SlidingPanes from '@/components/shared/SlidingPanes/SlidingPanes.vue';
 
+/**
+ * The modal teleports itself out of this component, so attributes a host sets on the shell — its
+ * `sv-*` class for style overrides, say — would be dropped. They go on the modal's content instead.
+ */
+defineOptions({ inheritAttrs: false });
+
 const props = defineProps<WalletModalShellProps>();
 defineEmits<WalletModalShellEmits>();
 
@@ -33,7 +39,7 @@ defineExpose({
         @close="$emit('cancel')"
     >
         <template #body>
-            <div class="grid grid-cols-1 gap-4 pb-4">
+            <div class="grid grid-cols-1 gap-4 pb-4" v-bind="$attrs">
                 <SlidingPanes :panes="panes" :current="step">
                     <template #[addPaymentMethodPane]>
                         <AddPaymentMethodPane

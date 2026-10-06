@@ -125,6 +125,7 @@ vi.mock(
 
 // Builds its own invoice and payment method services, which need providers this mount does not have.
 vi.mock('@/components/subscriptions/ChargeOnDemandModal/ChargeOnDemandModal.vue', () => ({
+    __esModule: true,
     default: defineComponent({
         name: 'ChargeOnDemandModalStub',
         props: { showModal: Boolean, scheduleId: String, items: Array },
@@ -379,7 +380,10 @@ describe('SubscriptionDetails', () => {
         it('opens the order form from the block', async () => {
             const wrapper = mountComponent({ onDemandItems, onDemandScheduleId: 'ppsc_1' });
 
+            expect(wrapper.find('.sv-charge-on-demand-modal-stub').exists()).toBe(false);
+
             await wrapper.find('.sv-on-demand-items-card__order').trigger('click');
+            await flushPromises();
 
             expect(wrapper.find('.sv-charge-on-demand-modal-stub').attributes('data-open')).toBe(
                 'true',

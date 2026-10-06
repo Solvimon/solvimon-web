@@ -5,11 +5,11 @@ import { useWatchDebounced } from './useWatchDebounced';
 const mountWithSource = <T>(
     source: () => T,
     callback: (value: T, oldValue: T) => void,
-    debounceDisabled?: MaybeRefOrGetter<boolean>,
+    debounce: MaybeRefOrGetter<number> = 200,
 ) => {
     const Wrapper = defineComponent({
         setup() {
-            useWatchDebounced(source, callback, { debounce: 200, debounceDisabled });
+            useWatchDebounced(source, callback, { debounce });
         },
         render: () => h('div'),
     });
@@ -88,11 +88,11 @@ describe('useWatchDebounced', () => {
         expect(callback).toHaveBeenNthCalledWith(2, 2, 1);
     });
 
-    it('calls back straight away, without a timer, while the debounce is disabled', async () => {
+    it('calls back straight away, without a timer, when the delay is 0', async () => {
         const callback = vi.fn();
         const source = ref(0);
 
-        mountWithSource(() => source.value, callback, true);
+        mountWithSource(() => source.value, callback, 0);
 
         source.value = 1;
         await nextTick();
@@ -101,22 +101,22 @@ describe('useWatchDebounced', () => {
         expect(vi.getTimerCount()).toBe(0);
     });
 
-    it('reads whether the debounce is disabled on every change', async () => {
+    it('reads the delay from a getter on every change', async () => {
         const callback = vi.fn();
         const source = ref(0);
-        const disabled = ref(true);
+        const delay = ref(0);
 
         mountWithSource(
             () => source.value,
             callback,
-            () => disabled.value,
+            () => delay.value,
         );
 
         source.value = 1;
         await nextTick();
         expect(callback).toHaveBeenCalledTimes(1);
 
-        disabled.value = false;
+        delay.value = 200;
         source.value = 2;
         await nextTick();
         expect(callback).toHaveBeenCalledTimes(1);

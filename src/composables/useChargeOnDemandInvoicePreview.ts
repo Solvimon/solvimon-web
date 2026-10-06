@@ -85,8 +85,7 @@ export function useChargeOnDemandInvoicePreview({
     // Debounced so that typing an amount sends one request, not one per keystroke. The first request
     // is sent straight away: with no preview yet and none on its way, there is nothing to wait for.
     useWatchDebounced(pricingItems, () => void loadPreview(), {
-        debounce: PREVIEW_DEBOUNCE_MS,
-        debounceDisabled: () => !invoicePreview.value && !isPreviewPending.value,
+        debounce: () => (invoicePreview.value || isPreviewPending.value ? PREVIEW_DEBOUNCE_MS : 0),
         deep: true,
     });
 

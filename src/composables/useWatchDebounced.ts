@@ -4,12 +4,11 @@ export function useWatchDebounced<T>(
     source: WatchSource<T>,
     callback: (value: T, oldValue: T) => void,
     options: {
-        debounce: number;
         /**
-         * Read on every change. While it holds, the callback runs straight away rather than on a
-         * timer, for a caller that only has something to wait for some of the time.
+         * Read on every change, so a getter can wait only when there is something to wait for. A
+         * delay of 0 calls back straight away rather than on a timer.
          */
-        debounceDisabled?: MaybeRefOrGetter<boolean>;
+        debounce: MaybeRefOrGetter<number>;
         deep?: boolean;
     },
 ): void {
@@ -20,12 +19,14 @@ export function useWatchDebounced<T>(
         (value, oldValue) => {
             clearTimeout(timer);
 
-            if (toValue(options.debounceDisabled)) {
+            const delay = toValue(options.debounce);
+
+            if (delay <= 0) {
                 callback(value, oldValue);
                 return;
             }
 
-            timer = setTimeout(() => callback(value, oldValue), options.debounce);
+            timer = setTimeout(() => callback(value, oldValue), delay);
         },
         { deep: options.deep },
     );

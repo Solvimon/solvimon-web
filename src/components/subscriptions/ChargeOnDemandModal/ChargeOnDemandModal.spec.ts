@@ -271,7 +271,7 @@ describe('ChargeOnDemandModal', () => {
             expect(wrapper.text()).toContain('Payment successful');
         });
 
-        it('reports the charged invoice when the customer is done', async () => {
+        it('reports the created invoice when the customer is done', async () => {
             mockCharge.mockResolvedValue(chargedInvoice);
             const wrapper = mountModal();
             await addItemAndWaitForTotal(wrapper);
@@ -280,7 +280,7 @@ describe('ChargeOnDemandModal', () => {
 
             await wrapper.find('[data-testid="charge-on-demand-done"]').trigger('click');
 
-            expect(wrapper.emitted('charged')).toEqual([[chargedInvoice]]);
+            expect(wrapper.emitted('invoice-created')).toEqual([[chargedInvoice]]);
             expect(wrapper.emitted('close')).toHaveLength(1);
         });
 
@@ -293,7 +293,7 @@ describe('ChargeOnDemandModal', () => {
 
             await wrapper.find('[data-testid="charge-on-demand-view-invoice"]').trigger('click');
 
-            expect(wrapper.emitted('charged')).toEqual([[chargedInvoice]]);
+            expect(wrapper.emitted('invoice-created')).toEqual([[chargedInvoice]]);
             expect(wrapper.emitted('close')).toHaveLength(1);
             expect(wrapper.emitted('view-invoice')).toEqual([[chargedInvoice.id]]);
         });
@@ -343,7 +343,7 @@ describe('ChargeOnDemandModal', () => {
 
                 await wrapper.find('[data-testid="charge-on-demand-done"]').trigger('click');
 
-                expect(wrapper.emitted('charged')).toEqual([[unpaidInvoice]]);
+                expect(wrapper.emitted('invoice-created')).toEqual([[unpaidInvoice]]);
                 expect(wrapper.emitted('close')).toHaveLength(1);
             });
         });
@@ -457,7 +457,7 @@ describe('ChargeOnDemandModal', () => {
                     await wrapper.find('[data-testid="charge-on-demand-close"]').trigger('click');
 
                     expect(wrapper.emitted('close')).toHaveLength(1);
-                    expect(wrapper.emitted('charged')).toBeUndefined();
+                    expect(wrapper.emitted('invoice-created')).toBeUndefined();
                 },
             );
         });

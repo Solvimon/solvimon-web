@@ -2,12 +2,13 @@
 import type { SolvimonSubscriptionDetailsEntryProps } from './SubscriptionDetails.entry.types';
 import SubscriptionDetails from './SubscriptionDetails.vue';
 import SubscriptionDetailsEntryView from './SubscriptionDetails.entry.view.vue';
+import { handleOnDemandInvoiceCreated } from './SubscriptionDetails.lib';
 import { EntryProvider } from '@/components/providers';
 import { getComponentName } from '@/utils/component';
 
 const componentName = getComponentName('subscription-details');
 
-defineProps<SolvimonSubscriptionDetailsEntryProps>();
+const props = defineProps<SolvimonSubscriptionDetailsEntryProps>();
 </script>
 
 <template>
@@ -52,6 +53,14 @@ defineProps<SolvimonSubscriptionDetailsEntryProps>();
                     @auto-top-up-cancelled="refreshWalletBalances"
                     @payment-method-stored="refreshPaymentMethods"
                     @subscription-changed="refreshSubscription"
+                    @invoice-created="
+                        (invoice) =>
+                            handleOnDemandInvoiceCreated({
+                                invoice,
+                                configuration: props.configuration,
+                                refreshWalletBalances,
+                            })
+                    "
                 />
             </template>
         </SubscriptionDetailsEntryView>

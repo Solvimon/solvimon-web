@@ -499,7 +499,7 @@ const handleConfirm = () => {
 /** Reported on the way out, so nothing is reloaded under a receipt still being read. */
 const handleDone = () => {
     if (chargedInvoice.value) {
-        emit('charged', chargedInvoice.value);
+        emit('invoice-created', chargedInvoice.value);
     }
     emit('close');
 };

@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The access token now refreshes, instead of the session ending five minutes in. Identity renews a session from a `refresh-token` cookie it sets on `/oauth/token` and reads back on `/oauth/refresh-token`; the SDK sent both calls with `credentials: 'omit'`, under which the browser discards that cookie from the response and sends none on the refresh. Every refresh answered 401, and `AuthProvider` gave up and raised `SESSION_EXPIRED` once the first token expired. Both identity calls now pass `credentials: 'include'`. Every other request keeps omitting credentials, which is still the default.
 
+### Added
+
+- The subscription details screen takes an `onInvoiceCreated` callback in its `configuration`, called with `{ invoiceId, paymentStatus }` when the customer places an on-demand order. The order creates an invoice whether or not its payment went through, so anything but `PAID` is an invoice still to be paid. The order's "Go to invoice" button sends the existing `view-invoice` action request.
+
 ## [0.1.0-alpha.25] - 2026-10-06
 
 ### Added

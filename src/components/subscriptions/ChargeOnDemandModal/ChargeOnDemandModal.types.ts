@@ -30,7 +30,8 @@ export interface ChargeOnDemandModalProps {
 
 export interface ChargeOnDemandModalEmits {
     (e: 'close'): void;
-    (e: 'charged', invoice: Invoice): void;
+    /** The order placed an invoice, paid or not. Reported as the modal closes. */
+    (e: 'invoice-created', invoice: Invoice): void;
     /** The customer asked to see the invoice of the order they just placed. Follows `close`. */
     (e: 'view-invoice', invoiceId: Invoice['id']): void;
     (e: 'payment-method-stored'): void;

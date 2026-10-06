@@ -1,6 +1,7 @@
 import type {
     Customer,
     CustomerWalletBalanceItem,
+    Invoice,
     PaymentMethod,
     PricingPlanSchedule,
     PricingPlanScheduleWithPlanData,
@@ -13,6 +14,16 @@ import type { BaseScreenProps } from '@/public/screens/types';
 export interface SubscriptionDetailsConfiguration {
     subscriptionId: PricingPlanSubscription['id'];
     avatar?: string;
+    /**
+     * Called when the customer places an on-demand order, once the order modal closes. The order
+     * created an invoice whether or not its payment went through, so `paymentStatus` says which:
+     * anything but `PAID` is an invoice still to be paid. Use it to refresh an invoice list or to
+     * follow up on the order.
+     */
+    onInvoiceCreated?: (invoice: {
+        invoiceId: Invoice['id'];
+        paymentStatus: Invoice['payment_status'];
+    }) => void;
 }
 
 export interface SubscriptionDetailsProps extends BaseScreenProps {
@@ -34,4 +45,6 @@ export interface SubscriptionDetailsEmits {
     (e: 'auto-top-up-cancelled'): void;
     (e: 'payment-method-stored'): void;
     (e: 'subscription-changed'): void;
+    /** An on-demand order placed an invoice, paid or not. */
+    (e: 'invoice-created', invoice: Invoice): void;
 }

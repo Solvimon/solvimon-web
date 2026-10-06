@@ -279,6 +279,7 @@ const title = computed<string>(() =>
                 :payment-methods="paymentMethods"
                 @close="isOnDemandOrderOpen = false"
                 @payment-method-stored="$emit('payment-method-stored')"
+                @invoice-created="(invoice) => $emit('invoice-created', invoice)"
                 @view-invoice="
                     (invoiceId) => dispatchAction({ action: 'view-invoice', data: { invoiceId } })
                 "

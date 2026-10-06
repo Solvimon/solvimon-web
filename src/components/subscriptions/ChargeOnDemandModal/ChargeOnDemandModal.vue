@@ -441,6 +441,7 @@ const charge = async () => {
         });
 
         chargedInvoice.value = invoice;
+        emit('invoice-created', invoice);
         // A successful response only means the invoice was created and a payment attempted. The
         // endpoint also answers 200 with the invoice left unpaid when:
         // - Adyen refuses, errors on or cancels the payment (its result code is not mapped to a failure),
@@ -497,8 +498,8 @@ const handleConfirm = () => {
 
 /** Reported on the way out, so nothing is reloaded under a receipt still being read. */
 const handleDone = () => {
-    if (chargedInvoice.value) {
-        emit('invoice-created', chargedInvoice.value);
+    if (chargedInvoice.value?.payment_status === 'PAID') {
+        emit('order-paid');
     }
     emit('close');
 };

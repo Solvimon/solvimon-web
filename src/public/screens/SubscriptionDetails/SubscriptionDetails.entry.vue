@@ -2,7 +2,7 @@
 import type { SolvimonSubscriptionDetailsEntryProps } from './SubscriptionDetails.entry.types';
 import SubscriptionDetails from './SubscriptionDetails.vue';
 import SubscriptionDetailsEntryView from './SubscriptionDetails.entry.view.vue';
-import { handleOnDemandInvoiceCreated } from './SubscriptionDetails.lib';
+import { reportInvoiceCreated } from './SubscriptionDetails.lib';
 import { EntryProvider } from '@/components/providers';
 import { getComponentName } from '@/utils/component';
 
@@ -55,12 +55,9 @@ const props = defineProps<SolvimonSubscriptionDetailsEntryProps>();
                     @subscription-changed="refreshSubscription"
                     @invoice-created="
                         (invoice) =>
-                            handleOnDemandInvoiceCreated({
-                                invoice,
-                                configuration: props.configuration,
-                                refreshWalletBalances,
-                            })
+                            reportInvoiceCreated({ invoice, configuration: props.configuration })
                     "
+                    @on-demand-order-paid="refreshWalletBalances"
                 />
             </template>
         </SubscriptionDetailsEntryView>

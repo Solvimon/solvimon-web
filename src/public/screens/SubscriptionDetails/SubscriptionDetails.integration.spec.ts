@@ -132,6 +132,7 @@ vi.mock('@/components/subscriptions/ChargeOnDemandModal/ChargeOnDemandModal.vue'
         emits: [
             'close',
             'invoice-created',
+            'order-paid',
             'view-invoice',
             'payment-method-stored',
             'payment-failed',
@@ -407,6 +408,16 @@ describe('SubscriptionDetails', () => {
                 .vm.$emit('invoice-created', invoice);
 
             expect(wrapper.emitted('invoice-created')).toEqual([[invoice]]);
+        });
+
+        it('reports a paid order once the customer leaves its receipt', async () => {
+            const wrapper = mountComponent({ onDemandItems, onDemandScheduleId: 'ppsc_1' });
+            await wrapper.find('.sv-on-demand-items-card__order').trigger('click');
+            await flushPromises();
+
+            wrapper.findComponent({ name: 'ChargeOnDemandModalStub' }).vm.$emit('order-paid');
+
+            expect(wrapper.emitted('on-demand-order-paid')).toHaveLength(1);
         });
 
         it('asks the host to open the invoice of a placed order', async () => {

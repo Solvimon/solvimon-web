@@ -12,7 +12,7 @@ export function isInvoiceSettled(invoice: Pick<Invoice, 'payment_status'>): bool
 /**
  * What a failed charge means for the customer, read from the response of
  * `POST /portal/invoices/charge-on-demand-pricing-items`. The endpoint returns no error code, so
- * this goes by HTTP status and the field a validation error names (see MD-5539, point 10).
+ * this goes by HTTP status and the field a validation error names.
  *
  * The first three are refused before an invoice is created, so the order can be tried again. The
  * rest may have left an invoice behind, or a payment in flight, so trying again could place a

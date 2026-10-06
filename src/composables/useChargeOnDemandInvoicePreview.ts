@@ -3,7 +3,7 @@ import type {
     Invoice,
     PricingPlanSchedule,
 } from '@solvimon/solvimon-types';
-import { ref, type Ref } from 'vue';
+import { computed, ref, watch, type Ref } from 'vue';
 import { createInvoicesService } from '@/services/invoices';
 import { useWatchDebounced } from '@/composables/useWatchDebounced';
 import { useLogger } from '@/components/providers/LoggerProvider/composables/useLogger';
@@ -28,7 +28,13 @@ export function useChargeOnDemandInvoicePreview({
     const logger = useLogger();
 
     const invoicePreview = ref<Invoice>();
-    const isPreviewPending = ref(false);
+    const isRequestPending = ref(false);
+    /**
+     * The items changed and their preview has not been asked for yet. Until it has, the preview on
+     * screen is for the previous items, so it must not be charged on.
+     */
+    const isPreviewStale = ref(false);
+    const isPreviewPending = computed(() => isRequestPending.value || isPreviewStale.value);
     /** The newest request failed, so there is no total to show until the preview is asked again. */
     const hasPreviewFailed = ref(false);
 
@@ -38,6 +44,7 @@ export function useChargeOnDemandInvoicePreview({
     const loadPreview = async () => {
         const scheduleId = pricingPlanScheduleId.value;
         const isLatest = latestGuard();
+        isPreviewStale.value = false;
 
         if (!scheduleId || !pricingItems.value) {
             // Items to charge but nowhere to charge them means the customer sees an amount that
@@ -51,12 +58,12 @@ export function useChargeOnDemandInvoicePreview({
             }
 
             invoicePreview.value = undefined;
-            isPreviewPending.value = false;
+            isRequestPending.value = false;
             hasPreviewFailed.value = false;
             return;
         }
 
-        isPreviewPending.value = true;
+        isRequestPending.value = true;
         hasPreviewFailed.value = false;
 
         try {
@@ -82,7 +89,7 @@ export function useChargeOnDemandInvoicePreview({
             );
         } finally {
             if (isLatest()) {
-                isPreviewPending.value = false;
+                isRequestPending.value = false;
             }
         }
     };
@@ -90,9 +97,18 @@ export function useChargeOnDemandInvoicePreview({
     // Debounced so that typing an amount sends one request, not one per keystroke. The first request
     // is sent straight away: with no preview yet and none on its way, there is nothing to wait for.
     useWatchDebounced(pricingItems, () => void loadPreview(), {
-        debounce: () => (invoicePreview.value || isPreviewPending.value ? PREVIEW_DEBOUNCE_MS : 0),
+        debounce: () => (invoicePreview.value || isRequestPending.value ? PREVIEW_DEBOUNCE_MS : 0),
         deep: true,
     });
+
+    // Marked on the change itself, ahead of the debounce, which always follows with `loadPreview`.
+    watch(
+        pricingItems,
+        () => {
+            isPreviewStale.value = true;
+        },
+        { deep: true, flush: 'sync' },
+    );
 
     // The watcher above only fires when the items change, not for the items the form starts with.
     // A top-up, for example, preselects its choose-your-amount option with the minimum amount during

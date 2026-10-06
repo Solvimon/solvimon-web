@@ -27,7 +27,6 @@ import { useAddPaymentMethodStep } from '@/composables/useAddPaymentMethodStep';
 import { usePaymentMethodOptions } from '@/composables/usePaymentMethodOptions';
 import { useLogger } from '@/components/providers/LoggerProvider/composables/useLogger';
 import { createInvoicesService } from '@/services/invoices';
-import { getSubscriptionName } from '@/utils/subscription';
 
 const props = defineProps<ChargeOnDemandModalProps>();
 const emit = defineEmits<ChargeOnDemandModalEmits>();
@@ -195,18 +194,6 @@ const canSubmit = computed(
         !isPreviewPending.value,
 );
 
-const subscriptionName = computed(() =>
-    getSubscriptionName({
-        subscription: props.subscription,
-        fallback: $t({
-            defaultMessage: 'your subscription',
-            description:
-                'Stands in for the subscription name in the on-demand order modal when the subscription has none',
-            id: 'charge_on_demand_modal.subscription_name_fallback',
-        }),
-    }),
-);
-
 const title = computed(() => {
     if (step.value === 'SUCCESS') {
         return $t({
@@ -232,15 +219,11 @@ const title = computed(() => {
 
 const subTitle = computed(() => {
     if (step.value === 'SUCCESS') {
-        return $t(
-            {
-                defaultMessage:
-                    'Your order for {subscription} is paid. The invoice is in your invoice list.',
-                description: 'Subtitle of the on-demand order modal once the order has been paid',
-                id: 'charge_on_demand_modal.success.subtitle',
-            },
-            { subscription: subscriptionName.value },
-        );
+        return $t({
+            defaultMessage: 'Your order is paid. The invoice is in your invoice list.',
+            description: 'Subtitle of the on-demand order modal once the order has been paid',
+            id: 'charge_on_demand_modal.success.subtitle',
+        });
     }
 
     return isAddingPaymentMethod.value

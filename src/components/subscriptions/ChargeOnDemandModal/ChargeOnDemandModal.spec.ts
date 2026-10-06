@@ -331,6 +331,44 @@ describe('ChargeOnDemandModal', () => {
             ).toBe(true);
         });
 
+        const isOnAddPaymentMethod = (wrapper: ReturnType<typeof mountModal>) =>
+            wrapper.find('[data-testid="charge-on-demand-save-payment-method"]').exists();
+
+        it('says the options could not be loaded rather than that none are set up', async () => {
+            mockLoadPaymentMethodOptions.mockRejectedValue(undefined);
+            const wrapper = mountModal();
+            await flushPromises();
+
+            await openAddPaymentMethod(wrapper);
+
+            expect(isOnAddPaymentMethod(wrapper)).toBe(false);
+            expect(findForm(wrapper).props('errors')).toEqual({
+                form: expect.stringContaining("couldn't load the ways to add a payment method"),
+            });
+        });
+
+        it('retries a failed lookup when the customer goes to add a payment method again', async () => {
+            mockLoadPaymentMethodOptions.mockRejectedValueOnce(undefined);
+            const wrapper = mountModal();
+            await flushPromises();
+            expect(mockLoadPaymentMethodOptions).toHaveBeenCalledTimes(1);
+
+            await openAddPaymentMethod(wrapper);
+
+            expect(mockLoadPaymentMethodOptions).toHaveBeenCalledTimes(2);
+            expect(isOnAddPaymentMethod(wrapper)).toBe(true);
+            expect(findForm(wrapper).props('errors')).toBeUndefined();
+        });
+
+        it('does not look the options up again once they loaded', async () => {
+            const wrapper = mountModal();
+            await flushPromises();
+
+            await openAddPaymentMethod(wrapper);
+
+            expect(mockLoadPaymentMethodOptions).toHaveBeenCalledTimes(1);
+        });
+
         it('selects the stored payment method once it is reloaded', async () => {
             const wrapper = mountModal();
             await openAddPaymentMethod(wrapper);

@@ -93,28 +93,6 @@ const paymentMethodOptions = computed(() =>
     ),
 );
 
-watch(
-    () => props.showModal && canTakePayments.value,
-    async (shouldLoad) => {
-        if (!shouldLoad) return;
-
-        try {
-            await loadPaymentMethodOptions({
-                customerId: props.subscription.customer_id,
-                subscriptionId: props.subscription.id,
-                country: props.customer ? getCustomerCountry(props.customer) : undefined,
-            });
-        } catch {
-            logger.error(
-                'PAYMENT_METHOD_OPTIONS_LOAD_FAILED',
-                'Failed to load the payment methods an on-demand order can be paid with',
-                { subscriptionId: props.subscription.id },
-            );
-        }
-    },
-    { immediate: true },
-);
-
 const {
     paneRef: addPaymentMethodRef,
     isActive: isAddingPaymentMethod,
@@ -124,8 +102,63 @@ const {
     submit: submitPaymentMethod,
 } = useAddPaymentMethodStep({ step, name: 'ADD_PAYMENT_METHOD', returnTo: 'ORDER' });
 
+/**
+ * A failed lookup leaves the options empty, which the add-payment-method pane reads as a merchant
+ * with no online payment set up. It is kept apart so the customer is told the truth and can retry.
+ */
+const hasPaymentMethodOptionsLoadFailed = ref(false);
+const paymentMethodOptionsError = ref<string>();
+
+const loadSubscriptionPaymentMethodOptions = async () => {
+    hasPaymentMethodOptionsLoadFailed.value = false;
+
+    try {
+        await loadPaymentMethodOptions({
+            customerId: props.subscription.customer_id,
+            subscriptionId: props.subscription.id,
+            country: props.customer ? getCustomerCountry(props.customer) : undefined,
+        });
+    } catch (error) {
+        hasPaymentMethodOptionsLoadFailed.value = true;
+        logger.error(
+            'PAYMENT_METHOD_OPTIONS_LOAD_FAILED',
+            'Failed to load the payment methods an on-demand order can be paid with',
+            { subscriptionId: props.subscription.id },
+            error,
+        );
+
+        // A customer already on the add pane would otherwise be left on the "none set up" card.
+        if (isAddingPaymentMethod.value) {
+            leaveAddPaymentMethod();
+            paymentMethodOptionsError.value = $t({
+                defaultMessage:
+                    "We couldn't load the ways to add a payment method. Please try again.",
+                description:
+                    'Shown on the on-demand order when the payment methods that can be added failed to load',
+                id: 'charge_on_demand_modal.payment_method_options_error',
+            });
+        }
+    }
+};
+
+watch(
+    () => props.showModal && canTakePayments.value,
+    (shouldLoad) => {
+        if (shouldLoad) {
+            void loadSubscriptionPaymentMethodOptions();
+        }
+    },
+    { immediate: true },
+);
+
 const handleAddPaymentMethod = () => {
     methodIdsBeforeAdding.value = new Set(payablePaymentMethods.value.map(({ id }) => id));
+    paymentMethodOptionsError.value = undefined;
+
+    if (hasPaymentMethodOptionsLoadFailed.value) {
+        void loadSubscriptionPaymentMethodOptions();
+    }
+
     openAddPaymentMethod();
 };
 
@@ -149,6 +182,8 @@ const total = computed(() => invoicePreview.value?.invoice_amount_including_tax)
 const isCharging = ref(false);
 const chargedInvoice = ref<Invoice>();
 const chargeError = ref<string>();
+
+const formError = computed(() => chargeError.value ?? paymentMethodOptionsError.value);
 
 const canSubmit = computed(
     () =>
@@ -361,6 +396,7 @@ watch(
         methodIdsBeforeAdding.value = undefined;
         chargedInvoice.value = undefined;
         chargeError.value = undefined;
+        paymentMethodOptionsError.value = undefined;
     },
 );
 </script>
@@ -397,7 +433,7 @@ watch(
                 :preview="invoicePreview"
                 :is-preview-loading="isPreviewPending"
                 :payment-methods="payablePaymentMethods"
-                :errors="chargeError ? { form: chargeError } : undefined"
+                :errors="formError ? { form: formError } : undefined"
                 :disabled="isCharging"
                 can-add-payment-method
                 @add-payment-method="handleAddPaymentMethod"

@@ -15,7 +15,7 @@ import {
     renameSync,
 } from 'node:fs';
 import { defineConfig } from 'vite';
-import type { PluginOption } from 'vite';
+import type { Plugin, PluginOption } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import { glob } from 'glob';
 import dts from 'vite-plugin-dts';
@@ -231,7 +231,7 @@ export default defineConfig({
  * swallowed and the types silently degraded to `any`. So the tree is published as-is under
  * `dist/types/`, and every published path becomes a one-line re-export of the file inside it.
  */
-function publishDeclarations() {
+function publishDeclarations(): Plugin {
     const outDir = fileURLToPath(new URL('./dist', import.meta.url));
     /** Where the emitted tree lives once it has been moved out of `dist/src`. */
     const treeDir = 'types';
@@ -380,7 +380,13 @@ function publishDeclarations() {
             rmSync(publishedTreeDir, { recursive: true, force: true });
             renameSync(emittedDir, publishedTreeDir);
             rewriteDeclarations(publishedTreeDir, rewriteVueImports);
-            vendorPrivateTypes(publishedTreeDir);
+
+            // Vendoring copies the types into `.sdk` inside the repository, which vite-plugin-dts
+            // watches, so in watch mode every build would set off the next one. A watch build only
+            // feeds local development, where the private types package resolves on its own.
+            if (!this.meta.watchMode) {
+                vendorPrivateTypes(publishedTreeDir);
+            }
 
             // Screen and component entries: dist/screens/X/X.ce.d.ts, dist/components/X/X.ce.d.ts
             for (const entryKey of [

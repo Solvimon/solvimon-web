@@ -478,7 +478,7 @@ const charge = async () => {
         // - Adyen refuses, errors on or cancels the payment (its result code is not mapped to a failure),
         // - Adyen or Stripe leave it pending, such as a stored SEPA debit or Stripe `processing`,
         // - the gateway asks for an action, such as 3DS on a Stripe card, which nobody can complete here.
-        // The invoice cannot tell these apart, so they share one outcome. See MD-5539, points 5 to 9.
+        // The invoice cannot tell these apart, so they share one outcome.
         step.value = isInvoiceSettled(invoice) ? 'SUCCESS' : 'NOT_PAID';
     } catch (error) {
         const failure = getChargeFailure(error);

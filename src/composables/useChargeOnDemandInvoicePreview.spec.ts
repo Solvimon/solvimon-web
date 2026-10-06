@@ -101,6 +101,25 @@ describe('useChargeOnDemandInvoicePreview', () => {
         );
     });
 
+    it('reports the preview as pending while a change waits to be previewed', async () => {
+        const { amount, isPreviewPending } = setup();
+
+        amount.value = amountOf('25');
+        await vi.runAllTimersAsync();
+        expect(isPreviewPending.value).toBe(false);
+
+        amount.value = amountOf('30');
+        await nextTick();
+
+        expect(mockPreview).toHaveBeenCalledTimes(1);
+        expect(isPreviewPending.value).toBe(true);
+
+        await vi.runAllTimersAsync();
+
+        expect(mockPreview).toHaveBeenCalledTimes(2);
+        expect(isPreviewPending.value).toBe(false);
+    });
+
     it('clears the preview when the amount is cleared', async () => {
         const { amount, invoicePreview } = setup();
 

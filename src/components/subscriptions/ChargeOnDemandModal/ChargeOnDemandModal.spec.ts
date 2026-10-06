@@ -1,5 +1,5 @@
 import { flushPromises, mount } from '@vue/test-utils';
-import { defineComponent } from 'vue';
+import { defineComponent, nextTick } from 'vue';
 import type { Customer, Invoice, PaymentMethod } from '@solvimon/solvimon-types';
 import type { ChargeOnDemandItem } from '@solvimon/solvimon-ui';
 import ChargeOnDemandModal from './ChargeOnDemandModal.vue';
@@ -413,6 +413,23 @@ describe('ChargeOnDemandModal', () => {
             await wrapper.find('[data-testid="charge-on-demand-done"]').trigger('click');
 
             expect(wrapper.emitted('order-paid')).toHaveLength(1);
+        });
+
+        it('does not charge a changed order on the total of the one before', async () => {
+            const wrapper = mountModal();
+            await addItemAndWaitForTotal(wrapper);
+
+            findForm(wrapper).vm.$emit('update:selection', [
+                { pricingItemId: 'prii_consulting', units: 4 },
+            ]);
+            await nextTick();
+
+            expect(findConfirm(wrapper).text()).toContain('Updating total');
+            expect(findConfirm(wrapper).attributes()).toHaveProperty('disabled');
+
+            await findConfirm(wrapper).trigger('click');
+
+            expect(mockCharge).not.toHaveBeenCalled();
         });
 
         it('holds the order while the charge is in flight', async () => {

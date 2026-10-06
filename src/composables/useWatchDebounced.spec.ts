@@ -1,15 +1,15 @@
-import { defineComponent, h, nextTick, ref } from 'vue';
+import { defineComponent, h, nextTick, ref, type MaybeRefOrGetter } from 'vue';
 import { mount } from '@vue/test-utils';
 import { useWatchDebounced } from './useWatchDebounced';
 
 const mountWithSource = <T>(
     source: () => T,
     callback: (value: T, oldValue: T) => void,
-    debounce = 200,
+    debounceDisabled?: MaybeRefOrGetter<boolean>,
 ) => {
     const Wrapper = defineComponent({
         setup() {
-            useWatchDebounced(source, callback, { debounce });
+            useWatchDebounced(source, callback, { debounce: 200, debounceDisabled });
         },
         render: () => h('div'),
     });
@@ -86,6 +86,43 @@ describe('useWatchDebounced', () => {
 
         expect(callback).toHaveBeenCalledTimes(2);
         expect(callback).toHaveBeenNthCalledWith(2, 2, 1);
+    });
+
+    it('calls back straight away, without a timer, while the debounce is disabled', async () => {
+        const callback = vi.fn();
+        const source = ref(0);
+
+        mountWithSource(() => source.value, callback, true);
+
+        source.value = 1;
+        await nextTick();
+
+        expect(callback).toHaveBeenCalledWith(1, 0);
+        expect(vi.getTimerCount()).toBe(0);
+    });
+
+    it('reads whether the debounce is disabled on every change', async () => {
+        const callback = vi.fn();
+        const source = ref(0);
+        const disabled = ref(true);
+
+        mountWithSource(
+            () => source.value,
+            callback,
+            () => disabled.value,
+        );
+
+        source.value = 1;
+        await nextTick();
+        expect(callback).toHaveBeenCalledTimes(1);
+
+        disabled.value = false;
+        source.value = 2;
+        await nextTick();
+        expect(callback).toHaveBeenCalledTimes(1);
+
+        vi.advanceTimersByTime(200);
+        expect(callback).toHaveBeenCalledTimes(2);
     });
 
     it('triggers the callback when a nested property changes with deep: true', async () => {

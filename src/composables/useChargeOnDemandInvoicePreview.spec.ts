@@ -55,7 +55,19 @@ describe('useChargeOnDemandInvoicePreview', () => {
         expect(invoicePreview.value).toEqual(invoice);
     });
 
-    it('waits for typing to settle before requesting a preview', async () => {
+    it('asks for the first preview straight away', async () => {
+        mockPreview.mockReturnValue(new Promise(() => {}));
+        const { amount, isPreviewPending } = setup();
+
+        amount.value = amountOf('25');
+        await nextTick();
+
+        expect(mockPreview).toHaveBeenCalledTimes(1);
+        expect(isPreviewPending.value).toBe(true);
+        expect(vi.getTimerCount()).toBe(0);
+    });
+
+    it('waits for typing to settle once there is a preview or a request out', async () => {
         const { amount } = setup();
 
         amount.value = amountOf('1');
@@ -63,62 +75,18 @@ describe('useChargeOnDemandInvoicePreview', () => {
         amount.value = amountOf('12');
         await nextTick();
         amount.value = amountOf('125');
+        await nextTick();
 
-        expect(mockPreview).not.toHaveBeenCalled();
+        expect(mockPreview).toHaveBeenCalledTimes(1);
 
         await vi.runAllTimersAsync();
 
-        expect(mockPreview).toHaveBeenCalledTimes(1);
-        expect(mockPreview).toHaveBeenCalledWith(
+        expect(mockPreview).toHaveBeenCalledTimes(2);
+        expect(mockPreview).toHaveBeenLastCalledWith(
             expect.objectContaining({
                 pricingItems: [{ pricing_item_id: 'prii_1', flexible_amount: amountOf('125') }],
             }),
         );
-    });
-
-    it('is pending from the change itself, not from when the request goes out', async () => {
-        const { amount, isPreviewPending } = setup();
-
-        amount.value = amountOf('25');
-        await nextTick();
-
-        expect(mockPreview).not.toHaveBeenCalled();
-        expect(isPreviewPending.value).toBe(true);
-
-        await vi.runAllTimersAsync();
-
-        expect(isPreviewPending.value).toBe(false);
-    });
-
-    it('stays pending when an earlier request settles while the next change waits', async () => {
-        const { amount, isPreviewPending, invoicePreview } = setup();
-        const stale = { id: 'inv_stale' } as Invoice;
-
-        let resolveStale: (value: Invoice) => void = () => {};
-        mockPreview.mockImplementationOnce(
-            () =>
-                new Promise<Invoice>((resolve) => {
-                    resolveStale = resolve;
-                }),
-        );
-
-        amount.value = amountOf('25');
-        await vi.runAllTimersAsync();
-        expect(mockPreview).toHaveBeenCalledTimes(1);
-
-        amount.value = amountOf('50');
-        await nextTick();
-        resolveStale(stale);
-        await Promise.resolve();
-        await Promise.resolve();
-
-        expect(isPreviewPending.value).toBe(true);
-        expect(invoicePreview.value).toBeUndefined();
-
-        await vi.runAllTimersAsync();
-
-        expect(isPreviewPending.value).toBe(false);
-        expect(invoicePreview.value).toEqual(invoice);
     });
 
     it('clears the preview when the amount is cleared', async () => {

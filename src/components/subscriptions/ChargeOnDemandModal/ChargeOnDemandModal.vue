@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import {
     Button,
-    ChargeOnDemandForm,
+    ChargeOnDemandEditor,
     InvoicePreview,
     Section,
     getCustomerCountry,
@@ -577,7 +577,7 @@ watch(
         @payment-failed="(error) => $emit('payment-failed', error)"
     >
         <template #ORDER>
-            <ChargeOnDemandForm
+            <ChargeOnDemandEditor
                 v-if="canTakePayments"
                 v-model:selection="selection"
                 v-model:payment-method-id="paymentMethodId"

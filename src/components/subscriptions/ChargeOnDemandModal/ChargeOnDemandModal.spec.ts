@@ -60,8 +60,8 @@ vi.mock('@/components/providers/LoggerProvider/composables/useLogger', () => ({
 vi.mock('@solvimon/solvimon-ui', async () => {
     const { createSolvimonUiMock } = await import('@/test-utils/solvimonUiMock');
     return createSolvimonUiMock({
-        ChargeOnDemandForm: defineComponent({
-            name: 'ChargeOnDemandFormStub',
+        ChargeOnDemandEditor: defineComponent({
+            name: 'ChargeOnDemandEditorStub',
             props: [
                 'items',
                 'selection',
@@ -163,7 +163,7 @@ const mountModal = (props: Record<string, unknown> = {}) =>
     });
 
 const findForm = (wrapper: ReturnType<typeof mountModal>) =>
-    wrapper.findComponent({ name: 'ChargeOnDemandFormStub' });
+    wrapper.findComponent({ name: 'ChargeOnDemandEditorStub' });
 
 const findConfirm = (wrapper: ReturnType<typeof mountModal>) =>
     wrapper.find('[data-testid="charge-on-demand-confirm"]');

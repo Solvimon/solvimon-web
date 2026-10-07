@@ -286,13 +286,6 @@ const title = computed(() => {
                         'Title of the on-demand order modal when the order was placed but its payment did not go through',
                     id: 'charge_on_demand_modal.not_paid.title',
                 });
-            case 'IN_PROGRESS':
-                return $t({
-                    defaultMessage: 'Order already being processed',
-                    description:
-                        'Title of the on-demand order modal when a payment for the order is already in progress',
-                    id: 'charge_on_demand_modal.in_progress.title',
-                });
             default:
                 return $t({
                     defaultMessage: "We couldn't confirm your order",
@@ -345,14 +338,6 @@ const subTitle = computed(() => {
                     description:
                         'Subtitle of the on-demand order modal when the payment failed and it is not known whether an invoice was created',
                     id: 'charge_on_demand_modal.not_completed.subtitle',
-                });
-            case 'IN_PROGRESS':
-                return $t({
-                    defaultMessage:
-                        'A payment for this order is already in progress. Check your invoice list in a moment.',
-                    description:
-                        'Subtitle of the on-demand order modal when a payment for the order is already in progress',
-                    id: 'charge_on_demand_modal.in_progress.subtitle',
                 });
             default:
                 return $t({

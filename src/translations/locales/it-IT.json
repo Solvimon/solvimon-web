@@ -49,8 +49,6 @@
     "charge_on_demand_modal.confirm_button.retry_preview": "Ricalcola il totale",
     "charge_on_demand_modal.confirm_button.updating": "Aggiornamento del totale…",
     "charge_on_demand_modal.done_button.label": "Fatto",
-    "charge_on_demand_modal.in_progress.subtitle": "È già in corso un pagamento per questo ordine. Controlla tra poco l'elenco delle tue fatture.",
-    "charge_on_demand_modal.in_progress.title": "Ordine già in elaborazione",
     "charge_on_demand_modal.not_completed.subtitle": "Il pagamento non è andato a buon fine. Se per questo ordine è stata creata una fattura, la trovi nell'elenco delle tue fatture.",
     "charge_on_demand_modal.not_paid.subtitle": "Il tuo ordine è stato effettuato, ma il pagamento non è andato a buon fine. Trovi la fattura nell'elenco delle tue fatture.",
     "charge_on_demand_modal.not_paid.title": "Pagamento non completato",

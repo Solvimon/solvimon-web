@@ -27,11 +27,11 @@ export type ChargeFailure =
     | 'INVALID'
     /** 422: the payment failed after the invoice was created, or the customer can't be invoiced. */
     | 'NOT_COMPLETED'
-    /** 406: the invoice is locked by a payment already in progress. */
-    | 'IN_PROGRESS'
     /**
-     * 404, 408, 5xx or no response: whether the order went through is unknown. A 404 can also come
-     * after the invoice was finalized and charged, when the backend fails to read it back.
+     * Anything else, such as a 404, 406, 408, 5xx or no response: whether the order went through is
+     * unknown. A 404 can also come after the invoice was finalized and charged, when the backend
+     * fails to read it back. A 406 is a lock on the customer or the new invoice, taken while the
+     * invoice is being filled, finalized or paid, so it can leave a draft or an unpaid invoice.
      */
     | 'UNCONFIRMED';
 
@@ -45,8 +45,6 @@ export function getChargeFailure(error: unknown): ChargeFailure {
             if (error.field === 'payment_method_id') return 'PAYMENT_METHOD';
             if (error.field === 'pricing_plan_subscription_id') return 'SUBSCRIPTION_INACTIVE';
             return 'INVALID';
-        case 406:
-            return 'IN_PROGRESS';
         case 422:
             return 'NOT_COMPLETED';
         default:

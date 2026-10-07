@@ -8,7 +8,7 @@ describe('getChargeFailure', () => {
         [400, 'pricing_items.0.units', 'INVALID'],
         [400, undefined, 'INVALID'],
         [404, undefined, 'UNCONFIRMED'],
-        [406, undefined, 'IN_PROGRESS'],
+        [406, undefined, 'UNCONFIRMED'],
         [422, undefined, 'NOT_COMPLETED'],
         [408, undefined, 'UNCONFIRMED'],
         [500, undefined, 'UNCONFIRMED'],
@@ -28,7 +28,6 @@ describe('canRetryCharge', () => {
         expect(canRetryCharge('INVALID')).toBe(true);
         expect(canRetryCharge('SUBSCRIPTION_INACTIVE')).toBe(false);
         expect(canRetryCharge('NOT_COMPLETED')).toBe(false);
-        expect(canRetryCharge('IN_PROGRESS')).toBe(false);
         expect(canRetryCharge('UNCONFIRMED')).toBe(false);
     });
 });

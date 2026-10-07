@@ -49,8 +49,6 @@
   "charge_on_demand_modal.confirm_button.retry_preview": "Calculate total again",
   "charge_on_demand_modal.confirm_button.updating": "Updating total…",
   "charge_on_demand_modal.done_button.label": "Done",
-  "charge_on_demand_modal.in_progress.subtitle": "A payment for this order is already in progress. Check your invoice list in a moment.",
-  "charge_on_demand_modal.in_progress.title": "Order already being processed",
   "charge_on_demand_modal.not_completed.subtitle": "The payment didn't go through. If an invoice was created for this order, you'll find it in your invoice list.",
   "charge_on_demand_modal.not_paid.subtitle": "Your order was placed, but the payment didn't go through. You'll find the invoice in your invoice list.",
   "charge_on_demand_modal.not_paid.title": "Payment not completed",

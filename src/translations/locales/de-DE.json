@@ -49,8 +49,6 @@
     "charge_on_demand_modal.confirm_button.retry_preview": "Gesamtbetrag erneut berechnen",
     "charge_on_demand_modal.confirm_button.updating": "Gesamtbetrag wird aktualisiert…",
     "charge_on_demand_modal.done_button.label": "Fertig",
-    "charge_on_demand_modal.in_progress.subtitle": "Für diese Bestellung läuft bereits eine Zahlung. Sehen Sie gleich in Ihrer Rechnungsübersicht nach.",
-    "charge_on_demand_modal.in_progress.title": "Bestellung wird bereits bearbeitet",
     "charge_on_demand_modal.not_completed.subtitle": "Die Zahlung ist nicht durchgegangen. Falls für diese Bestellung eine Rechnung erstellt wurde, finden Sie sie in Ihrer Rechnungsübersicht.",
     "charge_on_demand_modal.not_paid.subtitle": "Ihre Bestellung wurde aufgegeben, aber die Zahlung ist nicht durchgegangen. Die Rechnung finden Sie in Ihrer Rechnungsübersicht.",
     "charge_on_demand_modal.not_paid.title": "Zahlung nicht abgeschlossen",

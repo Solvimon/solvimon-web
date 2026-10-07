@@ -56,10 +56,6 @@ const handlePaymentSuccess = () => {
 const handlePaymentFailed = () => {
     isPaymentPending.value = false;
 };
-
-const handleInvalid = () => {
-    isPaymentPending.value = false;
-};
 </script>
 
 <template>
@@ -157,7 +153,7 @@ const handleInvalid = () => {
                             :billing-entity-name="invoice?.billing_entity?.legal_name"
                             @payment-success="handlePaymentSuccess"
                             @payment-failed="handlePaymentFailed"
-                            @invalid="handleInvalid"
+                            @invalid="handlePaymentFailed"
                             @select="
                                 (payload: SelectedPaymentMethod) =>
                                     (selectedPaymentMethod = payload)

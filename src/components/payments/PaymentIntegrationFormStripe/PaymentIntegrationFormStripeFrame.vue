@@ -38,10 +38,6 @@ function triggerSubmit() {
     );
 }
 
-/**
- * Keyed on Stripe's own union, so a `@stripe/stripe-js` upgrade that adds a type fails to compile
- * until it is listed here.
- */
 const STRIPE_ERROR_TYPES: Record<StripeError['type'], true> = {
     api_connection_error: true,
     api_error: true,

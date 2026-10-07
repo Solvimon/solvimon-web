@@ -1,9 +1,5 @@
 import type { Invoice, PricingPlanSubscription } from '@solvimon/solvimon-types';
 
-/**
- * Reached from the published declarations, so it must import nothing a consumer cannot resolve —
- * `@solvimon/solvimon-ui` included. See docs/development/public-types.md.
- */
 export interface SubscriptionDetailsConfiguration {
     subscriptionId: PricingPlanSubscription['id'];
     avatar?: string;

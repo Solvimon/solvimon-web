@@ -6,11 +6,6 @@ import { useService } from '@/composables/useService';
 import { useLogger } from '@/components/providers/LoggerProvider/composables/useLogger';
 import { getActiveDefaultScheduleInfo } from '@/utils/pricingPlanSchedule';
 
-/**
- * The on-demand items a customer can order on a subscription, on the schedule it is billed on now.
- * Only a DEFAULT subscription is charged to its own customer, so the payment methods the customer
- * holds can pay for an order on it; any other variant has nothing to order.
- */
 export function useChargeableOnDemandItems({
     subscription,
 }: {

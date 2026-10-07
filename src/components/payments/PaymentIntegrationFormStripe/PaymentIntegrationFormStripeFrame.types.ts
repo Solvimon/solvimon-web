@@ -41,13 +41,8 @@ export interface PaymentIntegrationFormStripeFrameProps {
     name?: string;
 }
 
-/** The part of Stripe's error the frame passes on when the Payment Element fails to load. */
 export type StripeLoadError = Partial<Pick<StripeError, 'message' | 'type'>>;
 
-/**
- * The part of Stripe's error the frame passes on from submitting the elements or creating the
- * confirmation token.
- */
 export type StripeSubmitError = Partial<Pick<StripeError, 'message' | 'type' | 'code'>>;
 
 export type PaymentIntegrationFormStripeFrameEmits = {

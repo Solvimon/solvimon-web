@@ -29,13 +29,8 @@ export function useChargeOnDemandInvoicePreview({
 
     const invoicePreview = ref<Invoice>();
     const isRequestPending = ref(false);
-    /**
-     * The items changed and their preview has not been asked for yet. Until it has, the preview on
-     * screen is for the previous items, so it must not be charged on.
-     */
     const isPreviewStale = ref(false);
     const isPreviewPending = computed(() => isRequestPending.value || isPreviewStale.value);
-    /** The newest request failed, so there is no total to show until the preview is asked again. */
     const hasPreviewFailed = ref(false);
 
     // Only the newest request may write the preview: a slower earlier one must not overwrite it.
@@ -94,14 +89,11 @@ export function useChargeOnDemandInvoicePreview({
         }
     };
 
-    // Debounced so that typing an amount sends one request, not one per keystroke. The first request
-    // is sent straight away: with no preview yet and none on its way, there is nothing to wait for.
     useWatchDebounced(pricingItems, () => void loadPreview(), {
         debounce: () => (invoicePreview.value || isRequestPending.value ? PREVIEW_DEBOUNCE_MS : 0),
         deep: true,
     });
 
-    // Marked on the change itself, ahead of the debounce, which always follows with `loadPreview`.
     watch(
         pricingItems,
         () => {
@@ -110,9 +102,6 @@ export function useChargeOnDemandInvoicePreview({
         { deep: true, flush: 'sync' },
     );
 
-    // The watcher above only fires when the items change, not for the items the form starts with.
-    // A top-up, for example, preselects its choose-your-amount option with the minimum amount during
-    // setup, so the first preview has to be requested here. It does nothing while there are no items.
     void loadPreview();
 
     return { invoicePreview, isPreviewPending, hasPreviewFailed, loadPreview };

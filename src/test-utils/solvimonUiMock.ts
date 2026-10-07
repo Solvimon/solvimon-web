@@ -5,7 +5,6 @@ export const createSolvimonUiMock = async (additionalStubs: Record<string, unkno
     return {
         ...actual,
         useIntl: mockUseIntl,
-        // Resolves its messages through solvimon-ui's own IntlProvider, which specs do not mount.
         useChargeOnDemandPriceLabel: () => ({
             getPriceLabel: ({
                 price,

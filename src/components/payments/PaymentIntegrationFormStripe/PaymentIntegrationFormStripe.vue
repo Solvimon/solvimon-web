@@ -104,10 +104,6 @@ async function handleSubmit() {
     frameRef.value.triggerSubmit();
 }
 
-/**
- * Stripe checks the fields on submit and answers through the frame. A validation error is already
- * shown on the fields, so it only ends the submit; anything else is a failure.
- */
 function handleSubmitError(error: StripeSubmitError) {
     if (error.type === 'validation_error') {
         emit('invalid');

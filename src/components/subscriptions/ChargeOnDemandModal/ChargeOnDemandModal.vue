@@ -46,20 +46,12 @@ const step = ref<ChargeOnDemandModalStep>('ORDER');
 const selection = ref<ChargeOnDemandSelectionItem[]>([]);
 const paymentMethodId = ref<PaymentMethod['id']>();
 
-/**
- * A charge is only taken through one of the subscription's own payment acceptors. Without one there
- * is no way for the customer to pay, whichever method they hold or add.
- */
 const canTakePayments = computed(() => (props.subscription.payment_acceptor_ids ?? []).length > 0);
 
 const payablePaymentMethods = computed(() =>
     getPayablePaymentMethods(props.paymentMethods ?? [], props.subscription),
 );
 
-/**
- * The payable methods there were when the customer went to add one. The host reloads the methods
- * once it is stored, and the one not among these is the one just added.
- */
 const methodIdsBeforeAdding = ref<Set<PaymentMethod['id']>>();
 
 watch(
@@ -88,10 +80,6 @@ const {
     isPending: isPaymentMethodOptionsPending,
 } = usePaymentMethodOptions();
 
-/**
- * The options endpoint falls back to the platform's payment acceptors for a subscription without its
- * own, and a method stored through one of those cannot pay the charge.
- */
 const paymentMethodOptions = computed(() =>
     allPaymentMethodOptions.value.filter(({ payment_acceptor }) =>
         (props.subscription.payment_acceptor_ids ?? []).includes(payment_acceptor.id),
@@ -107,10 +95,6 @@ const {
     submit: submitPaymentMethod,
 } = useAddPaymentMethodStep({ step, name: 'ADD_PAYMENT_METHOD', returnTo: 'ORDER' });
 
-/**
- * A failed lookup leaves the options empty, which the add-payment-method pane reads as a merchant
- * with no online payment set up. It is kept apart so the customer is told the truth and can retry.
- */
 const hasPaymentMethodOptionsLoadFailed = ref(false);
 const paymentMethodOptionsError = ref<string>();
 
@@ -132,7 +116,6 @@ const loadSubscriptionPaymentMethodOptions = async () => {
             error,
         );
 
-        // A customer already on the add pane would otherwise be left on the "none set up" card.
         if (isAddingPaymentMethod.value) {
             leaveAddPaymentMethod();
             paymentMethodOptionsError.value = $t({
@@ -172,7 +155,6 @@ const handlePaymentMethodStored = () => {
     emit('payment-method-stored');
 };
 
-/** Undefined while nothing is added, which is when the preview clears. */
 const pricingItems = computed(() =>
     selection.value.length > 0 ? toChargePricingItems(selection.value, props.items) : undefined,
 );
@@ -189,7 +171,6 @@ const isCharging = ref(false);
 const chargedInvoice = ref<Invoice>();
 const chargeError = ref<ChargeError>();
 
-/** Shown on the order itself, for the errors the customer can fix there and send again. */
 const chargeErrorMessage = computed(() => {
     switch (chargeError.value) {
         case 'PAYMENT_METHOD':
@@ -221,8 +202,6 @@ const chargeErrorMessage = computed(() => {
 
 const isOrderingBlocked = computed(() => chargeError.value === 'SUBSCRIPTION_INACTIVE');
 
-// Another method answers "this method can't pay", and a changed order "this item isn't accepted",
-// so each message goes once the customer has acted on it.
 watch(paymentMethodId, () => {
     if (chargeError.value === 'PAYMENT_METHOD') {
         chargeError.value = undefined;
@@ -249,7 +228,6 @@ const previewError = computed(() =>
         : undefined,
 );
 
-/** A failed total is asked for again from the pay button, which has nothing to pay until then. */
 const canRetryPreview = computed(
     () => hasPreviewFailed.value && !isPreviewPending.value && !isCharging.value,
 );
@@ -258,14 +236,12 @@ const formError = computed(
     () => chargeErrorMessage.value ?? previewError.value ?? paymentMethodOptionsError.value,
 );
 
-/** The order is through, paid or not, and an invoice exists for it. */
 const isOrderPlaced = computed(() => step.value === 'PLACED');
 
 const isOrderPaid = computed(
     () => !!chargedInvoice.value && isInvoiceSettled(chargedInvoice.value),
 );
 
-/** The order did not go through, or whether it did is unknown. */
 const hasChargeFailed = computed(() => step.value === 'PAYMENT_FAILED' || step.value === 'FAILED');
 
 const canSubmit = computed(
@@ -322,9 +298,6 @@ const title = computed(() => {
 
 const subTitle = computed(() => {
     if (step.value === 'PLACED') {
-        // A placed order's invoice is unpaid when the payment was refused, is still pending (such as
-        // a SEPA debit) or waits on an action such as 3DS. The invoice cannot tell these apart, so
-        // the copy holds for all of them.
         return isOrderPaid.value
             ? $t({
                   defaultMessage: 'Your order is paid. The invoice is in your invoice list.',
@@ -456,8 +429,6 @@ const charge = async () => {
     chargeError.value = undefined;
 
     try {
-        // Finalizing charges the invoice in the same request, so it is only asked for together with
-        // the payment method that pays it: without one the backend creates the invoice and then fails.
         const invoice = await chargeOnDemandPricingItems({
             pricing_plan_schedule_id: props.scheduleId,
             pricing_items: pricingItemsToCharge,
@@ -519,7 +490,6 @@ const handleConfirm = () => {
     void charge();
 };
 
-/** Reported on the way out, so nothing is reloaded under a receipt still being read. */
 const handleDone = () => {
     if (isOrderPaid.value) {
         emit('order-paid');
@@ -527,7 +497,6 @@ const handleDone = () => {
     emit('close');
 };
 
-/** An unpaid order's way forward is its invoice, so when it can be opened that is what it leads with. */
 const leadsWithInvoice = computed(
     () => isOrderPlaced.value && !isOrderPaid.value && props.canViewCreatedInvoice,
 );

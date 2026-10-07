@@ -16,7 +16,6 @@ export interface SubscriptionDetailsProps extends BaseScreenProps {
     customer?: Customer;
     paymentMethods?: PaymentMethod[];
     walletBalances?: CustomerWalletBalanceItem[];
-    /** What the customer can order on the schedule the subscription is billed on now. */
     onDemandItems?: ChargeOnDemandItem[];
     onDemandScheduleId?: PricingPlanSchedule['id'];
     isOnDemandItemsLoading?: boolean;
@@ -31,8 +30,6 @@ export interface SubscriptionDetailsEmits {
     (e: 'auto-top-up-cancelled'): void;
     (e: 'payment-method-stored'): void;
     (e: 'subscription-changed'): void;
-    /** An on-demand order placed an invoice, paid or not. */
     (e: 'invoice-created', invoice: Invoice): void;
-    /** The customer left the receipt of a paid on-demand order, which may have granted credits. */
     (e: 'on-demand-order-paid'): void;
 }

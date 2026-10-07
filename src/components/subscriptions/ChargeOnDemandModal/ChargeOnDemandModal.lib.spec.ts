@@ -1,12 +1,12 @@
-import { getChargeError, isInvoiceSettled, isOrderError } from './ChargeOnDemandModal.lib';
+import { getChargeError, isInvoiceSettled, isFixableChargeError } from './ChargeOnDemandModal.lib';
 import { ApiError } from '@/services/apiError';
 
 describe('getChargeError', () => {
     it.each([
         [400, 'payment_method_id', 'PAYMENT_METHOD'],
-        [400, 'pricing_items', 'ORDER_ITEMS'],
-        [400, 'pricing_items.0.units.number', 'ORDER_ITEMS'],
-        [400, 'pricing_items.1.flexible_amount', 'ORDER_ITEMS'],
+        [400, 'pricing_items', 'PRICING_ITEMS'],
+        [400, 'pricing_items.0.units.number', 'PRICING_ITEMS'],
+        [400, 'pricing_items.1.flexible_amount', 'PRICING_ITEMS'],
         [400, 'pricing_plan_subscription_id', 'SUBSCRIPTION_INACTIVE'],
         [400, 'pricing_plan_schedule_id', 'FAILED'],
         [400, 'reference', 'FAILED'],
@@ -27,13 +27,13 @@ describe('getChargeError', () => {
     });
 });
 
-describe('isOrderError', () => {
+describe('isFixableChargeError', () => {
     it('keeps the customer on the order only for what they can fix there', () => {
-        expect(isOrderError('PAYMENT_METHOD')).toBe(true);
-        expect(isOrderError('ORDER_ITEMS')).toBe(true);
-        expect(isOrderError('SUBSCRIPTION_INACTIVE')).toBe(true);
-        expect(isOrderError('PAYMENT_FAILED')).toBe(false);
-        expect(isOrderError('FAILED')).toBe(false);
+        expect(isFixableChargeError('PAYMENT_METHOD')).toBe(true);
+        expect(isFixableChargeError('PRICING_ITEMS')).toBe(true);
+        expect(isFixableChargeError('SUBSCRIPTION_INACTIVE')).toBe(true);
+        expect(isFixableChargeError('PAYMENT_FAILED')).toBe(false);
+        expect(isFixableChargeError('FAILED')).toBe(false);
     });
 });
 

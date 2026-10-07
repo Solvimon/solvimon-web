@@ -5,8 +5,6 @@ import {
     InvoicePreview,
     Section,
     getCustomerCountry,
-    getPayablePaymentMethods,
-    toChargePricingItems,
     useIntl,
     formatAmount,
 } from '@solvimon/solvimon-ui';
@@ -25,6 +23,7 @@ import {
     isFixableChargeError,
     type ChargeError,
 } from './ChargeOnDemandModal.lib';
+import { getPayablePaymentMethods, toChargePricingItems } from '@/utils/chargeOnDemand';
 import EmptyStatePlaceholder from '@/components/checkout/EmptyStatePlaceholder.vue';
 import OnDemandPaymentModalShell from '@/components/payments/OnDemandPaymentModalShell/OnDemandPaymentModalShell.vue';
 import { useChargeOnDemandInvoicePreview } from '@/composables/useChargeOnDemandInvoicePreview';

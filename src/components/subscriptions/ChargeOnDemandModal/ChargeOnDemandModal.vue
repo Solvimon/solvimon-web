@@ -22,7 +22,7 @@ import { CHARGE_ON_DEMAND_MODAL_STEPS } from './ChargeOnDemandModal.types';
 import {
     getChargeError,
     isInvoiceSettled,
-    isOrderError,
+    isFixableChargeError,
     type ChargeError,
 } from './ChargeOnDemandModal.lib';
 import EmptyStatePlaceholder from '@/components/checkout/EmptyStatePlaceholder.vue';
@@ -190,7 +190,7 @@ const chargedInvoice = ref<Invoice>();
 const chargeError = ref<ChargeError>();
 
 /** Shown on the order itself, for the errors the customer can fix there and send again. */
-const orderErrorMessage = computed(() => {
+const chargeErrorMessage = computed(() => {
     switch (chargeError.value) {
         case 'PAYMENT_METHOD':
             return $t({
@@ -199,13 +199,13 @@ const orderErrorMessage = computed(() => {
                     'Shown on the on-demand order when the chosen payment method cannot pay for it',
                 id: 'charge_on_demand_modal.charge_error.payment_method',
             });
-        case 'ORDER_ITEMS':
+        case 'PRICING_ITEMS':
             return $t({
                 defaultMessage:
                     "Some items in your order can't be ordered as entered. Check your order and try again.",
                 description:
                     'Shown on the on-demand order when an item, its quantity or its amount was not accepted',
-                id: 'charge_on_demand_modal.charge_error.order_items',
+                id: 'charge_on_demand_modal.charge_error.pricing_items',
             });
         case 'SUBSCRIPTION_INACTIVE':
             return $t({
@@ -232,7 +232,7 @@ watch(paymentMethodId, () => {
 watch(
     selection,
     () => {
-        if (chargeError.value === 'ORDER_ITEMS') {
+        if (chargeError.value === 'PRICING_ITEMS') {
             chargeError.value = undefined;
         }
     },
@@ -255,7 +255,7 @@ const canRetryPreview = computed(
 );
 
 const formError = computed(
-    () => orderErrorMessage.value ?? previewError.value ?? paymentMethodOptionsError.value,
+    () => chargeErrorMessage.value ?? previewError.value ?? paymentMethodOptionsError.value,
 );
 
 /** The order is through, paid or not, and an invoice exists for it. */
@@ -471,7 +471,7 @@ const charge = async () => {
     } catch (error) {
         const outcome = getChargeError(error);
 
-        if (isOrderError(outcome)) {
+        if (isFixableChargeError(outcome)) {
             chargeError.value = outcome;
         } else {
             step.value = outcome;

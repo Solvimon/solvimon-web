@@ -18,7 +18,7 @@ export type ChargeError =
     /** 400 on `payment_method_id`: the method can't pay this subscription. */
     | 'PAYMENT_METHOD'
     /** 400 on `pricing_items` or one of its entries: an item, its units or its amount isn't accepted. */
-    | 'ORDER_ITEMS'
+    | 'PRICING_ITEMS'
     /** 400 on `pricing_plan_subscription_id`: the subscription isn't active. */
     | 'SUBSCRIPTION_INACTIVE'
     /** 422: the payment could not be made. An unpaid invoice may have been left behind. */
@@ -33,9 +33,9 @@ export type ChargeError =
  * The errors the customer can fix on the order itself. The backend refuses these before it creates
  * an invoice, so sending the order again cannot place a second one.
  */
-export type OrderError = Extract<
+export type FixableChargeError = Extract<
     ChargeError,
-    'PAYMENT_METHOD' | 'ORDER_ITEMS' | 'SUBSCRIPTION_INACTIVE'
+    'PAYMENT_METHOD' | 'PRICING_ITEMS' | 'SUBSCRIPTION_INACTIVE'
 >;
 
 export function getChargeError(error: unknown): ChargeError {
@@ -54,13 +54,13 @@ export function getChargeError(error: unknown): ChargeError {
     if (error.field === 'payment_method_id') return 'PAYMENT_METHOD';
     if (error.field === 'pricing_plan_subscription_id') return 'SUBSCRIPTION_INACTIVE';
     if (error.field === 'pricing_items' || error.field?.startsWith('pricing_items.')) {
-        return 'ORDER_ITEMS';
+        return 'PRICING_ITEMS';
     }
     return 'FAILED';
 }
 
-export function isOrderError(error: ChargeError): error is OrderError {
+export function isFixableChargeError(error: ChargeError): error is FixableChargeError {
     return (
-        error === 'PAYMENT_METHOD' || error === 'ORDER_ITEMS' || error === 'SUBSCRIPTION_INACTIVE'
+        error === 'PAYMENT_METHOD' || error === 'PRICING_ITEMS' || error === 'SUBSCRIPTION_INACTIVE'
     );
 }

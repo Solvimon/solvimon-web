@@ -103,8 +103,8 @@ const toChargeOnDemandItem = (
 };
 
 /**
- * The items of an on-demand pricing items response that can be ordered: items the charge prices
- * as FIXED or FLAT and that grant no wallet credits.
+ * The items of an on-demand pricing items response that can be ordered: items whose on-demand
+ * config is priced FIXED or FLAT and grants no wallet credits.
  *
  * Items are named from `pricingPlanVersions`, expanded versions of the same subscription, because
  * the response does not expand products or product items. They are matched by product and product

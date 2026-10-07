@@ -116,4 +116,34 @@ describe('useCheckoutForm', () => {
 
         expect(onRequiredFieldChange).not.toHaveBeenCalled();
     });
+
+    describe('companyLegalName validation', () => {
+        it('requires a legal name once the purchase switches to a company purchase', async () => {
+            const { form, validation } = mountForm(vi.fn())();
+            form.value.email = 'jane@example.com';
+            form.value.type = 'ORGANIZATION';
+            await nextTick();
+
+            expect(await validation.value.$validate()).toBe(false);
+            expect(validation.value.companyLegalName.$invalid).toBe(true);
+        });
+
+        it('accepts a company purchase with a legal name', async () => {
+            const { form, validation } = mountForm(vi.fn())();
+            form.value.email = 'jane@example.com';
+            form.value.type = 'ORGANIZATION';
+            form.value.companyLegalName = 'Acme B.V.';
+            await nextTick();
+
+            expect(await validation.value.$validate()).toBe(true);
+        });
+
+        it('does not require a legal name for an individual purchase', async () => {
+            const { form, validation } = mountForm(vi.fn())();
+            form.value.email = 'jane@example.com';
+            await nextTick();
+
+            expect(await validation.value.$validate()).toBe(true);
+        });
+    });
 });

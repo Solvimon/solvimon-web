@@ -238,6 +238,7 @@ const readableCountryName = computed(() =>
                                 name="legal_name"
                                 :label="labels.legalNameLabel"
                                 :placeholder="labels.legalNamePlaceholder"
+                                :error="validation.value.companyLegalName.$errors"
                             />
 
                             <Input

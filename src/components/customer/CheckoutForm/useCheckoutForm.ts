@@ -39,7 +39,9 @@ export function useCheckoutForm({
             state: { required: requiredIf(() => getIsFieldRequired('state')) },
             addressLine1: { required: requiredIf(() => getIsFieldRequired('addressLine1')) },
             postalCode: { required: requiredIf(() => getIsFieldRequired('postalCode')) },
-            companyLegalName: requiredIf(form.value.type === 'ORGANIZATION'),
+            companyLegalName: {
+                required: requiredIf(() => form.value.type === 'ORGANIZATION'),
+            },
             companyVatNumber: { taxId },
         },
         form,

@@ -4,10 +4,6 @@ export function useWatchDebounced<T>(
     source: WatchSource<T>,
     callback: (value: T, oldValue: T) => void,
     options: {
-        /**
-         * Read on every change, so a getter can wait only when there is something to wait for. A
-         * delay of 0 calls back straight away rather than on a timer.
-         */
         debounce: MaybeRefOrGetter<number>;
         deep?: boolean;
     },

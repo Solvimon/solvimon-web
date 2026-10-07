@@ -123,7 +123,6 @@ vi.mock(
     }),
 );
 
-// Builds its own invoice and payment method services, which need providers this mount does not have.
 vi.mock('@/components/subscriptions/ChargeOnDemandModal/ChargeOnDemandModal.vue', () => ({
     __esModule: true,
     default: defineComponent({

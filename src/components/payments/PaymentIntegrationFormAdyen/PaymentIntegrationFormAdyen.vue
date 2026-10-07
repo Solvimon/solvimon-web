@@ -114,10 +114,6 @@ function emitError(err: Omit<Error, 'reference'>) {
     emit('payment-failed', failure);
 }
 
-/**
- * The drop-in answers an invalid submit by showing its field errors and calling nothing back, so
- * the check is made here, where it can be reported.
- */
 function submit() {
     if (!dropInInstance?.isValid) {
         dropInInstance?.showValidation();
@@ -483,7 +479,6 @@ function handleOnSubmit(
         .validateOnSubmit()
         .then((isValid) => {
             if (!isValid) {
-                // The drop-in went into loading on submit and stays there until told otherwise.
                 dropInInstance?.setStatus('ready');
                 emit('invalid');
                 return;

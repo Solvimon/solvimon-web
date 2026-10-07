@@ -28,10 +28,6 @@ const SubscriptionSchedules = defineAsyncComponent(
     () => import('@/public/components/SubscriptionSchedules/SubscriptionSchedules.vue'),
 );
 
-/**
- * Loaded and mounted the first time the customer opens it: the order form, its preview and the
- * add-payment-method pane stay out of the bundle for everyone who never orders.
- */
 const ChargeOnDemandModal = defineAsyncComponent(
     () => import('@/components/subscriptions/ChargeOnDemandModal/ChargeOnDemandModal.vue'),
 );

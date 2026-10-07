@@ -8,10 +8,6 @@ import type {
 import AddPaymentMethodPane from '@/components/payments/AddPaymentMethodPane/AddPaymentMethodPane.vue';
 import SlidingPanes from '@/components/shared/SlidingPanes/SlidingPanes.vue';
 
-/**
- * The modal teleports itself out of this component, so attributes a host sets on the shell — its
- * `sv-*` class for style overrides, say — would be dropped. They go on the modal's content instead.
- */
 defineOptions({ inheritAttrs: false });
 
 const props = defineProps<OnDemandPaymentModalShellProps>();

@@ -188,7 +188,6 @@ describe('ChargeOnDemandModal', () => {
     it('puts its class on the modal content, where a style override can reach it', () => {
         const modal = mountModal().findComponent({ name: 'ModalStub' });
 
-        // The real modal teleports, so a class left on its root would be dropped.
         expect(modal.attributes('class')).toBeUndefined();
         expect(modal.find('.sv-charge-on-demand-modal').exists()).toBe(true);
     });

@@ -199,14 +199,6 @@
     "defaultMessage": "Done",
     "description": "Closes the on-demand order modal once the order has been paid"
   },
-  "charge_on_demand_modal.in_progress.subtitle": {
-    "defaultMessage": "A payment for this order is already in progress. Check your invoice list in a moment.",
-    "description": "Subtitle of the on-demand order modal when a payment for the order is already in progress"
-  },
-  "charge_on_demand_modal.in_progress.title": {
-    "defaultMessage": "Order already being processed",
-    "description": "Title of the on-demand order modal when a payment for the order is already in progress"
-  },
   "charge_on_demand_modal.not_completed.subtitle": {
     "defaultMessage": "The payment didn't go through. If an invoice was created for this order, you'll find it in your invoice list.",
     "description": "Subtitle of the on-demand order modal when the payment failed and it is not known whether an invoice was created"

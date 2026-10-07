@@ -49,8 +49,6 @@
     "charge_on_demand_modal.confirm_button.retry_preview": "Totaal opnieuw berekenen",
     "charge_on_demand_modal.confirm_button.updating": "Totaal bijwerken…",
     "charge_on_demand_modal.done_button.label": "Klaar",
-    "charge_on_demand_modal.in_progress.subtitle": "Er loopt al een betaling voor deze bestelling. Bekijk zo meteen je factuuroverzicht.",
-    "charge_on_demand_modal.in_progress.title": "Bestelling wordt al verwerkt",
     "charge_on_demand_modal.not_completed.subtitle": "De betaling is niet gelukt. Als er een factuur voor deze bestelling is aangemaakt, vind je die in je factuuroverzicht.",
     "charge_on_demand_modal.not_paid.subtitle": "Je bestelling is geplaatst, maar de betaling is niet gelukt. Je vindt de factuur in je factuuroverzicht.",
     "charge_on_demand_modal.not_paid.title": "Betaling niet voltooid",

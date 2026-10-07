@@ -526,10 +526,10 @@ describe('ChargeOnDemandModal', () => {
                     'If an invoice was created for this order',
                 ],
                 [
-                    'a payment is already in progress',
+                    'the customer or the new invoice was locked',
                     new ApiError({ statusCode: 406 }),
-                    'Order already being processed',
-                    'already in progress',
+                    "We couldn't confirm your order",
+                    'Check your invoice list before trying again',
                 ],
                 [
                     'the server failed',

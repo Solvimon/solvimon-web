@@ -58,7 +58,6 @@ const props = defineProps<SolvimonSubscriptionDetailsEntryProps>();
                         (invoice) =>
                             reportInvoiceCreated({ invoice, configuration: props.configuration })
                     "
-                    @on-demand-order-paid="refreshWalletBalances"
                 />
             </template>
         </SubscriptionDetailsEntryView>

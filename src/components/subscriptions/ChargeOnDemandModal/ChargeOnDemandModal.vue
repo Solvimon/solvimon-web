@@ -494,9 +494,6 @@ const handleConfirm = () => {
 };
 
 const handleDone = () => {
-    if (isOrderPaid.value) {
-        emit('order-paid');
-    }
     emit('close');
 };
 

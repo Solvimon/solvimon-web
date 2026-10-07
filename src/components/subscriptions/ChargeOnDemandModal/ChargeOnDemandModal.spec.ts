@@ -306,18 +306,17 @@ describe('ChargeOnDemandModal', () => {
             expect(wrapper.emitted('close')).toBeUndefined();
         });
 
-        it('reports the paid order when the customer is done', async () => {
+        it('closes the receipt when the customer is done', async () => {
             mockCharge.mockResolvedValue(chargedInvoice);
             const wrapper = mountModal();
             await addItemAndWaitForTotal(wrapper);
             await findConfirm(wrapper).trigger('click');
             await flushPromises();
 
-            expect(wrapper.emitted('order-paid')).toBeUndefined();
+            expect(wrapper.emitted('close')).toBeUndefined();
 
             await wrapper.find('[data-testid="charge-on-demand-done"]').trigger('click');
 
-            expect(wrapper.emitted('order-paid')).toHaveLength(1);
             expect(wrapper.emitted('invoice-created')).toHaveLength(1);
             expect(wrapper.emitted('close')).toHaveLength(1);
         });
@@ -346,7 +345,6 @@ describe('ChargeOnDemandModal', () => {
 
             await wrapper.find('[data-testid="charge-on-demand-view-invoice"]').trigger('click');
 
-            expect(wrapper.emitted('order-paid')).toHaveLength(1);
             expect(wrapper.emitted('close')).toHaveLength(1);
             expect(wrapper.emitted('view-invoice')).toEqual([[chargedInvoice.id]]);
         });
@@ -411,7 +409,6 @@ describe('ChargeOnDemandModal', () => {
 
                 await wrapper.find('[data-testid="charge-on-demand-done"]').trigger('click');
 
-                expect(wrapper.emitted('order-paid')).toBeUndefined();
                 expect(wrapper.emitted('close')).toHaveLength(1);
             });
         });
@@ -436,10 +433,6 @@ describe('ChargeOnDemandModal', () => {
             await flushPromises();
 
             expect(wrapper.text()).toContain('Your order is paid');
-
-            await wrapper.find('[data-testid="charge-on-demand-done"]').trigger('click');
-
-            expect(wrapper.emitted('order-paid')).toHaveLength(1);
         });
 
         it('does not charge a changed order on the total of the one before', async () => {

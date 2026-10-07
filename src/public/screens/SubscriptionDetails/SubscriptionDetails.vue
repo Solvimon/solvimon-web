@@ -243,14 +243,8 @@ const title = computed<string>(() =>
                 @payment-method-stored="$emit('payment-method-stored')"
             />
 
-            <Skeleton
-                v-if="isOnDemandItemsLoading"
-                variant="section"
-                class="min-h-[130px]"
-                data-testid="on-demand-items-skeleton"
-            />
             <OnDemandItemsCard
-                v-else-if="!isLoading && onDemandItems.length > 0"
+                v-if="!isLoading && onDemandItems.length > 0"
                 :items="onDemandItems"
                 class="sv-subscription-details__on-demand-items"
                 @order="openOnDemandOrder"

@@ -30,5 +30,4 @@ export interface SubscriptionDetailsEmits {
     (e: 'payment-method-stored'): void;
     (e: 'subscription-changed'): void;
     (e: 'invoice-created', invoice: Invoice): void;
-    (e: 'on-demand-order-paid'): void;
 }

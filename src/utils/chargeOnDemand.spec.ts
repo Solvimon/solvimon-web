@@ -119,6 +119,7 @@ describe('getChargeableOnDemandItems', () => {
                             id: 'group',
                             name: 'Services',
                             product_type: 'ADDON',
+                            selection_constraint: 'ANY',
                             pricings: [
                                 buildPricing({ id: 'pricing-consulting', name: 'Consulting' }, [
                                     buildPricingItem('item-flat', [flatConfig]),
@@ -235,6 +236,7 @@ describe('getChargeableOnDemandItems', () => {
             name: 'On-demand per-unit fee',
             model_type: 'ONE_OFF',
             reference: 'product-item',
+            status: 'ACTIVE',
         };
         const pricingPlanVersions = [
             {
@@ -245,6 +247,7 @@ describe('getChargeableOnDemandItems', () => {
                             {
                                 ...buildPricing({ id: 'pricing', product_ids: [product.id] }, []),
                                 products: [product],
+                                entitlements: [],
                                 items: [
                                     {
                                         ...buildPricingItem(

@@ -20,9 +20,10 @@ export interface SubscriptionDetailsConfiguration {
      * `PARTIALLY_PAID` and a missing status are an invoice still to be paid. Use it to refresh an
      * invoice list or to follow up on the order.
      *
-     * An order whose outcome is unknown — no response, or a failed payment that may or may not have
-     * left an invoice — is not reported here. It reaches `onLog` as `ON_DEMAND_CHARGE_FAILED` or
-     * `ON_DEMAND_CHARGE_REFUSED`, and the customer is sent to their invoice list.
+     * An order that fails is not reported here, even when it may have left an invoice behind: a
+     * payment that could not be made reaches `onLog` as `ON_DEMAND_CHARGE_REFUSED`, and a failure
+     * whose outcome is unknown as `ON_DEMAND_CHARGE_FAILED`. Either way the customer is sent to
+     * their invoice list.
      */
     onInvoiceCreated?: (invoice: {
         invoiceId: Invoice['id'];

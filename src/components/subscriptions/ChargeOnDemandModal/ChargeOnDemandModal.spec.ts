@@ -323,9 +323,24 @@ describe('ChargeOnDemandModal', () => {
             expect(wrapper.emitted('close')).toHaveLength(1);
         });
 
-        it('takes the customer to the invoice of the paid order on the way out', async () => {
+        it('offers no way to the invoice unless the host can open it', async () => {
             mockCharge.mockResolvedValue(chargedInvoice);
             const wrapper = mountModal();
+            await addItemAndWaitForTotal(wrapper);
+            await findConfirm(wrapper).trigger('click');
+            await flushPromises();
+
+            expect(wrapper.find('[data-testid="charge-on-demand-view-invoice"]').exists()).toBe(
+                false,
+            );
+            expect(wrapper.find('[data-testid="charge-on-demand-done"]').classes()).toContain(
+                'sv-action--primary',
+            );
+        });
+
+        it('takes the customer to the invoice of the paid order on the way out', async () => {
+            mockCharge.mockResolvedValue(chargedInvoice);
+            const wrapper = mountModal({ canViewCreatedInvoice: true });
             await addItemAndWaitForTotal(wrapper);
             await findConfirm(wrapper).trigger('click');
             await flushPromises();
@@ -340,9 +355,9 @@ describe('ChargeOnDemandModal', () => {
         describe('when the order is placed but the payment did not go through', () => {
             const unpaidInvoice = { ...chargedInvoice, payment_status: 'UNPAID' } as Invoice;
 
-            const placeUnpaidOrder = async () => {
+            const placeUnpaidOrder = async (props: Record<string, unknown> = {}) => {
                 mockCharge.mockResolvedValue(unpaidInvoice);
-                const wrapper = mountModal();
+                const wrapper = mountModal(props);
                 await addItemAndWaitForTotal(wrapper);
                 await findConfirm(wrapper).trigger('click');
                 await flushPromises();
@@ -364,7 +379,7 @@ describe('ChargeOnDemandModal', () => {
             });
 
             it('leads with the invoice, where the order can be followed up', async () => {
-                const wrapper = await placeUnpaidOrder();
+                const wrapper = await placeUnpaidOrder({ canViewCreatedInvoice: true });
 
                 const buttons = wrapper.findAll('button[data-testid^="charge-on-demand-"]');
                 expect(buttons[0]?.attributes('data-testid')).toBe('charge-on-demand-view-invoice');
@@ -375,6 +390,17 @@ describe('ChargeOnDemandModal', () => {
 
                 expect(wrapper.emitted('close')).toHaveLength(1);
                 expect(wrapper.emitted('view-invoice')).toEqual([[unpaidInvoice.id]]);
+            });
+
+            it('leads with closing when the host cannot open the invoice', async () => {
+                const wrapper = await placeUnpaidOrder();
+
+                expect(wrapper.find('[data-testid="charge-on-demand-view-invoice"]').exists()).toBe(
+                    false,
+                );
+                expect(wrapper.find('[data-testid="charge-on-demand-done"]').classes()).toContain(
+                    'sv-action--primary',
+                );
             });
 
             it('reports the invoice, but not as paid', async () => {

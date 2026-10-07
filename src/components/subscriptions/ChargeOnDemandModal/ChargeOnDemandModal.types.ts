@@ -26,6 +26,8 @@ export interface ChargeOnDemandModalProps {
     customer?: Customer;
     /** All of the customer's saved payment methods; the modal offers the ones that can pay. */
     paymentMethods?: PaymentMethod[];
+    /** Offers "Go to invoice" on the receipt, for a host that handles `view-invoice`. */
+    canViewCreatedInvoice?: boolean;
 }
 
 export interface ChargeOnDemandModalEmits {

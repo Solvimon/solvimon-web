@@ -10,49 +10,57 @@ export function isInvoiceSettled(invoice: Pick<Invoice, 'payment_status'>): bool
 }
 
 /**
- * What a failed charge means for the customer, read from the response of
- * `POST /portal/invoices/charge-on-demand-pricing-items`. The endpoint returns no error code, so
- * this goes by HTTP status and the field a validation error names.
- *
- * The first three are refused before an invoice is created, so the order can be tried again. The
- * rest may have left an invoice behind, or a payment in flight, so trying again could place a
- * second order or charge twice.
+ * Why a charge from `POST /portal/invoices/charge-on-demand-pricing-items` did not go through. The
+ * endpoint returns no error code, so this goes by HTTP status and the field a validation error
+ * names.
  */
-export type ChargeFailure =
+export type ChargeError =
     /** 400 on `payment_method_id`: the method can't pay this subscription. */
     | 'PAYMENT_METHOD'
+    /** 400 on `pricing_items` or one of its entries: an item, its units or its amount isn't accepted. */
+    | 'ORDER_ITEMS'
     /** 400 on `pricing_plan_subscription_id`: the subscription isn't active. */
     | 'SUBSCRIPTION_INACTIVE'
-    /** Any other 400: the request was wrong, which is a bug on our side. */
-    | 'INVALID'
-    /** 422: the payment failed after the invoice was created, or the customer can't be invoiced. */
-    | 'NOT_COMPLETED'
+    /** 422: the payment could not be made. An unpaid invoice may have been left behind. */
+    | 'PAYMENT_FAILED'
     /**
-     * Anything else, such as a 404, 406, 408, 5xx or no response: whether the order went through is
-     * unknown. A 404 can also come after the invoice was finalized and charged, when the backend
-     * fails to read it back. A 406 is a lock on the customer or the new invoice, taken while the
-     * invoice is being filled, finalized or paid, so it can leave a draft or an unpaid invoice.
+     * Anything else, such as another 400, a 404, 406, 408, 5xx or no response. Several of these come
+     * after the invoice was created or even charged, so whether the order went through is unknown.
      */
-    | 'UNCONFIRMED';
+    | 'FAILED';
 
-export function getChargeFailure(error: unknown): ChargeFailure {
+/**
+ * The errors the customer can fix on the order itself. The backend refuses these before it creates
+ * an invoice, so sending the order again cannot place a second one.
+ */
+export type OrderError = Extract<
+    ChargeError,
+    'PAYMENT_METHOD' | 'ORDER_ITEMS' | 'SUBSCRIPTION_INACTIVE'
+>;
+
+export function getChargeError(error: unknown): ChargeError {
     if (!isApiError(error)) {
-        return 'UNCONFIRMED';
+        return 'FAILED';
     }
 
-    switch (error.statusCode) {
-        case 400:
-            if (error.field === 'payment_method_id') return 'PAYMENT_METHOD';
-            if (error.field === 'pricing_plan_subscription_id') return 'SUBSCRIPTION_INACTIVE';
-            return 'INVALID';
-        case 422:
-            return 'NOT_COMPLETED';
-        default:
-            return 'UNCONFIRMED';
+    if (error.statusCode === 422) {
+        return 'PAYMENT_FAILED';
     }
+
+    if (error.statusCode !== 400) {
+        return 'FAILED';
+    }
+
+    if (error.field === 'payment_method_id') return 'PAYMENT_METHOD';
+    if (error.field === 'pricing_plan_subscription_id') return 'SUBSCRIPTION_INACTIVE';
+    if (error.field === 'pricing_items' || error.field?.startsWith('pricing_items.')) {
+        return 'ORDER_ITEMS';
+    }
+    return 'FAILED';
 }
 
-/** Whether the customer can stay on the order and try again. */
-export function canRetryCharge(failure: ChargeFailure): boolean {
-    return failure === 'PAYMENT_METHOD' || failure === 'INVALID';
+export function isOrderError(error: ChargeError): error is OrderError {
+    return (
+        error === 'PAYMENT_METHOD' || error === 'ORDER_ITEMS' || error === 'SUBSCRIPTION_INACTIVE'
+    );
 }

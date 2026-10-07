@@ -10,9 +10,9 @@ import type { PricingPlanSubscriptionExpanded } from '@/types/subscription';
 export const CHARGE_ON_DEMAND_MODAL_STEPS = [
     'ORDER',
     'ADD_PAYMENT_METHOD',
-    'SUCCESS',
-    'NOT_PAID',
-    'NOT_CONFIRMED',
+    'PLACED',
+    'PAYMENT_FAILED',
+    'FAILED',
 ] as const;
 
 export type ChargeOnDemandModalStep = (typeof CHARGE_ON_DEMAND_MODAL_STEPS)[number];

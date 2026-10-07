@@ -293,7 +293,7 @@ describe('ChargeOnDemandModal', () => {
                 payment_method_id: 'pmet_subscription',
                 finalize_immediately: true,
             });
-            expect(wrapper.text()).toContain('Payment successful');
+            expect(wrapper.text()).toContain('Order placed');
         });
 
         it('reports the created invoice as soon as the order is placed', async () => {
@@ -352,7 +352,7 @@ describe('ChargeOnDemandModal', () => {
             expect(wrapper.emitted('view-invoice')).toEqual([[chargedInvoice.id]]);
         });
 
-        describe('when the order is placed but the payment did not go through', () => {
+        describe('when the order is placed but its invoice is not paid', () => {
             const unpaidInvoice = { ...chargedInvoice, payment_status: 'UNPAID' } as Invoice;
 
             const placeUnpaidOrder = async (props: Record<string, unknown> = {}) => {
@@ -364,12 +364,14 @@ describe('ChargeOnDemandModal', () => {
                 return wrapper;
             };
 
-            it('says the payment is not completed rather than successful', async () => {
+            it('says the invoice was created but is not paid yet', async () => {
                 const wrapper = await placeUnpaidOrder();
 
-                expect(wrapper.text()).toContain('Payment not completed');
-                expect(wrapper.text()).not.toContain('Payment successful');
-                expect(wrapper.text()).toContain("You'll find the invoice in your invoice list.");
+                expect(wrapper.text()).toContain('Order placed');
+                expect(wrapper.text()).toContain(
+                    "Your invoice was created, but it isn't paid yet.",
+                );
+                expect(wrapper.text()).not.toContain('Your order is paid');
             });
 
             it('offers no way to pay again, which would place a second order', async () => {
@@ -434,7 +436,7 @@ describe('ChargeOnDemandModal', () => {
             await findConfirm(wrapper).trigger('click');
             await flushPromises();
 
-            expect(wrapper.text()).toContain('Payment successful');
+            expect(wrapper.text()).toContain('Your order is paid');
 
             await wrapper.find('[data-testid="charge-on-demand-done"]').trigger('click');
 
@@ -496,7 +498,25 @@ describe('ChargeOnDemandModal', () => {
                 expect(findForm(wrapper).props('errors')).toBeUndefined();
             });
 
-            it('stops ordering when the subscription is not active', async () => {
+            it('asks the customer to check an order whose items were not accepted, until they change it', async () => {
+                const wrapper = await failCharge(
+                    new ApiError({ statusCode: 400, field: 'pricing_items.0.units.number' }),
+                );
+
+                expect(findForm(wrapper).props('errors')).toEqual({
+                    form: expect.stringContaining('Check your order and try again'),
+                });
+                expect(findConfirm(wrapper).attributes()).not.toHaveProperty('disabled');
+
+                findForm(wrapper).vm.$emit('update:selection', [
+                    { pricingItemId: 'prii_consulting', units: 2 },
+                ]);
+                await flushPromises();
+
+                expect(findForm(wrapper).props('errors')).toBeUndefined();
+            });
+
+            it('says the subscription cannot take orders and disables paying', async () => {
                 const wrapper = await failCharge(
                     new ApiError({ statusCode: 400, field: 'pricing_plan_subscription_id' }),
                 );
@@ -504,66 +524,58 @@ describe('ChargeOnDemandModal', () => {
                 expect(findForm(wrapper).props('errors')).toEqual({
                     form: expect.stringContaining("can't take orders right now"),
                 });
-                expect(findConfirm(wrapper).exists()).toBe(false);
-            });
-
-            it('keeps the order open to retry when the request itself was refused', async () => {
-                const wrapper = await failCharge(
-                    new ApiError({ statusCode: 400, field: 'pricing_items.0.units' }),
-                );
-
-                expect(findForm(wrapper).props('errors')).toEqual({
-                    form: expect.stringContaining("couldn't complete your order"),
-                });
-                expect(findConfirm(wrapper).exists()).toBe(true);
+                expect(findConfirm(wrapper).attributes()).toHaveProperty('disabled');
             });
 
             it.each([
                 [
-                    'the payment failed',
+                    'the payment could not be made',
                     new ApiError({ statusCode: 422 }),
                     'Payment not completed',
-                    'If an invoice was created for this order',
+                    "We couldn't take the payment for this order",
+                ],
+                [
+                    'the request was refused for a reason the customer cannot fix',
+                    new ApiError({ statusCode: 400, field: 'pricing_plan_schedule_id' }),
+                    'Something went wrong',
+                    'Check your invoice list before trying again',
                 ],
                 [
                     'the customer or the new invoice was locked',
                     new ApiError({ statusCode: 406 }),
-                    "We couldn't confirm your order",
+                    'Something went wrong',
                     'Check your invoice list before trying again',
                 ],
                 [
                     'the server failed',
                     new ApiError({ statusCode: 500 }),
-                    "We couldn't confirm your order",
+                    'Something went wrong',
                     'Check your invoice list before trying again',
                 ],
                 [
                     'the placed invoice could not be found',
                     new ApiError({ statusCode: 404 }),
-                    "We couldn't confirm your order",
+                    'Something went wrong',
                     'Check your invoice list before trying again',
                 ],
                 [
                     'no response came back',
                     new TypeError('Failed to fetch'),
-                    "We couldn't confirm your order",
+                    'Something went wrong',
                     'Check your invoice list before trying again',
                 ],
-            ])(
-                'sends the customer to their invoices without a retry when %s',
-                async (_case, error, title, message) => {
-                    const wrapper = await failCharge(error);
+            ])('ends the order without a retry when %s', async (_case, error, title, message) => {
+                const wrapper = await failCharge(error);
 
-                    expect(wrapper.text()).toContain(title);
-                    expect(wrapper.text()).toContain(message);
-                    expect(findConfirm(wrapper).exists()).toBe(false);
+                expect(wrapper.text()).toContain(title);
+                expect(wrapper.text()).toContain(message);
+                expect(findConfirm(wrapper).exists()).toBe(false);
 
-                    await wrapper.find('[data-testid="charge-on-demand-close"]').trigger('click');
+                await wrapper.find('[data-testid="charge-on-demand-close"]').trigger('click');
 
-                    expect(wrapper.emitted('close')).toHaveLength(1);
-                    expect(wrapper.emitted('invoice-created')).toBeUndefined();
-                },
-            );
+                expect(wrapper.emitted('close')).toHaveLength(1);
+                expect(wrapper.emitted('invoice-created')).toBeUndefined();
+            });
         });
     });
 

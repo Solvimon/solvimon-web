@@ -53,6 +53,10 @@ const payablePaymentMethods = computed(() =>
 
 const methodIdsBeforeAdding = ref<Set<PaymentMethod['id']>>();
 
+/**
+ * Keeps the selection payable whenever the host reloads the list, and selects a just-added method,
+ * found by comparing the list with the one before adding since storing a method reports no id.
+ */
 watch(
     payablePaymentMethods,
     (methods) => {

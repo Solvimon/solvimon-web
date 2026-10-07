@@ -9,6 +9,7 @@ import type {
 import PaymentIntegrationFormStripeFrame from './PaymentIntegrationFormStripeFrame.vue';
 import type {
     PaymentIntegrationFormStripeFrameProps,
+    StripeLoadError,
     StripeSubmitError,
 } from './PaymentIntegrationFormStripeFrame.types.ts';
 import { getFrameOptions } from './PaymentIntegrationFormStripe.lib.ts';
@@ -351,7 +352,7 @@ function handleReady() {
     emit('ready');
 }
 
-function handleLoadError(error: { message?: string; type?: string }) {
+function handleLoadError(error: StripeLoadError) {
     logger.error(
         'PAYMENT_INTEGRATION_INITIALIZATION_FAILED',
         'Failed to load the Stripe payment form',

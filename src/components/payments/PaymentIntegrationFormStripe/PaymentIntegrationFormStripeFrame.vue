@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import type { StripeError } from '@stripe/stripe-js';
 import { isEqual } from '@solvimon/solvimon-ui';
 import type {
     PaymentIntegrationFormStripeFrameEmits,
@@ -37,6 +38,25 @@ function triggerSubmit() {
     );
 }
 
+/**
+ * Keyed on Stripe's own union, so a `@stripe/stripe-js` upgrade that adds a type fails to compile
+ * until it is listed here.
+ */
+const STRIPE_ERROR_TYPES: Record<StripeError['type'], true> = {
+    api_connection_error: true,
+    api_error: true,
+    authentication_error: true,
+    card_error: true,
+    idempotency_error: true,
+    invalid_request_error: true,
+    rate_limit_error: true,
+    validation_error: true,
+};
+
+function isStripeErrorType(value: unknown): value is StripeError['type'] {
+    return typeof value === 'string' && Object.hasOwn(STRIPE_ERROR_TYPES, value);
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
     return typeof value === 'object' && value !== null;
 }
@@ -65,7 +85,7 @@ function handleMessage(event: MessageEvent) {
             const raw = isRecord(data['error']) ? data['error'] : {};
             emit('loaderror', {
                 message: typeof raw['message'] === 'string' ? raw['message'] : undefined,
-                type: typeof raw['type'] === 'string' ? raw['type'] : undefined,
+                type: isStripeErrorType(raw['type']) ? raw['type'] : undefined,
             });
             break;
         }
@@ -86,7 +106,7 @@ function handleMessage(event: MessageEvent) {
             const raw = isRecord(data['error']) ? data['error'] : {};
             emit('submit-error', {
                 message: typeof raw['message'] === 'string' ? raw['message'] : undefined,
-                type: typeof raw['type'] === 'string' ? raw['type'] : undefined,
+                type: isStripeErrorType(raw['type']) ? raw['type'] : undefined,
                 code: typeof raw['code'] === 'string' ? raw['code'] : undefined,
             });
             break;

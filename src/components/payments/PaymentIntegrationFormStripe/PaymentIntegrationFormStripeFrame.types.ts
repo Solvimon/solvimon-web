@@ -1,3 +1,5 @@
+import type { StripeError } from '@stripe/stripe-js';
+
 type StripeWalletsOption = { link?: 'never' | 'auto' };
 type StripeFieldsOption = {
     billingDetails?: {
@@ -39,13 +41,19 @@ export interface PaymentIntegrationFormStripeFrameProps {
     name?: string;
 }
 
-/** Stripe's error from submitting the elements or creating the confirmation token. */
-export type StripeSubmitError = { message?: string; type?: string; code?: string };
+/** The part of Stripe's error the frame passes on when the Payment Element fails to load. */
+export type StripeLoadError = Partial<Pick<StripeError, 'message' | 'type'>>;
+
+/**
+ * The part of Stripe's error the frame passes on from submitting the elements or creating the
+ * confirmation token.
+ */
+export type StripeSubmitError = Partial<Pick<StripeError, 'message' | 'type' | 'code'>>;
 
 export type PaymentIntegrationFormStripeFrameEmits = {
     ready: [];
     change: [paymentMethodType: string];
-    loaderror: [error: { message?: string; type?: string }];
+    loaderror: [error: StripeLoadError];
     'submit-success': [confirmationTokenId: string];
     'submit-error': [error: StripeSubmitError];
 };

@@ -1,10 +1,10 @@
-import { getChargeableOnDemandItems } from '@solvimon/solvimon-ui';
 import { computed, watch, type Ref } from 'vue';
 import type { PricingPlanSubscriptionExpanded } from '@/types/subscription';
 import { createPricingPlanSchedulesService } from '@/services/pricingPlanSchedules';
 import { useService } from '@/composables/useService';
 import { useLogger } from '@/components/providers/LoggerProvider/composables/useLogger';
 import { getActiveDefaultScheduleInfo } from '@/utils/pricingPlanSchedule';
+import { getChargeableOnDemandItems } from '@/utils/chargeOnDemand';
 
 export function useChargeableOnDemandItems({
     subscription,

@@ -142,10 +142,6 @@ const handlePaymentFailed = () => {
     isPaymentPending.value = false;
 };
 
-const handleInvalid = () => {
-    isPaymentPending.value = false;
-};
-
 const handleValidateOnSubmit = async () => {
     await checkoutForm.validation.value.$validate();
     return !checkoutForm.validation.value.$invalid;
@@ -754,7 +750,7 @@ onMounted(() => {
                                         "
                                         @payment-success="handlePaymentSuccess"
                                         @payment-failed="handlePaymentFailed"
-                                        @invalid="handleInvalid"
+                                        @invalid="handlePaymentFailed"
                                         @ready="emit('ready')"
                                     />
                                 </div>

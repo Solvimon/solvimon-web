@@ -540,6 +540,9 @@ const handleDone = () => {
     emit('close');
 };
 
+/** An unpaid order's way forward is its invoice, so when it can be opened that is what it leads with. */
+const leadsWithInvoice = computed(() => step.value === 'NOT_PAID' && props.canViewCreatedInvoice);
+
 const viewInvoiceButtonText = computed(() =>
     $t({
         defaultMessage: 'Go to invoice',
@@ -676,9 +679,8 @@ watch(
 
         <template #footer>
             <div v-if="isOrderPlaced" class="flex flex-col gap-2">
-                <!-- An unpaid order's way forward is its invoice, so that is what it leads with. -->
                 <Button
-                    v-if="step === 'NOT_PAID'"
+                    v-if="leadsWithInvoice"
                     size="lg"
                     class="sv-action sv-action--primary"
                     data-testid="charge-on-demand-view-invoice"
@@ -687,17 +689,17 @@ watch(
                 >
                 <Button
                     size="lg"
-                    :intent="step === 'NOT_PAID' ? 'subtle' : 'primary'"
+                    :intent="leadsWithInvoice ? 'subtle' : 'primary'"
                     :class="[
                         'sv-action',
-                        step === 'NOT_PAID' ? 'sv-action--secondary' : 'sv-action--primary',
+                        leadsWithInvoice ? 'sv-action--secondary' : 'sv-action--primary',
                     ]"
                     data-testid="charge-on-demand-done"
                     @click="handleDone"
                     >{{ confirmButtonText }}</Button
                 >
                 <Button
-                    v-if="step === 'SUCCESS'"
+                    v-if="step === 'SUCCESS' && canViewCreatedInvoice"
                     size="lg"
                     intent="subtle"
                     class="sv-action sv-action--secondary"

@@ -42,6 +42,7 @@ const props = defineProps<SolvimonSubscriptionDetailsEntryProps>();
                     :schedules-data="schedulesData"
                     :customer="customer"
                     :avatar="configuration.avatar"
+                    :can-view-created-invoice="configuration.canViewCreatedInvoice"
                     :payment-methods="paymentMethods"
                     :wallet-balances="walletBalances"
                     :on-demand-items="onDemandItems"

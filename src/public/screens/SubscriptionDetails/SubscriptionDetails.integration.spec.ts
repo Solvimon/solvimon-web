@@ -128,7 +128,12 @@ vi.mock('@/components/subscriptions/ChargeOnDemandModal/ChargeOnDemandModal.vue'
     __esModule: true,
     default: defineComponent({
         name: 'ChargeOnDemandModalStub',
-        props: { showModal: Boolean, scheduleId: String, items: Array },
+        props: {
+            showModal: Boolean,
+            scheduleId: String,
+            items: Array,
+            canViewCreatedInvoice: Boolean,
+        },
         emits: [
             'close',
             'invoice-created',
@@ -418,6 +423,24 @@ describe('SubscriptionDetails', () => {
             wrapper.findComponent({ name: 'ChargeOnDemandModalStub' }).vm.$emit('order-paid');
 
             expect(wrapper.emitted('on-demand-order-paid')).toHaveLength(1);
+        });
+
+        it('lets the order offer its invoice only when the host can open it', async () => {
+            const findModal = async (props: Record<string, unknown>) => {
+                const wrapper = mountComponent({
+                    onDemandItems,
+                    onDemandScheduleId: 'ppsc_1',
+                    ...props,
+                });
+                await wrapper.find('.sv-on-demand-items-card__order').trigger('click');
+                await flushPromises();
+                return wrapper.findComponent({ name: 'ChargeOnDemandModalStub' });
+            };
+
+            expect((await findModal({})).props('canViewCreatedInvoice')).toBe(false);
+            expect(
+                (await findModal({ canViewCreatedInvoice: true })).props('canViewCreatedInvoice'),
+            ).toBe(true);
         });
 
         it('asks the host to open the invoice of a placed order', async () => {

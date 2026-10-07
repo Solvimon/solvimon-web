@@ -22,6 +22,7 @@ export interface SubscriptionDetailsProps extends BaseScreenProps {
     isOnDemandItemsLoading?: boolean;
     hasWalletBalancesError?: boolean;
     avatar?: string;
+    canViewCreatedInvoice?: boolean;
 }
 
 export interface SubscriptionDetailsEmits {

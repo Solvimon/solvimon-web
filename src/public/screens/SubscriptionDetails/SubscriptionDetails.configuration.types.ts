@@ -8,6 +8,12 @@ export interface SubscriptionDetailsConfiguration {
     subscriptionId: PricingPlanSubscription['id'];
     avatar?: string;
     /**
+     * Offers "Go to invoice" on the receipt of an on-demand order, which sends a `view-invoice`
+     * action request. Turn it on only when you handle that action request; otherwise the button
+     * would only close the order. Defaults to `false`.
+     */
+    canViewCreatedInvoice?: boolean;
+    /**
      * Called as soon as an on-demand order creates an invoice, while the customer still sees its
      * receipt. The order created an invoice whether or not its payment went through, so
      * `paymentStatus` says which: `PAID` and `OVERPAID` are settled, while `UNPAID`,

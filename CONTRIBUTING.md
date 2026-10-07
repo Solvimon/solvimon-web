@@ -165,9 +165,12 @@ is told in `window.__SOLVIMON_EVENTS__`: log entries, the `ready` and `error` ev
 `action-request` events a screen hands back. Several flows end there rather than in the SDK, so
 that is where they are asserted.
 
-One thing to know when reading or writing these tests: requests are answered with a wildcard
-`access-control-allow-origin`, which a credentialed request cannot use. A screen that loads at all
-is therefore a screen whose requests carry no credentials.
+One thing to know when reading or writing these tests: requests are answered with a named
+`access-control-allow-origin` and `access-control-allow-credentials: true`, because the identity
+token calls are credentialed and a credentialed request cannot use a wildcard. CORS therefore no
+longer rejects a credentialed request on the SDK's behalf, and a screen that loads tells you
+nothing about what its requests carried. What a call was sent with is asserted on the recorded
+headers instead — see `sends no credentials with any request` in `checkout.spec.ts`.
 
 ## Public API and package hygiene
 

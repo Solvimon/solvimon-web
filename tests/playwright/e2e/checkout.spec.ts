@@ -103,17 +103,34 @@ test.describe('Checkout', () => {
                     domain: 'test.api.solvimon.com',
                     path: '/',
                     secure: true,
+                    sameSite: 'None',
+                },
+                {
+                    name: 'refresh-token',
+                    value: 'must-be-sent',
+                    domain: 'identity.solvimon.com',
+                    path: '/',
+                    secure: true,
+                    sameSite: 'None',
                 },
             ]);
 
-            // Every mocked response allows a wildcard origin, and the browser refuses a wildcard
-            // for a request that carries credentials. So a screen that loads at all is a screen
-            // whose requests were made with `credentials: 'omit'` — flip that and the calls below
-            // are blocked by CORS before they are ever answered.
             api = await mountLoaded(page);
 
-            expect(api.calls('subscription').length).toBeGreaterThan(0);
-            expect(api.calls('invoicePreview').length).toBeGreaterThan(0);
+            // Both cookies are cross-site eligible, so what separates them is the `credentials`
+            // each call is sent with. The mock answers everything with credentialed CORS headers
+            // now that the identity calls need it, so CORS no longer refuses a credentialed
+            // request on the SDK's behalf — the headers are what has to be asserted.
+            const portalCalls = [...api.calls('subscription'), ...api.calls('invoicePreview')];
+
+            expect(portalCalls.length).toBeGreaterThan(0);
+            portalCalls.forEach((call) => {
+                expect(call.headers['cookie']).toBeUndefined();
+            });
+
+            // The identity side of the same rule, asserted so that this test cannot pass for the
+            // wrong reason: a harness that never surfaced `cookie` would satisfy the checks above.
+            expect(api.lastCall('accessToken')?.headers['cookie']).toContain('refresh-token=');
         });
 
         test('loads the subscription the portal object names, expanded', async ({ page }) => {

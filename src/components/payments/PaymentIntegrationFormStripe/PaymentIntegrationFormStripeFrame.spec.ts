@@ -224,5 +224,16 @@ describe('PaymentIntegrationFormStripeFrame', () => {
                 { message: 'Card declined', type: 'card_error', code: 'card_declined' },
             ]);
         });
+
+        it('passes on only an error type Stripe defines', () => {
+            const { wrapper, cw } = setup();
+            dispatchMessage(cw, {
+                type: 'stripe:submit:error',
+                error: { message: 'Something broke', type: 'not_a_stripe_type', code: 'x' },
+            });
+            expect(wrapper.emitted('submit-error')?.[0]).toEqual([
+                { message: 'Something broke', type: undefined, code: 'x' },
+            ]);
+        });
     });
 });

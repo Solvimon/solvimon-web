@@ -1,34 +1,39 @@
-import { canRetryCharge, getChargeFailure, isInvoiceSettled } from './ChargeOnDemandModal.lib';
+import { getChargeError, isInvoiceSettled, isOrderError } from './ChargeOnDemandModal.lib';
 import { ApiError } from '@/services/apiError';
 
-describe('getChargeFailure', () => {
+describe('getChargeError', () => {
     it.each([
         [400, 'payment_method_id', 'PAYMENT_METHOD'],
+        [400, 'pricing_items', 'ORDER_ITEMS'],
+        [400, 'pricing_items.0.units.number', 'ORDER_ITEMS'],
+        [400, 'pricing_items.1.flexible_amount', 'ORDER_ITEMS'],
         [400, 'pricing_plan_subscription_id', 'SUBSCRIPTION_INACTIVE'],
-        [400, 'pricing_items.0.units', 'INVALID'],
-        [400, undefined, 'INVALID'],
-        [404, undefined, 'UNCONFIRMED'],
-        [406, undefined, 'UNCONFIRMED'],
-        [422, undefined, 'NOT_COMPLETED'],
-        [408, undefined, 'UNCONFIRMED'],
-        [500, undefined, 'UNCONFIRMED'],
-        [502, undefined, 'UNCONFIRMED'],
-    ])('reads a %i on %s as %s', (statusCode, field, failure) => {
-        expect(getChargeFailure(new ApiError({ statusCode, field }))).toBe(failure);
+        [400, 'pricing_plan_schedule_id', 'FAILED'],
+        [400, 'reference', 'FAILED'],
+        [400, undefined, 'FAILED'],
+        [401, undefined, 'FAILED'],
+        [404, undefined, 'FAILED'],
+        [406, undefined, 'FAILED'],
+        [408, undefined, 'FAILED'],
+        [422, undefined, 'PAYMENT_FAILED'],
+        [500, undefined, 'FAILED'],
+        [502, undefined, 'FAILED'],
+    ])('reads a %i on %s as %s', (statusCode, field, outcome) => {
+        expect(getChargeError(new ApiError({ statusCode, field }))).toBe(outcome);
     });
 
-    it('treats a request that got no response as unconfirmed', () => {
-        expect(getChargeFailure(new TypeError('Failed to fetch'))).toBe('UNCONFIRMED');
+    it('treats a request that got no response as failed', () => {
+        expect(getChargeError(new TypeError('Failed to fetch'))).toBe('FAILED');
     });
 });
 
-describe('canRetryCharge', () => {
-    it('lets the customer try again only when no invoice can have been created', () => {
-        expect(canRetryCharge('PAYMENT_METHOD')).toBe(true);
-        expect(canRetryCharge('INVALID')).toBe(true);
-        expect(canRetryCharge('SUBSCRIPTION_INACTIVE')).toBe(false);
-        expect(canRetryCharge('NOT_COMPLETED')).toBe(false);
-        expect(canRetryCharge('UNCONFIRMED')).toBe(false);
+describe('isOrderError', () => {
+    it('keeps the customer on the order only for what they can fix there', () => {
+        expect(isOrderError('PAYMENT_METHOD')).toBe(true);
+        expect(isOrderError('ORDER_ITEMS')).toBe(true);
+        expect(isOrderError('SUBSCRIPTION_INACTIVE')).toBe(true);
+        expect(isOrderError('PAYMENT_FAILED')).toBe(false);
+        expect(isOrderError('FAILED')).toBe(false);
     });
 });
 

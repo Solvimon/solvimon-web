@@ -20,10 +20,10 @@ import type {
 } from './ChargeOnDemandModal.types';
 import { CHARGE_ON_DEMAND_MODAL_STEPS } from './ChargeOnDemandModal.types';
 import {
-    canRetryCharge,
-    getChargeFailure,
+    getChargeError,
     isInvoiceSettled,
-    type ChargeFailure,
+    isOrderError,
+    type ChargeError,
 } from './ChargeOnDemandModal.lib';
 import EmptyStatePlaceholder from '@/components/checkout/EmptyStatePlaceholder.vue';
 import OnDemandPaymentModalShell from '@/components/payments/OnDemandPaymentModalShell/OnDemandPaymentModalShell.vue';
@@ -187,17 +187,25 @@ const total = computed(() => invoicePreview.value?.invoice_amount_including_tax)
 
 const isCharging = ref(false);
 const chargedInvoice = ref<Invoice>();
-const chargeFailure = ref<ChargeFailure>();
+const chargeError = ref<ChargeError>();
 
-/** Shown on the order itself, for the failures that leave the customer on it. */
-const chargeError = computed(() => {
-    switch (chargeFailure.value) {
+/** Shown on the order itself, for the errors the customer can fix there and send again. */
+const orderErrorMessage = computed(() => {
+    switch (chargeError.value) {
         case 'PAYMENT_METHOD':
             return $t({
                 defaultMessage: "This payment method can't pay for this order. Choose another one.",
                 description:
                     'Shown on the on-demand order when the chosen payment method cannot pay for it',
                 id: 'charge_on_demand_modal.charge_error.payment_method',
+            });
+        case 'ORDER_ITEMS':
+            return $t({
+                defaultMessage:
+                    "Some items in your order can't be ordered as entered. Check your order and try again.",
+                description:
+                    'Shown on the on-demand order when an item, its quantity or its amount was not accepted',
+                id: 'charge_on_demand_modal.charge_error.order_items',
             });
         case 'SUBSCRIPTION_INACTIVE':
             return $t({
@@ -206,25 +214,30 @@ const chargeError = computed(() => {
                     'Shown on the on-demand order when the subscription is not active, so nothing can be ordered on it',
                 id: 'charge_on_demand_modal.charge_error.subscription_inactive',
             });
-        case 'INVALID':
-            return $t({
-                defaultMessage: "We couldn't complete your order. Please try again later.",
-                description: 'Shown on the on-demand order when charging it failed',
-                id: 'charge_on_demand_modal.charge_error',
-            });
         default:
             return undefined;
     }
 });
 
-const isOrderingBlocked = computed(() => chargeFailure.value === 'SUBSCRIPTION_INACTIVE');
+const isOrderingBlocked = computed(() => chargeError.value === 'SUBSCRIPTION_INACTIVE');
 
-// Another method answers "this method can't pay", so the message goes once one is chosen.
+// Another method answers "this method can't pay", and a changed order "this item isn't accepted",
+// so each message goes once the customer has acted on it.
 watch(paymentMethodId, () => {
-    if (chargeFailure.value === 'PAYMENT_METHOD') {
-        chargeFailure.value = undefined;
+    if (chargeError.value === 'PAYMENT_METHOD') {
+        chargeError.value = undefined;
     }
 });
+
+watch(
+    selection,
+    () => {
+        if (chargeError.value === 'ORDER_ITEMS') {
+            chargeError.value = undefined;
+        }
+    },
+    { deep: true },
+);
 
 const previewError = computed(() =>
     hasPreviewFailed.value
@@ -242,11 +255,18 @@ const canRetryPreview = computed(
 );
 
 const formError = computed(
-    () => chargeError.value ?? previewError.value ?? paymentMethodOptionsError.value,
+    () => orderErrorMessage.value ?? previewError.value ?? paymentMethodOptionsError.value,
 );
 
 /** The order is through, paid or not, and an invoice exists for it. */
-const isOrderPlaced = computed(() => step.value === 'SUCCESS' || step.value === 'NOT_PAID');
+const isOrderPlaced = computed(() => step.value === 'PLACED');
+
+const isOrderPaid = computed(
+    () => !!chargedInvoice.value && isInvoiceSettled(chargedInvoice.value),
+);
+
+/** The order did not go through, or whether it did is unknown. */
+const hasChargeFailed = computed(() => step.value === 'PAYMENT_FAILED' || step.value === 'FAILED');
 
 const canSubmit = computed(
     () =>
@@ -260,40 +280,30 @@ const canSubmit = computed(
 );
 
 const title = computed(() => {
-    if (step.value === 'SUCCESS') {
+    if (step.value === 'PLACED') {
         return $t({
-            defaultMessage: 'Payment successful',
-            description: 'Title of the on-demand order modal once the order has been paid',
-            id: 'charge_on_demand_modal.success.title',
+            defaultMessage: 'Order placed',
+            description: 'Title of the on-demand order modal once the order is placed, paid or not',
+            id: 'charge_on_demand_modal.placed.title',
         });
     }
 
-    if (step.value === 'NOT_PAID') {
+    if (step.value === 'PAYMENT_FAILED') {
         return $t({
             defaultMessage: 'Payment not completed',
             description:
-                'Title of the on-demand order modal when the order was placed but its payment did not go through',
-            id: 'charge_on_demand_modal.not_paid.title',
+                'Title of the on-demand order modal when the payment for the order could not be made',
+            id: 'charge_on_demand_modal.payment_failed.title',
         });
     }
 
-    if (step.value === 'NOT_CONFIRMED') {
-        switch (chargeFailure.value) {
-            case 'NOT_COMPLETED':
-                return $t({
-                    defaultMessage: 'Payment not completed',
-                    description:
-                        'Title of the on-demand order modal when the order was placed but its payment did not go through',
-                    id: 'charge_on_demand_modal.not_paid.title',
-                });
-            default:
-                return $t({
-                    defaultMessage: "We couldn't confirm your order",
-                    description:
-                        'Title of the on-demand order modal when it is unknown whether the order went through',
-                    id: 'charge_on_demand_modal.unconfirmed.title',
-                });
-        }
+    if (step.value === 'FAILED') {
+        return $t({
+            defaultMessage: 'Something went wrong',
+            description:
+                'Title of the on-demand order modal when the order failed and it is unknown whether it went through',
+            id: 'charge_on_demand_modal.failed.title',
+        });
     }
 
     return isAddingPaymentMethod.value
@@ -311,43 +321,43 @@ const title = computed(() => {
 });
 
 const subTitle = computed(() => {
-    if (step.value === 'SUCCESS') {
-        return $t({
-            defaultMessage: 'Your order is paid. The invoice is in your invoice list.',
-            description: 'Subtitle of the on-demand order modal once the order has been paid',
-            id: 'charge_on_demand_modal.success.subtitle',
-        });
+    if (step.value === 'PLACED') {
+        // A placed order's invoice is unpaid when the payment was refused, is still pending (such as
+        // a SEPA debit) or waits on an action such as 3DS. The invoice cannot tell these apart, so
+        // the copy holds for all of them.
+        return isOrderPaid.value
+            ? $t({
+                  defaultMessage: 'Your order is paid. The invoice is in your invoice list.',
+                  description: 'Subtitle of the on-demand order modal once the order has been paid',
+                  id: 'charge_on_demand_modal.success.subtitle',
+              })
+            : $t({
+                  defaultMessage:
+                      "Your invoice was created, but it isn't paid yet. You'll find it in your invoice list.",
+                  description:
+                      'Subtitle of the on-demand order modal when the order was placed but its invoice is not paid',
+                  id: 'charge_on_demand_modal.placed.unpaid.subtitle',
+              });
     }
 
-    if (step.value === 'NOT_PAID') {
+    if (step.value === 'PAYMENT_FAILED') {
         return $t({
             defaultMessage:
-                "Your order was placed, but the payment didn't go through. You'll find the invoice in your invoice list.",
+                "We couldn't take the payment for this order. If an invoice was created, you'll find it in your invoice list.",
             description:
-                'Subtitle of the on-demand order modal when the order was placed but its payment did not go through',
-            id: 'charge_on_demand_modal.not_paid.subtitle',
+                'Subtitle of the on-demand order modal when the payment for the order could not be made',
+            id: 'charge_on_demand_modal.payment_failed.subtitle',
         });
     }
 
-    if (step.value === 'NOT_CONFIRMED') {
-        switch (chargeFailure.value) {
-            case 'NOT_COMPLETED':
-                return $t({
-                    defaultMessage:
-                        "The payment didn't go through. If an invoice was created for this order, you'll find it in your invoice list.",
-                    description:
-                        'Subtitle of the on-demand order modal when the payment failed and it is not known whether an invoice was created',
-                    id: 'charge_on_demand_modal.not_completed.subtitle',
-                });
-            default:
-                return $t({
-                    defaultMessage:
-                        'Something went wrong while placing your order. Check your invoice list before trying again.',
-                    description:
-                        'Subtitle of the on-demand order modal when it is unknown whether the order went through',
-                    id: 'charge_on_demand_modal.unconfirmed.subtitle',
-                });
-        }
+    if (step.value === 'FAILED') {
+        return $t({
+            defaultMessage:
+                "We couldn't complete your order. Check your invoice list before trying again.",
+            description:
+                'Subtitle of the on-demand order modal when the order failed and it is unknown whether it went through',
+            id: 'charge_on_demand_modal.failed.subtitle',
+        });
     }
 
     return isAddingPaymentMethod.value
@@ -376,19 +386,18 @@ const cancelButtonText = computed(() =>
 );
 
 const confirmButtonText = computed(() => {
-    if (step.value === 'SUCCESS') {
+    if (isOrderPlaced.value) {
         return $t({
             defaultMessage: 'Done',
-            description: 'Closes the on-demand order modal once the order has been paid',
+            description: 'Closes the on-demand order modal once the order is placed',
             id: 'charge_on_demand_modal.done_button.label',
         });
     }
 
-    if (step.value === 'NOT_PAID' || step.value === 'NOT_CONFIRMED') {
+    if (hasChargeFailed.value) {
         return $t({
             defaultMessage: 'Close',
-            description:
-                'Closes the on-demand order modal when the order was placed but its payment did not go through',
+            description: 'Closes the on-demand order modal when the order did not go through',
             id: 'charge_on_demand_modal.close_button.label',
         });
     }
@@ -444,7 +453,7 @@ const charge = async () => {
     }
 
     isCharging.value = true;
-    chargeFailure.value = undefined;
+    chargeError.value = undefined;
 
     try {
         // Finalizing charges the invoice in the same request, so it is only asked for together with
@@ -458,32 +467,25 @@ const charge = async () => {
 
         chargedInvoice.value = invoice;
         emit('invoice-created', invoice);
-        // A successful response only means the invoice was created and a payment attempted. The
-        // endpoint also answers 200 with the invoice left unpaid when:
-        // - Adyen refuses, errors on or cancels the payment (its result code is not mapped to a failure),
-        // - Adyen or Stripe leave it pending, such as a stored SEPA debit or Stripe `processing`,
-        // - the gateway asks for an action, such as 3DS on a Stripe card, which nobody can complete here.
-        // The invoice cannot tell these apart, so they share one outcome.
-        step.value = isInvoiceSettled(invoice) ? 'SUCCESS' : 'NOT_PAID';
+        step.value = 'PLACED';
     } catch (error) {
-        const failure = getChargeFailure(error);
-        chargeFailure.value = failure;
+        const outcome = getChargeError(error);
 
-        // Only the failures refused before an invoice is created leave the customer on the order.
-        // Any other may have left an invoice or a payment behind, and a second try a second order.
-        if (!canRetryCharge(failure) && failure !== 'SUBSCRIPTION_INACTIVE') {
-            step.value = 'NOT_CONFIRMED';
+        if (isOrderError(outcome)) {
+            chargeError.value = outcome;
+        } else {
+            step.value = outcome;
         }
 
         const context = {
             scheduleId: props.scheduleId,
-            failure,
+            outcome,
             ...(isApiError(error)
                 ? { statusCode: error.statusCode, field: error.field, requestId: error.requestId }
                 : {}),
         };
 
-        if (failure === 'INVALID' || failure === 'UNCONFIRMED') {
+        if (outcome === 'FAILED') {
             logger.error(
                 'ON_DEMAND_CHARGE_FAILED',
                 'Failed to charge the on-demand order',
@@ -519,14 +521,16 @@ const handleConfirm = () => {
 
 /** Reported on the way out, so nothing is reloaded under a receipt still being read. */
 const handleDone = () => {
-    if (chargedInvoice.value && isInvoiceSettled(chargedInvoice.value)) {
+    if (isOrderPaid.value) {
         emit('order-paid');
     }
     emit('close');
 };
 
 /** An unpaid order's way forward is its invoice, so when it can be opened that is what it leads with. */
-const leadsWithInvoice = computed(() => step.value === 'NOT_PAID' && props.canViewCreatedInvoice);
+const leadsWithInvoice = computed(
+    () => isOrderPlaced.value && !isOrderPaid.value && props.canViewCreatedInvoice,
+);
 
 const viewInvoiceButtonText = computed(() =>
     $t({
@@ -575,7 +579,7 @@ watch(
         selection.value = [];
         methodIdsBeforeAdding.value = undefined;
         chargedInvoice.value = undefined;
-        chargeFailure.value = undefined;
+        chargeError.value = undefined;
         paymentMethodOptionsError.value = undefined;
     },
 );
@@ -648,7 +652,7 @@ watch(
             </EmptyStatePlaceholder>
         </template>
 
-        <template v-for="placedStep in ['SUCCESS', 'NOT_PAID']" :key="placedStep" #[placedStep]>
+        <template #PLACED>
             <Section
                 v-if="chargedInvoice"
                 class="sv-charge-on-demand-modal__receipt"
@@ -657,7 +661,7 @@ watch(
                 <InvoicePreview
                     :invoice="chargedInvoice"
                     is-customer-facing
-                    :is-paid="isInvoiceSettled(chargedInvoice)"
+                    :is-paid="isOrderPaid"
                 />
             </Section>
         </template>
@@ -684,7 +688,7 @@ watch(
                     >{{ confirmButtonText }}</Button
                 >
                 <Button
-                    v-if="step === 'SUCCESS' && canViewCreatedInvoice"
+                    v-if="isOrderPaid && canViewCreatedInvoice"
                     size="lg"
                     intent="subtle"
                     class="sv-action sv-action--secondary"
@@ -693,7 +697,7 @@ watch(
                     >{{ viewInvoiceButtonText }}</Button
                 >
             </div>
-            <div v-else-if="step === 'NOT_CONFIRMED'" class="flex flex-col gap-2">
+            <div v-else-if="hasChargeFailed" class="flex flex-col gap-2">
                 <Button
                     size="lg"
                     class="sv-action sv-action--primary"
@@ -713,7 +717,7 @@ watch(
                     >{{ confirmButtonText }}</Button
                 >
                 <Button
-                    v-else-if="canTakePayments && !isOrderingBlocked"
+                    v-else-if="canTakePayments"
                     size="lg"
                     class="sv-action sv-action--primary"
                     data-testid="charge-on-demand-confirm"

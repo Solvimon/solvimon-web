@@ -163,9 +163,9 @@
     "defaultMessage": "Cancel",
     "description": "Closes the modal for ordering on-demand items"
   },
-  "charge_on_demand_modal.charge_error": {
-    "defaultMessage": "We couldn't complete your order. Please try again later.",
-    "description": "Shown on the on-demand order when charging it failed"
+  "charge_on_demand_modal.charge_error.order_items": {
+    "defaultMessage": "Some items in your order can't be ordered as entered. Check your order and try again.",
+    "description": "Shown on the on-demand order when an item, its quantity or its amount was not accepted"
   },
   "charge_on_demand_modal.charge_error.payment_method": {
     "defaultMessage": "This payment method can't pay for this order. Choose another one.",
@@ -177,7 +177,7 @@
   },
   "charge_on_demand_modal.close_button.label": {
     "defaultMessage": "Close",
-    "description": "Closes the on-demand order modal when the order was placed but its payment did not go through"
+    "description": "Closes the on-demand order modal when the order did not go through"
   },
   "charge_on_demand_modal.confirm_button.no_items": {
     "defaultMessage": "Add an item to continue",
@@ -197,23 +197,35 @@
   },
   "charge_on_demand_modal.done_button.label": {
     "defaultMessage": "Done",
-    "description": "Closes the on-demand order modal once the order has been paid"
+    "description": "Closes the on-demand order modal once the order is placed"
   },
-  "charge_on_demand_modal.not_completed.subtitle": {
-    "defaultMessage": "The payment didn't go through. If an invoice was created for this order, you'll find it in your invoice list.",
-    "description": "Subtitle of the on-demand order modal when the payment failed and it is not known whether an invoice was created"
+  "charge_on_demand_modal.failed.subtitle": {
+    "defaultMessage": "We couldn't complete your order. Check your invoice list before trying again.",
+    "description": "Subtitle of the on-demand order modal when the order failed and it is unknown whether it went through"
   },
-  "charge_on_demand_modal.not_paid.subtitle": {
-    "defaultMessage": "Your order was placed, but the payment didn't go through. You'll find the invoice in your invoice list.",
-    "description": "Subtitle of the on-demand order modal when the order was placed but its payment did not go through"
+  "charge_on_demand_modal.failed.title": {
+    "defaultMessage": "Something went wrong",
+    "description": "Title of the on-demand order modal when the order failed and it is unknown whether it went through"
   },
-  "charge_on_demand_modal.not_paid.title": {
+  "charge_on_demand_modal.payment_failed.subtitle": {
+    "defaultMessage": "We couldn't take the payment for this order. If an invoice was created, you'll find it in your invoice list.",
+    "description": "Subtitle of the on-demand order modal when the payment for the order could not be made"
+  },
+  "charge_on_demand_modal.payment_failed.title": {
     "defaultMessage": "Payment not completed",
-    "description": "Title of the on-demand order modal when the order was placed but its payment did not go through"
+    "description": "Title of the on-demand order modal when the payment for the order could not be made"
   },
   "charge_on_demand_modal.payment_method_options_error": {
     "defaultMessage": "We couldn't load the ways to add a payment method. Please try again.",
     "description": "Shown on the on-demand order when the payment methods that can be added failed to load"
+  },
+  "charge_on_demand_modal.placed.title": {
+    "defaultMessage": "Order placed",
+    "description": "Title of the on-demand order modal once the order is placed, paid or not"
+  },
+  "charge_on_demand_modal.placed.unpaid.subtitle": {
+    "defaultMessage": "Your invoice was created, but it isn't paid yet. You'll find it in your invoice list.",
+    "description": "Subtitle of the on-demand order modal when the order was placed but its invoice is not paid"
   },
   "charge_on_demand_modal.preview_error": {
     "defaultMessage": "We couldn't calculate the total. Please try again.",
@@ -227,10 +239,6 @@
     "defaultMessage": "Your order is paid. The invoice is in your invoice list.",
     "description": "Subtitle of the on-demand order modal once the order has been paid"
   },
-  "charge_on_demand_modal.success.title": {
-    "defaultMessage": "Payment successful",
-    "description": "Title of the on-demand order modal once the order has been paid"
-  },
   "charge_on_demand_modal.title": {
     "defaultMessage": "Order on-demand items",
     "description": "Title of the modal for ordering the on-demand items of a subscription"
@@ -242,14 +250,6 @@
   "charge_on_demand_modal.unavailable.title": {
     "defaultMessage": "Ordering isn't available",
     "description": "Title shown instead of the on-demand order form when the subscription cannot take payments"
-  },
-  "charge_on_demand_modal.unconfirmed.subtitle": {
-    "defaultMessage": "Something went wrong while placing your order. Check your invoice list before trying again.",
-    "description": "Subtitle of the on-demand order modal when it is unknown whether the order went through"
-  },
-  "charge_on_demand_modal.unconfirmed.title": {
-    "defaultMessage": "We couldn't confirm your order",
-    "description": "Title of the on-demand order modal when it is unknown whether the order went through"
   },
   "charge_on_demand_modal.view_invoice_button.label": {
     "defaultMessage": "Go to invoice",

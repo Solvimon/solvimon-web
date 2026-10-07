@@ -18,7 +18,6 @@ export interface SubscriptionDetailsProps extends BaseScreenProps {
     walletBalances?: CustomerWalletBalanceItem[];
     onDemandItems?: ChargeOnDemandItem[];
     onDemandScheduleId?: PricingPlanSchedule['id'];
-    isOnDemandItemsLoading?: boolean;
     hasWalletBalancesError?: boolean;
     avatar?: string;
     canViewCreatedInvoice?: boolean;

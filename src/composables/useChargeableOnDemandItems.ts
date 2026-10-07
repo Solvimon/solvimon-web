@@ -14,7 +14,7 @@ export function useChargeableOnDemandItems({
     const { getOnDemandPricingItems } = createPricingPlanSchedulesService();
     const logger = useLogger();
 
-    const { data, execute, isPending, error } = useService({ service: getOnDemandPricingItems });
+    const { data, execute, error } = useService({ service: getOnDemandPricingItems });
 
     const scheduleInfo = computed(() =>
         subscription.value?.variant === 'DEFAULT'
@@ -51,5 +51,5 @@ export function useChargeableOnDemandItems({
             : [],
     );
 
-    return { items, scheduleId, isPending };
+    return { items, scheduleId };
 }

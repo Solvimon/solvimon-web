@@ -37,11 +37,9 @@ const { isLoading } = useLoadInitialData(
     fetchWalletBalances(),
 );
 
-const {
-    items: onDemandItems,
-    scheduleId: onDemandScheduleId,
-    isPending: isOnDemandItemsLoading,
-} = useChargeableOnDemandItems({ subscription });
+const { items: onDemandItems, scheduleId: onDemandScheduleId } = useChargeableOnDemandItems({
+    subscription,
+});
 
 const schedulesData = computed(() => (subscription.value ? withPlanData(subscription.value) : []));
 
@@ -60,7 +58,6 @@ const hasWalletBalancesError = computed(() => walletBalancesApiStatus.value === 
         :wallet-balances="walletBalanceItems"
         :on-demand-items="onDemandItems"
         :on-demand-schedule-id="onDemandScheduleId"
-        :is-on-demand-items-loading="isOnDemandItemsLoading"
         :has-wallet-balances-error="hasWalletBalancesError"
         :is-loading="isLoading"
         :error="error"

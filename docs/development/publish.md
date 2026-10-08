@@ -109,14 +109,14 @@ npm run changelog:check
 
 `prepublishOnly` runs before npm receives anything:
 
-| Gate                    | What it holds                                                |
-| ----------------------- | ------------------------------------------------------------ |
-| `publish:guard`         | refuses to publish from the wrong place or with a dirty tree |
-| `changelog:check`       | the version has release notes of its own                     |
-| `build`                 | type-check and a clean production build                      |
-| `bundle:check-contents` | no internal hostname reached the bundle                      |
-| `types:check-published` | the published declarations resolve for a consumer            |
-| `types:check-consumer`  | a fixture consumer compiles against the packed tarball       |
+| Gate                    | What it holds                                          |
+| ----------------------- | ------------------------------------------------------ |
+| `publish:guard`         | refuses to publish from anywhere but CI                |
+| `changelog:check`       | the version has release notes of its own               |
+| `build`                 | type-check and a clean production build                |
+| `bundle:check-contents` | no internal hostname reached the bundle                |
+| `types:check-published` | the published declarations resolve for a consumer      |
+| `types:check-consumer`  | a fixture consumer compiles against the packed tarball |
 
 CI runs the same checks on every pull request, plus the e2e suite against the
 build that gets published.

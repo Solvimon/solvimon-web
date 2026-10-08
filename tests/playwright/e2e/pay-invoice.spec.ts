@@ -14,6 +14,8 @@ import {
     aSuccessfulAuthorization,
     CUSTOMER_ID,
     INVOICE_ID,
+    PAYMENT_ACCEPTOR_ID,
+    paymentMethodOptions,
 } from '../support/fixtures';
 
 /**
@@ -222,6 +224,80 @@ test.describe('Pay invoice', () => {
     });
 
     // ─── Failure modes ────────────────────────────────────────────────────────
+
+    // ─── Acceptors the invoice allows ─────────────────────────────────────────
+
+    /**
+     * Payment methods are looked up for the customer, so they carry every acceptor that customer
+     * can pay through — including ones this invoice refuses. Authorizing against one of those
+     * fails with a 400 the customer can do nothing about (DD-3533).
+     */
+    test.describe('acceptors the invoice allows', () => {
+        /** Two acceptors on offer, and the invoice takes only the second of them. */
+        const twoAcceptors = {
+            mocks: {
+                paymentMethodOptions: {
+                    body: paymentMethodOptions({ gateways: ['STRIPE', 'STRIPE'] }),
+                },
+                authorizePayment: { body: aSuccessfulAuthorization() },
+            },
+            invoice: anInvoiceRecord({ paymentAcceptorIds: ['paya_test_1'] }),
+        };
+
+        test('pays through an acceptor the invoice accepts', async ({ page }) => {
+            api = await mountLoaded(page, twoAcceptors);
+
+            await payInvoice(page).payButton.click();
+            const authorization = await api.waitForCall('authorizePayment');
+
+            expect(authorization.body).toMatchObject({ payment_acceptor_id: 'paya_test_1' });
+        });
+
+        test('offers nothing on an acceptor the invoice refuses', async ({ page }) => {
+            api = await mountLoaded(page, twoAcceptors);
+
+            // Only the accepted one is mounted, so there is a single form to pay through.
+            await expect(page.locator('iframe')).toHaveCount(1);
+        });
+
+        test('offers the invoice for download when it accepts none of them', async ({ page }) => {
+            api = await mountPayInvoice(page, {
+                invoice: anInvoiceRecord({ paymentAcceptorIds: ['paya_elsewhere'] }),
+            });
+            const ui = payInvoice(page);
+
+            await expect(ui.downloadInvoice).toBeVisible();
+            await expect(ui.payButton).toHaveCount(0);
+        });
+
+        // Mounted directly: with both acceptors offered there are two payment forms, and the
+        // shared `stripeElement` locator insists on one.
+        test('offers everything when the invoice names no acceptors', async ({ page }) => {
+            api = await mountPayInvoice(page, {
+                mocks: {
+                    paymentMethodOptions: {
+                        body: paymentMethodOptions({ gateways: ['STRIPE', 'STRIPE'] }),
+                    },
+                },
+                invoice: anInvoiceRecord({ paymentAcceptorIds: [] }),
+            });
+
+            await expect(page.locator('iframe')).toHaveCount(2);
+        });
+
+        test('pays through the only acceptor there is, as it always has', async ({ page }) => {
+            api = await mountLoaded(page, {
+                mocks: { authorizePayment: { body: aSuccessfulAuthorization() } },
+            });
+
+            await payInvoice(page).payButton.click();
+            const authorization = await api.waitForCall('authorizePayment');
+
+            expect(authorization.body).toMatchObject({
+                payment_acceptor_id: PAYMENT_ACCEPTOR_ID,
+            });
+        });
+    });
 
     test.describe('failure modes', () => {
         test('says so when the invoice cannot be loaded', async ({ page }) => {

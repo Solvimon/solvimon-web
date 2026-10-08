@@ -141,13 +141,21 @@ const handleSubmit = async () => {
     }
 
     isPaymentPending.value = true;
+    paymentErrorMessage.value = null;
     saveFormStateForRedirect();
     paymentIntegrationFormRef.value?.submit();
 };
 
 const paymentErrorMessage = ref<string | null>(null);
 
-const handlePaymentFailed = (error?: Error) => {
+// Both kinds reach this: the card form reports the SDK's own `Error`, an express sheet a plain
+// one. Only the message is read, so the handler asks for no more than that.
+/** The gateway would not submit. It shows the customer what is missing, so nothing is said here. */
+const handlePaymentNotSubmitted = () => {
+    isPaymentPending.value = false;
+};
+
+const handlePaymentFailed = (error?: { message?: string }) => {
     isPaymentPending.value = false;
 
     // The card form shows its own failure inside the drop-in; an express sheet closes with nothing
@@ -781,7 +789,7 @@ onMounted(() => {
                                         "
                                         @payment-success="handlePaymentSuccess"
                                         @payment-failed="handlePaymentFailed"
-                                        @invalid="handlePaymentFailed"
+                                        @invalid="handlePaymentNotSubmitted"
                                         @ready="emit('ready')"
                                     />
                                 </div>

@@ -39,6 +39,7 @@ vi.mock('./useCheckout.view', async () => {
                 initialState: r({ seatsValues: SEATS_VALUES }),
                 validation: r({ $validate: vi.fn(), $invalid: false }),
                 getIsFieldRequired: () => false,
+                updateInitialState,
             },
             invoicePreview: c(() => invoicePreview.value),
             invoicePreviewByBillingPeriod: r({}),
@@ -79,8 +80,9 @@ vi.mock('@/components/providers', () => ({
     useLogger: () => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }),
 }));
 
-const { mockExperimentalFeatures } = vi.hoisted(() => ({
+const { mockExperimentalFeatures, updateInitialState } = vi.hoisted(() => ({
     mockExperimentalFeatures: { value: { 'express-checkout': false } },
+    updateInitialState: vi.fn(),
 }));
 
 vi.mock(
@@ -271,6 +273,49 @@ describe('Checkout', () => {
             const wrapper = await mountCheckout();
 
             expect(wrapper.findComponent({ name: 'ExpressPaymentMethods' }).exists()).toBe(true);
+        });
+
+        // An address speaks `postal_code` and `line1`; the form has `postalCode` and
+        // `addressLine1`. Spreading one into the other dropped both on the floor.
+        it('writes what an express sheet collected into the checkout form', async () => {
+            mockExperimentalFeatures.value = { 'express-checkout': true };
+
+            const wrapper = await mountCheckout();
+
+            wrapper
+                .findComponent({ name: 'ExpressPaymentMethods' })
+                .vm.$emit('update-billing-information', {
+                    line1: 'Main street 1',
+                    line2: 'Second floor',
+                    postal_code: '1000AA',
+                    city: 'Amsterdam',
+                    state: 'NH',
+                    country: 'NL',
+                    email: 'customer@example.com',
+                });
+
+            expect(updateInitialState).toHaveBeenCalledWith({
+                addressLine1: 'Main street 1',
+                addressLine2: 'Second floor',
+                postalCode: '1000AA',
+                city: 'Amsterdam',
+                state: 'NH',
+                country: 'NL',
+                email: 'customer@example.com',
+            });
+        });
+
+        it('says so when an express payment does not go through', async () => {
+            mockExperimentalFeatures.value = { 'express-checkout': true };
+
+            const wrapper = await mountCheckout();
+
+            wrapper
+                .findComponent({ name: 'ExpressPaymentMethods' })
+                .vm.$emit('payment-failed', new Error('Apple Pay payment was not authorized'));
+            await wrapper.vm.$nextTick();
+
+            expect(wrapper.find('.sv-checkout__payment-error').exists()).toBe(true);
         });
     });
 });

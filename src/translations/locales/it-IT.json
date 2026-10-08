@@ -111,6 +111,7 @@
     "checkout.page_title": "Paga e abbonati",
     "checkout.pay_and_subscribe_button.label": "Paga e abbonati",
     "checkout.pay_and_subscribe_button_trial.label": "Inizia la prova",
+    "checkout.payment_failed": "Il pagamento non è andato a buon fine. Riprova.",
     "checkout.payment_method_block.load_failed_message": "Controlla la connessione e riprova.",
     "checkout.payment_method_block.load_failed_retry_button.label": "Riprova",
     "checkout.payment_method_block.load_failed_title": "Impossibile caricare i metodi di pagamento",

@@ -111,6 +111,7 @@
     "checkout.page_title": "Bezahlen und abonnieren",
     "checkout.pay_and_subscribe_button.label": "Bezahlen und abonnieren",
     "checkout.pay_and_subscribe_button_trial.label": "Testphase starten",
+    "checkout.payment_failed": "Die Zahlung ist fehlgeschlagen. Bitte versuchen Sie es erneut.",
     "checkout.payment_method_block.load_failed_message": "Prüfen Sie Ihre Verbindung und versuchen Sie es erneut.",
     "checkout.payment_method_block.load_failed_retry_button.label": "Erneut versuchen",
     "checkout.payment_method_block.load_failed_title": "Zahlungsmethoden konnten nicht geladen werden",

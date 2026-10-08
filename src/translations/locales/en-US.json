@@ -111,6 +111,7 @@
   "checkout.page_title": "Pay and subscribe",
   "checkout.pay_and_subscribe_button.label": "Pay and subscribe",
   "checkout.pay_and_subscribe_button_trial.label": "Start trial",
+  "checkout.payment_failed": "The payment did not go through. Please try again.",
   "checkout.payment_method_block.load_failed_message": "Check your connection and try again.",
   "checkout.payment_method_block.load_failed_retry_button.label": "Try again",
   "checkout.payment_method_block.load_failed_title": "Could not load payment methods",

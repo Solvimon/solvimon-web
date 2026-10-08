@@ -1,7 +1,6 @@
 import {
     filterOutExpressPaymentMethods,
     getExpressPaymentMethodOptions,
-    getPaymentMethodOptionsForAcceptors,
     getPaymentMethodOptionsWithoutExpress,
 } from './paymentMethods';
 import type { RawPaymentMethod } from '@adyen/adyen-web';
@@ -190,52 +189,6 @@ describe('paymentMethods utils', () => {
                 name: 'Credit Card',
                 brands: ['visa', 'mc'],
             });
-        });
-    });
-
-    describe('getPaymentMethodOptionsForAcceptors', () => {
-        const entryFor = (paymentAcceptorId: string) =>
-            ({
-                payment_acceptor: { id: paymentAcceptorId },
-            }) as PaymentMethodOptionsResponse[number];
-
-        it('keeps only what the invoice accepts', () => {
-            const allowed = entryFor('paya_allowed');
-            const options = [allowed, entryFor('paya_other')];
-
-            expect(getPaymentMethodOptionsForAcceptors(options, ['paya_allowed'])).toEqual([
-                allowed,
-            ]);
-        });
-
-        it('keeps every acceptor the invoice names', () => {
-            const options = [entryFor('paya_1'), entryFor('paya_2'), entryFor('paya_3')];
-
-            expect(
-                getPaymentMethodOptionsForAcceptors(options, ['paya_1', 'paya_3']).map(
-                    ({ payment_acceptor }) => payment_acceptor.id,
-                ),
-            ).toEqual(['paya_1', 'paya_3']);
-        });
-
-        // Nothing to pay with beats a form that fails on submit with a 400 (DD-3533).
-        it('offers nothing when the invoice accepts none of them', () => {
-            const options = [entryFor('paya_other')];
-
-            expect(getPaymentMethodOptionsForAcceptors(options, ['paya_allowed'])).toEqual([]);
-        });
-
-        it('restricts nothing for an invoice that names no acceptors', () => {
-            const options = [entryFor('paya_1'), entryFor('paya_2')];
-
-            expect(getPaymentMethodOptionsForAcceptors(options, [])).toBe(options);
-            expect(getPaymentMethodOptionsForAcceptors(options, undefined)).toBe(options);
-        });
-
-        it('drops an entry with no acceptor of its own rather than offering it', () => {
-            const options = [{} as PaymentMethodOptionsResponse[number]];
-
-            expect(getPaymentMethodOptionsForAcceptors(options, ['paya_allowed'])).toEqual([]);
         });
     });
 });

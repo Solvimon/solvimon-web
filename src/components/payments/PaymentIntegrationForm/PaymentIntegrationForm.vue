@@ -61,6 +61,14 @@ const setIntegrationRef = (paymentMethodOption: PaymentMethodOptionResponseEntry
         integrationRefs.value.set(paymentMethodOption.integration.payment_gateway?.variant, el);
 };
 
+const handleInvalid = (reason?: 'NO_PAYMENT_METHOD') => {
+    if (reason === 'NO_PAYMENT_METHOD') {
+        showIntegrationError.value = true;
+    }
+
+    emit('invalid', reason);
+};
+
 function submit() {
     if (!selectedIntegration.value) {
         showIntegrationError.value = true;
@@ -105,7 +113,7 @@ function submit() {
             @select="handleSelect"
             @payment-failed="$emit('payment-failed', $event)"
             @payment-success="$emit('payment-success')"
-            @invalid="$emit('invalid')"
+            @invalid="handleInvalid"
             @ready="$emit('ready')"
         />
 

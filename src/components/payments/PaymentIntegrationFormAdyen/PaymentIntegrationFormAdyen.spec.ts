@@ -61,6 +61,7 @@ const adyen = vi.hoisted(() => {
         showValidation: vi.fn(),
         setStatus: vi.fn(),
         isValid: true,
+        activePaymentMethod: { type: 'scheme' } as { type: string } | null,
         renderCards,
     };
     Object.assign(dropIn, {
@@ -242,6 +243,7 @@ describe('PaymentIntegrationFormAdyen', () => {
         captured.checkoutConfig = undefined;
         captured.dropInConfig = undefined;
         adyen.dropIn.isValid = true;
+        adyen.dropIn.activePaymentMethod = { type: 'scheme' };
     });
 
     describe('submitting', () => {
@@ -263,6 +265,17 @@ describe('PaymentIntegrationFormAdyen', () => {
             expect(adyen.dropIn.showValidation).toHaveBeenCalledTimes(1);
             expect(adyen.dropIn.submit).not.toHaveBeenCalled();
             expect(wrapper.emitted('invalid')).toHaveLength(1);
+        });
+
+        it('says no payment method is chosen when none is open in the drop-in', async () => {
+            adyen.dropIn.isValid = false;
+            adyen.dropIn.activePaymentMethod = null;
+            const wrapper = await mountComponent();
+
+            (wrapper.vm as unknown as { submit: () => void }).submit();
+
+            expect(adyen.dropIn.submit).not.toHaveBeenCalled();
+            expect(wrapper.emitted('invalid')).toEqual([['NO_PAYMENT_METHOD']]);
         });
 
         it('fails the payment when the drop-in throws on submit', async () => {

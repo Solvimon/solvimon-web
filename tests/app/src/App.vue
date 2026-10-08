@@ -67,7 +67,8 @@ const handleLog = (entry: LogEntry) => {
 };
 
 const solvimon = createSolvimonCore({
-    // The test app runs against `npm run build:internal`, the only build in which DEV resolves.
+    // Only reached when the app is opened by hand: every Playwright test names TEST, which the
+    // published build the suite runs against keeps. DEV resolves in `npm run build:internal`.
     // The published `Environment` is `TEST | LIVE`, so naming an internal one needs a cast.
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     environment: (testConfig?.environment ?? 'DEV') as unknown as Environment,

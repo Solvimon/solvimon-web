@@ -15,11 +15,20 @@ describe('getChargeError', () => {
         [404, undefined, 'FAILED'],
         [406, undefined, 'FAILED'],
         [408, undefined, 'FAILED'],
-        [422, undefined, 'PAYMENT_FAILED'],
+        [422, undefined, 'FAILED'],
         [500, undefined, 'FAILED'],
         [502, undefined, 'FAILED'],
     ])('reads a %i on %s as %s', (statusCode, field, outcome) => {
         expect(getChargeError(new ApiError({ statusCode, field }))).toBe(outcome);
+    });
+
+    it.each([
+        ['PAYMENT', 'PAYMENT_FAILED'],
+        ['CUSTOMER', 'FAILED'],
+        ['INVOICE', 'FAILED'],
+        [undefined, 'FAILED'],
+    ])('reads a 422 about %s as %s', (resourceType, outcome) => {
+        expect(getChargeError(new ApiError({ statusCode: 422, resourceType }))).toBe(outcome);
     });
 
     it('treats a request that got no response as failed', () => {

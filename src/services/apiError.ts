@@ -8,17 +8,24 @@ export class ApiError extends Error {
     readonly statusCode: number;
     readonly requestId?: string;
     readonly field?: string;
+    /** The kind of resource the error is about, such as `PAYMENT` on a refused payment. */
+    readonly resourceType?: string;
+    readonly resourceId?: string;
 
     constructor({
         statusCode,
         message,
         requestId,
         field,
+        resourceType,
+        resourceId,
     }: {
         statusCode: number;
         message?: string;
         requestId?: string | null;
         field?: string;
+        resourceType?: string;
+        resourceId?: string;
     }) {
         super(message || `Request failed with status ${statusCode}`);
 
@@ -26,6 +33,8 @@ export class ApiError extends Error {
         this.statusCode = statusCode;
         if (requestId) this.requestId = requestId;
         if (field) this.field = field;
+        if (resourceType) this.resourceType = resourceType;
+        if (resourceId) this.resourceId = resourceId;
     }
 }
 

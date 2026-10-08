@@ -572,9 +572,15 @@ describe('ChargeOnDemandModal', () => {
             it.each([
                 [
                     'the payment could not be made',
-                    new ApiError({ statusCode: 422 }),
+                    new ApiError({ statusCode: 422, resourceType: 'PAYMENT', resourceId: 'inv_1' }),
                     'Payment not completed',
                     "We couldn't take the payment for this order",
+                ],
+                [
+                    'the customer cannot be invoiced',
+                    new ApiError({ statusCode: 422, resourceType: 'CUSTOMER' }),
+                    'Something went wrong',
+                    'Check your invoice list before trying again',
                 ],
                 [
                     'the request was refused for a reason the customer cannot fix',

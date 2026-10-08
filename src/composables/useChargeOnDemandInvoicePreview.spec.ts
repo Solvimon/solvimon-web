@@ -101,6 +101,32 @@ describe('useChargeOnDemandInvoicePreview', () => {
         );
     });
 
+    it('waits for typing to settle after a failed preview', async () => {
+        const { amount } = setup();
+        mockPreview.mockRejectedValueOnce(new Error('nope'));
+        amount.value = amountOf('9');
+        await vi.runAllTimersAsync();
+        expect(mockPreview).toHaveBeenCalledTimes(1);
+
+        amount.value = amountOf('1');
+        await nextTick();
+        amount.value = amountOf('12');
+        await nextTick();
+        amount.value = amountOf('125');
+        await nextTick();
+
+        expect(mockPreview).toHaveBeenCalledTimes(1);
+
+        await vi.runAllTimersAsync();
+
+        expect(mockPreview).toHaveBeenCalledTimes(2);
+        expect(mockPreview).toHaveBeenLastCalledWith(
+            expect.objectContaining({
+                pricingItems: [{ pricing_item_id: 'prii_1', flexible_amount: amountOf('125') }],
+            }),
+        );
+    });
+
     it('reports the preview as pending while a change waits to be previewed', async () => {
         const { amount, isPreviewPending } = setup();
 

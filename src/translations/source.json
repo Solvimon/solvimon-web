@@ -219,6 +219,10 @@
     "defaultMessage": "Payment not completed",
     "description": "Title of the on-demand order modal when the payment for the order could not be made"
   },
+  "charge_on_demand_modal.payment_failed.unpaid_invoice.subtitle": {
+    "defaultMessage": "We couldn't take the payment for this order. Its invoice is in your invoice list, waiting to be paid.",
+    "description": "Subtitle of the on-demand order modal when the order was placed but the payment for its invoice was refused"
+  },
   "charge_on_demand_modal.payment_method_options_error": {
     "defaultMessage": "We couldn't load the ways to add a payment method. Please try again.",
     "description": "Shown on the on-demand order when the payment methods that can be added failed to load"

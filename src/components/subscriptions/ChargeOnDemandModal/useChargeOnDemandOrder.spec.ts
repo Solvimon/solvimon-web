@@ -90,6 +90,23 @@ describe('useChargeOnDemandOrder', () => {
         );
     });
 
+    it('keeps the invoice a refused payment names, until the next charge', async () => {
+        mockCharge.mockRejectedValueOnce(
+            new ApiError({ statusCode: 422, resourceType: 'PAYMENT', resourceId: 'inv_unpaid' }),
+        );
+        const { charge, unpaidInvoiceId } = setup();
+
+        expect(await charge(order)).toEqual({
+            error: 'PAYMENT_FAILED',
+            unpaidInvoiceId: 'inv_unpaid',
+        });
+        expect(unpaidInvoiceId.value).toBe('inv_unpaid');
+
+        await charge(order);
+
+        expect(unpaidInvoiceId.value).toBeUndefined();
+    });
+
     it('clears the last order on reset', async () => {
         mockCharge.mockRejectedValueOnce(new ApiError({ statusCode: 422 }));
         const { charge, reset, chargedInvoice, chargeError } = setup();

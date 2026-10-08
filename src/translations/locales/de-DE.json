@@ -54,6 +54,7 @@
     "charge_on_demand_modal.failed.title": "Etwas ist schiefgelaufen",
     "charge_on_demand_modal.payment_failed.subtitle": "Die Zahlung für diese Bestellung konnte nicht durchgeführt werden. Falls eine Rechnung erstellt wurde, finden Sie sie in Ihrer Rechnungsübersicht.",
     "charge_on_demand_modal.payment_failed.title": "Zahlung nicht abgeschlossen",
+    "charge_on_demand_modal.payment_failed.unpaid_invoice.subtitle": "Die Zahlung für diese Bestellung konnte nicht durchgeführt werden. Die Rechnung finden Sie in Ihrer Rechnungsübersicht, sie wartet auf Zahlung.",
     "charge_on_demand_modal.payment_method_options_error": "Die Möglichkeiten zum Hinzufügen einer Zahlungsmethode konnten nicht geladen werden. Bitte versuchen Sie es erneut.",
     "charge_on_demand_modal.placed.title": "Bestellung aufgegeben",
     "charge_on_demand_modal.placed.unpaid.subtitle": "Ihre Rechnung wurde erstellt, ist aber noch nicht bezahlt. Sie finden sie in Ihrer Rechnungsübersicht.",

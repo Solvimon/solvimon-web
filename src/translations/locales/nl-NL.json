@@ -54,6 +54,7 @@
     "charge_on_demand_modal.failed.title": "Er ging iets mis",
     "charge_on_demand_modal.payment_failed.subtitle": "We konden de betaling voor deze bestelling niet uitvoeren. Als er een factuur is aangemaakt, vind je die in je factuuroverzicht.",
     "charge_on_demand_modal.payment_failed.title": "Betaling niet voltooid",
+    "charge_on_demand_modal.payment_failed.unpaid_invoice.subtitle": "We konden de betaling voor deze bestelling niet uitvoeren. De factuur staat in je factuuroverzicht en wacht op betaling.",
     "charge_on_demand_modal.payment_method_options_error": "We konden de manieren om een betaalmethode toe te voegen niet laden. Probeer het opnieuw.",
     "charge_on_demand_modal.placed.title": "Bestelling geplaatst",
     "charge_on_demand_modal.placed.unpaid.subtitle": "Je factuur is aangemaakt, maar nog niet betaald. Je vindt hem in je factuuroverzicht.",

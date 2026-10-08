@@ -10,7 +10,9 @@ import { useLogger } from '@/components/providers/LoggerProvider/composables/use
 import { createInvoicesService } from '@/services/invoices';
 import { isApiError } from '@/services/apiError';
 
-export type ChargeOnDemandOrderResult = { invoice: Invoice } | { error: ChargeError };
+export type ChargeOnDemandOrderResult =
+    | { invoice: Invoice }
+    | { error: ChargeError; unpaidInvoiceId?: Invoice['id'] };
 
 /**
  * Places an on-demand order on a schedule: charges its items to a saved payment method and
@@ -27,6 +29,8 @@ export function useChargeOnDemandOrder({
     const isCharging = ref(false);
     const chargedInvoice = ref<Invoice>();
     const chargeError = ref<ChargeError>();
+    /** The invoice an order was placed on when only its payment was refused. */
+    const unpaidInvoiceId = ref<Invoice['id']>();
 
     const charge = async ({
         pricingItems,
@@ -37,6 +41,7 @@ export function useChargeOnDemandOrder({
     }): Promise<ChargeOnDemandOrderResult> => {
         isCharging.value = true;
         chargeError.value = undefined;
+        unpaidInvoiceId.value = undefined;
 
         try {
             const invoice = await chargeOnDemandPricingItems({
@@ -51,6 +56,9 @@ export function useChargeOnDemandOrder({
         } catch (error) {
             const outcome = getChargeError(error);
             chargeError.value = outcome;
+            // A refused payment names the invoice the order was placed on as its resource.
+            unpaidInvoiceId.value =
+                outcome === 'PAYMENT_FAILED' && isApiError(error) ? error.resourceId : undefined;
 
             const context = {
                 scheduleId: pricingPlanScheduleId.value,
@@ -80,7 +88,7 @@ export function useChargeOnDemandOrder({
                 );
             }
 
-            return { error: outcome };
+            return { error: outcome, unpaidInvoiceId: unpaidInvoiceId.value };
         } finally {
             isCharging.value = false;
         }
@@ -89,7 +97,8 @@ export function useChargeOnDemandOrder({
     const reset = () => {
         chargedInvoice.value = undefined;
         chargeError.value = undefined;
+        unpaidInvoiceId.value = undefined;
     };
 
-    return { isCharging, chargedInvoice, chargeError, charge, reset };
+    return { isCharging, chargedInvoice, chargeError, unpaidInvoiceId, charge, reset };
 }

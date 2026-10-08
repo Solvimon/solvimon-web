@@ -54,6 +54,7 @@
     "charge_on_demand_modal.failed.title": "Si è verificato un problema",
     "charge_on_demand_modal.payment_failed.subtitle": "Non è stato possibile effettuare il pagamento per questo ordine. Se è stata creata una fattura, la trovi nell'elenco delle tue fatture.",
     "charge_on_demand_modal.payment_failed.title": "Pagamento non completato",
+    "charge_on_demand_modal.payment_failed.unpaid_invoice.subtitle": "Non è stato possibile effettuare il pagamento per questo ordine. La fattura è nell'elenco delle tue fatture, in attesa di pagamento.",
     "charge_on_demand_modal.payment_method_options_error": "Non è stato possibile caricare i modi per aggiungere un metodo di pagamento. Riprova.",
     "charge_on_demand_modal.placed.title": "Ordine effettuato",
     "charge_on_demand_modal.placed.unpaid.subtitle": "La tua fattura è stata creata, ma non è ancora stata pagata. La trovi nell'elenco delle tue fatture.",

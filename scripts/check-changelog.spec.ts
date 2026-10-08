@@ -72,4 +72,38 @@ describe('checkChangelog', () => {
         const changelog = '## [1.0.0-alpha.1] - 2026-01-01\n\n- Initial alpha';
         expect(checkChangelog('1.0.0-alpha.1', changelog)).toEqual({ ok: true });
     });
+
+    // What let a stable release through: `0.1.0` matched the `0.1.0-alpha.25` heading, and the
+    // workflow's own awk — which matches `[version]` exactly — then found nothing to release.
+    it('does not accept a prerelease section for the release it drops the tag to', () => {
+        const changelog = '## [0.1.0-alpha.25] - 2026-10-06\n\n- Still in alpha';
+        const result = checkChangelog('0.1.0', changelog);
+
+        expect(result.ok).toBe(false);
+        expect(result.error).toContain('0.1.0');
+    });
+
+    it('does not accept a longer version that starts with the one being released', () => {
+        const changelog = '## [1.2.30] - 2026-01-01\n\n- Another release';
+
+        expect(checkChangelog('1.2.3', changelog).ok).toBe(false);
+    });
+
+    it('still accepts the heading for the prerelease itself', () => {
+        const changelog = '## [0.1.0-alpha.25] - 2026-10-06\n\n- Still in alpha';
+
+        expect(checkChangelog('0.1.0-alpha.25', changelog)).toEqual({ ok: true });
+    });
+
+    it('accepts a heading that names the version and nothing else', () => {
+        expect(checkChangelog('1.2.3', '## [1.2.3]\n\n- No date on this one')).toEqual({
+            ok: true,
+        });
+    });
+
+    it('accepts a heading written without brackets', () => {
+        expect(checkChangelog('1.2.3', '## 1.2.3 - 2026-01-01\n\n- Plain heading')).toEqual({
+            ok: true,
+        });
+    });
 });

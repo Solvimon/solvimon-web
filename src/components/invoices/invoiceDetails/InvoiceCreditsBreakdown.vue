@@ -61,7 +61,7 @@ const periodsWithCredits = computed(() =>
             description: 'Fallback label for wallet balance credit types when no name is available',
         }),
         walletLabel: formatMessage({
-            defaultMessage: 'Wallet',
+            defaultMessage: 'Wallet balance',
             id: 'wallet_balance.wallet_label',
             description:
                 'Label for a wallet that pays in money, which the invoice does not name; a currency is appended when there are several',
@@ -127,10 +127,10 @@ const periodsWithCredits = computed(() =>
                                             <InvoiceTableHeader left class="w-2/5">
                                                 {{
                                                     $t({
-                                                        defaultMessage: 'Credit breakdown',
-                                                        id: 'invoice_credits.credit_breakdown.table_header',
+                                                        defaultMessage: 'Wallet breakdown',
+                                                        id: 'invoice_credits.wallet_breakdown.table_header',
                                                         description:
-                                                            'Column header for wallet balance credit type details',
+                                                            'Column header for the wallets that paid the invoice, labelled by credit type or as a wallet balance',
                                                     })
                                                 }}
                                             </InvoiceTableHeader>

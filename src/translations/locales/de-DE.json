@@ -163,9 +163,9 @@
     "enabled_pricings_list.item.upgrade_button.label": "Upgrade",
     "enabled_pricings_list.title": "Upgrades",
     "invoice_credits.balance.table_header": "Guthaben",
-    "invoice_credits.credit_breakdown.table_header": "Guthabenaufschlüsselung",
     "invoice_credits.remaining.table_header": "Verbleibend",
     "invoice_credits.used.table_header": "Verbraucht",
+    "invoice_credits.wallet_breakdown.table_header": "Wallet-Aufschlüsselung",
     "invoice_preview.taxes_not_determined_by_billing_information_tooltip": "Wird anhand der Rechnungsdaten ermittelt",
     "invoice_table.button.load_more": "Mehr laden",
     "invoice_table.chip.paid": "Bezahlt",
@@ -315,5 +315,5 @@
     "wallet_balance.details.header": "Wallet-Guthaben",
     "wallet_balance.load_failed": "Wallet-Guthaben konnten nicht geladen werden",
     "wallet_balance.service_period_heading": "Leistungszeitraum - {startAt} - {endAt}",
-    "wallet_balance.wallet_label": "Wallet"
+    "wallet_balance.wallet_label": "Wallet-Guthaben"
 }

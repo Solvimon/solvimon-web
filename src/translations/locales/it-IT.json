@@ -163,9 +163,9 @@
     "enabled_pricings_list.item.upgrade_button.label": "Upgrade",
     "enabled_pricings_list.title": "Upgrade",
     "invoice_credits.balance.table_header": "Saldo",
-    "invoice_credits.credit_breakdown.table_header": "Dettaglio crediti",
     "invoice_credits.remaining.table_header": "Residuo",
     "invoice_credits.used.table_header": "Utilizzato",
+    "invoice_credits.wallet_breakdown.table_header": "Dettaglio del wallet",
     "invoice_preview.taxes_not_determined_by_billing_information_tooltip": "Verrà determinato in base ai dati di fatturazione",
     "invoice_table.button.load_more": "Carica altri",
     "invoice_table.chip.paid": "Pagata",
@@ -315,5 +315,5 @@
     "wallet_balance.details.header": "Saldo del wallet",
     "wallet_balance.load_failed": "Impossibile caricare i saldi dei wallet",
     "wallet_balance.service_period_heading": "Periodo di servizio - {startAt} - {endAt}",
-    "wallet_balance.wallet_label": "Wallet"
+    "wallet_balance.wallet_label": "Saldo del wallet"
 }

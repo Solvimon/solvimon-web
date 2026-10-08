@@ -186,7 +186,7 @@ const build = (invoice: Invoice) =>
         invoice,
         getPeriodTitle,
         creditsLabel: 'Credits',
-        walletLabel: 'Wallet',
+        walletLabel: 'Wallet balance',
         formatBalance,
     });
 
@@ -261,13 +261,13 @@ describe('buildInvoiceCreditsBreakdown', () => {
 
         expect(period?.rows).toEqual([
             {
-                id: '1-Wallet',
-                label: 'Wallet',
+                id: '1-Wallet balance',
+                label: 'Wallet balance',
                 amount: 'EUR 100.00',
                 rows: [
                     {
                         id: '1-wal_eur|EUR',
-                        label: 'Wallet',
+                        label: 'Wallet balance',
                         used: 'EUR 20.00',
                         left: 'EUR 80.00',
                         available: 'EUR 100.00',

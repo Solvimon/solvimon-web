@@ -655,10 +655,6 @@
     "defaultMessage": "Balance",
     "description": "Column header for the available wallet balance amount"
   },
-  "invoice_credits.credit_breakdown.table_header": {
-    "defaultMessage": "Credit breakdown",
-    "description": "Column header for wallet balance credit type details"
-  },
   "invoice_credits.remaining.table_header": {
     "defaultMessage": "Remaining",
     "description": "Column header for the remaining wallet credit amount"
@@ -666,6 +662,10 @@
   "invoice_credits.used.table_header": {
     "defaultMessage": "Used",
     "description": "Column header for the used wallet credit amount"
+  },
+  "invoice_credits.wallet_breakdown.table_header": {
+    "defaultMessage": "Wallet breakdown",
+    "description": "Column header for the wallets that paid the invoice, labelled by credit type or as a wallet balance"
   },
   "invoice_preview.taxes_not_determined_by_billing_information_tooltip": {
     "defaultMessage": "Will be determined by billing information",
@@ -1264,7 +1264,7 @@
     "description": "Heading shown above wallet balance details for an invoice period"
   },
   "wallet_balance.wallet_label": {
-    "defaultMessage": "Wallet",
+    "defaultMessage": "Wallet balance",
     "description": "Label for a wallet that pays in money, which the invoice does not name; a currency is appended when there are several"
   }
 }

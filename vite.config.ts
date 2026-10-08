@@ -57,6 +57,9 @@ const componentEntries = getLibEntries(
  */
 const MODULE_EXTENSIONS: Record<string, string> = { es: 'mjs', cjs: 'cjs' };
 
+/** Dropped from the published bundle only: a test run that cannot log is a test run debugged blind. */
+const PRODUCTION_DROPS: ('console' | 'debugger')[] = ['console', 'debugger'];
+
 /**
  * Whether BETA and DEV resolve to real configuration, opted into with
  * `SOLVIMON_INTERNAL_ENVIRONMENTS=1` for the playground, the e2e test app and `npm run watch`.
@@ -120,106 +123,115 @@ function dropRedundantStylesheet(): PluginOption {
 const coreEntry = resolve(__dirname, 'src/public/core/index.ts');
 const rootEntry = resolve(__dirname, 'src/index.ts');
 
-export default defineConfig({
-    // Applies to both output formats, unlike terser, which Vite only ran over the cjs build.
-    esbuild: { drop: ['console', 'debugger'] },
-    build: {
-        minify: 'esbuild',
-        outDir: fileURLToPath(new URL('./dist', import.meta.url)),
-        chunkSizeWarningLimit: 1000,
-        lib: {
-            entry: {
-                index: rootEntry,
-                ...screenEntries,
-                ...componentEntries,
-                core: coreEntry,
-            },
-            formats: ['es', 'cjs'],
-            fileName: (format, name) => {
-                const extension = MODULE_EXTENSIONS[format] ?? `${format}.js`;
+/**
+ * `mode` is what decides whether this build is the published one: `vite build` runs in production
+ * mode, `vitest` and `vite build --mode development` do not. Keying off it keeps `console` and the
+ * test ids in everything a developer runs, and out of everything a customer installs.
+ */
+export default defineConfig(({ mode }) => {
+    const isProduction = mode === 'production';
 
-                return name === 'core'
-                    ? `core/index.${extension}`
-                    : `${name.replace(/^[/\\]+/, '').replace('.ce', '')}.${extension}`;
-            },
-        },
-        rollupOptions: {
-            external: ['vue'],
-            output: {
-                preserveModules: false,
-                strict: false, // Setting to make sure cjs exports work (for next.js/webpack outputs)
-                globals: {
-                    vue: 'Vue',
+    return {
+        // Applies to both output formats, unlike terser, which Vite only ran over the cjs build.
+        esbuild: { drop: isProduction ? PRODUCTION_DROPS : [] },
+        build: {
+            minify: 'esbuild',
+            outDir: fileURLToPath(new URL('./dist', import.meta.url)),
+            chunkSizeWarningLimit: 1000,
+            lib: {
+                entry: {
+                    index: rootEntry,
+                    ...screenEntries,
+                    ...componentEntries,
+                    core: coreEntry,
                 },
-                // No manual vendor chunk: forcing all of solvimon-ui into one chunk made
-                // every entry import the union of what all entries use. Rollup already
-                // hoists shared modules on its own, per set of entries that use them.
-            },
-        },
-    },
-    plugins: [
-        vue({
-            features: { customElement: true },
-            template: {
-                compilerOptions: {
-                    nodeTransforms: [removeAttributes(process.env.ENVIRONMENT === 'LIVE')],
+                formats: ['es', 'cjs'],
+                fileName: (format, name) => {
+                    const extension = MODULE_EXTENSIONS[format] ?? `${format}.js`;
+
+                    return name === 'core'
+                        ? `core/index.${extension}`
+                        : `${name.replace(/^[/\\]+/, '').replace('.ce', '')}.${extension}`;
                 },
             },
-        }),
-        dropRedundantStylesheet(),
-        dts({
-            // `rollupTypes` in vite-plugin-dts 4; bundling stays off either way.
-            bundleTypes: false,
-            outDirs: './dist',
-            include: [
-                'env.d.ts',
-                'src/types/**/*.ts',
-                // The public type contract, and every type module the public entry props reach
-                // through, so the published declarations resolve instead of quietly falling back
-                // to `any`.
-                'src/public/types/**/*.ts',
-                'src/**/*.types.ts',
-                // Modules those type files import from that are not themselves `*.types.ts`.
-                // Kept to the ones that resolve on their own: chasing the rest would mean emitting
-                // declarations for all of `src`, and nothing a consumer writes goes through them.
-                'src/translations/supported.js',
-                'src/public/screens/types.ts',
-                'src/config/**/*.ts',
-                'src/components/providers/**/*.ts',
-                'src/components/providers/**/*.vue',
-                'src/index.ts',
-                'src/public/screens/**/*.entry.ce.ts',
-                'src/public/components/**/*.entry.ce.ts',
-                'src/public/core/**/*.ts',
-            ],
-            exclude: ['**/*.spec.ts', '**/*.test.ts', '**/node_modules/**'],
-            copyDtsFiles: false,
-        }),
-        publishDeclarations(),
-    ],
-    resolve: {
-        // Array form, most specific first: the first match wins, and a bare '@' would otherwise
-        // swallow '@/config/internalEnvironments' before it could be redirected.
-        alias: [
-            ...(withInternalEnvironments
-                ? []
-                : [
-                      {
-                          find: '@/config/internalEnvironments',
-                          replacement: fileURLToPath(
-                              new URL(
-                                  './src/config/internalEnvironments.published.ts',
-                                  import.meta.url,
-                              ),
-                          ),
-                      },
-                  ]),
-            { find: '@', replacement: fileURLToPath(new URL('./src', import.meta.url)) },
+            rollupOptions: {
+                external: ['vue'],
+                output: {
+                    preserveModules: false,
+                    strict: false, // Setting to make sure cjs exports work (for next.js/webpack outputs)
+                    globals: {
+                        vue: 'Vue',
+                    },
+                    // No manual vendor chunk: forcing all of solvimon-ui into one chunk made
+                    // every entry import the union of what all entries use. Rollup already
+                    // hoists shared modules on its own, per set of entries that use them.
+                },
+            },
+        },
+        plugins: [
+            vue({
+                features: { customElement: true },
+                template: {
+                    compilerOptions: {
+                        nodeTransforms: [removeAttributes(isProduction)],
+                    },
+                },
+            }),
+            dropRedundantStylesheet(),
+            dts({
+                // `rollupTypes` in vite-plugin-dts 4; bundling stays off either way.
+                bundleTypes: false,
+                outDirs: './dist',
+                include: [
+                    'env.d.ts',
+                    'src/types/**/*.ts',
+                    // The public type contract, and every type module the public entry props reach
+                    // through, so the published declarations resolve instead of quietly falling back
+                    // to `any`.
+                    'src/public/types/**/*.ts',
+                    'src/**/*.types.ts',
+                    // Modules those type files import from that are not themselves `*.types.ts`.
+                    // Kept to the ones that resolve on their own: chasing the rest would mean emitting
+                    // declarations for all of `src`, and nothing a consumer writes goes through them.
+                    'src/translations/supported.js',
+                    'src/public/screens/types.ts',
+                    'src/config/**/*.ts',
+                    'src/components/providers/**/*.ts',
+                    'src/components/providers/**/*.vue',
+                    'src/index.ts',
+                    'src/public/screens/**/*.entry.ce.ts',
+                    'src/public/components/**/*.entry.ce.ts',
+                    'src/public/core/**/*.ts',
+                ],
+                exclude: ['**/*.spec.ts', '**/*.test.ts', '**/node_modules/**'],
+                copyDtsFiles: false,
+            }),
+            publishDeclarations(),
         ],
-    },
-    test: {
-        setupFiles: ['./vitest.setup.ts', 'vitest-localstorage-mock'],
-    },
+        resolve: {
+            // Array form, most specific first: the first match wins, and a bare '@' would otherwise
+            // swallow '@/config/internalEnvironments' before it could be redirected.
+            alias: [
+                ...(withInternalEnvironments
+                    ? []
+                    : [
+                          {
+                              find: '@/config/internalEnvironments',
+                              replacement: fileURLToPath(
+                                  new URL(
+                                      './src/config/internalEnvironments.published.ts',
+                                      import.meta.url,
+                                  ),
+                              ),
+                          },
+                      ]),
+                { find: '@', replacement: fileURLToPath(new URL('./src', import.meta.url)) },
+            ],
+        },
+        test: {
+            setupFiles: ['./vitest.setup.ts', 'vitest-localstorage-mock'],
+        },
+    };
 });
 
 /**
@@ -419,13 +431,16 @@ function publishDeclarations(): Plugin {
     };
 }
 
+const ATTRIBUTES_TO_REMOVE = ['data-testid'];
+
 /**
  * Automatically remove all `data-testid` attributes for production builds.
+ *
+ * Both spellings: a static `data-testid` is an attribute node, a bound `:data-testid` is a `bind`
+ * directive, and leaving the second kind in shipped every id a template computes.
  */
 function removeAttributes(isProduction = false) {
     return (node: TemplateChildNode | RootNode) => {
-        const ATTRIBUTES_TO_REMOVE = ['data-testid'];
-
         if (node.type !== 1 || !isProduction) {
             return;
         }
@@ -434,7 +449,10 @@ function removeAttributes(isProduction = false) {
             if (prop.type === 6) {
                 return !ATTRIBUTES_TO_REMOVE.includes(prop.name);
             }
-            return true;
+
+            const boundName = prop.name === 'bind' && prop.arg?.type === 4 ? prop.arg.content : '';
+
+            return !ATTRIBUTES_TO_REMOVE.includes(boundName);
         });
     };
 }

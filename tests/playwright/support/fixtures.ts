@@ -636,6 +636,7 @@ export function anInvoiceRecord({
     status = 'FINAL',
     paid = false,
     openAmount,
+    paymentAcceptorIds,
 }: {
     id?: string;
     number?: string;
@@ -644,11 +645,14 @@ export function anInvoiceRecord({
     status?: string;
     paid?: boolean;
     openAmount?: string;
+    /** The acceptors this invoice can be paid through; defaults to the one the options carry. */
+    paymentAcceptorIds?: string[];
 } = {}): Json {
     const invoice = anInvoice({ total, currency });
 
     return {
         ...invoice,
+        ...(paymentAcceptorIds ? { payment_acceptor_ids: paymentAcceptorIds } : {}),
         id,
         invoice_number: number,
         status,

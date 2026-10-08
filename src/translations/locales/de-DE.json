@@ -159,7 +159,6 @@
     "customer_overview.subscriptions_block.title": "{count,plural,one{Mein Abonnement} other{Meine Abonnements}}",
     "customer_overview.subscriptions_block.view_all_button_label": "Alle anzeigen",
     "customer_overview.wallet_balances_block.title": "{count,plural,one{Wallet} other{Wallets}}",
-    "empty_value_placeholder": "-",
     "enabled_pricings_list.item.price": "{amount} pro {period}",
     "enabled_pricings_list.item.upgrade_button.label": "Upgrade",
     "enabled_pricings_list.title": "Upgrades",
@@ -315,5 +314,6 @@
     "wallet_balance.credit_type_fallback_label": "Guthaben",
     "wallet_balance.details.header": "Wallet-Guthaben",
     "wallet_balance.load_failed": "Wallet-Guthaben konnten nicht geladen werden",
-    "wallet_balance.service_period_heading": "Leistungszeitraum - {startAt} - {endAt}"
+    "wallet_balance.service_period_heading": "Leistungszeitraum - {startAt} - {endAt}",
+    "wallet_balance.wallet_label": "Wallet"
 }

@@ -1,12 +1,9 @@
 <script setup lang="ts">
-import type {
-    CreditType,
-    Invoice,
-    InvoiceCreditQuantity,
-    InvoicePeriod,
-} from '@solvimon/solvimon-types';
+import type { Invoice, InvoicePeriod, WalletBalanceValue } from '@solvimon/solvimon-types';
 import {
     DividerText,
+    formatAmount,
+    formatInvoiceWalletBalanceValue,
     Icon,
     InvoiceTable,
     InvoiceTableData,
@@ -24,15 +21,6 @@ const props = defineProps<{
 
 const { formatDate, $t, formatMessage, formatNumber } = useIntl();
 const { getIsOpen, toggle } = useToggleList<string>();
-
-const creditTypesById = computed(() =>
-    Object.fromEntries(
-        (props.invoice.credit_types ?? []).map((creditType: CreditType) => [
-            creditType.id,
-            creditType,
-        ]),
-    ),
-);
 
 const getPeriodTitle = (period: InvoicePeriod) =>
     formatMessage(
@@ -57,33 +45,28 @@ const getPeriodTitle = (period: InvoicePeriod) =>
         },
     );
 
-const getCreditTypeLabel = (credits?: InvoiceCreditQuantity) => {
-    if (!credits?.credit_type_id) {
-        return formatMessage({
-            defaultMessage: 'Credits',
-            id: 'wallet_balance.credit_type_fallback_label',
-            description: 'Fallback label for wallet balance credit types when no name is available',
-        });
-    }
-
-    return creditTypesById.value[credits.credit_type_id]?.name ?? credits.credit_type_id;
-};
-
-const formatQuantity = (quantity?: string) =>
-    quantity
-        ? formatNumber(Number(quantity))
-        : formatMessage({
-              defaultMessage: '-',
-              id: 'empty_value_placeholder',
-              description: 'Placeholder shown when a wallet balance quantity is missing',
-          });
+const formatBalance = (balanceValue?: WalletBalanceValue | null) =>
+    formatInvoiceWalletBalanceValue(balanceValue, {
+        formatMoney: formatAmount,
+        formatQuantity: (quantity) => formatNumber(Number(quantity)),
+    });
 
 const periodsWithCredits = computed(() =>
     buildInvoiceCreditsBreakdown({
         invoice: props.invoice,
         getPeriodTitle,
-        getCreditTypeLabel,
-        formatQuantity,
+        creditsLabel: formatMessage({
+            defaultMessage: 'Credits',
+            id: 'wallet_balance.credit_type_fallback_label',
+            description: 'Fallback label for wallet balance credit types when no name is available',
+        }),
+        walletLabel: formatMessage({
+            defaultMessage: 'Wallet',
+            id: 'wallet_balance.wallet_label',
+            description:
+                'Label for a wallet that pays in money, which the invoice does not name; a currency is appended when there are several',
+        }),
+        formatBalance,
     }),
 );
 </script>

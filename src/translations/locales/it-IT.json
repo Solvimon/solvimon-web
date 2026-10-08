@@ -159,7 +159,6 @@
     "customer_overview.subscriptions_block.title": "{count,plural,one{Il mio abbonamento} other{I miei abbonamenti}}",
     "customer_overview.subscriptions_block.view_all_button_label": "Mostra tutti",
     "customer_overview.wallet_balances_block.title": "{count,plural,one{Wallet} other{Wallet}}",
-    "empty_value_placeholder": "-",
     "enabled_pricings_list.item.price": "{amount} ogni {period}",
     "enabled_pricings_list.item.upgrade_button.label": "Upgrade",
     "enabled_pricings_list.title": "Upgrade",
@@ -315,5 +314,6 @@
     "wallet_balance.credit_type_fallback_label": "Crediti",
     "wallet_balance.details.header": "Saldo del wallet",
     "wallet_balance.load_failed": "Impossibile caricare i saldi dei wallet",
-    "wallet_balance.service_period_heading": "Periodo di servizio - {startAt} - {endAt}"
+    "wallet_balance.service_period_heading": "Periodo di servizio - {startAt} - {endAt}",
+    "wallet_balance.wallet_label": "Wallet"
 }

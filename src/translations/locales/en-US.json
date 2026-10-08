@@ -159,7 +159,6 @@
   "customer_overview.subscriptions_block.title": "{count,plural,one{My subscription} other{My subscriptions}}",
   "customer_overview.subscriptions_block.view_all_button_label": "View all",
   "customer_overview.wallet_balances_block.title": "{count,plural,one{Wallet} other{Wallets}}",
-  "empty_value_placeholder": "-",
   "enabled_pricings_list.item.price": "{amount} per {period}",
   "enabled_pricings_list.item.upgrade_button.label": "Upgrade",
   "enabled_pricings_list.title": "Upgrades",
@@ -315,5 +314,6 @@
   "wallet_balance.credit_type_fallback_label": "Credits",
   "wallet_balance.details.header": "Wallet balance",
   "wallet_balance.load_failed": "Could not load wallet balances",
-  "wallet_balance.service_period_heading": "Service period - {startAt} - {endAt}"
+  "wallet_balance.service_period_heading": "Service period - {startAt} - {endAt}",
+  "wallet_balance.wallet_label": "Wallet"
 }

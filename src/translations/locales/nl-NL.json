@@ -159,7 +159,6 @@
     "customer_overview.subscriptions_block.title": "{count,plural,one{Mijn abonnement} other{Mijn abonnementen}}",
     "customer_overview.subscriptions_block.view_all_button_label": "Alles weergeven",
     "customer_overview.wallet_balances_block.title": "{count,plural,one{Wallet} other{Wallets}}",
-    "empty_value_placeholder": "-",
     "enabled_pricings_list.item.price": "{amount} per {period}",
     "enabled_pricings_list.item.upgrade_button.label": "Upgraden",
     "enabled_pricings_list.title": "Upgrades",
@@ -315,5 +314,6 @@
     "wallet_balance.credit_type_fallback_label": "Tegoed",
     "wallet_balance.details.header": "Walletsaldo",
     "wallet_balance.load_failed": "Walletsaldi konden niet worden geladen",
-    "wallet_balance.service_period_heading": "Serviceperiode - {startAt} - {endAt}"
+    "wallet_balance.service_period_heading": "Serviceperiode - {startAt} - {endAt}",
+    "wallet_balance.wallet_label": "Wallet"
 }

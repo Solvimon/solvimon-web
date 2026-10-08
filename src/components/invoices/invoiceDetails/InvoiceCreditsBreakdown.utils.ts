@@ -1,4 +1,8 @@
-import type { Invoice, InvoiceCreditQuantity, InvoicePeriod } from '@solvimon/solvimon-types';
+import type { Invoice, InvoicePeriod, WalletBalanceValue } from '@solvimon/solvimon-types';
+import {
+    getInvoiceWalletBalanceRows,
+    getLabelledInvoiceWalletBalanceRows,
+} from '@solvimon/solvimon-ui';
 
 export type InvoiceCreditsBreakdownRow = {
     id: string;
@@ -22,65 +26,46 @@ export type InvoiceCreditsBreakdownPeriod = {
 type BuildInvoiceCreditsBreakdownOptions = {
     invoice: Invoice;
     getPeriodTitle: (period: InvoicePeriod) => string;
-    getCreditTypeLabel: (credits?: InvoiceCreditQuantity) => string;
-    formatQuantity: (quantity?: string) => string;
+    creditsLabel: string;
+    walletLabel: string;
+    formatBalance: (balanceValue?: WalletBalanceValue | null) => string;
 };
 
 export const buildInvoiceCreditsBreakdown = ({
     invoice,
     getPeriodTitle,
-    getCreditTypeLabel,
-    formatQuantity,
+    creditsLabel,
+    walletLabel,
+    formatBalance,
 }: BuildInvoiceCreditsBreakdownOptions): InvoiceCreditsBreakdownPeriod[] => {
     const periods = [...(invoice.periods ?? []), ...(invoice.closed_periods ?? [])];
 
     return periods
         .map((period) => {
+            const lines = (period.groups ?? []).flatMap((group) => group.lines ?? []);
+            const balanceRows = getLabelledInvoiceWalletBalanceRows(
+                getInvoiceWalletBalanceRows(lines),
+                { creditTypes: invoice.credit_types, creditsLabel, walletLabel },
+            );
             const walletRowsByLabel = new Map<string, InvoiceCreditsBreakdownRow>();
-            const rowKeysByLabel = new Map<string, Set<string>>();
 
-            for (const group of period.groups ?? []) {
-                for (const line of group.lines ?? []) {
-                    const walletBalanceDetails = line?.details?.wallet_balance_details;
+            for (const balanceRow of balanceRows) {
+                const available = formatBalance(balanceRow.availableBalance);
+                const walletRow = walletRowsByLabel.get(balanceRow.label) ?? {
+                    id: `${period.period_order}-${balanceRow.label}`,
+                    label: balanceRow.label,
+                    amount: available,
+                    rows: [],
+                };
 
-                    if (!walletBalanceDetails) {
-                        continue;
-                    }
-
-                    const primaryCredit =
-                        walletBalanceDetails.used_wallet_credits ??
-                        walletBalanceDetails.left_wallet_credits ??
-                        walletBalanceDetails.available_wallet_credits;
-                    const label = getCreditTypeLabel(primaryCredit);
-                    const row = {
-                        id: `${period.period_order}-${group.group_order}-${line.line_order}`,
-                        label,
-                        used: formatQuantity(walletBalanceDetails.used_wallet_credits?.quantity),
-                        left: formatQuantity(walletBalanceDetails.left_wallet_credits?.quantity),
-                        available: formatQuantity(
-                            walletBalanceDetails.available_wallet_credits?.quantity,
-                        ),
-                    };
-                    const rowKey = `${row.label}-${row.used}-${row.left}-${row.available}`;
-                    const rowKeys = rowKeysByLabel.get(label) ?? new Set<string>();
-
-                    if (rowKeys.has(rowKey)) {
-                        continue;
-                    }
-
-                    rowKeys.add(rowKey);
-                    rowKeysByLabel.set(label, rowKeys);
-
-                    const walletRow = walletRowsByLabel.get(label) ?? {
-                        id: `${period.period_order}-${label}`,
-                        label,
-                        amount: row.available,
-                        rows: [],
-                    };
-
-                    walletRow.rows.push(row);
-                    walletRowsByLabel.set(label, walletRow);
-                }
+                walletRow.rows.push({
+                    id: `${period.period_order}-${balanceRow.key}`,
+                    label: balanceRow.label,
+                    used: formatBalance(balanceRow.usedBalance),
+                    left: formatBalance(balanceRow.leftBalance),
+                    available,
+                });
+                walletRowsByLabel.set(balanceRow.label, walletRow);
             }
 
             return {

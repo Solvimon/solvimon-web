@@ -639,10 +639,6 @@
     "defaultMessage": "{count,plural,one{Wallet} other{Wallets}}",
     "description": "Title for the wallets block on the customer overview page"
   },
-  "empty_value_placeholder": {
-    "defaultMessage": "-",
-    "description": "Placeholder shown when a wallet balance quantity is missing"
-  },
   "enabled_pricings_list.item.price": {
     "defaultMessage": "{amount} per {period}",
     "description": "The recurring price of an enabled pricing, e.g. \"€ 100,00 per month\""
@@ -1266,5 +1262,9 @@
   "wallet_balance.service_period_heading": {
     "defaultMessage": "Service period - {startAt} - {endAt}",
     "description": "Heading shown above wallet balance details for an invoice period"
+  },
+  "wallet_balance.wallet_label": {
+    "defaultMessage": "Wallet",
+    "description": "Label for a wallet that pays in money, which the invoice does not name; a currency is appended when there are several"
   }
 }

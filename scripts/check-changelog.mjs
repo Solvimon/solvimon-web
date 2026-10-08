@@ -17,7 +17,12 @@ export function checkChangelog(version, changelog, { tagName } = {}) {
         }
     }
 
-    const headingPattern = new RegExp(`^##\\s+\\[?v?${escapeRegExp(version)}\\]?\\b.*$`, 'm');
+    // `0.1.0` must not match `## [0.1.0-alpha.25]`, or a stable release passes on the strength of
+    // the alpha section above it and ships with no notes of its own.
+    const headingPattern = new RegExp(
+        `^##\\s+\\[?v?${escapeRegExp(version)}\\]?(?![\\w.-]).*$`,
+        'm',
+    );
     const headingMatch = changelog.match(headingPattern);
 
     if (!headingMatch) {

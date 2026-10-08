@@ -19,6 +19,8 @@ permissions:
 jobs:
     create-release-tag:
         name: Create release tag
+        # A dispatch can name any ref, and this job publishes to npm irreversibly.
+        if: github.ref == 'refs/heads/main'
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v6
@@ -98,8 +100,27 @@ jobs:
               env:
                   GITLAB_NPM_TOKEN: ${{ secrets.GITLAB_NPM_TOKEN }}
 
-            - name: Publish to npm
+            # Skipped when the registry already has it: the failure a manual re-run exists for is a
+            # publish that went through and a tag that did not, and npm answers a second publish of
+            # the same version with a 403 that would stop the run before it tags.
+            - name: Check whether the version is already published
               if: steps.version.outputs.changed == 'true'
+              id: published
+              run: |
+                  version="${{ steps.version.outputs.current }}"
+                  package=$(node -p "require('./package.json').name")
+
+                  if npm view "$package@$version" version > /dev/null 2>&1; then
+                      echo "exists=true" >> "$GITHUB_OUTPUT"
+                      echo "$package@$version is already on npm; tagging it without publishing."
+                  else
+                      echo "exists=false" >> "$GITHUB_OUTPUT"
+                  fi
+              env:
+                  NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+            - name: Publish to npm
+              if: steps.version.outputs.changed == 'true' && steps.published.outputs.exists != 'true'
               run: |
                   npm config delete --location project @solvimon:registry
                   npm publish
@@ -125,10 +146,7 @@ jobs:
               id: changelog
               run: |
                   version="${{ steps.version.outputs.current }}"
-                  notes=$(awk -v ver="[$version]" '
-                    /^## \[/ { if (found) exit; if (index($0, ver)) found=1; next }
-                    found { print }
-                  ' CHANGELOG.md)
+                  notes=$(node ./scripts/ci/changelog-section.mjs "$version")
                   echo "notes<<EOF" >> "$GITHUB_OUTPUT"
                   echo "$notes" >> "$GITHUB_OUTPUT"
                   echo "EOF" >> "$GITHUB_OUTPUT"

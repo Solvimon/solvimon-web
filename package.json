@@ -14,7 +14,7 @@
         "analyze": "vite-bundle-visualizer",
         "prebuild": "npm run build:css && npm run type-check",
         "build": "vite build",
-        "build:internal": "SOLVIMON_INTERNAL_ENVIRONMENTS=1 npm run build",
+        "build:internal": "SOLVIMON_INTERNAL_ENVIRONMENTS=1 npm run build -- --mode development",
         "build:css": "tailwindcss -i ./src/assets/index.css -o ./.sdk/tailwind.css",
         "dev": "npm run watch",
         "playground:dev": "npm --prefix playground run dev",

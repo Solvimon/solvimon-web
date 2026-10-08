@@ -6,6 +6,34 @@ export function escapeRegExp(value) {
     return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+/**
+ * `0.1.0` must not match `## [0.1.0-alpha.25]`, or a stable release passes on the strength of the
+ * alpha section above it and ships with no notes of its own.
+ */
+function headingPattern(version) {
+    return new RegExp(`^##\\s+\\[?v?${escapeRegExp(version)}\\]?(?![\\w.-]).*$`, 'm');
+}
+
+function sectionBodyOf(changelog, headingMatch) {
+    const sectionStart = headingMatch.index + headingMatch[0].length;
+    const nextHeadingIndex = changelog.slice(sectionStart).search(/^##\s+/m);
+
+    return nextHeadingIndex === -1
+        ? changelog.slice(sectionStart)
+        : changelog.slice(sectionStart, sectionStart + nextHeadingIndex);
+}
+
+/**
+ * The release notes for a version, read by the same rule that gates it. The workflow used to find
+ * the section with an awk of its own that only matched `## [version]`, so a heading this accepted
+ * without brackets released with an empty body.
+ */
+export function getChangelogSection(version, changelog) {
+    const headingMatch = changelog.match(headingPattern(version));
+
+    return headingMatch ? sectionBodyOf(changelog, headingMatch).trim() : '';
+}
+
 export function checkChangelog(version, changelog, { tagName } = {}) {
     if (tagName?.startsWith('v')) {
         const tagVersion = tagName.slice(1);
@@ -17,13 +45,7 @@ export function checkChangelog(version, changelog, { tagName } = {}) {
         }
     }
 
-    // `0.1.0` must not match `## [0.1.0-alpha.25]`, or a stable release passes on the strength of
-    // the alpha section above it and ships with no notes of its own.
-    const headingPattern = new RegExp(
-        `^##\\s+\\[?v?${escapeRegExp(version)}\\]?(?![\\w.-]).*$`,
-        'm',
-    );
-    const headingMatch = changelog.match(headingPattern);
+    const headingMatch = changelog.match(headingPattern(version));
 
     if (!headingMatch) {
         return {
@@ -32,12 +54,7 @@ export function checkChangelog(version, changelog, { tagName } = {}) {
         };
     }
 
-    const sectionStart = headingMatch.index + headingMatch[0].length;
-    const nextHeadingIndex = changelog.slice(sectionStart).search(/^##\s+/m);
-    const sectionBody =
-        nextHeadingIndex === -1
-            ? changelog.slice(sectionStart)
-            : changelog.slice(sectionStart, sectionStart + nextHeadingIndex);
+    const sectionBody = sectionBodyOf(changelog, headingMatch);
 
     if (!sectionBody.trim()) {
         return {

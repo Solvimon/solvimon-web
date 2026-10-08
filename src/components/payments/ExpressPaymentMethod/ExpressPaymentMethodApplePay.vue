@@ -1,13 +1,18 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { isValidCountryCode } from '@solvimon/solvimon-ui';
 import type {
     BillingPeriod,
-    AuthorizePaymentPayload,
+    AuthorizePaymentResponse,
     Address,
     CountryCode,
 } from '@solvimon/solvimon-types';
-import type { AddressData, ApplePayConfiguration } from '@adyen/adyen-web';
+import type {
+    AddressData,
+    ApplePayConfiguration,
+    SubmitActions,
+    SubmitData,
+} from '@adyen/adyen-web';
 import type { ExpressPaymentMethodEmits } from './ExpressPaymentMethod.types';
 import type { ExpressPaymentMethodApplePayProps } from './ExpressPaymentMethodApplePay.types';
 import { createExpressCheckout } from './useExpressPaymentMethod';
@@ -25,6 +30,9 @@ const emit = defineEmits<ExpressPaymentMethodEmits>();
 
 const applePayButtonRef = ref<HTMLDivElement>();
 
+/** Held so the button can be taken down again, and rebuilt when what it charges changes. */
+let applePayInstance: { unmount: () => unknown } | undefined;
+
 const logger = useLogger();
 const { authorizePayment } = createPaymentsService();
 
@@ -40,17 +48,78 @@ function failureContext(params: Omit<PaymentFailureParams, 'gateway'>): Record<s
     });
 }
 
+/** A charge is only a payment once the gateway says the money moved. */
+const isAuthorized = (paymentResult: AuthorizePaymentResponse) =>
+    paymentResult.status === 'SUCCESS' && paymentResult.payment?.result === 'AUTHORIZED';
+
+/**
+ * Where the payment is made. Adyen calls this once `onAuthorized` resolves, with the Apple Pay
+ * credential already formed into a payment method — building that by hand is what put the
+ * encrypted token into `browser_info`.
+ */
+const handleSubmit = async (state: SubmitData, actions: SubmitActions) => {
+    const fail = (error: Error) => {
+        actions.reject();
+        emit('payment-failed', error);
+    };
+
+    try {
+        const paymentResult = await authorizePayment({
+            payment_acceptor_id: paymentAcceptorId,
+            payment_gateway_variant: PAYMENT_GATEWAY_VARIANT_ADYEN,
+            adyen: {
+                payment_method: transformObjectToAdyenObject(state.data.paymentMethod),
+                ...(state.data.riskData && {
+                    risk_data: transformObjectToAdyenObject(state.data.riskData),
+                }),
+                store_payment_method: true, // Required for recurring payments
+            },
+            amount: props.amount,
+            ...(props.context ? { context: props.context } : {}),
+            return_url: createReturnUrl({ paymentAcceptorId, redirectUrl: window.location.href }),
+        });
+
+        if (isAuthorized(paymentResult)) {
+            actions.resolve({ resultCode: 'Authorised' });
+            emit('payment-success');
+            return;
+        }
+
+        // Anything else — REFUSED, FAILURE, or a 3DS action this flow cannot carry out inside the
+        // Apple Pay sheet — is a payment that did not happen, and must not read as one.
+        logger.error(
+            'APPLE_PAY_AUTHORIZATION_FAILED',
+            'Payment authorization failed',
+            failureContext({
+                reason: 'APPLE_PAY_AUTHORIZATION_REJECTED',
+                extra: { paymentStatus: paymentResult.status },
+            }),
+        );
+        fail(new Error(`Apple Pay payment was not authorized (${paymentResult.status})`));
+    } catch (error) {
+        logger.error(
+            'APPLE_PAY_AUTHORIZATION_FAILED',
+            'Apple Pay authorization failed',
+            failureContext({ reason: 'APPLE_PAY_AUTHORIZATION_FAILED', cause: error }),
+            error,
+        );
+        fail(error instanceof Error ? error : new Error('Apple Pay authorization failed'));
+    }
+};
+
 const initApplePay = async () => {
     const { ApplePay } = await loadAdyenSdk();
 
-    const checkout = await createExpressCheckout(props, logger);
+    const checkout = await createExpressCheckout(props, logger, {
+        onSubmit: (state, _component, actions) => void handleSubmit(state, actions),
+    });
 
     const applePay = new ApplePay(checkout, {
         isExpress: true,
         recurringPaymentRequest: {
             paymentDescription: props.billingInformation.description,
             billingAgreement: props.billingInformation.agreement,
-            managementURL: 'https://www.google.com',
+            managementURL: props.billingInformation.managementURL,
 
             // Trial
             ...(props.billingInformation.trial && {
@@ -120,111 +189,42 @@ const initApplePay = async () => {
                 error,
             );
         },
+        /**
+         * Resolving here is what starts Adyen's payment flow, which calls `onSubmit` above. The
+         * charge is not made from this callback — the form is checked here instead, because a
+         * rejection shows the customer an error in the sheet rather than taking their money for a
+         * subscription the checkout cannot create.
+         */
         onAuthorized: async (data, actions) => {
-            try {
-                // Transform payment data from Apple Pay authorizedEvent
-                // The authorizedEvent contains the payment data that needs to be sent to Adyen
-                const authorizedEvent = data.authorizedEvent;
+            const billingContact = data.authorizedEvent.payment.billingContact;
+            const billingAddress = data.billingAddress;
 
-                // Only ever the shape of what arrived. The authorized event carries
-                // `payment.token.paymentData` — the encrypted Apple Pay credential — alongside the
-                // customer's billing contact, and neither belongs in a consumer's log sink.
-                logger.info('APPLE_PAY_AUTHORIZED', 'Apple Pay authorized', {
-                    paymentAcceptorId,
-                    hasPaymentMethod: !!authorizedEvent.payment.token.paymentMethod,
-                    hasPaymentData: !!authorizedEvent.payment.token.paymentData,
-                    hasBillingContact: !!authorizedEvent.payment.billingContact,
-                });
+            if (billingContact) {
+                emit(
+                    'update-billing-information',
+                    getBillingInformationFromContact(billingContact),
+                );
+            } else if (billingAddress) {
+                emit(
+                    'update-billing-information',
+                    getBillingInformationFromAddress(billingAddress),
+                );
+            }
 
-                // Extract billing information from multiple possible sources
-                // Try to get it from the authorizedEvent paymentMethod first, then from data.billingAddress
-                const billingContact = authorizedEvent.payment.billingContact;
-                const billingAddress = data.billingAddress;
+            const isValid = (await props.validateOnSubmit?.()) ?? true;
 
-                if (billingContact) {
-                    emit(
-                        'update-billing-information',
-                        getBillingInformationFromContact(billingContact),
-                    );
-                } else if (billingAddress) {
-                    emit(
-                        'update-billing-information',
-                        getBillingInformationFromAddress(billingAddress),
-                    );
-                }
-
-                const adyen: AuthorizePaymentPayload['adyen'] = {
-                    payment_method: transformObjectToAdyenObject(
-                        authorizedEvent.payment.token.paymentMethod,
-                    ),
-                    browser_info: transformObjectToAdyenObject(
-                        authorizedEvent.payment.token.paymentData,
-                    ),
-                };
-
-                const returnUrl = createReturnUrl({
-                    paymentAcceptorId,
-                    redirectUrl: window.location.href,
-                });
-
-                // Call backend API to authorize payment
-                const paymentResult = await authorizePayment({
-                    payment_acceptor_id: paymentAcceptorId,
-                    payment_gateway_variant: PAYMENT_GATEWAY_VARIANT_ADYEN,
-                    adyen: {
-                        ...adyen,
-                        store_payment_method: true, // Required for recurring payments
-                    },
-                    amount: props.amount,
-                    return_url: returnUrl,
-                });
-
-                logger.info('APPLE_PAY_API_RESPONSE', 'Payment API response received', {
-                    paymentAcceptorId,
-                    status: paymentResult.status,
-                });
-
-                if (paymentResult.status === 'FAILURE') {
-                    logger.error(
-                        'APPLE_PAY_AUTHORIZATION_FAILED',
-                        'Payment authorization failed',
-                        failureContext({
-                            reason: 'APPLE_PAY_AUTHORIZATION_REJECTED',
-                            extra: { paymentStatus: paymentResult.status },
-                        }),
-                    );
-                    actions.reject();
-                    return;
-                }
-
-                // Handle ACTION_REQUIRED if needed (e.g., 3DS)
-                if (paymentResult.status === 'ACTION_REQUIRED') {
-                    logger.warn(
-                        'APPLE_PAY_ACTION_REQUIRED',
-                        'Payment requires additional action',
-                        failureContext({
-                            reason: 'APPLE_PAY_ACTION_REQUIRED',
-                            extra: { actionType: paymentResult.action?.method },
-                        }),
-                    );
-                    // For Apple Pay express checkout, we might need to handle this differently
-                    // For now, reject if action is required
-                    actions.reject();
-                    return;
-                }
-
-                // Success - resolve the payment
-                logger.info('APPLE_PAY_SUCCESS', 'Apple Pay payment successful, resolving');
-                actions.resolve();
-            } catch (error) {
-                logger.error(
-                    'APPLE_PAY_AUTHORIZATION_FAILED',
-                    'Apple Pay authorization failed',
-                    failureContext({ reason: 'APPLE_PAY_AUTHORIZATION_FAILED', cause: error }),
-                    error,
+            if (!isValid) {
+                logger.warn(
+                    'APPLE_PAY_FORM_INCOMPLETE',
+                    'Apple Pay authorization stopped: the checkout form is incomplete',
+                    failureContext({ reason: 'APPLE_PAY_FORM_INVALID' }),
                 );
                 actions.reject();
+                emit('payment-failed', new Error('The checkout form is incomplete'));
+                return;
             }
+
+            actions.resolve();
         },
     });
 
@@ -236,10 +236,16 @@ const initApplePay = async () => {
     try {
         await applePay.isAvailable();
         applePay.mount(applePayButtonRef.value);
+        applePayInstance = applePay;
         emit('ready');
     } catch (e) {
         logger.error('APPLE_PAY_ERROR', 'Apple Pay not available on this device', {}, e);
     }
+};
+
+const unmountApplePay = () => {
+    applePayInstance?.unmount();
+    applePayInstance = undefined;
 };
 
 const getAppleIntervalConfigFromTimePeriod = (
@@ -316,9 +322,37 @@ const handleClick = () => {
     }
 };
 
+/** Nothing above may escape as an unhandled rejection in the host's page. */
+const startApplePay = async () => {
+    try {
+        await initApplePay();
+    } catch (error) {
+        logger.error(
+            'APPLE_PAY_ERROR',
+            'Apple Pay could not be set up',
+            failureContext({ reason: 'APPLE_PAY_SETUP_FAILED', cause: error }),
+            error,
+        );
+    }
+};
+
 onMounted(() => {
-    void initApplePay();
+    void startApplePay();
 });
+
+/**
+ * The sheet states the amount and the recurring agreement, both fixed when the button is built, so
+ * a promo code or a seat change would otherwise leave the customer authorizing yesterday's total.
+ */
+watch(
+    () => [props.amount.quantity, props.amount.currency, props.billingInformation.agreement],
+    () => {
+        unmountApplePay();
+        void startApplePay();
+    },
+);
+
+onBeforeUnmount(unmountApplePay);
 </script>
 
 <template>

@@ -126,15 +126,19 @@ export function getAdyenExpressCheckoutConfiguration({
     locale,
     paymentMethodOptionResponse,
     logger,
+    onSubmit,
 }: {
     amount?: Amount;
     countryCode: CoreConfiguration['countryCode'];
     locale: CoreConfiguration['locale'];
     paymentMethodOptionResponse: PaymentMethodOptionResponseEntry;
     logger: Logger;
+    /** Where an express button makes its payment, once the gateway has authorization for one. */
+    onSubmit?: CoreConfiguration['onSubmit'];
 }): CoreConfiguration {
     return {
         ...(amount ? { amount: toMinorUnitAmount(amount) } : {}),
+        ...(onSubmit ? { onSubmit } : {}),
         analytics: { enabled: false },
         clientKey: getAdyenClientKeyFromPaymentMethodOptionsResponse(paymentMethodOptionResponse),
         countryCode,

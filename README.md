@@ -312,7 +312,8 @@ The SDK emits structured log entries via the [`onLog`](#error-logging) callback.
 | :----------------------------------- | :------------------------------------------------------------------------ |
 | `ACTIVE_SCHEDULE_NOT_FOUND`          | No schedule is currently being billed                                     |
 | `ADYEN_INVALID_CONFIGURATION`        | No environment set for adyen advanced flow, defaulted to live             |
-| `APPLE_PAY_ACTION_REQUIRED`          | Payment requires additional action                                        |
+| `APPLE_PAY_ACTION_REQUIRED`          | Reserved — not currently emitted                                          |
+| `APPLE_PAY_FORM_INCOMPLETE`          | Apple Pay authorization stopped: the checkout form is incomplete          |
 | `INVOICE_PREVIEW_SKIPPED`            | Skipped the on-demand charge invoice preview: no schedule to charge it on |
 | `ON_DEMAND_CHARGE_REFUSED`           | The on-demand order was refused or its payment did not go through         |
 | `PAYMENT_INTEGRATION_NOT_RENDERABLE` | No Adyen payment methods to offer                                         |

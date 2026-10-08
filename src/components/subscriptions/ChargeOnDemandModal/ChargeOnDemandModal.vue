@@ -4,7 +4,6 @@ import {
     ChargeOnDemandEditor,
     InvoicePreview,
     Section,
-    getCustomerCountry,
     useIntl,
     formatAmount,
     useValidation,
@@ -34,7 +33,7 @@ import EmptyStatePlaceholder from '@/components/checkout/EmptyStatePlaceholder.v
 import OnDemandPaymentModalShell from '@/components/payments/OnDemandPaymentModalShell/OnDemandPaymentModalShell.vue';
 import { useChargeOnDemandInvoicePreview } from '@/composables/useChargeOnDemandInvoicePreview';
 import { useAddPaymentMethodStep } from '@/composables/useAddPaymentMethodStep';
-import { usePaymentMethodOptions } from '@/composables/usePaymentMethodOptions';
+import { useCustomerPaymentMethodOptions } from '@/composables/useCustomerPaymentMethodOptions';
 import { useLogger } from '@/components/providers/LoggerProvider/composables/useLogger';
 import { createInvoicesService } from '@/services/invoices';
 import { isApiError } from '@/services/apiError';
@@ -86,18 +85,6 @@ watch(
 );
 
 const {
-    paymentMethodOptions: allPaymentMethodOptions,
-    get: loadPaymentMethodOptions,
-    isPending: isPaymentMethodOptionsPending,
-} = usePaymentMethodOptions();
-
-const paymentMethodOptions = computed(() =>
-    allPaymentMethodOptions.value.filter(({ payment_acceptor }) =>
-        (props.subscription.payment_acceptor_ids ?? []).includes(payment_acceptor.id),
-    ),
-);
-
-const {
     paneRef: addPaymentMethodRef,
     isActive: isAddingPaymentMethod,
     isSaving: isSavingPaymentMethod,
@@ -109,52 +96,49 @@ const {
 const hasPaymentMethodOptionsLoadFailed = ref(false);
 const paymentMethodOptionsError = ref<string>();
 
-const loadSubscriptionPaymentMethodOptions = async () => {
-    hasPaymentMethodOptionsLoadFailed.value = false;
+const handlePaymentMethodOptionsError = (error: unknown) => {
+    hasPaymentMethodOptionsLoadFailed.value = true;
+    logger.error(
+        'PAYMENT_METHOD_OPTIONS_LOAD_FAILED',
+        'Failed to load the payment methods that can be offered',
+        { flow: 'ON_DEMAND_ORDER', subscriptionId: props.subscription.id },
+        error,
+    );
 
-    try {
-        await loadPaymentMethodOptions({
-            customerId: props.subscription.customer_id,
-            subscriptionId: props.subscription.id,
-            country: props.customer ? getCustomerCountry(props.customer) : undefined,
+    if (isAddingPaymentMethod.value) {
+        leaveAddPaymentMethod();
+        paymentMethodOptionsError.value = $t({
+            defaultMessage: "We couldn't load the ways to add a payment method. Please try again.",
+            description:
+                'Shown on the on-demand order when the payment methods that can be added failed to load',
+            id: 'charge_on_demand_modal.payment_method_options_error',
         });
-    } catch (error) {
-        hasPaymentMethodOptionsLoadFailed.value = true;
-        logger.error(
-            'PAYMENT_METHOD_OPTIONS_LOAD_FAILED',
-            'Failed to load the payment methods that can be offered',
-            { flow: 'ON_DEMAND_ORDER', subscriptionId: props.subscription.id },
-            error,
-        );
-
-        if (isAddingPaymentMethod.value) {
-            leaveAddPaymentMethod();
-            paymentMethodOptionsError.value = $t({
-                defaultMessage:
-                    "We couldn't load the ways to add a payment method. Please try again.",
-                description:
-                    'Shown on the on-demand order when the payment methods that can be added failed to load',
-                id: 'charge_on_demand_modal.payment_method_options_error',
-            });
-        }
     }
 };
 
-watch(
-    () => props.showModal && canTakePayments.value,
-    (shouldLoad) => {
-        if (shouldLoad) {
-            void loadSubscriptionPaymentMethodOptions();
-        }
-    },
-    { immediate: true },
+const {
+    settledOptions,
+    isPending: isPaymentMethodOptionsPending,
+    load: loadPaymentMethodOptions,
+} = useCustomerPaymentMethodOptions({
+    isOpen: computed(() => props.showModal && canTakePayments.value),
+    customer: computed(() => props.customer),
+    subscriptionId: computed(() => props.subscription.id),
+    onError: handlePaymentMethodOptionsError,
+});
+
+const paymentMethodOptions = computed(() =>
+    settledOptions.value?.filter(({ payment_acceptor }) =>
+        (props.subscription.payment_acceptor_ids ?? []).includes(payment_acceptor.id),
+    ),
 );
 
 const handleAddPaymentMethod = () => {
     paymentMethodOptionsError.value = undefined;
 
     if (hasPaymentMethodOptionsLoadFailed.value) {
-        void loadSubscriptionPaymentMethodOptions();
+        hasPaymentMethodOptionsLoadFailed.value = false;
+        void loadPaymentMethodOptions();
     }
 
     openAddPaymentMethod();

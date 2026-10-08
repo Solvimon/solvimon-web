@@ -20,12 +20,12 @@ defineEmits<ExpressPaymentMethodsEmits>();
 const { $t } = useIntl();
 
 const isApplePayReady = ref<boolean>(false);
+/** Apple Pay is only on Apple's own devices, so most customers never see a button here. */
+const isApplePayUnavailable = ref<boolean>(false);
 const isGooglePayReady = ref<boolean>(false);
 const isPayPalReady = ref<boolean>(false);
 
-const paymentMethodOptionsResponseEntryIncludingApplePay = computed<
-    PaymentMethodOptionResponseEntry | undefined
->(() => {
+const applePayEntry = computed<PaymentMethodOptionResponseEntry | undefined>(() => {
     if (!ENABLED_EXPRESS_PAYMENT_METHOD_TYPES.includes('applepay')) {
         return undefined;
     }
@@ -38,6 +38,14 @@ const paymentMethodOptionsResponseEntryIncludingApplePay = computed<
         ),
     );
 });
+
+/**
+ * The entry as far as the rest of this block is concerned: a device that cannot pay with Apple Pay
+ * has nothing to show for it, and nothing to wait for either.
+ */
+const paymentMethodOptionsResponseEntryIncludingApplePay = computed<
+    PaymentMethodOptionResponseEntry | undefined
+>(() => (isApplePayUnavailable.value ? undefined : applePayEntry.value));
 
 const paymentMethodOptionsResponseEntryIncludingPayPal = computed<
     PaymentMethodOptionResponseEntry | undefined
@@ -151,6 +159,7 @@ const expressPaymentButtonCount = computed(() => {
                     :context="context"
                     :validate-on-submit="validateOnSubmit"
                     @ready="isApplePayReady = true"
+                    @unavailable="isApplePayUnavailable = true"
                     @update-billing-information="$emit('update-billing-information', $event)"
                     @payment-success="$emit('payment-success')"
                     @payment-failed="$emit('payment-failed', $event)"

@@ -9,9 +9,10 @@ import {
     useTimePeriod,
 } from '@solvimon/solvimon-ui';
 import { computed, defineAsyncComponent, onMounted, ref } from 'vue';
-import type { Address, BillingPeriod, CountryCode } from '@solvimon/solvimon-types';
+import type { BillingPeriod, CountryCode } from '@solvimon/solvimon-types';
 import type { CheckoutEmits, CheckoutProps } from './Checkout.types';
 import { useCheckoutView } from './useCheckout.view';
+import type { ExpressBillingInformation } from '@/components/payments/ExpressPaymentMethod/ExpressPaymentMethod.types';
 import { usePromotionCode } from '@/composables/usePromotionCode';
 import { useAutoApplyPromotionCode } from '@/composables/useAutoApplyPromotionCode';
 import { usePortal } from '@/components/providers/PortalProvider/composables/usePortal';
@@ -19,7 +20,7 @@ import CheckoutForm from '@/components/customer/CheckoutForm/CheckoutForm.vue';
 import CheckoutTitle from '@/components/checkout/CheckoutTitle.vue';
 import { isInvoiceUsageBased } from '@/utils/invoice';
 import CheckoutNotAvailable from '@/components/checkout/CheckoutNotAvailable.vue';
-import type { Error } from '@/types/errors';
+import type { Error as ScreenError } from '@/types/errors';
 import SubscriptionPaymentCompletedCard from '@/components/payments/SubscriptionPaymentCompletedCard/SubscriptionPaymentCompletedCard.vue';
 import OrderSummary from '@/components/subscriptions/OrderSummary.vue';
 import MarkdownText from '@/components/shared/MarkdownText/MarkdownText.vue';
@@ -68,7 +69,7 @@ const props = defineProps<CheckoutProps>();
 const emit = defineEmits<CheckoutEmits>();
 const configuration = computed(() => props.configuration);
 
-const criticalError = ref<Error>();
+const criticalError = ref<ScreenError>();
 const paymentIntegrationFormRef = ref();
 
 const logger = useLogger();
@@ -149,8 +150,20 @@ const handleSubmit = async () => {
     paymentIntegrationFormRef.value?.submit();
 };
 
-const handlePaymentFailed = () => {
+const paymentErrorMessage = ref<string | null>(null);
+
+const handlePaymentFailed = (error?: Error) => {
     isPaymentPending.value = false;
+
+    // The card form shows its own failure inside the drop-in; an express sheet closes with nothing
+    // on screen unless the checkout says something itself.
+    paymentErrorMessage.value =
+        error?.message ??
+        $t({
+            defaultMessage: 'The payment did not go through. Please try again.',
+            id: 'checkout.payment_failed',
+            description: 'Error shown when a payment the customer started did not complete',
+        });
 };
 
 const handleValidateOnSubmit = async () => {
@@ -383,10 +396,22 @@ const expressPaymentMethodBillingInformation = computed(() => {
 
 const isCountryCode = (country: string): country is CountryCode => isValidCountryCode(country);
 
-const handleUpdateBillingInformation = (billingInformation: Partial<Address>) => {
-    const { country, ...rest } = billingInformation;
+/**
+ * What an express sheet collected, written into the form the rest of the checkout validates and
+ * submits. Named field by field because the two shapes disagree: an address carries `postal_code`
+ * and `line1` where the form has `postalCode` and `addressLine1`, and spreading one into the other
+ * quietly dropped both.
+ */
+const handleUpdateBillingInformation = (billingInformation: ExpressBillingInformation) => {
+    const { line1, line2, postal_code, city, state, country, email } = billingInformation;
+
     checkoutForm.updateInitialState({
-        ...rest,
+        ...(line1 && { addressLine1: line1 }),
+        ...(line2 && { addressLine2: line2 }),
+        ...(postal_code && { postalCode: postal_code }),
+        ...(city && { city }),
+        ...(state && { state }),
+        ...(email && { email }),
         ...(country && isCountryCode(country) ? { country } : {}),
     });
 };
@@ -495,6 +520,7 @@ const redirectsOnSuccess = computed(
 const handlePaymentSuccess = () => {
     isPaid.value = true;
     promotionCodeErrorMessage.value = null;
+    paymentErrorMessage.value = null;
 
     if (props.configuration?.onPaymentSuccess) {
         props.configuration.onPaymentSuccess();
@@ -814,6 +840,12 @@ onMounted(() => {
                     v-if="promotionCodeErrorMessage"
                     class="sv-checkout__promotion-error mt-2"
                     :title="promotionCodeErrorMessage"
+                />
+
+                <ErrorNotification
+                    v-if="paymentErrorMessage"
+                    class="sv-checkout__payment-error mt-2"
+                    :title="paymentErrorMessage"
                 />
 
                 <!-- pay button-->

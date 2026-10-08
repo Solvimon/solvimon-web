@@ -447,6 +447,10 @@
     "defaultMessage": "Start trial",
     "description": "The label of the start trial button in the checkout form"
   },
+  "checkout.payment_failed": {
+    "defaultMessage": "The payment did not go through. Please try again.",
+    "description": "Error shown when a payment the customer started did not complete"
+  },
   "checkout.payment_method_block.load_failed_message": {
     "defaultMessage": "Check your connection and try again.",
     "description": "The message shown when the payment methods failed to load"

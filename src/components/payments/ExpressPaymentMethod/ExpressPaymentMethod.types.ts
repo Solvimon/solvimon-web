@@ -75,9 +75,16 @@ export interface ExpressPaymentMethodProps {
     };
 }
 
+/** What the express sheet knows about the customer: an address, and the email it collected. */
+export interface ExpressBillingInformation extends Partial<Address> {
+    email?: string;
+}
+
 export interface ExpressPaymentMethodEmits {
     (e: 'ready'): void;
-    (e: 'update-billing-information', billingInformation: Partial<Address>): void;
+    /** The gateway has nothing to offer on this device, so nothing should be shown for it. */
+    (e: 'unavailable'): void;
+    (e: 'update-billing-information', billingInformation: ExpressBillingInformation): void;
     (e: 'payment-success'): void;
     (e: 'payment-failed', error: Error): void;
 }

@@ -307,9 +307,10 @@ describe('ExpressPaymentMethodApplePay', () => {
                 mockEvent as unknown as ApplePayJS.ApplePayPaymentMethodSelectedEvent,
             );
 
-            // Verify onBillingInformationChange was called
+            // Checkout form fields: a `postal_code` here never reached the form, so the preview
+            // was re-priced without the postal code the tax depends on.
             expect(mockOnBillingInformationChange).toHaveBeenCalledWith({
-                postal_code: '1234AB',
+                postalCode: '1234AB',
                 city: 'Amsterdam',
                 country: 'NL',
             });
@@ -377,7 +378,14 @@ describe('ExpressPaymentMethodApplePay', () => {
         authorizedEvent: {
             payment: {
                 token: { paymentMethod: { test: 'data' }, paymentData: { test: 'browser' } },
-                billingContact: null,
+                billingContact: {
+                    addressLines: ['Main street 1', 'Second floor'],
+                    locality: 'Amsterdam',
+                    administrativeArea: 'NH',
+                    postalCode: '1000AA',
+                    countryCode: 'NL',
+                },
+                shippingContact: { emailAddress: 'customer@example.com' },
             },
         },
         billingAddress: null,
@@ -440,6 +448,47 @@ describe('ExpressPaymentMethodApplePay', () => {
             expect(actions.resolve).not.toHaveBeenCalled();
             expect(mockAuthorizePayment).not.toHaveBeenCalled();
             expect(wrapper.emitted('payment-failed')).toBeTruthy();
+        });
+    });
+
+    describe('what the sheet collected', () => {
+        // The customer never fills the checkout form in this flow, so validating it before handing
+        // over what Apple Pay collected rejected every express payment.
+        it('hands over the address and email before the form is checked', async () => {
+            const validateOnSubmit = vi.fn().mockResolvedValue(true);
+            const wrapper = await mountAndSettle({ ...mockProps, validateOnSubmit });
+            const actions = { resolve: vi.fn(), reject: vi.fn() };
+
+            await authorize(actions);
+
+            const [billingInformation] =
+                wrapper.emitted('update-billing-information')?.at(-1) ?? [];
+
+            expect(billingInformation).toEqual({
+                line1: 'Main street 1',
+                line2: 'Second floor',
+                state: 'NH',
+                postal_code: '1000AA',
+                city: 'Amsterdam',
+                country: 'NL',
+                email: 'customer@example.com',
+            });
+            expect(validateOnSubmit).toHaveBeenCalled();
+            expect(actions.resolve).toHaveBeenCalled();
+        });
+
+        it('rejects rather than hanging the sheet when the check throws', async () => {
+            const wrapper = await mountAndSettle({
+                ...mockProps,
+                validateOnSubmit: vi.fn().mockRejectedValue(new Error('boom')),
+            });
+            const actions = { resolve: vi.fn(), reject: vi.fn() };
+
+            await authorize(actions);
+
+            expect(actions.reject).toHaveBeenCalled();
+            expect(actions.resolve).not.toHaveBeenCalled();
+            expect(wrapper.emitted('payment-failed')).toHaveLength(1);
         });
     });
 
@@ -533,6 +582,26 @@ describe('ExpressPaymentMethodApplePay', () => {
 
             expect(mockApplePayInstance.unmount).toHaveBeenCalled();
             expect(mockApplePay).toHaveBeenCalledTimes(2);
+        });
+
+        // `amount` is rebuilt by every invoice preview, and the sheet asks for one as it opens.
+        it('leaves the button alone when the amount is rebuilt with the same value', async () => {
+            const wrapper = await mountAndSettle();
+
+            await wrapper.setProps({ amount: { currency: 'EUR', quantity: '10.00' } });
+            await new Promise((resolve) => setTimeout(resolve, 0));
+
+            expect(mockApplePayInstance.unmount).not.toHaveBeenCalled();
+            expect(mockApplePay).toHaveBeenCalledTimes(1);
+        });
+
+        it('says so when the device cannot pay with Apple Pay', async () => {
+            mockApplePayInstance.isAvailable.mockRejectedValueOnce(new Error('unavailable'));
+
+            const wrapper = await mountAndSettle();
+
+            expect(wrapper.emitted('unavailable')).toHaveLength(1);
+            expect(wrapper.emitted('ready')).toBeFalsy();
         });
 
         it('leaves nothing mounted behind it', async () => {

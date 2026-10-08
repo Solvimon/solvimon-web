@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { isValidCountryCode } from '@solvimon/solvimon-ui';
 import type {
     BillingPeriod,
@@ -32,6 +32,9 @@ const applePayButtonRef = ref<HTMLDivElement>();
 
 /** Held so the button can be taken down again, and rebuilt when what it charges changes. */
 let applePayInstance: { unmount: () => unknown } | undefined;
+
+/** Which setup is the current one. A rebuild invalidates whatever is still in flight. */
+let currentSetup = 0;
 
 const logger = useLogger();
 const { authorizePayment } = createPaymentsService();
@@ -108,6 +111,7 @@ const handleSubmit = async (state: SubmitData, actions: SubmitActions) => {
 };
 
 const initApplePay = async () => {
+    const setup = currentSetup;
     const { ApplePay } = await loadAdyenSdk();
 
     const checkout = await createExpressCheckout(props, logger, {
@@ -151,9 +155,11 @@ const initApplePay = async () => {
         requiredShippingContactFields: ['email'],
         onPaymentMethodSelected: async (resolve, _reject, event) => {
             // Load new invoice preview with updated billing information
+            // Checkout form fields, not address fields: `postal_code` was dropped on the way in,
+            // so the preview was re-priced without the postal code the tax depends on.
             const { invoicePreview, trialInvoicePreview } = await props.onBillingInformationChange({
                 ...(event.paymentMethod.billingContact?.postalCode && {
-                    postal_code: event.paymentMethod.billingContact.postalCode,
+                    postalCode: event.paymentMethod.billingContact.postalCode,
                 }),
                 ...(event.paymentMethod.billingContact?.locality && {
                     city: event.paymentMethod.billingContact.locality,
@@ -196,35 +202,51 @@ const initApplePay = async () => {
          * subscription the checkout cannot create.
          */
         onAuthorized: async (data, actions) => {
-            const billingContact = data.authorizedEvent.payment.billingContact;
-            const billingAddress = data.billingAddress;
+            try {
+                const billingContact = data.authorizedEvent.payment?.billingContact;
+                const address = billingContact
+                    ? getBillingInformationFromContact(billingContact)
+                    : data.billingAddress
+                      ? getBillingInformationFromAddress(data.billingAddress)
+                      : undefined;
+                const email = data.authorizedEvent.payment?.shippingContact?.emailAddress;
 
-            if (billingContact) {
-                emit(
-                    'update-billing-information',
-                    getBillingInformationFromContact(billingContact),
-                );
-            } else if (billingAddress) {
-                emit(
-                    'update-billing-information',
-                    getBillingInformationFromAddress(billingAddress),
-                );
-            }
+                // What the sheet collected is what the checkout is then validated against: the
+                // customer never fills the form in this flow, so checking it before handing the
+                // address and email over would reject every express payment.
+                if (address || email) {
+                    emit('update-billing-information', { ...address, ...(email && { email }) });
+                    await nextTick();
+                }
 
-            const isValid = (await props.validateOnSubmit?.()) ?? true;
+                const isValid = (await props.validateOnSubmit?.()) ?? true;
 
-            if (!isValid) {
-                logger.warn(
-                    'APPLE_PAY_FORM_INCOMPLETE',
-                    'Apple Pay authorization stopped: the checkout form is incomplete',
-                    failureContext({ reason: 'APPLE_PAY_FORM_INVALID' }),
+                if (!isValid) {
+                    logger.warn(
+                        'APPLE_PAY_FORM_INCOMPLETE',
+                        'Apple Pay authorization stopped: the checkout form is incomplete',
+                        failureContext({ reason: 'APPLE_PAY_FORM_INVALID' }),
+                    );
+                    actions.reject();
+                    emit('payment-failed', new Error('The checkout form is incomplete'));
+                    return;
+                }
+
+                actions.resolve();
+            } catch (error) {
+                // Adyen waits on one of the two: without this the sheet hangs on the customer.
+                logger.error(
+                    'APPLE_PAY_AUTHORIZATION_FAILED',
+                    'Apple Pay authorization failed',
+                    failureContext({ reason: 'APPLE_PAY_AUTHORIZATION_FAILED', cause: error }),
+                    error,
                 );
                 actions.reject();
-                emit('payment-failed', new Error('The checkout form is incomplete'));
-                return;
+                emit(
+                    'payment-failed',
+                    error instanceof Error ? error : new Error('Apple Pay authorization failed'),
+                );
             }
-
-            actions.resolve();
         },
     });
 
@@ -235,15 +257,28 @@ const initApplePay = async () => {
 
     try {
         await applePay.isAvailable();
+
+        // A rebuild that started while this one was waiting owns the button now.
+        if (setup !== currentSetup) {
+            return;
+        }
+
         applePay.mount(applePayButtonRef.value);
         applePayInstance = applePay;
         emit('ready');
     } catch (e) {
         logger.error('APPLE_PAY_ERROR', 'Apple Pay not available on this device', {}, e);
+
+        // Nothing is mounted, so nothing should be offered: the button is otherwise left visible
+        // and dead, and the block it sits in waits on a `ready` that is never coming.
+        if (setup === currentSetup) {
+            emit('unavailable');
+        }
     }
 };
 
 const unmountApplePay = () => {
+    currentSetup += 1;
     applePayInstance?.unmount();
     applePayInstance = undefined;
 };
@@ -288,15 +323,22 @@ const getAppleIntervalConfigFromTimePeriod = (
     return undefined;
 };
 
+/** The street and the state come along: they are what US and CA checkouts are validated on. */
 const getBillingInformationFromContact = (
     contact: ApplePayJS.ApplePayPaymentContact,
 ): Partial<Address> => ({
+    ...(contact.addressLines?.[0] && { line1: contact.addressLines[0] }),
+    ...(contact.addressLines?.[1] && { line2: contact.addressLines[1] }),
+    ...(contact.administrativeArea && { state: contact.administrativeArea }),
     postal_code: contact.postalCode,
     city: contact.locality,
     country: contact.countryCode,
 });
 
 const getBillingInformationFromAddress = (address: Partial<AddressData>): Partial<Address> => ({
+    ...(address.street && { line1: address.street }),
+    ...(address.houseNumberOrName && { line2: address.houseNumberOrName }),
+    ...(address.stateOrProvince && { state: address.stateOrProvince }),
     postal_code: address.postalCode,
     city: address.city,
     country: address.country,
@@ -345,7 +387,12 @@ onMounted(() => {
  * a promo code or a seat change would otherwise leave the customer authorizing yesterday's total.
  */
 watch(
-    () => [props.amount.quantity, props.amount.currency, props.billingInformation.agreement],
+    // By value: `amount` is rebuilt by every invoice preview, and `onPaymentMethodSelected` asks
+    // for one as the sheet opens — comparing objects would tear down the live session.
+    () =>
+        [props.amount.quantity, props.amount.currency, props.billingInformation.agreement].join(
+            '|',
+        ),
     () => {
         unmountApplePay();
         void startApplePay();

@@ -9,7 +9,7 @@ import {
     useValidation,
 } from '@solvimon/solvimon-ui';
 import type { ChargeOnDemandSelectionItem } from '@solvimon/solvimon-ui';
-import type { Invoice, PaymentMethod } from '@solvimon/solvimon-types';
+import type { PaymentMethod } from '@solvimon/solvimon-types';
 import { helpers } from '@vuelidate/validators';
 import { computed, reactive, ref, watch } from 'vue';
 import type {
@@ -18,12 +18,8 @@ import type {
     ChargeOnDemandModalStep,
 } from './ChargeOnDemandModal.types';
 import { CHARGE_ON_DEMAND_MODAL_STEPS } from './ChargeOnDemandModal.types';
-import {
-    getChargeError,
-    isInvoiceSettled,
-    isFixableChargeError,
-    type ChargeError,
-} from './ChargeOnDemandModal.lib';
+import { isInvoiceSettled, isFixableChargeError } from './ChargeOnDemandModal.lib';
+import { useChargeOnDemandOrder } from './useChargeOnDemandOrder';
 import {
     getPayablePaymentMethods,
     isOrderableUnits,
@@ -35,15 +31,12 @@ import { useChargeOnDemandInvoicePreview } from '@/composables/useChargeOnDemand
 import { useAddPaymentMethodStep } from '@/composables/useAddPaymentMethodStep';
 import { useCustomerPaymentMethodOptions } from '@/composables/useCustomerPaymentMethodOptions';
 import { useLogger } from '@/components/providers/LoggerProvider/composables/useLogger';
-import { createInvoicesService } from '@/services/invoices';
-import { isApiError } from '@/services/apiError';
 
 const props = defineProps<ChargeOnDemandModalProps>();
 const emit = defineEmits<ChargeOnDemandModalEmits>();
 
 const { $t } = useIntl();
 const logger = useLogger();
-const { chargeOnDemandPricingItems } = createInvoicesService();
 
 const step = ref<ChargeOnDemandModalStep>('ORDER');
 
@@ -216,9 +209,13 @@ const { invoicePreview, isPreviewPending, hasPreviewFailed, loadPreview } =
 
 const total = computed(() => invoicePreview.value?.invoice_amount_including_tax);
 
-const isCharging = ref(false);
-const chargedInvoice = ref<Invoice>();
-const chargeError = ref<ChargeError>();
+const {
+    isCharging,
+    chargedInvoice,
+    chargeError,
+    charge,
+    reset: resetCharge,
+} = useChargeOnDemandOrder({ pricingPlanScheduleId: computed(() => props.scheduleId) });
 
 const chargeErrorMessage = computed(() => {
     switch (chargeError.value) {
@@ -483,61 +480,23 @@ const confirmButtonText = computed(() => {
     );
 });
 
-const charge = async () => {
+const placeOrder = async () => {
     const pricingItemsToCharge = pricingItems.value;
 
     if (!canSubmit.value || !pricingItemsToCharge || !paymentMethodId.value) {
         return;
     }
 
-    isCharging.value = true;
-    chargeError.value = undefined;
+    const result = await charge({
+        pricingItems: pricingItemsToCharge,
+        paymentMethodId: paymentMethodId.value,
+    });
 
-    try {
-        const invoice = await chargeOnDemandPricingItems({
-            pricing_plan_schedule_id: props.scheduleId,
-            pricing_items: pricingItemsToCharge,
-            payment_method_id: paymentMethodId.value,
-            finalize_immediately: true,
-        });
-
-        chargedInvoice.value = invoice;
-        emit('invoice-created', invoice);
+    if ('invoice' in result) {
+        emit('invoice-created', result.invoice);
         step.value = 'PLACED';
-    } catch (error) {
-        const outcome = getChargeError(error);
-
-        if (isFixableChargeError(outcome)) {
-            chargeError.value = outcome;
-        } else {
-            step.value = outcome;
-        }
-
-        const context = {
-            scheduleId: props.scheduleId,
-            outcome,
-            ...(isApiError(error)
-                ? { statusCode: error.statusCode, field: error.field, requestId: error.requestId }
-                : {}),
-        };
-
-        if (outcome === 'FAILED') {
-            logger.error(
-                'ON_DEMAND_CHARGE_FAILED',
-                'Failed to charge the on-demand order',
-                context,
-                error,
-            );
-        } else {
-            logger.warn(
-                'ON_DEMAND_CHARGE_REFUSED',
-                'The on-demand order was refused or its payment did not go through',
-                context,
-                error,
-            );
-        }
-    } finally {
-        isCharging.value = false;
+    } else if (!isFixableChargeError(result.error)) {
+        step.value = result.error;
     }
 };
 
@@ -552,7 +511,7 @@ const handleConfirm = () => {
         return;
     }
 
-    void charge();
+    void placeOrder();
 };
 
 const handleDone = () => {
@@ -609,8 +568,7 @@ watch(
         step.value = 'ORDER';
         selection.value = [];
         methodIdsBeforeAdding.value = undefined;
-        chargedInvoice.value = undefined;
-        chargeError.value = undefined;
+        resetCharge();
         paymentMethodOptionsError.value = undefined;
     },
 );

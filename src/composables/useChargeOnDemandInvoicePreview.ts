@@ -89,8 +89,13 @@ export function useChargeOnDemandInvoicePreview({
         }
     };
 
+    // Only the first preview for a selection goes out straight away. After that, including after a
+    // failed preview, typing settles first so each keystroke is not its own request.
     useWatchDebounced(pricingItems, () => void loadPreview(), {
-        debounce: () => (invoicePreview.value || isRequestPending.value ? PREVIEW_DEBOUNCE_MS : 0),
+        debounce: () =>
+            invoicePreview.value || isRequestPending.value || hasPreviewFailed.value
+                ? PREVIEW_DEBOUNCE_MS
+                : 0,
         deep: true,
     });
 

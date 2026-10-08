@@ -8,16 +8,12 @@ const mockGooglePayInstance = {
     mount: vi.fn(),
 };
 
-// The SDK calls these with `new`, which vitest rejects on a mock carrying a
-// `mockReturnValue`; a class implementation keeps the constructor-arg assertions.
-class GooglePayStub {
-    constructor() {
-        return mockGooglePayInstance;
-    }
-}
-
-const mockGooglePay = vi.fn();
-mockGooglePay.mockImplementation(GooglePayStub as never);
+// The SDK calls this with `new`, which rules out `mockReturnValue`. A plain function returns
+// the instance either way and still records its constructor arguments — a class
+// implementation is what the spy cannot call.
+const mockGooglePay = vi.fn(function (_checkout: unknown, _configuration: unknown) {
+    return mockGooglePayInstance;
+});
 const mockAdyenCheckout = vi.fn().mockResolvedValue({});
 
 // The components reach the SDK through this loader, which is the SDK's only
@@ -116,7 +112,6 @@ describe('ExpressPaymentMethodGooglePay', () => {
         mockGooglePayInstance.isAvailable.mockResolvedValue(true);
         mockGooglePayInstance.mount.mockClear();
         mockAdyenCheckout.mockResolvedValue({});
-        mockGooglePay.mockImplementation(GooglePayStub as never);
     });
 
     it('should initialize GooglePay on mount', async () => {

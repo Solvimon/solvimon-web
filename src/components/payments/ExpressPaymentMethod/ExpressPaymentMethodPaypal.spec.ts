@@ -1,4 +1,5 @@
 import { mount } from '@vue/test-utils';
+import type { PayPalConfiguration } from '@adyen/adyen-web';
 import { nextTick } from 'vue';
 import type { ExpressPaymentMethodProps } from './ExpressPaymentMethod.types';
 import ExpressPaymentMethodPaypal from './ExpressPaymentMethodPaypal.vue';
@@ -8,16 +9,12 @@ const mockPayPalInstance = {
     mount: vi.fn(),
 };
 
-// The SDK calls these with `new`, which vitest rejects on a mock carrying a
-// `mockReturnValue`; a class implementation keeps the constructor-arg assertions.
-class PayPalStub {
-    constructor() {
-        return mockPayPalInstance;
-    }
-}
-
-const mockPayPal = vi.fn();
-mockPayPal.mockImplementation(PayPalStub as never);
+// The SDK calls this with `new`, which rules out `mockReturnValue`. A plain function returns
+// the instance either way and still records its constructor arguments — a class
+// implementation is what the spy cannot call.
+const mockPayPal = vi.fn(function (_checkout: unknown, _configuration: PayPalConfiguration) {
+    return mockPayPalInstance;
+});
 const mockAdyenCheckout = vi.fn().mockResolvedValue({});
 
 // The components reach the SDK through this loader, which is the SDK's only
@@ -116,7 +113,6 @@ describe('ExpressPaymentMethodPaypal', () => {
         mockPayPalInstance.isAvailable.mockResolvedValue(true);
         mockPayPalInstance.mount.mockClear();
         mockAdyenCheckout.mockResolvedValue({});
-        mockPayPal.mockImplementation(PayPalStub as never);
     });
 
     it('should initialize PayPal on mount', async () => {

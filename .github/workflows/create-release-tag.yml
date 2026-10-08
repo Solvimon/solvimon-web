@@ -7,6 +7,11 @@ on:
         paths:
             - package.json
     workflow_dispatch:
+        inputs:
+            version:
+                description: Version to release. Defaults to the one in package.json.
+                required: false
+                type: string
 
 permissions:
     contents: write
@@ -20,29 +25,46 @@ jobs:
               with:
                   fetch-depth: 0
 
+            # A push compares against what it replaced. A manual run has no such commit —
+            # `github.event.before` is empty there — so it asks the tags what is already released,
+            # which is what makes re-running after a failed publish do something.
             - name: Check package version change
               id: version
+              env:
+                  REQUESTED_VERSION: ${{ inputs.version }}
+                  BEFORE_SHA: ${{ github.event.before }}
               run: |
-                  before_sha="${{ github.event.before }}"
-                  current_version=$(node -p "require('./package.json').version")
+                  package_version=$(node -p "require('./package.json').version")
+                  current_version="${REQUESTED_VERSION:-$package_version}"
 
-                  if ! git cat-file -e "$before_sha:package.json" 2> /dev/null; then
-                      echo "changed=false" >> "$GITHUB_OUTPUT"
-                      echo "Could not read package.json from previous commit; skipping tag creation."
+                  if [ "$current_version" != "$package_version" ]; then
+                      echo "Requested $current_version but package.json is at $package_version."
+                      exit 1
+                  fi
+
+                  echo "current=$current_version" >> "$GITHUB_OUTPUT"
+
+                  if [ -n "$BEFORE_SHA" ] && git cat-file -e "$BEFORE_SHA:package.json" 2> /dev/null; then
+                      previous_version=$(git show "$BEFORE_SHA:package.json" | node -p "JSON.parse(require('fs').readFileSync(0, 'utf8')).version")
+                      echo "previous=$previous_version" >> "$GITHUB_OUTPUT"
+
+                      if [ "$current_version" = "$previous_version" ]; then
+                          echo "changed=false" >> "$GITHUB_OUTPUT"
+                          echo "package.json version did not change; skipping tag creation."
+                          exit 0
+                      fi
+
+                      echo "changed=true" >> "$GITHUB_OUTPUT"
+                      echo "package.json version changed from $previous_version to $current_version."
                       exit 0
                   fi
 
-                  previous_version=$(git show "$before_sha:package.json" | node -p "JSON.parse(require('fs').readFileSync(0, 'utf8')).version")
-
-                  echo "current=$current_version" >> "$GITHUB_OUTPUT"
-                  echo "previous=$previous_version" >> "$GITHUB_OUTPUT"
-
-                  if [ "$current_version" = "$previous_version" ]; then
+                  if git ls-remote --exit-code --tags origin "refs/tags/v$current_version" > /dev/null 2>&1; then
                       echo "changed=false" >> "$GITHUB_OUTPUT"
-                      echo "package.json version did not change; skipping tag creation."
+                      echo "v$current_version is already tagged; skipping tag creation."
                   else
                       echo "changed=true" >> "$GITHUB_OUTPUT"
-                      echo "package.json version changed from $previous_version to $current_version."
+                      echo "v$current_version is not tagged yet; releasing it."
                   fi
 
             - name: Check changelog
@@ -62,7 +84,7 @@ jobs:
             - uses: actions/setup-node@v6
               if: steps.version.outputs.changed == 'true'
               with:
-                  node-version-file: package.json
+                  node-version-file: .nvmrc
                   cache: npm
                   registry-url: https://registry.npmjs.org/
 

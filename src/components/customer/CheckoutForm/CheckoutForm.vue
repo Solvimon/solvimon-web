@@ -42,6 +42,8 @@ const isCompanyPurchase = computed(() => model.value.type === 'ORGANIZATION');
 
 const fields = reactive({
     email: formControlModel(model, 'email', asOptionalText),
+    firstName: formControlModel(model, 'firstName', asOptionalText),
+    lastName: formControlModel(model, 'lastName', asOptionalText),
     addressLine1: formControlModel(model, 'addressLine1', asOptionalText),
     addressLine2: formControlModel(model, 'addressLine2', asOptionalText),
     postalCode: formControlModel(model, 'postalCode', asOptionalText),
@@ -111,6 +113,50 @@ const readableCountryName = computed(() =>
                             :placeholder="labels.emailPlaceholder + getOptionalSuffix('email')"
                             :error="validation.value.email.$errors"
                         />
+
+                        <!-- An organization customer has no field for a person's name. -->
+                        <div v-if="!isCompanyPurchase" class="grid grid-cols-2 gap-2">
+                            <Input
+                                v-model="fields.firstName"
+                                name="first_name"
+                                :label="
+                                    $t({
+                                        defaultMessage: 'First name',
+                                        id: 'checkout.first_name.label',
+                                        description:
+                                            'The first name of the customer in the checkout form',
+                                    })
+                                "
+                                :placeholder="
+                                    $t({
+                                        defaultMessage: 'First name...',
+                                        id: 'checkout.first_name.placeholder',
+                                        description:
+                                            'The first name of the customer in the checkout form',
+                                    }) + getOptionalSuffix('firstName')
+                                "
+                            />
+                            <Input
+                                v-model="fields.lastName"
+                                name="last_name"
+                                :label="
+                                    $t({
+                                        defaultMessage: 'Last name',
+                                        id: 'checkout.last_name.label',
+                                        description:
+                                            'The last name of the customer in the checkout form',
+                                    })
+                                "
+                                :placeholder="
+                                    $t({
+                                        defaultMessage: 'Last name...',
+                                        id: 'checkout.last_name.placeholder',
+                                        description:
+                                            'The last name of the customer in the checkout form',
+                                    }) + getOptionalSuffix('lastName')
+                                "
+                            />
+                        </div>
 
                         <CountrySelect
                             v-model:single-model-value="country"

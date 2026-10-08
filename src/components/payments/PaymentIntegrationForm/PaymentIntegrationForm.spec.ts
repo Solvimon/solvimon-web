@@ -1,4 +1,4 @@
-import { mount } from '@vue/test-utils';
+import { flushPromises, mount } from '@vue/test-utils';
 import { describe, expect, it, vi } from 'vitest';
 import PaymentIntegrationForm from './PaymentIntegrationForm.vue';
 import { createPaymentMethodOptionEntry } from '@/test-utils/paymentMethodOptionsFixture';
@@ -48,5 +48,30 @@ describe('PaymentIntegrationForm', () => {
 
     it('passes nothing on when the screen has no name to give', () => {
         expect(adyenStub(mountForm()).attributes('billing-entity-name')).toBeUndefined();
+    });
+
+    it('asks for a payment method when the gateway form has none open', async () => {
+        const wrapper = mountForm();
+        await flushPromises();
+        expect(wrapper.find('form-message-stub').exists()).toBe(false);
+
+        wrapper
+            .findComponent({ name: 'PaymentIntegrationFormAdyen' })
+            .vm.$emit('invalid', 'NO_PAYMENT_METHOD');
+        await flushPromises();
+
+        expect(wrapper.find('form-message-stub').exists()).toBe(true);
+        expect(wrapper.emitted('invalid')).toEqual([['NO_PAYMENT_METHOD']]);
+    });
+
+    it('leaves marking what is missing to the gateway form otherwise', async () => {
+        const wrapper = mountForm();
+        await flushPromises();
+
+        wrapper.findComponent({ name: 'PaymentIntegrationFormAdyen' }).vm.$emit('invalid');
+        await flushPromises();
+
+        expect(wrapper.find('form-message-stub').exists()).toBe(false);
+        expect(wrapper.emitted('invalid')).toHaveLength(1);
     });
 });

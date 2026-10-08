@@ -81,7 +81,11 @@ export interface PaymentIntegrationFormEmits {
      * Emitted when a payment is successful.
      */
     (e: 'payment-success'): void;
-    (e: 'invalid'): void;
+    /**
+     * Emitted when a submit is not sent. `NO_PAYMENT_METHOD` means no payment method is open in
+     * the form, so there are no fields of its own to mark.
+     */
+    (e: 'invalid', reason?: 'NO_PAYMENT_METHOD'): void;
     /**
      * Emitted when the payment integration form is ready and the payment integration form is initialized.
      */

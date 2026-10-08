@@ -116,6 +116,12 @@ function emitError(err: Omit<Error, 'reference'>) {
 
 function submit() {
     if (!dropInInstance?.isValid) {
+        // Drop-in validates only the open payment method; with none open it shows nothing.
+        if (dropInInstance && !dropInInstance.activePaymentMethod) {
+            emit('invalid', 'NO_PAYMENT_METHOD');
+            return;
+        }
+
         dropInInstance?.showValidation();
         emit('invalid');
         return;

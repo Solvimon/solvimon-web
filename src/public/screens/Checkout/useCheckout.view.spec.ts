@@ -619,6 +619,33 @@ describe('useCheckoutView', () => {
         });
     });
 
+    it('drops a name entered before switching to a company purchase', () => {
+        const checkoutFormMock = createMockCheckoutForm({
+            email: 'company@example.com',
+            country: 'NL' as CountryCode,
+            type: 'ORGANIZATION' as const,
+            companyLegalName: 'Acme Corp',
+            firstName: 'John',
+            lastName: 'Doe',
+        });
+
+        mockUseCheckoutForm.mockReturnValue(checkoutFormMock);
+
+        const result = useCheckoutView({
+            initialCountry: undefined,
+            initialEmail: undefined,
+            subscriptionId: 'sub_123' as PricingPlanSubscription['id'],
+        });
+
+        const customerDetails = (
+            result.authorizationContext.value as AuthorizePaymentInitPricingPlanSubscriptionContext
+        ).init_pricing_plan_subscription.customer_details;
+
+        expect(customerDetails.individual).toBeUndefined();
+        expect(customerDetails.organization).not.toHaveProperty('name');
+        expect(customerDetails.organization?.legal_name).toBe('Acme Corp');
+    });
+
     it('includes enabled pricing IDs in authorization context when provided', () => {
         const subscriptionId = 'sub_123' as PricingPlanSubscription['id'];
         const enabledPricingIds = ['pricing_1', 'pricing_2'] as Pricing['id'][];

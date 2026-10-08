@@ -54,6 +54,7 @@
   "charge_on_demand_modal.failed.title": "Something went wrong",
   "charge_on_demand_modal.payment_failed.subtitle": "We couldn't take the payment for this order. If an invoice was created, you'll find it in your invoice list.",
   "charge_on_demand_modal.payment_failed.title": "Payment not completed",
+  "charge_on_demand_modal.payment_failed.unpaid_invoice.subtitle": "We couldn't take the payment for this order. Its invoice is in your invoice list, waiting to be paid.",
   "charge_on_demand_modal.payment_method_options_error": "We couldn't load the ways to add a payment method. Please try again.",
   "charge_on_demand_modal.placed.title": "Order placed",
   "charge_on_demand_modal.placed.unpaid.subtitle": "Your invoice was created, but it isn't paid yet. You'll find it in your invoice list.",

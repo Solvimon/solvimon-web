@@ -213,6 +213,7 @@ const {
     isCharging,
     chargedInvoice,
     chargeError,
+    unpaidInvoiceId,
     charge,
     reset: resetCharge,
 } = useChargeOnDemandOrder({ pricingPlanScheduleId: computed(() => props.scheduleId) });
@@ -364,6 +365,16 @@ const subTitle = computed(() => {
                       'Subtitle of the on-demand order modal when the order was placed but its invoice is not paid',
                   id: 'charge_on_demand_modal.placed.unpaid.subtitle',
               });
+    }
+
+    if (step.value === 'PAYMENT_FAILED' && unpaidInvoiceId.value) {
+        return $t({
+            defaultMessage:
+                "We couldn't take the payment for this order. Its invoice is in your invoice list, waiting to be paid.",
+            description:
+                'Subtitle of the on-demand order modal when the order was placed but the payment for its invoice was refused',
+            id: 'charge_on_demand_modal.payment_failed.unpaid_invoice.subtitle',
+        });
     }
 
     if (step.value === 'PAYMENT_FAILED') {
@@ -522,6 +533,10 @@ const leadsWithInvoice = computed(
     () => isOrderPlaced.value && !isOrderPaid.value && props.canViewCreatedInvoice,
 );
 
+const canViewUnpaidInvoice = computed(
+    () => step.value === 'PAYMENT_FAILED' && !!unpaidInvoiceId.value && props.canViewCreatedInvoice,
+);
+
 const viewInvoiceButtonText = computed(() =>
     $t({
         defaultMessage: 'Go to invoice',
@@ -531,12 +546,12 @@ const viewInvoiceButtonText = computed(() =>
 );
 
 const handleViewInvoice = () => {
-    const invoice = chargedInvoice.value;
+    const invoiceId = chargedInvoice.value?.id ?? unpaidInvoiceId.value;
 
     handleDone();
 
-    if (invoice) {
-        emit('view-invoice', invoice.id);
+    if (invoiceId) {
+        emit('view-invoice', invoiceId);
     }
 };
 
@@ -688,8 +703,20 @@ watch(
             </div>
             <div v-else-if="hasChargeFailed" class="flex flex-col gap-2">
                 <Button
+                    v-if="canViewUnpaidInvoice"
                     size="lg"
                     class="sv-action sv-action--primary"
+                    data-testid="charge-on-demand-view-invoice"
+                    @click="handleViewInvoice"
+                    >{{ viewInvoiceButtonText }}</Button
+                >
+                <Button
+                    size="lg"
+                    :intent="canViewUnpaidInvoice ? 'subtle' : 'primary'"
+                    :class="[
+                        'sv-action',
+                        canViewUnpaidInvoice ? 'sv-action--secondary' : 'sv-action--primary',
+                    ]"
                     data-testid="charge-on-demand-close"
                     @click="handleCancel"
                     >{{ confirmButtonText }}</Button

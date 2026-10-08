@@ -515,9 +515,9 @@ describe('ChargeOnDemandModal', () => {
         });
 
         describe('when the charge fails', () => {
-            const failCharge = async (error: unknown) => {
+            const failCharge = async (error: unknown, props: Record<string, unknown> = {}) => {
                 mockCharge.mockRejectedValue(error);
-                const wrapper = mountModal();
+                const wrapper = mountModal(props);
                 await addItemAndWaitForTotal(wrapper);
                 await findConfirm(wrapper).trigger('click');
                 await flushPromises();
@@ -623,6 +623,51 @@ describe('ChargeOnDemandModal', () => {
 
                 expect(wrapper.emitted('close')).toHaveLength(1);
                 expect(wrapper.emitted('invoice-created')).toBeUndefined();
+            });
+
+            describe('when the payment for the placed order is refused', () => {
+                const refusedPayment = new ApiError({
+                    statusCode: 422,
+                    resourceType: 'PAYMENT',
+                    resourceId: 'inv_unpaid',
+                });
+                const findViewInvoice = (wrapper: ReturnType<typeof mountModal>) =>
+                    wrapper.find('[data-testid="charge-on-demand-view-invoice"]');
+
+                it('says the invoice is waiting to be paid', async () => {
+                    const wrapper = await failCharge(refusedPayment);
+
+                    expect(wrapper.text()).toContain(
+                        'Its invoice is in your invoice list, waiting to be paid.',
+                    );
+                });
+
+                it('takes the customer to the unpaid invoice when the host can open it', async () => {
+                    const wrapper = await failCharge(refusedPayment, {
+                        canViewCreatedInvoice: true,
+                    });
+
+                    await findViewInvoice(wrapper).trigger('click');
+
+                    expect(wrapper.emitted('view-invoice')).toEqual([['inv_unpaid']]);
+                    expect(wrapper.emitted('close')).toHaveLength(1);
+                });
+
+                it('offers no way to the invoice unless the host can open it', async () => {
+                    const wrapper = await failCharge(refusedPayment);
+
+                    expect(findViewInvoice(wrapper).exists()).toBe(false);
+                });
+
+                it('offers no invoice when the API did not name one', async () => {
+                    const wrapper = await failCharge(
+                        new ApiError({ statusCode: 422, resourceType: 'PAYMENT' }),
+                        { canViewCreatedInvoice: true },
+                    );
+
+                    expect(findViewInvoice(wrapper).exists()).toBe(false);
+                    expect(wrapper.text()).toContain('If an invoice was created');
+                });
             });
         });
     });

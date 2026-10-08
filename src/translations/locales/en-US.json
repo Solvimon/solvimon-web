@@ -163,9 +163,9 @@
   "enabled_pricings_list.item.upgrade_button.label": "Upgrade",
   "enabled_pricings_list.title": "Upgrades",
   "invoice_credits.balance.table_header": "Balance",
-  "invoice_credits.credit_breakdown.table_header": "Credit breakdown",
   "invoice_credits.remaining.table_header": "Remaining",
   "invoice_credits.used.table_header": "Used",
+  "invoice_credits.wallet_breakdown.table_header": "Wallet breakdown",
   "invoice_preview.taxes_not_determined_by_billing_information_tooltip": "Will be determined by billing information",
   "invoice_table.button.load_more": "Load more",
   "invoice_table.chip.paid": "Paid",
@@ -315,5 +315,5 @@
   "wallet_balance.details.header": "Wallet balance",
   "wallet_balance.load_failed": "Could not load wallet balances",
   "wallet_balance.service_period_heading": "Service period - {startAt} - {endAt}",
-  "wallet_balance.wallet_label": "Wallet"
+  "wallet_balance.wallet_label": "Wallet balance"
 }

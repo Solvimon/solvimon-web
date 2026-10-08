@@ -163,9 +163,9 @@
     "enabled_pricings_list.item.upgrade_button.label": "Upgraden",
     "enabled_pricings_list.title": "Upgrades",
     "invoice_credits.balance.table_header": "Saldo",
-    "invoice_credits.credit_breakdown.table_header": "Kredietoverzicht",
     "invoice_credits.remaining.table_header": "Resterend",
     "invoice_credits.used.table_header": "Gebruikt",
+    "invoice_credits.wallet_breakdown.table_header": "Walletoverzicht",
     "invoice_preview.taxes_not_determined_by_billing_information_tooltip": "Wordt bepaald aan de hand van de factuurgegevens",
     "invoice_table.button.load_more": "Meer laden",
     "invoice_table.chip.paid": "Betaald",
@@ -315,5 +315,5 @@
     "wallet_balance.details.header": "Walletsaldo",
     "wallet_balance.load_failed": "Walletsaldi konden niet worden geladen",
     "wallet_balance.service_period_heading": "Serviceperiode - {startAt} - {endAt}",
-    "wallet_balance.wallet_label": "Wallet"
+    "wallet_balance.wallet_label": "Walletsaldo"
 }

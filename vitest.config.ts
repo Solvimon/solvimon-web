@@ -2,8 +2,6 @@ import { fileURLToPath } from 'node:url';
 import { mergeConfig, defineConfig, configDefaults } from 'vitest/config';
 import viteConfig from './vite.config';
 
-// The vite config is a function of its mode now, and `mergeConfig` merges objects. Calling it with
-// the mode tests actually run in is also what keeps `console` and the test ids in the suite.
 export default mergeConfig(
     viteConfig({ command: 'serve', mode: 'test' }),
     defineConfig({

@@ -179,20 +179,13 @@ export default defineConfig(({ mode }) => {
             }),
             dropRedundantStylesheet(),
             dts({
-                // `rollupTypes` in vite-plugin-dts 4; bundling stays off either way.
                 bundleTypes: false,
                 outDirs: './dist',
                 include: [
                     'env.d.ts',
                     'src/types/**/*.ts',
-                    // The public type contract, and every type module the public entry props reach
-                    // through, so the published declarations resolve instead of quietly falling back
-                    // to `any`.
                     'src/public/types/**/*.ts',
                     'src/**/*.types.ts',
-                    // Modules those type files import from that are not themselves `*.types.ts`.
-                    // Kept to the ones that resolve on their own: chasing the rest would mean emitting
-                    // declarations for all of `src`, and nothing a consumer writes goes through them.
                     'src/translations/supported.js',
                     'src/public/screens/types.ts',
                     'src/config/**/*.ts',

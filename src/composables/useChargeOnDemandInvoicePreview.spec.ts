@@ -160,6 +160,49 @@ describe('useChargeOnDemandInvoicePreview', () => {
         expect(mockPreview).toHaveBeenCalledTimes(1);
     });
 
+    it('clears the preview the moment there is nothing to preview', async () => {
+        const { amount, invoicePreview, isPreviewPending } = setup();
+        amount.value = amountOf('25');
+        await vi.runAllTimersAsync();
+        expect(invoicePreview.value).toEqual(invoice);
+
+        amount.value = undefined;
+
+        expect(invoicePreview.value).toBeUndefined();
+        expect(isPreviewPending.value).toBe(false);
+    });
+
+    it('clears a failed preview the moment there is nothing to preview', async () => {
+        const { amount, hasPreviewFailed } = setup();
+        mockPreview.mockRejectedValueOnce(new Error('nope'));
+        amount.value = amountOf('25');
+        await vi.runAllTimersAsync();
+        expect(hasPreviewFailed.value).toBe(true);
+
+        amount.value = undefined;
+
+        expect(hasPreviewFailed.value).toBe(false);
+    });
+
+    it('drops a preview still out when there is nothing to preview any more', async () => {
+        let resolve: (value: Invoice) => void = () => {};
+        mockPreview.mockImplementationOnce(
+            () =>
+                new Promise<Invoice>((r) => {
+                    resolve = r;
+                }),
+        );
+        const { amount, invoicePreview } = setup();
+        amount.value = amountOf('25');
+        await nextTick();
+
+        amount.value = undefined;
+        resolve(invoice);
+        await vi.advanceTimersByTimeAsync(0);
+
+        expect(invoicePreview.value).toBeUndefined();
+    });
+
     it('does not request a preview without a schedule to charge on', async () => {
         const { amount } = setup({ scheduleId: '' });
 

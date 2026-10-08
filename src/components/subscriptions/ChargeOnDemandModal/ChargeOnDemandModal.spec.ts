@@ -262,6 +262,22 @@ describe('ChargeOnDemandModal', () => {
         },
     );
 
+    it("does not show the last order's total when it is opened again", async () => {
+        const wrapper = mountModal();
+        findForm(wrapper).vm.$emit('update:selection', [
+            { pricingItemId: 'prii_consulting', units: 2 },
+        ]);
+        await vi.runAllTimersAsync();
+        await flushPromises();
+        expect(findForm(wrapper).props('preview')).toEqual(preview);
+
+        await wrapper.setProps({ showModal: false });
+        await wrapper.setProps({ showModal: true });
+
+        expect(findForm(wrapper).props('preview')).toBeUndefined();
+        expect(findForm(wrapper).props('isPreviewLoading')).toBe(false);
+    });
+
     it('says the total failed to load and asks for it again from the pay button', async () => {
         mockPreview.mockRejectedValueOnce(new Error('nope'));
         const wrapper = mountModal();

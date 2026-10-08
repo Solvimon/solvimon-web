@@ -27,7 +27,6 @@ const getInvoiceAndPaymentMethodOptions = async () => {
 
     await getPaymentMethodOptions({
         customerId: invoice.customer.id,
-        // Scopes the acceptors to the ones this invoice can be paid through (DD-3533).
         invoiceId: invoice.id,
         amount: invoice.open_invoice_amount,
     });

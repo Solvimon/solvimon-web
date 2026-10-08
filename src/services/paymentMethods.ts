@@ -88,6 +88,7 @@ export function createPaymentMethodsService() {
         customerId,
         country,
         subscriptionId,
+        invoiceId,
         amount,
     }: GetPaymentMethodOptionsPayload): Promise<PaymentMethodOptionsResponse> {
         return request<PaymentMethodOptionsResponse>({
@@ -97,6 +98,7 @@ export function createPaymentMethodsService() {
                 ...(customerId && { customer_id: customerId }),
                 ...(country && { country }),
                 ...(subscriptionId && { pricing_plan_subscription_id: subscriptionId }),
+                ...(invoiceId && { invoice_id: invoiceId }),
                 amount,
             },
         });

@@ -21,6 +21,7 @@ export function usePaymentMethodOptions() {
             ? getPaymentMethodOptions({
                   customerId: payload.customerId,
                   subscriptionId: payload.subscriptionId,
+                  invoiceId: payload.invoiceId,
                   amount: payload.amount,
                   country: payload.country,
               })

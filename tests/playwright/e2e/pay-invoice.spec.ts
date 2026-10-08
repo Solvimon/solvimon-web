@@ -55,9 +55,11 @@ test.describe('Pay invoice', () => {
                 invoice: anInvoiceRecord({ total: '75.00', openAmount: '25.00' }),
             });
 
-            // What is left to pay, not what the invoice was for.
+            // What is left to pay, not what the invoice was for — and asked of the invoice, so
+            // the answer only carries acceptors it can be paid through (DD-3533).
             expect(api.lastCall('paymentMethodOptions')?.body).toEqual({
                 customer_id: CUSTOMER_ID,
+                invoice_id: INVOICE_ID,
                 amount: { quantity: '25.00', currency: 'EUR' },
             });
         });
@@ -243,6 +245,16 @@ test.describe('Pay invoice', () => {
             },
             invoice: anInvoiceRecord({ paymentAcceptorIds: ['paya_test_1'] }),
         };
+
+        test('asks the API for the acceptors this invoice can be paid through', async ({
+            page,
+        }) => {
+            api = await mountLoaded(page);
+
+            expect(api.lastCall('paymentMethodOptions')?.body).toMatchObject({
+                invoice_id: INVOICE_ID,
+            });
+        });
 
         test('pays through an acceptor the invoice accepts', async ({ page }) => {
             api = await mountLoaded(page, twoAcceptors);

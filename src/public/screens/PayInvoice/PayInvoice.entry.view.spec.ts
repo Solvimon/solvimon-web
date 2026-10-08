@@ -120,11 +120,13 @@ describe('PayInvoice.entry.view', () => {
         ]);
     });
 
-    it('asks for the options of the customer the invoice is addressed to', async () => {
+    // The API narrows the acceptors to the invoice; the filter above is the guard behind it.
+    it('asks for the options of the invoice being paid, not of the customer alone', async () => {
         await mountEntryView(createInvoice([ALLOWED_ACCEPTOR_ID]));
 
         expect(mockGetOptions).toHaveBeenCalledWith({
             customerId: 'cust_1',
+            invoiceId: 'invo_1',
             amount: { currency: 'EUR', quantity: '99.00' },
         });
     });

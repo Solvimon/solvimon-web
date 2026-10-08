@@ -93,4 +93,48 @@ describe('paymentMethods service', () => {
             });
         });
     });
+
+    describe('getPaymentMethodOptions', () => {
+        beforeEach(() => {
+            mockRequest.mockResolvedValue([]);
+        });
+
+        // Without it the answer carries every acceptor the customer has, including ones this
+        // invoice refuses, and paying through one of those fails with a 400 (DD-3533).
+        it('names the invoice being paid, so the API answers for that invoice', async () => {
+            const { getPaymentMethodOptions } = createPaymentMethodsService();
+            await getPaymentMethodOptions({
+                customerId: 'cust_1',
+                invoiceId: 'invo_1',
+                amount: { quantity: '20.00', currency: 'EUR' },
+            });
+
+            expect(mockRequest).toHaveBeenCalledWith({
+                url: 'https://api.test/portal/payment-method-options',
+                options: { method: 'POST' },
+                data: {
+                    customer_id: 'cust_1',
+                    invoice_id: 'invo_1',
+                    amount: { quantity: '20.00', currency: 'EUR' },
+                },
+            });
+        });
+
+        it('leaves the invoice out when there is none to pay', async () => {
+            const { getPaymentMethodOptions } = createPaymentMethodsService();
+            await getPaymentMethodOptions({ customerId: 'cust_1' });
+
+            expect(mockRequest.mock.calls[0][0].data).not.toHaveProperty('invoice_id');
+        });
+
+        it('scopes by subscription for a checkout instead', async () => {
+            const { getPaymentMethodOptions } = createPaymentMethodsService();
+            await getPaymentMethodOptions({ subscriptionId: 'ppsu_1', country: 'NL' });
+
+            expect(mockRequest.mock.calls[0][0].data).toMatchObject({
+                pricing_plan_subscription_id: 'ppsu_1',
+                country: 'NL',
+            });
+        });
+    });
 });

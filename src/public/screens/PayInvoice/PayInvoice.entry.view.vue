@@ -28,6 +28,8 @@ const getInvoiceAndPaymentMethodOptions = async () => {
 
     await getPaymentMethodOptions({
         customerId: invoice.customer.id,
+        // Scopes the acceptors to the ones this invoice can be paid through (DD-3533).
+        invoiceId: invoice.id,
         amount: invoice.open_invoice_amount,
     });
 };
@@ -43,9 +45,9 @@ const countryCode = computed(() =>
 );
 
 /**
- * The options are looked up for the customer, who may pay through acceptors this invoice does not
- * accept. Authorizing against one of those fails with a 400 nothing on the screen can recover
- * from, so only what the invoice takes is offered (DD-3533).
+ * A guard behind the `invoice_id` sent above: authorizing against an acceptor the invoice refuses
+ * fails with a 400 nothing on the screen can recover from, so an answer that carries one anyway
+ * still never reaches the customer (DD-3533).
  */
 const payableMethodOptions = computed(() =>
     getPaymentMethodOptionsForAcceptors(

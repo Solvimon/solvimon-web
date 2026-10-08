@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - `INVOICE_PREVIEW_FAILED` and `PAYMENT_METHOD_OPTIONS_LOAD_FAILED` carry the same message wherever they are logged, and name the flow in the context instead: `preview` (`CHECKOUT`, `SUBSCRIPTION_UPGRADE` or `ON_DEMAND_CHARGE`) and `flow` (`CHECKOUT` or `ON_DEMAND_ORDER`). Match on the code and context rather than the message.
+- The invoice's wallet balance table (`sv-invoice__credits-breakdown`) reads an invoice line's `wallet_balances`, which replaces the deprecated `wallet_balance_details`, and lists every wallet that paid the invoice. A wallet that holds money rather than credits is now included, shown as an amount under a "Wallet balance" label, and the table's first column reads "Wallet breakdown" instead of "Credit breakdown", as in the portal and the invoice PDF. The column header's message id changed from `invoice_credits.credit_breakdown.table_header` to `invoice_credits.wallet_breakdown.table_header`; a `messages` override for the old id no longer applies, so move it to the new one.
 
 ### Fixed
 

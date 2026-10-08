@@ -179,6 +179,10 @@
     "defaultMessage": "Close",
     "description": "Closes the on-demand order modal when the order did not go through"
   },
+  "charge_on_demand_modal.confirm_button.invalid_units": {
+    "defaultMessage": "Check the quantities to continue",
+    "description": "Disabled pay button of the on-demand order while an item has a quantity that cannot be ordered"
+  },
   "charge_on_demand_modal.confirm_button.no_items": {
     "defaultMessage": "Add an item to continue",
     "description": "Disabled pay button of the on-demand order while no item is added"
@@ -250,6 +254,10 @@
   "charge_on_demand_modal.unavailable.title": {
     "defaultMessage": "Ordering isn't available",
     "description": "Title shown instead of the on-demand order form when the subscription cannot take payments"
+  },
+  "charge_on_demand_modal.units_error": {
+    "defaultMessage": "Enter a whole number of 1 or more.",
+    "description": "Shown under the quantity of an on-demand order item that is not a whole number of 1 or more"
   },
   "charge_on_demand_modal.view_invoice_button.label": {
     "defaultMessage": "Go to invoice",

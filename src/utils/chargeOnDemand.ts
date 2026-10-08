@@ -29,7 +29,8 @@ const getConfigPrice = (config: PricingItemConfig, priceType: ChargeOnDemandPric
     return priceType === 'FIXED' ? band?.fixed_amount : band?.amount;
 };
 
-const isOrderableUnits = (units: number | undefined): units is number =>
+/** Whether `units` is a quantity a FLAT item can be ordered in: a whole number of 1 or more. */
+export const isOrderableUnits = (units: number | undefined): units is number =>
     typeof units === 'number' && Number.isInteger(units) && units >= 1;
 
 const getDefaultUnits = (config: PricingItemConfig): number => {
@@ -166,8 +167,8 @@ export const getPayablePaymentMethods = (
 /**
  * The `pricing_items` of a charge on demand request, in the order the items were added. The
  * backend reports an item's errors by its index here, and rejects `units` on anything but FLAT.
- * A FLAT item's units fall back to its default units unless they are a whole number of 1 or more,
- * as the units field can hold whatever was typed into it.
+ * Units are sent as entered: the order validates them with `isOrderableUnits` before it previews
+ * or charges, so a quantity the customer did not choose is never charged.
  */
 export const toChargePricingItems = (
     selection: ChargeOnDemandSelectionItem[],
@@ -179,14 +180,7 @@ export const toChargePricingItems = (
             return [];
         }
 
-        return item.priceType === 'FLAT'
-            ? [
-                  {
-                      pricing_item_id: pricingItemId,
-                      units: {
-                          number: String(isOrderableUnits(units) ? units : item.defaultUnits),
-                      },
-                  },
-              ]
+        return item.priceType === 'FLAT' && units !== undefined
+            ? [{ pricing_item_id: pricingItemId, units: { number: String(units) } }]
             : [{ pricing_item_id: pricingItemId }];
     });

@@ -228,6 +228,38 @@ describe('ChargeOnDemandModal', () => {
         expect(findConfirm(wrapper).attributes()).not.toHaveProperty('disabled');
     });
 
+    it.each([0, 2.5, undefined])(
+        'holds an order with %s units until the quantity can be ordered',
+        async (units) => {
+            const wrapper = mountModal();
+
+            findForm(wrapper).vm.$emit('update:selection', [
+                { pricingItemId: 'prii_consulting', units },
+            ]);
+            await vi.runAllTimersAsync();
+            await flushPromises();
+
+            expect(mockPreview).not.toHaveBeenCalled();
+            expect(findForm(wrapper).props('errors')).toEqual({
+                items: { prii_consulting: 'Enter a whole number of 1 or more.' },
+            });
+            expect(findConfirm(wrapper).text()).toBe('Check the quantities to continue');
+            expect(findConfirm(wrapper).attributes()).toHaveProperty('disabled');
+
+            findForm(wrapper).vm.$emit('update:selection', [
+                { pricingItemId: 'prii_consulting', units: 3 },
+            ]);
+            await vi.runAllTimersAsync();
+            await flushPromises();
+
+            expect(findForm(wrapper).props('errors')).toBeUndefined();
+            expect(mockPreview).toHaveBeenCalledWith({
+                pricingPlanScheduleId: 'ppsc_1',
+                pricingItems: [{ pricing_item_id: 'prii_consulting', units: { number: '3' } }],
+            });
+        },
+    );
+
     it('says the total failed to load and asks for it again from the pay button', async () => {
         mockPreview.mockRejectedValueOnce(new Error('nope'));
         const wrapper = mountModal();

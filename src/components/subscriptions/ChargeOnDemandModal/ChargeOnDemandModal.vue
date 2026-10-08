@@ -7,10 +7,12 @@ import {
     getCustomerCountry,
     useIntl,
     formatAmount,
+    useValidation,
 } from '@solvimon/solvimon-ui';
 import type { ChargeOnDemandSelectionItem } from '@solvimon/solvimon-ui';
 import type { Invoice, PaymentMethod } from '@solvimon/solvimon-types';
-import { computed, ref, watch } from 'vue';
+import { helpers } from '@vuelidate/validators';
+import { computed, reactive, ref, watch } from 'vue';
 import type {
     ChargeOnDemandModalEmits,
     ChargeOnDemandModalProps,
@@ -23,7 +25,11 @@ import {
     isFixableChargeError,
     type ChargeError,
 } from './ChargeOnDemandModal.lib';
-import { getPayablePaymentMethods, toChargePricingItems } from '@/utils/chargeOnDemand';
+import {
+    getPayablePaymentMethods,
+    isOrderableUnits,
+    toChargePricingItems,
+} from '@/utils/chargeOnDemand';
 import EmptyStatePlaceholder from '@/components/checkout/EmptyStatePlaceholder.vue';
 import OnDemandPaymentModalShell from '@/components/payments/OnDemandPaymentModalShell/OnDemandPaymentModalShell.vue';
 import { useChargeOnDemandInvoicePreview } from '@/composables/useChargeOnDemandInvoicePreview';
@@ -158,8 +164,62 @@ const handlePaymentMethodStored = () => {
     emit('payment-method-stored');
 };
 
+/**
+ * Every line carries `units` and its price type: Vuelidate's `forEach` only runs a property's
+ * rules on lines that have the key, and a cleared units field can leave it out.
+ */
+const validationState = reactive({
+    lines: computed(() =>
+        selection.value.map(({ pricingItemId, units }) => ({
+            pricingItemId,
+            priceType: props.items.find((item) => item.pricingItemId === pricingItemId)?.priceType,
+            units,
+        })),
+    ),
+});
+
+const validation = useValidation(
+    {
+        lines: {
+            $each: helpers.forEach({
+                units: {
+                    orderable: helpers.withMessage(
+                        () =>
+                            $t({
+                                defaultMessage: 'Enter a whole number of 1 or more.',
+                                description:
+                                    'Shown under the quantity of an on-demand order item that is not a whole number of 1 or more',
+                                id: 'charge_on_demand_modal.units_error',
+                            }),
+                        (units: number | undefined, line: { priceType?: string }) =>
+                            line.priceType !== 'FLAT' || isOrderableUnits(units),
+                    ),
+                },
+            }),
+        },
+    },
+    validationState,
+);
+
+const hasInvalidUnits = computed(() => validation.value.lines.$invalid);
+
+/** Shown as the customer types, since invalid units also hold back the total. */
+const itemErrors = computed(() => {
+    const { $errors = [] }: { $errors?: { units?: { $message: unknown }[] }[] } =
+        validation.value.lines.$each.$response ?? {};
+
+    const entries = validationState.lines.flatMap(({ pricingItemId }, index) => {
+        const message = $errors[index]?.units?.[0]?.$message;
+        return message ? [[pricingItemId, String(message)] as const] : [];
+    });
+
+    return entries.length > 0 ? Object.fromEntries(entries) : undefined;
+});
+
 const pricingItems = computed(() =>
-    selection.value.length > 0 ? toChargePricingItems(selection.value, props.items) : undefined,
+    selection.value.length > 0 && !hasInvalidUnits.value
+        ? toChargePricingItems(selection.value, props.items)
+        : undefined,
 );
 
 const { invoicePreview, isPreviewPending, hasPreviewFailed, loadPreview } =
@@ -239,6 +299,12 @@ const formError = computed(
     () => chargeErrorMessage.value ?? previewError.value ?? paymentMethodOptionsError.value,
 );
 
+const editorErrors = computed(() =>
+    formError.value || itemErrors.value
+        ? { form: formError.value, items: itemErrors.value }
+        : undefined,
+);
+
 const isOrderPlaced = computed(() => step.value === 'PLACED');
 
 const isOrderPaid = computed(
@@ -253,6 +319,7 @@ const canSubmit = computed(
         canTakePayments.value &&
         !isOrderingBlocked.value &&
         selection.value.length > 0 &&
+        !hasInvalidUnits.value &&
         !!paymentMethodId.value &&
         !!total.value &&
         !isPreviewPending.value,
@@ -392,6 +459,15 @@ const confirmButtonText = computed(() => {
             defaultMessage: 'Add an item to continue',
             description: 'Disabled pay button of the on-demand order while no item is added',
             id: 'charge_on_demand_modal.confirm_button.no_items',
+        });
+    }
+
+    if (hasInvalidUnits.value) {
+        return $t({
+            defaultMessage: 'Check the quantities to continue',
+            description:
+                'Disabled pay button of the on-demand order while an item has a quantity that cannot be ordered',
+            id: 'charge_on_demand_modal.confirm_button.invalid_units',
         });
     }
 
@@ -586,7 +662,7 @@ watch(
                 :preview="invoicePreview"
                 :is-preview-loading="isPreviewPending"
                 :payment-methods="payablePaymentMethods"
-                :errors="formError ? { form: formError } : undefined"
+                :errors="editorErrors"
                 :disabled="isCharging"
                 can-add-payment-method
                 @add-payment-method="handleAddPaymentMethod"

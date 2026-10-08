@@ -11,6 +11,7 @@ import { describe, expect, it } from 'vitest';
 import {
     getChargeableOnDemandItems,
     getPayablePaymentMethods,
+    isOrderableUnits,
     toChargePricingItems,
 } from './chargeOnDemand';
 
@@ -346,6 +347,16 @@ describe('getPayablePaymentMethods', () => {
     });
 });
 
+describe('isOrderableUnits', () => {
+    it.each([1, 2, 100])('accepts %s', (units) => {
+        expect(isOrderableUnits(units)).toBe(true);
+    });
+
+    it.each([undefined, NaN, 0, -2, 1.5])('rejects %s', (units) => {
+        expect(isOrderableUnits(units)).toBe(false);
+    });
+});
+
 describe('toChargePricingItems', () => {
     it('sends units for FLAT items only, in the order they were added', () => {
         expect(
@@ -362,13 +373,22 @@ describe('toChargePricingItems', () => {
         ]);
     });
 
-    it.each([NaN, 0, -2, 1.5])('sends the default units for %s units', (units) => {
+    it('sends units as entered rather than replacing ones that cannot be ordered', () => {
         expect(
             toChargePricingItems(
-                [{ pricingItemId: 'pricing-item-consulting', units }],
+                [{ pricingItemId: 'pricing-item-consulting', units: 0 }],
                 chargeOnDemandItemsFixture,
             ),
-        ).toEqual([{ pricing_item_id: 'pricing-item-consulting', units: { number: '2' } }]);
+        ).toEqual([{ pricing_item_id: 'pricing-item-consulting', units: { number: '0' } }]);
+    });
+
+    it('leaves out the units of a FLAT item that has none', () => {
+        expect(
+            toChargePricingItems(
+                [{ pricingItemId: 'pricing-item-consulting' }],
+                chargeOnDemandItemsFixture,
+            ),
+        ).toEqual([{ pricing_item_id: 'pricing-item-consulting' }]);
     });
 
     it('leaves out items that are not listed', () => {

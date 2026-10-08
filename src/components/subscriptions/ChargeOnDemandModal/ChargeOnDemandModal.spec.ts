@@ -686,5 +686,44 @@ describe('ChargeOnDemandModal', () => {
 
             expect(findForm(wrapper).props('paymentMethodId')).toBe('pmet_new');
         });
+
+        it('keeps the chosen method when the customer goes back without storing one', async () => {
+            const wrapper = mountModal();
+            findForm(wrapper).vm.$emit('update:paymentMethodId', 'pmet_other');
+            await openAddPaymentMethod(wrapper);
+
+            await wrapper.find('[data-testid="charge-on-demand-cancel"]').trigger('click');
+            await wrapper.setProps({
+                paymentMethods: [card('pmet_other'), card('pmet_subscription'), card('pmet_new')],
+            });
+
+            expect(findForm(wrapper).props('paymentMethodId')).toBe('pmet_other');
+        });
+
+        it('keeps the chosen method on later reloads when the stored one cannot pay', async () => {
+            const wrapper = mountModal();
+            findForm(wrapper).vm.$emit('update:paymentMethodId', 'pmet_other');
+            await openAddPaymentMethod(wrapper);
+
+            wrapper.findComponent({ name: 'PaymentMethodFormStub' }).vm.$emit('success');
+            await flushPromises();
+            await wrapper.setProps({
+                paymentMethods: [
+                    card('pmet_other'),
+                    card('pmet_subscription'),
+                    card('pmet_elsewhere', 'int_elsewhere'),
+                ],
+            });
+            await wrapper.setProps({
+                paymentMethods: [
+                    card('pmet_other'),
+                    card('pmet_subscription'),
+                    card('pmet_elsewhere', 'int_elsewhere'),
+                    card('pmet_later'),
+                ],
+            });
+
+            expect(findForm(wrapper).props('paymentMethodId')).toBe('pmet_other');
+        });
     });
 });

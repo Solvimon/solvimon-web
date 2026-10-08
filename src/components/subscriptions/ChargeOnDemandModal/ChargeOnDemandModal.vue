@@ -60,19 +60,21 @@ const payablePaymentMethods = computed(() =>
 const methodIdsBeforeAdding = ref<Set<PaymentMethod['id']>>();
 
 /**
- * Keeps the selection payable whenever the host reloads the list, and selects a just-added method,
- * found by comparing the list with the one before adding since storing a method reports no id.
+ * Keeps the selection payable whenever the host reloads the list, and selects a just-stored method,
+ * found by comparing the list with the one taken when it was stored since storing a method reports
+ * no id. That snapshot is used up by the first reload after storing, whether or not the stored
+ * method can pay, so a later reload never replaces the method the customer chose.
  */
 watch(
     payablePaymentMethods,
     (methods) => {
-        const added = methodIdsBeforeAdding.value
-            ? methods.find(({ id }) => !methodIdsBeforeAdding.value?.has(id))
-            : undefined;
+        const snapshot = methodIdsBeforeAdding.value;
+        methodIdsBeforeAdding.value = undefined;
+
+        const added = snapshot ? methods.find(({ id }) => !snapshot.has(id)) : undefined;
 
         if (added) {
             paymentMethodId.value = added.id;
-            methodIdsBeforeAdding.value = undefined;
             return;
         }
 
@@ -149,7 +151,6 @@ watch(
 );
 
 const handleAddPaymentMethod = () => {
-    methodIdsBeforeAdding.value = new Set(payablePaymentMethods.value.map(({ id }) => id));
     paymentMethodOptionsError.value = undefined;
 
     if (hasPaymentMethodOptionsLoadFailed.value) {
@@ -160,6 +161,7 @@ const handleAddPaymentMethod = () => {
 };
 
 const handlePaymentMethodStored = () => {
+    methodIdsBeforeAdding.value = new Set(payablePaymentMethods.value.map(({ id }) => id));
     leaveAddPaymentMethod();
     emit('payment-method-stored');
 };

@@ -79,6 +79,15 @@ vi.mock('@/components/providers', () => ({
     useLogger: () => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }),
 }));
 
+const { mockExperimentalFeatures } = vi.hoisted(() => ({
+    mockExperimentalFeatures: { value: { 'express-checkout': false } },
+}));
+
+vi.mock(
+    '@/components/providers/ExperimentalFeatureProvider/composables/useExperimentalFeature',
+    () => ({ useExperimentalFeature: () => mockExperimentalFeatures }),
+);
+
 const PORTAL = {
     object_type: 'PORTAL_URL',
     id: 'purl_checkout',
@@ -240,6 +249,28 @@ describe('Checkout', () => {
             const wrapper = await mountCheckout();
 
             expect(wrapper.find('.sv-checkout__terms').exists()).toBe(false);
+        });
+    });
+
+    describe('express payment methods', () => {
+        beforeEach(() => {
+            mockExperimentalFeatures.value = { 'express-checkout': false };
+        });
+
+        // The Apple Pay button could charge a customer with nothing happening on screen, so it is
+        // only offered where the merchant has opted into express checkout (DD-3535).
+        it('offers none while express checkout is off', async () => {
+            const wrapper = await mountCheckout();
+
+            expect(wrapper.findComponent({ name: 'ExpressPaymentMethods' }).exists()).toBe(false);
+        });
+
+        it('offers them once the merchant opts in', async () => {
+            mockExperimentalFeatures.value = { 'express-checkout': true };
+
+            const wrapper = await mountCheckout();
+
+            expect(wrapper.findComponent({ name: 'ExpressPaymentMethods' }).exists()).toBe(true);
         });
     });
 });

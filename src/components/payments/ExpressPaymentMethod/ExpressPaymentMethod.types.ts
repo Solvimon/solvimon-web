@@ -78,4 +78,6 @@ export interface ExpressPaymentMethodProps {
 export interface ExpressPaymentMethodEmits {
     (e: 'ready'): void;
     (e: 'update-billing-information', billingInformation: Partial<Address>): void;
+    (e: 'payment-success'): void;
+    (e: 'payment-failed', error: Error): void;
 }

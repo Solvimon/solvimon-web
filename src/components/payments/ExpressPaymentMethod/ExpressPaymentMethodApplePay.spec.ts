@@ -1,24 +1,22 @@
 import { mount } from '@vue/test-utils';
 import { nextTick } from 'vue';
-import type { BillingPeriod } from '@solvimon/solvimon-types';
+import type { AuthorizePaymentPayload, BillingPeriod } from '@solvimon/solvimon-types';
+import type { ApplePayConfiguration } from '@adyen/adyen-web';
 import type { ExpressPaymentMethodApplePayProps } from './ExpressPaymentMethodApplePay.types';
 import ExpressPaymentMethodApplePay from './ExpressPaymentMethodApplePay.vue';
 
 const mockApplePayInstance = {
     isAvailable: vi.fn().mockResolvedValue(true),
     mount: vi.fn(),
+    unmount: vi.fn(),
 };
 
-// The SDK calls these with `new`, which vitest rejects on a mock carrying a
-// `mockReturnValue`; a class implementation keeps the constructor-arg assertions.
-class ApplePayStub {
-    constructor() {
-        return mockApplePayInstance;
-    }
-}
-
-const mockApplePay = vi.fn();
-mockApplePay.mockImplementation(ApplePayStub as never);
+// The SDK calls this with `new`, which rules out `mockReturnValue`. A plain function returns the
+// instance either way and still records its constructor arguments — a class implementation is what
+// the spy cannot call.
+const mockApplePay = vi.fn(function (_checkout: unknown, _configuration: ApplePayConfiguration) {
+    return mockApplePayInstance;
+});
 const mockAdyenCheckout = vi.fn().mockResolvedValue({});
 
 // The components reach the SDK through this loader, which is the SDK's only
@@ -55,6 +53,7 @@ vi.mock('@/utils/adyen', () => ({
         locale: config.locale,
         countryCode: config.countryCode,
         amount: config.amount,
+        onSubmit: config.onSubmit,
     })),
     createReturnUrl: vi.fn(
         ({ paymentAcceptorId, redirectUrl }) =>
@@ -63,10 +62,12 @@ vi.mock('@/utils/adyen', () => ({
     transformObjectToAdyenObject: vi.fn((obj) => obj),
 }));
 
+/** A payment the gateway completed: the status alone does not say the money moved. */
 const mockAuthorizePayment = vi.fn().mockResolvedValue({
     status: 'SUCCESS',
     payment: {
         id: 'test-payment-id',
+        result: 'AUTHORIZED',
     },
 });
 
@@ -150,12 +151,13 @@ describe('ExpressPaymentMethodApplePay', () => {
         vi.clearAllMocks();
         mockApplePayInstance.isAvailable.mockResolvedValue(true);
         mockApplePayInstance.mount.mockClear();
+        mockApplePayInstance.unmount.mockClear();
         mockAdyenCheckout.mockResolvedValue({});
-        mockApplePay.mockImplementation(ApplePayStub as never);
         mockAuthorizePayment.mockResolvedValue({
             status: 'SUCCESS',
             payment: {
                 id: 'test-payment-id',
+                result: 'AUTHORIZED',
             },
         });
         mockOnBillingInformationChange.mockResolvedValue({
@@ -220,6 +222,9 @@ describe('ExpressPaymentMethodApplePay', () => {
                 recurringPaymentRequest: expect.objectContaining({
                     paymentDescription: mockProps.billingInformation.description,
                     billingAgreement: mockProps.billingInformation.agreement,
+                    // Where the customer manages the subscription Apple Pay signs them up for;
+                    // it used to point at google.com.
+                    managementURL: mockProps.billingInformation.managementURL,
                     regularBilling: expect.objectContaining({
                         label: mockProps.billingInformation.regular.label,
                         amount: mockProps.billingInformation.regular.amount.quantity.toString(),
@@ -296,7 +301,11 @@ describe('ExpressPaymentMethodApplePay', () => {
                 },
             };
 
-            await onPaymentMethodSelected(mockResolve, mockReject, mockEvent);
+            await onPaymentMethodSelected(
+                mockResolve,
+                mockReject,
+                mockEvent as unknown as ApplePayJS.ApplePayPaymentMethodSelectedEvent,
+            );
 
             // Verify onBillingInformationChange was called
             expect(mockOnBillingInformationChange).toHaveBeenCalledWith({
@@ -346,7 +355,7 @@ describe('ExpressPaymentMethodApplePay', () => {
 
         if (onError) {
             const mockError = new Error('Test error');
-            onError(mockError);
+            onError(mockError as unknown as Parameters<typeof onError>[0]);
 
             expect(mockLogger.error).toHaveBeenCalledWith(
                 'APPLE_PAY_ERROR',
@@ -361,152 +370,178 @@ describe('ExpressPaymentMethodApplePay', () => {
         }
     });
 
-    it('should handle onAuthorized callback with successful payment', async () => {
-        const wrapper = mount(ExpressPaymentMethodApplePay, {
-            props: mockProps,
-        });
+    type AuthorizedArgs = Parameters<NonNullable<ApplePayConfiguration['onAuthorized']>>;
 
-        // Wait for component to mount
+    /** The sheet's authorization, which starts Adyen's payment flow rather than charging. */
+    const authorizedEventData = {
+        authorizedEvent: {
+            payment: {
+                token: { paymentMethod: { test: 'data' }, paymentData: { test: 'browser' } },
+                billingContact: null,
+            },
+        },
+        billingAddress: null,
+    } as unknown as AuthorizedArgs[0];
+
+    /** What Adyen hands `onSubmit` once the authorization has been resolved. */
+    const submitState = {
+        data: {
+            paymentMethod: { type: 'applepay', applePayToken: 'token-abc' },
+            riskData: { clientData: 'risk-abc' },
+        },
+        isValid: true,
+    };
+
+    const mountAndSettle = async (props = mockProps) => {
+        const wrapper = mount(ExpressPaymentMethodApplePay, { props });
+
         await nextTick();
         await nextTick();
         await new Promise((resolve) => setTimeout(resolve, 0));
 
-        // Get the onAuthorized callback
-        const applePayCallArgs = mockApplePay.mock.calls[0];
-        const applePayConfig = applePayCallArgs?.[1];
-        const onAuthorized = applePayConfig?.onAuthorized;
+        return wrapper;
+    };
 
-        expect(onAuthorized).toBeDefined();
+    const applePayConfig = () => mockApplePay.mock.calls[0]?.[1];
 
-        if (onAuthorized) {
-            const mockResolve = vi.fn();
-            const mockReject = vi.fn();
-            const mockData = {
-                authorizedEvent: {
-                    payment: {
-                        token: {
-                            paymentMethod: { test: 'data' },
-                            paymentData: { test: 'browser' },
-                        },
-                        billingContact: null,
-                    },
+    const authorize = (actions: AuthorizedArgs[1]) =>
+        applePayConfig().onAuthorized?.(authorizedEventData, actions);
+
+    /** Adyen's `onSubmit` reports nothing back, so a test waits for the work it started. */
+    const submit = async (state: unknown, actions: unknown) => {
+        mockAdyenCheckout.mock.calls[0]?.[0]?.onSubmit(state, undefined, actions);
+        await new Promise((resolve) => setTimeout(resolve, 0));
+    };
+
+    describe('authorizing', () => {
+        // Adyen's contract: resolving is what starts the payment flow, so the charge belongs in
+        // `onSubmit`. Charging here as well took the money a second time.
+        it('resolves the authorization without charging, so the flow can submit', async () => {
+            const wrapper = await mountAndSettle();
+            const actions = { resolve: vi.fn(), reject: vi.fn() };
+
+            await authorize(actions);
+
+            expect(actions.resolve).toHaveBeenCalled();
+            expect(mockAuthorizePayment).not.toHaveBeenCalled();
+            expect(wrapper.emitted('payment-success')).toBeFalsy();
+        });
+
+        it('stops before the sheet charges anything when the checkout form is invalid', async () => {
+            const wrapper = await mountAndSettle({
+                ...mockProps,
+                validateOnSubmit: vi.fn().mockResolvedValue(false),
+            });
+            const actions = { resolve: vi.fn(), reject: vi.fn() };
+
+            await authorize(actions);
+
+            expect(actions.reject).toHaveBeenCalled();
+            expect(actions.resolve).not.toHaveBeenCalled();
+            expect(mockAuthorizePayment).not.toHaveBeenCalled();
+            expect(wrapper.emitted('payment-failed')).toBeTruthy();
+        });
+    });
+
+    describe('paying', () => {
+        it('charges what the authorization is for, with the subscription it creates', async () => {
+            const context: AuthorizePaymentPayload['context'] = {
+                type: 'INIT_PRICING_PLAN_SUBSCRIPTION',
+                init_pricing_plan_subscription: {
+                    template_pricing_plan_subscription_id: 'ppsu_1',
+                    customer_details: { email: 'customer@example.com', type: 'INDIVIDUAL' },
                 },
-                billingAddress: null,
             };
-            const mockActions = {
-                resolve: mockResolve,
-                reject: mockReject,
-            };
+            const wrapper = await mountAndSettle({ ...mockProps, context });
+            const actions = { resolve: vi.fn(), reject: vi.fn() };
 
-            await onAuthorized(mockData, mockActions);
+            await submit(submitState, actions);
 
-            // Verify authorizePayment was called
             expect(mockAuthorizePayment).toHaveBeenCalledWith(
                 expect.objectContaining({
                     payment_acceptor_id: 'test-acceptor-id',
                     payment_gateway_variant: 'ADYEN',
                     amount: mockProps.amount,
+                    // Built by Adyen rather than by hand: the encrypted credential used to be sent
+                    // as `browser_info`, stringified to "[object Object]".
                     adyen: expect.objectContaining({
+                        payment_method: submitState.data.paymentMethod,
                         store_payment_method: true,
                     }),
+                    context,
                 }),
             );
-
-            // Verify resolve was called
-            expect(mockResolve).toHaveBeenCalled();
-            expect(mockReject).not.toHaveBeenCalled();
-        }
-    });
-
-    it('should handle onAuthorized callback with payment failure', async () => {
-        mockAuthorizePayment.mockResolvedValueOnce({
-            status: 'FAILURE',
+            expect(actions.resolve).toHaveBeenCalled();
+            expect(wrapper.emitted('payment-success')).toHaveLength(1);
         });
 
-        mount(ExpressPaymentMethodApplePay, {
-            props: mockProps,
+        it('tells the checkout a refused payment failed, rather than resolving the sheet', async () => {
+            mockAuthorizePayment.mockResolvedValueOnce({ status: 'REFUSED', payment: {} });
+            const wrapper = await mountAndSettle();
+            const actions = { resolve: vi.fn(), reject: vi.fn() };
+
+            await submit(submitState, actions);
+
+            expect(actions.reject).toHaveBeenCalled();
+            expect(actions.resolve).not.toHaveBeenCalled();
+            expect(wrapper.emitted('payment-success')).toBeFalsy();
+            expect(wrapper.emitted('payment-failed')).toHaveLength(1);
         });
 
-        // Wait for component to mount
-        await nextTick();
-        await nextTick();
-        await new Promise((resolve) => setTimeout(resolve, 0));
+        it('treats an authorization the gateway did not complete as a failure', async () => {
+            mockAuthorizePayment.mockResolvedValueOnce({
+                status: 'SUCCESS',
+                payment: { result: 'REFUSED' },
+            });
+            const wrapper = await mountAndSettle();
+            const actions = { resolve: vi.fn(), reject: vi.fn() };
 
-        // Get the onAuthorized callback
-        const applePayCallArgs = mockApplePay.mock.calls[0];
-        const applePayConfig = applePayCallArgs?.[1];
-        const onAuthorized = applePayConfig?.onAuthorized;
+            await submit(submitState, actions);
 
-        if (onAuthorized) {
-            const mockResolve = vi.fn();
-            const mockReject = vi.fn();
-            const mockData = {
-                authorizedEvent: {
-                    payment: {
-                        token: {
-                            paymentMethod: { test: 'data' },
-                            paymentData: { test: 'browser' },
-                        },
-                        billingContact: null,
-                    },
-                },
-                billingAddress: null,
-            };
-            const mockActions = {
-                resolve: mockResolve,
-                reject: mockReject,
-            };
+            expect(actions.reject).toHaveBeenCalled();
+            expect(wrapper.emitted('payment-failed')).toHaveLength(1);
+        });
 
-            await onAuthorized(mockData, mockActions);
+        it('reports a payment that could not be sent at all', async () => {
+            mockAuthorizePayment.mockRejectedValueOnce(new Error('network'));
+            const wrapper = await mountAndSettle();
+            const actions = { resolve: vi.fn(), reject: vi.fn() };
 
-            // Verify reject was called
-            expect(mockReject).toHaveBeenCalled();
-            expect(mockResolve).not.toHaveBeenCalled();
+            await submit(submitState, actions);
+
+            expect(actions.reject).toHaveBeenCalled();
+            expect(wrapper.emitted('payment-failed')).toHaveLength(1);
             expect(mockLogger.error).toHaveBeenCalledWith(
                 'APPLE_PAY_AUTHORIZATION_FAILED',
-                'Payment authorization failed',
+                'Apple Pay authorization failed',
+                expect.anything(),
                 expect.anything(),
             );
-        }
+        });
     });
 
-    it('should handle onAuthorized callback with missing paymentMethod', async () => {
-        mount(ExpressPaymentMethodApplePay, {
-            props: mockProps,
+    describe('lifecycle', () => {
+        // The sheet quotes the amount it was built with, so a promo code or a seat change would
+        // otherwise have the customer authorizing a total the checkout no longer shows.
+        it('rebuilds the button when the amount changes', async () => {
+            const wrapper = await mountAndSettle();
+
+            expect(mockApplePay).toHaveBeenCalledTimes(1);
+
+            await wrapper.setProps({ amount: { currency: 'EUR', quantity: '12.50' } });
+            await new Promise((resolve) => setTimeout(resolve, 0));
+
+            expect(mockApplePayInstance.unmount).toHaveBeenCalled();
+            expect(mockApplePay).toHaveBeenCalledTimes(2);
         });
 
-        // Wait for component to mount
-        await nextTick();
-        await nextTick();
-        await new Promise((resolve) => setTimeout(resolve, 0));
+        it('leaves nothing mounted behind it', async () => {
+            const wrapper = await mountAndSettle();
 
-        // Get the onAuthorized callback
-        const applePayCallArgs = mockApplePay.mock.calls[0];
-        const applePayConfig = applePayCallArgs?.[1];
-        const onAuthorized = applePayConfig?.onAuthorized;
+            wrapper.unmount();
 
-        if (onAuthorized) {
-            const mockResolve = vi.fn();
-            const mockReject = vi.fn();
-            const mockData = {
-                authorizedEvent: {
-                    // Missing paymentMethod
-                    browserInfo: { test: 'browser' },
-                    riskData: { test: 'risk' },
-                },
-                billingAddress: null,
-            };
-            const mockActions = {
-                resolve: mockResolve,
-                reject: mockReject,
-            };
-
-            await onAuthorized(mockData, mockActions);
-
-            // Verify reject was called
-            expect(mockReject).toHaveBeenCalled();
-            expect(mockResolve).not.toHaveBeenCalled();
-        }
+            expect(mockApplePayInstance.unmount).toHaveBeenCalled();
+        });
     });
 
     it('should handle click event on ApplePay button', async () => {

@@ -148,8 +148,12 @@ const expressPaymentButtonCount = computed(() => {
                         paymentMethodOptionsResponseEntryIncludingApplePay
                     "
                     :on-billing-information-change="onBillingInformationChange"
+                    :context="context"
+                    :validate-on-submit="validateOnSubmit"
                     @ready="isApplePayReady = true"
                     @update-billing-information="$emit('update-billing-information', $event)"
+                    @payment-success="$emit('payment-success')"
+                    @payment-failed="$emit('payment-failed', $event)"
                 />
             </div>
 

@@ -27,6 +27,7 @@ import EmptyStatePlaceholder from '@/components/checkout/EmptyStatePlaceholder.v
 import Skeleton from '@/components/shared/Skeleton.vue';
 import ExpressPaymentMethods from '@/components/payments/ExpressPaymentMethods/ExpressPaymentMethods.vue';
 import { useLogger } from '@/components/providers';
+import { useExperimentalFeature } from '@/components/providers/ExperimentalFeatureProvider/composables/useExperimentalFeature';
 import {
     isSubscriptionWithAddonProducts,
     isSubscriptionWithEnabledPricings,
@@ -123,6 +124,16 @@ const {
     subscriptionId,
     enabledPricingIds: props.configuration?.enabledPricingIds,
 });
+
+/**
+ * Express checkout is behind the flag that already decides whether the drop-in leaves these
+ * methods out, so a merchant cannot end up with both or with an express button the rest of the
+ * screen does not know about.
+ */
+const experimentalFeatures = useExperimentalFeature();
+const isExpressCheckoutEnabled = computed(
+    () => !!experimentalFeatures?.value?.['express-checkout'],
+);
 
 const isPaymentPending = ref(false);
 
@@ -591,6 +602,7 @@ onMounted(() => {
                 <!-- express payment methods -->
                 <ExpressPaymentMethods
                     v-if="
+                        isExpressCheckoutEnabled &&
                         checkoutForm.form.value.country &&
                         amount &&
                         expressPaymentMethodBillingInformation
@@ -602,7 +614,11 @@ onMounted(() => {
                     :payment-methods-options-response="paymentMethodOptions ?? []"
                     :billing-information="expressPaymentMethodBillingInformation"
                     :on-billing-information-change="updateInvoicePreviewOnBillingInformationChange"
+                    :context="authorizationContext"
+                    :validate-on-submit="handleValidateOnSubmit"
                     @update-billing-information="handleUpdateBillingInformation"
+                    @payment-success="handlePaymentSuccess"
+                    @payment-failed="handlePaymentFailed"
                 />
 
                 <!-- customer information form -->

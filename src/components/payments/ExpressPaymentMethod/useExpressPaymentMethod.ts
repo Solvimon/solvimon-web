@@ -1,4 +1,5 @@
 import { onMounted, ref, type Ref } from 'vue';
+import type { CoreConfiguration } from '@adyen/adyen-web';
 import type { ExpressPaymentMethodProps } from './ExpressPaymentMethod.types';
 import { useLogger } from '@/components/providers';
 import type { Logger } from '@/components/providers/LoggerProvider/LoggerProvider.types';
@@ -16,6 +17,7 @@ type MountableExpressComponent = {
 export async function createExpressCheckout(
     props: ExpressPaymentMethodProps,
     logger: Logger,
+    { onSubmit }: { onSubmit?: CoreConfiguration['onSubmit'] } = {},
 ): Promise<AdyenCheckout> {
     const { AdyenCheckout: createCheckout } = await loadAdyenSdk();
 
@@ -26,6 +28,7 @@ export async function createExpressCheckout(
             countryCode: props.countryCode,
             paymentMethodOptionResponse: props.paymentMethodOptionsResponse,
             logger,
+            onSubmit,
         }),
     );
 }

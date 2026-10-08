@@ -99,10 +99,20 @@ export function useChargeOnDemandInvoicePreview({
         deep: true,
     });
 
+    // Cleared at once rather than after the debounce: a modal reopened with an empty order would
+    // otherwise show the last order's total, or its failure, until the debounced clear ran.
     watch(
         pricingItems,
-        () => {
-            isPreviewStale.value = true;
+        (items) => {
+            isPreviewStale.value = !!items;
+
+            if (!items) {
+                // Also keeps a request still out for the previous order from landing on this one.
+                latestGuard();
+                invoicePreview.value = undefined;
+                hasPreviewFailed.value = false;
+                isRequestPending.value = false;
+            }
         },
         { deep: true, flush: 'sync' },
     );

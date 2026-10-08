@@ -1,6 +1,25 @@
 import { describe, expect, it } from 'vitest';
-import type { Invoice } from '@solvimon/solvimon-types';
+import type { Invoice, InvoiceWalletBalance, WalletBalanceValue } from '@solvimon/solvimon-types';
 import { buildInvoiceCreditsBreakdown } from './InvoiceCreditsBreakdown.utils';
+
+const credits = (quantity: string, credit_type_id?: string): WalletBalanceValue => ({
+    credits: { quantity, credit_type_id },
+});
+
+const money = (quantity: string, currency = 'EUR'): WalletBalanceValue => ({
+    amount: { quantity, currency },
+});
+
+const creditsWalletBalance = (
+    wallet_id: string,
+    creditTypeId: string,
+    [used, left, available]: [string, string, string],
+): InvoiceWalletBalance => ({
+    wallet_id,
+    used_balance: credits(used, creditTypeId),
+    left_balance: credits(left, creditTypeId),
+    available_balance: credits(available, creditTypeId),
+});
 
 const createInvoice = (): Invoice =>
     ({
@@ -25,58 +44,37 @@ const createInvoice = (): Invoice =>
                             {
                                 line_order: 1,
                                 details: {
-                                    wallet_balance_details: {
-                                        used_wallet_credits: {
-                                            quantity: '10',
-                                            credit_type_id: 'ctyp_1',
-                                        },
-                                        left_wallet_credits: {
-                                            quantity: '90',
-                                            credit_type_id: 'ctyp_1',
-                                        },
-                                        available_wallet_credits: {
-                                            quantity: '100',
-                                            credit_type_id: 'ctyp_1',
-                                        },
-                                    },
+                                    wallet_balances: [
+                                        creditsWalletBalance('wal_1', 'ctyp_1', [
+                                            '10',
+                                            '90',
+                                            '100',
+                                        ]),
+                                    ],
                                 },
                             },
                             {
                                 line_order: 2,
                                 details: {
-                                    wallet_balance_details: {
-                                        used_wallet_credits: {
-                                            quantity: '10',
-                                            credit_type_id: 'ctyp_1',
-                                        },
-                                        left_wallet_credits: {
-                                            quantity: '90',
-                                            credit_type_id: 'ctyp_1',
-                                        },
-                                        available_wallet_credits: {
-                                            quantity: '100',
-                                            credit_type_id: 'ctyp_1',
-                                        },
-                                    },
+                                    wallet_balances: [
+                                        creditsWalletBalance('wal_1', 'ctyp_1', [
+                                            '10',
+                                            '90',
+                                            '100',
+                                        ]),
+                                    ],
                                 },
                             },
                             {
                                 line_order: 3,
                                 details: {
-                                    wallet_balance_details: {
-                                        used_wallet_credits: {
-                                            quantity: '5',
-                                            credit_type_id: 'legacy_credits',
-                                        },
-                                        left_wallet_credits: {
-                                            quantity: '45',
-                                            credit_type_id: 'legacy_credits',
-                                        },
-                                        available_wallet_credits: {
-                                            quantity: '50',
-                                            credit_type_id: 'legacy_credits',
-                                        },
-                                    },
+                                    wallet_balances: [
+                                        creditsWalletBalance('wal_2', 'legacy_credits', [
+                                            '5',
+                                            '45',
+                                            '50',
+                                        ]),
+                                    ],
                                 },
                             },
                             {
@@ -100,11 +98,12 @@ const createInvoice = (): Invoice =>
                             {
                                 line_order: 1,
                                 details: {
-                                    wallet_balance_details: {
-                                        available_wallet_credits: {
-                                            quantity: '25',
+                                    wallet_balances: [
+                                        {
+                                            wallet_id: 'wal_3',
+                                            available_balance: credits('25'),
                                         },
-                                    },
+                                    ],
                                 },
                             },
                         ],
@@ -118,26 +117,82 @@ const createInvoice = (): Invoice =>
                 groups: [],
             },
         ],
-    }) as Invoice;
+    }) as unknown as Invoice;
+
+const createMoneyWalletInvoice = (): Invoice =>
+    ({
+        customer: {
+            timezone: 'Europe/Amsterdam',
+        },
+        credit_types: [
+            {
+                id: 'ctyp_1',
+                name: 'OpenAI credits',
+            },
+        ],
+        periods: [
+            {
+                period_order: 1,
+                start_at: '2026-04-01T00:00:00Z',
+                end_at: '2026-04-30T23:59:59Z',
+                groups: [
+                    {
+                        group_order: 1,
+                        lines: [
+                            {
+                                line_order: 1,
+                                details: {
+                                    wallet_balances: [
+                                        {
+                                            wallet_id: 'wal_eur',
+                                            used_balance: money('12.50'),
+                                            left_balance: money('80.00'),
+                                            available_balance: money('100.00'),
+                                        },
+                                    ],
+                                },
+                            },
+                            {
+                                line_order: 2,
+                                details: {
+                                    wallet_balances: [
+                                        {
+                                            wallet_id: 'wal_eur',
+                                            used_balance: money('7.50'),
+                                            left_balance: money('80.00'),
+                                            available_balance: money('100.00'),
+                                        },
+                                        creditsWalletBalance('wal_1', 'ctyp_1', ['3', '7', '10']),
+                                    ],
+                                },
+                            },
+                        ],
+                    },
+                ],
+            },
+        ],
+    }) as unknown as Invoice;
 
 const getPeriodTitle = (period: { period_order: number }) => `Period ${period.period_order}`;
-const getCreditTypeLabel = (credits?: { credit_type_id?: string }) => {
-    if (!credits?.credit_type_id) {
-        return 'Credits';
+const formatBalance = (balanceValue?: WalletBalanceValue | null) => {
+    if (balanceValue?.amount) {
+        return `${balanceValue.amount.currency} ${balanceValue.amount.quantity}`;
     }
 
-    return credits.credit_type_id === 'ctyp_1' ? 'OpenAI credits' : credits.credit_type_id;
+    return balanceValue?.credits ? `formatted:${balanceValue.credits.quantity}` : '-';
 };
-const formatQuantity = (quantity?: string) => (quantity ? `formatted:${quantity}` : '-');
+const build = (invoice: Invoice) =>
+    buildInvoiceCreditsBreakdown({
+        invoice,
+        getPeriodTitle,
+        creditsLabel: 'Credits',
+        walletLabel: 'Wallet',
+        formatBalance,
+    });
 
 describe('buildInvoiceCreditsBreakdown', () => {
-    it('groups wallet balance rows by credit type and removes duplicate rows per label', () => {
-        const periods = buildInvoiceCreditsBreakdown({
-            invoice: createInvoice(),
-            getPeriodTitle,
-            getCreditTypeLabel,
-            formatQuantity,
-        });
+    it('groups wallet balance rows by credit type and keeps a repeated snapshot once', () => {
+        const periods = build(createInvoice());
 
         expect(periods).toHaveLength(2);
         expect(periods[0]).toEqual({
@@ -150,7 +205,7 @@ describe('buildInvoiceCreditsBreakdown', () => {
                     amount: 'formatted:100',
                     rows: [
                         {
-                            id: '1-1-1',
+                            id: expect.stringMatching(/^1-wal_1\|/),
                             label: 'OpenAI credits',
                             used: 'formatted:10',
                             left: 'formatted:90',
@@ -164,7 +219,7 @@ describe('buildInvoiceCreditsBreakdown', () => {
                     amount: 'formatted:50',
                     rows: [
                         {
-                            id: '1-1-3',
+                            id: expect.stringMatching(/^1-wal_2\|/),
                             label: 'legacy_credits',
                             used: 'formatted:5',
                             left: 'formatted:45',
@@ -176,13 +231,8 @@ describe('buildInvoiceCreditsBreakdown', () => {
         });
     });
 
-    it('falls back to the default credit label and placeholder quantities when data is partial', () => {
-        const periods = buildInvoiceCreditsBreakdown({
-            invoice: createInvoice(),
-            getPeriodTitle,
-            getCreditTypeLabel,
-            formatQuantity,
-        });
+    it('falls back to the default credit label and placeholder values when data is partial', () => {
+        const periods = build(createInvoice());
 
         expect(periods[1]).toEqual({
             id: '2-2026-03-01T00:00:00Z',
@@ -194,7 +244,7 @@ describe('buildInvoiceCreditsBreakdown', () => {
                     amount: 'formatted:25',
                     rows: [
                         {
-                            id: '2-1-1',
+                            id: expect.stringMatching(/^2-wal_3\|/),
                             label: 'Credits',
                             used: '-',
                             left: '-',
@@ -206,13 +256,43 @@ describe('buildInvoiceCreditsBreakdown', () => {
         });
     });
 
+    it('shows a money wallet as money, summing what it paid across lines', () => {
+        const [period] = build(createMoneyWalletInvoice());
+
+        expect(period?.rows).toEqual([
+            {
+                id: '1-Wallet',
+                label: 'Wallet',
+                amount: 'EUR 100.00',
+                rows: [
+                    {
+                        id: '1-wal_eur|EUR',
+                        label: 'Wallet',
+                        used: 'EUR 20.00',
+                        left: 'EUR 80.00',
+                        available: 'EUR 100.00',
+                    },
+                ],
+            },
+            {
+                id: '1-OpenAI credits',
+                label: 'OpenAI credits',
+                amount: 'formatted:10',
+                rows: [
+                    {
+                        id: expect.stringMatching(/^1-wal_1\|/),
+                        label: 'OpenAI credits',
+                        used: 'formatted:3',
+                        left: 'formatted:7',
+                        available: 'formatted:10',
+                    },
+                ],
+            },
+        ]);
+    });
+
     it('omits periods that do not contain wallet balance rows', () => {
-        const periods = buildInvoiceCreditsBreakdown({
-            invoice: createInvoice(),
-            getPeriodTitle,
-            getCreditTypeLabel,
-            formatQuantity,
-        });
+        const periods = build(createInvoice());
 
         expect(periods.map((period) => period.title)).toEqual(['Period 1', 'Period 2']);
     });

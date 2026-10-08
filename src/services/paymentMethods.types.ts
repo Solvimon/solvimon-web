@@ -33,17 +33,12 @@ interface GetPaymentMethodOptionsBasePayload {
 export interface GetPaymentMethodOptionsByCustomerIdPayload extends GetPaymentMethodOptionsBasePayload {
     customerId: Customer['id'];
     subscriptionId?: PricingPlanSubscription['id'];
-    /**
-     * Narrows the acceptors to the ones the invoice can be paid through. Without it the answer
-     * carries every acceptor the customer has, including ones the invoice refuses (DD-3533).
-     */
     invoiceId?: Invoice['id'];
 }
 
 export interface GetPaymentMethodOptionsBySubscriptionIdPayload extends GetPaymentMethodOptionsBasePayload {
     subscriptionId: PricingPlanSubscription['id'];
     customerId?: never;
-    /** The subscription is the scope; an invoice narrows the customer lookup instead. */
     invoiceId?: never;
 }
 

@@ -133,7 +133,6 @@ export function getAdyenExpressCheckoutConfiguration({
     locale: CoreConfiguration['locale'];
     paymentMethodOptionResponse: PaymentMethodOptionResponseEntry;
     logger: Logger;
-    /** Where an express button makes its payment, once the gateway has authorization for one. */
     onSubmit?: CoreConfiguration['onSubmit'];
 }): CoreConfiguration {
     return {

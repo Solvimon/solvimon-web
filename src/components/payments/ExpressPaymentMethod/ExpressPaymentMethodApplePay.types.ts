@@ -7,11 +7,6 @@ export interface ExpressPaymentMethodApplePayProps extends ExpressPaymentMethodP
         trialInvoicePreview: Invoice;
         invoicePreview: Invoice;
     }>;
-    /**
-     * What the payment is for. Without it the charge creates no subscription, and the customer is
-     * billed for nothing.
-     */
     context?: AuthorizePaymentPayload['context'];
-    /** Checked before the sheet's authorization is allowed to become a charge. */
     validateOnSubmit?: () => Promise<boolean>;
 }

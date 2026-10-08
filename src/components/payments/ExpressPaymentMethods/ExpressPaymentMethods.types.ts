@@ -22,9 +22,7 @@ export interface ExpressPaymentMethodsProps {
         trialInvoicePreview: Invoice;
         invoicePreview: Invoice;
     }>;
-    /** What an express payment is for, so the charge creates the subscription it is paying for. */
     context?: AuthorizePaymentPayload['context'];
-    /** Checked before an express authorization is allowed to become a charge. */
     validateOnSubmit?: () => Promise<boolean>;
 }
 

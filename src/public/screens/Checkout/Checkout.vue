@@ -126,11 +126,6 @@ const {
     enabledPricingIds: props.configuration?.enabledPricingIds,
 });
 
-/**
- * Express checkout is behind the flag that already decides whether the drop-in leaves these
- * methods out, so a merchant cannot end up with both or with an express button the rest of the
- * screen does not know about.
- */
 const experimentalFeatures = useExperimentalFeature();
 const isExpressCheckoutEnabled = computed(
     () => !!experimentalFeatures?.value?.['express-checkout'],
@@ -396,12 +391,6 @@ const expressPaymentMethodBillingInformation = computed(() => {
 
 const isCountryCode = (country: string): country is CountryCode => isValidCountryCode(country);
 
-/**
- * What an express sheet collected, written into the form the rest of the checkout validates and
- * submits. Named field by field because the two shapes disagree: an address carries `postal_code`
- * and `line1` where the form has `postalCode` and `addressLine1`, and spreading one into the other
- * quietly dropped both.
- */
 const handleUpdateBillingInformation = (billingInformation: ExpressBillingInformation) => {
     const { line1, line2, postal_code, city, state, country, email } = billingInformation;
 

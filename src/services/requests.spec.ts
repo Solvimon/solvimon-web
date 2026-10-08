@@ -284,6 +284,23 @@ describe('createRequestService', () => {
             });
         });
 
+        it('rejects with the resource the API said the error is about', async () => {
+            const request = createRequestService();
+            mockFetch.mockResolvedValueOnce(
+                jsonErrorResponse(422, {
+                    message: 'Payment failed for invoice',
+                    resource_type: 'PAYMENT',
+                    resource_id: 'inv_1',
+                }),
+            );
+
+            await expect(request({ url: CALLED_URL })).rejects.toMatchObject({
+                statusCode: 422,
+                resourceType: 'PAYMENT',
+                resourceId: 'inv_1',
+            });
+        });
+
         it('rejects with a real Error, so a reporter can title and group it', async () => {
             const request = createRequestService();
             mockFetch.mockResolvedValueOnce(jsonErrorResponse(422, { message: 'Nope' }));

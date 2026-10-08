@@ -22,8 +22,10 @@ export function getChargeError(error: unknown): ChargeError {
         return 'FAILED';
     }
 
+    // A 422 is also how the API refuses a customer it cannot invoice, before any invoice exists, so
+    // only one it says is about the payment means the payment was refused.
     if (error.statusCode === 422) {
-        return 'PAYMENT_FAILED';
+        return error.resourceType === 'PAYMENT' ? 'PAYMENT_FAILED' : 'FAILED';
     }
 
     if (error.statusCode !== 400) {

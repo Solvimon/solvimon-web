@@ -124,6 +124,8 @@ export function createRequestService({ enableAccessCheck } = { enableAccessCheck
                     message: json?.message,
                     requestId: response.headers.get(Headers.X_REQUEST_ID),
                     field: json?.field,
+                    resourceType: json?.resource_type,
+                    resourceId: json?.resource_id,
                 });
             }
 

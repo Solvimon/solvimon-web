@@ -1,8 +1,4 @@
-import type {
-    PaymentAcceptor,
-    PaymentMethodOption,
-    PaymentMethodOptionsResponse,
-} from '@solvimon/solvimon-types';
+import type { PaymentMethodOption, PaymentMethodOptionsResponse } from '@solvimon/solvimon-types';
 import type { RawPaymentMethod } from '@adyen/adyen-web';
 
 const EXPRESS_PAYMENT_METHOD_NAMES = ['Apple Pay'] as const;
@@ -62,28 +58,5 @@ export function filterOutExpressPaymentMethods(
     return paymentMethods.filter(
         (method) =>
             !EXPRESS_PAYMENT_METHOD_TYPES.some((type) => type === method.type?.toLowerCase()),
-    );
-}
-
-/**
- * The options a given invoice can actually be paid with.
- *
- * Payment method options are looked up for a customer, so they carry every acceptor that customer
- * can pay through. An invoice may only accept some of those, and authorizing against one it does
- * not accept fails with a 400 the customer can do nothing about (DD-3533) — so the ones it will
- * not take are never offered.
- *
- * An invoice that names no acceptors at all restricts nothing, and is offered everything.
- */
-export function getPaymentMethodOptionsForAcceptors(
-    paymentMethodsOptionsResponse: PaymentMethodOptionsResponse,
-    paymentAcceptorIds: PaymentAcceptor['id'][] | undefined,
-): PaymentMethodOptionsResponse {
-    if (!paymentAcceptorIds?.length) {
-        return paymentMethodsOptionsResponse;
-    }
-
-    return paymentMethodsOptionsResponse.filter(({ payment_acceptor: paymentAcceptor }) =>
-        paymentAcceptorIds.includes(paymentAcceptor?.id),
     );
 }

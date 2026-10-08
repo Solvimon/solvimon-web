@@ -38,24 +38,18 @@ vi.mock('@solvimon/solvimon-ui', async () => {
     return { ...actual, getCustomerCountry: () => 'NL' };
 });
 
-const ALLOWED_ACCEPTOR_ID = 'paya_allowed';
-const OTHER_ACCEPTOR_ID = 'paya_other';
-
-const createInvoice = (paymentAcceptorIds?: string[]) =>
-    ({
-        id: 'invo_1',
-        customer: { id: 'cust_1' },
-        open_invoice_amount: { currency: 'EUR', quantity: '99.00' },
-        ...(paymentAcceptorIds ? { payment_acceptor_ids: paymentAcceptorIds } : {}),
-    }) as unknown as Invoice;
+const invoice = {
+    id: 'invo_1',
+    customer: { id: 'cust_1' },
+    open_invoice_amount: { currency: 'EUR', quantity: '99.00' },
+} as unknown as Invoice;
 
 const options: PaymentMethodOptionsResponse = [
-    createPaymentMethodOptionEntry({ paymentAcceptorId: ALLOWED_ACCEPTOR_ID }),
-    createPaymentMethodOptionEntry({ paymentAcceptorId: OTHER_ACCEPTOR_ID }),
+    createPaymentMethodOptionEntry({ paymentAcceptorId: 'paya_1' }),
 ];
 
 /** The screen hands its data to the host through a slot; that is what a test reads. */
-const mountEntryView = async (invoice: Invoice) => {
+const mountEntryView = async () => {
     mockUseInvoice.mockReturnValue({
         invoice: ref(invoice),
         get: mockGetInvoice.mockResolvedValue(invoice),
@@ -69,7 +63,7 @@ const mountEntryView = async (invoice: Invoice) => {
 
     const slotProps: Record<string, unknown>[] = [];
 
-    const wrapper = mount(PayInvoiceEntryView, {
+    mount(PayInvoiceEntryView, {
         props: {
             portalObject: createTestPortalObject(),
             environment: 'TEST',
@@ -85,49 +79,30 @@ const mountEntryView = async (invoice: Invoice) => {
 
     await flushPromises();
 
-    return { wrapper, latestSlotProps: () => slotProps.at(-1) };
+    return { latestSlotProps: () => slotProps.at(-1) };
 };
-
-const offeredAcceptorIds = (slotProps: Record<string, unknown> | undefined) =>
-    ((slotProps?.paymentMethodOptions ?? []) as PaymentMethodOptionsResponse).map(
-        ({ payment_acceptor }) => payment_acceptor.id,
-    );
 
 describe('PayInvoice.entry.view', () => {
     beforeEach(() => {
         vi.clearAllMocks();
     });
 
-    // The options are looked up for the customer, so they carry acceptors this invoice refuses.
-    it('offers only the methods on acceptors the invoice accepts', async () => {
-        const { latestSlotProps } = await mountEntryView(createInvoice([ALLOWED_ACCEPTOR_ID]));
-
-        expect(offeredAcceptorIds(latestSlotProps())).toEqual([ALLOWED_ACCEPTOR_ID]);
-    });
-
-    it('offers nothing when the invoice accepts none of them', async () => {
-        const { latestSlotProps } = await mountEntryView(createInvoice(['paya_elsewhere']));
-
-        expect(offeredAcceptorIds(latestSlotProps())).toEqual([]);
-    });
-
-    it('offers everything for an invoice that names no acceptors', async () => {
-        const { latestSlotProps } = await mountEntryView(createInvoice());
-
-        expect(offeredAcceptorIds(latestSlotProps())).toEqual([
-            ALLOWED_ACCEPTOR_ID,
-            OTHER_ACCEPTOR_ID,
-        ]);
-    });
-
-    // The API narrows the acceptors to the invoice; the filter above is the guard behind it.
+    // Asked of the invoice, so the API answers with the acceptors it can be paid through rather
+    // than every acceptor the customer has — paying through one of those fails with a 400 the
+    // customer can do nothing about (DD-3533).
     it('asks for the options of the invoice being paid, not of the customer alone', async () => {
-        await mountEntryView(createInvoice([ALLOWED_ACCEPTOR_ID]));
+        await mountEntryView();
 
         expect(mockGetOptions).toHaveBeenCalledWith({
             customerId: 'cust_1',
             invoiceId: 'invo_1',
             amount: { currency: 'EUR', quantity: '99.00' },
         });
+    });
+
+    it('offers what came back to pay the invoice with', async () => {
+        const { latestSlotProps } = await mountEntryView();
+
+        expect(latestSlotProps()?.paymentMethodOptions).toEqual(options);
     });
 });

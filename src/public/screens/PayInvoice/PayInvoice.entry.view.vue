@@ -7,7 +7,6 @@ import { useInvoice } from '@/composables/useInvoice';
 import { usePayments } from '@/composables/usePayments';
 import { usePaymentMethodOptions } from '@/composables/usePaymentMethodOptions';
 import { usePaymentMethods } from '@/composables/usePaymentMethods';
-import { getPaymentMethodOptionsForAcceptors } from '@/utils/paymentMethods';
 
 const props = defineProps<SolvimonPayInvoiceEntryProps>();
 
@@ -43,18 +42,6 @@ const { isLoading } = useLoadInitialData(
 const countryCode = computed(() =>
     invoice.value?.customer ? getCustomerCountry(invoice.value.customer) : undefined,
 );
-
-/**
- * A guard behind the `invoice_id` sent above: authorizing against an acceptor the invoice refuses
- * fails with a 400 nothing on the screen can recover from, so an answer that carries one anyway
- * still never reaches the customer (DD-3533).
- */
-const payableMethodOptions = computed(() =>
-    getPaymentMethodOptionsForAcceptors(
-        paymentMethodOptions.value ?? [],
-        invoice.value?.payment_acceptor_ids,
-    ),
-);
 </script>
 
 <template>
@@ -64,7 +51,7 @@ const payableMethodOptions = computed(() =>
         :is-loading="isLoading"
         :amount="invoice?.open_invoice_amount"
         :country-code="countryCode"
-        :payment-method-options="payableMethodOptions"
+        :payment-method-options="paymentMethodOptions"
         :payment-attempts="payments"
         :download-service="downloadInvoicePdf"
         :error="error"

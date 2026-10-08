@@ -1,4 +1,5 @@
 import type { Customer } from '@solvimon/solvimon-types';
+import { flushPromises } from '@vue/test-utils';
 import { nextTick, ref } from 'vue';
 import { useCustomerPaymentMethodOptions } from './useCustomerPaymentMethodOptions';
 
@@ -22,7 +23,12 @@ const CUSTOMER = {
     organization: { registered_address: { country: 'NL' } },
 } as unknown as Customer;
 
-const setup = ({ isOpen = false, customer = CUSTOMER as Customer | null } = {}) => {
+const setup = ({
+    isOpen = false,
+    customer = CUSTOMER as Customer | null,
+    subscriptionId = undefined as string | undefined,
+    onError = undefined as ((error: unknown) => void) | undefined,
+} = {}) => {
     const open = ref(isOpen);
     // Null rather than undefined, which a default parameter would fill back in.
     const currentCustomer = ref(customer ?? undefined);
@@ -30,7 +36,12 @@ const setup = ({ isOpen = false, customer = CUSTOMER as Customer | null } = {}) 
     return {
         open,
         currentCustomer,
-        ...useCustomerPaymentMethodOptions({ isOpen: open, customer: currentCustomer }),
+        ...useCustomerPaymentMethodOptions({
+            isOpen: open,
+            customer: currentCustomer,
+            subscriptionId: ref(subscriptionId),
+            onError,
+        }),
     };
 };
 
@@ -74,6 +85,31 @@ describe('useCustomerPaymentMethodOptions', () => {
         await nextTick();
 
         expect(mockGet).toHaveBeenLastCalledWith({ customerId: 'cust_2', country: 'NL' });
+    });
+
+    it("narrows the options to a subscription's", () => {
+        setup({ isOpen: true, subscriptionId: 'ppsu_1' });
+
+        expect(mockGet).toHaveBeenCalledWith({
+            customerId: 'cust_1',
+            subscriptionId: 'ppsu_1',
+            country: 'NL',
+        });
+    });
+
+    it('reports a failed lookup and asks again when told to', async () => {
+        const error = new Error('gateway down');
+        mockGet.mockRejectedValueOnce(error);
+        const onError = vi.fn();
+        const { load } = setup({ isOpen: true, onError });
+        await flushPromises();
+
+        expect(onError).toHaveBeenCalledWith(error);
+
+        await load();
+
+        expect(mockGet).toHaveBeenCalledTimes(2);
+        expect(onError).toHaveBeenCalledTimes(1);
     });
 
     it('hands the options on to whoever asked for them', () => {

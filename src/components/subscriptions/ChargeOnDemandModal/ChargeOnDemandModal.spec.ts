@@ -3,6 +3,7 @@ import { defineComponent, nextTick } from 'vue';
 import type { Customer, Invoice, PaymentMethod } from '@solvimon/solvimon-types';
 import type { ChargeOnDemandItem } from '@solvimon/solvimon-ui';
 import ChargeOnDemandModal from './ChargeOnDemandModal.vue';
+import OnDemandPaymentModalShell from '@/components/payments/OnDemandPaymentModalShell/OnDemandPaymentModalShell.vue';
 import type { PricingPlanSubscriptionExpanded } from '@/types/subscription';
 import { ApiError } from '@/services/apiError';
 
@@ -174,6 +175,7 @@ describe('ChargeOnDemandModal', () => {
         vi.clearAllMocks();
         mockPreview.mockResolvedValue(preview);
         mockLoadPaymentMethodOptions.mockResolvedValue([]);
+        gateway.isPending.value = false;
         gateway.options.value = [
             { payment_acceptor: { id: 'pacc_stripe' }, integration: { id: 'int_stripe' } },
             { payment_acceptor: { id: 'pacc_platform' }, integration: { id: 'int_platform' } },
@@ -615,6 +617,35 @@ describe('ChargeOnDemandModal', () => {
             expect(mockLoadPaymentMethodOptions).toHaveBeenCalledWith(
                 expect.objectContaining({ customerId: 'cust_1', subscriptionId: 'ppsu_1' }),
             );
+        });
+
+        it('waits for the customer, whose country decides the options, before it asks', async () => {
+            const wrapper = mountModal({ customer: undefined });
+            expect(mockLoadPaymentMethodOptions).not.toHaveBeenCalled();
+
+            await wrapper.setProps({
+                customer: {
+                    id: 'cust_1',
+                    type: 'ORGANIZATION',
+                    organization: { registered_address: { country: 'DE' } },
+                } as unknown as Customer,
+            });
+
+            expect(mockLoadPaymentMethodOptions).toHaveBeenCalledWith({
+                customerId: 'cust_1',
+                subscriptionId: 'ppsu_1',
+                country: 'DE',
+            });
+        });
+
+        it('offers no options to add while they are still being looked up', async () => {
+            gateway.isPending.value = true;
+            const wrapper = mountModal();
+            await openAddPaymentMethod(wrapper);
+
+            expect(
+                wrapper.findComponent(OnDemandPaymentModalShell).props('paymentMethodOptions'),
+            ).toBeUndefined();
         });
 
         it("offers only the options of the subscription's own payment acceptors", async () => {

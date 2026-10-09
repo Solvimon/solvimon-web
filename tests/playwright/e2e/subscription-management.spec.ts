@@ -384,7 +384,7 @@ test.describe('Subscription management', () => {
             );
             // Expanded, so the options are labelled off the response rather than a call per plan.
             expect(api.lastCall('pricingPlan')).toBeUndefined();
-            await expect(ui.planSelector).toContainText('Workspace plans');
+            await expect(ui.planSelector).toContainText('Pick your plan');
             await expect(ui.planSelector).toContainText('Pro plan');
             await expect(ui.planSelector).toContainText('Scale plan');
             await expect(page.getByRole('radio', { name: /pro plan/i })).toBeChecked();

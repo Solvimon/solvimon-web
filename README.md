@@ -412,6 +412,7 @@ The SDK emits structured log entries via the [`onLog`](#error-logging) callback.
 | `PORTAL_TYPE_NOT_ALLOWED`                   | Reserved — not currently emitted                                   |
 | `PORTAL_URL_EXPIRED`                        | The portal link has expired                                        |
 | `PORTAL_URL_REVOKED`                        | The portal link is revoked                                         |
+| `PRICING_PLAN_GROUP_LOAD_FAILED`            | Failed to load the pricing plan group of the subscription          |
 | `PROMOTION_CODE_APPLY_FAILED`               | Failed to apply promotion code                                     |
 | `PROMOTION_CODE_REMOVE_FAILED`              | Failed to remove promotion code                                    |
 | `REQUEST_FAILED`                            | Request failed                                                     |
@@ -428,6 +429,7 @@ The SDK emits structured log entries via the [`onLog`](#error-logging) callback.
 | `STRIPE_SUBMIT_FAILED`                      | Unexpected error during Stripe submission                          |
 | `SUBSCRIPTION_CANCELLATION_FAILED`          | Failed to change the cancellation state of a subscription          |
 | `SUBSCRIPTION_LOAD_FAILED`                  | Failed to load the subscription the checkout prices                |
+| `SUBSCRIPTION_PLAN_CHANGE_FAILED`           | Failed to move the subscription to another plan in its group       |
 | `SUBSCRIPTION_UPDATE_FAILED`                | Failed to start a new pricing plan schedule                        |
 | `TOKENIZATION_FAILED`                       | Missing customer id for payment acceptor with id…                  |
 | `TOP_UP_FAILED`                             | Failed to charge the wallet top-up                                 |
@@ -448,6 +450,7 @@ The SDK emits structured log entries via the [`onLog`](#error-logging) callback.
 | `ON_DEMAND_CHARGE_REFUSED`           | The on-demand order was refused or its payment did not go through                                            |
 | `PAYMENT_INTEGRATION_NOT_RENDERABLE` | No Adyen payment methods to offer                                                                            |
 | `PAYMENT_OUTCOME_UNCONFIRMED`        | The payment outcome could not be confirmed yet                                                               |
+| `PRICING_PLAN_GROUP_MEMBER_SKIPPED`  | Skipped a pricing plan group member that could not be loaded                                                 |
 | `PROMOTION_CODE_REJECTED`            | The promotion code was not accepted                                                                          |
 | `RECURRING_AMOUNT_UNRESOLVED`        | Could not tell the recurring part of the invoice from the one-off part; the mandate states the invoice total |
 | `REQUEST_FAILED`                     | Request failed with an expected status                                                                       |

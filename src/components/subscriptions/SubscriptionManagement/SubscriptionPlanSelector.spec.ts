@@ -22,16 +22,13 @@ const options: SubscriptionPlanOption[] = [
 const mountComponent = ({
     planOptions = options,
     pricingPlanId = 'ppla_starter',
-    groupName,
 }: {
     planOptions?: SubscriptionPlanOption[];
     pricingPlanId?: string;
-    groupName?: string;
 } = {}) =>
     mount(SubscriptionPlanSelector, {
         props: {
             options: planOptions,
-            groupName,
             pricingPlanId,
             'onUpdate:pricingPlanId': (value?: string) => value,
         },
@@ -46,47 +43,41 @@ describe('SubscriptionPlanSelector', () => {
         expect(wrapper.text()).toContain('Pro');
     });
 
-    it('names the choice after the group', () => {
-        const wrapper = mountComponent({ groupName: 'Workspace plans' });
-
-        expect(wrapper.text()).toContain('Workspace plans');
-    });
-
-    it('falls back to a generic heading when the group has no name', () => {
+    it('heads the choice the way the design does', () => {
         const wrapper = mountComponent();
 
-        expect(wrapper.text()).toContain('Plan');
+        expect(wrapper.text()).toContain('Pick your plan');
     });
 
-    it('marks the plan the subscription runs on today', () => {
-        const wrapper = mountComponent();
-
-        expect(wrapper.text()).toContain('Your current plan');
-    });
-
-    it('says a move takes effect right away for an immediate transition', () => {
-        const wrapper = mountComponent();
-
-        expect(wrapper.text()).toContain('Starts right away');
-    });
-
-    it('says a move waits for the next billing period when the group times it that way', () => {
-        const wrapper = mountComponent({
-            planOptions: [
-                options[0],
-                { ...options[1], direction: 'DOWNGRADE', changeType: 'NEXT_BILLING_PERIOD' },
-            ],
-        });
-
-        expect(wrapper.text()).toContain('Starts on your next billing period');
-    });
-
-    it('describes a plan by its own description alongside the timing', () => {
+    it('describes a plan by its own description', () => {
         const wrapper = mountComponent({
             planOptions: [options[0], { ...options[1], description: 'For growing teams' }],
         });
 
-        expect(wrapper.text()).toContain('For growing teams · Starts right away');
+        expect(wrapper.text()).toContain('For growing teams');
+    });
+
+    describe('the current subscription', () => {
+        it('is marked, so the customer can see what they are moving from', () => {
+            const wrapper = mountComponent();
+
+            expect(wrapper.find('.sv-subscription-plan-selector__current').exists()).toBe(true);
+            expect(wrapper.text()).toContain('Current subscription');
+        });
+
+        // One marker, on the plan being billed today — not on whichever plan is selected.
+        it('is marked once, on the plan being billed today', () => {
+            const wrapper = mountComponent({ pricingPlanId: 'ppla_pro' });
+
+            expect(wrapper.findAll('.sv-subscription-plan-selector__current')).toHaveLength(1);
+        });
+    });
+
+    // The timing of a move is the aside's to state, so it is not repeated on every option.
+    it('leaves the timing of a move to the change summary', () => {
+        const wrapper = mountComponent();
+
+        expect(wrapper.text()).not.toContain('Starts right away');
     });
 
     it('reports the plan the customer picks', async () => {

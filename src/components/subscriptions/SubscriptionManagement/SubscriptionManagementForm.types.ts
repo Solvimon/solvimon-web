@@ -19,8 +19,6 @@ export interface SubscriptionManagementFormProps {
      * there is nothing to move to and the plan choice is left out.
      */
     planOptions?: SubscriptionPlanOption[];
-    /** Names the plan choice — the pricing plan group's own name. */
-    planGroupName?: string;
     /**
      * What the change can be charged to. The API only charges the subscription's own method, so
      * nothing can be added here.

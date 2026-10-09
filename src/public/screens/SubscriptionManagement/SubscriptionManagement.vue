@@ -2,6 +2,7 @@
 import { computed, ref, watch } from 'vue';
 import { Button, ErrorNotification, Typography, useIntl } from '@solvimon/solvimon-ui';
 import type { PaymentMethod, Pricing } from '@solvimon/solvimon-types';
+import type { PricingPlan } from '@solvimon/solvimon-types';
 import type { SubscriptionManagementProps } from './SubscriptionManagement.types';
 import { ContentWithAsideLayout } from '@/layouts';
 import { useActionDispatchProvider, useLogger, usePortal } from '@/components/providers';
@@ -11,11 +12,17 @@ import { usePaymentMethods } from '@/composables/usePaymentMethods';
 import { usePaymentMethodOptions } from '@/composables/usePaymentMethodOptions';
 import { useLoadInitialData } from '@/composables/useLoadInitialData';
 import { useSubscriptionUpgradePreview } from '@/composables/useSubscriptionUpgradePreview';
+import {
+    useSubscriptionPlanGroup,
+    type SubscriptionPlanOption,
+} from '@/composables/useSubscriptionPlanGroup';
 import { createPricingPlanSchedulesService } from '@/services/pricingPlanSchedules';
+import { createSubscriptionsService } from '@/services/subscriptions';
 import SecurePaymentsKPI from '@/components/payments/SecurePaymentsKPI/SecurePaymentsKPI.vue';
 import SubscriptionManagementForm from '@/components/subscriptions/SubscriptionManagement/SubscriptionManagementForm.vue';
 import SubscriptionManagementSummary from '@/components/subscriptions/SubscriptionManagement/SubscriptionManagementSummary.vue';
 import SubscriptionManagementSuccess from '@/components/subscriptions/SubscriptionManagement/SubscriptionManagementSuccess.vue';
+import SubscriptionPlanChangeSummary from '@/components/subscriptions/SubscriptionManagement/SubscriptionPlanChangeSummary.vue';
 import AddPaymentMethodModal from '@/components/payments/AddPaymentMethodModal/AddPaymentMethodModal.vue';
 import Skeleton from '@/components/shared/Skeleton.vue';
 import {
@@ -30,6 +37,7 @@ const portal = usePortal();
 const logger = useLogger();
 const { dispatchAction } = useActionDispatchProvider();
 const { createPricingPlanSchedule } = createPricingPlanSchedulesService();
+const { changeSubscriptionPlan } = createSubscriptionsService();
 
 const { subscription, get: fetchSubscription } = useSubscription({
     subscriptionId: props.configuration.subscriptionId,
@@ -141,6 +149,49 @@ watch(
     { immediate: true },
 );
 
+/**
+ * The plans the subscription may move to (MD-5064): the group its current plan belongs to, which
+ * is only there for plans a merchant has grouped.
+ */
+const {
+    group: planGroup,
+    options: planOptions,
+    currentPricingPlanId,
+    load: loadPlanGroup,
+} = useSubscriptionPlanGroup();
+
+watch(
+    activeScheduleInfo,
+    (scheduleInfo) => {
+        void loadPlanGroup({
+            subscriptionId: props.configuration.subscriptionId,
+            scheduleInfo,
+        });
+    },
+    { immediate: true },
+);
+
+const pricingPlanId = ref<PricingPlan['id'] | undefined>();
+
+/** The choice opens on the plan being billed today, so staying put is the default. */
+watch(
+    currentPricingPlanId,
+    (planId) => {
+        pricingPlanId.value = planId;
+    },
+    { immediate: true },
+);
+
+/** The plan the customer picked, as the group describes it — it carries the timing of the move. */
+const selectedPlanOption = computed(() =>
+    planOptions.value.find((option) => option.pricingPlanId === pricingPlanId.value),
+);
+
+/** A move only happens once the customer picks a plan other than the one they are on. */
+const isChangingPlan = computed(() =>
+    Boolean(selectedPlanOption.value && !selectedPlanOption.value.isCurrent),
+);
+
 const {
     invoice: previewInvoice,
     isPending: isPreviewPending,
@@ -153,9 +204,11 @@ const {
  * Immediate, since the ids are seeded from the schedule before this watcher is registered.
  */
 watch(
-    [enabledPricingIds, subscription],
-    ([pricingIds, loadedSubscription]) => {
-        if (!loadedSubscription || pricingIds.length === 0) {
+    [enabledPricingIds, subscription, isChangingPlan],
+    ([pricingIds, loadedSubscription, isPlanChange]) => {
+        // A plan change is not priced here: it moves the subscription off the very schedule this
+        // preview is calculated on.
+        if (!loadedSubscription || pricingIds.length === 0 || isPlanChange) {
             return;
         }
 
@@ -167,8 +220,17 @@ watch(
     { immediate: true },
 );
 
+/** One plan is no choice; the screen only offers the move when the group holds more than one. */
+const canChangePlan = computed(() => planOptions.value.length > 1);
+
 const isUpdating = ref(false);
 const updateError = ref<string | undefined>();
+
+/**
+ * The plan the committed change moved to, kept because the selection is what the confirmation
+ * names and the options behind it are reloaded once the subscription catches up.
+ */
+const committedPlanChange = ref<SubscriptionPlanOption | undefined>();
 
 /**
  * The change is committed, so the screen stops offering it and confirms it instead. The customer
@@ -176,12 +238,15 @@ const updateError = ref<string | undefined>();
  */
 const isUpdated = ref(false);
 
-/** The change is paid for, so it cannot be committed until the customer has said with what. */
+/**
+ * The change is paid for, so it cannot be committed until the customer has said with what. A plan
+ * change answers for itself: it needs a plan to move to rather than pricings to enable.
+ */
 const canUpdate = computed(
     () =>
         !isLoading.value &&
         !isUpdating.value &&
-        enabledPricingIds.value.length > 0 &&
+        (isChangingPlan.value || enabledPricingIds.value.length > 0) &&
         Boolean(subscription.value) &&
         Boolean(paymentMethodId.value),
 );
@@ -195,21 +260,41 @@ const handleUpdate = async () => {
     updateError.value = undefined;
 
     try {
-        await createPricingPlanSchedule({
-            pricingPlanSubscriptionId: subscription.value.id,
-            enabledPricings: enabledPricingIds.value.map((pricingId) => ({
-                pricing_id: pricingId,
-            })),
-        });
+        if (isChangingPlan.value && pricingPlanId.value) {
+            // The group decides when the move lands, so nothing about its timing is sent along.
+            await changeSubscriptionPlan({
+                id: subscription.value.id,
+                pricingPlanId: pricingPlanId.value,
+            });
+
+            committedPlanChange.value = selectedPlanOption.value;
+        } else {
+            await createPricingPlanSchedule({
+                pricingPlanSubscriptionId: subscription.value.id,
+                enabledPricings: enabledPricingIds.value.map((pricingId) => ({
+                    pricing_id: pricingId,
+                })),
+            });
+        }
 
         isUpdated.value = true;
     } catch (error) {
-        logger.error(
-            'SUBSCRIPTION_UPDATE_FAILED',
-            'Failed to start a new pricing plan schedule',
-            {},
-            error,
-        );
+        if (isChangingPlan.value) {
+            logger.error(
+                'SUBSCRIPTION_PLAN_CHANGE_FAILED',
+                'Failed to move the subscription to another plan in its group',
+                {},
+                error,
+            );
+        } else {
+            logger.error(
+                'SUBSCRIPTION_UPDATE_FAILED',
+                'Failed to start a new pricing plan schedule',
+                {},
+                error,
+            );
+        }
+
         updateError.value = $t({
             defaultMessage: 'Something went wrong. Please try again.',
             id: 'subscription_management.update_error',
@@ -241,17 +326,21 @@ const billingPeriod = computed(
             <SubscriptionManagementSuccess
                 v-if="isUpdated"
                 class="sv-subscription-management__success"
-                :pricing-group-name="pricingGroup?.name"
+                :pricing-group-name="committedPlanChange ? undefined : pricingGroup?.name"
+                :pricing-plan-name="committedPlanChange?.name"
             />
 
             <Skeleton v-else-if="isLoading" variant="section" class="min-h-[220px]" />
 
             <SubscriptionManagementForm
-                v-else-if="pricingGroup && billingPeriod"
+                v-else-if="(pricingGroup || canChangePlan) && billingPeriod"
                 v-model:enabled-pricing-ids="enabledPricingIds"
                 v-model:payment-method-id="paymentMethodId"
+                v-model:pricing-plan-id="pricingPlanId"
                 class="sv-subscription-management__form"
                 :pricing-group="pricingGroup"
+                :plan-options="planOptions"
+                :plan-group-name="planGroup?.name"
                 :payment-methods="paymentMethods"
                 :payment-method-options="paymentMethodOptions"
                 :billing-period="billingPeriod"
@@ -289,7 +378,15 @@ const billingPeriod = computed(
             </Button>
 
             <template v-else>
+                <SubscriptionPlanChangeSummary
+                    v-if="isChangingPlan && selectedPlanOption"
+                    class="sv-subscription-management__plan-change-summary"
+                    :plan-name="selectedPlanOption.name"
+                    :change-type="selectedPlanOption.changeType"
+                />
+
                 <SubscriptionManagementSummary
+                    v-else
                     class="sv-subscription-management__summary"
                     :invoice="previewInvoice"
                     :is-pending="isLoading || isPreviewPending"

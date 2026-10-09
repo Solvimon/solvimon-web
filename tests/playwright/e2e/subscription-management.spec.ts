@@ -2,6 +2,7 @@ import { test, expect, type Page } from '@playwright/test';
 import type { ApiMock } from '../support/api-mock';
 import {
     aManageableSubscription,
+    aPricingPlanGroup,
     hostEvents,
     mountSubscriptionManagement,
     subscriptionManagement,
@@ -13,6 +14,7 @@ import {
     CUSTOMER_ID,
     DEFAULT_SCHEDULE_ID,
     SUBSCRIPTION_ID,
+    UPGRADE_PRICING_PLAN_ID,
 } from '../support/fixtures';
 
 /**
@@ -272,6 +274,130 @@ test.describe('Subscription management', () => {
 
             await expect(subscriptionManagement(page).screen).toHaveCount(0);
             expect(api.calls('subscription')).toEqual([]);
+        });
+    });
+
+    // ─── Changing plan ────────────────────────────────────────────────────────
+
+    test.describe('changing plan', () => {
+        test('offers the plans of the group the current plan belongs to', async ({ page }) => {
+            api = await mountLoaded(page, { planGroup: aPricingPlanGroup() });
+            const ui = subscriptionManagement(page);
+
+            expect(new URL(api.lastCall('pricingPlanGroup')!.url).pathname).toBe(
+                `/v1/portal/pricing-plan-subscriptions/${SUBSCRIPTION_ID}/pricing-plan-group`,
+            );
+            // Expanded, so the options are labelled off the response rather than a call per plan.
+            expect(api.lastCall('pricingPlan')).toBeUndefined();
+            await expect(ui.planSelector).toContainText('Workspace plans');
+            await expect(ui.planSelector).toContainText('Pro plan');
+            await expect(ui.planSelector).toContainText('Scale plan');
+            await expect(page.getByRole('radio', { name: /pro plan/i })).toBeChecked();
+        });
+
+        // The endpoint 404s for a plan in no group, which is not a failure to report.
+        test('offers no plan choice for a plan that belongs to no group', async ({ page }) => {
+            api = await mountLoaded(page);
+
+            await expect(subscriptionManagement(page).planSelector).toHaveCount(0);
+            await expect(subscriptionManagement(page).summary).toBeVisible();
+        });
+
+        test('reads the member plans by id where the group expands none', async ({ page }) => {
+            api = await mountLoaded(page, {
+                planGroup: aPricingPlanGroup({ expanded: false }),
+            });
+
+            const plan = await api.waitForCall('pricingPlan');
+
+            expect(new URL(plan.url).pathname).toBe(
+                `/v1/portal/pricing-plans/${UPGRADE_PRICING_PLAN_ID}`,
+            );
+            await expect(subscriptionManagement(page).planSelector).toContainText('Scale plan');
+        });
+
+        test('offers no plan choice while the group is not active', async ({ page }) => {
+            api = await mountLoaded(page, { planGroup: aPricingPlanGroup({ status: 'DRAFT' }) });
+
+            await expect(subscriptionManagement(page).planSelector).toHaveCount(0);
+        });
+
+        test('explains when the move lands instead of pricing it', async ({ page }) => {
+            api = await mountLoaded(page, { planGroup: aPricingPlanGroup() });
+            const ui = subscriptionManagement(page);
+
+            await ui.planSelector.getByText('Scale plan').click();
+
+            await expect(ui.planChangeSummary).toContainText('Moving to Scale plan');
+            await expect(ui.planChangeSummary).toContainText('takes effect right away');
+            await expect(ui.summary).toHaveCount(0);
+        });
+
+        test('promises the next billing period when the group times the move that way', async ({
+            page,
+        }) => {
+            api = await mountLoaded(page, {
+                planGroup: aPricingPlanGroup({ upgradeType: 'NEXT_BILLING_PERIOD' }),
+            });
+            const ui = subscriptionManagement(page);
+
+            await ui.planSelector.getByText('Scale plan').click();
+
+            await expect(ui.planChangeSummary).toContainText('next billing period');
+        });
+
+        test('moves the subscription to the plan the customer picked', async ({ page }) => {
+            api = await mountLoaded(page, { planGroup: aPricingPlanGroup() });
+            const ui = subscriptionManagement(page);
+
+            await ui.planSelector.getByText('Scale plan').click();
+            await ui.updateButton.click();
+
+            const changed = await api.waitForCall('changeSubscriptionPlan');
+
+            expect(new URL(changed.url).pathname).toBe(
+                `/v1/portal/pricing-plan-subscriptions/${SUBSCRIPTION_ID}/change-plan`,
+            );
+            // The group owns the timing, so the SDK sends nothing that would override it.
+            expect(changed.body).toEqual({ pricing_plan_id: UPGRADE_PRICING_PLAN_ID });
+            await expect(ui.success).toContainText('Scale plan');
+        });
+
+        test('starts a new schedule instead when the plan is left alone', async ({ page }) => {
+            api = await mountLoaded(page, {
+                planGroup: aPricingPlanGroup(),
+                mocks: { createPricingPlanSchedule: { body: { id: 'ppsc_new' } } },
+            });
+
+            await subscriptionManagement(page).updateButton.click();
+
+            await api.waitForCall('createPricingPlanSchedule');
+            expect(api.lastCall('changeSubscriptionPlan')).toBeUndefined();
+        });
+
+        test('leaves out a transition the merchant has closed off', async ({ page }) => {
+            api = await mountLoaded(page, {
+                planGroup: aPricingPlanGroup({ upgradeType: 'NOT_ALLOWED' }),
+            });
+
+            // The only move out of the current plan is the one that is not allowed, so there is
+            // no choice left to offer.
+            await expect(subscriptionManagement(page).planSelector).toHaveCount(0);
+        });
+
+        test('keeps the choice when the move cannot be committed', async ({ page }) => {
+            api = await mountLoaded(page, {
+                planGroup: aPricingPlanGroup(),
+                mocks: { changeSubscriptionPlan: { status: 500, body: { message: 'Boom' } } },
+            });
+            const ui = subscriptionManagement(page);
+
+            await ui.planSelector.getByText('Scale plan').click();
+            await ui.updateButton.click();
+
+            await expect(ui.updateError).toBeVisible();
+            await expect(ui.success).toHaveCount(0);
+            await expect(page.getByRole('radio', { name: /scale plan/i })).toBeChecked();
         });
     });
 });

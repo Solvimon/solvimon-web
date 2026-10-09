@@ -289,6 +289,7 @@ The SDK emits structured log entries via the [`onLog`](#error-logging) callback.
 | `PAYMENT_DETAILS_REJECTED`                  | Payment details returned a failed payment                          |
 | `PAYMENT_INTEGRATION_INITIALIZATION_FAILED` | Failed to mount Adyen web drop-in                                  |
 | `PAYMENT_METHOD_OPTIONS_LOAD_FAILED`        | Failed to load the payment methods that can be offered             |
+| `PRICING_PLAN_GROUP_LOAD_FAILED`            | Failed to load the pricing plan group of the subscription          |
 | `PROMOTION_CODE_APPLY_FAILED`               | Failed to apply promotion code                                     |
 | `PROMOTION_CODE_REMOVE_FAILED`              | Failed to remove promotion code                                    |
 | `REQUEST_FAILED`                            | Request failed                                                     |
@@ -301,6 +302,7 @@ The SDK emits structured log entries via the [`onLog`](#error-logging) callback.
 | `STRIPE_SUBMIT_FAILED`                      | Unexpected error during Stripe submission                          |
 | `SUBSCRIPTION_CANCELLATION_FAILED`          | Failed to change the cancellation state of a subscription          |
 | `SUBSCRIPTION_LOAD_FAILED`                  | Failed to load the subscription the checkout prices                |
+| `SUBSCRIPTION_PLAN_CHANGE_FAILED`           | Failed to move the subscription to another plan in its group       |
 | `SUBSCRIPTION_UPDATE_FAILED`                | Failed to start a new pricing plan schedule                        |
 | `TOKENIZATION_FAILED`                       | Missing customer id for payment acceptor with id…                  |
 | `TOP_UP_FAILED`                             | Failed to charge the wallet top-up                                 |
@@ -317,6 +319,7 @@ The SDK emits structured log entries via the [`onLog`](#error-logging) callback.
 | `INVOICE_PREVIEW_SKIPPED`            | Skipped the on-demand charge invoice preview: no schedule to charge it on |
 | `ON_DEMAND_CHARGE_REFUSED`           | The on-demand order was refused or its payment did not go through         |
 | `PAYMENT_INTEGRATION_NOT_RENDERABLE` | No Adyen payment methods to offer                                         |
+| `PRICING_PLAN_GROUP_MEMBER_SKIPPED`  | Skipped a pricing plan group member that could not be loaded              |
 | `REQUEST_FAILED`                     | Request failed with an expected status                                    |
 | `TRANSLATION_LOAD_FAILED`            | Failed to load translations for locale…                                   |
 

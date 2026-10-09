@@ -1111,6 +1111,38 @@
     "defaultMessage": "Payment method",
     "description": "Label above the payment method that pays for the subscription change"
   },
+  "subscription_management.plan_change_summary.headline": {
+    "defaultMessage": "Moving to {plan}",
+    "description": "Names the plan a subscription is about to be moved to"
+  },
+  "subscription_management.plan_change_summary.immediate": {
+    "defaultMessage": "The change takes effect right away. The new price appears on your next invoice.",
+    "description": "Explains a plan change that takes effect immediately"
+  },
+  "subscription_management.plan_change_summary.next_billing_period": {
+    "defaultMessage": "The change takes effect at the start of your next billing period. You keep your current plan until then, and the new price appears on the invoice from that period onwards.",
+    "description": "Explains a plan change that only takes effect at the next billing period"
+  },
+  "subscription_management.plan_change_summary.title": {
+    "defaultMessage": "Your new plan",
+    "description": "Title of the block explaining the plan change about to be committed"
+  },
+  "subscription_management.plan_selector.current": {
+    "defaultMessage": "Your current plan",
+    "description": "Marks the plan a subscription already runs on"
+  },
+  "subscription_management.plan_selector.immediate": {
+    "defaultMessage": "Starts right away",
+    "description": "Says when a move to this plan takes effect, for plans that change at once"
+  },
+  "subscription_management.plan_selector.next_billing_period": {
+    "defaultMessage": "Starts on your next billing period",
+    "description": "Says when a move to this plan takes effect, for plans that change at the next billing period"
+  },
+  "subscription_management.plan_selector.title": {
+    "defaultMessage": "Plan",
+    "description": "Heading above the plans a subscription can be moved between"
+  },
   "subscription_management.success.message": {
     "defaultMessage": "Your {subject} has been changed. Please be aware that it can take some time to reflect this change in your subscription.",
     "description": "Confirmation of the pricing group a committed subscription change applied to"
@@ -1118,6 +1150,10 @@
   "subscription_management.success.message_generic": {
     "defaultMessage": "Your subscription has been changed. Please be aware that it can take some time to reflect this change in your subscription.",
     "description": "Confirmation of a committed subscription change when the pricing group is not known"
+  },
+  "subscription_management.success.plan_message": {
+    "defaultMessage": "Your subscription has been moved to {plan}. Please be aware that it can take some time to reflect this change in your subscription.",
+    "description": "Confirmation of a committed move to another plan within the same pricing plan group"
   },
   "subscription_management.success.title": {
     "defaultMessage": "Subscription updated",

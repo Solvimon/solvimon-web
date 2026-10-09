@@ -6,10 +6,22 @@ import type {
     Pricing,
     PricingGroupExtended,
 } from '@solvimon/solvimon-types';
+import type { PricingPlan } from '@solvimon/solvimon-types';
+import type { SubscriptionPlanOption } from '@/composables/useSubscriptionPlanGroup';
 
 export interface SubscriptionManagementFormProps {
-    /** The group being changed. Its pricings are the options the customer picks between. */
-    pricingGroup: PricingGroupExtended;
+    /**
+     * The group being changed. Its pricings are the options the customer picks between. Absent for
+     * a plan that offers nothing to customise, which a plan change on its own does not need.
+     */
+    pricingGroup?: PricingGroupExtended;
+    /**
+     * The plans of the group the current plan belongs to, cheapest first. Fewer than two means
+     * there is nothing to move to and the plan choice is left out.
+     */
+    planOptions?: SubscriptionPlanOption[];
+    /** Names the plan choice — the pricing plan group's own name. */
+    planGroupName?: string;
     /** The customer's saved payment methods, to pay the change with. */
     paymentMethods?: PaymentMethod[];
     /**
@@ -35,4 +47,6 @@ export interface SubscriptionManagementFormModel {
      */
     enabledPricingIds: Pricing['id'][];
     paymentMethodId?: PaymentMethod['id'];
+    /** The plan the subscription should run on, which starts on the one it runs on today. */
+    pricingPlanId?: PricingPlan['id'];
 }

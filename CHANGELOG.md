@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- The manage subscription screen now also moves a subscription between plans. Where the plan it runs on belongs to an `ACTIVE` pricing plan group, the screen offers that group's plans above what the plan itself can be customised with, cheapest first, with the current one marked. The group owns the timing and the screen says it on each option — a move that starts right away, or one that starts at the next billing period — and a transition the merchant has closed off (`NOT_ALLOWED`) is not offered at all. The group is read from `GET /portal/pricing-plan-subscriptions/{id}/pricing-plan-group`, expanded so each member carries its plan; a subscription whose plan is in no group answers 404, which the screen reads as nothing to offer rather than as a failure. Picking another plan commits through `POST /portal/pricing-plan-subscriptions/{id}/change-plan` with the target plan and nothing else, so the group's own timing decides when the move lands; keeping the current plan still starts a new schedule with the pricings that are enabled, exactly as before. A plan that belongs to no group, or whose group is not active, renders the screen as it did. Since a plan change is not priced up front — there is no preview endpoint for one yet — the aside explains when the move takes effect and where the new price appears instead of showing an order total it cannot stand behind.
+
 ## [0.1.0-alpha.26] - 2026-10-08
 
 ### Added

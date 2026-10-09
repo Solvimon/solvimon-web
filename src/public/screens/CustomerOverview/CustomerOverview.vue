@@ -65,6 +65,10 @@ const handleWalletBalancesChanged = () => {
     void customerWalletBalances.fetch();
 };
 
+const handleSubscriptionChanged = () => {
+    void subscriptions.fetchAll();
+};
+
 /** One-off charges such as a wallet top-up are invoiced on the schedule billed right now. */
 const activeScheduleId = computed(() => getActiveDefaultScheduleId(subscriptions.items.value));
 
@@ -96,6 +100,7 @@ watch([activeScheduleId, () => subscriptions.items.value], ([scheduleId, activeS
                 :subscriptions="shownSubscriptions"
                 :payment-methods="paymentMethods.items.value"
                 :is-loading="isLoading"
+                @subscription-changed="handleSubscriptionChanged"
             />
         </template>
         <template #content>

@@ -75,6 +75,8 @@ describe('SubscriptionsList component', () => {
             maxItems?: number;
             showViewAllButton?: boolean;
             showViewDetailsButton?: boolean;
+            showUpgradeButton?: boolean;
+            showCancelButton?: boolean;
         };
         isLoading?: boolean;
     } = {}) =>
@@ -223,9 +225,17 @@ describe('SubscriptionsList component', () => {
             expect(wrapper.text()).toContain('Subscription details');
         });
 
+        // The card leads with Upgrade now, so the details button is opt-in rather than the default.
+        it('is not rendered by default', () => {
+            const wrapper = mountComponent();
+
+            expect(wrapper.text()).not.toContain('Subscription details');
+        });
+
         it('dispatches the view subscription details action when clicked', async () => {
             const wrapper = mountComponent({
                 subscriptions: [createSubscription({ id: 'sub_details' })],
+                configuration: { showViewDetailsButton: true },
             });
 
             await getButtonByText(wrapper, 'Subscription details').trigger('click');
@@ -234,6 +244,76 @@ describe('SubscriptionsList component', () => {
                 action: 'view-subscription-details',
                 data: { subscriptionId: 'sub_details' },
             });
+        });
+    });
+
+    describe('upgrade button', () => {
+        it('is rendered by default', () => {
+            const wrapper = mountComponent();
+
+            expect(wrapper.text()).toContain('Upgrade');
+        });
+
+        it('is not rendered when showUpgradeButton is false', () => {
+            const wrapper = mountComponent({
+                configuration: { showUpgradeButton: false },
+            });
+
+            expect(wrapper.text()).not.toContain('Upgrade');
+        });
+
+        // The management screen is a flow of the host's own, so the card asks for it rather than
+        // navigating itself.
+        it('dispatches the manage subscription action when clicked', async () => {
+            const wrapper = mountComponent({
+                subscriptions: [createSubscription({ id: 'sub_upgrade' })],
+            });
+
+            await getButtonByText(wrapper, 'Upgrade').trigger('click');
+
+            expect(mockDispatchAction).toHaveBeenCalledWith({
+                action: 'manage-subscription',
+                data: { subscriptionId: 'sub_upgrade' },
+            });
+        });
+    });
+
+    describe('cancel button', () => {
+        it('is rendered for a running subscription', () => {
+            const wrapper = mountComponent();
+
+            expect(wrapper.text()).toContain('Cancel');
+        });
+
+        it('is not rendered when showCancelButton is false', () => {
+            const wrapper = mountComponent({
+                configuration: { showCancelButton: false },
+            });
+
+            expect(wrapper.text()).not.toContain('Cancel');
+        });
+
+        // A subscription that has already been cancelled can only be taken back, not cancelled again.
+        it('is replaced by renew once the subscription has been cancelled', () => {
+            const wrapper = mountComponent({
+                subscriptions: [
+                    createSubscription({
+                        inactivePeriods: [{ type: 'CANCEL', start_at: '2026-05-01T00:00:00.000Z' }],
+                    }),
+                ],
+            });
+
+            expect(wrapper.text()).toContain('Renew');
+            expect(wrapper.text()).not.toContain('Cancel');
+        });
+
+        // Cancelling is confirmed in a modal and carried out by the SDK, so it is not dispatched.
+        it('opens the cancellation modal rather than dispatching an action', async () => {
+            const wrapper = mountComponent();
+
+            await getButtonByText(wrapper, 'Cancel').trigger('click');
+
+            expect(mockDispatchAction).not.toHaveBeenCalled();
         });
     });
 });

@@ -26,6 +26,8 @@ const { dispatchAction } = useActionDispatchProvider();
         :is-loading="isLoading"
         :show-view-all-button="configuration?.showViewAllButton"
         :show-view-details-button="configuration?.showViewDetailsButton"
+        :show-upgrade-button="configuration?.showUpgradeButton"
+        :show-cancel-button="configuration?.showCancelButton"
         @view-subscription-details="
             dispatchAction({
                 action: 'view-subscription-details',
@@ -33,6 +35,7 @@ const { dispatchAction } = useActionDispatchProvider();
             })
         "
         @view-all-subscriptions="dispatchAction({ action: 'view-all-subscriptions' })"
+        @subscription-changed="$emit('subscription-changed')"
         @load-more="$emit('load-more')"
     />
 </template>

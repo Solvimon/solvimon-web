@@ -1,19 +1,53 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, defineAsyncComponent, ref, toRef } from 'vue';
 import { PaymentMethod, Section, Typography, useIntl, Button } from '@solvimon/solvimon-ui';
 import type {
     SubscriptionsListItemEmits,
     SubscriptionsListItemProps,
 } from './SubscriptionsListItem.types';
 import { getMostRecentPricingPlan, getSubscriptionName } from '@/utils/subscription';
+import { useSubscriptionActions } from '@/composables/useSubscriptionActions';
+
+const SubscriptionCancellationModal = defineAsyncComponent(
+    () =>
+        import('@/components/subscriptions/SubscriptionCancellationModal/SubscriptionCancellationModal.vue'),
+);
 
 const props = withDefaults(defineProps<SubscriptionsListItemProps>(), {
-    showViewSubscriptionDetailsButton: true,
+    showViewSubscriptionDetailsButton: false,
+    showUpgradeButton: true,
+    showCancelButton: true,
 });
-defineEmits<SubscriptionsListItemEmits>();
+const emit = defineEmits<SubscriptionsListItemEmits>();
 
 const { $t } = useIntl();
 const { formatDate } = useIntl();
+
+const {
+    isCancellable,
+    isRenewable,
+    pendingVariant,
+    cancel,
+    renew,
+    dismiss: handleDismissCancellation,
+    manage: handleUpgrade,
+} = useSubscriptionActions({ subscription: toRef(props, 'subscription') });
+
+/**
+ * The confirmation modal is loaded on demand: most customers never open it, and it is the heaviest
+ * thing this card could pull onto the overview. It stays mounted afterwards so closing it animates.
+ */
+const hasRequestedCancellation = ref(false);
+
+const handleCancel = () => {
+    hasRequestedCancellation.value = true;
+    cancel();
+};
+
+const handleRenew = () => {
+    hasRequestedCancellation.value = true;
+    renew();
+};
 
 const mostRecentPricingPlan = computed(() => getMostRecentPricingPlan(props.subscription));
 
@@ -33,6 +67,22 @@ const subscriptionDescription = computed<string | undefined>(
 );
 
 const isDetailButtonVisible = computed<boolean>(() => props.showViewSubscriptionDetailsButton);
+
+const isUpgradeButtonVisible = computed<boolean>(() => props.showUpgradeButton);
+
+const isCancelButtonVisible = computed<boolean>(
+    () => props.showCancelButton && isCancellable.value,
+);
+
+const isRenewButtonVisible = computed<boolean>(() => props.showCancelButton && isRenewable.value);
+
+/** A card has one primary action, and it is the upgrade wherever that is on offer. */
+const detailButtonIntent = computed(() => (isUpgradeButtonVisible.value ? 'subtle' : 'primary'));
+
+/** The subscription on screen is stale once it has been cancelled or renewed, so the list reloads. */
+const handleCancellationConfirmed = () => {
+    emit('subscription-changed');
+};
 </script>
 
 <template>
@@ -87,12 +137,67 @@ const isDetailButtonVisible = computed<boolean>(() => props.showViewSubscription
                 </div>
             </div>
             <div
-                class="sv-subscriptions-list__item-actions flex flex-col items-center gap-2 md:flex-row"
+                class="sv-subscriptions-list__item-actions flex flex-col items-center gap-2 md:flex-row md:items-start"
             >
                 <Button
-                    v-if="isDetailButtonVisible"
+                    v-if="isUpgradeButtonVisible"
                     intent="primary"
-                    class="sv-action sv-action--primary sv-subscriptions-list__item-details w-full md:w-auto"
+                    size="sm"
+                    class="sv-action sv-action--primary sv-subscriptions-list__item-upgrade w-full md:w-auto"
+                    type="button"
+                    @click="handleUpgrade"
+                >
+                    {{
+                        $t({
+                            defaultMessage: 'Upgrade',
+                            description:
+                                'The label for the upgrade button on a subscription in the subscriptions block',
+                            id: 'customer.subscriptions_block.upgrade_button_label',
+                        })
+                    }}
+                </Button>
+
+                <Button
+                    v-if="isRenewButtonVisible"
+                    intent="secondary"
+                    size="sm"
+                    class="sv-action sv-action--secondary sv-subscriptions-list__item-renew w-full md:w-auto"
+                    type="button"
+                    @click="handleRenew"
+                >
+                    {{
+                        $t({
+                            defaultMessage: 'Renew',
+                            description:
+                                'The label for the renew button on a cancelled subscription in the subscriptions block',
+                            id: 'customer.subscriptions_block.renew_button_label',
+                        })
+                    }}
+                </Button>
+
+                <Button
+                    v-else-if="isCancelButtonVisible"
+                    intent="secondary"
+                    size="sm"
+                    class="sv-action sv-action--secondary sv-subscriptions-list__item-cancel w-full md:w-auto"
+                    type="button"
+                    @click="handleCancel"
+                >
+                    {{
+                        $t({
+                            defaultMessage: 'Cancel',
+                            description:
+                                'The label for the cancel button on a subscription in the subscriptions block',
+                            id: 'customer.subscriptions_block.cancel_button_label',
+                        })
+                    }}
+                </Button>
+
+                <Button
+                    v-if="isDetailButtonVisible"
+                    :intent="detailButtonIntent"
+                    size="sm"
+                    class="sv-action sv-subscriptions-list__item-details w-full md:w-auto"
                     type="button"
                     @click="$emit('view-subscription-details', { subscriptionId: subscription.id })"
                 >
@@ -107,5 +212,14 @@ const isDetailButtonVisible = computed<boolean>(() => props.showViewSubscription
                 </Button>
             </div>
         </div>
+
+        <SubscriptionCancellationModal
+            v-if="hasRequestedCancellation"
+            :show-modal="Boolean(pendingVariant)"
+            :variant="pendingVariant"
+            :subscription="subscription"
+            @confirmed="handleCancellationConfirmed"
+            @close="handleDismissCancellation"
+        />
     </Section>
 </template>

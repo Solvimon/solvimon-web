@@ -603,13 +603,25 @@
     "defaultMessage": "Pay",
     "description": "The label for the pay invoice button"
   },
+  "customer.subscriptions_block.cancel_button_label": {
+    "defaultMessage": "Cancel",
+    "description": "The label for the cancel button on a subscription in the subscriptions block"
+  },
   "customer.subscriptions_block.next_billing_date": {
     "defaultMessage": "Next billing date",
     "description": "The label for the next billing date"
   },
+  "customer.subscriptions_block.renew_button_label": {
+    "defaultMessage": "Renew",
+    "description": "The label for the renew button on a cancelled subscription in the subscriptions block"
+  },
   "customer.subscriptions_block.show_details_button_label": {
     "defaultMessage": "Subscription details",
     "description": "The label for the subscription details button in the subscriptions block"
+  },
+  "customer.subscriptions_block.upgrade_button_label": {
+    "defaultMessage": "Upgrade",
+    "description": "The label for the upgrade button on a subscription in the subscriptions block"
   },
   "customer_overview.billing_information_block.view_all_payment_methods_link_label": {
     "defaultMessage": "Edit",

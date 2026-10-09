@@ -236,6 +236,25 @@ describe('splitInvoiceByRecurrence', () => {
         expect(result.oneOff.includingTax).toEqual(eur('18.15'));
     });
 
+    it('gives up on a discount whose lines name product items of their own', () => {
+        const result = splitInvoiceByRecurrence(
+            invoice([
+                group({
+                    type: 'PRICING',
+                    lines: [line({ excluding: '100.00', including: '100.00' })],
+                }),
+                group({
+                    type: 'DISCOUNT',
+                    lines: [line({ excluding: '-20.00', including: '-20.00' })],
+                }),
+            ]),
+        );
+
+        expect(result.hasUnattributed).toBe(true);
+        expect(result.unattributed.includingTax).toEqual(eur('-20.00'));
+        expect(result.recurring.includingTax).toEqual(eur('100.00'));
+    });
+
     it('puts a charge it cannot attribute aside instead of on either side', () => {
         const result = splitInvoiceByRecurrence(
             invoice([
@@ -311,7 +330,7 @@ describe('getInvoiceGroupsByRecurrence', () => {
         expect(result.oneOff.map((group) => group.pricing?.name)).toEqual(['Shipping']);
     });
 
-    it('keeps a group whose lines disagree where every group used to be', () => {
+    it('puts a group whose lines disagree under neither heading', () => {
         const result = getInvoiceGroupsByRecurrence(
             invoice([
                 {
@@ -322,8 +341,24 @@ describe('getInvoiceGroupsByRecurrence', () => {
             ]),
         );
 
-        expect(result.recurring).toHaveLength(1);
+        expect(result.other.map((group) => group.pricing?.name)).toEqual(['Mixed']);
+        expect(result.recurring).toHaveLength(0);
         expect(result.oneOff).toHaveLength(0);
+    });
+
+    // A discount is not the subscription's price, so it is neither listed nor subtotalled as one —
+    // and its lines carry product items, which would otherwise classify it as recurring.
+    it('puts a discount under neither heading, lines or no lines', () => {
+        const withLines = getInvoiceGroupsByRecurrence(
+            invoice([{ type: 'DISCOUNT', pricing: { name: 'Promo' }, lines: [line('PER_SEAT')] }]),
+        );
+        const withoutLines = getInvoiceGroupsByRecurrence(
+            invoice([{ type: 'DISCOUNT', pricing: { name: 'Promo' } }]),
+        );
+
+        expect(withLines.other.map((group) => group.pricing?.name)).toEqual(['Promo']);
+        expect(withLines.recurring).toHaveLength(0);
+        expect(withoutLines.other.map((group) => group.pricing?.name)).toEqual(['Promo']);
     });
 
     it('falls back to the group type when a preview does not expand its lines', () => {
@@ -339,6 +374,10 @@ describe('getInvoiceGroupsByRecurrence', () => {
     });
 
     it('reports nothing for an invoice with no periods', () => {
-        expect(getInvoiceGroupsByRecurrence({} as Invoice)).toEqual({ recurring: [], oneOff: [] });
+        expect(getInvoiceGroupsByRecurrence({} as Invoice)).toEqual({
+            recurring: [],
+            oneOff: [],
+            other: [],
+        });
     });
 });

@@ -145,8 +145,10 @@ const getSaveBadgeText = (amount?: { quantity: string; currency: string }) => {
     return `${saveLine}${periodLine}`;
 };
 
-const groupsByRecurrence = computed<{ recurring: InvoiceGroup[]; oneOff: InvoiceGroup[] }>(() =>
-    props.invoice ? getInvoiceGroupsByRecurrence(props.invoice) : { recurring: [], oneOff: [] },
+const groupsByRecurrence = computed<ReturnType<typeof getInvoiceGroupsByRecurrence>>(() =>
+    props.invoice
+        ? getInvoiceGroupsByRecurrence(props.invoice)
+        : { recurring: [], oneOff: [], other: [] },
 );
 
 // An invoice of one kind reads as it always has: a heading over every row explains nothing.
@@ -498,7 +500,25 @@ const handleBinaryBillingToggle = (checked: boolean) => {
                         </Section>
                     </div>
                 </template>
-                <InvoicePreviewGroups v-else :invoice="invoice" :wrapper-component="Section" />
+                <Section v-if="hasBothRecurrences && groupsByRecurrence.other.length">
+                    <div
+                        v-for="(group, index) in groupsByRecurrence.other"
+                        :key="index"
+                        class="flex flex-row gap-2 py-1.5"
+                    >
+                        <Typography tag="span" variant="body-xs" class="grow">{{
+                            getInvoiceGroupName(group)
+                        }}</Typography>
+                        <Typography tag="span" variant="body-xs">
+                            <AmountDisplay :value="group.amount_excluding_tax" />
+                        </Typography>
+                    </div>
+                </Section>
+                <InvoicePreviewGroups
+                    v-if="!hasBothRecurrences"
+                    :invoice="invoice"
+                    :wrapper-component="Section"
+                />
             </div>
 
             <!-- invoice totals preview -->

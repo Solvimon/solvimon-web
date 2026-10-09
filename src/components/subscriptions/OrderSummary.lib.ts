@@ -13,14 +13,18 @@ const getAmountValue = (amount: Pick<Amount, 'quantity'>) => Number(amount.quant
  * rather than carrying one that cannot be relied on.
  */
 export const getPeriodRecurringAmount = (invoice: Invoice | undefined): Amount | undefined => {
-    if (!invoice) {
+    const period = invoice?.periods?.[0];
+
+    if (!invoice || !period) {
         return undefined;
     }
 
-    const split = splitInvoiceByRecurrence(invoice);
+    // One period, not the whole invoice: a preview that prorates a part period and then bills a
+    // full one would otherwise report the two added together as the price of one of them.
+    const split = splitInvoiceByRecurrence({ ...invoice, periods: [period] });
 
     if (!split.hasOneOff) {
-        return invoice.periods?.[0]?.amount_including_tax;
+        return period.amount_including_tax;
     }
 
     return split.hasUnattributed ? undefined : split.recurring.includingTax;

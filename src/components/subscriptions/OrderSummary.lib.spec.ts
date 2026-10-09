@@ -59,6 +59,20 @@ describe('getPeriodRecurringAmount', () => {
         expect(getPeriodRecurringAmount(invoice({ recurring: '100.00' }))).toEqual(eur('100.00'));
     });
 
+    // A preview that prorates a part period before billing a full one must not report the two
+    // added together as the price of one of them.
+    it('answers for one period, not for every period the preview carries', () => {
+        const twoPeriods = {
+            billing_currency: 'EUR',
+            periods: [
+                invoice({ recurring: '33.00', oneOff: '15.00' }).periods[0],
+                invoice({ recurring: '100.00', oneOff: '15.00' }).periods[0],
+            ],
+        } as unknown as Invoice;
+
+        expect(getPeriodRecurringAmount(twoPeriods)).toEqual(eur('33.00'));
+    });
+
     it('reports nothing for a period with no preview of its own', () => {
         expect(getPeriodRecurringAmount(undefined)).toBeUndefined();
     });

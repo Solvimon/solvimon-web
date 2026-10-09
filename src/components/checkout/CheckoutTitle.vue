@@ -26,6 +26,17 @@ const strong = (text: string) => `<strong>${text}</strong>`;
 const description = computed(() => {
     const dueToday = formatAmount(props.dueTodayAmount);
 
+    const billedTodayOnly = () =>
+        $t(
+            {
+                defaultMessage: 'You will be billed <strong>{due_today}</strong> today.',
+                id: 'checkout.one_off_description',
+                description: 'The description of an order that is charged once and does not renew',
+            },
+            // @ts-expect-error formatjs does not support this type yet
+            { due_today: dueToday, strong },
+        );
+
     if (props.recurringAmount) {
         if (Number(props.recurringAmount.quantity) === 0) {
             if (props.hasUsageCharges) {
@@ -42,16 +53,11 @@ const description = computed(() => {
                 );
             }
 
-            return $t(
-                {
-                    defaultMessage: 'You will be billed <strong>{due_today}</strong> today.',
-                    id: 'checkout.one_off_description',
-                    description:
-                        'The description of an order that is charged once and does not renew',
-                },
-                // @ts-expect-error formatjs does not support this type yet
-                { due_today: dueToday, strong },
-            );
+            // Zero and still renewing is a plan nothing has been chosen from yet, and the sentences
+            // below state it as the zero it is. Only an order that renews at nothing is a purchase.
+            if (!props.hasRecurringCharge) {
+                return billedTodayOnly();
+            }
         }
 
         const price = formatAmount(props.recurringAmount);
@@ -86,6 +92,12 @@ const description = computed(() => {
                   // @ts-expect-error formatjs does not support this type yet
                   { due_today: dueToday, price, period_name: periodName.value, strong },
               );
+    }
+
+    // Something on the invoice is charged only once and what is left could not be told apart from
+    // it. Stating today's charge says less than it might; stating it per period would be a lie.
+    if (props.hasOneOffCharges) {
+        return billedTodayOnly();
     }
 
     const price = formatAmount(props.amount);

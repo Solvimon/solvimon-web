@@ -63,28 +63,39 @@ const classifyLine = (line: InvoiceLine): InvoiceRecurrence | undefined => {
 
 /**
  * A group is taken whole, because a summary row carries the group's own amount: one whose lines
- * disagree would contradict whichever heading it went under, so it stays where all of them were.
+ * disagree would contradict whichever heading it went under, and lands in `other` with the
+ * invoice-wide discounts, which belong under neither.
  */
 export function getInvoiceGroupsByRecurrence(invoice: Invoice): {
     recurring: InvoiceGroup[];
     oneOff: InvoiceGroup[];
+    other: InvoiceGroup[];
 } {
-    const recurring: InvoiceGroup[] = [];
-    const oneOff: InvoiceGroup[] = [];
+    const buckets: Record<InvoiceRecurrence, InvoiceGroup[]> = {
+        RECURRING: [],
+        ONE_OFF: [],
+        UNATTRIBUTED: [],
+    };
 
     invoice.periods?.forEach((period) => {
         period.groups?.forEach((group) => {
+            const groupRecurrence = RECURRENCE_BY_GROUP_TYPE[group.type] ?? 'UNATTRIBUTED';
+
             const recurrences = new Set(
-                group.lines?.length
+                groupRecurrence === 'RECURRING' && group.lines?.length
                     ? group.lines.map((line) => classifyLine(line) ?? 'RECURRING')
-                    : [RECURRENCE_BY_GROUP_TYPE[group.type] ?? 'RECURRING'],
+                    : [groupRecurrence],
             );
 
-            (recurrences.size === 1 && recurrences.has('ONE_OFF') ? oneOff : recurring).push(group);
+            buckets[recurrences.size === 1 ? [...recurrences][0] : 'UNATTRIBUTED'].push(group);
         });
     });
 
-    return { recurring, oneOff };
+    return {
+        recurring: buckets.RECURRING,
+        oneOff: buckets.ONE_OFF,
+        other: buckets.UNATTRIBUTED,
+    };
 }
 
 /**
@@ -123,14 +134,14 @@ export function splitInvoiceByRecurrence(invoice: Invoice): InvoiceRecurrenceSpl
                 return;
             }
 
-            group.lines.forEach((line) => {
+            group.lines.forEach((line) =>
                 add(
-                    groupRecurrence === 'ONE_OFF'
-                        ? 'ONE_OFF'
-                        : (classifyLine(line) ?? groupRecurrence),
+                    groupRecurrence === 'RECURRING'
+                        ? (classifyLine(line) ?? groupRecurrence)
+                        : groupRecurrence,
                     line,
-                );
-            });
+                ),
+            );
         });
     });
 

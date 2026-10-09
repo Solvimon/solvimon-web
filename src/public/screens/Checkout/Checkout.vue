@@ -8,7 +8,7 @@ import {
     useIntl,
     useTimePeriod,
 } from '@solvimon/solvimon-ui';
-import { computed, defineAsyncComponent, onMounted, ref } from 'vue';
+import { computed, defineAsyncComponent, onMounted, ref, watch } from 'vue';
 import type { BillingPeriod, CountryCode } from '@solvimon/solvimon-types';
 import type { CheckoutEmits, CheckoutProps } from './Checkout.types';
 import { useCheckoutView } from './useCheckout.view';
@@ -199,10 +199,27 @@ const isUsageBased = computed(
         (invoicePreview.value ? isInvoiceUsageBased(invoicePreview.value) : false),
 );
 
-// The invoice total stands in where the two could not be told apart, which is what was stated
-// before either could, so a sheet is never left without a price.
+/**
+ * The invoice total stands in where the two could not be told apart. It overstates — it still
+ * holds the one-off — but a mandate for more than will be charged is the safer of the two errors,
+ * and leaving a subscription without one is not an option. Reported, since nothing on screen says
+ * the figure is a stand-in.
+ */
 const mandateRecurringAmount = computed(
     () => recurringAmount.value ?? invoicePreview.value?.tax_summary.total_amount,
+);
+
+watch(
+    () => hasOneOffCharges.value && !recurringAmount.value && !!invoicePreview.value,
+    (isStandingIn) => {
+        if (isStandingIn) {
+            logger.warn(
+                'RECURRING_AMOUNT_UNRESOLVED',
+                'Could not tell the recurring part of the invoice from the one-off part; the mandate states the invoice total',
+                { flow: 'CHECKOUT' },
+            );
+        }
+    },
 );
 
 // Not just "the recurring amount is not zero": a usage-billed plan renews at zero on its first
@@ -669,6 +686,8 @@ onMounted(() => {
                         :amount="invoicePreview?.invoice_amount_including_tax"
                         :due-today-amount="amount ?? invoicePreview?.invoice_amount_including_tax"
                         :recurring-amount="titleRecurringAmount"
+                        :has-one-off-charges="hasOneOffCharges"
+                        :has-recurring-charge="hasRecurringCharge"
                         :has-usage-charges="hasUsagePricing"
                         :billing-period="subscription?.billing_period"
                         :country-code="checkoutForm.form.value.country"

@@ -23,13 +23,6 @@ const periodName = computed(() =>
 
 const strong = (text: string) => `<strong>${text}</strong>`;
 
-/**
- * What the customer is told they are agreeing to.
- *
- * A plan that only subscribes has one amount to state, and states it as it always has. One that
- * also charges something once — hardware, shipping, a swap — has two, and saying the first of
- * them "per month" is a price the customer never agreed to.
- */
 const description = computed(() => {
     const dueToday = formatAmount(props.dueTodayAmount);
 
@@ -44,7 +37,7 @@ const description = computed(() => {
                         description:
                             'The description of a usage-based subscription whose first invoice also charges something only once',
                     },
-                    // @ts-expect-error the intl values type takes no rich-text tag handler
+                    // @ts-expect-error formatjs does not support this type yet
                     { due_today: dueToday, period_name: periodName.value, strong },
                 );
             }
@@ -56,7 +49,7 @@ const description = computed(() => {
                     description:
                         'The description of an order that is charged once and does not renew',
                 },
-                // @ts-expect-error the intl values type takes no rich-text tag handler
+                // @ts-expect-error formatjs does not support this type yet
                 { due_today: dueToday, strong },
             );
         }
@@ -78,7 +71,7 @@ const description = computed(() => {
                       period_name: periodName.value,
                       // @ts-expect-error formatjs does not support this type yet
                       startDate: props.subscriptionStartDate,
-                      // @ts-expect-error the intl values type takes no rich-text tag handler
+                      // @ts-expect-error formatjs does not support this type yet
                       strong,
                   },
               )
@@ -90,7 +83,7 @@ const description = computed(() => {
                       description:
                           'The description of a subscription whose first invoice also charges something only once',
                   },
-                  // @ts-expect-error the intl values type takes no rich-text tag handler
+                  // @ts-expect-error formatjs does not support this type yet
                   { due_today: dueToday, price, period_name: periodName.value, strong },
               );
     }
@@ -110,7 +103,7 @@ const description = computed(() => {
                   // @ts-expect-error formatjs does not support this type yet
                   startDate: props.subscriptionStartDate,
                   period_name: periodName.value,
-                  // @ts-expect-error the intl values type takes no rich-text tag handler
+                  // @ts-expect-error formatjs does not support this type yet
                   strong,
               },
           )
@@ -121,12 +114,11 @@ const description = computed(() => {
                   id: 'checkout.subscription_description',
                   description: 'The description of the subscription',
               },
-              // @ts-expect-error the intl values type takes no rich-text tag handler
+              // @ts-expect-error formatjs does not support this type yet
               { price, period_name: periodName.value, strong },
           );
 });
 
-/** The same sentence with the price still being worked out, so only the period is named. */
 const descriptionWithoutPrice = computed(() =>
     props.trialStartDate
         ? $t(

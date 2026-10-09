@@ -149,22 +149,18 @@ const groupsByRecurrence = computed<{ recurring: InvoiceGroup[]; oneOff: Invoice
     props.invoice ? getInvoiceGroupsByRecurrence(props.invoice) : { recurring: [], oneOff: [] },
 );
 
-/**
- * Whether the rows are worth splitting under headings of their own. An invoice of one kind reads
- * as it always has — a heading over every row it has is noise, not an explanation.
- */
+// An invoice of one kind reads as it always has: a heading over every row explains nothing.
 const hasBothRecurrences = computed(
     () =>
         groupsByRecurrence.value.recurring.length > 0 && groupsByRecurrence.value.oneOff.length > 0,
 );
 
-/** A subtotal of a single row is the row again, so it is shown only where it adds up something. */
+// A subtotal of a single row is the row again.
 const subtotalOf = (groups: InvoiceGroup[]): Amount | undefined =>
     groups.length > 1 && props.invoice
         ? getGroupsSubtotal(groups, props.invoice.billing_currency)
         : undefined;
 
-/** What the subscription renews at, stated under the total only when it is not the total. */
 const recurringAmount = computed(() =>
     hasBothRecurrences.value ? getInvoiceRecurringAmount(props.invoice) : undefined,
 );
@@ -528,7 +524,6 @@ const handleBinaryBillingToggle = (checked: boolean) => {
                         })
                     }}
                 </Typography>
-                <!-- What is charged again, where the total above it is not that amount. -->
                 <div
                     v-if="invoice && renewalAmount"
                     class="sv-order-summary__renewal flex flex-row gap-2 pt-1.5"

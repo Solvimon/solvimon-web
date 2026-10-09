@@ -25,11 +25,8 @@ export function getNameFromPricing(pricing: PricingExtended): string | undefined
 }
 
 /**
- * Every model type a schedule prices on, read off the plan rather than off an invoice.
- *
- * An invoice only shows what it charged: a plan billed on usage puts no line on its first invoice
- * at all, so asking the invoice whether anything recurs answers no for a subscription that plainly
- * does. The plan is the only place that question has a stable answer.
+ * Read off the plan, not off an invoice: a plan billed on usage puts no line on its first invoice,
+ * so the invoice answers "nothing recurs" for a subscription that plainly does.
  */
 export function getModelTypesFromScheduleInfo(
     scheduleInfo: PricingPlanScheduleInfoExpanded | undefined,
@@ -44,8 +41,8 @@ export function getModelTypesFromScheduleInfo(
         ),
     ]);
 
-    // An addon or a group member is only priced once the customer picks it, so counting one they
-    // did not would have the plan bill for usage or renew on something they are not buying.
+    // An addon or group member is priced only once picked, so counting one they left alone would
+    // promise usage billing, or a renewal, on something they are not buying.
     const isCharged = ({ pricing, inGroup }: (typeof pricings)[number]) => {
         const isOptional =
             inGroup || !!pricing?.pricing_group_id || pricing?.product_type === 'ADDON';

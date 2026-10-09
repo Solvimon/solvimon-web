@@ -23,9 +23,8 @@ const itemModel = (index: number) =>
 </script>
 
 <template>
-    <!-- Single root so fallthrough attributes are inherited. Headed like a pricing group, because
-         what these are is the one thing the rows cannot say: a stepper of hardware looks exactly
-         like a stepper of seats, and only one of the two is charged again next month. -->
+    <!-- Single root so fallthrough attributes are inherited. Headed because a stepper of hardware
+         looks exactly like a stepper of seats, and only one of the two comes back next month. -->
     <Section v-if="modelValue.length > 0" no-spacing content-background="gray">
         <div class="grid grid-cols-1 gap-1 p-1">
             <PricingGroupTitle>

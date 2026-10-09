@@ -118,8 +118,7 @@ const initApplePay = async () => {
         onSubmit: (state, _component, actions) => void handleSubmit(state, actions),
     });
 
-    // Nothing renews, so there is no recurring mandate to ask the customer for: the sheet states
-    // the one charge it is making and nothing beyond it.
+    // Nothing renews, so there is no recurring mandate to ask the customer for.
     const recurringPaymentRequest: ApplePayConfiguration['recurringPaymentRequest'] = props
         .billingInformation.regular
         ? {
@@ -127,7 +126,6 @@ const initApplePay = async () => {
               billingAgreement: props.billingInformation.agreement,
               managementURL: props.billingInformation.managementURL,
 
-              // Trial
               ...(props.billingInformation.trial && {
                   trialBilling: {
                       label: props.billingInformation.trial.label,
@@ -139,7 +137,6 @@ const initApplePay = async () => {
                   },
               }),
 
-              // Regular
               regularBilling: {
                   label: props.billingInformation.regular.label,
                   amount: props.billingInformation.regular.amount.quantity.toString(),

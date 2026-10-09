@@ -140,8 +140,6 @@ describe('splitInvoiceByRecurrence', () => {
         expect(result.hasUnattributed).toBe(false);
     });
 
-    // The shape the API actually returns for a one-off: both the group and the line say REVENUE,
-    // and the only thing that says the charge will not come back is the product item's model type.
     it('reads a one-off charge the API types REVENUE all the way down', () => {
         const result = splitInvoiceByRecurrence({
             billing_currency: 'EUR',
@@ -313,8 +311,6 @@ describe('getInvoiceGroupsByRecurrence', () => {
         expect(result.oneOff.map((group) => group.pricing?.name)).toEqual(['Shipping']);
     });
 
-    // A row carries the group's own amount, so a group that is both cannot be filed under either
-    // heading without the number beneath it contradicting the heading.
     it('keeps a group whose lines disagree where every group used to be', () => {
         const result = getInvoiceGroupsByRecurrence(
             invoice([

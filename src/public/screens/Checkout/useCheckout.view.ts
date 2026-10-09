@@ -27,6 +27,7 @@ import {
     getScheduleCustomizations,
 } from '@/utils/pricingPlanSchedule';
 import { withPreselectedEnabledPricings } from '@/utils/enabledPricings';
+import { splitInvoiceByRecurrence } from '@/utils/invoice';
 import { getInitialSeatsValues } from '@/utils/seatsValues';
 import { getInitialUnitsValues } from '@/utils/unitsValues';
 import { getQueryParam } from '@/utils/url';
@@ -360,6 +361,43 @@ export function useCheckoutView({
     });
 
     /**
+     * What the first invoice charges once and what it charges every period, told apart. The
+     * checkout prices a subscription off that one invoice, so without this every total it states
+     * is the amount due today wearing a "per period" label.
+     */
+    const invoiceRecurrence = computed(() =>
+        invoicePreview.invoicePreview.value
+            ? splitInvoiceByRecurrence(invoicePreview.invoicePreview.value)
+            : undefined,
+    );
+
+    /** Whether the first invoice charges anything that will not be charged again. */
+    const hasOneOffCharges = computed(() => invoiceRecurrence.value?.hasOneOff ?? false);
+
+    /**
+     * What the subscription renews at, and the only place a screen or a payment sheet should ask
+     * for it: should the API come to return the recurring invoice itself, this is what changes.
+     *
+     * An invoice with nothing one-off on it renews at its own total. Where the two are mixed the
+     * split answers it, and where the split cannot account for part of the invoice the answer is
+     * `undefined` rather than a number the customer would be told — and asked to authorize — as
+     * the price of every period to come.
+     */
+    const recurringAmount = computed<Amount | undefined>(() => {
+        const split = invoiceRecurrence.value;
+
+        if (!split) {
+            return undefined;
+        }
+
+        if (!split.hasOneOff) {
+            return invoicePreview.invoicePreview.value?.invoice_amount_including_tax;
+        }
+
+        return split.hasUnattributed ? undefined : split.recurring.includingTax;
+    });
+
+    /**
      * Reload the payment method options whenever the country or amount changes.
      */
     watch(
@@ -466,6 +504,8 @@ export function useCheckoutView({
         authorizationContext,
         isPaid,
         amount,
+        recurringAmount,
+        hasOneOffCharges,
         saveFormStateForRedirect,
     };
 }

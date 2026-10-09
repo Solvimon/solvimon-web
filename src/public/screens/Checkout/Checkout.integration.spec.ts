@@ -5,13 +5,16 @@ import Checkout from './Checkout.vue';
 
 // ─── Mocks ────────────────────────────────────────────────────────────────────
 
-const { isPaid, subscription, invoicePreview, SEATS_VALUES } = vi.hoisted(() => ({
-    isPaid: { value: false },
-    subscription: { value: undefined as unknown },
-    invoicePreview: { value: undefined as unknown },
-    /** Seats to set are the plainest reason for the editor to be on screen at all. */
-    SEATS_VALUES: [{ pricingItemConfigId: 'pic_1', value: 1 }],
-}));
+const { isPaid, subscription, invoicePreview, recurringAmount, hasOneOffCharges, SEATS_VALUES } =
+    vi.hoisted(() => ({
+        isPaid: { value: false },
+        subscription: { value: undefined as unknown },
+        invoicePreview: { value: undefined as unknown },
+        recurringAmount: { value: undefined as unknown },
+        hasOneOffCharges: { value: false },
+        /** Seats to set are the plainest reason for the editor to be on screen at all. */
+        SEATS_VALUES: [{ pricingItemConfigId: 'pic_1', value: 1 }],
+    }));
 
 vi.mock('@solvimon/solvimon-ui', async () => {
     const { createSolvimonUiMock } = await import('@/test-utils/solvimonUiMock');
@@ -51,6 +54,8 @@ vi.mock('./useCheckout.view', async () => {
                 set: (value: boolean) => (isPaid.value = value),
             }),
             amount: r({ currency: 'EUR', quantity: '10.00' }),
+            recurringAmount: c(() => recurringAmount.value),
+            hasOneOffCharges: c(() => hasOneOffCharges.value),
             loadInvoicePreview: vi.fn(),
             updateInvoicePreviewOnBillingInformationChange: vi.fn(),
             saveFormStateForRedirect: vi.fn(),
@@ -181,6 +186,80 @@ describe('Checkout', () => {
             periods: [],
             tax_summary: { total_amount: { currency: 'EUR', quantity: '10.00' } },
         };
+        recurringAmount.value = { currency: 'EUR', quantity: '10.00' };
+        hasOneOffCharges.value = false;
+    });
+
+    describe('what the invoice charges once, and what it charges again', () => {
+        beforeEach(() => {
+            // The title renders behind a start date, which is read off the preview's first period.
+            invoicePreview.value = {
+                id: 'inv_preview',
+                periods: [{ start_at: '2026-10-09T00:00:00.000Z' }],
+                invoice_amount_including_tax: { currency: 'EUR', quantity: '10.00' },
+                tax_summary: { total_amount: { currency: 'EUR', quantity: '10.00' } },
+            };
+        });
+
+        const title = (wrapper: Awaited<ReturnType<typeof mountCheckout>>) =>
+            wrapper.findComponent({ name: 'CheckoutTitle' });
+
+        const expressBillingInformation = (wrapper: Awaited<ReturnType<typeof mountCheckout>>) =>
+            wrapper
+                .findComponent({ name: 'ExpressPaymentMethods' })
+                .props('billingInformation') as { regular?: { amount: { quantity: string } } };
+
+        // Hardware and shipping are billed on the same invoice as the subscription. Telling the
+        // customer that total is what they pay every month names a price nobody will charge.
+        it('hands the title a recurring amount of its own once the invoice holds a one-off charge', async () => {
+            hasOneOffCharges.value = true;
+            recurringAmount.value = { currency: 'EUR', quantity: '8.00' };
+
+            const wrapper = await mountCheckout({ Skeleton: false });
+
+            expect(title(wrapper).props('recurringAmount')).toEqual({
+                currency: 'EUR',
+                quantity: '8.00',
+            });
+            expect(title(wrapper).props('dueTodayAmount')).toEqual({
+                currency: 'EUR',
+                quantity: '10.00',
+            });
+        });
+
+        // An invoice that only subscribes reads as it always has: one amount, stated once.
+        it('leaves the title a single amount when nothing is charged only once', async () => {
+            const wrapper = await mountCheckout({ Skeleton: false });
+
+            expect(title(wrapper).props('recurringAmount')).toBeUndefined();
+        });
+
+        // The sheet's recurring amount is the mandate the customer authorizes, so it has to be
+        // what will actually be charged again — not the first invoice's total.
+        it('mandates the recurring amount in an express sheet, not the amount due today', async () => {
+            mockExperimentalFeatures.value = { 'express-checkout': true };
+            hasOneOffCharges.value = true;
+            recurringAmount.value = { currency: 'EUR', quantity: '8.00' };
+
+            const wrapper = await mountCheckout();
+
+            expect(expressBillingInformation(wrapper).regular?.amount).toEqual({
+                currency: 'EUR',
+                quantity: '8.00',
+            });
+        });
+
+        // Hardware bought outright renews at nothing. A sheet carrying a recurring request would
+        // sign the customer up for a subscription that does not exist.
+        it('mandates nothing recurring in an express sheet when the order does not renew', async () => {
+            mockExperimentalFeatures.value = { 'express-checkout': true };
+            hasOneOffCharges.value = true;
+            recurringAmount.value = { currency: 'EUR', quantity: '0.00' };
+
+            const wrapper = await mountCheckout();
+
+            expect(expressBillingInformation(wrapper).regular).toBeUndefined();
+        });
     });
 
     it('offers the plan customization while there is still something to pay for', async () => {

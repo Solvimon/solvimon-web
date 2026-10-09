@@ -226,13 +226,32 @@ describe('ExpressPaymentMethodApplePay', () => {
                     // it used to point at google.com.
                     managementURL: mockProps.billingInformation.managementURL,
                     regularBilling: expect.objectContaining({
-                        label: mockProps.billingInformation.regular.label,
-                        amount: mockProps.billingInformation.regular.amount.quantity.toString(),
+                        label: mockProps.billingInformation.regular!.label,
+                        amount: mockProps.billingInformation.regular!.amount.quantity.toString(),
                     }),
                 }),
                 requiredBillingContactFields: ['postalAddress'],
                 requiredShippingContactFields: ['email'],
             }),
+        );
+    });
+
+    it('asks for no recurring mandate when the order renews at nothing', async () => {
+        const { regular: _regular, ...billingInformation } = mockProps.billingInformation;
+
+        mount(ExpressPaymentMethodApplePay, {
+            props: { ...mockProps, billingInformation },
+        });
+
+        await nextTick();
+        await nextTick();
+        await new Promise((resolve) => setTimeout(resolve, 0));
+
+        // A sheet carrying a recurring request states a price for every period to come, so an
+        // order that has no such period must not carry one at all.
+        expect(mockApplePay).toHaveBeenCalledWith(
+            expect.anything(),
+            expect.not.objectContaining({ recurringPaymentRequest: expect.anything() }),
         );
     });
 
@@ -329,7 +348,7 @@ describe('ExpressPaymentMethodApplePay', () => {
             expect(mockResolve).toHaveBeenCalledWith(
                 expect.objectContaining({
                     newTotal: expect.objectContaining({
-                        label: mockProps.billingInformation.regular.label,
+                        label: mockProps.billingInformation.regular!.label,
                         amount: '10.00',
                     }),
                 }),
@@ -667,7 +686,7 @@ describe('ExpressPaymentMethodApplePay', () => {
             billingInformation: {
                 ...mockProps.billingInformation,
                 regular: {
-                    ...mockProps.billingInformation.regular,
+                    ...mockProps.billingInformation.regular!,
                     interval: {
                         type: 'WEEK' as BillingPeriod['type'],
                         value: 2,

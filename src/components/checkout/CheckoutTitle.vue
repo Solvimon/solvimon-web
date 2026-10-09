@@ -10,11 +10,134 @@ import {
     Typography,
     useIntl,
 } from '@solvimon/solvimon-ui';
+import { computed } from 'vue';
 import type { CheckoutTitleProps } from './CheckoutTitle.types';
 
-defineProps<CheckoutTitleProps>();
+const props = defineProps<CheckoutTitleProps>();
 
 const { $t } = useIntl();
+
+const periodName = computed(() =>
+    formatBillingPeriod(props.billingPeriod, { short: true, hideValueForExactPeriods: true }),
+);
+
+const strong = (text: string) => `<strong>${text}</strong>`;
+
+/**
+ * What the customer is told they are agreeing to.
+ *
+ * A plan that only subscribes has one amount to state, and states it as it always has. One that
+ * also charges something once — hardware, shipping, a swap — has two, and saying the first of
+ * them "per month" is a price the customer never agreed to.
+ */
+const description = computed(() => {
+    const dueToday = formatAmount(props.dueTodayAmount);
+
+    if (props.recurringAmount) {
+        if (Number(props.recurringAmount.quantity) === 0) {
+            return $t(
+                {
+                    defaultMessage: 'You will be billed <strong>{due_today}</strong> today.',
+                    id: 'checkout.one_off_description',
+                    description:
+                        'The description of an order that is charged once and does not renew',
+                },
+                // @ts-expect-error the intl values type takes no rich-text tag handler
+                { due_today: dueToday, strong },
+            );
+        }
+
+        const price = formatAmount(props.recurringAmount);
+
+        return props.trialStartDate
+            ? $t(
+                  {
+                      defaultMessage:
+                          'You will be billed <strong>{due_today}</strong> today, then <strong>{price}</strong> per {period_name}, starting {startDate, date, long}.',
+                      id: 'checkout.trial_period_description_with_one_off',
+                      description:
+                          'The description of a trial whose first invoice also charges something only once',
+                  },
+                  {
+                      due_today: dueToday,
+                      price,
+                      period_name: periodName.value,
+                      // @ts-expect-error formatjs does not support this type yet
+                      startDate: props.subscriptionStartDate,
+                      // @ts-expect-error the intl values type takes no rich-text tag handler
+                      strong,
+                  },
+              )
+            : $t(
+                  {
+                      defaultMessage:
+                          'You will be billed <strong>{due_today}</strong> today, then <strong>{price}</strong> per {period_name}.',
+                      id: 'checkout.subscription_description_with_one_off',
+                      description:
+                          'The description of a subscription whose first invoice also charges something only once',
+                  },
+                  // @ts-expect-error the intl values type takes no rich-text tag handler
+                  { due_today: dueToday, price, period_name: periodName.value, strong },
+              );
+    }
+
+    const price = formatAmount(props.amount);
+
+    return props.trialStartDate
+        ? $t(
+              {
+                  defaultMessage:
+                      'You will be billed <strong>{price}</strong> per {period_name}, starting {startDate, date, long}.',
+                  id: 'checkout.trial_period_description',
+                  description: 'The description of the trial period',
+              },
+              {
+                  price,
+                  // @ts-expect-error formatjs does not support this type yet
+                  startDate: props.subscriptionStartDate,
+                  period_name: periodName.value,
+                  // @ts-expect-error the intl values type takes no rich-text tag handler
+                  strong,
+              },
+          )
+        : $t(
+              {
+                  defaultMessage:
+                      'You will be billed <strong>{price}</strong> per {period_name}, starting today.',
+                  id: 'checkout.subscription_description',
+                  description: 'The description of the subscription',
+              },
+              // @ts-expect-error the intl values type takes no rich-text tag handler
+              { price, period_name: periodName.value, strong },
+          );
+});
+
+/** The same sentence with the price still being worked out, so only the period is named. */
+const descriptionWithoutPrice = computed(() =>
+    props.trialStartDate
+        ? $t(
+              {
+                  defaultMessage: 'per {period_name} starting, {startDate, date, long}',
+                  id: 'checkout.trial_period_description_without_price',
+                  description:
+                      'The description of the trial period, while the price is still being determined',
+              },
+              {
+                  // @ts-expect-error formatjs does not support this type yet
+                  startDate: props.subscriptionStartDate,
+                  period_name: periodName.value,
+              },
+          )
+        : $t(
+              {
+                  defaultMessage: 'per {period_name}, starting today',
+                  id: 'checkout.subscription_description_without_price',
+                  description:
+                      'The description of the subscription, while the price is still being determined',
+              },
+              { period_name: periodName.value },
+          ),
+);
 </script>
 
 <template>
@@ -59,85 +182,9 @@ const { $t } = useIntl();
                         </TooltipContent>
                     </template>
                 </Tooltip>
-                <span
-                    v-html="
-                        trialStartDate
-                            ? $t(
-                                  {
-                                      defaultMessage:
-                                          'per {period_name} starting, {startDate, date, long}',
-                                      id: 'checkout.trial_period_description_without_price',
-                                      description:
-                                          'The description of the trial period, while the price is still being determined',
-                                  },
-                                  {
-                                      // @ts-expect-error formatjs does not support this type yet
-                                      startDate: subscriptionStartDate,
-                                      period_name: formatBillingPeriod(billingPeriod, {
-                                          short: true,
-                                          hideValueForExactPeriods: true,
-                                      }),
-                                  },
-                              )
-                            : $t(
-                                  {
-                                      defaultMessage: 'per {period_name}, starting today',
-                                      id: 'checkout.subscription_description_without_price',
-                                      description:
-                                          'The description of the subscription, while the price is still being determined',
-                                  },
-                                  {
-                                      period_name: formatBillingPeriod(billingPeriod, {
-                                          short: true,
-                                          hideValueForExactPeriods: true,
-                                      }),
-                                  },
-                              )
-                    "
-                />
+                <span v-html="descriptionWithoutPrice" />
             </span>
-            <span
-                v-else
-                v-html="
-                    trialStartDate
-                        ? $t(
-                              {
-                                  defaultMessage:
-                                      'You will be billed <strong>{price}</strong> per {period_name}, starting {startDate, date, long}.',
-                                  id: 'checkout.trial_period_description',
-                                  description: 'The description of the trial period',
-                              },
-                              {
-                                  price: formatAmount(amount),
-                                  // @ts-expect-error formatjs does not support this type yet
-                                  startDate: subscriptionStartDate,
-                                  period_name: formatBillingPeriod(billingPeriod, {
-                                      short: true,
-                                      hideValueForExactPeriods: true,
-                                  }),
-                                  // @ts-ignore
-                                  strong: (text) => `<strong>${text}</strong>`,
-                              },
-                          )
-                        : $t(
-                              {
-                                  defaultMessage:
-                                      'You will be billed <strong>{price}</strong> per {period_name}, starting today.',
-                                  id: 'checkout.subscription_description',
-                                  description: 'The description of the subscription',
-                              },
-                              {
-                                  price: formatAmount(amount),
-                                  period_name: formatBillingPeriod(billingPeriod, {
-                                      short: true,
-                                      hideValueForExactPeriods: true,
-                                  }),
-                                  // @ts-ignore
-                                  strong: (text) => `<strong>${text}</strong>`,
-                              },
-                          )
-                "
-            />
+            <span v-else v-html="description" />
         </Typography>
     </div>
 </template>

@@ -291,9 +291,17 @@
     "defaultMessage": "Billing address",
     "description": "Address line 1 of the customer address in the checkout form"
   },
+  "checkout.agreement.one_off": {
+    "defaultMessage": "{due_today} today. One-time purchase.",
+    "description": "The agreement for an order that is charged once and does not renew"
+  },
   "checkout.agreement.subscription": {
     "defaultMessage": "{subscription_amount}/{billing_period} until canceled, starting {start_date, date, long}.",
     "description": "The agreement for the subscription"
+  },
+  "checkout.agreement.subscription_with_one_off": {
+    "defaultMessage": "{due_today} today, then {subscription_amount}/{billing_period} until canceled, starting {start_date, date, long}.",
+    "description": "The agreement for a subscription whose first invoice also charges something only once"
   },
   "checkout.agreement.trial": {
     "defaultMessage": "{discounted_amount} for {trial_period}, then {subscription_amount}/{billing_period} until canceled, starting {start_date, date, ::MMMMd}.",
@@ -398,6 +406,10 @@
   "checkout.not_available.title": {
     "defaultMessage": "Checkout not available",
     "description": "The title of the checkout not available page"
+  },
+  "checkout.one_off_description": {
+    "defaultMessage": "You will be billed <strong>{due_today}</strong> today.",
+    "description": "The description of an order that is charged once and does not renew"
   },
   "checkout.optional_suffix.label": {
     "defaultMessage": "(optional)",
@@ -535,6 +547,10 @@
     "defaultMessage": "You will be billed <strong>{price}</strong> per {period_name}, starting today.",
     "description": "The description of the subscription"
   },
+  "checkout.subscription_description_with_one_off": {
+    "defaultMessage": "You will be billed <strong>{due_today}</strong> today, then <strong>{price}</strong> per {period_name}.",
+    "description": "The description of a subscription whose first invoice also charges something only once"
+  },
   "checkout.subscription_description_without_price": {
     "defaultMessage": "per {period_name}, starting today",
     "description": "The description of the subscription, while the price is still being determined"
@@ -546,6 +562,10 @@
   "checkout.trial_period_description": {
     "defaultMessage": "You will be billed <strong>{price}</strong> per {period_name}, starting {startDate, date, long}.",
     "description": "The description of the trial period"
+  },
+  "checkout.trial_period_description_with_one_off": {
+    "defaultMessage": "You will be billed <strong>{due_today}</strong> today, then <strong>{price}</strong> per {period_name}, starting {startDate, date, long}.",
+    "description": "The description of a trial whose first invoice also charges something only once"
   },
   "checkout.trial_period_description_without_price": {
     "defaultMessage": "per {period_name} starting, {startDate, date, long}",

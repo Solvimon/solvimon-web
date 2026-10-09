@@ -35,6 +35,10 @@ describe('isInvoiceUsageBased', () => {
         expect(isInvoiceUsageBased({ periods: [] } as unknown as Invoice)).toBe(false);
     });
 
+    it('returns false for a period that carries no groups', () => {
+        expect(isInvoiceUsageBased({ periods: [{}] } as unknown as Invoice)).toBe(false);
+    });
+
     it('returns true when only one of multiple product items is USAGE_BASED', () => {
         const invoice = {
             periods: [

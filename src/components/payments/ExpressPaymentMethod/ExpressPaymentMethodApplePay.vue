@@ -118,39 +118,44 @@ const initApplePay = async () => {
         onSubmit: (state, _component, actions) => void handleSubmit(state, actions),
     });
 
+    // Nothing renews, so there is no recurring mandate to ask the customer for: the sheet states
+    // the one charge it is making and nothing beyond it.
+    const recurringPaymentRequest: ApplePayConfiguration['recurringPaymentRequest'] = props
+        .billingInformation.regular
+        ? {
+              paymentDescription: props.billingInformation.description,
+              billingAgreement: props.billingInformation.agreement,
+              managementURL: props.billingInformation.managementURL,
+
+              // Trial
+              ...(props.billingInformation.trial && {
+                  trialBilling: {
+                      label: props.billingInformation.trial.label,
+                      amount: props.billingInformation.trial.amount.quantity.toString(),
+                      type: 'final',
+                      paymentTiming: 'recurring',
+                      recurringPaymentStartDate: props.billingInformation.trial.startDate,
+                      recurringPaymentEndDate: props.billingInformation.trial.endDate,
+                  },
+              }),
+
+              // Regular
+              regularBilling: {
+                  label: props.billingInformation.regular.label,
+                  amount: props.billingInformation.regular.amount.quantity.toString(),
+                  type: 'final',
+                  paymentTiming: 'recurring',
+                  recurringPaymentStartDate: props.billingInformation.regular.startDate,
+                  ...getAppleIntervalConfigFromTimePeriod(
+                      props.billingInformation.regular.interval ?? { type: 'MONTH', value: 1 },
+                  ),
+              },
+          }
+        : undefined;
+
     const applePay = new ApplePay(checkout, {
         isExpress: true,
-        recurringPaymentRequest: {
-            paymentDescription: props.billingInformation.description,
-            billingAgreement: props.billingInformation.agreement,
-            managementURL: props.billingInformation.managementURL,
-
-            // Trial
-            ...(props.billingInformation.trial && {
-                trialBilling: {
-                    label: props.billingInformation.trial.label,
-                    amount: props.billingInformation.trial.amount.quantity.toString(),
-                    type: 'final',
-                    paymentTiming: 'recurring',
-                    recurringPaymentStartDate: props.billingInformation.trial.startDate,
-                    recurringPaymentEndDate: props.billingInformation.trial.endDate,
-                },
-            }),
-
-            // Regular
-            ...(props.billingInformation.regular && {
-                regularBilling: {
-                    label: props.billingInformation.regular.label,
-                    amount: props.billingInformation.regular.amount.quantity.toString(),
-                    type: 'final',
-                    paymentTiming: 'recurring',
-                    recurringPaymentStartDate: props.billingInformation.regular.startDate,
-                    ...getAppleIntervalConfigFromTimePeriod(
-                        props.billingInformation.regular.interval ?? { type: 'MONTH', value: 1 },
-                    ),
-                },
-            }),
-        },
+        ...(recurringPaymentRequest && { recurringPaymentRequest }),
         requiredBillingContactFields: ['postalAddress'],
         requiredShippingContactFields: ['email'],
         onPaymentMethodSelected: async (resolve, _reject, event) => {
@@ -181,7 +186,9 @@ const initApplePay = async () => {
 
             resolve({
                 newTotal: {
-                    label: props.billingInformation.regular.label,
+                    label:
+                        props.billingInformation.regular?.label ??
+                        props.billingInformation.description,
                     amount: newTotalAmount,
                     type: 'final',
                 },

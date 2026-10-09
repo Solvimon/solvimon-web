@@ -1,4 +1,5 @@
 import type { Amount, Invoice, InvoiceGroup, InvoiceLine } from '@solvimon/solvimon-types';
+import { sumAmounts } from './amount';
 
 export const isInvoiceUsageBased = (invoice: Invoice) => {
     return (
@@ -64,26 +65,36 @@ const classifyLine = (line: InvoiceLine): InvoiceRecurrence | undefined => {
     return modelTypes.every((modelType) => modelType === 'ONE_OFF') ? 'ONE_OFF' : 'RECURRING';
 };
 
-const decimalPlaces = (quantity: string): number => quantity.split('.')[1]?.length ?? 0;
-
 /**
- * Amounts are summed as integers in the smallest unit the operands themselves use, because adding
- * the quantities as floats drifts: `0.1 + 0.2` is not `0.3`, and an invoice total that is off by a
- * cent from the one the customer is charged is worse than no total at all.
+ * The invoice's groups split into the ones charged every period and the ones charged once, for a
+ * summary that lists them under headings of their own.
+ *
+ * A group is taken as a whole: it stands for one pricing, and a summary row carries the group's
+ * own amount, so a group whose lines disagree cannot be put on one side without the row beneath
+ * the heading contradicting it. Those stay with the recurring ones, which is where every group was
+ * listed before any of this.
  */
-const sumAmounts = (amounts: Amount[], currency: string): Amount => {
-    const quantities = amounts
-        .map(({ quantity }) => quantity)
-        .filter((quantity) => Number.isFinite(Number(quantity)));
-    const scale = quantities.reduce((max, quantity) => Math.max(max, decimalPlaces(quantity)), 2);
-    const factor = 10 ** scale;
-    const total = quantities.reduce(
-        (sum, quantity) => sum + Math.round(Number(quantity) * factor),
-        0,
-    );
+export function getInvoiceGroupsByRecurrence(invoice: Invoice): {
+    recurring: InvoiceGroup[];
+    oneOff: InvoiceGroup[];
+} {
+    const recurring: InvoiceGroup[] = [];
+    const oneOff: InvoiceGroup[] = [];
 
-    return { quantity: (total / factor).toFixed(scale), currency };
-};
+    invoice.periods?.forEach((period) => {
+        period.groups?.forEach((group) => {
+            const recurrences = new Set(
+                group.lines?.length
+                    ? group.lines.map((line) => classifyLine(line) ?? 'RECURRING')
+                    : [RECURRENCE_BY_GROUP_TYPE[group.type] ?? 'RECURRING'],
+            );
+
+            (recurrences.size === 1 && recurrences.has('ONE_OFF') ? oneOff : recurring).push(group);
+        });
+    });
+
+    return { recurring, oneOff };
+}
 
 /**
  * What the invoice charges once and what it charges every period, told apart.

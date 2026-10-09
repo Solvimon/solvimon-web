@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import {
+    Amount as AmountDisplay,
+    Divider,
     InvoicePreview,
     InvoicePreviewGroups,
     Section,
@@ -12,18 +14,21 @@ import {
     useTimePeriod,
     type SelectExtendedOptionEntry,
 } from '@solvimon/solvimon-ui';
-import type { Amount, BillingPeriod, Pricing } from '@solvimon/solvimon-types';
+import type { Amount, BillingPeriod, InvoiceGroup, Pricing } from '@solvimon/solvimon-types';
 import { computed } from 'vue';
 import SubscriptionSummary from './SubscriptionSummary.vue';
 import type { OrderSummaryProps } from './OrderSummary.types';
 import {
     getAnnualizedAmount,
+    getGroupsSubtotal,
+    getInvoiceGroupName,
     getPeriodRecurringAmount as getInvoiceRecurringAmount,
     getSavingsAmount,
 } from './OrderSummary.lib';
 import PricingGroupContent from '@/components/subscriptions/PlanCustomizationForm/PricingGroupContent.vue';
 import { useViewport } from '@/composables/useViewport';
 import { getFirstPricingPlanScheduleOfType } from '@/utils/pricingPlanSchedule';
+import { getInvoiceGroupsByRecurrence } from '@/utils/invoice';
 import { asOptionalText, type SelectControlValue } from '@/utils/formControl';
 
 const props = defineProps<OrderSummaryProps>();
@@ -139,6 +144,36 @@ const getSaveBadgeText = (amount?: { quantity: string; currency: string }) => {
     });
     return `${saveLine}${periodLine}`;
 };
+
+const groupsByRecurrence = computed<{ recurring: InvoiceGroup[]; oneOff: InvoiceGroup[] }>(() =>
+    props.invoice ? getInvoiceGroupsByRecurrence(props.invoice) : { recurring: [], oneOff: [] },
+);
+
+/**
+ * Whether the rows are worth splitting under headings of their own. An invoice of one kind reads
+ * as it always has — a heading over every row it has is noise, not an explanation.
+ */
+const hasBothRecurrences = computed(
+    () =>
+        groupsByRecurrence.value.recurring.length > 0 && groupsByRecurrence.value.oneOff.length > 0,
+);
+
+/** A subtotal of a single row is the row again, so it is shown only where it adds up something. */
+const subtotalOf = (groups: InvoiceGroup[]): Amount | undefined =>
+    groups.length > 1 && props.invoice
+        ? getGroupsSubtotal(groups, props.invoice.billing_currency)
+        : undefined;
+
+/** What the subscription renews at, stated under the total only when it is not the total. */
+const recurringAmount = computed(() =>
+    hasBothRecurrences.value ? getInvoiceRecurringAmount(props.invoice) : undefined,
+);
+
+const renewalAmount = computed(() =>
+    recurringAmount.value && Number(recurringAmount.value.quantity) !== 0
+        ? recurringAmount.value
+        : undefined,
+);
 
 const effectiveBillingPeriods = computed<BillingPeriod[]>(() => {
     const scheduleInfo = getFirstPricingPlanScheduleOfType({
@@ -401,7 +436,73 @@ const handleBinaryBillingToggle = (checked: boolean) => {
 
             <!-- invoice groups preview -->
             <div v-if="invoice && variant !== 'products-inline'" class="sv-order-summary__items">
-                <InvoicePreviewGroups :invoice="invoice" :wrapper-component="Section" />
+                <template v-if="hasBothRecurrences">
+                    <div
+                        v-for="section in [
+                            {
+                                key: 'recurring',
+                                groups: groupsByRecurrence.recurring,
+                                heading: $t({
+                                    defaultMessage: 'Subscription',
+                                    id: 'checkout.order_summary_block.recurring_heading',
+                                    description:
+                                        'The heading above the charges that are made every billing period',
+                                }),
+                            },
+                            {
+                                key: 'one-off',
+                                groups: groupsByRecurrence.oneOff,
+                                heading: $t({
+                                    defaultMessage: 'One-time charges',
+                                    id: 'checkout.order_summary_block.one_off_heading',
+                                    description:
+                                        'The heading above the charges that are made once and not again',
+                                }),
+                            },
+                        ]"
+                        :key="section.key"
+                        :class="`sv-order-summary__items-${section.key}`"
+                    >
+                        <Typography variant="caps-heading">{{ section.heading }}</Typography>
+                        <Section>
+                            <div
+                                v-for="(group, index) in section.groups"
+                                :key="index"
+                                class="flex flex-row gap-2 py-1.5"
+                            >
+                                <Typography tag="span" variant="body-xs" class="grow">{{
+                                    getInvoiceGroupName(group)
+                                }}</Typography>
+                                <Typography tag="span" variant="body-xs">
+                                    <AmountDisplay :value="group.amount_excluding_tax" />
+                                </Typography>
+                            </div>
+                            <template v-if="subtotalOf(section.groups)">
+                                <Divider spacing="xxs" />
+                                <div class="flex flex-row gap-2 py-1.5">
+                                    <Typography
+                                        tag="span"
+                                        variant="body-xs"
+                                        weight="semibold"
+                                        class="grow"
+                                        >{{
+                                            $t({
+                                                defaultMessage: 'Subtotal',
+                                                id: 'checkout.order_summary_block.subtotal',
+                                                description:
+                                                    'The label of a section total in the order summary',
+                                            })
+                                        }}</Typography
+                                    >
+                                    <Typography tag="span" variant="body-xs" weight="semibold">
+                                        <AmountDisplay :value="subtotalOf(section.groups)!" />
+                                    </Typography>
+                                </div>
+                            </template>
+                        </Section>
+                    </div>
+                </template>
+                <InvoicePreviewGroups v-else :invoice="invoice" :wrapper-component="Section" />
             </div>
 
             <!-- invoice totals preview -->
@@ -427,6 +528,30 @@ const handleBinaryBillingToggle = (checked: boolean) => {
                         })
                     }}
                 </Typography>
+                <!-- What is charged again, where the total above it is not that amount. -->
+                <div
+                    v-if="invoice && renewalAmount"
+                    class="sv-order-summary__renewal flex flex-row gap-2 pt-1.5"
+                >
+                    <Typography tag="span" variant="body-xs" color="subtle" class="grow">{{
+                        $t(
+                            {
+                                defaultMessage: 'Then {amount} per {period}',
+                                id: 'checkout.order_summary_block.renews_at',
+                                description:
+                                    'The amount the subscription is charged every period after the first invoice',
+                            },
+                            {
+                                amount: formatAmount(renewalAmount),
+                                period: formatTimePeriod(subscription.billing_period, {
+                                    prefix: false,
+                                    singular: true,
+                                    hideValueForExactPeriods: true,
+                                }),
+                            },
+                        )
+                    }}</Typography>
+                </div>
             </Section>
         </div>
     </Section>

@@ -49,9 +49,10 @@ const units = useSeatBasedPricing({
             <Typography v-if="units.pricing.amount" tag="span" variant="body-xs" color="subtle">{{
                 $t(
                     {
-                        defaultMessage: '{amount} per unit',
-                        id: 'units.price_per_unit',
-                        description: 'The price per unit label for one-off flat pricing',
+                        defaultMessage: '{amount} per unit, one-time',
+                        id: 'units.price_per_unit_one_time',
+                        description:
+                            'The price per unit label for a one-off flat item, which is charged once rather than every period',
                     },
                     { amount: formatAmount(units.pricing.amount) },
                 )

@@ -154,7 +154,6 @@ watch(
  * is only there for plans a merchant has grouped.
  */
 const {
-    group: planGroup,
     options: planOptions,
     currentPricingPlanId,
     load: loadPlanGroup,
@@ -340,7 +339,6 @@ const billingPeriod = computed(
                 class="sv-subscription-management__form"
                 :pricing-group="pricingGroup"
                 :plan-options="planOptions"
-                :plan-group-name="planGroup?.name"
                 :payment-methods="paymentMethods"
                 :payment-method-options="paymentMethodOptions"
                 :billing-period="billingPeriod"

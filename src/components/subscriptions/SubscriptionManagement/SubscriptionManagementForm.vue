@@ -88,7 +88,6 @@ watch(
                     v-model:pricing-plan-id="pricingPlanId"
                     class="sv-subscription-management-form__plan"
                     :options="planOptions ?? []"
-                    :group-name="planGroupName"
                     :disabled="disabled"
                 />
 
@@ -120,7 +119,7 @@ watch(
                 :disabled="disabled"
                 :label="
                     $t({
-                        defaultMessage: 'Payment method',
+                        defaultMessage: 'Pick a payment method',
                         id: 'subscription_management.payment_method_selector.label',
                         description:
                             'Label above the payment method that pays for the subscription change',

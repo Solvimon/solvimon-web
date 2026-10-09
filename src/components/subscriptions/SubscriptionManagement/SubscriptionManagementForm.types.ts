@@ -20,8 +20,6 @@ export interface SubscriptionManagementFormProps {
      * there is nothing to move to and the plan choice is left out.
      */
     planOptions?: SubscriptionPlanOption[];
-    /** Names the plan choice — the pricing plan group's own name. */
-    planGroupName?: string;
     /** The customer's saved payment methods, to pay the change with. */
     paymentMethods?: PaymentMethod[];
     /**

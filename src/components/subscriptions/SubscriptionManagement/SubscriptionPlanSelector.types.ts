@@ -4,8 +4,6 @@ import type { SubscriptionPlanOption } from '@/composables/useSubscriptionPlanGr
 export interface SubscriptionPlanSelectorProps {
     /** The plans of the group, cheapest first, with the one being billed today among them. */
     options: SubscriptionPlanOption[];
-    /** Names the choice — "Workspace plans". Falls back to a generic heading. */
-    groupName?: string;
     disabled?: boolean;
 }
 

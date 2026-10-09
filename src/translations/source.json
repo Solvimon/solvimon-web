@@ -1120,7 +1120,7 @@
     "description": "Label of the button that leaves the manage subscription screen once the change is committed"
   },
   "subscription_management.payment_method_selector.label": {
-    "defaultMessage": "Payment method",
+    "defaultMessage": "Pick a payment method",
     "description": "Label above the payment method that pays for the subscription change"
   },
   "subscription_management.plan_change_summary.headline": {
@@ -1140,19 +1140,11 @@
     "description": "Title of the block explaining the plan change about to be committed"
   },
   "subscription_management.plan_selector.current": {
-    "defaultMessage": "Your current plan",
+    "defaultMessage": "Current subscription",
     "description": "Marks the plan a subscription already runs on"
   },
-  "subscription_management.plan_selector.immediate": {
-    "defaultMessage": "Starts right away",
-    "description": "Says when a move to this plan takes effect, for plans that change at once"
-  },
-  "subscription_management.plan_selector.next_billing_period": {
-    "defaultMessage": "Starts on your next billing period",
-    "description": "Says when a move to this plan takes effect, for plans that change at the next billing period"
-  },
   "subscription_management.plan_selector.title": {
-    "defaultMessage": "Plan",
+    "defaultMessage": "Pick your plan",
     "description": "Heading above the plans a subscription can be moved between"
   },
   "subscription_management.success.message": {

@@ -1,79 +1,30 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import {
-    RadioGroupExtended,
-    Section,
-    SelectExtended,
-    useIntl,
-    type RadioGroupExtendedProps,
-    type SelectExtendedOptionEntry,
-} from '@solvimon/solvimon-ui';
+import { Icon, RadioGroupExtended, Typography, useIntl } from '@solvimon/solvimon-ui';
 import type { PricingPlan } from '@solvimon/solvimon-types';
 import type { SubscriptionPlanSelectorProps } from './SubscriptionPlanSelector.types';
-import PricingGroupTitle from '@/components/subscriptions/PlanCustomizationForm/PricingGroupTitle.vue';
-import { useViewport } from '@/composables/useViewport';
-import type { SubscriptionPlanOption } from '@/composables/useSubscriptionPlanGroup';
-
-const SHOW_RADIO_GROUP_MAX_OPTIONS = 3;
 
 const props = defineProps<SubscriptionPlanSelectorProps>();
 
 const pricingPlanId = defineModel<PricingPlan['id'] | undefined>('pricingPlanId');
 
 const { $t } = useIntl();
-const { isMobileViewport } = useViewport();
-
-const title = computed(
-    () =>
-        props.groupName ||
-        $t({
-            defaultMessage: 'Plan',
-            id: 'subscription_management.plan_selector.title',
-            description: 'Heading above the plans a subscription can be moved between',
-        }),
-);
-
-/**
- * What the customer is promised about the move. The group decides the timing, so the option says
- * it outright rather than leaving the customer to find out on the invoice.
- */
-const describeOption = ({ isCurrent, changeType, description }: SubscriptionPlanOption) => {
-    const timing = () => {
-        if (isCurrent) {
-            return $t({
-                defaultMessage: 'Your current plan',
-                id: 'subscription_management.plan_selector.current',
-                description: 'Marks the plan a subscription already runs on',
-            });
-        }
-
-        if (changeType === 'NEXT_BILLING_PERIOD') {
-            return $t({
-                defaultMessage: 'Starts on your next billing period',
-                id: 'subscription_management.plan_selector.next_billing_period',
-                description:
-                    'Says when a move to this plan takes effect, for plans that change at the next billing period',
-            });
-        }
-
-        return $t({
-            defaultMessage: 'Starts right away',
-            id: 'subscription_management.plan_selector.immediate',
-            description:
-                'Says when a move to this plan takes effect, for plans that change at once',
-        });
-    };
-
-    return [description, timing()].filter(Boolean).join(' · ');
-};
 
 const options = computed(() =>
-    props.options.map((option) => ({
-        label: option.name,
-        value: option.pricingPlanId,
-        description: describeOption(option),
+    props.options.map(({ pricingPlanId: value, name, description }) => ({
+        label: name,
+        value,
+        ...(description && { description }),
     })),
 );
+
+/** The slot hands back the option it rendered, which carries no more than a label and a value. */
+const optionsByPlanId = computed(
+    () => new Map(props.options.map((option) => [option.pricingPlanId, option])),
+);
+
+const isCurrentPlan = (value: string | boolean) =>
+    typeof value === 'string' && Boolean(optionsByPlanId.value.get(value)?.isCurrent);
 
 /** `RadioGroupExtended` reports `string | boolean`; only its string options are ever selectable. */
 const radioModelValue = computed<string | boolean | undefined>({
@@ -82,48 +33,69 @@ const radioModelValue = computed<string | boolean | undefined>({
         pricingPlanId.value = typeof value === 'string' ? value : undefined;
     },
 });
-
-/** `SelectExtended` reports `null` for a cleared selection. */
-const selectModelValue = computed<string | null | undefined>({
-    get: () => pricingPlanId.value,
-    set: (value) => {
-        pricingPlanId.value = value ?? undefined;
-    },
-});
-
-const getRadioGroupOptions = (): RadioGroupExtendedProps['options'] =>
-    options.value.map(({ label, value, description }) => ({ label, value, description }));
-
-const getSelectOptions = (): SelectExtendedOptionEntry[] =>
-    options.value.map(({ label, value, description: subLabel }) => ({ label, value, subLabel }));
 </script>
 
 <template>
-    <Section no-spacing class="sv-subscription-plan-selector">
-        <div class="p-1">
-            <PricingGroupTitle>
-                <template #title>{{ title }}</template>
-            </PricingGroupTitle>
-            <div class="pt-1">
-                <RadioGroupExtended
-                    v-if="options.length <= SHOW_RADIO_GROUP_MAX_OPTIONS"
-                    v-model="radioModelValue"
-                    class="sv-subscription-plan-selector__options"
-                    :options="getRadioGroupOptions()"
-                    :direction="isMobileViewport ? 'column' : 'row'"
-                    :disabled="disabled"
-                    :show-radio="false"
-                />
-                <SelectExtended
-                    v-else
-                    v-model:single-model-value="selectModelValue"
-                    class="sv-subscription-plan-selector__options"
-                    :options="getSelectOptions()"
-                    :disabled="disabled"
-                    size="xl"
-                    show-sub-label-in-input
-                />
-            </div>
-        </div>
-    </Section>
+    <div class="sv-subscription-plan-selector flex flex-col gap-2">
+        <Typography tag="span" variant="body" weight="semibold" no-spacing>
+            {{
+                $t({
+                    defaultMessage: 'Pick your plan',
+                    id: 'subscription_management.plan_selector.title',
+                    description: 'Heading above the plans a subscription can be moved between',
+                })
+            }}
+        </Typography>
+
+        <RadioGroupExtended
+            v-model="radioModelValue"
+            class="sv-subscription-plan-selector__options [&>div[role=group]]:gap-2 [&_label]:p-6"
+            :options="options"
+            direction="column"
+            :disabled="disabled"
+            :show-radio="false"
+        >
+            <template #label="{ option }">
+                <Typography tag="span" variant="heading-2" weight="semibold" no-spacing>
+                    {{ option.label }}
+                </Typography>
+            </template>
+
+            <template #description="{ option }">
+                <Typography
+                    v-if="option.description"
+                    tag="span"
+                    variant="body-sm"
+                    color="secondary"
+                    no-spacing
+                >
+                    {{ option.description }}
+                </Typography>
+            </template>
+
+            <template #suffix="{ optionValue }">
+                <div
+                    v-if="isCurrentPlan(optionValue)"
+                    class="sv-subscription-plan-selector__current flex shrink-0 items-center gap-1 rounded border border-gray-200 bg-white px-3 py-2 text-primary-600"
+                >
+                    <Icon icon="check" size="xs" />
+                    <Typography
+                        tag="span"
+                        variant="body-xs"
+                        weight="semibold"
+                        color="inherit"
+                        no-spacing
+                    >
+                        {{
+                            $t({
+                                defaultMessage: 'Current subscription',
+                                id: 'subscription_management.plan_selector.current',
+                                description: 'Marks the plan a subscription already runs on',
+                            })
+                        }}
+                    </Typography>
+                </div>
+            </template>
+        </RadioGroupExtended>
+    </div>
 </template>

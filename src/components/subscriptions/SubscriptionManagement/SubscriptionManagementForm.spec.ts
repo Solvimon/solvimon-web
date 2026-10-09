@@ -69,7 +69,6 @@ const mountComponent = ({
     paymentMethodId,
     paymentMethodOptions,
     planOptions: planOptionsProp,
-    planGroupName,
     pricingPlanId,
     withPricingGroup = true,
 }: {
@@ -78,7 +77,6 @@ const mountComponent = ({
     paymentMethodId?: string;
     paymentMethodOptions?: PaymentMethodOptionsResponse;
     planOptions?: SubscriptionPlanOption[];
-    planGroupName?: string;
     pricingPlanId?: string;
     withPricingGroup?: boolean;
 } = {}) =>
@@ -91,7 +89,6 @@ const mountComponent = ({
             enabledPricingIds,
             paymentMethodId,
             planOptions: planOptionsProp,
-            planGroupName,
             pricingPlanId,
             'onUpdate:enabledPricingIds': (value: string[]) => value,
             'onUpdate:paymentMethodId': (value?: string) => value,
@@ -120,7 +117,7 @@ describe('SubscriptionManagementForm', () => {
         expect(wrapper.find('.sv-subscription-management-form__payment-methods').exists()).toBe(
             true,
         );
-        expect(wrapper.text()).toContain('Payment method');
+        expect(wrapper.text()).toContain('Pick a payment method');
     });
 
     describe('payment method default', () => {
@@ -203,12 +200,11 @@ describe('SubscriptionManagementForm', () => {
         it('offers the plans of the group above what the plan can be customised with', () => {
             const wrapper = mountComponent({
                 planOptions,
-                planGroupName: 'Workspace plans',
                 pricingPlanId: 'ppla_starter',
             });
 
             expect(wrapper.find('.sv-subscription-management-form__plan').exists()).toBe(true);
-            expect(wrapper.text()).toContain('Workspace plans');
+            expect(wrapper.text()).toContain('Pick your plan');
             expect(wrapper.text()).toContain('Pro');
         });
 

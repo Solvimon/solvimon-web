@@ -98,7 +98,6 @@ vi.mock('@/components/subscriptions/SubscriptionManagement/SubscriptionManagemen
         props: {
             pricingGroup: { type: Object, default: undefined },
             planOptions: { type: Array, default: () => [] },
-            planGroupName: String,
             paymentMethods: { type: Array, default: () => [] },
             paymentMethodOptions: { type: Array, default: undefined },
             billingPeriod: { type: Object, required: true },
@@ -667,7 +666,6 @@ describe('SubscriptionManagement', () => {
             const form = wrapper.findComponent({ name: 'SubscriptionManagementForm' });
 
             expect(form.props('planOptions')).toEqual(planOptions);
-            expect(form.props('planGroupName')).toBe('Workspace plans');
         });
 
         it('opens on the plan the subscription runs on today', () => {

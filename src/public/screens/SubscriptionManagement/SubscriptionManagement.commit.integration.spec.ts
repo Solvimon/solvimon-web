@@ -32,6 +32,26 @@ vi.mock('@/services/invoices', () => ({
     createInvoicesService: () => ({ getInvoicePreview: mockGetInvoicePreview }),
 }));
 
+vi.mock('@/services/subscriptions', () => ({
+    createSubscriptionsService: () => ({ changeSubscriptionPlan: vi.fn() }),
+}));
+
+// A plan in no group, so the screen offers what the plan can be customised with and nothing else.
+vi.mock('@/composables/useSubscriptionPlanGroup', async () => {
+    const { ref } = await import('vue');
+
+    return {
+        useSubscriptionPlanGroup: () => ({
+            group: ref(undefined),
+            options: ref([]),
+            currentPricingPlanId: ref(undefined),
+            isPending: ref(false),
+            error: ref(undefined),
+            load: vi.fn(),
+        }),
+    };
+});
+
 vi.mock('@/composables/usePaymentMethodOptions', () => ({
     usePaymentMethodOptions: () => ({ paymentMethodOptions: ref([]), get: vi.fn() }),
 }));

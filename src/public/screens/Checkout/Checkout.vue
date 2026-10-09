@@ -38,6 +38,7 @@ import {
     getPricingItemConfigMetaById,
 } from '@/utils/pricingPlanSchedule';
 import { getPricingCurrencyForCountry } from '@/utils/countryCurrency';
+import { getModelTypesFromScheduleInfo } from '@/utils/pricing';
 import { ContentWithAsideLayout } from '@/layouts';
 import { useViewport } from '@/composables/useViewport';
 import PromotionCodeSection from '@/components/checkout/PromotionCodeSection.vue';
@@ -176,6 +177,12 @@ const handleValidateOnSubmit = async () => {
     return !checkoutForm.validation.value.$invalid;
 };
 
+const hasTrialPeriod = computed(() => !!trialInvoicePreview.value);
+
+const isUsageBased = computed(() =>
+    invoicePreview.value ? isInvoiceUsageBased(invoicePreview.value) : false,
+);
+
 /**
  * What the subscription renews at, as stated to the customer and authorized by them. The invoice
  * total stands in where the one-off and the recurring part could not be told apart — which is what
@@ -185,20 +192,34 @@ const mandateRecurringAmount = computed(
     () => recurringAmount.value ?? invoicePreview.value?.tax_summary.total_amount,
 );
 
-/** An order that renews at nothing is a purchase, and must not be mandated as a subscription. */
+/** What the plan prices on, which is the only place that survives an invoice charging nothing. */
+const planModelTypes = computed(() => getModelTypesFromScheduleInfo(scheduleInfo.value));
+
+/** Whether the plan prices anything that comes back next period, whatever this invoice charged. */
+const hasRecurringPricing = computed(() =>
+    [...planModelTypes.value].some((modelType) => modelType !== 'ONE_OFF'),
+);
+
+/** Whether usage is billed each period — true of a plan that invoices nothing for it up front. */
+const hasUsagePricing = computed(() => planModelTypes.value.has('USAGE_BASED'));
+
+/**
+ * Whether anything is going to be charged again.
+ *
+ * Usage is the reason this is not just "the recurring amount is not zero". A plan billed on what
+ * the customer uses puts no line on its first invoice at all, so that invoice renews at zero and
+ * the subscription renews all the same — reading a purchase off it would take the mandate away
+ * from the very subscriptions that cannot go without one.
+ */
 const hasRecurringCharge = computed(
-    () => !!mandateRecurringAmount.value && Number(mandateRecurringAmount.value.quantity) !== 0,
+    () =>
+        hasRecurringPricing.value ||
+        (!!mandateRecurringAmount.value && Number(mandateRecurringAmount.value.quantity) !== 0),
 );
 
 /** The title names a second amount only where the invoice holds one that is charged just once. */
 const titleRecurringAmount = computed(() =>
     hasOneOffCharges.value ? recurringAmount.value : undefined,
-);
-
-const hasTrialPeriod = computed(() => !!trialInvoicePreview.value);
-
-const isUsageBased = computed(() =>
-    invoicePreview.value ? isInvoiceUsageBased(invoicePreview.value) : false,
 );
 
 const isBillingInformationMandatory = computed(
@@ -370,6 +391,25 @@ const agreement = computed(() => {
                         'The agreement for an order that is charged once and does not renew',
                 },
                 { due_today: dueToday },
+            );
+        }
+
+        if (hasUsagePricing.value && Number(recurringAmount.value.quantity) === 0) {
+            return $t(
+                {
+                    defaultMessage:
+                        '{due_today} today, then usage billed every {billing_period} until canceled.',
+                    id: 'checkout.agreement.usage_with_one_off',
+                    description:
+                        'The agreement for a usage-based subscription whose first invoice also charges something only once',
+                },
+                {
+                    due_today: dueToday,
+                    billing_period: formatTimePeriod(
+                        invoicePreview.value?.billing_period ?? { type: 'MONTH', value: 1 },
+                        { short: true, singular: true, hideValueForExactPeriods: true },
+                    ),
+                },
             );
         }
 
@@ -636,6 +676,7 @@ onMounted(() => {
                         :amount="invoicePreview?.invoice_amount_including_tax"
                         :due-today-amount="amount ?? invoicePreview?.invoice_amount_including_tax"
                         :recurring-amount="titleRecurringAmount"
+                        :has-usage-charges="hasUsagePricing"
                         :billing-period="subscription?.billing_period"
                         :country-code="checkoutForm.form.value.country"
                     />

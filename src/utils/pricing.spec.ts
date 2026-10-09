@@ -1,5 +1,6 @@
 import {
     getAllPricingsFromScheduleInfos,
+    getModelTypesFromScheduleInfo,
     getNameFromPricing,
     getPricingsFromScheduleInfo,
 } from './pricing';
@@ -231,5 +232,92 @@ describe('pricing utils', () => {
             const pricing = { name: '', products: [] } as unknown as PricingExtended;
             expect(getNameFromPricing(pricing)).toBeUndefined();
         });
+    });
+});
+
+describe('getModelTypesFromScheduleInfo', () => {
+    const pricing = (id: string, modelType: string, rest: Record<string, unknown> = {}) => ({
+        id,
+        product_type: 'DEFAULT',
+        ...rest,
+        items: [{ product_items: [{ model_type: modelType }] }],
+    });
+
+    const scheduleInfo = (categories: unknown[]) =>
+        ({
+            pricing_plan_version: { pricing_categories: categories },
+        }) as unknown as PricingPlanScheduleInfoExpanded;
+
+    // The plan this was written for: hardware billed once, service billed on usage. Its first
+    // invoice carries only the hardware, so the plan is the only thing that still says USAGE_BASED.
+    it('reports what the plan prices on, not what an invoice happened to charge', () => {
+        const result = getModelTypesFromScheduleInfo(
+            scheduleInfo([
+                { pricings: [pricing('pric_1', 'ONE_OFF')] },
+                { pricings: [pricing('pric_2', 'USAGE_BASED')] },
+            ]),
+        );
+
+        expect([...result].sort()).toEqual(['ONE_OFF', 'USAGE_BASED']);
+    });
+
+    it('counts everything when no selection is given', () => {
+        const result = getModelTypesFromScheduleInfo(
+            scheduleInfo([
+                {
+                    pricings: [pricing('pric_1', 'ONE_OFF')],
+                    pricing_groups: [{ pricings: [pricing('pric_2', 'PER_SEAT')] }],
+                },
+            ]),
+        );
+
+        expect(result.has('PER_SEAT')).toBe(true);
+    });
+
+    // An addon nobody picked is not priced, so a plan does not recur on the strength of one.
+    it('leaves out a group pricing the customer has not chosen', () => {
+        const info = scheduleInfo([
+            {
+                pricings: [pricing('pric_1', 'ONE_OFF')],
+                pricing_groups: [{ pricings: [pricing('pric_2', 'RECURRING')] }],
+            },
+        ]);
+
+        expect([...getModelTypesFromScheduleInfo(info, { enabledPricingIds: [] })]).toEqual([
+            'ONE_OFF',
+        ]);
+        expect(
+            getModelTypesFromScheduleInfo(info, { enabledPricingIds: ['pric_2'] }).has('RECURRING'),
+        ).toBe(true);
+    });
+
+    it('leaves out an addon the customer has not chosen', () => {
+        const result = getModelTypesFromScheduleInfo(
+            scheduleInfo([
+                {
+                    pricings: [
+                        pricing('pric_1', 'ONE_OFF'),
+                        pricing('pric_2', 'RECURRING', { product_type: 'ADDON' }),
+                    ],
+                },
+            ]),
+            { enabledPricingIds: [] },
+        );
+
+        expect([...result]).toEqual(['ONE_OFF']);
+    });
+
+    // What the plan always charges is charged whether or not anything was selected.
+    it('keeps a pricing that needs no choosing', () => {
+        const result = getModelTypesFromScheduleInfo(
+            scheduleInfo([{ pricings: [pricing('pric_1', 'USAGE_BASED')] }]),
+            { enabledPricingIds: [] },
+        );
+
+        expect([...result]).toEqual(['USAGE_BASED']);
+    });
+
+    it('reports nothing for a schedule it cannot read a plan off', () => {
+        expect(getModelTypesFromScheduleInfo(undefined).size).toBe(0);
     });
 });

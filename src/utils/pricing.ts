@@ -1,5 +1,6 @@
 import type {
     ModelType,
+    Pricing,
     PricingExtended,
     PricingPlanScheduleInfoExpanded,
 } from '@solvimon/solvimon-types';
@@ -32,17 +33,30 @@ export function getNameFromPricing(pricing: PricingExtended): string | undefined
  */
 export function getModelTypesFromScheduleInfo(
     scheduleInfo: PricingPlanScheduleInfoExpanded | undefined,
+    { enabledPricingIds }: { enabledPricingIds?: Pricing['id'][] } = {},
 ): Set<ModelType> {
     const categories = scheduleInfo?.pricing_plan_version?.pricing_categories ?? [];
 
     const pricings = categories.flatMap((category) => [
-        ...(category.pricings ?? []),
-        ...(category.pricing_groups ?? []).flatMap((group) => group.pricings ?? []),
+        ...(category.pricings ?? []).map((pricing) => ({ pricing, inGroup: false })),
+        ...(category.pricing_groups ?? []).flatMap((group) =>
+            (group.pricings ?? []).map((pricing) => ({ pricing, inGroup: true })),
+        ),
     ]);
+
+    // An addon or a group member is only priced once the customer picks it, so counting one they
+    // did not would have the plan bill for usage or renew on something they are not buying.
+    const isCharged = ({ pricing, inGroup }: (typeof pricings)[number]) => {
+        const isOptional =
+            inGroup || !!pricing?.pricing_group_id || pricing?.product_type === 'ADDON';
+
+        return !isOptional || !enabledPricingIds || enabledPricingIds.includes(pricing?.id);
+    };
 
     return new Set(
         pricings
-            .flatMap((pricing) => pricing?.items ?? [])
+            .filter(isCharged)
+            .flatMap(({ pricing }) => pricing?.items ?? [])
             .flatMap((item) => item.product_items ?? [])
             .map(({ model_type }) => model_type),
     );

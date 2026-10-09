@@ -179,8 +179,35 @@ const handleValidateOnSubmit = async () => {
 
 const hasTrialPeriod = computed(() => !!trialInvoicePreview.value);
 
-const isUsageBased = computed(() =>
-    invoicePreview.value ? isInvoiceUsageBased(invoicePreview.value) : false,
+/**
+ * What the plan prices on, limited to what the customer has actually chosen, and the only place
+ * that survives an invoice charging nothing.
+ */
+const planModelTypes = computed(() =>
+    getModelTypesFromScheduleInfo(scheduleInfo.value, {
+        enabledPricingIds: checkoutForm.form.value.enabledPricingIds,
+    }),
+);
+
+/** Whether the plan prices anything that comes back next period, whatever this invoice charged. */
+const hasRecurringPricing = computed(() =>
+    [...planModelTypes.value].some((modelType) => modelType !== 'ONE_OFF'),
+);
+
+/** Whether usage is billed each period — true of a plan that invoices nothing for it up front. */
+const hasUsagePricing = computed(() => planModelTypes.value.has('USAGE_BASED'));
+
+/**
+ * Whether the summary says usage is billed on top of the total it shows.
+ *
+ * Asked of the plan, because usage puts no line on an invoice until some has been reported — and
+ * at checkout none has, for anybody. An invoice-only answer kept the note from the one audience
+ * it exists for. The invoice is still consulted, so a plan this cannot read through still says it.
+ */
+const isUsageBased = computed(
+    () =>
+        hasUsagePricing.value ||
+        (invoicePreview.value ? isInvoiceUsageBased(invoicePreview.value) : false),
 );
 
 /**
@@ -191,17 +218,6 @@ const isUsageBased = computed(() =>
 const mandateRecurringAmount = computed(
     () => recurringAmount.value ?? invoicePreview.value?.tax_summary.total_amount,
 );
-
-/** What the plan prices on, which is the only place that survives an invoice charging nothing. */
-const planModelTypes = computed(() => getModelTypesFromScheduleInfo(scheduleInfo.value));
-
-/** Whether the plan prices anything that comes back next period, whatever this invoice charged. */
-const hasRecurringPricing = computed(() =>
-    [...planModelTypes.value].some((modelType) => modelType !== 'ONE_OFF'),
-);
-
-/** Whether usage is billed each period — true of a plan that invoices nothing for it up front. */
-const hasUsagePricing = computed(() => planModelTypes.value.has('USAGE_BASED'));
 
 /**
  * Whether anything is going to be charged again.

@@ -50,10 +50,7 @@ export interface ExpressPaymentMethodProps {
              */
             endDate?: Date;
         };
-        /**
-         * The regular period. Left out by an order that renews at nothing — hardware bought
-         * outright, say — which must not be presented to the customer as a subscription.
-         */
+        /** The regular period. Absent where nothing renews, which must not be mandated as one. */
         regular?: {
             /**
              * The label of the regular period

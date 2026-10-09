@@ -6,14 +6,11 @@ import { sumAmounts } from '@/utils/amount';
 const getAmountValue = (amount: Pick<Amount, 'quantity'>) => Number(amount.quantity);
 
 /**
- * What a billing period costs every time it comes round, with anything charged only once left out.
+ * A one-off folded into a per-period figure is counted again for every period in the year: a €15
+ * delivery, charged once either way, invents €165 of annual difference between monthly and yearly.
  *
- * The price beside an option and the saving between two of them are both per-period figures, and a
- * one-off folded into them is counted again for every period in the year: a €15 delivery, charged
- * once either way, turns into €165 of invented annual difference between monthly and yearly.
- *
- * `undefined` where part of the invoice fits neither side, so the option goes without a price and
- * the badge without a number rather than carrying one that cannot be relied on.
+ * `undefined` where part of the invoice fits neither side, so the badge goes without a number
+ * rather than carrying one that cannot be relied on.
  */
 export const getPeriodRecurringAmount = (invoice: Invoice | undefined): Amount | undefined => {
     if (!invoice) {
@@ -29,7 +26,6 @@ export const getPeriodRecurringAmount = (invoice: Invoice | undefined): Amount |
     return split.hasUnattributed ? undefined : split.recurring.includingTax;
 };
 
-/** A period amount as its yearly equivalent, on fixed day, week and month counts. */
 export const getAnnualizedAmount = (period: BillingPeriod, amount?: Amount): Amount | undefined => {
     if (!amount) {
         return undefined;
@@ -52,7 +48,6 @@ export const getAnnualizedAmount = (period: BillingPeriod, amount?: Amount): Amo
     return { quantity: annualValue.toFixed(2), currency: amount.currency };
 };
 
-/** What the cheaper of two yearly equivalents saves, or nothing where it saves nothing. */
 export const getSavingsAmount = (fromAmount?: Amount, toAmount?: Amount): Amount | undefined => {
     if (!fromAmount || !toAmount) {
         return undefined;
@@ -67,7 +62,6 @@ export const getSavingsAmount = (fromAmount?: Amount, toAmount?: Amount): Amount
     return { quantity: delta.toFixed(2), currency: fromAmount.currency };
 };
 
-/** A group named the way the summary has always named one: by its pricing, else by its products. */
 export const getInvoiceGroupName = (group: InvoiceGroup): string => {
     if (group.pricing?.name && !isEmpty(group.pricing.name)) {
         return group.pricing.name;
@@ -77,7 +71,7 @@ export const getInvoiceGroupName = (group: InvoiceGroup): string => {
     return getComposedString(group.products?.map(({ name }) => name) ?? []) ?? '';
 };
 
-/** What a run of groups comes to, excluding tax — the same basis the rows beside it are shown on. */
+/** Excluding tax, the basis the rows beside it are shown on. */
 export const getGroupsSubtotal = (groups: InvoiceGroup[], currency: string): Amount =>
     sumAmounts(
         groups.map(({ amount_excluding_tax }) => amount_excluding_tax),

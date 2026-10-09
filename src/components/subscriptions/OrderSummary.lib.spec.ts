@@ -12,7 +12,6 @@ const eur = (quantity: string): Amount => ({ quantity, currency: 'EUR' });
 const MONTHLY: BillingPeriod = { type: 'MONTH', value: 1 };
 const YEARLY: BillingPeriod = { type: 'YEAR', value: 1 };
 
-/** An invoice of one recurring line and, where given, a one-off charged alongside it. */
 const invoice = ({ recurring, oneOff }: { recurring: string; oneOff?: string }): Invoice => {
     const total = (Number(recurring) + Number(oneOff ?? '0')).toFixed(2);
 
@@ -56,7 +55,6 @@ describe('getPeriodRecurringAmount', () => {
         );
     });
 
-    // An invoice with nothing one-off on it keeps reporting its period total, as it always did.
     it('reports the period total when nothing is charged only once', () => {
         expect(getPeriodRecurringAmount(invoice({ recurring: '100.00' }))).toEqual(eur('100.00'));
     });

@@ -248,8 +248,6 @@ describe('getModelTypesFromScheduleInfo', () => {
             pricing_plan_version: { pricing_categories: categories },
         }) as unknown as PricingPlanScheduleInfoExpanded;
 
-    // The plan this was written for: hardware billed once, service billed on usage. Its first
-    // invoice carries only the hardware, so the plan is the only thing that still says USAGE_BASED.
     it('reports what the plan prices on, not what an invoice happened to charge', () => {
         const result = getModelTypesFromScheduleInfo(
             scheduleInfo([
@@ -274,7 +272,6 @@ describe('getModelTypesFromScheduleInfo', () => {
         expect(result.has('PER_SEAT')).toBe(true);
     });
 
-    // An addon nobody picked is not priced, so a plan does not recur on the strength of one.
     it('leaves out a group pricing the customer has not chosen', () => {
         const info = scheduleInfo([
             {
@@ -307,7 +304,6 @@ describe('getModelTypesFromScheduleInfo', () => {
         expect([...result]).toEqual(['ONE_OFF']);
     });
 
-    // What the plan always charges is charged whether or not anything was selected.
     it('keeps a pricing that needs no choosing', () => {
         const result = getModelTypesFromScheduleInfo(
             scheduleInfo([{ pricings: [pricing('pric_1', 'USAGE_BASED')] }]),

@@ -15,7 +15,6 @@ export const isInvoiceUsageBased = (invoice: Invoice) => {
     );
 };
 
-/** Which part of the agreement a charge belongs to: the one that repeats, or the one that does not. */
 export type InvoiceRecurrence = 'RECURRING' | 'ONE_OFF' | 'UNATTRIBUTED';
 
 export interface InvoiceAmountTotals {
@@ -27,9 +26,8 @@ export interface InvoiceRecurrenceSplit {
     recurring: InvoiceAmountTotals;
     oneOff: InvoiceAmountTotals;
     /**
-     * What could not be put on either side — an invoice-wide discount, a markup, a group whose
-     * lines name no product items. A caller that prints a recurring price must treat a non-zero
-     * amount here as "the split is not trustworthy" rather than fold it into one of the two.
+     * What fits neither side — an invoice-wide discount, a markup. A caller printing a recurring
+     * price must read a non-zero amount here as "not trustworthy", never fold it into one of them.
      */
     unattributed: InvoiceAmountTotals;
     hasOneOff: boolean;
@@ -46,11 +44,9 @@ const RECURRENCE_BY_GROUP_TYPE: Record<InvoiceGroup['type'], InvoiceRecurrence> 
     DEDUCTION: 'UNATTRIBUTED',
 };
 
-/**
- * Every model type but `ONE_OFF` is charged again next period: usage and seats vary in size, but
- * they come back. `CREDITS` is read as recurring too — a grant that is genuinely a single top-up
- * is modelled as a one-off item and classified by `ONE_OFF` above.
- */
+// The product item's model type is the only thing that marks a one-off: the API types both the
+// group and the line REVENUE. Everything but ONE_OFF comes back next period, usage and seats
+// included.
 const classifyLine = (line: InvoiceLine): InvoiceRecurrence | undefined => {
     if (line.type === 'ONE_OFF') {
         return 'ONE_OFF';
@@ -66,13 +62,8 @@ const classifyLine = (line: InvoiceLine): InvoiceRecurrence | undefined => {
 };
 
 /**
- * The invoice's groups split into the ones charged every period and the ones charged once, for a
- * summary that lists them under headings of their own.
- *
- * A group is taken as a whole: it stands for one pricing, and a summary row carries the group's
- * own amount, so a group whose lines disagree cannot be put on one side without the row beneath
- * the heading contradicting it. Those stay with the recurring ones, which is where every group was
- * listed before any of this.
+ * A group is taken whole, because a summary row carries the group's own amount: one whose lines
+ * disagree would contradict whichever heading it went under, so it stays where all of them were.
  */
 export function getInvoiceGroupsByRecurrence(invoice: Invoice): {
     recurring: InvoiceGroup[];
@@ -97,15 +88,10 @@ export function getInvoiceGroupsByRecurrence(invoice: Invoice): {
 }
 
 /**
- * What the invoice charges once and what it charges every period, told apart.
+ * Only ever an approximation of the next invoice: proration, a setup fee or an invoice-wide
+ * discount all make "this invoice minus its one-off lines" something other than what it renews at.
  *
- * Only ever an approximation of the next invoice: a first period that is prorated, a setup fee or
- * an invoice-wide discount all make "this invoice minus its one-off lines" something other than
- * what the subscription renews at. Where the API returns the recurring invoice itself, prefer it —
- * this is for the case where it does not.
- *
- * Lines are classified where a group has them and the group's own type stands in where it does
- * not, since a preview is not guaranteed to expand its lines.
+ * The group's own type stands in where a preview has not expanded its lines.
  */
 export function splitInvoiceByRecurrence(invoice: Invoice): InvoiceRecurrenceSplit {
     const currency = invoice.billing_currency;
@@ -138,8 +124,6 @@ export function splitInvoiceByRecurrence(invoice: Invoice): InvoiceRecurrenceSpl
             }
 
             group.lines.forEach((line) => {
-                // A group the API already calls one-off settles its lines; anything else is read
-                // from the line, which knows what it charges for better than the group does.
                 add(
                     groupRecurrence === 'ONE_OFF'
                         ? 'ONE_OFF'

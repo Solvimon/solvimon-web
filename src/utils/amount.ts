@@ -16,11 +16,7 @@ export function toMinorUnitAmount(amount: Amount): { value: number; currency: st
 
 const decimalPlaces = (quantity: string): number => quantity.split('.')[1]?.length ?? 0;
 
-/**
- * Amounts summed as integers in the smallest unit the operands themselves use, because adding the
- * quantities as floats drifts: `0.1 + 0.2` is not `0.3`, and a total that is off by a cent from
- * the one the customer is charged is worse than no total at all.
- */
+/** Summed as integers, because `0.1 + 0.2` is not `0.3` and a total a cent out is worse than none. */
 export function sumAmounts(amounts: Amount[], currency: string): Amount {
     const quantities = amounts
         .map(({ quantity }) => quantity)

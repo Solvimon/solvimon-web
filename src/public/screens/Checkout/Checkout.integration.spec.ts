@@ -192,7 +192,6 @@ describe('Checkout', () => {
 
     describe('what the invoice charges once, and what it charges again', () => {
         beforeEach(() => {
-            // The title renders behind a start date, which is read off the preview's first period.
             invoicePreview.value = {
                 id: 'inv_preview',
                 periods: [{ start_at: '2026-10-09T00:00:00.000Z' }],
@@ -209,8 +208,6 @@ describe('Checkout', () => {
                 .findComponent({ name: 'ExpressPaymentMethods' })
                 .props('billingInformation') as { regular?: { amount: { quantity: string } } };
 
-        // Hardware and shipping are billed on the same invoice as the subscription. Telling the
-        // customer that total is what they pay every month names a price nobody will charge.
         it('hands the title a recurring amount of its own once the invoice holds a one-off charge', async () => {
             hasOneOffCharges.value = true;
             recurringAmount.value = { currency: 'EUR', quantity: '8.00' };
@@ -227,15 +224,12 @@ describe('Checkout', () => {
             });
         });
 
-        // An invoice that only subscribes reads as it always has: one amount, stated once.
         it('leaves the title a single amount when nothing is charged only once', async () => {
             const wrapper = await mountCheckout({ Skeleton: false });
 
             expect(title(wrapper).props('recurringAmount')).toBeUndefined();
         });
 
-        // The sheet's recurring amount is the mandate the customer authorizes, so it has to be
-        // what will actually be charged again — not the first invoice's total.
         it('mandates the recurring amount in an express sheet, not the amount due today', async () => {
             mockExperimentalFeatures.value = { 'express-checkout': true };
             hasOneOffCharges.value = true;
@@ -249,8 +243,6 @@ describe('Checkout', () => {
             });
         });
 
-        // Hardware bought outright renews at nothing. A sheet carrying a recurring request would
-        // sign the customer up for a subscription that does not exist.
         it('mandates nothing recurring in an express sheet when the order does not renew', async () => {
             mockExperimentalFeatures.value = { 'express-checkout': true };
             hasOneOffCharges.value = true;

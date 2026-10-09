@@ -247,8 +247,6 @@ describe('ExpressPaymentMethodApplePay', () => {
         await nextTick();
         await new Promise((resolve) => setTimeout(resolve, 0));
 
-        // A sheet carrying a recurring request states a price for every period to come, so an
-        // order that has no such period must not carry one at all.
         expect(mockApplePay).toHaveBeenCalledWith(
             expect.anything(),
             expect.not.objectContaining({ recurringPaymentRequest: expect.anything() }),

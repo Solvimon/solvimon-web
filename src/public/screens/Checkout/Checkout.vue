@@ -179,61 +179,40 @@ const handleValidateOnSubmit = async () => {
 
 const hasTrialPeriod = computed(() => !!trialInvoicePreview.value);
 
-/**
- * What the plan prices on, limited to what the customer has actually chosen, and the only place
- * that survives an invoice charging nothing.
- */
 const planModelTypes = computed(() =>
     getModelTypesFromScheduleInfo(scheduleInfo.value, {
         enabledPricingIds: checkoutForm.form.value.enabledPricingIds,
     }),
 );
 
-/** Whether the plan prices anything that comes back next period, whatever this invoice charged. */
 const hasRecurringPricing = computed(() =>
     [...planModelTypes.value].some((modelType) => modelType !== 'ONE_OFF'),
 );
 
-/** Whether usage is billed each period — true of a plan that invoices nothing for it up front. */
 const hasUsagePricing = computed(() => planModelTypes.value.has('USAGE_BASED'));
 
-/**
- * Whether the summary says usage is billed on top of the total it shows.
- *
- * Asked of the plan, because usage puts no line on an invoice until some has been reported — and
- * at checkout none has, for anybody. An invoice-only answer kept the note from the one audience
- * it exists for. The invoice is still consulted, so a plan this cannot read through still says it.
- */
+// Asked of the plan: usage puts no line on an invoice until some is reported, and at checkout
+// none has been, for anybody. The invoice still answers for a plan this cannot read through.
 const isUsageBased = computed(
     () =>
         hasUsagePricing.value ||
         (invoicePreview.value ? isInvoiceUsageBased(invoicePreview.value) : false),
 );
 
-/**
- * What the subscription renews at, as stated to the customer and authorized by them. The invoice
- * total stands in where the one-off and the recurring part could not be told apart — which is what
- * was stated before either could — so a sheet is never left without a price.
- */
+// The invoice total stands in where the two could not be told apart, which is what was stated
+// before either could, so a sheet is never left without a price.
 const mandateRecurringAmount = computed(
     () => recurringAmount.value ?? invoicePreview.value?.tax_summary.total_amount,
 );
 
-/**
- * Whether anything is going to be charged again.
- *
- * Usage is the reason this is not just "the recurring amount is not zero". A plan billed on what
- * the customer uses puts no line on its first invoice at all, so that invoice renews at zero and
- * the subscription renews all the same — reading a purchase off it would take the mandate away
- * from the very subscriptions that cannot go without one.
- */
+// Not just "the recurring amount is not zero": a usage-billed plan renews at zero on its first
+// invoice and renews all the same, and dropping its mandate would be the worse of the two bugs.
 const hasRecurringCharge = computed(
     () =>
         hasRecurringPricing.value ||
         (!!mandateRecurringAmount.value && Number(mandateRecurringAmount.value.quantity) !== 0),
 );
 
-/** The title names a second amount only where the invoice holds one that is charged just once. */
 const titleRecurringAmount = computed(() =>
     hasOneOffCharges.value ? recurringAmount.value : undefined,
 );
@@ -392,7 +371,6 @@ const agreement = computed(() => {
         );
     }
 
-    // What is charged today is not what renews, so the mandate has to state both.
     if (hasOneOffCharges.value && recurringAmount.value) {
         const dueToday = formatAmount(
             invoicePreview.value?.tax_summary.total_amount ?? { quantity: '0.00', currency: 'EUR' },
@@ -502,8 +480,7 @@ const expressPaymentMethodBillingInformation = computed(() => {
                     endDate: trialEndDate.value ? new Date(trialEndDate.value) : undefined,
                 },
             }),
-        // An order that renews at nothing is a purchase. Leaving `regular` off is what keeps the
-        // sheet from mandating a charge that is never going to be made.
+        // Left off entirely, so the sheet mandates no charge that is never going to be made.
         ...(hasRecurringCharge.value &&
             mandateRecurringAmount.value && {
                 regular: {

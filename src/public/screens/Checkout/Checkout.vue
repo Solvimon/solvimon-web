@@ -116,6 +116,8 @@ const {
     authorizationContext,
     isPaid,
     amount,
+    recurringAmount,
+    hasOneOffCharges,
     loadInvoicePreview,
     updateInvoicePreviewOnBillingInformationChange,
     saveFormStateForRedirect,
@@ -173,6 +175,25 @@ const handleValidateOnSubmit = async () => {
     await checkoutForm.validation.value.$validate();
     return !checkoutForm.validation.value.$invalid;
 };
+
+/**
+ * What the subscription renews at, as stated to the customer and authorized by them. The invoice
+ * total stands in where the one-off and the recurring part could not be told apart — which is what
+ * was stated before either could — so a sheet is never left without a price.
+ */
+const mandateRecurringAmount = computed(
+    () => recurringAmount.value ?? invoicePreview.value?.tax_summary.total_amount,
+);
+
+/** An order that renews at nothing is a purchase, and must not be mandated as a subscription. */
+const hasRecurringCharge = computed(
+    () => !!mandateRecurringAmount.value && Number(mandateRecurringAmount.value.quantity) !== 0,
+);
+
+/** The title names a second amount only where the invoice holds one that is charged just once. */
+const titleRecurringAmount = computed(() =>
+    hasOneOffCharges.value ? recurringAmount.value : undefined,
+);
 
 const hasTrialPeriod = computed(() => !!trialInvoicePreview.value);
 
@@ -319,11 +340,50 @@ const agreement = computed(() => {
                         : formatAmount(trialInvoicePreview.value.tax_summary.total_amount),
                 trial_period: formatTimePeriod(trialPeriod.value!, { short: true }),
                 subscription_amount: formatAmount(
-                    invoicePreview.value?.tax_summary.total_amount ?? {
+                    mandateRecurringAmount.value ?? {
                         quantity: '0.00',
                         currency: 'EUR',
                     },
                 ),
+                billing_period: formatTimePeriod(
+                    invoicePreview.value?.billing_period ?? { type: 'MONTH', value: 1 },
+                    { short: true, singular: true, hideValueForExactPeriods: true },
+                ),
+                // @ts-expect-error formatjs does not support this type yet
+                start_date: new Date(subscriptionStartDate.value),
+            },
+        );
+    }
+
+    // What is charged today is not what renews, so the mandate has to state both.
+    if (hasOneOffCharges.value && recurringAmount.value) {
+        const dueToday = formatAmount(
+            invoicePreview.value?.tax_summary.total_amount ?? { quantity: '0.00', currency: 'EUR' },
+        );
+
+        if (!hasRecurringCharge.value) {
+            return $t(
+                {
+                    defaultMessage: '{due_today} today. One-time purchase.',
+                    id: 'checkout.agreement.one_off',
+                    description:
+                        'The agreement for an order that is charged once and does not renew',
+                },
+                { due_today: dueToday },
+            );
+        }
+
+        return $t(
+            {
+                defaultMessage:
+                    '{due_today} today, then {subscription_amount}/{billing_period} until canceled, starting {start_date, date, long}.',
+                id: 'checkout.agreement.subscription_with_one_off',
+                description:
+                    'The agreement for a subscription whose first invoice also charges something only once',
+            },
+            {
+                due_today: dueToday,
+                subscription_amount: formatAmount(recurringAmount.value),
                 billing_period: formatTimePeriod(
                     invoicePreview.value?.billing_period ?? { type: 'MONTH', value: 1 },
                     { short: true, singular: true, hideValueForExactPeriods: true },
@@ -342,8 +402,8 @@ const agreement = computed(() => {
             description: 'The agreement for the subscription',
         },
         {
-            subscription_amount: invoicePreview.value?.tax_summary.total_amount
-                ? formatAmount(invoicePreview.value?.tax_summary.total_amount)
+            subscription_amount: mandateRecurringAmount.value
+                ? formatAmount(mandateRecurringAmount.value)
                 : '',
             billing_period: formatTimePeriod(
                 invoicePreview.value?.billing_period ?? { type: 'MONTH', value: 1 },
@@ -386,14 +446,19 @@ const expressPaymentMethodBillingInformation = computed(() => {
                     endDate: trialEndDate.value ? new Date(trialEndDate.value) : undefined,
                 },
             }),
-        regular: {
-            label: subscriptionName,
-            amount: invoicePreview.value.tax_summary.total_amount,
-            startDate: subscriptionStartDate.value
-                ? new Date(subscriptionStartDate.value)
-                : undefined,
-            interval: subscription.value?.billing_period ?? { type: 'MONTH', value: 1 },
-        },
+        // An order that renews at nothing is a purchase. Leaving `regular` off is what keeps the
+        // sheet from mandating a charge that is never going to be made.
+        ...(hasRecurringCharge.value &&
+            mandateRecurringAmount.value && {
+                regular: {
+                    label: subscriptionName,
+                    amount: mandateRecurringAmount.value,
+                    startDate: subscriptionStartDate.value
+                        ? new Date(subscriptionStartDate.value)
+                        : undefined,
+                    interval: subscription.value?.billing_period ?? { type: 'MONTH', value: 1 },
+                },
+            }),
     };
 });
 
@@ -569,6 +634,8 @@ onMounted(() => {
                         :subscription-start-date="subscriptionStartDate"
                         :subscription-name="subscription?.name ?? ''"
                         :amount="invoicePreview?.invoice_amount_including_tax"
+                        :due-today-amount="amount ?? invoicePreview?.invoice_amount_including_tax"
+                        :recurring-amount="titleRecurringAmount"
                         :billing-period="subscription?.billing_period"
                         :country-code="checkoutForm.form.value.country"
                     />

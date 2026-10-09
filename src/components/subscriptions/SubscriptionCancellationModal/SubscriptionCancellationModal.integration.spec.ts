@@ -83,6 +83,7 @@ vi.mock('@/services/subscriptions', () => ({
 
 vi.mock('@/components/providers', () => ({
     useLogger: () => ({ error: mockLogError }),
+    useActionDispatchProvider: () => ({ dispatchAction: vi.fn() }),
 }));
 
 const mockSubscription = {

@@ -131,7 +131,10 @@ test.describe('Wallet top-up from the customer overview', () => {
         await payButton(page).click();
         await expect(page.getByText("We couldn't top up your wallet")).toBeVisible();
 
-        await page.getByRole('button', { name: /^cancel$/i }).click();
+        await page
+            .getByRole('dialog')
+            .getByRole('button', { name: /^cancel$/i })
+            .click();
         await customerOverview(page)
             .walletBalances.getByRole('button', { name: /^top up$/i })
             .click();

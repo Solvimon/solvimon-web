@@ -31,4 +31,23 @@ describe('SubscriptionManagementSuccess', () => {
             'Your subscription has been changed. Please be aware that it can take some time to reflect this change in your subscription.',
         );
     });
+
+    it('names the plan the subscription was moved to', () => {
+        const wrapper = mountComponent({ pricingPlanName: 'Pro' });
+
+        expect(wrapper.find('.sv-subscription-management-success__message').text()).toBe(
+            'Your subscription has been moved to Pro. Please be aware that it can take some time to reflect this change in your subscription.',
+        );
+    });
+
+    it('names the plan ahead of the group when both are known', () => {
+        const wrapper = mountComponent({
+            pricingPlanName: 'Pro',
+            pricingGroupName: 'Credit packs',
+        });
+
+        expect(wrapper.find('.sv-subscription-management-success__message').text()).toContain(
+            'moved to Pro',
+        );
+    });
 });

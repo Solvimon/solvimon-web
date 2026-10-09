@@ -8,6 +8,8 @@ export type SubscriptionsListConfiguration = {
     maxItems?: number;
     showViewAllButton?: boolean;
     showViewDetailsButton?: boolean;
+    showUpgradeButton?: boolean;
+    showCancelButton?: boolean;
 };
 
 export interface SubscriptionsListProps {
@@ -23,4 +25,5 @@ export interface SubscriptionsListProps {
 
 export interface SubscriptionsListEmits {
     (e: 'load-more'): void;
+    (e: 'subscription-changed'): void;
 }

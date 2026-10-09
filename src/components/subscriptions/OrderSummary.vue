@@ -12,10 +12,15 @@ import {
     useTimePeriod,
     type SelectExtendedOptionEntry,
 } from '@solvimon/solvimon-ui';
-import type { BillingPeriod, Pricing } from '@solvimon/solvimon-types';
+import type { Amount, BillingPeriod, Pricing } from '@solvimon/solvimon-types';
 import { computed } from 'vue';
 import SubscriptionSummary from './SubscriptionSummary.vue';
 import type { OrderSummaryProps } from './OrderSummary.types';
+import {
+    getAnnualizedAmount,
+    getPeriodRecurringAmount as getInvoiceRecurringAmount,
+    getSavingsAmount,
+} from './OrderSummary.lib';
 import PricingGroupContent from '@/components/subscriptions/PlanCustomizationForm/PricingGroupContent.vue';
 import { useViewport } from '@/composables/useViewport';
 import { getFirstPricingPlanScheduleOfType } from '@/utils/pricingPlanSchedule';
@@ -73,10 +78,11 @@ const selectedBillingPeriodModel = computed<SelectControlValue>({
     },
 });
 
+const getPeriodRecurringAmount = (periodKey: string): Amount | undefined =>
+    getInvoiceRecurringAmount(props.invoicePreviewByBillingPeriod?.[periodKey]);
+
 const getSelectedPeriodAmountLabel = (period: BillingPeriod) => {
-    const amount =
-        props.invoicePreviewByBillingPeriod?.[getBillingPeriodKey(period)]?.periods?.[0]
-            ?.amount_including_tax;
+    const amount = getPeriodRecurringAmount(getBillingPeriodKey(period));
     if (!amount) {
         return undefined;
     }
@@ -111,55 +117,6 @@ const getSelectedPeriodAmountLabel = (period: BillingPeriod) => {
             period: periodLabel,
         },
     );
-};
-
-const getPeriodTotalAmount = (period: BillingPeriod) =>
-    props.invoicePreviewByBillingPeriod?.[getBillingPeriodKey(period)]?.periods?.[0]
-        ?.amount_including_tax;
-
-const getAmountValue = (amount: { quantity: string }) => Number(amount.quantity);
-
-// Convert a period amount into its yearly equivalent using fixed day/week/month counts.
-const getAnnualizedAmount = (
-    period: BillingPeriod,
-    amount?: { quantity: string; currency: string },
-) => {
-    if (!amount) {
-        return undefined;
-    }
-    const base = {
-        DAY: 365,
-        WEEK: 52,
-        MONTH: 12,
-        YEAR: 1,
-    } as const;
-    const multiplier = base[period.type] / Math.max(period.value ?? 1, 1);
-    const annualValue = getAmountValue(amount) * multiplier;
-    if (!Number.isFinite(annualValue)) {
-        return undefined;
-    }
-    return {
-        quantity: annualValue.toFixed(2),
-        currency: amount.currency,
-    };
-};
-
-// calculate the positive difference between two amount
-const getSavingsAmount = (
-    fromAmount?: { quantity: string; currency: string },
-    toAmount?: { quantity: string; currency: string },
-) => {
-    if (!fromAmount || !toAmount) {
-        return undefined;
-    }
-    const delta = getAmountValue(fromAmount) - getAmountValue(toAmount);
-    if (!Number.isFinite(delta) || delta <= 0) {
-        return undefined;
-    }
-    return {
-        quantity: delta.toFixed(2),
-        currency: fromAmount.currency,
-    };
 };
 
 // Render a single-line badge label like "Save $X /year".
@@ -241,7 +198,10 @@ const effectiveBillingPeriods = computed<BillingPeriod[]>(() => {
 const billingPeriodOptions = computed<SelectExtendedOptionEntry[]>(() => {
     const biggestPeriod = effectiveBillingPeriods.value[effectiveBillingPeriods.value.length - 1];
     const biggestAnnual = biggestPeriod
-        ? getAnnualizedAmount(biggestPeriod, getPeriodTotalAmount(biggestPeriod))
+        ? getAnnualizedAmount(
+              biggestPeriod,
+              getPeriodRecurringAmount(getBillingPeriodKey(biggestPeriod)),
+          )
         : undefined;
 
     const options = effectiveBillingPeriods.value.map((period) => {
@@ -261,7 +221,7 @@ const billingPeriodOptions = computed<SelectExtendedOptionEntry[]>(() => {
                       { period: map.value[period.type].full },
                   );
 
-        const optionAmount = getPeriodTotalAmount(period);
+        const optionAmount = getPeriodRecurringAmount(getBillingPeriodKey(period));
         const optionAnnual = getAnnualizedAmount(period, optionAmount);
         const savingsAmount =
             biggestPeriod &&
@@ -326,12 +286,9 @@ const toggleSaveText = computed(() => {
     if (!biggestPeriod) {
         return '';
     }
-    const biggestAmount =
-        props.invoicePreviewByBillingPeriod?.[biggestOption.value]?.periods?.[0]
-            ?.amount_including_tax;
+    const biggestAmount = getPeriodRecurringAmount(biggestOption.value);
     const selectedPeriod = parseBillingPeriodKey(selectedKey);
-    const selectedAmount =
-        props.invoicePreviewByBillingPeriod?.[selectedKey]?.periods?.[0]?.amount_including_tax;
+    const selectedAmount = getPeriodRecurringAmount(selectedKey);
     if (!selectedPeriod || !selectedAmount) {
         return '';
     }

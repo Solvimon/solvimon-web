@@ -136,6 +136,38 @@ describe('splitInvoiceByRecurrence', () => {
         expect(result.hasUnattributed).toBe(false);
     });
 
+    // The shape the API actually returns for a one-off: both the group and the line say REVENUE,
+    // and the only thing that says the charge will not come back is the product item's model type.
+    it('reads a one-off charge the API types REVENUE all the way down', () => {
+        const result = splitInvoiceByRecurrence({
+            billing_currency: 'EUR',
+            periods: [
+                {
+                    groups: [
+                        {
+                            type: 'REVENUE',
+                            amount_excluding_tax: eur('15.00'),
+                            amount_including_tax: eur('18.15'),
+                            lines: [
+                                {
+                                    type: 'REVENUE',
+                                    pricing_type: 'FIXED',
+                                    product_items: [{ model_type: 'ONE_OFF' }],
+                                    amount_excluding_tax: eur('15.00'),
+                                    amount_including_tax: eur('18.15'),
+                                },
+                            ],
+                        },
+                    ],
+                },
+            ],
+        } as unknown as Invoice);
+
+        expect(result.oneOff.includingTax).toEqual(eur('18.15'));
+        expect(result.recurring.includingTax).toEqual(eur('0.00'));
+        expect(result.hasOneOff).toBe(true);
+    });
+
     it('reads a one-off line out of a group the API still types as PRICING', () => {
         const result = splitInvoiceByRecurrence(
             invoice([

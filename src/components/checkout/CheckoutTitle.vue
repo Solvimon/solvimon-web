@@ -35,6 +35,20 @@ const description = computed(() => {
 
     if (props.recurringAmount) {
         if (Number(props.recurringAmount.quantity) === 0) {
+            if (props.hasUsageCharges) {
+                return $t(
+                    {
+                        defaultMessage:
+                            'You will be billed <strong>{due_today}</strong> today. Usage is billed every {period_name}.',
+                        id: 'checkout.usage_with_one_off_description',
+                        description:
+                            'The description of a usage-based subscription whose first invoice also charges something only once',
+                    },
+                    // @ts-expect-error the intl values type takes no rich-text tag handler
+                    { due_today: dueToday, period_name: periodName.value, strong },
+                );
+            }
+
             return $t(
                 {
                     defaultMessage: 'You will be billed <strong>{due_today}</strong> today.',

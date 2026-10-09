@@ -13,6 +13,11 @@ export interface CheckoutTitleProps {
      * the two could not be told apart, so the title never states a price that is a guess.
      */
     recurringAmount?: Amount;
+    /**
+     * Whether usage is billed each period. A plan priced on what the customer uses charges
+     * nothing for it up front, so without this an invoice of hardware alone reads as a purchase.
+     */
+    hasUsageCharges?: boolean;
     billingPeriod: BillingPeriod;
     countryCode: CountryCode | undefined;
     trialStartDate?: Date;

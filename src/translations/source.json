@@ -311,6 +311,10 @@
     "defaultMessage": "Free",
     "description": "The free amount for the trial period"
   },
+  "checkout.agreement.usage_with_one_off": {
+    "defaultMessage": "{due_today} today, then usage billed every {billing_period} until canceled.",
+    "description": "The agreement for a usage-based subscription whose first invoice also charges something only once"
+  },
   "checkout.billing_details.add_billing_details_button.label": {
     "defaultMessage": "More billing details",
     "description": "Label of the button in the checkout that lets you fill out all billing details"
@@ -570,6 +574,10 @@
   "checkout.trial_period_description_without_price": {
     "defaultMessage": "per {period_name} starting, {startDate, date, long}",
     "description": "The description of the trial period, while the price is still being determined"
+  },
+  "checkout.usage_with_one_off_description": {
+    "defaultMessage": "You will be billed <strong>{due_today}</strong> today. Usage is billed every {period_name}.",
+    "description": "The description of a usage-based subscription whose first invoice also charges something only once"
   },
   "checkout.vat_number.check_button.label": {
     "defaultMessage": "Check",

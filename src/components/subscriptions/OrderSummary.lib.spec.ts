@@ -1,6 +1,8 @@
-import type { Amount, BillingPeriod, Invoice } from '@solvimon/solvimon-types';
+import type { Amount, BillingPeriod, Invoice, InvoiceGroup } from '@solvimon/solvimon-types';
 import {
     getAnnualizedAmount,
+    getGroupsSubtotal,
+    getInvoiceGroupName,
     getPeriodRecurringAmount,
     getSavingsAmount,
 } from './OrderSummary.lib';
@@ -143,5 +145,43 @@ describe('a one-off charged alongside the subscription', () => {
 
         expect(withoutOneOff).toEqual(eur('20.00'));
         expect(withOneOff).toEqual(withoutOneOff);
+    });
+});
+
+describe('getInvoiceGroupName', () => {
+    const group = (fields: Record<string, unknown>) => fields as unknown as InvoiceGroup;
+
+    it('names a group by its pricing', () => {
+        expect(getInvoiceGroupName(group({ pricing: { name: 'Standard Shipping' } }))).toBe(
+            'Standard Shipping',
+        );
+    });
+
+    it('falls back to the products when the pricing carries no name', () => {
+        expect(
+            getInvoiceGroupName(
+                group({
+                    pricing: { name: '' },
+                    products: [{ name: 'PAX A35' }, { name: 'Stand' }],
+                }),
+            ),
+        ).toContain('PAX A35');
+    });
+
+    it('names a group it can read nothing off as nothing', () => {
+        expect(getInvoiceGroupName(group({}))).toBe('');
+    });
+});
+
+describe('getGroupsSubtotal', () => {
+    const group = (quantity: string) =>
+        ({ amount_excluding_tax: eur(quantity) }) as unknown as InvoiceGroup;
+
+    it('adds the groups up on the basis the rows beside it are shown on', () => {
+        expect(getGroupsSubtotal([group('400.00'), group('15.00')], 'EUR')).toEqual(eur('415.00'));
+    });
+
+    it('reports zero in the given currency for no groups at all', () => {
+        expect(getGroupsSubtotal([], 'GBP')).toEqual({ quantity: '0.00', currency: 'GBP' });
     });
 });

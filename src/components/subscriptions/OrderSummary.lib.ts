@@ -1,5 +1,7 @@
-import type { Amount, BillingPeriod, Invoice } from '@solvimon/solvimon-types';
+import type { Amount, BillingPeriod, Invoice, InvoiceGroup } from '@solvimon/solvimon-types';
+import { getComposedString, isEmpty } from '@solvimon/solvimon-ui';
 import { splitInvoiceByRecurrence } from '@/utils/invoice';
+import { sumAmounts } from '@/utils/amount';
 
 const getAmountValue = (amount: Pick<Amount, 'quantity'>) => Number(amount.quantity);
 
@@ -64,3 +66,20 @@ export const getSavingsAmount = (fromAmount?: Amount, toAmount?: Amount): Amount
 
     return { quantity: delta.toFixed(2), currency: fromAmount.currency };
 };
+
+/** A group named the way the summary has always named one: by its pricing, else by its products. */
+export const getInvoiceGroupName = (group: InvoiceGroup): string => {
+    if (group.pricing?.name && !isEmpty(group.pricing.name)) {
+        return group.pricing.name;
+    }
+
+    // Typed as returning a string, but a composition of nothing comes back undefined.
+    return getComposedString(group.products?.map(({ name }) => name) ?? []) ?? '';
+};
+
+/** What a run of groups comes to, excluding tax — the same basis the rows beside it are shown on. */
+export const getGroupsSubtotal = (groups: InvoiceGroup[], currency: string): Amount =>
+    sumAmounts(
+        groups.map(({ amount_excluding_tax }) => amount_excluding_tax),
+        currency,
+    );

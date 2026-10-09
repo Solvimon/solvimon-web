@@ -447,6 +447,22 @@
     "defaultMessage": "{amount}{period}",
     "description": "Billing period option sublabel showing price per period"
   },
+  "checkout.order_summary_block.one_off_heading": {
+    "defaultMessage": "One-time charges",
+    "description": "The heading above the charges that are made once and not again"
+  },
+  "checkout.order_summary_block.recurring_heading": {
+    "defaultMessage": "Subscription",
+    "description": "The heading above the charges that are made every billing period"
+  },
+  "checkout.order_summary_block.renews_at": {
+    "defaultMessage": "Then {amount} per {period}",
+    "description": "The amount the subscription is charged every period after the first invoice"
+  },
+  "checkout.order_summary_block.subtotal": {
+    "defaultMessage": "Subtotal",
+    "description": "The label of a section total in the order summary"
+  },
   "checkout.order_summary_block.title": {
     "defaultMessage": "Order summary",
     "description": "The title of the order summary block that lists the subscription cost in the checkout"
@@ -1287,9 +1303,17 @@
     "defaultMessage": "Units",
     "description": "The label for the one-off flat item units input field"
   },
-  "units.price_per_unit": {
-    "defaultMessage": "{amount} per unit",
-    "description": "The price per unit label for one-off flat pricing"
+  "units.price_per_unit_one_time": {
+    "defaultMessage": "{amount} per unit, one-time",
+    "description": "The price per unit label for a one-off flat item, which is charged once rather than every period"
+  },
+  "units_editor.description": {
+    "defaultMessage": "Charged once",
+    "description": "The description of the one-off items in the plan customization form"
+  },
+  "units_editor.title": {
+    "defaultMessage": "One-time items",
+    "description": "The heading above the one-off items in the plan customization form"
   },
   "wallet_balance.credit_type_fallback_label": {
     "defaultMessage": "Credits",

@@ -1,5 +1,9 @@
 import type { Amount, Invoice, InvoiceGroup, InvoiceLine } from '@solvimon/solvimon-types';
-import { isInvoiceUsageBased, splitInvoiceByRecurrence } from './invoice';
+import {
+    getInvoiceGroupsByRecurrence,
+    isInvoiceUsageBased,
+    splitInvoiceByRecurrence,
+} from './invoice';
 
 const makeInvoice = (modelType: string): Invoice =>
     ({
@@ -280,5 +284,65 @@ describe('splitInvoiceByRecurrence', () => {
         const result = splitInvoiceByRecurrence({ billing_currency: 'EUR' } as unknown as Invoice);
 
         expect(result.oneOff.excludingTax).toEqual(eur('0.00'));
+    });
+});
+
+describe('getInvoiceGroupsByRecurrence', () => {
+    const eur = (quantity: string): Amount => ({ quantity, currency: 'EUR' });
+
+    const line = (modelType: string) =>
+        ({
+            type: 'REVENUE',
+            product_items: [{ model_type: modelType }],
+            amount_excluding_tax: eur('10.00'),
+            amount_including_tax: eur('10.00'),
+        }) as unknown as InvoiceLine;
+
+    const invoice = (groups: unknown[]) =>
+        ({ billing_currency: 'EUR', periods: [{ groups }] }) as unknown as Invoice;
+
+    it('puts each group on the side its lines charge from', () => {
+        const result = getInvoiceGroupsByRecurrence(
+            invoice([
+                { type: 'REVENUE', pricing: { name: 'Seats' }, lines: [line('PER_SEAT')] },
+                { type: 'REVENUE', pricing: { name: 'Shipping' }, lines: [line('ONE_OFF')] },
+            ]),
+        );
+
+        expect(result.recurring.map((group) => group.pricing?.name)).toEqual(['Seats']);
+        expect(result.oneOff.map((group) => group.pricing?.name)).toEqual(['Shipping']);
+    });
+
+    // A row carries the group's own amount, so a group that is both cannot be filed under either
+    // heading without the number beneath it contradicting the heading.
+    it('keeps a group whose lines disagree where every group used to be', () => {
+        const result = getInvoiceGroupsByRecurrence(
+            invoice([
+                {
+                    type: 'REVENUE',
+                    pricing: { name: 'Mixed' },
+                    lines: [line('PER_SEAT'), line('ONE_OFF')],
+                },
+            ]),
+        );
+
+        expect(result.recurring).toHaveLength(1);
+        expect(result.oneOff).toHaveLength(0);
+    });
+
+    it('falls back to the group type when a preview does not expand its lines', () => {
+        const result = getInvoiceGroupsByRecurrence(
+            invoice([
+                { type: 'ONE_OFF', pricing: { name: 'Top-up' } },
+                { type: 'REVENUE', pricing: { name: 'Plan' } },
+            ]),
+        );
+
+        expect(result.oneOff.map((group) => group.pricing?.name)).toEqual(['Top-up']);
+        expect(result.recurring.map((group) => group.pricing?.name)).toEqual(['Plan']);
+    });
+
+    it('reports nothing for an invoice with no periods', () => {
+        expect(getInvoiceGroupsByRecurrence({} as Invoice)).toEqual({ recurring: [], oneOff: [] });
     });
 });

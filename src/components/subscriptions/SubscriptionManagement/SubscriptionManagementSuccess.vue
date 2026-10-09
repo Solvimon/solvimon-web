@@ -17,8 +17,21 @@ const title = computed(() =>
 );
 
 /** Names what was changed where it is known, since a customer may manage several groups. */
-const message = computed(() =>
-    props.pricingGroupName
+const message = computed(() => {
+    if (props.pricingPlanName) {
+        return $t(
+            {
+                defaultMessage:
+                    'Your subscription has been moved to {plan}. Please be aware that it can take some time to reflect this change in your subscription.',
+                description:
+                    'Confirmation of a committed move to another plan within the same pricing plan group',
+                id: 'subscription_management.success.plan_message',
+            },
+            { plan: props.pricingPlanName },
+        );
+    }
+
+    return props.pricingGroupName
         ? $t(
               {
                   defaultMessage:
@@ -35,8 +48,8 @@ const message = computed(() =>
               description:
                   'Confirmation of a committed subscription change when the pricing group is not known',
               id: 'subscription_management.success.message_generic',
-          }),
-);
+          });
+});
 </script>
 
 <template>

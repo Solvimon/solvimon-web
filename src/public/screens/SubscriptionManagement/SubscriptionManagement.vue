@@ -229,7 +229,6 @@ const hasChange = computed(() => {
  * is only there for plans a merchant has grouped.
  */
 const {
-    group: planGroup,
     options: planOptions,
     currentPricingPlanId,
     load: loadPlanGroup,
@@ -511,7 +510,6 @@ const submitButtonAttrs = computed(() => {
                 class="sv-subscription-management__form"
                 :pricing-group="pricingGroup"
                 :plan-options="planOptions"
-                :plan-group-name="planGroup?.name"
                 :payment-methods="subscriptionPaymentMethods"
                 :has-expired-payment-method="hasExpiredPaymentMethod"
                 :billing-period="billingPeriod"

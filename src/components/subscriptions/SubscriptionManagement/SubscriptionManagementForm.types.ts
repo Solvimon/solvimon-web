@@ -4,12 +4,23 @@ import type {
     PaymentMethod,
     PricingGroupExtended,
 } from '@solvimon/solvimon-types';
+import type { SubscriptionPlanOption } from '@/composables/useSubscriptionPlanGroup';
 
 export interface SubscriptionManagementFormProps {
     /** Lets a submit button outside the form name it with its `form` attribute. */
     id?: string;
-    /** The group being changed. Its pricings are the options the customer picks between. */
-    pricingGroup: PricingGroupExtended;
+    /**
+     * The group being changed. Its pricings are the options the customer picks between. Absent for
+     * a plan that offers nothing to customise, which a plan change on its own does not need.
+     */
+    pricingGroup?: PricingGroupExtended;
+    /**
+     * The plans of the group the current plan belongs to, cheapest first. Fewer than two means
+     * there is nothing to move to and the plan choice is left out.
+     */
+    planOptions?: SubscriptionPlanOption[];
+    /** Names the plan choice — the pricing plan group's own name. */
+    planGroupName?: string;
     /**
      * What the change can be charged to. The API only charges the subscription's own method, so
      * nothing can be added here.

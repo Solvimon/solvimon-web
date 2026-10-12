@@ -106,7 +106,9 @@ export function stripeStubScript(config: StripeStubConfig): string {
                     },
                 };
             },
-            createConfirmationToken: function () {
+            createConfirmationToken: function (request) {
+                // The billing details the token is made with, which the frame fills in itself.
+                record('__STRIPE_STUB_TOKENS__', (request && request.params) || {});
                 return Promise.resolve(
                     config.confirmationTokenError
                         ? { error: config.confirmationTokenError }

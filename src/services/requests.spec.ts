@@ -405,12 +405,31 @@ describe('createRequestService', () => {
                 statusCode: 502,
                 requestId: 'req_456',
             });
+            expect(loggerError).toHaveBeenCalledOnce();
             expect(loggerError).toHaveBeenCalledWith(
                 'REQUEST_PARSE_FAILED',
                 'Failed to parse JSON response',
-                {},
+                expect.objectContaining({
+                    path: '/test',
+                    method: 'GET',
+                    statusCode: 502,
+                    requestId: 'req_456',
+                    fingerprint: ['REQUEST_PARSE_FAILED', 'GET', '/test', '502'],
+                }),
                 parseError,
             );
+        });
+
+        it('reads only string fields from an error body', async () => {
+            const request = createRequestService();
+            mockFetch.mockResolvedValueOnce(
+                jsonErrorResponse(422, { message: { nested: true }, field: 'email' }),
+            );
+
+            await expect(request({ url: CALLED_URL })).rejects.toMatchObject({
+                message: 'Request failed with status 422',
+                field: 'email',
+            });
         });
 
         it('falls back to the status when the error body names no message', async () => {

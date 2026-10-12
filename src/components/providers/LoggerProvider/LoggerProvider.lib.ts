@@ -29,9 +29,24 @@ export function createConsoleLogSink(): LogSink {
     };
 }
 
+/**
+ * A sink that throws, which is usually the host's own `onLog`, must not replace the failure being
+ * logged or keep the other sinks from running. Its error is rethrown outside the SDK's call stack,
+ * where the host's own error reporting sees it.
+ */
+function runSink(sink: LogSink, entry: LogEntry): void {
+    try {
+        sink(entry);
+    } catch (error) {
+        setTimeout(() => {
+            throw error;
+        });
+    }
+}
+
 /** Fans an entry out to every sink, so console output can sit next to the consumer's own. */
 export function combineLogSinks(...sinks: LogSink[]): LogSink {
-    return (entry) => sinks.forEach((sink) => sink(entry));
+    return (entry) => sinks.forEach((sink) => runSink(sink, entry));
 }
 
 export function createCustomElementLogSink(
@@ -39,7 +54,7 @@ export function createCustomElementLogSink(
     hostRef: Ref<HTMLElement | null>,
 ): LogSink {
     return (entry) => {
-        sink(entry);
+        runSink(sink, entry);
 
         if (!hostRef.value) {
             return;

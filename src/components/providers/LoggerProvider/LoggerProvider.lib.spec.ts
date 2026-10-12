@@ -296,6 +296,22 @@ describe('createCustomElementLogSink', () => {
         expect(received[0].bubbles).toBe(true);
         expect(received[0].composed).toBe(true);
     });
+
+    it('still dispatches the event when the host callback throws', () => {
+        vi.useFakeTimers();
+        const host = document.createElement('div');
+        const listener = vi.fn();
+        host.addEventListener('log', listener);
+        const sink = createCustomElementLogSink(() => {
+            throw new Error('onLog broke');
+        }, ref(host));
+
+        expect(() => sink({ schemaVersion: 1 } as LogEntry)).not.toThrow();
+        expect(listener).toHaveBeenCalledOnce();
+
+        expect(() => vi.runAllTimers()).toThrow('onLog broke');
+        vi.useRealTimers();
+    });
 });
 
 describe('createConsoleLogSink', () => {
@@ -364,5 +380,23 @@ describe('combineLogSinks', () => {
 
         expect(first).toHaveBeenCalledWith(entry);
         expect(second).toHaveBeenCalledWith(entry);
+    });
+
+    it('keeps a throwing sink from replacing the logged failure or skipping the next sink', () => {
+        vi.useFakeTimers();
+        const failure = new Error('onLog broke');
+        const second = vi.fn();
+        const entry = { schemaVersion: 1, level: 'error' } as LogEntry;
+
+        expect(() =>
+            combineLogSinks(() => {
+                throw failure;
+            }, second)(entry),
+        ).not.toThrow();
+        expect(second).toHaveBeenCalledWith(entry);
+
+        // Rethrown outside the SDK's call stack, where the host's own error reporting sees it.
+        expect(() => vi.runAllTimers()).toThrow(failure);
+        vi.useRealTimers();
     });
 });

@@ -43,8 +43,8 @@ function portalToken({
 export const TOKEN_USER_NAME = 'test-portal-user';
 
 /**
- * A JWT-shaped access token. Nothing verifies it, but the SDK decodes it to decide when to refresh,
- * so `exp` has to be real — `expiresInSeconds` is what drives the refresh tests.
+ * A JWT-shaped access token. Nothing verifies it; the SDK judges expiry by the response's
+ * `expires_in`, and `exp` is kept in step with it so the two never disagree.
  */
 export function accessToken({ expiresInSeconds = 60 * 60 } = {}): string {
     const encode = (value: Json) =>

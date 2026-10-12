@@ -276,7 +276,7 @@ The SDK emits structured log entries via the [`onLog`](#error-logging) callback.
 | `INITIAL_DATA_LOAD_FAILED`                  | Failed to load initial data                                        |
 | `INTEGRATION_ERROR`                         | Unhandled error in payment submission flow                         |
 | `INVALID_COUNTRY_CODE`                      | invalid country code provided:…                                    |
-| `INVALID_EMAIL`                             | invalid email provided:…                                           |
+| `INVALID_EMAIL`                             | invalid email provided                                             |
 | `INVALID_REDIRECT_RESULT`                   | Redirect result is set but payment acceptor id is missing          |
 | `INVALID_TOKEN`                             | Failed to fetch access token                                       |
 | `INVOICE_PREVIEW_FAILED`                    | Failed to load the invoice preview                                 |

@@ -125,7 +125,6 @@ describe('parseMarkdownSubset', () => {
         });
 
         it('refuses a javascript: href, keeping the words and dropping the payload', () => {
-            // eslint-disable-next-line no-script-url -- the vector under test
             const nodes = inline('[Click me](javascript:alert(1))');
 
             expect(nodes.every((node) => node.type !== 'link')).toBe(true);
@@ -138,7 +137,6 @@ describe('parseMarkdownSubset', () => {
         });
 
         it('refuses a javascript: autolink', () => {
-            // eslint-disable-next-line no-script-url -- the vector under test
             expect(inline('<javascript:alert(1)>').every((node) => node.type !== 'link')).toBe(
                 true,
             );

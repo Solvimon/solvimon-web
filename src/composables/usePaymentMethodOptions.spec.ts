@@ -3,8 +3,8 @@ import type {
     PricingPlanSubscription,
 } from '@solvimon/solvimon-types';
 import { ApiStatus } from '@solvimon/solvimon-types';
-import type { GetPaymentMethodOptionsPayload } from '@/services/paymentMethods.types';
 import { usePaymentMethodOptions } from './usePaymentMethodOptions';
+import type { GetPaymentMethodOptionsPayload } from '@/services/paymentMethods.types';
 
 const mockGetPaymentMethodOptions =
     vi.fn<(payload: GetPaymentMethodOptionsPayload) => Promise<PaymentMethodOptionsResponse>>();

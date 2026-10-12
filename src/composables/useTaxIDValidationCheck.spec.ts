@@ -1,6 +1,6 @@
 import { nextTick, ref } from 'vue';
-import type { CheckoutFormState } from '@/components/customer/CheckoutForm/CheckoutForm.types';
 import { useTaxIDValidationCheck } from './useTaxIDValidationCheck';
+import type { CheckoutFormState } from '@/components/customer/CheckoutForm/CheckoutForm.types';
 
 const mockCheckTaxID = vi.fn();
 const mockIsEUCountry = vi.fn();

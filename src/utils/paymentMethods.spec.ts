@@ -1,10 +1,10 @@
+import type { RawPaymentMethod } from '@adyen/adyen-web';
+import type { PaymentMethodOption, PaymentMethodOptionsResponse } from '@solvimon/solvimon-types';
 import {
     filterOutExpressPaymentMethods,
     getExpressPaymentMethodOptions,
     getPaymentMethodOptionsWithoutExpress,
 } from './paymentMethods';
-import type { RawPaymentMethod } from '@adyen/adyen-web';
-import type { PaymentMethodOption, PaymentMethodOptionsResponse } from '@solvimon/solvimon-types';
 
 const makeOption = (name: string): PaymentMethodOption =>
     ({ name }) as unknown as PaymentMethodOption;

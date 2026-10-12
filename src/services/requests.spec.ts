@@ -1,8 +1,8 @@
 import type { Mock } from 'vitest';
+import { version } from '../../package.json';
 import { createRequestService } from './requests';
 import { Headers as HeadersConst } from './requests.lib';
 import { ApiError } from './apiError';
-import { version } from '../../package.json';
 
 const CLIENT_VERSION = `solvimon-web-v${version}`;
 

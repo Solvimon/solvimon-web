@@ -9,7 +9,7 @@ vi.mock('@solvimon/solvimon-ui', async () => {
         InvoiceSummary: defineComponent({
             name: 'InvoiceSummaryStub',
             props: { invoice: { type: Object, required: true } },
-            setup: (props) => () => h('div', { class: 'invoice-summary-stub' }),
+            setup: () => () => h('div', { class: 'invoice-summary-stub' }),
         }),
     });
 });

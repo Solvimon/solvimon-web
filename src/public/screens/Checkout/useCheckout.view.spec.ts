@@ -8,9 +8,9 @@ import type {
     Pricing,
     AuthorizePaymentPayload,
 } from '@solvimon/solvimon-types';
+import { PRICE_SETTLE_TIMEOUT_MS, useCheckoutView } from './useCheckout.view';
 import type { CheckoutFormState } from '@/components/customer/CheckoutForm/CheckoutForm.types';
 import { providerMockLogger } from '@/test-utils/providerMock';
-import { PRICE_SETTLE_TIMEOUT_MS, useCheckoutView } from './useCheckout.view';
 
 type AuthorizePaymentInitPricingPlanSubscriptionContext = Extract<
     NonNullable<AuthorizePaymentPayload['context']>,
@@ -87,12 +87,12 @@ const createMockCheckoutForm = (overrides?: Partial<CheckoutFormState>) => ({
 });
 
 const mockUseCheckoutForm = vi.fn<
-    (args?: {
+    (_args?: {
         initialState?: Partial<CheckoutFormState>;
         onRequiredFieldChange?: (form: CheckoutFormState) => void;
     }) => ReturnType<typeof createMockCheckoutForm>
 >(
-    (args?: {
+    (_args?: {
         initialState?: Partial<CheckoutFormState>;
         onRequiredFieldChange?: (form: CheckoutFormState) => void;
     }) => createMockCheckoutForm(),
@@ -201,7 +201,7 @@ describe('useCheckoutView', () => {
         mockGetScheduleCustomizations.mockReturnValue(undefined);
         // Reset mock to default implementation
         mockUseCheckoutForm.mockImplementation(
-            (args?: {
+            (_args?: {
                 initialState?: Partial<CheckoutFormState>;
                 onRequiredFieldChange?: (form: CheckoutFormState) => void;
             }) => createMockCheckoutForm(),

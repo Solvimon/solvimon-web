@@ -1,5 +1,5 @@
-import { useSaveAutoTopUpConfig } from './useSaveAutoTopUpConfig';
 import type { WalletAutoTopUpConfigPayload } from '@solvimon/solvimon-types';
+import { useSaveAutoTopUpConfig } from './useSaveAutoTopUpConfig';
 
 const { mockCreate, mockError } = vi.hoisted(() => ({ mockCreate: vi.fn(), mockError: vi.fn() }));
 

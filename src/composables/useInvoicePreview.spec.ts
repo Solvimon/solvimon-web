@@ -202,7 +202,7 @@ describe('useInvoicePreview', () => {
 
         const { loadInvoicePreview } = useInvoicePreview();
 
-        loadInvoicePreview({
+        void loadInvoicePreview({
             subscription,
             customer: individualCustomer('NL'),
             enabledPricingIds: undefined,
@@ -224,7 +224,7 @@ describe('useInvoicePreview', () => {
 
         mockGetInvoicePreview.mockClear();
 
-        loadInvoicePreview({
+        void loadInvoicePreview({
             subscription,
             customer: individualCustomer('AU'),
             enabledPricingIds: undefined,

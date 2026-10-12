@@ -50,7 +50,6 @@ describe('MarkdownText', () => {
         });
 
         it('does not emit a javascript: href', () => {
-            // eslint-disable-next-line no-script-url -- the vector under test
             const wrapper = render('[Click me](javascript:alert(1))');
 
             expect(wrapper.find('a').exists()).toBe(false);

@@ -1,5 +1,5 @@
 import type { Invoice } from '@solvimon/solvimon-types';
-import { getInvoiceTimezone, isInvoicePayable, withInvoiceTimezone } from './invoiceState';
+import { getInvoiceTimezone, isInvoicePayable } from './invoiceState';
 
 describe('isInvoicePayable', () => {
     const payable = {

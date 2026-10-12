@@ -1,4 +1,3 @@
-import { ApiStatus } from '@solvimon/solvimon-types';
 import { useIncrementalLoading } from './useIncrementalLoading';
 
 describe('useIncrementalLoading', () => {

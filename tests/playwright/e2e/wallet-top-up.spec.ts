@@ -156,17 +156,14 @@ test.describe('Wallet top-up from the customer overview', () => {
             expect(chargesSent(api)).toHaveLength(0);
         });
 
-        // DD-3543 tester: confirmed defect. The amount field in TopUpModalForm has no `label`, and
-        // solvimon-ui's Input renders its error message only in the label's suffix — so the field
-        // turns red but the reason never reaches the screen (nor `aria-invalid`, for a reader).
         test(`says why ${JSON.stringify(typed)} is refused`, async ({ page }) => {
-            test.fail();
             api = await openTopUp(page);
             await amountField(page).fill(typed);
 
             await payButton(page).click();
 
             await expect(page.getByText(message)).toBeVisible({ timeout: 3000 });
+            await expect(amountField(page)).toHaveAttribute('aria-invalid', 'true');
         });
     }
 

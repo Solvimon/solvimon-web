@@ -1239,6 +1239,10 @@
     "defaultMessage": "Top up with at least {minimum}.",
     "description": "Error shown under the choose-your-amount input in the top-up modal when it is below what the pricing allows"
   },
+  "topup_modal.amount.label": {
+    "defaultMessage": "Amount",
+    "description": "Label of the amount input of the choose-your-amount top-up"
+  },
   "topup_modal.amount.positive": {
     "defaultMessage": "Top up with more than zero.",
     "description": "Error shown under the choose-your-amount input in the top-up modal when it is zero or negative"
@@ -1278,10 +1282,6 @@
   "topup_modal.error.payment_declined": {
     "defaultMessage": "Your payment was declined. Try another payment method.",
     "description": "Error shown in the top-up modal when the payment was declined"
-  },
-  "topup_modal.flexible_option.bounds": {
-    "defaultMessage": "Between {minimum} and {maximum}",
-    "description": "Bounds of the choose-your-amount option in the top-up modal"
   },
   "topup_modal.flexible_option.label": {
     "defaultMessage": "Choose your own amount",

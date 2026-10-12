@@ -433,7 +433,7 @@ const agreement = computed(() => {
             },
             {
                 discounted_amount:
-                    trialInvoicePreview.value.tax_summary.total_amount.quantity === '0.00'
+                    Number(trialInvoicePreview.value.tax_summary.total_amount.quantity) === 0
                         ? $t({
                               defaultMessage: 'Free',
                               id: 'checkout.agreement.trial.free',
@@ -444,7 +444,7 @@ const agreement = computed(() => {
                 subscription_amount: formatAmount(
                     mandateRecurringAmount.value ?? {
                         quantity: '0.00',
-                        currency: 'EUR',
+                        currency: trialInvoicePreview.value.tax_summary.total_amount.currency,
                     },
                 ),
                 billing_period: formatTimePeriod(
@@ -459,7 +459,10 @@ const agreement = computed(() => {
 
     if (hasOneOffCharges.value && recurringAmount.value) {
         const dueToday = formatAmount(
-            invoicePreview.value?.tax_summary.total_amount ?? { quantity: '0.00', currency: 'EUR' },
+            invoicePreview.value?.tax_summary.total_amount ?? {
+                quantity: '0.00',
+                currency: recurringAmount.value.currency,
+            },
         );
 
         if (!hasRecurringCharge.value) {

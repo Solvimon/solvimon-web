@@ -1,7 +1,6 @@
 import type { RegisteredScreenId, RegisteredComponentId } from './types';
-import { getComponentName } from '@/utils/component';
 
-type DefineFn = (tagName?: string) => void;
+type DefineFn = (tagName?: string) => string;
 type DefineLoader = () => Promise<DefineFn>;
 
 /**
@@ -98,12 +97,9 @@ function isRegisteredComponentId(id: string): id is RegisteredComponentId {
     return Object.hasOwn(COMPONENT_LOADERS, id);
 }
 
-export function getCustomElementTagName(viewId: string): string {
-    return getComponentName(viewId);
-}
-
 /**
- * Loads the entry for `viewId` and registers its custom element.
+ * Loads the entry for `viewId`, registers its custom element and resolves to its tag name: the
+ * canonical one, or the one a host already registered the element under itself.
  *
  * An unknown id throws synchronously, as it always did — that is a caller's mistake and should
  * surface at the call site rather than inside a rejected promise.
@@ -111,7 +107,7 @@ export function getCustomElementTagName(viewId: string): string {
 export function ensureCustomElementDefined(
     viewId: string,
     type: 'screen' | 'component',
-): Promise<void> {
+): Promise<string> {
     const load =
         type === 'screen'
             ? isRegisteredScreenId(viewId) && SCREEN_LOADERS[viewId]

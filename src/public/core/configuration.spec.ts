@@ -6,13 +6,7 @@ const { mockEnsureDefined } = vi.hoisted(() => ({ mockEnsureDefined: vi.fn() }))
 /** These tests care where the element lands and what reaches it, not what the portal holds. */
 const portalObject = {} as ComponentMountConfiguration<'invoices-list'>['portalObject'];
 
-vi.mock('./registry.ce', async () => {
-    const actual = await vi.importActual<typeof import('./registry.ce')>('./registry.ce');
-    return {
-        getCustomElementTagName: actual.getCustomElementTagName,
-        ensureCustomElementDefined: mockEnsureDefined,
-    };
-});
+vi.mock('./registry.ce', () => ({ ensureCustomElementDefined: mockEnsureDefined }));
 
 /** Lets a test decide when the entry finishes loading. */
 function deferred<T = void>() {
@@ -33,7 +27,7 @@ describe('createSolvimonCore', () => {
         container.id = 'host';
         document.body.appendChild(container);
         mockEnsureDefined.mockReset();
-        mockEnsureDefined.mockResolvedValue(undefined);
+        mockEnsureDefined.mockImplementation((id: string) => Promise.resolve(`solvimon-${id}`));
     });
 
     afterEach(() => {
@@ -41,7 +35,7 @@ describe('createSolvimonCore', () => {
     });
 
     it('appends the element once its entry has loaded', async () => {
-        const entry = deferred();
+        const entry = deferred<string>();
         mockEnsureDefined.mockReturnValueOnce(entry.promise);
 
         createSolvimonCore({ environment: 'TEST' }).createComponent('invoices-list', {
@@ -52,12 +46,22 @@ describe('createSolvimonCore', () => {
         // The entry is still in flight, so nothing has been put in the container yet.
         expect(container.children).toHaveLength(0);
 
-        entry.resolve();
+        entry.resolve('solvimon-invoices-list');
         await entry.promise;
         await Promise.resolve();
 
         expect(container.children).toHaveLength(1);
         expect(container.children[0].tagName.toLowerCase()).toBe('solvimon-invoices-list');
+    });
+
+    it('mounts under the name a host already registered the element as', async () => {
+        mockEnsureDefined.mockResolvedValueOnce('acme-invoices-list');
+
+        createSolvimonCore().createComponent('invoices-list', { container, portalObject });
+        await Promise.resolve();
+        await Promise.resolve();
+
+        expect(container.children[0].tagName.toLowerCase()).toBe('acme-invoices-list');
     });
 
     it('loads only the entry being mounted', async () => {
@@ -104,7 +108,7 @@ describe('createSolvimonCore', () => {
     });
 
     it('cancels the mount when unmount is called before the entry lands', async () => {
-        const entry = deferred();
+        const entry = deferred<string>();
         mockEnsureDefined.mockReturnValueOnce(entry.promise);
 
         const unmount = createSolvimonCore().createComponent('invoices-list', {
@@ -113,7 +117,7 @@ describe('createSolvimonCore', () => {
         });
 
         unmount();
-        entry.resolve();
+        entry.resolve('solvimon-invoices-list');
         await entry.promise;
         await Promise.resolve();
 

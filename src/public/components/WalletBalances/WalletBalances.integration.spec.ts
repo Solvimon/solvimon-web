@@ -41,6 +41,8 @@ vi.mock('@solvimon/solvimon-ui', async () => {
                 customerWalletBalances: { type: Array, required: true },
                 title: String,
                 showTopUpButton: Boolean,
+                showManualTopUp: Boolean,
+                showAutoTopUp: Boolean,
             },
             setup(props) {
                 return () => h('div', { 'data-testid': 'wallet-balances-stub' }, props.title);
@@ -135,5 +137,15 @@ describe('WalletBalances entry component', () => {
         const wrapper = mountComponent({ walletBalancesData: null });
 
         expect(wrapper.text()).toBe('');
+    });
+
+    it('offers no top-up, auto top-up or cancel buttons on its own, having no modals to open', () => {
+        const wrapper = mountComponent();
+        const balances = wrapper.findComponent({ name: 'WalletBalancesStub' });
+
+        expect(balances.props('showManualTopUp')).toBe(false);
+        expect(balances.props('showAutoTopUp')).toBe(false);
+        expect(wrapper.findComponent({ name: 'TopUpModal' }).exists()).toBe(false);
+        expect(wrapper.findComponent({ name: 'AutoTopUpModal' }).exists()).toBe(false);
     });
 });

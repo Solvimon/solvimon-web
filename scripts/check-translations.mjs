@@ -3,6 +3,7 @@ import path from 'path';
 import { fileURLToPath } from 'node:url';
 import { resolveSafePath } from './safe-path.mjs';
 import { glob } from 'glob';
+import { isStructurallySame, parse } from '@formatjs/icu-messageformat-parser';
 import { SUPPORTED_LOCALES } from '../src/translations/supported.js';
 
 export function isTranslationRecord(value) {
@@ -60,12 +61,46 @@ export function findDuplicateMessageIds(files, readFile) {
         .sort((a, b) => a.id.localeCompare(b.id));
 }
 
-export function checkTranslations(sourceKeys, localeFiles, readFile) {
+/**
+ * Why `translation` cannot stand in for `source`: a placeholder, plural, select or tag that one has
+ * and the other lacks, or a message that does not parse. Undefined when it can.
+ */
+export function findPlaceholderMismatch(source, translation) {
+    try {
+        const { success, error } = isStructurallySame(parse(source), parse(translation));
+        return success ? undefined : error.message;
+    } catch (error) {
+        return error instanceof Error ? error.message : String(error);
+    }
+}
+
+/** @param {Record<string, string>} sourceMessages - the default message of every id in the catalogue */
+export function checkTranslations(sourceMessages, localeFiles, readFile) {
     return localeFiles.map((file) => {
         const locale = parseTranslationFile(readFile(file), file);
-        const missingKeys = sourceKeys.filter((key) => !(key in locale));
-        return { file, missingKeys };
+        const missingKeys = Object.keys(sourceMessages).filter((key) => !(key in locale));
+        const extraKeys = Object.keys(locale).filter((key) => !(key in sourceMessages));
+        const placeholderMismatches = Object.entries(sourceMessages).flatMap(([key, source]) => {
+            if (!(key in locale)) return [];
+            const reason = findPlaceholderMismatch(source, locale[key]);
+            return reason ? [{ key, reason }] : [];
+        });
+        return { file, missingKeys, extraKeys, placeholderMismatches };
     });
+}
+
+/** The locale files to check, or the locales whose file name could not be resolved safely. */
+export function resolveLocaleFiles(locales, localesDir) {
+    const files = [];
+    const rejected = [];
+    for (const locale of locales) {
+        try {
+            files.push(resolveSafePath(`${locale}.json`, localesDir));
+        } catch {
+            rejected.push(locale);
+        }
+    }
+    return { files, rejected };
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
@@ -75,16 +110,12 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     const localesDir = path.join(translationsDir, 'locales');
 
     const source = JSON.parse(fs.readFileSync(path.join(translationsDir, 'source.json'), 'utf-8'));
-    const sourceKeys = Object.keys(source);
+    const sourceMessages = Object.fromEntries(
+        Object.entries(source).map(([key, { defaultMessage }]) => [key, defaultMessage]),
+    );
 
-    const files = SUPPORTED_LOCALES.map((locale) => {
-        try {
-            return resolveSafePath(`${locale}.json`, localesDir);
-        } catch {
-            console.error(`⚠️ Skipping suspicious locale: ${locale}`);
-            return null;
-        }
-    }).filter(Boolean);
+    const { files, rejected } = resolveLocaleFiles(SUPPORTED_LOCALES, localesDir);
+    rejected.forEach((locale) => console.log(`❌ Locale "${locale}" does not name a safe file`));
 
     const sourceFiles = glob
         .sync('src/**/*.{ts,vue}', { cwd: path.join(__dirname, '..'), absolute: true })
@@ -103,18 +134,31 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
         console.log('✅ Every message id carries one message.');
     }
 
-    const results = checkTranslations(sourceKeys, files, (f) => fs.readFileSync(f, 'utf-8'));
+    const results = checkTranslations(sourceMessages, files, (f) => fs.readFileSync(f, 'utf-8'));
 
-    let hasMissing = false;
-    for (const { file, missingKeys } of results) {
+    let hasProblems = rejected.length > 0 || duplicates.length > 0;
+    for (const { file, missingKeys, extraKeys, placeholderMismatches } of results) {
+        const name = path.basename(file);
         if (missingKeys.length > 0) {
-            hasMissing = true;
-            console.log(`❌ Missing keys in ${path.basename(file)}:`);
+            console.log(`❌ Missing keys in ${name}:`);
             missingKeys.forEach((key) => console.log(`  - ${key}`));
+        }
+        if (extraKeys.length > 0) {
+            console.log(`❌ Keys in ${name} that source.json does not have:`);
+            extraKeys.forEach((key) => console.log(`  - ${key}`));
+        }
+        if (placeholderMismatches.length > 0) {
+            console.log(`❌ Messages in ${name} whose placeholders differ from source.json:`);
+            placeholderMismatches.forEach(({ key, reason }) =>
+                console.log(`  - ${key}: ${reason}`),
+            );
+        }
+        if (missingKeys.length + extraKeys.length + placeholderMismatches.length === 0) {
+            console.log(`✅ ${name} is complete!`);
         } else {
-            console.log(`✅ ${path.basename(file)} is complete!`);
+            hasProblems = true;
         }
     }
 
-    if (hasMissing || duplicates.length > 0) process.exit(1);
+    if (hasProblems) process.exit(1);
 }

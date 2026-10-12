@@ -8,8 +8,13 @@ import {
     useIntl,
     useTimePeriod,
 } from '@solvimon/solvimon-ui';
-import { computed, defineAsyncComponent, onMounted, ref, watch } from 'vue';
-import type { BillingPeriod, CountryCode } from '@solvimon/solvimon-types';
+import { computed, defineAsyncComponent, nextTick, onMounted, ref, watch } from 'vue';
+import type {
+    Amount,
+    AuthorizePaymentPayload,
+    BillingPeriod,
+    CountryCode,
+} from '@solvimon/solvimon-types';
 import type { CheckoutEmits, CheckoutProps } from './Checkout.types';
 import { useCheckoutView } from './useCheckout.view';
 import type { ExpressBillingInformation } from '@/components/payments/ExpressPaymentMethod/ExpressPaymentMethod.types';
@@ -167,6 +172,7 @@ const paymentErrorMessage = ref<string | null>(null);
 /** The gateway would not submit. It shows the customer what is missing, so nothing is said here. */
 const handlePaymentNotSubmitted = () => {
     isPaymentPending.value = false;
+    paymentOrder.value = undefined;
     clearSavedFormState();
 };
 
@@ -175,6 +181,7 @@ const isPaymentUnconfirmed = ref(false);
 
 const handlePaymentFailed = (error?: { message?: string; code?: string }) => {
     isPaymentPending.value = false;
+    paymentOrder.value = undefined;
     clearSavedFormState();
 
     if (error?.code === 'PAYMENT_OUTCOME_UNCONFIRMED') {
@@ -208,13 +215,31 @@ const handleExpressPaymentFailed = (error?: { message?: string; code?: string })
     }
 };
 
+/**
+ * The amount and the order a card payment is sent for, fixed once its price has settled: the form
+ * reads them when the gateway hands its token back, and the order stays locked until then, so the
+ * two always come from the same moment.
+ */
+const paymentOrder = ref<{ amount: Amount; context: AuthorizePaymentPayload['context'] }>();
+const orderLockAttrs = computed(() => (paymentOrder.value ? { inert: true } : {}));
+
 // Every way to pay comes through here (the button, Enter in a card field, an express sheet), so
 // none of them authorizes an amount the preview is about to replace.
 const handleValidateOnSubmit = async () => {
     await checkoutForm.validation.value.$validate();
     if (checkoutForm.validation.value.$invalid) return false;
 
-    if (!(await settleInvoicePreview())) {
+    const settlement = await settleInvoicePreview();
+    if (settlement === 'CHANGED') {
+        paymentErrorMessage.value = $t({
+            defaultMessage: 'The price changed with your last edit. Check it and pay again.',
+            id: 'checkout.price_changed',
+            description:
+                'Shown when a payment is held back because the customer changed the order while it waited for the price',
+        });
+        return false;
+    }
+    if (settlement === 'FAILED') {
         paymentErrorMessage.value = $t({
             defaultMessage: 'The price could not be brought up to date. Please try again.',
             id: 'checkout.price_not_settled',
@@ -224,6 +249,10 @@ const handleValidateOnSubmit = async () => {
         return false;
     }
 
+    if (amount.value) {
+        paymentOrder.value = { amount: amount.value, context: authorizationContext.value };
+        await nextTick();
+    }
     return true;
 };
 
@@ -689,6 +718,7 @@ const redirectsOnSuccess = computed(
 
 const handlePaymentSuccess = () => {
     isPaid.value = true;
+    paymentOrder.value = undefined;
     clearSavedFormState();
     promotionCodeErrorMessage.value = null;
     paymentErrorMessage.value = null;
@@ -787,6 +817,7 @@ onMounted(() => {
                 <!-- plan customization -->
                 <PlanCustomizationEditor
                     v-if="showPlanCustomizationEditor && subscription"
+                    v-bind="orderLockAttrs"
                     v-model:seats-values="seatsValuesModel"
                     v-model:units-values="unitsValuesModel"
                     v-model:enabled-pricing-ids="enabledPricingIdsModel"
@@ -831,6 +862,7 @@ onMounted(() => {
                     :is-billing-information-mandatory="isBillingInformationMandatory"
                     :get-is-field-required="checkoutForm.getIsFieldRequired"
                     :read-only="isPaid"
+                    v-bind="orderLockAttrs"
                 />
 
                 <!-- payment methods -->
@@ -951,8 +983,12 @@ onMounted(() => {
                                     <PaymentIntegrationForm
                                         ref="paymentIntegrationFormRef"
                                         :country-code="checkoutForm.form.value.country"
-                                        :context="authorizationContext"
-                                        :amount="amount"
+                                        :context="
+                                            paymentOrder
+                                                ? paymentOrder.context
+                                                : authorizationContext
+                                        "
+                                        :amount="paymentOrder ? paymentOrder.amount : amount"
                                         :email="checkoutForm.form.value.email"
                                         variant="AUTHORIZE"
                                         :payment-method-options="paymentMethodOptions ?? []"
@@ -1005,6 +1041,7 @@ onMounted(() => {
                 <!-- promotion code -->
                 <PromotionCodeSection
                     class="sv-checkout__promotion-code"
+                    v-bind="orderLockAttrs"
                     :promotion-code="promotionCode"
                     @update:applied-code="promotionCode = $event"
                     @remove="removePromotionCode"

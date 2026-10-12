@@ -33,10 +33,34 @@ export const useInvoicePreview = () => {
     let latestLoad = 0;
     let latestPreview: Promise<void> = Promise.resolve();
 
+    // A superseded preview hands over only once it settles, and one that never answers never does,
+    // so a wait also moves on as soon as a later preview is asked for.
+    let announcePreview = () => {};
+    let previewAsked = new Promise<void>((resolve) => (announcePreview = resolve));
+
     const loadInvoicePreview = (params: LoadInvoicePreviewParams): Promise<void> => {
         const load = ++latestLoad;
         latestPreview = loadPreview(params, load);
+        announcePreview();
+        previewAsked = new Promise<void>((resolve) => (announcePreview = resolve));
         return latestPreview;
+    };
+
+    const whenLoaded = async (): Promise<void> => {
+        for (;;) {
+            const current = latestPreview;
+            const isLoaded = await Promise.race([
+                current.then(
+                    () => true,
+                    (error: unknown) => {
+                        if (current === latestPreview) throw error;
+                        return false;
+                    },
+                ),
+                previewAsked.then(() => false),
+            ]);
+            if (isLoaded && current === latestPreview) return;
+        }
     };
 
     const loadPreview = async (
@@ -225,6 +249,6 @@ export const useInvoicePreview = () => {
         isPending: computed(() => status.value === ApiStatus.Loading),
         isFailed: computed(() => status.value === ApiStatus.Failed),
         /** Settles as the preview asked for last does, however many take over meanwhile. */
-        whenLoaded: () => latestPreview,
+        whenLoaded,
     };
 };

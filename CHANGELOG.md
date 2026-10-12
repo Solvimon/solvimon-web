@@ -38,6 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The invoice PDF download asks for `Accept: application/pdf` and sends no `Content-Type`, instead of sending `application/pdf` as its `Content-Type`.
 - A request the API rejects with a 401 is now retried once with a renewed access token. It fails and logs `REQUEST_FAILED` only when no renewed token can be had, or when the retry is rejected too. Requests also wait for the token to be refreshed first when it is within a minute of expiring. However many requests need a new token at once, they share one refresh. After a refresh fails, requests do not start another one; instead the refresh is retried every 30 seconds, and when the tab becomes visible, until one succeeds. This holds even when the token is still far from expiring. Hosts may therefore see fewer `REQUEST_FAILED` entries with a 401 status. `SESSION_EXPIRED` still means the session cannot be renewed and the host has to issue a new portal token.
 - The SDK now judges when the access token expires from `expires_in` on the identity response instead of the token's `exp` claim, so a client clock that is set wrong no longer makes it refresh too early or too late.
+- Checkout reads a `coupon_code` query parameter only when it could be a code. It trims the value and ignores it when it is empty, longer than 256 characters, or contains whitespace or invisible or control characters, such as a zero-width space. A `couponCode` set in the `configuration` is used as given.
 
 ### Fixed
 

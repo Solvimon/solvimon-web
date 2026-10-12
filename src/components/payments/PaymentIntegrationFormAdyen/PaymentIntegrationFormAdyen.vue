@@ -536,6 +536,8 @@ function applyPaymentResult(
             return;
         }
 
+        emit('action-required');
+
         // Resolving with the action is what hands it to the drop-in; handing it over as well ran
         // the 3DS challenge twice.
         actions.resolve({

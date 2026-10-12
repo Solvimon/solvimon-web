@@ -1266,6 +1266,16 @@ describe('PaymentIntegrationFormAdyen', () => {
         });
     });
 
+    // The challenge is drawn inside the form, which the screen holds while a payment is pending.
+    it('tells the screen when it hands the customer a step to complete', async () => {
+        mockAuthorizePayment.mockResolvedValue(actionRequiredResponse);
+        const wrapper = await mountComponent();
+
+        await submitThroughDropIn();
+
+        expect(wrapper.emitted('action-required')).toHaveLength(1);
+    });
+
     describe('a submit the form starts itself', () => {
         it('tells the screen a payment is on its way', async () => {
             mockAuthorizePayment.mockResolvedValue(authorizedResponse);

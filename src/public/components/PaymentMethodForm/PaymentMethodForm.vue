@@ -17,6 +17,7 @@ import Skeleton from '@/components/shared/Skeleton.vue';
 import PaymentIntegrationForm from '@/components/payments/PaymentIntegrationForm/PaymentIntegrationForm.vue';
 import PaymentMethodsUnavailableCard from '@/components/payments/PaymentMethodsUnavailableCard/PaymentMethodsUnavailableCard.vue';
 import { usePaymentMethodAvailability } from '@/composables/usePaymentMethodAvailability';
+import { usePaymentFormHold } from '@/composables/usePaymentFormHold';
 import { safeUrlRedirect } from '@/utils/url';
 import type {
     AuthorizePaymentIntegrationFormProps,
@@ -48,6 +49,7 @@ const { availability } = usePaymentMethodAvailability({
 const paymentIntegrationFormRef = ref<InstanceType<typeof PaymentIntegrationForm>>();
 const selectedPaymentMethod = ref<SelectedPaymentMethod>();
 const isPaymentPending = ref(false);
+const { isFormHeld, handleActionRequired } = usePaymentFormHold(isPaymentPending);
 /**
  * Whether the form is through. The gateway swaps its own fields for a confirmation at that point,
  * so what is left below it is a submit button with nothing to submit.
@@ -211,7 +213,7 @@ const paymentIntegrationProps = computed<PaymentIntegrationFormProps>(() => {
             })
         "
     >
-        <div :class="{ 'pointer-events-none opacity-60': isPaymentPending }">
+        <div :class="{ 'pointer-events-none opacity-60': isFormHeld }">
             <PaymentIntegrationForm
                 ref="paymentIntegrationFormRef"
                 class="sv-payment-method-form__integration"
@@ -221,6 +223,7 @@ const paymentIntegrationProps = computed<PaymentIntegrationFormProps>(() => {
                 @payment-failed="handlePaymentFailed"
                 @invalid="handleInvalid"
                 @submitting="isPaymentPending = true"
+                @action-required="handleActionRequired"
             />
         </div>
         <Button

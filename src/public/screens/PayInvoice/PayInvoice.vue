@@ -20,6 +20,7 @@ import type { SelectedPaymentMethod } from '@/components/payments/PaymentIntegra
 import PayButton from '@/components/payments/PayButton/PayButton.vue';
 import PaymentMethodsUnavailableCard from '@/components/payments/PaymentMethodsUnavailableCard/PaymentMethodsUnavailableCard.vue';
 import { usePaymentMethodAvailability } from '@/composables/usePaymentMethodAvailability';
+import { usePaymentFormHold } from '@/composables/usePaymentFormHold';
 
 const { $t } = useIntl();
 
@@ -37,6 +38,7 @@ const selectedPaymentMethod = ref<SelectedPaymentMethod>();
 const storePaymentMethod = ref(true);
 const paymentIntegrationFormRef = ref<InstanceType<typeof PaymentIntegrationForm>>();
 const isPaymentPending = ref(false);
+const { isFormHeld, handleActionRequired } = usePaymentFormHold(isPaymentPending);
 /** Known from the payment itself, before a refetched invoice can say so. */
 const isPaid = ref(false);
 /** The payment may still go through, so paying again could charge the customer twice. */
@@ -147,7 +149,7 @@ const handlePaymentFailed = (error?: { code?: string }) => {
                     no-border
                     no-spacing
                 >
-                    <div :class="{ 'pointer-events-none opacity-60': isPaymentPending }">
+                    <div :class="{ 'pointer-events-none opacity-60': isFormHeld }">
                         <PaymentIntegrationForm
                             ref="paymentIntegrationFormRef"
                             :amount="amount"
@@ -171,6 +173,7 @@ const handlePaymentFailed = (error?: { code?: string }) => {
                             @payment-failed="handlePaymentFailed"
                             @invalid="handlePaymentNotSubmitted"
                             @submitting="isPaymentPending = true"
+                            @action-required="handleActionRequired"
                             @select="
                                 (payload: SelectedPaymentMethod) =>
                                     (selectedPaymentMethod = payload)

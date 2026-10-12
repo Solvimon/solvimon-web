@@ -1,21 +1,32 @@
 import { mount } from '@vue/test-utils';
-import { ErrorHandlingProvider, IntlProvider } from '@solvimon/solvimon-ui';
+import {
+    ErrorHandlingProvider,
+    IntlProvider,
+    formatAmount,
+    formatBillingPeriod,
+} from '@solvimon/solvimon-ui';
 import type { Amount, BillingPeriod } from '@solvimon/solvimon-types';
 import { h } from 'vue';
 import CheckoutTitle from './CheckoutTitle.vue';
 import type { CheckoutTitleProps } from './CheckoutTitle.types';
 
 const { formatted } = vi.hoisted(() => ({
-    formatted: { amount: '€10.00', period: 'month' },
+    formatted: {} as { amount?: string; period?: string },
 }));
 
 // Both values can come from the API: an amount carries its currency, and a period the formatter
-// does not know falls back to its raw value.
-vi.mock('@solvimon/solvimon-ui', async () => ({
-    ...(await vi.importActual<typeof import('@solvimon/solvimon-ui')>('@solvimon/solvimon-ui')),
-    formatAmount: () => formatted.amount,
-    formatBillingPeriod: () => formatted.period,
-}));
+// does not know falls back to its raw value. Left unset, the real formatters run.
+vi.mock('@solvimon/solvimon-ui', async () => {
+    const actual =
+        await vi.importActual<typeof import('@solvimon/solvimon-ui')>('@solvimon/solvimon-ui');
+    return {
+        ...actual,
+        formatAmount: (...args: Parameters<typeof actual.formatAmount>) =>
+            formatted.amount ?? actual.formatAmount(...args),
+        formatBillingPeriod: (...args: Parameters<typeof actual.formatBillingPeriod>) =>
+            formatted.period ?? actual.formatBillingPeriod(...args),
+    };
+});
 
 const HOSTILE = '<img src=x onerror="window.__pwned=1">';
 
@@ -44,6 +55,11 @@ describe('CheckoutTitle', () => {
     beforeEach(() => {
         formatted.amount = '€10.00';
         formatted.period = 'month';
+    });
+
+    afterEach(() => {
+        formatted.amount = undefined;
+        formatted.period = undefined;
     });
 
     it('states the price in bold', () => {
@@ -90,5 +106,82 @@ describe('CheckoutTitle', () => {
         const wrapper = mountTitle();
 
         expect(wrapper.text()).toContain(formatted.period.trim());
+    });
+});
+
+const MONTHLY = { type: 'MONTH', value: 1 } as BillingPeriod;
+const DUE_TODAY: Amount = { quantity: '35.00', currency: 'EUR' };
+const RECURRING: Amount = { quantity: '10.00', currency: 'EUR' };
+
+const month = formatBillingPeriod(MONTHLY, { short: true, hideValueForExactPeriods: true });
+
+const mountPricedTitle = (props: Partial<CheckoutTitleProps>) =>
+    mountTitle({
+        subscriptionName: 'Pro plan',
+        amount: RECURRING,
+        dueTodayAmount: DUE_TODAY,
+        billingPeriod: MONTHLY,
+        countryCode: 'NL',
+        subscriptionStartDate: new Date('2026-10-09T00:00:00Z'),
+        ...props,
+    });
+
+/** The amounts the description sets in bold, in order. */
+const boldAmounts = (wrapper: ReturnType<typeof mountPricedTitle>) =>
+    wrapper.findAll('strong').map((strong) => strong.text());
+
+describe('CheckoutTitle description', () => {
+    it('states only what is due today for an order that does not renew', () => {
+        const wrapper = mountPricedTitle({ hasOneOffCharges: true });
+
+        expect(wrapper.text()).toContain(`You will be billed ${formatAmount(DUE_TODAY)} today.`);
+        expect(boldAmounts(wrapper)).toEqual([formatAmount(DUE_TODAY)]);
+    });
+
+    it('states what is due today and then what it renews at', () => {
+        const wrapper = mountPricedTitle({
+            hasOneOffCharges: true,
+            hasRecurringCharge: true,
+            recurringAmount: RECURRING,
+        });
+
+        expect(wrapper.text()).toContain(
+            `You will be billed ${formatAmount(DUE_TODAY)} today, then ${formatAmount(RECURRING)} per ${month}.`,
+        );
+        expect(boldAmounts(wrapper)).toEqual([formatAmount(DUE_TODAY), formatAmount(RECURRING)]);
+    });
+
+    it('states what is due today and that usage follows, for a plan billed on usage', () => {
+        const wrapper = mountPricedTitle({
+            hasOneOffCharges: true,
+            hasRecurringCharge: true,
+            hasUsageCharges: true,
+            recurringAmount: { quantity: '0.00', currency: 'EUR' },
+        });
+
+        expect(wrapper.text()).toContain(
+            `You will be billed ${formatAmount(DUE_TODAY)} today. Usage is billed every ${month}.`,
+        );
+        expect(boldAmounts(wrapper)).toEqual([formatAmount(DUE_TODAY)]);
+    });
+
+    it('states only what is due today for an order that renews at nothing', () => {
+        const wrapper = mountPricedTitle({
+            hasOneOffCharges: true,
+            hasRecurringCharge: false,
+            recurringAmount: { quantity: '0.00', currency: 'EUR' },
+        });
+
+        expect(wrapper.text()).toContain(`You will be billed ${formatAmount(DUE_TODAY)} today.`);
+        expect(wrapper.text()).not.toContain('per');
+    });
+
+    it('states the price per period for a subscription without one-off charges', () => {
+        const wrapper = mountPricedTitle({});
+
+        expect(wrapper.text()).toContain(
+            `You will be billed ${formatAmount(RECURRING)} per ${month}, starting today.`,
+        );
+        expect(boldAmounts(wrapper)).toEqual([formatAmount(RECURRING)]);
     });
 });

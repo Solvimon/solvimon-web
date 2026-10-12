@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import type { StripeError } from '@stripe/stripe-js';
-import { isEqual } from '@solvimon/solvimon-ui';
+import { isEqual, useIntl } from '@solvimon/solvimon-ui';
 import type {
     PaymentIntegrationFormStripeFrameEmits,
     PaymentIntegrationFormStripeFrameProps,
@@ -10,6 +10,7 @@ import { STRIPE_FRAME_SRCDOC } from './PaymentIntegrationFormStripe.srcdoc';
 
 const props = defineProps<PaymentIntegrationFormStripeFrameProps>();
 const emit = defineEmits<PaymentIntegrationFormStripeFrameEmits>();
+const { $t } = useIntl();
 
 defineExpose({ triggerSubmit });
 
@@ -150,7 +151,13 @@ watch(
         :height="iframeHeight || undefined"
         frameborder="0"
         style="width: 100%; display: block; border: none"
-        title="Payment form"
+        :title="
+            $t({
+                defaultMessage: 'Payment form',
+                id: 'payment_integration_form_stripe.frame_title',
+                description: 'Accessible name of the frame that holds the Stripe payment fields',
+            })
+        "
         @load="sendInit"
     />
 </template>

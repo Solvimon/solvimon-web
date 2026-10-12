@@ -64,6 +64,15 @@ describe('PaymentIntegrationForm', () => {
         expect(wrapper.emitted('invalid')).toEqual([['NO_PAYMENT_METHOD']]);
     });
 
+    it('tells the screen when the gateway form sends a payment of its own accord', async () => {
+        const wrapper = mountForm();
+        await flushPromises();
+
+        wrapper.findComponent({ name: 'PaymentIntegrationFormAdyen' }).vm.$emit('submitting');
+
+        expect(wrapper.emitted('submitting')).toHaveLength(1);
+    });
+
     it('leaves marking what is missing to the gateway form otherwise', async () => {
         const wrapper = mountForm();
         await flushPromises();

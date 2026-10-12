@@ -504,4 +504,19 @@ describe('PayInvoice', () => {
             expect(wrapper.text()).toContain('Payment failed');
         });
     });
+
+    // Enter in a card field pays without the button, which then stayed live for a second payment.
+    it('holds the pay button while a payment the drop-in started is on its way', async () => {
+        mockAuthorizePayment.mockReturnValue(new Promise(() => {}));
+        const wrapper = mountComponent();
+        await waitForAdyenMount();
+
+        const [, dropInConfig] = MockDropIn.mock.calls[0];
+        dropInConfig.onSelect({ props: { type: 'scheme' } });
+        await submitThroughDropIn();
+
+        expect(
+            wrapper.findComponent({ name: 'PayButton' }).find('button').attributes('disabled'),
+        ).toBeDefined();
+    });
 });

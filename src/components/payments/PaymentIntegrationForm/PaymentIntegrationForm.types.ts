@@ -87,6 +87,11 @@ export interface PaymentIntegrationFormEmits {
      */
     (e: 'invalid', reason?: 'NO_PAYMENT_METHOD'): void;
     /**
+     * Emitted when a payment is sent, including one the form started itself: Enter in a card field
+     * or a wallet's own button. The screen waits on it as on one its own button sent.
+     */
+    (e: 'submitting'): void;
+    /**
      * Emitted when the payment integration form is ready and the payment integration form is initialized.
      */
     (e: 'ready'): void;

@@ -170,6 +170,7 @@ const handlePaymentFailed = (error?: { code?: string }) => {
                             @payment-success="handlePaymentSuccess"
                             @payment-failed="handlePaymentFailed"
                             @invalid="handlePaymentNotSubmitted"
+                            @submitting="isPaymentPending = true"
                             @select="
                                 (payload: SelectedPaymentMethod) =>
                                     (selectedPaymentMethod = payload)

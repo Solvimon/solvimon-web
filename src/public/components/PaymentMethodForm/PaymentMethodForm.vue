@@ -220,6 +220,7 @@ const paymentIntegrationProps = computed<PaymentIntegrationFormProps>(() => {
                 @payment-success="handlePaymentSuccess"
                 @payment-failed="handlePaymentFailed"
                 @invalid="handleInvalid"
+                @submitting="isPaymentPending = true"
             />
         </div>
         <Button

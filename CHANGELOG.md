@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The invoices list says so when its invoices, or the next batch of them, fail to load (`sv-invoices-list__error`); "Load more" stays to try again. The invoice, invoice header, invoice details and payment history components say so too when their invoice fails to load, instead of rendering nothing.
 - `UNSUPPORTED_LOCALE` (warning) is logged when an element is given a locale the SDK has no translations for, such as `nl` or `en-GB`; the element renders in `en-US` as before. `PORTAL_TYPE_NOT_ALLOWED` (error) is logged when an element is given a portal object of a type it does not accept. Both are new members of the exported `WarnCode` and `ErrorCode` unions, so a `switch` over them that must be exhaustive needs a case for each.
 - The README documents the `action-request` event, its actions, and which properties an element follows after it has mounted.
+- The payment methods screen's "Your payment methods", "Add payment method" and "Cancel" are translated, under the message ids `screens.payment_method_management.list_title`, `screens.payment_method_management.add_button` and `screens.payment_method_management.cancel_button`. The pay button names card payments under `pay_button.payment_method.card` ("Credit Card"). A `messages` override can replace any of them.
 
 ### Changed
 
@@ -120,6 +121,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Properties changed after an element has mounted take effect. A `portalObject` with another token or a new `environment` starts the element over with them; a new `invoiceId` or `subscriptionId` in `configuration` loads that invoice or subscription; `experimentalFeatures` apply in place; and a checkout `couponCode` set before the subscription has loaded is applied. Each was read once, when the element mounted.
 - Mounting an element through `createSolvimonCore` after defining it under your own tag name — `defineSolvimonCheckout('acme-checkout')`, say — no longer throws `NotSupportedError`. The core mounts it under the name you chose.
 - The payment method form uses the `countryCode` property it declares. It overrides the customer's country for the payment methods offered and the payment form; it was ignored.
+- At exactly 640px wide, components that switch between a mobile and a desktop layout now use the desktop one, as their `sm:` styles already do. They used both at once.
+- Checkout says a trial is "Free" however the API writes its zero amount; it only recognised `0.00`. Where it states a fallback amount, that amount is now in the checkout's own currency instead of always in EUR.
+- The promotion code field tells screen readers a code is applied only once checkout has accepted it, and announces nothing for a code it turned down. Pressing Enter in the field applies the code once; it applied it twice.
+- A checkout note no longer reads an underscore inside a word, such as `customer_reference_id` or a URL, as italics.
 
 ## [0.1.0-alpha.27] - 2026-10-12
 

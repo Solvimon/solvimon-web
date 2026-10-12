@@ -92,4 +92,57 @@ describe('PaymentIntegrationForm', () => {
         expect(wrapper.find('form-message-stub').exists()).toBe(false);
         expect(wrapper.emitted('invalid')).toHaveLength(1);
     });
+
+    describe('with a payment on its way through one of several forms', () => {
+        const twoForms = () =>
+            mountForm({
+                validateOnSubmit: () => Promise.resolve(true),
+                paymentMethodOptions: [
+                    createPaymentMethodOptionEntry({
+                        paymentAcceptorId: 'pa_1',
+                        integrationId: 'int_1',
+                    }),
+                    createPaymentMethodOptionEntry({
+                        paymentAcceptorId: 'pa_2',
+                        integrationId: 'int_2',
+                    }),
+                ],
+            });
+        const forms = (wrapper: ReturnType<typeof mountForm>) =>
+            wrapper.findAllComponents({ name: 'PaymentIntegrationFormAdyen' });
+        const validate = (form: ReturnType<typeof forms>[number]) =>
+            (form.vm.$attrs['validate-on-submit'] ??
+                form.vm.$attrs['validateOnSubmit']) as () => Promise<boolean>;
+
+        // A second form's own submit (Enter, its PayPal button) would otherwise pay a second time.
+        it('turns down a submit from any other form until that payment is over', async () => {
+            const wrapper = twoForms();
+            await flushPromises();
+            const [first, second] = forms(wrapper);
+
+            first!.vm.$emit('submitting');
+
+            await expect(validate(second!)()).resolves.toBe(false);
+            await expect(validate(first!)()).resolves.toBe(true);
+
+            first!.vm.$emit('payment-failed', { code: 'AUTHORIZATION_FAILED', message: 'x' });
+
+            await expect(validate(second!)()).resolves.toBe(true);
+        });
+
+        it('keeps the screen waiting on the payment, saying nothing of the turned-down submit', async () => {
+            const wrapper = twoForms();
+            await flushPromises();
+            const [first, second] = forms(wrapper);
+
+            first!.vm.$emit('submitting');
+            second!.vm.$emit('invalid');
+
+            expect(wrapper.emitted('invalid')).toBeUndefined();
+
+            first!.vm.$emit('invalid');
+
+            expect(wrapper.emitted('invalid')).toHaveLength(1);
+        });
+    });
 });

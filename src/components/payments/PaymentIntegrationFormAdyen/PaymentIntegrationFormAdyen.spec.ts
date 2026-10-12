@@ -378,11 +378,13 @@ describe('PaymentIntegrationFormAdyen', () => {
             await mountComponent();
             const actions = await submitThroughDropIn();
 
-            expect(mockHandleAction).toHaveBeenCalledWith(
-                expect.objectContaining({ type: 'redirect', paymentData: 'pd_1' }),
-            );
+            // Resolving with the action is what runs it; running it as well ran 3DS twice.
+            expect(mockHandleAction).not.toHaveBeenCalled();
             expect(actions.resolve).toHaveBeenCalledWith(
-                expect.objectContaining({ resultCode: 'RedirectShopper' }),
+                expect.objectContaining({
+                    resultCode: 'RedirectShopper',
+                    action: expect.objectContaining({ type: 'redirect', paymentData: 'pd_1' }),
+                }),
             );
         });
 
@@ -661,11 +663,13 @@ describe('PaymentIntegrationFormAdyen', () => {
             await mountComponent(tokenizeProps);
             const actions = await submitThroughDropIn();
 
-            expect(mockHandleAction).toHaveBeenCalledWith(
-                expect.objectContaining({ type: 'redirect', paymentData: 'pd_1' }),
-            );
+            // Resolving with the action is what runs it; running it as well ran 3DS twice.
+            expect(mockHandleAction).not.toHaveBeenCalled();
             expect(actions.resolve).toHaveBeenCalledWith(
-                expect.objectContaining({ resultCode: 'RedirectShopper' }),
+                expect.objectContaining({
+                    resultCode: 'RedirectShopper',
+                    action: expect.objectContaining({ type: 'redirect', paymentData: 'pd_1' }),
+                }),
             );
         });
 

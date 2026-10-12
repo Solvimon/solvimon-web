@@ -1,8 +1,28 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { execFileSync } from 'child_process';
 import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'fs';
 import { tmpdir } from 'os';
 import path from 'path';
 import { generateTranslationsReport } from './translations-report.mjs';
+
+const SCRIPT = path.join(__dirname, 'translations-report.mjs');
+
+function runCli(args: string[]): { status: number; stdout: string; stderr: string } {
+    try {
+        const stdout = execFileSync(process.execPath, [SCRIPT, ...args], {
+            encoding: 'utf8',
+            stdio: 'pipe',
+        });
+        return { status: 0, stdout, stderr: '' };
+    } catch (error) {
+        const { status, stdout, stderr } = error as {
+            status: number;
+            stdout: string;
+            stderr: string;
+        };
+        return { status, stdout, stderr };
+    }
+}
 
 let tmpDir: string;
 let defaultArgs: { translationsDir: string; sha: string };
@@ -168,5 +188,37 @@ describe('generateTranslationsReport', () => {
         });
 
         expect(generateTranslationsReport({ ...defaultArgs, supported })).toContain('> [!NOTE]');
+    });
+});
+
+describe('command line', () => {
+    it('reads the translations directory of the checkout', () => {
+        const { status, stdout } = runCli([
+            '--translations-dir',
+            'src/translations',
+            '--sha',
+            'abc',
+        ]);
+
+        expect(status).toBe(0);
+        expect(stdout).toContain('<!-- translations-report -->');
+    });
+
+    it.each([
+        ['an absolute path outside', '/etc'],
+        ['a relative climb out', '../../../../../../../../etc'],
+    ])('refuses %s', (_, outside) => {
+        const { status, stderr } = runCli(['--translations-dir', outside, '--sha', 'abc']);
+
+        expect(status).not.toBe(0);
+        expect(stderr).toContain('Path traversal detected');
+    });
+
+    it('reads an encoded climb as a directory name inside the checkout', () => {
+        const { status, stderr } = runCli(['--translations-dir', '%2e%2e/%2e%2e', '--sha', 'abc']);
+
+        expect(status).not.toBe(0);
+        expect(stderr).not.toContain('Path traversal detected');
+        expect(stderr).toContain('ENOENT');
     });
 });

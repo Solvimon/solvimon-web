@@ -1,8 +1,28 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { mkdtempSync, rmSync, writeFileSync } from 'fs';
+import { execFileSync } from 'child_process';
+import { mkdtempSync, rmSync, symlinkSync, writeFileSync } from 'fs';
 import { tmpdir } from 'os';
 import path from 'path';
 import { generateCoverageReport } from './coverage-report.mjs';
+
+const SCRIPT = path.join(__dirname, 'coverage-report.mjs');
+
+function runCli(args: string[]): { status: number; stdout: string; stderr: string } {
+    try {
+        const stdout = execFileSync(process.execPath, [SCRIPT, ...args], {
+            encoding: 'utf8',
+            stdio: 'pipe',
+        });
+        return { status: 0, stdout, stderr: '' };
+    } catch (error) {
+        const { status, stdout, stderr } = error as {
+            status: number;
+            stdout: string;
+            stderr: string;
+        };
+        return { status, stdout, stderr };
+    }
+}
 
 function makeSummary({
     lines = 80,
@@ -184,5 +204,55 @@ describe('generateCoverageReport', () => {
 
         expect(report).toContain('<details>');
         expect(report).not.toContain('<details open>');
+    });
+});
+
+describe('command line', () => {
+    beforeEach(() => {
+        tmpDir = mkdtempSync(path.join(tmpdir(), 'coverage-report-cli-'));
+    });
+
+    afterEach(() => rmSync(tmpDir, { recursive: true, force: true }));
+
+    const write = (name: string) => {
+        const file = path.join(tmpDir, name);
+        writeFileSync(file, JSON.stringify(makeSummary()));
+        return file;
+    };
+
+    it('reads reports from the temp directory', () => {
+        const { status, stdout } = runCli([
+            '--pr',
+            write('pr.json'),
+            '--base',
+            write('base.json'),
+            '--sha',
+            'abc1234',
+            '--base-ref',
+            'main',
+        ]);
+
+        expect(status).toBe(0);
+        expect(stdout).toContain('abc1234');
+    });
+
+    it.each([
+        ['an absolute path outside', '/etc/hosts'],
+        ['a relative climb out', '../../../../../../../../etc/hosts'],
+    ])('refuses %s', (_, outside) => {
+        const { status, stderr } = runCli(['--pr', outside, '--base', write('base.json')]);
+
+        expect(status).not.toBe(0);
+        expect(stderr).toContain('Path traversal detected');
+    });
+
+    it('refuses a symlink in the temp directory that points outside it', () => {
+        const link = path.join(tmpDir, 'pr.json');
+        symlinkSync('/etc/hosts', link);
+
+        const { status, stderr } = runCli(['--pr', link, '--base', write('base.json')]);
+
+        expect(status).not.toBe(0);
+        expect(stderr).toContain('Path traversal detected');
     });
 });

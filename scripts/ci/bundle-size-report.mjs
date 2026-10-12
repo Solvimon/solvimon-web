@@ -1,5 +1,7 @@
 import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
+import { tmpdir } from 'os';
+import { resolveSafePathIn } from '../safe-path.mjs';
 
 function fmt(bytes) {
     if (bytes >= 1024 * 1024) return (bytes / 1024 / 1024).toFixed(2) + ' MB';
@@ -102,11 +104,13 @@ export function generateBundleSizeReport({ prPath, basePath, sha, baseRef }) {
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
     const args = process.argv.slice(2);
     const get = (flag) => args[args.indexOf(flag) + 1];
+    // `ci.yml` hands over reports it wrote to `/tmp` as well as to the checkout.
+    const roots = [process.cwd(), tmpdir(), '/tmp'];
 
     console.log(
         generateBundleSizeReport({
-            prPath: get('--pr'),
-            basePath: get('--base'),
+            prPath: resolveSafePathIn(get('--pr'), roots),
+            basePath: resolveSafePathIn(get('--base'), roots),
             sha: get('--sha'),
             baseRef: get('--base-ref'),
         }),

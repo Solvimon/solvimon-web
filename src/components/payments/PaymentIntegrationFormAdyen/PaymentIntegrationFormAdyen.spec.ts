@@ -150,8 +150,6 @@ vi.mock('@/utils/adyen', () => ({
     getAdyenClientKeyFromPaymentMethodOptionsResponse: vi.fn(() => 'test_client_key'),
     getAdyenDropInPaymentMethods: adyen.getDropInPaymentMethods,
     getAdyenEnvironmentFromPaymentMethodOptionsResponse: vi.fn(() => 'test'),
-    PAYMENT_ACCEPTOR_ID_QUERY_STRING: 'payment_acceptor_id',
-    REDIRECT_RESULT_QUERY_STRING: 'redirectResult',
     transformObjectToAdyenObject: vi.fn((value: unknown) => value),
 }));
 
@@ -1048,6 +1046,108 @@ describe('PaymentIntegrationFormAdyen', () => {
 
             expect(mockAdyenCheckout).toHaveBeenCalledTimes(1);
             expect(wrapper.findComponent({ name: 'PaymentCompletedCard' }).exists()).toBe(true);
+        });
+    });
+
+    describe('the redirect return in the address', () => {
+        const visit = (search: string) => window.history.replaceState(null, '', `/pay${search}`);
+        const returnTo = (query: Record<string, string>) => {
+            visit(`?${new URLSearchParams({ coupon_code: 'SAVE', ...query })}`);
+            vi.mocked(getQueryParam).mockImplementation((key: string) => query[key] ?? null);
+        };
+
+        afterEach(() => {
+            visit('');
+            vi.mocked(getQueryParam).mockImplementation(() => null);
+        });
+
+        it('is taken out once handled, so a reload cannot send it again', async () => {
+            mockGetPaymentDetails.mockResolvedValue({ payment_status: 'REFUSED' });
+            returnTo({ redirectResult: 'res_1', payment_acceptor_id: 'paya_123' });
+
+            await mountComponent();
+
+            expect(window.location.search).toBe('?coupon_code=SAVE');
+        });
+
+        it('is left to the form of the acceptor it names', async () => {
+            returnTo({ redirectResult: 'res_1', payment_acceptor_id: 'paya_other' });
+
+            const wrapper = await mountComponent();
+
+            expect(mockGetPaymentDetails).not.toHaveBeenCalled();
+            expect(wrapper.emitted('payment-failed')).toBeUndefined();
+            expect(mockAdyenCheckout).toHaveBeenCalledTimes(1);
+            expect(window.location.search).toContain('redirectResult=res_1');
+        });
+
+        // The address already decoded it; decoding again threw on a `%`.
+        it('is sent on as the address decoded it', async () => {
+            mockGetPaymentDetails.mockResolvedValue({ payment_status: 'SUCCESS' });
+            returnTo({ redirectResult: 'Ab%25+c=', payment_acceptor_id: 'paya_123' });
+
+            const wrapper = await mountComponent();
+
+            expect(mockGetPaymentDetails).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    adyen: { details: { redirectResult: 'Ab%25+c=' } },
+                }),
+            );
+            expect(wrapper.emitted('payment-success')).toHaveLength(1);
+        });
+
+        it('is not sent on when no gateway could have written it', async () => {
+            returnTo({ redirectResult: 'not a result', payment_acceptor_id: 'paya_123' });
+
+            const wrapper = await mountComponent();
+
+            expect(mockGetPaymentDetails).not.toHaveBeenCalled();
+            expect((wrapper.emitted('payment-failed')?.[0]?.[0] as { code: string }).code).toBe(
+                'PAYMENT_OUTCOME_UNCONFIRMED',
+            );
+        });
+    });
+
+    describe('trying again', () => {
+        const retry = async (wrapper: Awaited<ReturnType<typeof mountComponent>>) => {
+            wrapper.findComponent({ name: 'PaymentErrorCard' }).vm.$emit('retry');
+            await flushPromises();
+        };
+
+        afterEach(() => {
+            vi.mocked(getQueryParam).mockImplementation(() => null);
+        });
+
+        it('asks again about the payment it could not check, then shows the outcome', async () => {
+            vi.mocked(getQueryParam).mockImplementation(
+                (key: string) =>
+                    ({ redirectResult: 'res_1', payment_acceptor_id: 'paya_123' })[key] ?? null,
+            );
+            mockGetPaymentDetails
+                .mockRejectedValueOnce(new TypeError('Failed to fetch'))
+                .mockResolvedValueOnce({ payment_status: 'SUCCESS' });
+
+            const wrapper = await mountComponent();
+            await retry(wrapper);
+
+            expect(mockGetPaymentDetails).toHaveBeenCalledTimes(2);
+            expect(mockGetPaymentDetails).toHaveBeenLastCalledWith(
+                expect.objectContaining({ adyen: { details: { redirectResult: 'res_1' } } }),
+            );
+            expect(wrapper.emitted('payment-success')).toHaveLength(1);
+            expect(mockAdyenCheckout).not.toHaveBeenCalled();
+        });
+
+        it('builds a fresh drop-in after a failed payment, without asking about it again', async () => {
+            const wrapper = await mountComponent();
+            captured.checkoutConfig?.onPaymentFailed?.({ resultCode: 'Refused' });
+            await flushPromises();
+
+            await retry(wrapper);
+
+            expect(wrapper.findComponent({ name: 'PaymentErrorCard' }).exists()).toBe(false);
+            expect(mockAdyenCheckout).toHaveBeenCalledTimes(2);
+            expect(mockGetPaymentDetails).not.toHaveBeenCalled();
         });
     });
 });

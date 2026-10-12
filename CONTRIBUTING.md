@@ -137,6 +137,8 @@ Run end-to-end tests:
 npm run test:e2e
 ```
 
+See [Testing](docs/development/testing.md) for what the unit-test mocks do, running the e2e suite against the right build and port, and writing e2e tests that wait for what they assert on.
+
 ### End-to-end tests
 
 There is no API and no test environment to run against, so the e2e suite answers every request in

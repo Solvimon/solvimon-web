@@ -281,9 +281,12 @@ async function handlePaymentResult(result: AuthorizePaymentResponse) {
             return;
         }
 
-        const { error, paymentIntent, setupIntent } = await stripe.handleNextAction({
-            clientSecret,
-        });
+        // A rejection goes on to the caller's catch, which must not get Stripe's object either.
+        const { error, paymentIntent, setupIntent } = await stripe
+            .handleNextAction({ clientSecret })
+            .catch((thrown: unknown) => {
+                throw summarizeStripeError(thrown);
+            });
 
         if (error) {
             const stripeError = summarizeStripeError(error);
@@ -358,13 +361,17 @@ async function retrieveIntentStatus({
 }: StripeRedirectReturn): Promise<string> {
     const stripe = await getStripeInstance();
 
+    const rethrowSummarized = (thrown: unknown): never => {
+        throw summarizeStripeError(thrown);
+    };
+
     if (intent === 'PAYMENT') {
-        const result = await stripe.retrievePaymentIntent(clientSecret);
+        const result = await stripe.retrievePaymentIntent(clientSecret).catch(rethrowSummarized);
         if (result.error) throw summarizeStripeError(result.error);
         return result.paymentIntent.status;
     }
 
-    const result = await stripe.retrieveSetupIntent(clientSecret);
+    const result = await stripe.retrieveSetupIntent(clientSecret).catch(rethrowSummarized);
     if (result.error) throw summarizeStripeError(result.error);
     return result.setupIntent.status;
 }

@@ -250,6 +250,42 @@ describe('PaymentIntegrationFormStripe', () => {
             expect(mockLogger.error).toHaveBeenCalled();
             expect(reported(wrapper)).not.toContain('pi_1_secret_LEAK');
         });
+
+        it('reports a next action that rejects without it, as unconfirmed', async () => {
+            mockAuthorizePayment.mockResolvedValue(stripeActionRequiredResponse);
+            mockHandleNextAction.mockRejectedValue(LEAKY_ERROR);
+            const wrapper = mountComponent();
+
+            await wrapper
+                .findComponent({ name: 'PaymentIntegrationFormStripeFrame' })
+                .vm.$emit('submit-success', 'ctok_test');
+            await flushPromises();
+
+            expect(mockLogger.error).toHaveBeenCalled();
+            expect(reported(wrapper)).toContain('payment_intent_authentication_failure');
+            expect(reported(wrapper)).not.toContain('pi_1_secret_LEAK');
+            expect(wrapper.emitted('payment-failed')?.[0]?.[0]).toMatchObject({
+                code: 'PAYMENT_OUTCOME_UNCONFIRMED',
+            });
+        });
+
+        it('reports a redirect lookup that rejects without it', async () => {
+            mockGetQueryParam.mockImplementation(
+                (key: string) =>
+                    ({
+                        payment_acceptor_id: 'paya_123',
+                        redirect_status: 'succeeded',
+                        payment_intent_client_secret: 'pi_3Redirect_secret_Abc123',
+                    })[key] ?? null,
+            );
+            mockRetrievePaymentIntent.mockRejectedValue(LEAKY_ERROR);
+            const wrapper = mountComponent();
+
+            await flushPromises();
+
+            expect(mockLogger.error).toHaveBeenCalled();
+            expect(reported(wrapper)).not.toContain('pi_1_secret_LEAK');
+        });
     });
 
     describe('handlePaymentResult — SUCCESS', () => {

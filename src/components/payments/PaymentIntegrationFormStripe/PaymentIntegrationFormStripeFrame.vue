@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
-import type { StripeError } from '@stripe/stripe-js';
 import { isEqual, useIntl } from '@solvimon/solvimon-ui';
 import type {
     PaymentIntegrationFormStripeFrameEmits,
@@ -9,7 +8,11 @@ import type {
     StripeFrameOptionsUpdate,
 } from './PaymentIntegrationFormStripeFrame.types';
 import { STRIPE_FRAME_SRCDOC } from './PaymentIntegrationFormStripe.srcdoc';
-import { getFrameOptionsUpdate, getFrameTargetOrigin } from './PaymentIntegrationFormStripe.lib';
+import {
+    getFrameOptionsUpdate,
+    getFrameTargetOrigin,
+    isStripeErrorType,
+} from './PaymentIntegrationFormStripe.lib';
 
 const props = defineProps<PaymentIntegrationFormStripeFrameProps>();
 const emit = defineEmits<PaymentIntegrationFormStripeFrameEmits>();
@@ -68,21 +71,6 @@ function triggerSubmit(): boolean {
         getFrameTargetOrigin(window.location.origin),
     );
     return true;
-}
-
-const STRIPE_ERROR_TYPES: Record<StripeError['type'], true> = {
-    api_connection_error: true,
-    api_error: true,
-    authentication_error: true,
-    card_error: true,
-    idempotency_error: true,
-    invalid_request_error: true,
-    rate_limit_error: true,
-    validation_error: true,
-};
-
-function isStripeErrorType(value: unknown): value is StripeError['type'] {
-    return typeof value === 'string' && Object.hasOwn(STRIPE_ERROR_TYPES, value);
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

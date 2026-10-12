@@ -95,15 +95,43 @@ export function getFrameOptionsUpdate(
 }
 
 /**
- * Where the frame is posted to. It is a blob document of the page, so it shares the page's origin;
- * an opaque origin ('null') cannot be named as a target, and there the frame relies on checking
- * that messages come from its parent window.
+ * Where the frame is posted to, given the page's document origin (`window.origin`). The frame is a
+ * blob document of the page and shares that origin. In a frame sandboxed without
+ * allow-same-origin the document origin is opaque ('null') while `location.origin` still names the
+ * URL, and an opaque origin cannot be named as a target; there the frame relies on checking that
+ * messages come from its parent window.
  */
-export function getFrameTargetOrigin(pageOrigin: string): string {
-    return pageOrigin === 'null' ? '*' : pageOrigin;
+export function getFrameTargetOrigin(documentOrigin: string): string {
+    return documentOrigin === 'null' ? '*' : documentOrigin;
 }
 
-/** A Stripe error can carry the intent it is about, client secret included, so only this leaves. */
-export function summarizeStripeError(error: StripeError): StripeSubmitError {
-    return { code: error.code, type: error.type, message: error.message };
+const STRIPE_ERROR_TYPES: Record<StripeError['type'], true> = {
+    api_connection_error: true,
+    api_error: true,
+    authentication_error: true,
+    card_error: true,
+    idempotency_error: true,
+    invalid_request_error: true,
+    rate_limit_error: true,
+    validation_error: true,
+};
+
+export function isStripeErrorType(value: unknown): value is StripeError['type'] {
+    return typeof value === 'string' && Object.hasOwn(STRIPE_ERROR_TYPES, value);
+}
+
+/**
+ * A Stripe error can carry the intent it is about, client secret included, so only this leaves.
+ * Takes whatever Stripe.js returned or threw, and never hands back the object itself.
+ */
+export function summarizeStripeError(error: unknown): StripeSubmitError {
+    if (typeof error !== 'object' || error === null) return {};
+    const code: unknown = Reflect.get(error, 'code');
+    const type: unknown = Reflect.get(error, 'type');
+    const message: unknown = Reflect.get(error, 'message');
+    return {
+        code: typeof code === 'string' ? code : undefined,
+        type: isStripeErrorType(type) ? type : undefined,
+        message: typeof message === 'string' ? message : undefined,
+    };
 }

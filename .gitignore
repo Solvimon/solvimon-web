@@ -1,5 +1,7 @@
 .sdk
 .env
+.env.*
+!.env.example
 dist
 coverage
 node_modules
@@ -15,6 +17,7 @@ tests/playwright/results.xml
 
 # AI
 .claude/settings.json
+.claude/settings.local.json
 
 # Scratch files
 /scratch.*

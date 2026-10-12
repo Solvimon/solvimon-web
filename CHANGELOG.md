@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A request the API rejects with a 401 is now retried once with a renewed access token, and only fails and logs `REQUEST_FAILED` when that retry fails too. Requests also wait for the token to be refreshed first when it is within a minute of expiring. However many requests need a new token at once, they share one refresh. After a refresh fails, requests do not start another one; the 30-second timer or the tab becoming visible retries it. Hosts may therefore see fewer `REQUEST_FAILED` entries with a 401 status. `SESSION_EXPIRED` still means the session cannot be renewed and the host has to issue a new portal token.
+- The SDK now judges when the access token expires from `expires_in` on the identity response instead of the token's `exp` claim, so a client clock that is set wrong no longer makes it refresh too early or too late.
+
+### Fixed
+
+- A session no longer lapses in a background tab or after a laptop sleeps. The token was refreshed only by a 30-second timer, which browsers throttle in the background and which stops during sleep, so the first request afterwards failed with a 401. Requests now refresh an expiring token before they are sent, and the token is also checked when the tab becomes visible again. An access token without an `exp` claim was never refreshed at all; that is fixed too (DD-3547).
+- A malformed portal token no longer leaves every later element with that token blank. The token was parsed after its shared session had been registered, and the failure threw before the cleanup hook was set up, so the session leaked and nothing was logged. The token is now parsed first, and a malformed one logs `INVALID_TOKEN` (DD-3547).
+- `SESSION_EXPIRED` and `INVALID_TOKEN` now reach the elements still on the page. When several elements shared a portal token, these entries went to the `onLog` of the first element that mounted, even after it had been removed. Every mounted element that shares the token now receives them (DD-3547).
+
 ## [0.1.0-alpha.27] - 2026-10-12
 
 ### Added

@@ -1263,6 +1263,14 @@
     "defaultMessage": "Done",
     "description": "Label of the button that dismisses the top-up modal once the top-up has been charged"
   },
+  "topup_modal.error.charge_failed": {
+    "defaultMessage": "We couldn't top up your wallet. Please try again.",
+    "description": "Error shown in the top-up modal when charging the top-up failed"
+  },
+  "topup_modal.error.payment_declined": {
+    "defaultMessage": "Your payment was declined. Try another payment method.",
+    "description": "Error shown in the top-up modal when the payment was declined"
+  },
   "topup_modal.flexible_option.bounds": {
     "defaultMessage": "Between {minimum} and {maximum}",
     "description": "Bounds of the choose-your-amount option in the top-up modal"
@@ -1298,6 +1306,10 @@
   "topup_modal.subtitle": {
     "defaultMessage": "Your current balance is {balance}.",
     "description": "Subtitle of the top-up modal showing the current wallet balance"
+  },
+  "topup_modal.success.auto_top_up_failed": {
+    "defaultMessage": "Your wallet was topped up, but we couldn't save your automatic top-up. You can set it up from your wallet.",
+    "description": "Error shown on the top-up receipt when the automatic top-up rule set alongside it failed to save"
   },
   "topup_modal.success.modal_subtitle": {
     "defaultMessage": "Your payment went through.",

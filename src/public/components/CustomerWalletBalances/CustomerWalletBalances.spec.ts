@@ -8,7 +8,7 @@ vi.mock('@/components/wallets/TopUpModal/TopUpModal.vue', () => ({
     default: defineComponent({
         name: 'TopUpModalStub',
         props: { showModal: Boolean, selectedBalanceItem: Object },
-        emits: ['close', 'confirm', 'payment-success'],
+        emits: ['close', 'confirm', 'auto-top-up-saved', 'payment-success'],
         setup: (props) => () =>
             h('div', { class: 'top-up-modal', 'data-open': String(props.showModal) }),
     }),
@@ -133,6 +133,14 @@ describe('CustomerWalletBalances', () => {
             topUpModal(wrapper).vm.$emit('confirm');
 
             expect(wrapper.emitted('top-up-charged')).toHaveLength(1);
+        });
+
+        it('reports a rule saved alongside the top-up so the wallet can be reloaded', () => {
+            const wrapper = mountBlock();
+
+            topUpModal(wrapper).vm.$emit('auto-top-up-saved');
+
+            expect(wrapper.emitted('auto-top-up-saved')).toHaveLength(1);
         });
     });
 

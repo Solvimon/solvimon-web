@@ -479,4 +479,57 @@ describe('useInvoicePreview', () => {
             await expect(us).rejects.toThrow('Boom');
         });
     });
+
+    describe('whenLoaded', () => {
+        const subscription = {
+            id: 'sub_126',
+            pricing_plan_schedule_infos: [
+                { id: 'default_schedule_id', pricing_plan_schedule: { type: 'DEFAULT' } },
+            ],
+            billing_period: { type: 'MONTH', value: 1 },
+        } as unknown as PricingPlanSubscriptionExpanded;
+
+        it('settles as the preview asked for last, including one asked for after it', async () => {
+            const pending: ((preview: InvoicePreview) => void)[] = [];
+            mockGetInvoicePreview.mockImplementation(
+                () => new Promise((resolve) => pending.push(resolve)),
+            );
+            const { loadInvoicePreview, whenLoaded, invoicePreview } = useInvoicePreview();
+
+            void loadInvoicePreview({ subscription, customer: individualCustomer('NL') });
+            const loaded = whenLoaded();
+            void loadInvoicePreview({ subscription, customer: individualCustomer('DE') });
+            pending[0]!({
+                first_invoice: { id: 'inv_nl' },
+                invoice_infos: [
+                    {
+                        pricing_plan_schedule_id: 'default_schedule_id',
+                        invoices: [{ id: 'inv_nl' }],
+                    },
+                ],
+            } as unknown as InvoicePreview);
+            pending[1]!({
+                first_invoice: { id: 'inv_de' },
+                invoice_infos: [
+                    {
+                        pricing_plan_schedule_id: 'default_schedule_id',
+                        invoices: [{ id: 'inv_de' }],
+                    },
+                ],
+            } as unknown as InvoicePreview);
+            await loaded;
+
+            expect(invoicePreview.value).toEqual({ id: 'inv_de' });
+        });
+
+        it('reports a preview that failed', async () => {
+            mockGetInvoicePreview.mockRejectedValueOnce(new Error('Boom'));
+            const { loadInvoicePreview, whenLoaded, isFailed } = useInvoicePreview();
+
+            await expect(loadInvoicePreview({ subscription })).rejects.toThrow('Boom');
+
+            expect(isFailed.value).toBe(true);
+            await expect(whenLoaded()).rejects.toThrow('Boom');
+        });
+    });
 });

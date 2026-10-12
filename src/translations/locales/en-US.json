@@ -132,6 +132,7 @@
   "checkout.payment_method_block.no_payment_methods_available_title": "No payment methods available",
   "checkout.payment_method_block.title": "Payment method",
   "checkout.payment_unconfirmed": "Your payment could not be confirmed yet and may still go through, so please do not pay again.",
+  "checkout.price_not_settled": "The price could not be brought up to date. Please try again.",
   "checkout.promotion_code.add_label": "Add promotion code",
   "checkout.promotion_code.applied_label": "Promotion applied",
   "checkout.promotion_code.applied_status": "Promotion code applied",

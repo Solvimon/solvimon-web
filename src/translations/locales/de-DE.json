@@ -132,6 +132,7 @@
     "checkout.payment_method_block.no_payment_methods_available_title": "Keine Zahlungsmethoden verfügbar",
     "checkout.payment_method_block.title": "Zahlungsmethode",
     "checkout.payment_unconfirmed": "Ihre Zahlung konnte noch nicht bestätigt werden und wird möglicherweise noch verarbeitet. Bitte zahlen Sie daher nicht erneut.",
+    "checkout.price_not_settled": "Der Preis konnte nicht aktualisiert werden. Bitte versuchen Sie es erneut.",
     "checkout.promotion_code.add_label": "Aktionscode hinzufügen",
     "checkout.promotion_code.applied_label": "Aktion angewendet",
     "checkout.promotion_code.applied_status": "Aktionscode angewendet",

@@ -110,6 +110,8 @@ const {
     subscription,
     isPaymentMethodsPending,
     isInvoicePreviewPending,
+    isInvoicePreviewStale,
+    settleInvoicePreview,
     checkoutForm,
     invoicePreview,
     invoicePreviewByBillingPeriod,
@@ -206,9 +208,23 @@ const handleExpressPaymentFailed = (error?: { message?: string; code?: string })
     }
 };
 
+// Every way to pay comes through here (the button, Enter in a card field, an express sheet), so
+// none of them authorizes an amount the preview is about to replace.
 const handleValidateOnSubmit = async () => {
     await checkoutForm.validation.value.$validate();
-    return !checkoutForm.validation.value.$invalid;
+    if (checkoutForm.validation.value.$invalid) return false;
+
+    if (!(await settleInvoicePreview())) {
+        paymentErrorMessage.value = $t({
+            defaultMessage: 'The price could not be brought up to date. Please try again.',
+            id: 'checkout.price_not_settled',
+            description:
+                'Error shown when a payment is held back because the price of the latest changes could not be loaded',
+        });
+        return false;
+    }
+
+    return true;
 };
 
 const hasTrialPeriod = computed(() => !!trialInvoicePreview.value);
@@ -1017,6 +1033,7 @@ onMounted(() => {
                             :disabled="
                                 isPromotionCodePending ||
                                 isInvoicePreviewPending ||
+                                isInvoicePreviewStale ||
                                 hasPaymentMethodOptionsError ||
                                 paymentMethodOptions.length === 0 ||
                                 isPaymentPending ||

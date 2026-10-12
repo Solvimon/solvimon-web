@@ -132,6 +132,7 @@
     "checkout.payment_method_block.no_payment_methods_available_title": "Geen betaalmethoden beschikbaar",
     "checkout.payment_method_block.title": "Betaalmethode",
     "checkout.payment_unconfirmed": "Je betaling kon nog niet worden bevestigd en kan nog worden verwerkt, dus betaal niet opnieuw.",
+    "checkout.price_not_settled": "De prijs kon niet worden bijgewerkt. Probeer het opnieuw.",
     "checkout.promotion_code.add_label": "Promotiecode toevoegen",
     "checkout.promotion_code.applied_label": "Promotie toegepast",
     "checkout.promotion_code.applied_status": "Promotiecode toegepast",

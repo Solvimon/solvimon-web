@@ -1,7 +1,7 @@
 import { isValidCountryCode, objectDiff, useValidation } from '@solvimon/solvimon-ui';
 import { taxId } from '@solvimon/solvimon-ui/validators';
 import { email, required, requiredIf } from '@vuelidate/validators';
-import { computed, onMounted, ref, toRaw } from 'vue';
+import { computed, onMounted, ref, toRaw, watch } from 'vue';
 import type { CheckoutFormState } from './CheckoutForm.types';
 import { getRequiredFieldsForCountry, isVatNumberShown } from './CheckoutForm.lib';
 import { useWatchDebounced } from '@/composables/useWatchDebounced';
@@ -80,12 +80,39 @@ export function useCheckoutForm({
     // changed field is looked at: several can change within one debounce window.
     let handledForm = snapshot();
 
-    const handleFormChange = (newValue: CheckoutFormState) => {
-        const changed = Object.keys(objectDiff({ from: handledForm, to: newValue }));
-        handledForm = newValue;
+    const changesPreviewSinceHandled = (value: CheckoutFormState) =>
+        Object.keys(objectDiff({ from: handledForm, to: value }))
+            .filter(isCheckoutFormStateKey)
+            .some(changesPreview);
 
-        if (changed.filter(isCheckoutFormStateKey).some(changesPreview)) {
+    /**
+     * A change to the price the preview has not been asked for yet: the debounce holds it back,
+     * and until it is asked for, the preview on screen is of the form before it.
+     */
+    const isPreviewStale = ref(false);
+
+    const handleFormChange = (newValue: CheckoutFormState) => {
+        const changesPrice = changesPreviewSinceHandled(newValue);
+        handledForm = newValue;
+        isPreviewStale.value = false;
+
+        if (changesPrice) {
             onRequiredFieldChange(newValue);
+        }
+    };
+
+    watch(
+        snapshot,
+        (value) => {
+            isPreviewStale.value = changesPreviewSinceHandled(value);
+        },
+        { flush: 'sync' },
+    );
+
+    /** Asks now for the preview of a change the debounce still holds back. */
+    const flushPreviewChange = () => {
+        if (isPreviewStale.value) {
+            handleFormChange(snapshot());
         }
     };
 
@@ -103,6 +130,8 @@ export function useCheckoutForm({
         getIsFieldRequired,
         updateInitialState,
         initialState: initialFormState,
+        isPreviewStale,
+        flushPreviewChange,
     };
 }
 

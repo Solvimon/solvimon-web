@@ -223,5 +223,8 @@ export const useInvoicePreview = () => {
         trialPeriod,
         lastPreviewScheduleId,
         isPending: computed(() => status.value === ApiStatus.Loading),
+        isFailed: computed(() => status.value === ApiStatus.Failed),
+        /** Settles as the preview asked for last does, however many take over meanwhile. */
+        whenLoaded: () => latestPreview,
     };
 };

@@ -16,7 +16,7 @@ import type {
 import { useSubscriptionCancellationModalLabels } from './useSubscriptionCancellationModalLabels';
 import { createSubscriptionsService } from '@/services/subscriptions';
 import SubscriptionSummary from '@/components/subscriptions/SubscriptionSummary.vue';
-import { getMostRecentScheduleInfo } from '@/utils/subscription';
+import { getActiveDefaultScheduleInfo } from '@/utils/pricingPlanSchedule';
 import { usePaymentMethod } from '@/composables/usePaymentMethod';
 import { useLogger } from '@/components/providers';
 
@@ -57,8 +57,12 @@ const billingPeriodEndsAt = computed(() => {
 
 const renewsOn = billingPeriodEndsAt;
 
+/** What is being cancelled is what is billed now, not a change that has yet to start. */
 const enabledPricingIds = computed(() =>
-    (getMostRecentScheduleInfo(props.subscription)?.pricing_plan_schedule?.enabled_pricings ?? [])
+    (
+        getActiveDefaultScheduleInfo(props.subscription?.pricing_plan_schedule_infos ?? [])
+            ?.pricing_plan_schedule?.enabled_pricings ?? []
+    )
         .map(({ pricing_id }) => pricing_id)
         .filter((pricingId): pricingId is Pricing['id'] => Boolean(pricingId)),
 );

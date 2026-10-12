@@ -28,6 +28,9 @@ export const useInvoicePreview = () => {
 
     const getBillingPeriodKey = (period: BillingPeriod) => `${period.type}:${period.value}`;
 
+    // Only the preview asked for last may write state: an earlier one can answer after it.
+    let latestLoad = 0;
+
     const loadInvoicePreview = async ({
         subscription,
         subscriptionStartAt,
@@ -37,6 +40,7 @@ export const useInvoicePreview = () => {
         enabledPricingIds,
         promotionCode,
     }: LoadInvoicePreviewParams) => {
+        const load = ++latestLoad;
         const customerPayload = buildCustomerPayload(customer);
 
         status.value = ApiStatus.Loading;
@@ -128,24 +132,22 @@ export const useInvoicePreview = () => {
 
             const cachedPayload = cachedPreviewPayloads.value[periodKey];
             if (cachedPayload && isEqual(payload, cachedPayload)) {
-                return { periodKey, response: undefined };
+                return { periodKey, payload, response: undefined };
             }
 
-            cachedPreviewPayloads.value = {
-                ...cachedPreviewPayloads.value,
-                [periodKey]: payload,
-            };
-
             const response = await getInvoicePreview(payload);
-            return { periodKey, response };
+            return { periodKey, payload, response };
         });
 
         try {
+            const results = await Promise.all(previewPromises);
+
+            if (load !== latestLoad) return;
+
             const updatedPreviews: Record<string, Invoice> = {
                 ...invoicePreviewByBillingPeriod.value,
             };
-
-            const results = await Promise.all(previewPromises);
+            const updatedPayloads = { ...cachedPreviewPayloads.value };
 
             const trialSchedule = subscription.pricing_plan_schedule_infos.find(
                 ({ pricing_plan_schedule }) => pricing_plan_schedule.type === 'TRIAL',
@@ -155,8 +157,10 @@ export const useInvoicePreview = () => {
                 ({ pricing_plan_schedule }) => pricing_plan_schedule.type === 'DEFAULT',
             )?.id;
 
-            results.forEach(({ periodKey, response }) => {
+            results.forEach(({ periodKey, payload, response }) => {
                 if (!response) return;
+
+                updatedPayloads[periodKey] = payload;
 
                 lastPreviewScheduleId.value =
                     response.invoice_infos.at(-1)?.pricing_plan_schedule_id;
@@ -183,19 +187,22 @@ export const useInvoicePreview = () => {
                 }
             });
 
+            cachedPreviewPayloads.value = updatedPayloads;
             invoicePreviewByBillingPeriod.value = updatedPreviews;
             invoicePreview.value = updatedPreviews[selectedPeriodKey];
+            status.value = ApiStatus.Done;
         } catch (error) {
-            status.value = ApiStatus.Failed;
             logger.error(
                 'INVOICE_PREVIEW_FAILED',
                 'Failed to load the invoice preview',
                 { preview: 'CHECKOUT' },
                 error,
             );
+            // A later preview has taken over, and its outcome is the one the caller acts on.
+            if (load !== latestLoad) return;
+
+            status.value = ApiStatus.Failed;
             throw error;
-        } finally {
-            status.value = ApiStatus.Done;
         }
     };
 

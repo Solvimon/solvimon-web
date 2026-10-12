@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onUnmounted, watchEffect } from 'vue';
 import type { CssOverridesProviderProps } from './CssOverridesProvider.types';
+import { normalizeCssOverrides } from './CssOverridesProvider.lib';
 import { useHostElementProvider } from '@/components/providers/HostElementProvider/composables/useHostElementProvider';
 import {
     adoptStyleSheet,
@@ -12,17 +13,7 @@ import {
 const props = defineProps<CssOverridesProviderProps>();
 const { hostRef } = useHostElementProvider();
 
-// A customer can pass one CSS string or a list of CSS strings.
-// We turn that into one clean CSS block before injecting it.
-const normalizedCssOverrides = computed(() => {
-    if (!props.cssOverrides) {
-        return '';
-    }
-
-    return Array.isArray(props.cssOverrides)
-        ? props.cssOverrides.filter(Boolean).join('\n').trim()
-        : props.cssOverrides.trim();
-});
+const normalizedCssOverrides = computed(() => normalizeCssOverrides(props.cssOverrides));
 
 let styleElement: HTMLStyleElement | undefined;
 let styleSheet: CSSStyleSheet | undefined;

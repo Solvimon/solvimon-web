@@ -284,9 +284,7 @@ describe('TopUpModal (integrated) — the amount typed into a money wallet', () 
         expect(amountErrors(wrapper).join(' ')).toContain(message);
     });
 
-    // DD-3543 tester: confirmed defect. The field has no `label`, and solvimon-ui's Input renders
-    // its error only in the label's suffix, so the message never reaches the page.
-    it.fails('puts the reason on the page, not only on the field', async () => {
+    it('puts the reason on the page, not only on the field', async () => {
         const wrapper = mountModal();
         await settle();
 

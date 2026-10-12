@@ -266,4 +266,14 @@ describe('ConvertedAmountInput', () => {
         expect(conversion(wrapper).exists()).toBe(false);
         expect(wrapper.text()).toContain('Enter the balance to top up at.');
     });
+
+    it('marks the field invalid for a screen reader while it has an error', () => {
+        const wrapper = mountInput({ error: 'Enter the balance to top up at.' });
+
+        expect(wrapper.find('input').attributes('aria-invalid')).toBe('true');
+    });
+
+    it('leaves a field without an error unmarked', () => {
+        expect(mountInput({ error: [] }).find('input').attributes('aria-invalid')).toBeUndefined();
+    });
 });

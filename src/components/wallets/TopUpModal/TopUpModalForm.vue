@@ -208,19 +208,17 @@ const entryUnitFor = (pricing: Omit<FlexibleTopUpPricing, 'pricingItemId'>) =>
           '')
         : pricing.currency;
 
+/** The money bounds the pricing sets, which the input restates in the unit it is typed in. */
+const boundsFor = ({ config }: Omit<FlexibleTopUpPricing, 'pricingItemId'>) => ({
+    ...(config?.minimum_amount && { minimum: config.minimum_amount }),
+    ...(config?.maximum_amount && { maximum: config.maximum_amount }),
+});
+
 const flexiblePricingFor = (optionValue: string | boolean) => {
     const flexiblePricing = findItem(String(optionValue))?.flexiblePricing;
 
     return flexiblePricing ? [flexiblePricing] : [];
 };
-
-/**
- * Whether an option is the choose-your-amount one. Its description says what the amount input accepts,
- * so it belongs inside the panel that expands with the input rather than above it — everything else
- * keeps its description on show at all times.
- */
-const isFlexibleOption = (optionValue: string | boolean) =>
-    !!findItem(String(optionValue))?.flexiblePricing;
 
 const options = computed(() =>
     chargeableItems.value.map((item) => ({
@@ -232,20 +230,6 @@ const options = computed(() =>
                   description: 'Label of the choose-your-amount option in the top-up modal',
                   id: 'topup_modal.flexible_option.label',
               }),
-        ...(item.flexiblePricing?.bounds.minimum &&
-            item.flexiblePricing.bounds.maximum && {
-                description: $t(
-                    {
-                        defaultMessage: 'Between {minimum} and {maximum}',
-                        description: 'Bounds of the choose-your-amount option in the top-up modal',
-                        id: 'topup_modal.flexible_option.bounds',
-                    },
-                    {
-                        minimum: formatValue(item.flexiblePricing.bounds.minimum),
-                        maximum: formatValue(item.flexiblePricing.bounds.maximum),
-                    },
-                ),
-            }),
     })),
 );
 
@@ -492,16 +476,8 @@ const { sortedPaymentMethods } = useDefaultPaymentMethod({
                         >
                     </template>
 
-                    <template #description="{ option, optionValue }">
+                    <template #description="{ optionValue }">
                         <div class="sv-top-up-form__option-details">
-                            <Typography
-                                v-if="option.description && !isFlexibleOption(optionValue)"
-                                tag="span"
-                                variant="body-xs"
-                                color="subtle"
-                                no-spacing
-                                >{{ option.description }}</Typography
-                            >
                             <Expand
                                 v-if="flexiblePricingFor(optionValue).length > 0"
                                 :is-open="String(optionValue) === selectedPricingItemId"
@@ -514,17 +490,19 @@ const { sortedPaymentMethods } = useDefaultPaymentMethod({
                                     @click.stop
                                     @keydown.stop
                                 >
-                                    <Typography
-                                        v-if="option.description"
-                                        tag="span"
-                                        variant="body-xs"
-                                        color="subtle"
-                                        no-spacing
-                                        >{{ option.description }}</Typography
-                                    >
+                                    <!-- Labelled, as the input puts its bounds and its errors beside the label. -->
                                     <ConvertedAmountInput
                                         v-model="flexibleAmountQuantity"
                                         name="top-up-amount"
+                                        :label="
+                                            $t({
+                                                defaultMessage: 'Amount',
+                                                description:
+                                                    'Label of the amount input of the choose-your-amount top-up',
+                                                id: 'topup_modal.amount.label',
+                                            })
+                                        "
+                                        :bounds="boundsFor(flexiblePricing)"
                                         model-base="AMOUNT"
                                         :unit="entryUnitFor(flexiblePricing)"
                                         :entry-base="entryBaseFor(flexiblePricing)"

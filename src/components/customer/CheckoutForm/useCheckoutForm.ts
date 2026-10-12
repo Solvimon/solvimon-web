@@ -1,8 +1,7 @@
-import { objectDiff, useValidation } from '@solvimon/solvimon-ui';
+import { isValidCountryCode, objectDiff, useValidation } from '@solvimon/solvimon-ui';
 import { taxId } from '@solvimon/solvimon-ui/validators';
 import { email, required, requiredIf } from '@vuelidate/validators';
 import { computed, onMounted, ref, toRaw } from 'vue';
-import type { CountryCode } from '@solvimon/solvimon-types';
 import type { CheckoutFormState } from './CheckoutForm.types';
 import { getRequiredFieldsForCountry } from './CheckoutForm.lib';
 import { useWatchDebounced } from '@/composables/useWatchDebounced';
@@ -45,78 +44,55 @@ export function useCheckoutForm({
         form,
     );
 
-    /**
-     * When the country is not set in the initial state, get the country from the geo location service.
-     */
-    const getCountryFromGeoLocationService = (country: CountryCode | undefined) => {
-        if (!country) {
-            void createGeoLocationService()
-                .getGeoLocation()
-                .then(({ country }) => {
-                    form.value.country = country;
-                });
+    const geoLocation = createGeoLocationService();
+
+    /** Fills in the country from the customer's location, unless one is already chosen. */
+    const fillCountryFromGeoLocation = async () => {
+        try {
+            const { country } = await geoLocation.getGeoLocation();
+            if (typeof country === 'string' && isValidCountryCode(country) && !form.value.country) {
+                form.value.country = country;
+            }
+        } catch {
+            // The customer picks the country instead.
         }
     };
 
-    const handleFormChange = (newValue: CheckoutFormState, oldValue: CheckoutFormState) => {
-        const changed = objectDiff({ from: oldValue, to: newValue });
-        const fieldName = Object.keys(changed).find(isCheckoutFormStateKey);
+    /** Fields that change the preview without being required for the customer's country. */
+    const previewFields: (keyof CheckoutFormState)[] = [
+        'type',
+        'companyVatNumber',
+        'seatsValues',
+        'unitsValues',
+        'enabledPricingIds',
+    ];
 
-        if (!fieldName) {
-            return;
-        }
+    const changesPreview = (fieldName: keyof CheckoutFormState) =>
+        previewFields.includes(fieldName) ||
+        (fieldName !== 'email' && getIsFieldRequired(fieldName));
 
-        /**
-         * These fields are not required, but need to trigger the required field change event,
-         * so that we can update the invoice preview accordingly.
-         */
-        if (['type', 'companyVatNumber'].includes(fieldName)) {
+    const snapshot = (): CheckoutFormState => JSON.parse(JSON.stringify(form.value));
+
+    // Compared with the form as last handled rather than as before the last change, and every
+    // changed field is looked at: several can change within one debounce window.
+    let handledForm = snapshot();
+
+    const handleFormChange = (newValue: CheckoutFormState) => {
+        const changed = Object.keys(objectDiff({ from: handledForm, to: newValue }));
+        handledForm = newValue;
+
+        if (changed.filter(isCheckoutFormStateKey).some(changesPreview)) {
             onRequiredFieldChange(newValue);
-            return;
-        }
-
-        /**
-         * Update when seats values change.
-         */
-        if (fieldName === 'seatsValues') {
-            onRequiredFieldChange(newValue);
-            return;
-        }
-
-        /**
-         * Update when one-off flat item unit values change.
-         */
-        if (fieldName === 'unitsValues') {
-            onRequiredFieldChange(newValue);
-            return;
-        }
-
-        /**
-         * Update when enabled pricing ids change.
-         */
-        if (fieldName === 'enabledPricingIds') {
-            onRequiredFieldChange(newValue);
-            return;
-        }
-
-        /**
-         * Whilst `email` is not required, it needs to trigger the required field change event,
-         */
-        if (fieldName !== 'email' && getIsFieldRequired(fieldName)) {
-            onRequiredFieldChange(newValue);
-            return;
         }
     };
 
-    onMounted(async () => {
-        await getCountryFromGeoLocationService(initialState?.country);
+    onMounted(() => {
+        if (!initialState?.country) {
+            void fillCountryFromGeoLocation();
+        }
     });
 
-    useWatchDebounced(
-        (): CheckoutFormState => JSON.parse(JSON.stringify(form.value)),
-        handleFormChange,
-        { debounce: 200 },
-    );
+    useWatchDebounced(snapshot, handleFormChange, { debounce: 200 });
 
     return {
         form,

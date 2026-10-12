@@ -163,7 +163,7 @@
     "customer.invoice_table.pay_invoice_button.label": "Bezahlen",
     "customer.subscriptions_block.next_billing_date": "Nächstes Rechnungsdatum",
     "customer.subscriptions_block.show_details_button_label": "Abonnementdetails",
-    "customer_overview.billing_information_block.view_all_payment_methods_link_label": "Bearbeiten",
+    "customer_overview.billing_information_block.edit_button_label": "Bearbeiten",
     "customer_overview.payment_methods.title": "{count,plural,one{Zahlungsmethode} other{Zahlungsmethoden}}",
     "customer_overview.payment_methods_block.add_payment_method_button_label": "Zahlungsmethode hinzufügen",
     "customer_overview.payment_methods_block.add_payment_method_helper_text": "Fügen Sie eine Zahlungsmethode für wiederkehrende Rechnungszahlungen hinzu.",

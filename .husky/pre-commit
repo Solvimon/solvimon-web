@@ -4,9 +4,29 @@ export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 
 # Lints and formats staged files only. Set SKIP_LINT_STAGED=1 to bypass.
-# --no-stash: the backup stash lives in the stash list every worktree shares, and lint-staged drops
-# it by index, so concurrent commits could drop each other's entries. Unstaged hunks of partially
-# staged files are still hidden and restored; a failed task just leaves its fixes in place.
+# --no-stash keeps lint-staged's backup out of the stash list every worktree shares. Without that
+# backup it does not put back the unstaged hunks of partially staged files when a task fails, so
+# they are re-applied here from the patch it set them aside in.
 if [ "$SKIP_LINT_STAGED" != "1" ]; then
-    ./node_modules/.bin/lint-staged --no-stash
+    patch="$(git rev-parse --git-path lint-staged_unstaged.patch)"
+    if [ -s "$patch" ]; then
+        kept="$patch.$(date +%s)"
+        mv "$patch" "$kept"
+        echo "lint-staged left unrestored changes from an earlier commit; they are in $kept" >&2
+    fi
+
+    status=0
+    ./node_modules/.bin/lint-staged --no-stash || status=$?
+
+    if [ "$status" -ne 0 ] && [ -s "$patch" ]; then
+        if git apply --check --reverse "$patch" 2>/dev/null; then
+            : # already back in the working tree
+        elif ! git apply --whitespace=nowarn "$patch"; then
+            kept="$patch.$(date +%s)"
+            mv "$patch" "$kept"
+            echo "Could not restore your unstaged changes; they are in $kept" >&2
+        fi
+    fi
+    rm -f "$patch"
+    exit "$status"
 fi

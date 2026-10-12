@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- The invoices list marks a credit note with a "Credit note" chip and a voided invoice with a "Void" chip, where an unpaid invoice shows its Pay button.
+- The invoices list says so when its invoices, or the next batch of them, fail to load (`sv-invoices-list__error`); "Load more" stays to try again. The invoice, invoice header, invoice details and payment history components say so too when their invoice fails to load, instead of rendering nothing.
+
+### Changed
+
+- The invoices list caps `pagination.batchSize` at the documented maximum of 50, and at a minimum of 1.
+- The payment history lists its attempts in the order it shows them, and the invoice's wallet balance table toggles each row with a button that reports whether it is expanded, so screen readers read and operate both as they appear.
+- Each invoice row's button now has an accessible name, "View invoice {invoiceNumber}" (`invoice_table.row.view_invoice_aria_label`).
+- The invoice PDF download asks for `Accept: application/pdf` instead of sending that as its `Content-Type`.
+
+### Fixed
+
+- The invoices list no longer offers Pay on an invoice that cannot be paid. It only checked `paid`, so credit notes, draft, empty and voided invoices, and invoices with nothing left open got a Pay button that led to a payment the API refuses. Pay now shows only for a `FINAL` invoice that is not a credit note, has an amount left open and is not paid by either `paid` or `payment_status`.
+- The invoice details component no longer goes blank when the invoice's payments fail to load: it fetched payments it does not show, and a failure there discarded the invoice too. It now fetches only the invoice.
+- The invoice, invoice header, invoice details and payment history components show their loading skeleton while the invoice loads, where they rendered nothing, and load the new invoice when `configuration.invoiceId` changes instead of keeping the first one.
+- Invoice dates in the invoices list and the invoice details, and the wallet balance table's service periods, are given in the timezone the invoice was issued in (`invoice.timezone`) rather than the customer's current one, as the API does when it dates the invoice's periods. The customer's timezone is still used for an invoice without one.
+- The invoices list's "Load more" button shows that it is loading while the next batch loads.
+
 ## [0.1.0-alpha.27] - 2026-10-12
 
 ### Added

@@ -847,6 +847,10 @@
     "defaultMessage": "Pay",
     "description": "The default label for the pay button when no amount and payment method are known"
   },
+  "pay_button.payment_method.card": {
+    "defaultMessage": "Credit Card",
+    "description": "Name of card payments in the pay button label, as in \"Pay €10.00 with Credit Card\""
+  },
   "pay_invoice.error.description": {
     "defaultMessage": "Please try again or contact support.",
     "description": "Body text shown when the invoice payment fails to load"
@@ -1075,9 +1079,21 @@
     "defaultMessage": "Unsupported pricing",
     "description": "Text displayed when the pricing item pricing is unsupported"
   },
+  "screens.payment_method_management.add_button": {
+    "defaultMessage": "Add payment method",
+    "description": "Button opening the add payment method form on the payment method management screen"
+  },
+  "screens.payment_method_management.cancel_button": {
+    "defaultMessage": "Cancel",
+    "description": "Button closing the add payment method form on the payment method management screen"
+  },
   "screens.payment_method_management.description": {
     "defaultMessage": "Add a new payment method or set a default payment method for your payments.",
     "description": "The descriptive text for the payment method management screen"
+  },
+  "screens.payment_method_management.list_title": {
+    "defaultMessage": "Your payment methods",
+    "description": "The title above the list of saved payment methods on the payment method management screen"
   },
   "screens.payment_method_management.title": {
     "defaultMessage": "Payment methods",

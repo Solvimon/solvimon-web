@@ -29,43 +29,35 @@ test.describe('Error reporting (tester)', () => {
         expect(logs.filter(({ code }) => code === 'UNHANDLED_ERROR')).toHaveLength(1);
     });
 
-    // DEFECT: the checkout logs SUBSCRIPTION_LOAD_FAILED and rethrows from an async onMounted, so
-    // the boundary reports the same failure again as UNHANDLED_ERROR and fires `error`.
-    test.fail(
-        'a subscription the checkout cannot load is reported once, not again as unhandled',
-        async ({ page }) => {
-            api = await mountCheckout(page, {
-                configuration: { email: 'customer@example.com', countryCode: 'NL' },
-                mocks: { subscription: { status: 404, body: { message: 'Not found' } } },
-            });
+    test('a subscription the checkout cannot load is reported once, not again as unhandled', async ({
+        page,
+    }) => {
+        api = await mountCheckout(page, {
+            configuration: { email: 'customer@example.com', countryCode: 'NL' },
+            mocks: { subscription: { status: 404, body: { message: 'Not found' } } },
+        });
 
-            await expect
-                .poll(async () => (await hostEvents(page)).logs.map(({ code }) => code))
-                .toContain('SUBSCRIPTION_LOAD_FAILED');
-            await page.waitForTimeout(500);
-            const { logs, errors } = await hostEvents(page);
-            expect(logs.map(({ code }) => code)).not.toContain('UNHANDLED_ERROR');
-            expect(errors).toEqual([]);
-        },
-    );
+        await expect
+            .poll(async () => (await hostEvents(page)).logs.map(({ code }) => code))
+            .toContain('SUBSCRIPTION_LOAD_FAILED');
+        await page.waitForTimeout(500);
+        const { logs, errors } = await hostEvents(page);
+        expect(logs.map(({ code }) => code)).not.toContain('UNHANDLED_ERROR');
+        expect(errors).toEqual([]);
+    });
 
-    // DEFECT: subscription-management requires `configuration.subscriptionId` but does not pass
-    // `required-configuration`, so it requests `/subscriptions/undefined` instead of waiting.
-    test.fail(
-        'subscription management waits for a subscription id like the other screens',
-        async ({ page }) => {
-            api = await mountSubscriptionManagement(page, { configuration: {} });
+    test('subscription management waits for a subscription id like the other screens', async ({
+        page,
+    }) => {
+        api = await mountSubscriptionManagement(page, { configuration: {} });
 
-            await expect
-                .poll(async () => (await hostEvents(page)).logs.map(({ code }) => code))
-                .toContain('MISSING_REQUIRED_PROPERTIES');
-            expect(api.calls('subscription')).toEqual([]);
-        },
-    );
+        await expect
+            .poll(async () => (await hostEvents(page)).logs.map(({ code }) => code))
+            .toContain('MISSING_REQUIRED_PROPERTIES');
+        expect(api.calls('subscription')).toEqual([]);
+    });
 
-    // DEFECT: LoggerProvider reads `onLog` once while setting up, so a plain HTML host that sets
-    // it after appending the element never hears from it.
-    test.fail('calls an onLog set right after the element was appended', async ({ page }) => {
+    test('calls an onLog set right after the element was appended', async ({ page }) => {
         api = await mountCustomerOverview(page);
         await expect(customerOverview(page).billingInformation).toBeVisible();
         const portalObject = aCustomerPortalObject();

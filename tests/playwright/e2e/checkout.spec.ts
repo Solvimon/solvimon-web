@@ -767,6 +767,37 @@ test.describe('Checkout', () => {
             expect(api.calls('authorizePayment')).toEqual([]);
             await expect(checkout(page).paid).toHaveCount(0);
         });
+
+        test('lets the customer try again after submitting empty card fields', async ({ page }) => {
+            api = await mountLoaded(page, {
+                portalObject: aPortalObject({ successUrl: '' }),
+                stripe: {
+                    submitError: {
+                        message: 'Your card number is incomplete.',
+                        type: 'validation_error',
+                        code: 'incomplete_number',
+                    },
+                },
+            });
+
+            await checkout(page).submit.click();
+
+            await expect(checkout(page).submit).toBeEnabled();
+            expect(api.calls('authorizePayment')).toEqual([]);
+        });
+
+        test('reports a submit Stripe throws on instead of waiting on it', async ({ page }) => {
+            api = await mountLoaded(page, {
+                portalObject: aPortalObject({ successUrl: '' }),
+                stripe: { submitRejection: 'elements.submit() blew up' },
+            });
+
+            await checkout(page).submit.click();
+
+            await expect(checkout(page).screen).toContainText(/(fail|wrong|error|try again)/i);
+            await expect(checkout(page).submit).toBeEnabled();
+            expect(api.calls('authorizePayment')).toEqual([]);
+        });
     });
 
     // ─── Return from a redirect ───────────────────────────────────────────────

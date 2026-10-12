@@ -52,6 +52,11 @@ export const ENDPOINTS = {
     updatePaymentMethod: { method: 'PATCH', path: /^\/v1\/portal\/payment-methods\/[^/]+$/ },
     tokenizePaymentMethod: { method: 'POST', path: '/v1/portal/payment-methods/tokenize' },
     paymentMethodOptions: { method: 'POST', path: '/v1/portal/payment-method-options' },
+    createAutoTopUpConfig: { method: 'POST', path: '/v1/portal/auto-top-up-configs' },
+    chargeOnDemandInvoice: {
+        method: 'POST',
+        path: '/v1/portal/invoices/charge-on-demand-pricing-items',
+    },
     payments: { method: 'GET', path: '/v1/portal/payments' },
     authorizePayment: { method: 'POST', path: '/v1/portal/payments/authorize' },
     verifyPaymentDetails: { method: 'POST', path: '/v1/portal/payments/verify-details' },

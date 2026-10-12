@@ -41,12 +41,17 @@ export function usePromotionCode({
         return isFieldError(error) && error.field === 'promotion_codes';
     };
 
+    // An apply or removal settles as the latest preview does, which a later apply or removal may
+    // have asked for. Only the one asked for last speaks for the code; an earlier one settles quietly.
+    let latestAction = 0;
+
     const applyPromotionCode = async (code?: string | null) => {
         const normalizedCode = code?.trim();
         if (!normalizedCode) {
             return;
         }
 
+        const action = ++latestAction;
         promotionCodeErrorMessage.value = null;
         checkoutForm.form.value.promotionCode = normalizedCode;
         isPromotionCodePending.value = true;
@@ -56,6 +61,8 @@ export function usePromotionCode({
                 promotionCode: normalizedCode,
             });
         } catch (error) {
+            if (action !== latestAction) return;
+
             logger.capture(error, {
                 code: 'PROMOTION_CODE_APPLY_FAILED',
                 message: 'Failed to apply promotion code',
@@ -71,7 +78,9 @@ export function usePromotionCode({
             void removePromotionCode({ suppressError: true, preserveErrorMessage: true });
             return;
         }
-        isPromotionCodePending.value = false;
+        if (action === latestAction) {
+            isPromotionCodePending.value = false;
+        }
     };
 
     const removePromotionCode = async ({
@@ -81,6 +90,7 @@ export function usePromotionCode({
         suppressError?: boolean;
         preserveErrorMessage?: boolean;
     } = {}) => {
+        const action = ++latestAction;
         if (!preserveErrorMessage) {
             promotionCodeErrorMessage.value = null;
         }
@@ -90,6 +100,8 @@ export function usePromotionCode({
         try {
             await updateInvoicePreviewOnBillingInformationChange({});
         } catch (error) {
+            if (action !== latestAction) return;
+
             logger.capture(error, {
                 code: 'PROMOTION_CODE_REMOVE_FAILED',
                 message: 'Failed to remove promotion code',
@@ -97,7 +109,8 @@ export function usePromotionCode({
             if (!suppressError) {
                 setErrorMessage('remove', error);
             }
-        } finally {
+        }
+        if (action === latestAction) {
             isPromotionCodePending.value = false;
         }
     };

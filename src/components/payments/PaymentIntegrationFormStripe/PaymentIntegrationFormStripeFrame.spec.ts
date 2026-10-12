@@ -494,7 +494,7 @@ describe('PaymentIntegrationFormStripeFrame, tried from outside (DD-3539)', () =
     // In a frame sandboxed without allow-same-origin, location.origin is still the URL's origin
     // while the document's, and so the blob frame's, is opaque. A message aimed at the URL's origin
     // is dropped and the frame is never set up; self.origin is the document's origin.
-    it.fails('posts to any origin when the document origin is opaque', async () => {
+    it('posts to any origin when the document origin is opaque', async () => {
         const original = Object.getOwnPropertyDescriptor(window, 'origin');
         Object.defineProperty(window, 'origin', { value: 'null', configurable: true });
         try {

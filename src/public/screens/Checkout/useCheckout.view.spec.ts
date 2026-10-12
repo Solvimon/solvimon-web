@@ -1240,6 +1240,30 @@ describe('useCheckoutView', () => {
     });
 
     describe('onMounted', () => {
+        it('stops at a subscription it cannot load without throwing it into the tree', async () => {
+            mockGetSubscription.mockRejectedValueOnce(new Error('Request failed with status 404'));
+            const errorHandler = vi.fn();
+
+            const wrapper = mount(
+                defineComponent({
+                    setup() {
+                        useCheckoutView({
+                            initialCountry: undefined,
+                            initialEmail: undefined,
+                            subscriptionId: 'sub_123' as PricingPlanSubscription['id'],
+                        });
+                        return () => h('div');
+                    },
+                }),
+                { global: { config: { errorHandler } } },
+            );
+            await flushPromises();
+
+            expect(errorHandler).not.toHaveBeenCalled();
+            expect(mockLoadInvoicePreview).not.toHaveBeenCalled();
+            wrapper.unmount();
+        });
+
         it('calls loadSubscription on mount', async () => {
             const [, wrapper] = withSetup(() =>
                 useCheckoutView({

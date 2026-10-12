@@ -54,6 +54,7 @@ import {
 } from '@/utils/subscription';
 import SecurePaymentsKPI from '@/components/payments/SecurePaymentsKPI/SecurePaymentsKPI.vue';
 import { safeUrlRedirect } from '@/utils/url';
+import { CodedError } from '@/utils/error';
 
 const PaymentIntegrationForm = defineAsyncComponent(
     () => import('@/components/payments/PaymentIntegrationForm/PaymentIntegrationForm.vue'),
@@ -87,9 +88,10 @@ const { isMobileViewport } = useViewport();
 
 logger.info('COMPONENT_INITIALIZED', 'Checkout component initialized');
 
+// Nothing below works with another portal object, so the setup stops here. The error boundary
+// reports it, once, under this code.
 if (portal.value?.type !== 'INIT_PRICING_PLAN_SUBSCRIPTION') {
-    logger.error('INVALID_TOKEN', 'Invalid token');
-    throw Error('Invalid token');
+    throw new CodedError('INVALID_TOKEN', 'Invalid token');
 }
 
 if (portal.value.status === 'REVOKED') {
@@ -744,7 +746,8 @@ const handleBillingPeriodChange = (billingPeriod: BillingPeriod) => {
         billing_period: billingPeriod,
     };
 
-    void loadInvoicePreview();
+    // Already logged as INVOICE_PREVIEW_FAILED, and the next change loads it again.
+    loadInvoicePreview().catch(() => {});
 };
 
 onMounted(() => {

@@ -117,7 +117,8 @@ test.describe('DD-3540 pay race tester', () => {
         await checkout(page).seats.pressSequentially('1111111111', { delay: 100 });
         await checkout(page).seats.fill('7');
 
-        await expect(page.getByText('The price could not be brought up to date')).toBeVisible();
+        // Nothing failed: the customer changed the order, so the message says that instead.
+        await expect(page.getByText('The price changed with your last edit')).toBeVisible();
         expect(api.calls('authorizePayment')).toEqual([]);
         await expect(checkout(page).orderSummary).toContainText('70.00');
 
@@ -197,9 +198,6 @@ test.describe('DD-3540 pay race tester', () => {
     });
 
     test('does not leave Pay stuck behind a preview that never answers', async ({ page }) => {
-        // Defect: a payment waits on the preview asked for at the time, with no timeout, and a later
-        // preview does not release it. Pay stays pending until the page is reloaded.
-        test.fail();
         let fiveSeatsAsked = 0;
         api = await mountSeats(page, (request) => {
             const seats = seatsOf(request);
@@ -219,11 +217,36 @@ test.describe('DD-3540 pay race tester', () => {
         await checkout(page).submit.click();
         await expect.poll(() => fiveSeatsAsked).toBe(2);
 
-        // The customer gives up on five seats; the preview for three answers at once.
+        // The customer gives up on five seats; the preview for three answers at once. The waiting
+        // payment follows it, as it follows any change asked for while it waits, and goes out at the
+        // price of the seats the form now holds instead of staying stuck behind five.
         await checkout(page).seats.fill('3');
-        await expect(checkout(page).orderSummary).toContainText('30.00');
 
-        await expect(checkout(page).submit).toBeEnabled({ timeout: 5000 });
+        expect(await paidAmount(api)).toEqual({
+            seats: '3',
+            amount: { quantity: '30.00', currency: 'EUR' },
+        });
+    });
+
+    test('holds the payment back, and releases Pay, when the preview it waits on never answers', async ({
+        page,
+    }) => {
+        test.setTimeout(45_000);
+        api = await mountSeats(page, (request) => ({
+            // The preview of five never comes back within the test.
+            delayMs: seatsOf(request) === '5' ? 120_000 : 0,
+            body: anInvoicePreview({ total: priceFor(seatsOf(request)) }),
+        }));
+
+        await checkout(page).seats.fill('5');
+        await payPastTheButton(page);
+
+        await expect(checkout(page).screen).toContainText(
+            'The price could not be brought up to date',
+            { timeout: 15_000 },
+        );
+        expect(api.calls('authorizePayment')).toEqual([]);
+        await expect(checkout(page).seats).toBeEditable();
     });
 
     test('pays the discounted price when the code is applied just before', async ({ page }) => {
@@ -288,10 +311,6 @@ test.describe('DD-3540 pay race tester', () => {
     test('pays a price that matches the seats sent when they change while Stripe makes its token', async ({
         page,
     }) => {
-        // Defect: the price is settled before Stripe is asked for a token, but the amount and the
-        // context are read only once the token is back. The plan and the form stay editable while
-        // Pay spins, so a change in between is sent with the price from before it.
-        test.fail();
         // Stripe takes its time over the token, as the real one does over the network.
         await page.addInitScript(() => {
             if (window.top === window) return;

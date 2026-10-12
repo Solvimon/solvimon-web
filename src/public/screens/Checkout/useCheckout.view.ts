@@ -71,6 +71,12 @@ function onlyPlanConfigs(
         : undefined;
 }
 
+/** How long a payment waits for the price before it is held back instead. */
+export const PRICE_SETTLE_TIMEOUT_MS = 10_000;
+
+/** `CHANGED`: the customer changed the order while the payment waited for its price. */
+export type PriceSettlement = 'SETTLED' | 'CHANGED' | 'FAILED';
+
 export function useCheckoutView({
     initialCountry,
     initialEmail,
@@ -552,9 +558,10 @@ export function useCheckoutView({
      * Whether the price on screen is the price of the form as it is. The amount authorized comes
      * from the preview, and the server takes it as given, so a payment waits on this first: a
      * change the debounce still holds back is asked for now, and a failed preview is asked again.
+     * The wait follows the latest preview, and gives up after a while rather than hold Pay.
      */
-    const settleInvoicePreview = async (): Promise<boolean> => {
-        if (!subscription.value) return false;
+    const settleInvoicePreview = async (): Promise<PriceSettlement> => {
+        if (!subscription.value) return 'FAILED';
 
         checkoutForm.flushPreviewChange();
         if (invoicePreview.isFailed.value) {
@@ -563,15 +570,27 @@ export function useCheckoutView({
             });
         }
 
+        let timer: ReturnType<typeof setTimeout> | undefined;
+        const timedOut = new Promise<false>((resolve) => {
+            timer = setTimeout(() => resolve(false), PRICE_SETTLE_TIMEOUT_MS);
+        });
         try {
-            await invoicePreview.whenLoaded();
+            const isLoaded = await Promise.race([
+                invoicePreview.whenLoaded().then(() => true),
+                timedOut,
+            ]);
+            if (!isLoaded) return 'FAILED';
         } catch {
-            return false;
+            return 'FAILED';
+        } finally {
+            clearTimeout(timer);
         }
         // The payment form reads the amount from its props, which follow on the next render.
         await nextTick();
 
-        return !checkoutForm.isPreviewStale.value && !invoicePreview.isPending.value;
+        return checkoutForm.isPreviewStale.value || invoicePreview.isPending.value
+            ? 'CHANGED'
+            : 'SETTLED';
     };
 
     watch(

@@ -16,12 +16,17 @@ const {
     isInvoicePreviewStale,
     settleInvoicePreview,
     checkoutFormValue,
+    amountValue,
     SEATS_VALUES,
 } = vi.hoisted(() => ({
+    /** The amount the screen was last handed, to change it from a spec. */
+    amountValue: {
+        current: undefined as { value: { currency: string; quantity: string } } | undefined,
+    },
     isPaid: { value: false },
     isInvoicePreviewPending: { value: false },
     isInvoicePreviewStale: { value: false },
-    settleInvoicePreview: vi.fn(() => Promise.resolve(true)),
+    settleInvoicePreview: vi.fn(() => Promise.resolve('SETTLED')),
     /** The form the screen was last handed, to change it from a spec. */
     checkoutFormValue: { current: undefined as { value: Record<string, unknown> } | undefined },
     hasPaymentMethodOptionsError: { value: false },
@@ -77,7 +82,7 @@ vi.mock('./useCheckout.view', async () => {
                 get: () => isPaid.value,
                 set: (value: boolean) => (isPaid.value = value),
             }),
-            amount: r({ currency: 'EUR', quantity: '10.00' }),
+            amount: (amountValue.current = r({ currency: 'EUR', quantity: '10.00' })),
             recurringAmount: c(() => recurringAmount.value),
             hasOneOffCharges: c(() => hasOneOffCharges.value),
             loadInvoicePreview: vi.fn(),
@@ -213,7 +218,7 @@ describe('Checkout', () => {
         isInvoicePreviewPending.value = false;
         isInvoicePreviewStale.value = false;
         settleInvoicePreview.mockReset();
-        settleInvoicePreview.mockResolvedValue(true);
+        settleInvoicePreview.mockResolvedValue('SETTLED');
         hasPaymentMethodOptionsError.value = false;
         paymentMethodOptions.value = [];
         portalNote.note = undefined;
@@ -434,12 +439,59 @@ describe('Checkout', () => {
         });
 
         it('holds the payment back, and says so, when the price cannot be brought up to date', async () => {
-            settleInvoicePreview.mockResolvedValue(false);
+            settleInvoicePreview.mockResolvedValue('FAILED');
             const { wrapper, validate } = await validateOnSubmit();
 
             await expect(validate()).resolves.toBe(false);
             await wrapper.vm.$nextTick();
             expect(wrapper.find('.sv-checkout__payment-error').exists()).toBe(true);
+        });
+
+        // Nothing failed: the customer changed the order, and needs to see its new price first.
+        it('says the price changed when the customer changed the order while it waited', async () => {
+            settleInvoicePreview.mockResolvedValue('CHANGED');
+            const { wrapper, validate } = await validateOnSubmit();
+
+            await expect(validate()).resolves.toBe(false);
+            await wrapper.vm.$nextTick();
+            expect(wrapper.find('.sv-checkout__payment-error').attributes('title')).toMatch(
+                /price changed/i,
+            );
+        });
+
+        // A card gateway reads the amount and the order only once it hands its token back.
+        it('sends the amount and the order of the moment the price settled', async () => {
+            const { wrapper, validate } = await validateOnSubmit();
+            const form = () => wrapper.findComponent({ name: 'PaymentIntegrationForm' });
+
+            await validate();
+            amountValue.current!.value = { currency: 'EUR', quantity: '50.00' };
+            await wrapper.vm.$nextTick();
+
+            expect(form().vm.$attrs.amount).toEqual({ currency: 'EUR', quantity: '10.00' });
+
+            form().vm.$emit('payment-failed', { message: 'Declined' });
+            await wrapper.vm.$nextTick();
+
+            expect(form().vm.$attrs.amount).toEqual({ currency: 'EUR', quantity: '50.00' });
+        });
+
+        it('locks the order while the payment is out, and frees it once it fails', async () => {
+            const { wrapper, validate } = await validateOnSubmit();
+            const locked = () =>
+                ['CheckoutForm', 'PlanCustomizationEditor', 'PromotionCodeSection'].map(
+                    (name) => wrapper.findComponent({ name }).attributes('inert') !== undefined,
+                );
+
+            expect(locked()).toEqual([false, false, false]);
+
+            await validate();
+            await wrapper.vm.$nextTick();
+            expect(locked()).toEqual([true, true, true]);
+
+            wrapper.findComponent({ name: 'PaymentIntegrationForm' }).vm.$emit('invalid');
+            await wrapper.vm.$nextTick();
+            expect(locked()).toEqual([false, false, false]);
         });
     });
 

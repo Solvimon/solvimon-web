@@ -531,6 +531,10 @@
     "defaultMessage": "Your payment could not be confirmed yet and may still go through, so please do not pay again.",
     "description": "Shown when it is not yet known whether an express payment the customer made went through"
   },
+  "checkout.price_changed": {
+    "defaultMessage": "The price changed with your last edit. Check it and pay again.",
+    "description": "Shown when a payment is held back because the customer changed the order while it waited for the price"
+  },
   "checkout.price_not_settled": {
     "defaultMessage": "The price could not be brought up to date. Please try again.",
     "description": "Error shown when a payment is held back because the price of the latest changes could not be loaded"

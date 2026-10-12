@@ -522,6 +522,32 @@ describe('useInvoicePreview', () => {
             expect(invoicePreview.value).toEqual({ id: 'inv_de' });
         });
 
+        // A superseded preview hands over only once it settles; one that never answers never does.
+        it('moves on to a later preview past one that never answers', async () => {
+            const pending: ((preview: InvoicePreview) => void)[] = [];
+            mockGetInvoicePreview.mockImplementation(
+                () => new Promise((resolve) => pending.push(resolve)),
+            );
+            const { loadInvoicePreview, whenLoaded } = useInvoicePreview();
+
+            void loadInvoicePreview({ subscription, customer: individualCustomer('NL') });
+            let isLoaded = false;
+            void whenLoaded().then(() => (isLoaded = true));
+            void loadInvoicePreview({ subscription, customer: individualCustomer('DE') });
+            pending[1]!({
+                first_invoice: { id: 'inv_de' },
+                invoice_infos: [
+                    {
+                        pricing_plan_schedule_id: 'default_schedule_id',
+                        invoices: [{ id: 'inv_de' }],
+                    },
+                ],
+            } as unknown as InvoicePreview);
+            await flushPromises();
+
+            expect(isLoaded).toBe(true);
+        });
+
         it('reports a preview that failed', async () => {
             mockGetInvoicePreview.mockRejectedValueOnce(new Error('Boom'));
             const { loadInvoicePreview, whenLoaded, isFailed } = useInvoicePreview();

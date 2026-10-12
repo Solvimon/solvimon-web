@@ -199,3 +199,102 @@ describe('PaymentIntegrationForm (DD-3538 round 3 tester)', () => {
         await expect(validate(a!)()).resolves.toBe(false);
     });
 });
+
+describe('PaymentIntegrationForm (DD-3538 round 4 tester)', () => {
+    /**
+     * One validation both submits wait on, as when the screen's validation is still running
+     * (Vuelidate's async rules, a VAT lookup) and a second form submits meanwhile: both answers
+     * arrive in the same tick.
+     */
+    function sharedValidation() {
+        let release: (ok: boolean) => void = () => {};
+        const pending = new Promise<boolean>((resolve) => (release = resolve));
+        return { validateOnSubmit: vi.fn(() => pending), release: () => release(true) };
+    }
+
+    /** What each gateway form does with the answer, in its own order. */
+    function submitAs(form: ReturnType<typeof forms>[number], gateway: 'ADYEN' | 'STRIPE') {
+        return validate(form)().then((ok) => {
+            // Adyen says `submitting` as soon as its validation is through; Stripe only once the
+            // frame has made it a token, after the claim the validation took.
+            if (ok && gateway === 'ADYEN') form.vm.$emit('submitting');
+            return ok;
+        });
+    }
+
+    async function race(options: unknown[], gateways: ('ADYEN' | 'STRIPE')[]) {
+        const { validateOnSubmit, release } = sharedValidation();
+        const wrapper = mountForm(options, validateOnSubmit);
+        await flushPromises();
+        await new Promise((resolve) => setTimeout(resolve, 50));
+        const all = forms(wrapper);
+
+        const answers = Promise.all(all.map((form, i) => submitAs(form, gateways[i]!)));
+        release();
+        return (await answers).filter(Boolean).length;
+    }
+
+    it('lets one of two Stripe forms through when both submit within one validation', async () => {
+        await expect(race([stripe('s1'), stripe('s2')], ['STRIPE', 'STRIPE'])).resolves.toBe(1);
+    });
+
+    it('lets one through when Stripe submits first and Adyen joins the same validation', async () => {
+        await expect(race([stripe('s'), adyen('a')], ['STRIPE', 'ADYEN'])).resolves.toBe(1);
+    });
+
+    // An Adyen form does not claim at validation (`claims: false`) and says `submitting` only in
+    // the `then` after it, so a second form whose validation resolves in the same tick re-checks
+    // the hold before anyone holds it, and both pay.
+    it.fails(
+        'lets one of two Adyen forms through when both submit within one validation',
+        async () => {
+            await expect(race([adyen('a'), adyen('b')], ['ADYEN', 'ADYEN'])).resolves.toBe(1);
+        },
+    );
+
+    it.fails(
+        'lets one through when Adyen submits first and Stripe joins the same validation',
+        async () => {
+            await expect(race([adyen('a'), stripe('s')], ['ADYEN', 'STRIPE'])).resolves.toBe(1);
+        },
+    );
+
+    it('lets go of a Stripe claim on each way its submit can end', async () => {
+        for (const end of ['invalid', 'payment-failed', 'payment-success'] as const) {
+            const { all } = await mounted([stripe('s'), adyen('a')]);
+            const [s, a] = all;
+
+            await expect(validate(s!)()).resolves.toBe(true);
+            await expect(validate(a!)()).resolves.toBe(false);
+            if (end === 'payment-failed') s!.vm.$emit(end, { code: 'AUTHORIZATION_FAILED' });
+            else s!.vm.$emit(end);
+
+            await expect(validate(a!)()).resolves.toBe(true);
+        }
+    });
+
+    it('lets go of a Stripe claim when the Stripe form leaves the list', async () => {
+        const wrapper = mountForm([stripe('s'), adyen('a')]);
+        await flushPromises();
+        await new Promise((resolve) => setTimeout(resolve, 50));
+        const [s] = forms(wrapper);
+        await expect(validate(s!)()).resolves.toBe(true);
+
+        await wrapper.setProps({ paymentMethodOptions: [adyen('a')] });
+        await flushPromises();
+        const [a] = forms(wrapper);
+
+        await expect(validate(a!)()).resolves.toBe(true);
+    });
+
+    it('takes no claim for a Stripe form the screen turned down', async () => {
+        const validateOnSubmit = vi.fn().mockResolvedValueOnce(false).mockResolvedValue(true);
+        const wrapper = mountForm([stripe('s'), adyen('a')], validateOnSubmit);
+        await flushPromises();
+        await new Promise((resolve) => setTimeout(resolve, 50));
+        const [s, a] = forms(wrapper);
+
+        await expect(validate(s!)()).resolves.toBe(false);
+        await expect(validate(a!)()).resolves.toBe(true);
+    });
+});

@@ -5,20 +5,17 @@ import type {
     AutoTopUpCancellationModalEmits,
     AutoTopUpCancellationModalProps,
 } from './AutoTopUpCancellationModal.types';
-import { createAutoTopUpConfigsService } from '@/services/autoTopUpConfigs';
 import { useWalletBalanceFormat } from '@/composables/useWalletBalanceFormat';
-import { useLogger } from '@/components/providers/LoggerProvider/composables/useLogger';
+import { useDeactivateAutoTopUpConfig } from '@/composables/useDeactivateAutoTopUpConfig';
 
 const props = defineProps<AutoTopUpCancellationModalProps>();
 const emit = defineEmits<AutoTopUpCancellationModalEmits>();
 
 const { $t } = useIntl();
-const logger = useLogger();
 const { formatValue } = useWalletBalanceFormat();
 
-const { deactivateAutoTopUpConfig } = createAutoTopUpConfigsService();
+const { deactivate, isDeactivating: isSubmitting } = useDeactivateAutoTopUpConfig();
 
-const isSubmitting = ref(false);
 const hasFailed = ref(false);
 
 watch(
@@ -75,25 +72,15 @@ const handleConfirm = async () => {
         return;
     }
 
-    isSubmitting.value = true;
     hasFailed.value = false;
 
-    try {
-        await deactivateAutoTopUpConfig(configId);
-
-        emit('confirmed');
-        emit('close');
-    } catch (error) {
-        logger.error(
-            'AUTO_TOP_UP_CANCELLATION_FAILED',
-            "Failed to turn off a wallet's automatic top-up",
-            {},
-            error,
-        );
+    if (!(await deactivate(configId))) {
         hasFailed.value = true;
-    } finally {
-        isSubmitting.value = false;
+        return;
     }
+
+    emit('confirmed');
+    emit('close');
 };
 
 const handleClose = () => {

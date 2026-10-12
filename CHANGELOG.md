@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - A payment whose outcome is not known yet is no longer reported as failed. A bank debit such as SEPA that is still processing, an authorization answered with a pending payment, and a payment call that got no answer or failed with a 5xx used to show "Payment failed" with a "Try again" button, so a customer whose payment was on its way could pay a second time. The customer is now told the payment may still go through and not to pay again, with no retry, and checkout and the pay invoice screen keep the pay button and the express payment methods off. It is logged as `PAYMENT_OUTCOME_UNCONFIRMED` (warning), and a `payment-failed` event for it carries that code instead of `AUTHORIZATION_FAILED`. Only a call the API turned down (a 4xx) still counts as a failed payment.
 - When checkout cannot keep its form for a payment redirect, for example because session storage throws, it logs `CHECKOUT_FORM_STATE_NOT_SAVED` as a warning and the pay button no longer stays pending.
-- An element that is missing `environment`, `portalObject` or the id its `configuration` needs (`invoiceId` for `invoice`, `invoice-header`, `invoice-details`, `payment-history` and `pay-invoice`; `subscriptionId` for `subscription-details` and `subscription-schedules`) renders nothing until they are set, and logs `MISSING_REQUIRED_PROPERTIES` as a warning, with the missing names in `context.missing`, if they are still missing just after it mounts.
+- An element that is missing `environment`, `portalObject` or the id its `configuration` needs (`invoiceId` for `invoice`, `invoice-header`, `invoice-details`, `payment-history` and `pay-invoice`; `subscriptionId` for `subscription-details`, `subscription-schedules` and `subscription-management`) renders nothing until they are set, and logs `MISSING_REQUIRED_PROPERTIES` as a warning, with the missing names in `context.missing`, if they are still missing just after it mounts.
 
 ### Changed
 
@@ -24,6 +24,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The `manage-subscription` action request carries `data.enabledPricingId` when the customer chose Upgrade on a pricing in `SubscriptionDetails`. Pass it to `SubscriptionManagement` as `configuration.enabledPricingId` to open on that pricing's group.
 - The billing information block's Edit button has a message id of its own, `customer_overview.billing_information_block.edit_button_label`. It used `customer_overview.billing_information_block.view_all_payment_methods_link_label`; a `messages` override for the old id no longer applies, so move it to the new one.
 - The checkout's `error` event is typed with an `Error` as its payload, like every other element's. It was typed as `{ title, message }`, which nothing ever sent.
+- A checkout given a portal object meant for another element still logs `INVALID_TOKEN`, once, and now also dispatches it as an `error` event.
+- An error the UI library recovers from by itself, such as a date it can only format in the browser's own time zone, is logged as the warning `UI_COMPONENT_RECOVERED` rather than as `UNHANDLED_ERROR`.
 - A JSON response that cannot be parsed is logged once, as `REQUEST_PARSE_FAILED` with the request's `path`, `method`, `statusCode` and `requestId`. It used to be logged a second time as `REQUEST_FAILED`, and without that context.
 
 ### Fixed
@@ -75,6 +77,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The `log` and `action-request` events, and `cssOverrides`, work from the moment an element starts rendering. Entries logged while it rendered for the first time used to reach `onLog` without a `log` event, and an action requested then went ahead without an `action-request` event the host could cancel.
 - An `onLog` callback that throws no longer replaces the error being logged, or stops the other log outputs. Its error is rethrown outside the SDK, where the page's own error reporting sees it.
 - The `billing-information-form` component logs a customer that fails to load as `INITIAL_DATA_LOAD_FAILED`.
+- The logger reads `onLog`, `logLevel` and `environment` each time it logs. An element whose properties were set after it was appended never called that `onLog`, and kept writing to the console with `environment` missing from its entries even once it was set to `LIVE`.
+- `UNHANDLED_ERROR` entries carry the `componentName`, `environment` and `url` every other entry has, so a page with several elements can tell which one failed.
 
 ## [0.1.0-alpha.27] - 2026-10-12
 

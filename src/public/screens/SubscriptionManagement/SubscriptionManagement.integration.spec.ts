@@ -502,6 +502,18 @@ describe('SubscriptionManagement', () => {
             );
         });
 
+        it('describes the button by nothing while the message is not on screen yet', () => {
+            const wrapper = mountComponent({
+                enabledPricingId: 'pri_5000',
+                paymentMethods: [],
+                isLoading: true,
+            });
+
+            expect(
+                wrapper.find('.sv-subscription-management__update').attributes('aria-describedby'),
+            ).toBeUndefined();
+        });
+
         it('describes the button by nothing while there is a method', () => {
             const wrapper = mountComponent({ enabledPricingId: 'pri_5000' });
 

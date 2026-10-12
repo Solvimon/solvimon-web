@@ -294,22 +294,38 @@ const handleUpdate = async () => {
     }
 };
 
-/** Tells a customer looking at the disabled button why it is disabled. */
-const submitButtonAttrs = computed(() => {
-    const reasonId = isCustomized.value
-        ? CUSTOMIZED_PRICING_ID
-        : pricingGroup.value && subscriptionPaymentMethods.value.length === 0
-          ? NO_PAYMENT_METHOD_ID
-          : undefined;
-
-    return { form: FORM_ID, ...(reasonId && { 'aria-describedby': reasonId }) };
-});
-
 const billingPeriod = computed(
     () =>
         activeScheduleInfo.value?.pricing_plan_schedule?.billing_period ??
         subscription.value?.billing_period,
 );
+
+/** What the content column shows, in order of precedence. */
+const contentState = computed<
+    'updated' | 'loading' | 'load-error' | 'customized' | 'form' | 'empty'
+>(() => {
+    if (isUpdated.value) return 'updated';
+    if (isLoading.value) return 'loading';
+    if (subscriptionError.value) return 'load-error';
+    if (pricingGroup.value && isCustomized.value) return 'customized';
+    if (pricingGroup.value && billingPeriod.value) return 'form';
+    return 'empty';
+});
+
+/**
+ * Tells a customer looking at the disabled button why it is disabled — only by a message that is
+ * on screen.
+ */
+const submitButtonAttrs = computed(() => {
+    const reasonId =
+        contentState.value === 'customized'
+            ? CUSTOMIZED_PRICING_ID
+            : contentState.value === 'form' && subscriptionPaymentMethods.value.length === 0
+              ? NO_PAYMENT_METHOD_ID
+              : undefined;
+
+    return { form: FORM_ID, ...(reasonId && { 'aria-describedby': reasonId }) };
+});
 </script>
 
 <template>
@@ -324,15 +340,19 @@ const billingPeriod = computed(
 
         <template #content>
             <SubscriptionManagementSuccess
-                v-if="isUpdated"
+                v-if="contentState === 'updated'"
                 class="sv-subscription-management__success"
                 :pricing-group-name="pricingGroup?.name"
             />
 
-            <Skeleton v-else-if="isLoading" variant="section" class="min-h-[220px]" />
+            <Skeleton
+                v-else-if="contentState === 'loading'"
+                variant="section"
+                class="min-h-[220px]"
+            />
 
             <ErrorNotification
-                v-else-if="subscriptionError"
+                v-else-if="contentState === 'load-error'"
                 class="sv-subscription-management__load-error sv-error"
                 :title="
                     $t({
@@ -345,7 +365,7 @@ const billingPeriod = computed(
             />
 
             <EmptyStatePlaceholder
-                v-else-if="pricingGroup && isCustomized"
+                v-else-if="contentState === 'customized'"
                 class="sv-subscription-management__customized-pricing"
                 icon="info"
             >
@@ -372,7 +392,7 @@ const billingPeriod = computed(
             </EmptyStatePlaceholder>
 
             <SubscriptionManagementForm
-                v-else-if="pricingGroup && billingPeriod"
+                v-else-if="contentState === 'form' && pricingGroup && billingPeriod"
                 :id="FORM_ID"
                 v-model:enabled-pricing-ids="enabledPricingIds"
                 v-model:payment-method-id="paymentMethodId"

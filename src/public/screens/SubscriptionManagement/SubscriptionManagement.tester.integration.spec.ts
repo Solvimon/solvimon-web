@@ -496,7 +496,7 @@ describe('SubscriptionManagement (tester, DD-3544)', () => {
          * the custom-pricing message, which is not rendered (`submitButtonAttrs` vs the
          * `pricingGroup && isCustomized` branch in SubscriptionManagement.vue).
          */
-        it.fails('only points the button at a message that is on screen', async () => {
+        it('only points the button at a message that is on screen', async () => {
             const wrapper = mountComponent({
                 sub: withSchedule(
                     {

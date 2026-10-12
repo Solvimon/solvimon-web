@@ -15,6 +15,7 @@ import { isEUCountry } from '@solvimon/solvimon-ui';
 import type { CountryCode } from '@solvimon/solvimon-types';
 import type { CheckoutFormState, CheckoutFormProps, CheckoutFormEmits } from './CheckoutForm.types';
 import TaxIDCheckNotice from './TaxIDCheckNotice.vue';
+import { isVatNumberShown } from './CheckoutForm.lib';
 import CompanyPurchaseToggle from '@/components/customer/CompanyPurchaseToggle.vue';
 import { useCustomerFormLabels } from '@/components/customer/useCustomerFormLabels';
 import { useTaxIDValidationCheck } from '@/composables/useTaxIDValidationCheck';
@@ -59,7 +60,7 @@ const country = computed<SelectControlValue>({
     },
 });
 
-const showVatIdInput = computed(() => model.value.country !== 'US');
+const showVatIdInput = computed(() => isVatNumberShown(model.value));
 
 const { isTaxIDCheckEnabled, isTaxIDCheckPending, taxIdValidationData, runTaxIDCheck } =
     useTaxIDValidationCheck(model);

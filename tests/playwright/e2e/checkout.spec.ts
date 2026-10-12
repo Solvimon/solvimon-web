@@ -523,6 +523,21 @@ test.describe('Checkout', () => {
             expect(api.calls('authorizePayment')).toEqual([]);
         });
 
+        test('pays once the invalid VAT number is hidden again', async ({ page }) => {
+            api = await mountLoaded(page, {
+                mocks: { authorizePayment: { body: aSuccessfulAuthorization() } },
+            });
+
+            await checkout(page).companyPurchase.click();
+            await checkout(page).vatNumber.fill('123');
+            await checkout(page).companyPurchase.click();
+            await expect(checkout(page).vatNumber).toBeHidden();
+            await checkout(page).submit.click();
+
+            const authorization = await api.waitForCall('authorizePayment');
+            expect(JSON.stringify(authorization.body)).not.toContain('"123"');
+        });
+
         test('does not submit while the form is invalid', async ({ page }) => {
             api = await mountLoaded(page, { configuration: { countryCode: 'NL' } });
 

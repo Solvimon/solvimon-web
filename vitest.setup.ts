@@ -1,14 +1,14 @@
-import { vi } from 'vitest';
+import { beforeEach, vi } from 'vitest';
+import { providerMockLogger } from './src/test-utils/providerMock';
 
-vi.mock('@/components/providers', () => ({
-    useLogger: () => ({
-        error: vi.fn(),
-        info: vi.fn(),
-        warn: vi.fn(),
-        debug: vi.fn(),
-        capture: vi.fn(),
-    }),
-}));
+vi.mock('@/components/providers', async () => {
+    const { createProviderMock } = await import('./src/test-utils/providerMock');
+    return createProviderMock();
+});
+
+beforeEach(() => {
+    Object.values(providerMockLogger).forEach((log) => log.mockClear());
+});
 
 Object.defineProperty(window, 'matchMedia', {
     writable: true,

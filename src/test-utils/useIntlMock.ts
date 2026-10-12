@@ -1,13 +1,36 @@
+import { createIntl, createIntlCache } from '@formatjs/intl';
+import type { IntlConfig, MessageDescriptor } from '@formatjs/intl';
+import enUS from '@/translations/locales/en-US.json';
+
+type MessageValues = Record<
+    string,
+    string | number | boolean | null | undefined | Date | ((chunks: string[]) => string)
+>;
+
+/**
+ * A missing translation falls back to `defaultMessage`, as it does in production. Anything else
+ * (an unparsable message, a placeholder without a value, a tag without a handler) is a bug that
+ * production would only log and render verbatim, so a spec fails on it instead.
+ */
+export const throwOnIntlError: IntlConfig['onError'] = (error) => {
+    if (error.code === 'MISSING_TRANSLATION') return;
+    throw error;
+};
+
+const cache = createIntlCache();
+
+const intl = createIntl(
+    { locale: 'en-US', defaultLocale: 'en-US', messages: enUS, onError: throwOnIntlError },
+    cache,
+);
+
+const formatMessage = (message: MessageDescriptor, values?: MessageValues): string => {
+    const formatted = intl.formatMessage(message, values);
+    return Array.isArray(formatted) ? formatted.join('') : String(formatted);
+};
+
 export const mockUseIntl = () => ({
-    $t: (message: { defaultMessage: string }, values?: Record<string, string>) => {
-        let result = message.defaultMessage;
-        if (values) {
-            Object.entries(values).forEach(([key, value]) => {
-                result = result.replace(`{${key}}`, String(value));
-            });
-        }
-        return result;
-    },
+    $t: formatMessage,
     formatDate: ({
         date,
         format,
@@ -34,14 +57,6 @@ export const mockUseIntl = () => ({
             ...(timezone ? { timeZone: timezone } : {}),
         }).format(new Date(date));
     },
-    formatMessage: (message: { defaultMessage: string }, values?: Record<string, string>) => {
-        let result = message.defaultMessage;
-        if (values) {
-            Object.entries(values).forEach(([key, value]) => {
-                result = result.replace(`{${key}}`, String(value));
-            });
-        }
-        return result;
-    },
+    formatMessage,
     formatNumber: (n: number) => String(n),
 });

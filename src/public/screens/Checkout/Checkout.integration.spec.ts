@@ -223,9 +223,10 @@ describe('Checkout', () => {
         paymentMethodOptions.value = [];
         portalNote.note = undefined;
         subscription.value = CUSTOMISABLE_SUBSCRIPTION;
+        // A preview without a period leaves the express agreement no start date to state.
         invoicePreview.value = {
             id: 'inv_preview',
-            periods: [],
+            periods: [{ start_at: '2026-10-09T00:00:00.000Z' }],
             tax_summary: { total_amount: { currency: 'EUR', quantity: '10.00' } },
         };
         recurringAmount.value = { currency: 'EUR', quantity: '10.00' };

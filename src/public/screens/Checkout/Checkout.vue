@@ -144,10 +144,15 @@ const handleSubmit = async () => {
         return;
     }
 
+    handlePaymentSubmitting();
+    paymentIntegrationFormRef.value.submit();
+};
+
+/** Also reached when the form submits on its own, so it may redirect away just the same. */
+const handlePaymentSubmitting = () => {
     isPaymentPending.value = true;
     paymentErrorMessage.value = null;
     saveFormStateForRedirect();
-    paymentIntegrationFormRef.value.submit();
 };
 
 const paymentErrorMessage = ref<string | null>(null);
@@ -932,6 +937,7 @@ onMounted(() => {
                                         @payment-success="handlePaymentSuccess"
                                         @payment-failed="handlePaymentFailed"
                                         @invalid="handlePaymentNotSubmitted"
+                                        @submitting="handlePaymentSubmitting"
                                         @ready="emit('ready')"
                                     />
                                 </div>

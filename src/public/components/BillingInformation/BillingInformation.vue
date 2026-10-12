@@ -44,9 +44,9 @@ const { dispatchAction } = useActionDispatchProvider();
                 >{{
                     $t({
                         defaultMessage: 'Edit',
-                        id: 'customer_overview.billing_information_block.view_all_payment_methods_link_label',
+                        id: 'customer_overview.billing_information_block.edit_button_label',
                         description:
-                            'The link text that links to the overview page of the customer billing information',
+                            'The label of the button that opens the form to edit the customer billing information',
                     })
                 }}</Button
             >

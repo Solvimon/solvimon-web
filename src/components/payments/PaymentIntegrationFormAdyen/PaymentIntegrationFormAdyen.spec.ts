@@ -115,12 +115,13 @@ const mockGetAdyenDropInPaymentMethods = adyen.getDropInPaymentMethods;
 const mockHandleAction = adyen.handleAction;
 const mockAdyenCheckout = adyen.checkout;
 const captured = adyen.captured;
+/** Assigned onto the drop-in after the fact, since it hands back the drop-in itself. */
+const mockDropInMount = (adyen.dropIn as unknown as { mount: ReturnType<typeof vi.fn> }).mount;
 
 vi.mock('@adyen/adyen-web', () => ({
     AdyenCheckout: (config: Record<string, unknown>) => {
         adyen.captured.checkoutConfig = config;
-        adyen.checkout(config);
-        return Promise.resolve({ config });
+        return adyen.checkout(config) ?? Promise.resolve({ config });
     },
     Dropin: function Dropin(
         _checkout: unknown,
@@ -1148,6 +1149,75 @@ describe('PaymentIntegrationFormAdyen', () => {
             expect(wrapper.findComponent({ name: 'PaymentErrorCard' }).exists()).toBe(false);
             expect(mockAdyenCheckout).toHaveBeenCalledTimes(2);
             expect(mockGetPaymentDetails).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('mounting', () => {
+        function holdCheckout() {
+            let release: () => void = () => {};
+            mockAdyenCheckout.mockImplementationOnce(
+                (config: unknown) =>
+                    new Promise((resolve) => {
+                        release = () => resolve({ config });
+                    }),
+            );
+            return () => release();
+        }
+
+        it('builds nothing once the form has gone', async () => {
+            const release = holdCheckout();
+            const wrapper = await mountComponent();
+
+            wrapper.unmount();
+            release();
+            await flushPromises();
+
+            expect(mockDropInMount).not.toHaveBeenCalled();
+            expect(mockLogger.error).not.toHaveBeenCalled();
+        });
+
+        it('builds one drop-in when a rebuild overtakes the first build', async () => {
+            const release = holdCheckout();
+            const wrapper = await mountComponent();
+
+            await wrapper.setProps({
+                paymentMethodOptionResponseEntry: {
+                    ...mockProps.paymentMethodOptionResponseEntry,
+                    payment_acceptor: { id: 'paya_456' },
+                } as never,
+            });
+            await flushPromises();
+            release();
+            await flushPromises();
+
+            expect(mockDropInMount).toHaveBeenCalledTimes(1);
+        });
+
+        it('adds its styles to the shadow root once, however often it is rebuilt', async () => {
+            const host = document.createElement('div');
+            document.body.appendChild(host);
+            const shadowRoot = host.attachShadow({ mode: 'open' });
+            const target = document.createElement('div');
+            shadowRoot.appendChild(target);
+
+            const wrapper = mount(PaymentIntegrationFormAdyen, {
+                props: mockProps,
+                attachTo: target,
+            });
+            await flushPromises();
+            await wrapper.setProps({
+                paymentMethodOptionResponseEntry: {
+                    ...mockProps.paymentMethodOptionResponseEntry,
+                    payment_acceptor: { id: 'paya_456' },
+                } as never,
+            });
+            await flushPromises();
+
+            expect(mockDropInMount).toHaveBeenCalledTimes(2);
+            expect(shadowRoot.querySelectorAll('style')).toHaveLength(3);
+
+            wrapper.unmount();
+            host.remove();
         });
     });
 });

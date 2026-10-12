@@ -31,6 +31,8 @@ export interface InvoicesListConfiguration {
 export interface InvoicesListProps {
     invoices: Invoice[];
     isLoading: boolean;
+    /** Set when the invoices, or the next batch of them, failed to load. */
+    error?: Error | null;
     hasMoreItems: boolean;
     configuration?: InvoicesListConfiguration;
 }

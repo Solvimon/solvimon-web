@@ -103,7 +103,8 @@ watch([activeScheduleId, () => subscriptions.items.value], ([scheduleId, activeS
                 class="sv-customer-overview__invoices"
                 :invoices="invoices.items.value"
                 :has-more-items="invoices.hasNextBatch.value"
-                :is-loading="isLoading"
+                :is-loading="isLoading || invoices.isPending.value"
+                :error="invoices.error.value"
                 @load-more="invoices.fetchMore"
             />
         </template>

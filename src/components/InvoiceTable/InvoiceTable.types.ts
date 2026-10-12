@@ -3,6 +3,8 @@ import type { Invoice } from '@solvimon/solvimon-types';
 export interface InvoiceTableProps {
     invoices: Invoice[];
     isLoading?: boolean;
+    /** Set when the invoices, or the next batch of them, failed to load. */
+    error?: Error | null;
     hasMoreItems?: boolean;
     configuration: {
         showPayButton: boolean;

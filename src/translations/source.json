@@ -735,9 +735,17 @@
     "defaultMessage": "Load more",
     "description": "The label for the load more button"
   },
+  "invoice_table.chip.credit_note": {
+    "defaultMessage": "Credit note",
+    "description": "The label of the chip for credit notes"
+  },
   "invoice_table.chip.paid": {
     "defaultMessage": "Paid",
     "description": "The label of the chip for paid invoices"
+  },
+  "invoice_table.chip.void": {
+    "defaultMessage": "Void",
+    "description": "The label of the chip for voided invoices"
   },
   "invoice_table.header.amount": {
     "defaultMessage": "Amount",
@@ -754,6 +762,14 @@
   "invoice_table.header.status": {
     "defaultMessage": "Status",
     "description": "The title of the invoice status header column of the invoice table"
+  },
+  "invoice_table.load_error": {
+    "defaultMessage": "We could not load your invoices. Please try again.",
+    "description": "Error shown when the invoices, or the next batch of them, fail to load"
+  },
+  "invoice_table.row.view_invoice_aria_label": {
+    "defaultMessage": "View invoice {invoiceNumber}",
+    "description": "Accessible name of the button covering an invoice row, which opens that invoice"
   },
   "invoices_list.title": {
     "defaultMessage": "Invoices",

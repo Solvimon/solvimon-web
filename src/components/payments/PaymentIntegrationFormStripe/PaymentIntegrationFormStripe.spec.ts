@@ -488,7 +488,7 @@ describe('PaymentIntegrationFormStripe', () => {
                     ({
                         payment_acceptor_id: 'paya_123',
                         redirect_status: redirectStatus,
-                        payment_intent_client_secret: 'pi_secret_redirect',
+                        payment_intent_client_secret: 'pi_3Redirect_secret_Abc123',
                     })[key] ?? null,
             );
 

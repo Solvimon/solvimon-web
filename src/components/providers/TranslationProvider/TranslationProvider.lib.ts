@@ -19,6 +19,19 @@ export function isSupportedLocale(locale: string): locale is SupportedLocale {
     return supportedLocaleSet.has(locale);
 }
 
+/**
+ * A locale the SDK has no catalogue for — `nl` or `en-GB` rather than `nl-NL` — renders in
+ * en-US, which a host would otherwise only find out about from a customer.
+ */
+export function warnIfUnsupportedLocale(locale: string | undefined, logger: Logger): void {
+    if (!locale || isSupportedLocale(locale)) return;
+
+    logger.warn('UNSUPPORTED_LOCALE', 'The locale is not supported, showing en-US instead', {
+        locale,
+        supportedLocales: [...SUPPORTED_LOCALES],
+    });
+}
+
 const APP_LOCALE_IMPORTS: Record<SupportedLocale, LocaleLoader> = {
     'en-US': () => import('@/translations/locales/en-US.json'),
     'nl-NL': () => import('@/translations/locales/nl-NL.json'),

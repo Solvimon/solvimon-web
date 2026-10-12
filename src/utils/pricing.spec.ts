@@ -1,14 +1,14 @@
+import type {
+    PricingCategoryExtended,
+    PricingExtended,
+    PricingPlanScheduleInfoExpanded,
+} from '@solvimon/solvimon-types';
 import {
     getAllPricingsFromScheduleInfos,
     getModelTypesFromScheduleInfo,
     getNameFromPricing,
     getPricingsFromScheduleInfo,
 } from './pricing';
-import type {
-    PricingCategoryExtended,
-    PricingExtended,
-    PricingPlanScheduleInfoExpanded,
-} from '@solvimon/solvimon-types';
 
 describe('pricing utils', () => {
     describe('getAllPricingsFromScheduleInfos', () => {

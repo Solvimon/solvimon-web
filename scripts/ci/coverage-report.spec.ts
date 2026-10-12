@@ -1,7 +1,7 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { mkdtempSync, rmSync, writeFileSync } from 'fs';
 import { tmpdir } from 'os';
 import path from 'path';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { generateCoverageReport } from './coverage-report.mjs';
 
 function makeSummary({

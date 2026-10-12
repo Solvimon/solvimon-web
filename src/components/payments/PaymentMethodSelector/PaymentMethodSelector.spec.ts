@@ -1,11 +1,7 @@
 import type { ErrorObject } from '@vuelidate/core';
 import { mount } from '@vue/test-utils';
 import { defineComponent, h } from 'vue';
-import type {
-    Customer,
-    PaymentMethod,
-    PaymentMethodOptionsResponse,
-} from '@solvimon/solvimon-types';
+import type { PaymentMethod, PaymentMethodOptionsResponse } from '@solvimon/solvimon-types';
 import PaymentMethodSelector from './PaymentMethodSelector.vue';
 
 vi.mock('@solvimon/solvimon-ui', async () => {

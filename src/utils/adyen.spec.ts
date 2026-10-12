@@ -1,3 +1,9 @@
+import type {
+    PaymentMethodOptionResponseEntry,
+    Amount,
+    PaymentAcceptor,
+    PaymentIntegration,
+} from '@solvimon/solvimon-types';
 import {
     getAdyenClientKeyFromPaymentMethodOptionsResponse,
     getAdyenDropInPaymentMethods,
@@ -9,12 +15,6 @@ import {
     transformObjectToAdyenObject,
     PAYMENT_ACCEPTOR_ID_QUERY_STRING,
 } from './adyen';
-import type {
-    PaymentMethodOptionResponseEntry,
-    Amount,
-    PaymentAcceptor,
-    PaymentIntegration,
-} from '@solvimon/solvimon-types';
 
 // Helper function to create a minimal PaymentAcceptor
 function createMockPaymentAcceptor(overrides: Partial<PaymentAcceptor> = {}): PaymentAcceptor {

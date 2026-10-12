@@ -1,7 +1,3 @@
-import {
-    combinePricingPlanVersionWithOverrides,
-    getSchedulesWithPlanData,
-} from './pricingPlanScheduleOverrides';
 import type {
     Pricing,
     PricingExtended,
@@ -14,6 +10,10 @@ import type {
     Product,
     ProductItemExtended,
 } from '@solvimon/solvimon-types';
+import {
+    combinePricingPlanVersionWithOverrides,
+    getSchedulesWithPlanData,
+} from './pricingPlanScheduleOverrides';
 import type { PricingPlanSubscriptionExpanded } from '@/types/subscription';
 
 const createConfig = ({

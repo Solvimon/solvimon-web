@@ -1,5 +1,5 @@
-import { getAllPricingsFromPricingPlanVersion } from './pricingPlanVersion';
 import type { PricingExtended, PricingPlanVersionExtended } from '@solvimon/solvimon-types';
+import { getAllPricingsFromPricingPlanVersion } from './pricingPlanVersion';
 
 const createMockPricing = (id: string): PricingExtended =>
     ({

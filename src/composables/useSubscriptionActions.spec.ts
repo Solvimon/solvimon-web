@@ -1,6 +1,6 @@
 import { ref } from 'vue';
-import type { PricingPlanSubscriptionExpanded } from '@/types/subscription';
 import { useSubscriptionActions } from './useSubscriptionActions';
+import type { PricingPlanSubscriptionExpanded } from '@/types/subscription';
 
 const { mockDispatchAction } = vi.hoisted(() => ({
     mockDispatchAction: vi.fn(),

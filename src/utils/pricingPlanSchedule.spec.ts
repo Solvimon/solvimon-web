@@ -1,11 +1,3 @@
-import {
-    getActiveDefaultScheduleId,
-    getActiveDefaultScheduleInfo,
-    getFirstPricingPlanScheduleOfType,
-    getPricingGroupByPricingId,
-    getPricingItemConfigMetaById,
-    getScheduleCustomizations,
-} from './pricingPlanSchedule';
 import type {
     BillingPeriod,
     ConfiguredMeterValue,
@@ -19,6 +11,14 @@ import type {
     PricingPlanSubscriptionExpanded,
     PricingPlanVersionExtended,
 } from '@solvimon/solvimon-types';
+import {
+    getActiveDefaultScheduleId,
+    getActiveDefaultScheduleInfo,
+    getFirstPricingPlanScheduleOfType,
+    getPricingGroupByPricingId,
+    getPricingItemConfigMetaById,
+    getScheduleCustomizations,
+} from './pricingPlanSchedule';
 
 describe('pricingPlanSchedule utils', () => {
     describe('getPricingItemConfigMetaById', () => {

@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import type { Logger } from '@/components/providers/LoggerProvider/LoggerProvider.types';
 import {
     DEFAULT_LOCALE,
     isSupportedLocale,
     loadLocaleMessages,
     supportedLocaleSet,
 } from './TranslationProvider.lib';
+import type { Logger } from '@/components/providers/LoggerProvider/LoggerProvider.types';
 
 vi.mock('@solvimon/solvimon-ui/translations/en-US', () => ({
     default: { greeting: 'Hello', farewell: 'Goodbye' },

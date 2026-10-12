@@ -1,12 +1,11 @@
-import { useSeatBasedPricing } from './useSeatBasedPricing';
 import type {
     Amount,
     BillingPeriod,
     PricingExtended,
     PricingItemConfigExtended,
-    PricingItemExtended,
     ProductItemExtended,
 } from '@solvimon/solvimon-types';
+import { useSeatBasedPricing } from './useSeatBasedPricing';
 import { getPricingItemByPricingConfigId } from '@/utils/pricingItem';
 
 vi.mock('@/utils/pricingItem');
@@ -284,7 +283,7 @@ describe('useSeatBasedPricing', () => {
         });
 
         // Access .value to trigger the computed evaluation
-        result.value;
+        void result.value;
 
         expect(mockGetPricingItemByPricingConfigId).toHaveBeenCalledWith({
             pricings,

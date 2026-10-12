@@ -26,7 +26,13 @@ body { overflow: hidden; }
 <script src="${STRIPE_SCRIPT_URL}"><\/script>
 <script>
 (function () {
-  let stripe, elements, countryCode, email, name, parentOrigin;
+  let stripe, elements, paymentElement, resizeObserver, countryCode, email, name, parentOrigin;
+
+  // An opaque origin serialises as 'null', which postMessage refuses as a target. The parent
+  // checks that what it receives comes from this frame.
+  function parentTarget() {
+    return parentOrigin === 'null' ? '*' : parentOrigin;
+  }
 
   // Every submit is answered, or the page waiting on it never stops waiting.
   function postSubmitError(error) {
@@ -37,7 +43,7 @@ body { overflow: hidden; }
         type: error && error.type,
         code: error && error.code
       }
-    }, parentOrigin);
+    }, parentTarget());
   }
 
   window.addEventListener('message', function (event) {
@@ -50,37 +56,56 @@ body { overflow: hidden; }
       countryCode = event.data.countryCode;
       email = event.data.email;
       name = event.data.name;
+      // A second Payment Element would mount beside the first, and the submit would go to it empty.
+      if (paymentElement) paymentElement.destroy();
       stripe = Stripe(event.data.publicKey);
       elements = stripe.elements(event.data.options);
-      const paymentElement = elements.create('payment', { layout: { type: 'accordion', defaultCollapsed: false }, wallets: event.data.options.wallets, fields: event.data.options.fields });
+      paymentElement = elements.create('payment', { layout: { type: 'accordion', defaultCollapsed: false }, wallets: event.data.options.wallets, fields: event.data.options.fields });
 
       paymentElement.on('ready', function () {
-        parent.postMessage({ type: 'stripe:ready', initId: initId }, parentOrigin);
+        parent.postMessage({ type: 'stripe:ready', initId: initId }, parentTarget());
       });
 
       paymentElement.on('change', function (e) {
-        parent.postMessage({ type: 'stripe:change', paymentMethodType: e.value.type }, parentOrigin);
+        parent.postMessage({ type: 'stripe:change', paymentMethodType: e.value.type }, parentTarget());
       });
 
       paymentElement.on('loaderror', function (e) {
         parent.postMessage({
           type: 'stripe:loaderror',
           error: { message: e.error.message, type: e.error.type }
-        }, parentOrigin);
+        }, parentTarget());
       });
 
       paymentElement.mount('#stripe-root');
 
-      new ResizeObserver(function () {
-        parent.postMessage({
-          type: 'stripe:resize',
-          height: document.documentElement.scrollHeight
-        }, parentOrigin);
-      }).observe(document.documentElement);
+      if (!resizeObserver) {
+        resizeObserver = new ResizeObserver(function () {
+          parent.postMessage({
+            type: 'stripe:resize',
+            height: document.documentElement.scrollHeight
+          }, parentTarget());
+        });
+        resizeObserver.observe(document.documentElement);
+      }
+    }
+
+    if (event.data.type === 'stripe:update') {
+      if (!parentOrigin || event.origin !== parentOrigin || !elements) return;
+      const updateElements = elements;
+      const updateOptions = event.data.options;
+      // A failed update leaves the element showing the old amount; the parent sets it up anew.
+      Promise.resolve().then(function () {
+        return updateElements.update(updateOptions);
+      }).catch(function () {
+        if (updateElements !== elements) return;
+        parent.postMessage({ type: 'stripe:update:error' }, parentTarget());
+      });
     }
 
     if (event.data.type === 'stripe:submit') {
       if (!parentOrigin || event.origin !== parentOrigin) return;
+      const submitCountryCode = 'countryCode' in event.data ? event.data.countryCode : countryCode;
       const submitEmail = 'email' in event.data ? event.data.email : email;
       const submitName = 'name' in event.data ? event.data.name : name;
       // A setup anew while this submit is in flight replaces both; the token comes from the
@@ -97,7 +122,7 @@ body { overflow: hidden; }
           return;
         }
         const billingDetails = {};
-        if (countryCode) billingDetails.address = { country: countryCode };
+        if (submitCountryCode) billingDetails.address = { country: submitCountryCode };
         if (submitEmail) billingDetails.email = submitEmail;
         if (submitName) billingDetails.name = submitName;
         const tokenParams = Object.keys(billingDetails).length
@@ -111,7 +136,7 @@ body { overflow: hidden; }
           parent.postMessage({
             type: 'stripe:submit:success',
             confirmationTokenId: tokenResult.confirmationToken.id
-          }, parentOrigin);
+          }, parentTarget());
         });
       }).catch(postSubmitError);
     }

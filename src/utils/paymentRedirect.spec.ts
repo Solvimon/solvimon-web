@@ -30,10 +30,10 @@ describe('paymentRedirect', () => {
 
     describe('readAdyenRedirectReturn', () => {
         it('returns the result addressed to this acceptor, as the address decoded it', () => {
-            visit('?payment_acceptor_id=paya_1&redirectResult=Ab%2Bc%25%3D');
+            visit('?payment_acceptor_id=paya_1&redirectResult=X6XtfGC3%21H4sI%2B%2F_-.%3D');
             expect(readAdyenRedirectReturn('paya_1')).toEqual({
                 kind: 'RESULT',
-                redirectResult: 'Ab+c%=',
+                redirectResult: 'X6XtfGC3!H4sI+/_-.=',
             });
         });
 
@@ -49,13 +49,18 @@ describe('paymentRedirect', () => {
             });
         });
 
-        it.each([['a b'], ['a\u0000b'], ['x'.repeat(16385)]])(
-            'turns down a result no gateway sends: %#',
-            (value) => {
-                visit(`?payment_acceptor_id=paya_1&redirectResult=${encodeURIComponent(value)}`);
-                expect(readAdyenRedirectReturn('paya_1')).toEqual({ kind: 'INVALID' });
-            },
-        );
+        it.each([
+            ['a b'],
+            ['a\u0000b'],
+            ['x'.repeat(16385)],
+            ['%'],
+            ['Ab%2Bc'],
+            ['<script>alert(1)</script>'],
+            ['"quoted"'],
+        ])('turns down a result no gateway sends: %#', (value) => {
+            visit(`?payment_acceptor_id=paya_1&redirectResult=${encodeURIComponent(value)}`);
+            expect(readAdyenRedirectReturn('paya_1')).toEqual({ kind: 'INVALID' });
+        });
 
         it('finds nothing without a redirect result', () => {
             visit('?payment_acceptor_id=paya_1');

@@ -18,8 +18,9 @@ const REDIRECT_QUERY_STRINGS = [
     STRIPE_SETUP_INTENT_CLIENT_SECRET_QUERY_STRING,
 ];
 
-// Adyen's redirect result is opaque, so only its shape is checked: printable, no spaces, bounded.
-const ADYEN_REDIRECT_RESULT_PATTERN = /^[\x21-\x7e]{1,16384}$/;
+// Adyen's redirect result is opaque: a short prefix, `!`, and a base64 or base64url payload. Only
+// that alphabet is let through, so a `%` or markup typed into the address never reaches the API.
+const ADYEN_REDIRECT_RESULT_PATTERN = /^[A-Za-z0-9+/=_!.-]{1,16384}$/;
 const STRIPE_REDIRECT_STATUS_PATTERN = /^[a-z_]{1,64}$/;
 const STRIPE_CLIENT_SECRET_PATTERNS = {
     PAYMENT: /^pi_[A-Za-z0-9]+_secret_[A-Za-z0-9]+$/,

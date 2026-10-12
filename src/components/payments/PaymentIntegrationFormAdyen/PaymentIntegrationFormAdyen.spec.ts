@@ -1082,16 +1082,16 @@ describe('PaymentIntegrationFormAdyen', () => {
             expect(window.location.search).toContain('redirectResult=res_1');
         });
 
-        // The address already decoded it; decoding again threw on a `%`.
+        // The address already decoded it; decoding it again could only mangle it.
         it('is sent on as the address decoded it', async () => {
             mockGetPaymentDetails.mockResolvedValue({ payment_status: 'SUCCESS' });
-            returnTo({ redirectResult: 'Ab%25+c=', payment_acceptor_id: 'paya_123' });
+            returnTo({ redirectResult: 'X6XtfGC3!H4sI+/=', payment_acceptor_id: 'paya_123' });
 
             const wrapper = await mountComponent();
 
             expect(mockGetPaymentDetails).toHaveBeenCalledWith(
                 expect.objectContaining({
-                    adyen: { details: { redirectResult: 'Ab%25+c=' } },
+                    adyen: { details: { redirectResult: 'X6XtfGC3!H4sI+/=' } },
                 }),
             );
             expect(wrapper.emitted('payment-success')).toHaveLength(1);

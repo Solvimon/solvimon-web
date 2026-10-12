@@ -37,6 +37,10 @@ const selectedPaymentMethod = ref<SelectedPaymentMethod>();
 const storePaymentMethod = ref(true);
 const paymentIntegrationFormRef = ref<InstanceType<typeof PaymentIntegrationForm>>();
 const isPaymentPending = ref(false);
+/** Known from the payment itself, before a refetched invoice can say so. */
+const isPaid = ref(false);
+/** The payment may still go through, so paying again could charge the customer twice. */
+const isPaymentUnconfirmed = ref(false);
 
 function handleSubmit() {
     if (!paymentIntegrationFormRef.value) {
@@ -48,13 +52,25 @@ function handleSubmit() {
 }
 
 const handlePaymentSuccess = () => {
+    isPaid.value = true;
+    isPaymentPending.value = false;
+    void props.refresh?.();
+
     if (props.configuration.onPaymentSuccess) {
         props.configuration.onPaymentSuccess();
     }
 };
 
-const handlePaymentFailed = () => {
+const handlePaymentNotSubmitted = () => {
     isPaymentPending.value = false;
+};
+
+const handlePaymentFailed = (error?: { code?: string }) => {
+    isPaymentPending.value = false;
+
+    if (error?.code === 'PAYMENT_OUTCOME_UNCONFIRMED') {
+        isPaymentUnconfirmed.value = true;
+    }
 };
 </script>
 
@@ -76,7 +92,7 @@ const handlePaymentFailed = () => {
 
             <!-- invoice fully paid -->
             <PaymentFeedbackCard
-                v-if="invoice?.paid"
+                v-if="invoice?.paid || (invoice && isPaid)"
                 status="success"
                 :title="
                     $t({
@@ -153,7 +169,7 @@ const handlePaymentFailed = () => {
                             :billing-entity-name="invoice?.billing_entity?.legal_name"
                             @payment-success="handlePaymentSuccess"
                             @payment-failed="handlePaymentFailed"
-                            @invalid="handlePaymentFailed"
+                            @invalid="handlePaymentNotSubmitted"
                             @select="
                                 (payload: SelectedPaymentMethod) =>
                                     (selectedPaymentMethod = payload)
@@ -206,9 +222,9 @@ const handlePaymentFailed = () => {
                 <InvoiceSummary v-if="invoice" :invoice="invoice" />
             </Skeleton>
 
-            <div v-if="invoice && !invoice.paid && availability === 'READY'">
+            <div v-if="invoice && !invoice.paid && !isPaid && availability === 'READY'">
                 <PayButton
-                    :disabled="!selectedPaymentMethod || isPaymentPending"
+                    :disabled="!selectedPaymentMethod || isPaymentPending || isPaymentUnconfirmed"
                     :loading="isPaymentPending"
                     :amount="amount"
                     :payment-method="selectedPaymentMethod"

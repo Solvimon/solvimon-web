@@ -26,5 +26,7 @@ export interface PayInvoiceProps extends BaseScreenProps {
     countryCode?: string;
     amount?: Amount;
     downloadService?: (invoice: Pick<Invoice, 'id' | 'invoice_number'>) => Promise<void>;
+    /** Loads the invoice and its payments again, so a paid invoice reads as paid. */
+    refresh?: () => Promise<unknown>;
     configuration: PayInvoiceConfiguration;
 }

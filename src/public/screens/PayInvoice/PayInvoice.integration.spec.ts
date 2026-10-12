@@ -419,4 +419,35 @@ describe('PayInvoice', () => {
 
         expect(onPaymentSuccess).toHaveBeenCalledOnce();
     });
+
+    // A redirect return emitted success without the screen noticing, so "Pay" stayed enabled on an
+    // invoice the customer had just paid.
+    it('stops offering payment and reloads the invoice once a payment succeeds', async () => {
+        const refresh = vi.fn().mockResolvedValue(undefined);
+        const wrapper = mountComponent({ refresh });
+        await waitForAdyenMount();
+
+        const [checkoutConfig] = mockAdyenCheckout.mock.calls[0];
+        checkoutConfig.onPaymentCompleted({}, { unmount: vi.fn() });
+        await flushPromises();
+
+        expect(refresh).toHaveBeenCalledOnce();
+        expect(wrapper.text()).toContain('Thank you for your payment!');
+        expect(wrapper.findComponent({ name: 'PayButton' }).exists()).toBe(false);
+    });
+
+    it('keeps the pay button off while the outcome of a payment is unconfirmed', async () => {
+        mockAuthorizePayment.mockRejectedValue(new TypeError('Failed to fetch'));
+        const wrapper = mountComponent();
+        await waitForAdyenMount();
+
+        const [, dropInConfig] = MockDropIn.mock.calls[0];
+        dropInConfig.onSelect({ props: { type: 'scheme' } });
+        await submitThroughDropIn();
+
+        expect(wrapper.text()).toContain('Payment not confirmed yet');
+        expect(
+            wrapper.findComponent({ name: 'PayButton' }).find('button').attributes('disabled'),
+        ).toBeDefined();
+    });
 });

@@ -432,19 +432,10 @@ describe('getAuth', () => {
         it('reports to the elements still mounted, not to the first one', async () => {
             const firstLog = vi.fn();
             const secondLog = vi.fn();
-            const secondRefresh = vi.fn().mockRejectedValue({ statusCode: 401 });
+            mockRefreshAccessToken.mockRejectedValue({ statusCode: 401 });
             vi.mocked(useLogger)
                 .mockReturnValueOnce(createLogger(firstLog))
                 .mockReturnValueOnce(createLogger(secondLog));
-            vi.mocked(createTokensService)
-                .mockReturnValueOnce({
-                    getAccessToken: mockGetAccessToken as () => Promise<Token>,
-                    refreshAccessToken: mockRefreshAccessToken,
-                })
-                .mockReturnValueOnce({
-                    getAccessToken: mockGetAccessToken as () => Promise<Token>,
-                    refreshAccessToken: secondRefresh,
-                });
 
             const token = uniqueToken();
             const { wrapper: first } = withSetup(token);
@@ -454,8 +445,7 @@ describe('getAuth', () => {
 
             await vi.advanceTimersByTimeAsync(60_000);
 
-            expect(mockRefreshAccessToken).not.toHaveBeenCalled();
-            expect(secondRefresh).toHaveBeenCalledTimes(2);
+            expect(mockRefreshAccessToken).toHaveBeenCalledTimes(2);
             expect(secondLog).toHaveBeenCalledWith(
                 'SESSION_EXPIRED',
                 expect.any(String),
@@ -463,6 +453,23 @@ describe('getAuth', () => {
                 expect.anything(),
             );
             expect(firstLog).not.toHaveBeenCalled();
+            second.unmount();
+        });
+
+        it('keeps the session for an element whose logger another element also uses', async () => {
+            const shared = createLogger(mockLogError);
+            vi.mocked(useLogger).mockReturnValue(shared);
+            mockGetAccessToken.mockResolvedValue(tokenResponse('access-token-123'));
+
+            const token = uniqueToken();
+            const { wrapper: first } = withSetup(token);
+            const { auth, wrapper: second } = withSetup(token);
+            await vi.advanceTimersByTimeAsync(0);
+            first.unmount();
+
+            withSetup(token).wrapper.unmount();
+            expect(mockGetAccessToken).toHaveBeenCalledTimes(1);
+            expect(auth.accessToken.value).toBe('access-token-123');
             second.unmount();
         });
     });

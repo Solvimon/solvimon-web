@@ -38,6 +38,9 @@ const { isLoading } = useLoadInitialData(
     getPayments(props.configuration.invoiceId),
 );
 
+const refresh = () =>
+    Promise.allSettled([getInvoice(), getPayments(props.configuration.invoiceId)]);
+
 const countryCode = computed(() =>
     invoice.value?.customer ? getCustomerCountry(invoice.value.customer) : undefined,
 );
@@ -53,6 +56,7 @@ const countryCode = computed(() =>
         :payment-method-options="paymentMethodOptions"
         :payment-attempts="payments"
         :download-service="downloadInvoicePdf"
+        :refresh="refresh"
         :error="error"
     />
 </template>

@@ -32,7 +32,11 @@ export interface ActionRequestDetailViewAllSubscriptions extends ActionRequestDe
 
 export interface ActionRequestDetailManageSubscription extends ActionRequestDetailBase {
     action: 'manage-subscription';
-    data: { subscriptionId: string };
+    /**
+     * `enabledPricingId` is the pricing the customer chose to change, when they came from one. Hand
+     * it to `SubscriptionManagement` as `configuration.enabledPricingId` to open on its group.
+     */
+    data: { subscriptionId: string; enabledPricingId?: string };
 }
 
 export interface ActionRequestDetailEditBillingInformation extends ActionRequestDetailBase {

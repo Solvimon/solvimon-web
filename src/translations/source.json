@@ -827,6 +827,10 @@
     "defaultMessage": "Select a payment method",
     "description": "Error shown when no payment method is selected"
   },
+  "payment_integration_form_stripe.frame_title": {
+    "defaultMessage": "Payment form",
+    "description": "Accessible name of the frame that holds the Stripe payment fields"
+  },
   "payment_method.context_menu.delete.label": {
     "defaultMessage": "Delete",
     "description": "Context menu option for deleting the payment method"

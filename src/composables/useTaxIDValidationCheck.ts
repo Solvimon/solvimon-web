@@ -1,19 +1,34 @@
-import { computed, ref, type Ref } from 'vue';
-import type { TaxIdValidationResult } from '@solvimon/solvimon-types';
+import { computed, watch, type Ref } from 'vue';
+import type { TaxIdValidationResult, TaxIdValidationStatus } from '@solvimon/solvimon-types';
 import { isEUCountry } from '@solvimon/solvimon-ui';
 import type { CheckoutFormState } from '@/components/customer/CheckoutForm/CheckoutForm.types';
+import { useService } from '@/composables/useService';
 import { createCustomerService } from '@/services/customer';
 
 export function useTaxIDValidationCheck(form: Ref<CheckoutFormState>) {
     const { checkTaxID } = createCustomerService();
 
-    const taxIdValidationData = ref<TaxIdValidationResult | undefined>(undefined);
+    const {
+        data,
+        error,
+        execute,
+        settle,
+        isPending: isTaxIDCheckPending,
+    } = useService({ service: checkTaxID, isCollection: true });
+
+    const taxIdValidationData = computed<TaxIdValidationResult | undefined>(() => data.value?.[0]);
+
+    /** A check that could not be made reads as one VIES could not answer. */
+    const taxIdCheckStatus = computed<TaxIdValidationStatus | undefined>(() =>
+        error.value ? 'UNKNOWN' : taxIdValidationData.value?.valid,
+    );
 
     const taxId = computed(() => form.value.companyVatNumber?.trim() ?? '');
     const legalName = computed(() => form.value.companyLegalName ?? '');
     const countryCode = computed(() => form.value.country);
 
-    const isTaxIDCheckPending = ref(false);
+    // An outcome speaks for the details it was asked about only, including one still on its way.
+    watch([taxId, legalName, countryCode], () => settle([]));
 
     const isSelectedCountryEU = computed(() => {
         return isEUCountry(countryCode.value ?? '');
@@ -32,10 +47,8 @@ export function useTaxIDValidationCheck(form: Ref<CheckoutFormState>) {
             return;
         }
 
-        isTaxIDCheckPending.value = true;
-
         try {
-            const result = await checkTaxID({
+            await execute({
                 type: 'ORGANIZATION',
                 organization: {
                     legal_name: legalName.value,
@@ -45,20 +58,15 @@ export function useTaxIDValidationCheck(form: Ref<CheckoutFormState>) {
                     },
                 },
             });
-
-            if (result?.data?.length) {
-                taxIdValidationData.value = result.data[0];
-            } else {
-                taxIdValidationData.value = undefined;
-            }
-        } finally {
-            isTaxIDCheckPending.value = false;
+        } catch {
+            // Shown through `taxIdCheckStatus`.
         }
     }
 
     return {
         runTaxIDCheck,
         taxIdValidationData,
+        taxIdCheckStatus,
         isTaxIDCheckPending,
         isTaxIDCheckEnabled,
         showViesCheckNotice,

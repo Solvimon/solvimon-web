@@ -12,7 +12,7 @@ const paymentMethodOptions = usePaymentMethodOptions();
 
 const initialLoad = async (): Promise<void> => {
     const customerResponse = await customer.get.execute();
-    const country = getCustomerCountry(customerResponse);
+    const country = props.countryCode || getCustomerCountry(customerResponse);
 
     await paymentMethodOptions.get({
         customerId: customerResponse.id,

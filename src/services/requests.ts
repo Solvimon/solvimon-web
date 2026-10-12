@@ -10,7 +10,13 @@ import type {
 } from './requests.types';
 import { useLogger } from '@/components/providers/LoggerProvider/composables/useLogger';
 import type { Logger } from '@/components/providers/LoggerProvider/LoggerProvider.types';
-import { appendQueryParams, getMediaType, Headers, MediaType } from '@/services/requests.lib';
+import {
+    appendQueryParams,
+    getMediaType,
+    Headers,
+    isRefreshCookieEndpoint,
+    MediaType,
+} from '@/services/requests.lib';
 import { useAuth } from '@/components/providers/AuthProvider';
 
 type ErrorBody = Partial<Record<'message' | 'field' | 'resource_type' | 'resource_id', string>>;
@@ -30,13 +36,18 @@ function readErrorBody(json: unknown): ErrorBody {
 
 const defaultOptions: RequestOptions = {
     method: 'GET',
-    credentials: 'omit',
 };
 
+/**
+ * `includeRefreshCookie` is for the identity token service alone: the refresh token lives in an
+ * `HttpOnly` cookie, which `omit` neither stores from the response nor sends back. It only takes
+ * effect on the two endpoints that read that cookie; every other request omits credentials.
+ */
 export function createRequestService({
     enableAccessCheck = true,
+    includeRefreshCookie = false,
     logger = useLogger(),
-}: { enableAccessCheck?: boolean; logger?: Logger } = {}) {
+}: { enableAccessCheck?: boolean; includeRefreshCookie?: boolean; logger?: Logger } = {}) {
     // Resolved here because inject() is only valid during setup, but read per request: the token
     // is refreshed in the background, and a value captured now would never be replaced.
     const auth = enableAccessCheck ? useAuth() : undefined;
@@ -118,12 +129,14 @@ export function createRequestService({
 
         const fullUrl = new URL(url);
         appendQueryParams(fullUrl, query);
+        const credentials: RequestCredentials =
+            includeRefreshCookie && isRefreshCookieEndpoint(fullUrl) ? 'include' : 'omit';
 
         const send = (accessToken?: string) =>
             fetch(fullUrl.toString(), {
                 method: options.method,
                 headers: getDefaultHeaders({ headers: options.headers, accessToken }),
-                credentials: options.credentials,
+                credentials,
                 body: data ? JSON.stringify(data) : undefined,
             });
 

@@ -52,3 +52,7 @@ export const buildUrl = (base: string, ...segments: string[]): string => {
     url.pathname = [url.pathname.replace(/\/+$/, ''), ...encoded].join('/');
     return url.toString();
 };
+
+/** The identity calls that authenticate on the `HttpOnly` refresh cookie, and so have to send it. */
+export const isRefreshCookieEndpoint = (url: URL): boolean =>
+    /\/oauth\/(token|refresh-token)$/.test(url.pathname);

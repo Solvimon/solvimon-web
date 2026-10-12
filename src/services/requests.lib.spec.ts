@@ -1,4 +1,4 @@
-import { buildUrl, getMediaType } from './requests.lib';
+import { buildUrl, getMediaType, isRefreshCookieEndpoint } from './requests.lib';
 
 describe('getMediaType', () => {
     it('returns the media type of a bare header', () => {
@@ -73,5 +73,18 @@ describe('buildUrl', () => {
 
     it('throws on a segment that cannot be encoded', () => {
         expect(() => buildUrl(BASE, '\uD800')).toThrow();
+    });
+});
+
+describe('isRefreshCookieEndpoint', () => {
+    it.each([
+        ['https://identity.test/oauth/token', true],
+        ['https://identity.test/v1/oauth/refresh-token', true],
+        ['https://identity.test/oauth/tokens', false],
+        ['https://identity.test/oauth/token/extra', false],
+        ['https://api.test/portal/customers', false],
+        ['https://identity.test/oauth/token%2F..', false],
+    ])('%s is %s', (url, expected) => {
+        expect(isRefreshCookieEndpoint(new URL(url))).toBe(expected);
     });
 });

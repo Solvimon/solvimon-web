@@ -15,28 +15,43 @@ export function generateTranslationsReport({ translationsDir, supported, sha }) 
         try {
             filePath = resolveSafePath(`${locale}.json`, localesDir);
         } catch {
-            console.error(`⚠️ Skipping suspicious locale: ${locale}`);
-            return { locale, missingKeys: [] };
+            return { locale, missingKeys: [], rejected: true };
         }
         let translations = {};
         if (existsSync(filePath)) {
             translations = JSON.parse(readFileSync(filePath, 'utf8'));
         }
         const missingKeys = sourceKeys.filter((key) => !(key in translations));
-        return { locale, missingKeys };
+        return { locale, missingKeys, rejected: false };
     });
 
     const localesWithMissing = results.filter((r) => r.missingKeys.length > 0);
+    const rejectedLocales = results.filter((r) => r.rejected);
 
     let summaryLines;
-    if (localesWithMissing.length === 0) {
+    if (localesWithMissing.length === 0 && rejectedLocales.length === 0) {
         summaryLines = ['> [!NOTE]', `> All ${supported.length} locales are fully translated ✅`];
     } else {
-        const names = localesWithMissing.map((r) => `**${r.locale}**`).join(', ');
-        summaryLines = ['> [!CAUTION]', `> Missing translations in: ${names}`];
+        const list = (rs) => rs.map((r) => `**${r.locale}**`).join(', ');
+        summaryLines = [
+            '> [!CAUTION]',
+            ...(localesWithMissing.length > 0
+                ? [`> Missing translations in: ${list(localesWithMissing)}`]
+                : []),
+            ...(rejectedLocales.length > 0
+                ? [`> Not checked, the name is not a safe file name: ${list(rejectedLocales)}`]
+                : []),
+        ];
     }
 
-    const sections = results.flatMap(({ locale, missingKeys }) => {
+    const sections = results.flatMap(({ locale, missingKeys, rejected }) => {
+        if (rejected) {
+            return [
+                `<details>\n<summary><strong>${locale}</strong> — not checked ❌</summary>\n</details>`,
+                '',
+            ];
+        }
+
         if (missingKeys.length === 0) {
             return [
                 `<details>\n<summary><strong>${locale}</strong> — complete ✅</summary>\n</details>`,

@@ -172,6 +172,23 @@ describe('generateTranslationsReport', () => {
         expect(report).toContain('`greeting`');
     });
 
+    it('fails a locale whose name would escape the locales directory', () => {
+        const { supported } = setup({
+            source: { greeting: 'Hello' },
+            supported: ['nl-NL'],
+            locales: { 'nl-NL': { greeting: 'Hallo' } },
+        });
+
+        const report = generateTranslationsReport({
+            ...defaultArgs,
+            supported: [...supported, '../../secrets'],
+        });
+
+        expect(report).toContain('[!CAUTION]');
+        expect(report).toContain('**../../secrets**');
+        expect(report).not.toContain('All 2 locales are fully translated');
+    });
+
     it('includes the SHA in the footer', () => {
         const { supported } = setup({ source: {}, supported: ['en-US'], locales: { 'en-US': {} } });
 

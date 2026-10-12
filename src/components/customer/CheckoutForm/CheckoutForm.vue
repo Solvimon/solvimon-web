@@ -5,13 +5,13 @@ import {
     Expand,
     getCountryNameByCode,
     Input,
+    isEUCountry,
     isValidCountryCode,
     Section,
     Typography,
     useIntl,
 } from '@solvimon/solvimon-ui';
 import { computed, reactive, ref } from 'vue';
-import { isEUCountry } from '@solvimon/solvimon-ui';
 import type { CountryCode } from '@solvimon/solvimon-types';
 import type { CheckoutFormState, CheckoutFormProps, CheckoutFormEmits } from './CheckoutForm.types';
 import TaxIDCheckNotice from './TaxIDCheckNotice.vue';
@@ -187,6 +187,8 @@ const readableCountryName = computed(() =>
                             <Input
                                 v-model="fields.addressLine2"
                                 name="address_line_2"
+                                :label="labels.addressLine2Label"
+                                label-screen-reader-only
                                 :placeholder="
                                     $t({
                                         defaultMessage: 'Address line 2...',
@@ -200,15 +202,21 @@ const readableCountryName = computed(() =>
                                 <Input
                                     v-model="fields.postalCode"
                                     name="postal_code"
+                                    :label="labels.postalCodeLabel"
+                                    label-screen-reader-only
+                                    :required="getIsFieldRequired('postalCode')"
                                     :placeholder="
                                         labels.postalCodePlaceholder +
                                         getOptionalSuffix('postalCode')
                                     "
-                                    :error="validation.value.addressLine1.$errors"
+                                    :error="validation.value.postalCode.$errors"
                                 />
                                 <Input
                                     v-model="fields.city"
                                     name="city"
+                                    :label="labels.cityLabel"
+                                    label-screen-reader-only
+                                    :required="getIsFieldRequired('city')"
                                     :placeholder="
                                         labels.cityPlaceholder + getOptionalSuffix('city')
                                     "
@@ -216,6 +224,9 @@ const readableCountryName = computed(() =>
                                 <Input
                                     v-model="fields.state"
                                     name="state"
+                                    :label="labels.stateLabel"
+                                    label-screen-reader-only
+                                    :required="getIsFieldRequired('state')"
                                     :placeholder="
                                         labels.statePlaceholder + getOptionalSuffix('state')
                                     "

@@ -1,4 +1,4 @@
-import { getCustomElementTagName, ensureCustomElementDefined } from './registry.ce';
+import { ensureCustomElementDefined } from './registry.ce';
 import type {
     ComponentMountConfiguration,
     CoreConfiguration,
@@ -73,7 +73,6 @@ function mountSolvimonElement(
     // Both resolved before the entry loads, so a bad container or an unknown id still throws at the
     // call site rather than inside a promise the caller never sees.
     const parent = resolveContainer(container);
-    const tagName = getCustomElementTagName(id);
     const definition = ensureCustomElementDefined(id, type);
 
     let element: HTMLElement | undefined;
@@ -82,7 +81,7 @@ function mountSolvimonElement(
     // The entry arrives over the network, so the element is appended once it does. `unmount` stays
     // synchronous, and calling it before the entry lands cancels the mount.
     void definition
-        .then(() => {
+        .then((tagName) => {
             if (unmounted) return;
 
             element = document.createElement(tagName);

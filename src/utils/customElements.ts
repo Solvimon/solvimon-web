@@ -74,17 +74,27 @@ export function defineCustomElement(
  *
  * `tagName` is the escape hatch for a page that already has an element by the canonical name, and
  * is the only thing exporting the class itself ever bought a host. Registering a name twice throws,
- * so a name already taken is left alone.
+ * so a name already taken is left alone. So does registering one class under a second name, which
+ * is what the core would do after a host defined the element under its own: the class keeps the
+ * first name, and `define` returns the name it is registered under.
  */
 export function createSolvimonElement(component: CustomElementComponent, id: string) {
     const element = defineCustomElement(component);
     const defaultTagName = getComponentName(id);
+    let registeredTagName: string | undefined;
 
     return {
-        define: (tagName: string = defaultTagName): void => {
-            if (!customElements.get(tagName)) {
-                customElements.define(tagName, element);
+        define: (tagName?: string): string => {
+            if (registeredTagName) return registeredTagName;
+
+            const name = tagName ?? defaultTagName;
+
+            if (!customElements.get(name)) {
+                customElements.define(name, element);
+                registeredTagName = name;
             }
+
+            return name;
         },
     };
 }

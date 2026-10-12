@@ -38,7 +38,6 @@ export function defineCustomElement(
         return defineCustomElementVue(component, {
             shadowRoot: true,
             ...options,
-            // After the spread: `ownStyles` already holds `options.styles`, on top of the base.
             styles: [...baseStyles, ...ownStyles],
         });
     }

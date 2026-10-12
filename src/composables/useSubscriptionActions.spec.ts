@@ -153,6 +153,19 @@ describe('useSubscriptionActions', () => {
             });
         });
 
+        it('names the pricing the customer wants to change', () => {
+            const { manage } = useSubscriptionActions({
+                subscription: ref(createSubscription()),
+            });
+
+            manage('pri_credits_1000');
+
+            expect(mockDispatchAction).toHaveBeenCalledWith({
+                action: 'manage-subscription',
+                data: { subscriptionId: 'ppsu_1', enabledPricingId: 'pri_credits_1000' },
+            });
+        });
+
         it('dispatches nothing while there is no subscription', () => {
             const { manage } = useSubscriptionActions({ subscription: ref(undefined) });
 

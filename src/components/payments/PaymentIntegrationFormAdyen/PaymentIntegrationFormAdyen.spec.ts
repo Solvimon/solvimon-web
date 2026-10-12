@@ -1150,6 +1150,26 @@ describe('PaymentIntegrationFormAdyen', () => {
             expect(mockAdyenCheckout).toHaveBeenCalledTimes(2);
             expect(mockGetPaymentDetails).not.toHaveBeenCalled();
         });
+
+        // The drop-in mounting after the second answer would otherwise take the card with it.
+        it('keeps the card when asking again finds the payment refused', async () => {
+            vi.mocked(getQueryParam).mockImplementation(
+                (key: string) =>
+                    ({ redirectResult: 'res_1', payment_acceptor_id: 'paya_123' })[key] ?? null,
+            );
+            mockGetPaymentDetails
+                .mockRejectedValueOnce(new TypeError('Failed to fetch'))
+                .mockResolvedValueOnce({ payment_status: 'REFUSED' });
+
+            const wrapper = await mountComponent();
+            await retry(wrapper);
+
+            expect(
+                (wrapper.emitted('payment-failed')?.[1]?.[0] as { code: string } | undefined)?.code,
+            ).toBe('AUTHORIZATION_FAILED');
+            expect(wrapper.findComponent({ name: 'PaymentErrorCard' }).exists()).toBe(true);
+            expect(mockAdyenCheckout).toHaveBeenCalledTimes(1);
+        });
     });
 
     describe('mounting', () => {
@@ -1191,6 +1211,31 @@ describe('PaymentIntegrationFormAdyen', () => {
             await flushPromises();
 
             expect(mockDropInMount).toHaveBeenCalledTimes(1);
+        });
+
+        // The overtaken mount used to put the returned payment's card back over the rebuilt form.
+        it('leaves a refused return cleared once a rebuild overtakes the first build', async () => {
+            vi.mocked(getQueryParam).mockImplementation(
+                (key: string) =>
+                    ({ redirectResult: 'res_1', payment_acceptor_id: 'paya_123' })[key] ?? null,
+            );
+            mockGetPaymentDetails.mockResolvedValue({ payment_status: 'REFUSED' });
+            const release = holdCheckout();
+            const wrapper = await mountComponent();
+
+            await wrapper.setProps({
+                paymentMethodOptionResponseEntry: {
+                    ...mockProps.paymentMethodOptionResponseEntry,
+                    payment_acceptor: { id: 'paya_456' },
+                } as never,
+            });
+            await flushPromises();
+            release();
+            await flushPromises();
+
+            expect(wrapper.findComponent({ name: 'PaymentErrorCard' }).exists()).toBe(false);
+            expect(mockDropInMount).toHaveBeenCalledTimes(1);
+            vi.mocked(getQueryParam).mockImplementation(() => null);
         });
 
         it('adds its styles to the shadow root once, however often it is rebuilt', async () => {

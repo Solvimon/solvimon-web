@@ -994,26 +994,37 @@ async function confirmRedirectResult() {
     });
 }
 
+/**
+ * Mounting clears the card of a previous attempt, but the returned payment is this attempt, and
+ * what happened to it matters more to the customer than a drop-in that would not load. A rebuild
+ * that overtook this mount has cleared it on purpose, so it stays cleared then.
+ */
+async function mountDropInKeepingRedirectCard() {
+    const redirectError = integrationError.value;
+    // `mountDropIn` takes the next attempt the moment it is called.
+    const attempt = mountAttempt + 1;
+    await mountDropIn();
+    if (redirectError && attempt === mountAttempt) integrationError.value = redirectError;
+}
+
 /** "Try again" on the error card: starts the form over without reloading the page. */
 async function retry() {
     integrationError.value = undefined;
 
-    if (pendingRedirectResult) {
-        isDropInWithheld = false;
-        await confirmRedirectResult();
+    if (!pendingRedirectResult) {
+        await mountDropIn();
+        return;
     }
 
-    await mountDropIn();
+    isDropInWithheld = false;
+    await confirmRedirectResult();
+    await mountDropInKeepingRedirectCard();
 }
 
 onMounted(async () => {
     // The drop-in waits for the payment the customer came back from, so it cannot be paid twice.
     await handleRedirectResult();
-    // Mounting clears the card of a previous attempt, but the returned payment is this attempt, and
-    // what happened to it matters more to the customer than a drop-in that would not load.
-    const redirectError = integrationError.value;
-    await mountDropIn();
-    if (redirectError) integrationError.value = redirectError;
+    await mountDropInKeepingRedirectCard();
 });
 
 onBeforeUnmount(() => {

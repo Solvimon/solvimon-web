@@ -35,3 +35,20 @@ export const appendQueryParams = (url: URL, query: QueryParams = {}): void => {
         url.searchParams.append(key, `${value}`);
     });
 };
+
+/**
+ * `base` with each segment appended as exactly one path segment, so an id can never add a segment,
+ * a query or a fragment of its own. `.` and `..` would still step up the path however they are
+ * encoded, and an empty segment names the collection, so those throw.
+ */
+export const buildUrl = (base: string, ...segments: string[]): string => {
+    const url = new URL(base);
+    const encoded = segments.map((segment) => {
+        if (typeof segment !== 'string' || segment === '' || segment === '.' || segment === '..') {
+            throw new Error('Invalid URL path segment');
+        }
+        return encodeURIComponent(segment);
+    });
+    url.pathname = [url.pathname.replace(/\/+$/, ''), ...encoded].join('/');
+    return url.toString();
+};

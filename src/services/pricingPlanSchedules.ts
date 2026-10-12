@@ -5,6 +5,7 @@ import type {
     PricingPlanSubscription,
 } from '@solvimon/solvimon-types';
 import { createRequestService } from './requests';
+import { buildUrl } from './requests.lib';
 import { useConfig } from '@/components/providers/ConfigProvider/composables/useConfig';
 
 export interface GetOnDemandPricingItemsPayload {
@@ -26,11 +27,17 @@ export function createPricingPlanSchedulesService() {
      *
      * Returns the schedule's One Off items with an on-demand config, as pricing categories.
      */
-    function getOnDemandPricingItems({
+    async function getOnDemandPricingItems({
         scheduleId,
     }: GetOnDemandPricingItemsPayload): Promise<OnDemandPricingItemsResponse> {
         return request<OnDemandPricingItemsResponse>({
-            url: `${config.apiUrls.config}/portal/pricing-plan-schedules/${scheduleId}/on-demand-pricing-items`,
+            url: buildUrl(
+                config.apiUrls.config,
+                'portal',
+                'pricing-plan-schedules',
+                scheduleId,
+                'on-demand-pricing-items',
+            ),
         });
     }
 
@@ -46,7 +53,7 @@ export function createPricingPlanSchedulesService() {
         enabledPricings,
     }: CreatePricingPlanSchedulePayload): Promise<PricingPlanSchedule> {
         return request<PricingPlanSchedule>({
-            url: `${config.apiUrls.config}/portal/pricing-plan-schedules`,
+            url: buildUrl(config.apiUrls.config, 'portal', 'pricing-plan-schedules'),
             options: { method: 'POST' },
             data: {
                 pricing_plan_subscription_id: pricingPlanSubscriptionId,

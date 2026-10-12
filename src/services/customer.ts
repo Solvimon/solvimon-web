@@ -5,6 +5,7 @@ import type {
     CountryCode,
 } from '@solvimon/solvimon-types';
 import { createRequestService } from './requests';
+import { buildUrl } from './requests.lib';
 import { useConfig } from '@/components/providers/ConfigProvider/composables/useConfig';
 
 interface TaxIdValidationResponse {
@@ -32,15 +33,15 @@ export function createCustomerService(): CustomerService {
     const request = createRequestService();
     const config = useConfig();
 
-    function getCustomer(customerId: Customer['id']): Promise<Customer> {
+    async function getCustomer(customerId: Customer['id']): Promise<Customer> {
         return request<Customer>({
-            url: `${config.apiUrls.config}/portal/customers/${customerId}`,
+            url: buildUrl(config.apiUrls.config, 'portal', 'customers', customerId),
         });
     }
 
-    function updateCustomer(customerId: Customer['id'], payload: Partial<Customer>) {
+    async function updateCustomer(customerId: Customer['id'], payload: Partial<Customer>) {
         return request<Customer>({
-            url: `${config.apiUrls.config}/portal/customers/${customerId}`,
+            url: buildUrl(config.apiUrls.config, 'portal', 'customers', customerId),
             options: { method: 'PATCH' },
             data: payload,
         });
@@ -48,7 +49,7 @@ export function createCustomerService(): CustomerService {
 
     function checkTaxID(payload: CheckTaxIDPayload) {
         return request<TaxIdValidationResponse>({
-            url: `${config.apiUrls.config}/portal/customers/validate-tax-id`,
+            url: buildUrl(config.apiUrls.config, 'portal', 'customers', 'validate-tax-id'),
             options: { method: 'POST' },
             data: payload,
         });

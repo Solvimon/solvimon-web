@@ -75,6 +75,6 @@ The pre-commit hook runs lint-staged with `--no-stash`, so its backup never ente
 
 lint-staged still sets aside the unstaged changes of a partially staged file, in `lint-staged_unstaged.patch` in the worktree's git directory. It puts them back itself when the commit goes through. When a task fails it does not, so the hook applies that patch to the working tree and the staged changes stay staged. A task that failed leaves the fixes it already made in the working tree, without rolling them back.
 
-If the patch no longer applies, the hook keeps it under a timestamped name next to the original and says so. Apply it by hand with `git apply <file>`.
+If the patch no longer applies, the hook keeps it under a timestamped name next to the original and says so. Apply it by hand with `git apply --unidiff-zero <file>`; lint-staged writes it without context lines.
 
 Git hooks run from the `core.hooksPath` that husky set up. When that is an absolute path into the main checkout, a worktree runs the main checkout's hooks, so a change to `.husky/` only takes effect there once it is merged.

@@ -9,7 +9,7 @@ import type {
     AuthorizePaymentPayload,
 } from '@solvimon/solvimon-types';
 import type { CheckoutFormState } from '@/components/customer/CheckoutForm/CheckoutForm.types';
-import { useCheckoutView } from './useCheckout.view';
+import { PRICE_SETTLE_TIMEOUT_MS, useCheckoutView } from './useCheckout.view';
 
 type AuthorizePaymentInitPricingPlanSubscriptionContext = Extract<
     NonNullable<AuthorizePaymentPayload['context']>,
@@ -1718,7 +1718,7 @@ describe('useCheckoutView', () => {
             });
             await flushPromises();
 
-            let settled: boolean | undefined;
+            let settled: string | undefined;
             void view.settleInvoicePreview().then((result) => (settled = result));
             await flushPromises();
 
@@ -1727,7 +1727,7 @@ describe('useCheckoutView', () => {
 
             land();
             await flushPromises();
-            expect(settled).toBe(true);
+            expect(settled).toBe('SETTLED');
             wrapper.unmount();
         });
 
@@ -1737,7 +1737,7 @@ describe('useCheckoutView', () => {
             const { view, wrapper } = setup({ loaded });
             await flushPromises();
 
-            await expect(view.settleInvoicePreview()).resolves.toBe(false);
+            await expect(view.settleInvoicePreview()).resolves.toBe('FAILED');
             wrapper.unmount();
         });
 
@@ -1752,13 +1752,27 @@ describe('useCheckoutView', () => {
             wrapper.unmount();
         });
 
+        // A preview that never answers would otherwise keep Pay spinning for good.
+        it('gives up on a preview that does not answer, and holds the payment back', async () => {
+            vi.useFakeTimers();
+            const { view, wrapper } = setup({ loaded: new Promise<void>(() => {}) });
+            await vi.runAllTimersAsync();
+
+            const settled = view.settleInvoicePreview();
+            await vi.advanceTimersByTimeAsync(PRICE_SETTLE_TIMEOUT_MS);
+
+            await expect(settled).resolves.toBe('FAILED');
+            vi.useRealTimers();
+            wrapper.unmount();
+        });
+
         it('holds the payment back when the form changed again meanwhile', async () => {
             const { view, wrapper, form } = setup();
             await flushPromises();
             form.flushPreviewChange.mockImplementation(() => {});
             form.isPreviewStale.value = true;
 
-            await expect(view.settleInvoicePreview()).resolves.toBe(false);
+            await expect(view.settleInvoicePreview()).resolves.toBe('CHANGED');
             wrapper.unmount();
         });
     });

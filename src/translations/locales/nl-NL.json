@@ -270,6 +270,7 @@
     "subscription_cancellation_modal.cancel.error": "We konden je abonnement niet opzeggen. Probeer het opnieuw.",
     "subscription_cancellation_modal.cancel.explanation": "Je abonnement wordt opgezegd, maar je houdt toegang tot het einde van de factuurperiode.",
     "subscription_cancellation_modal.cancel.explanation_with_date": "Je abonnement wordt opgezegd, maar je houdt toegang tot {date}.",
+    "subscription_cancellation_modal.cancel.keep_button.label": "Abonnement behouden",
     "subscription_cancellation_modal.cancel.title": "Abonnement opzeggen",
     "subscription_cancellation_modal.cancel_button.label": "Annuleren",
     "subscription_cancellation_modal.renew.confirm_button.label": "Abonnement verlengen",

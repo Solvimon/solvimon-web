@@ -270,6 +270,7 @@
     "subscription_cancellation_modal.cancel.error": "Ihr Abonnement konnte nicht gekündigt werden. Bitte versuchen Sie es erneut.",
     "subscription_cancellation_modal.cancel.explanation": "Ihr Abonnement wird gekündigt, Sie behalten den Zugriff jedoch bis zum Ende des Abrechnungszeitraums.",
     "subscription_cancellation_modal.cancel.explanation_with_date": "Ihr Abonnement wird gekündigt, Sie behalten den Zugriff jedoch bis zum {date}.",
+    "subscription_cancellation_modal.cancel.keep_button.label": "Abonnement behalten",
     "subscription_cancellation_modal.cancel.title": "Abonnement kündigen",
     "subscription_cancellation_modal.cancel_button.label": "Abbrechen",
     "subscription_cancellation_modal.renew.confirm_button.label": "Abonnement verlängern",

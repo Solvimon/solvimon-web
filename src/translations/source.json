@@ -1083,6 +1083,10 @@
     "defaultMessage": "Your subscription will be canceled, but you’ll continue to have access until {date}.",
     "description": "Explanation of what happens when a running subscription is cancelled, naming the date access ends, shown in the cancel subscription modal"
   },
+  "subscription_cancellation_modal.cancel.keep_button.label": {
+    "defaultMessage": "Keep subscription",
+    "description": "Label of the button that dismisses the cancel subscription modal without cancelling"
+  },
   "subscription_cancellation_modal.cancel.title": {
     "defaultMessage": "Cancel subscription",
     "description": "Title of the cancel subscription confirmation modal"

@@ -8,8 +8,10 @@ import {
     getFallbackTrialAndSubscriptionStartAndEndDates,
     getMostRecentPricingPlan,
     getMostRecentScheduleInfo,
+    getOpenInactivePeriod,
     getPricingGroupsFromExtendedPricingPlanSubscription,
     getSubscriptionName,
+    getUndoableCancellation,
 } from './subscription';
 
 const makeScheduleInfo = (
@@ -170,6 +172,20 @@ describe('subscription utils', () => {
             const diff = new Date(subEnd).getTime() - new Date(subStart).getTime();
             expect(result.subscriptionEndDate).toEqual(new Date(now.getTime() + diff));
         });
+
+        it('ends the subscription its own length after a trial pushed its start back', () => {
+            const subscription = {
+                pricing_plan_schedule_infos: [
+                    makeScheduleInfo('TRIAL', '2025-01-01T00:00:00Z', '2025-01-31T00:00:00Z'),
+                    makeScheduleInfo('DEFAULT', '2025-01-31T00:00:00Z', '2026-01-31T00:00:00Z'),
+                ],
+            } as unknown as PricingPlanSubscriptionExpanded;
+
+            const result = getFallbackTrialAndSubscriptionStartAndEndDates(subscription);
+
+            expect(result.subscriptionStartDate).toEqual(new Date('2024-07-01T00:00:00Z'));
+            expect(result.subscriptionEndDate).toEqual(new Date('2025-07-01T00:00:00Z'));
+        });
     });
 
     describe('findPricingsByIds', () => {
@@ -229,6 +245,72 @@ describe('subscription utils', () => {
         it('handles empty ids array', () => {
             const result = findPricingsByIds(mockData, []);
             expect(result).toEqual([]);
+        });
+
+        it('returns a pricing once when several schedules offer it', () => {
+            const withTwoSchedules = {
+                pricing_plan_schedule_infos: [
+                    ...mockData.pricing_plan_schedule_infos,
+                    ...mockData.pricing_plan_schedule_infos,
+                ],
+            } as PricingPlanSubscriptionExpanded;
+
+            const result = findPricingsByIds(withTwoSchedules, ['pric_FwD1Lk0uXII7V2CWub1v']);
+
+            expect(result.map(({ id }) => id)).toEqual(['pric_FwD1Lk0uXII7V2CWub1v']);
+        });
+    });
+
+    describe('getOpenInactivePeriod', () => {
+        const cancellation = { type: 'CANCEL', start_at: '2026-11-01T00:00:00Z' } as const;
+        const planChange = { type: 'UPGRADE', start_at: '2026-10-20T00:00:00Z' } as const;
+
+        it('returns the earliest period without an end', () => {
+            expect(
+                getOpenInactivePeriod({ inactive_periods: [cancellation, planChange] as never }),
+            ).toEqual(planChange);
+        });
+
+        it('returns the earliest of one type when asked', () => {
+            expect(
+                getOpenInactivePeriod(
+                    { inactive_periods: [cancellation, planChange] as never },
+                    'CANCEL',
+                ),
+            ).toEqual(cancellation);
+        });
+
+        it('skips a period that has ended', () => {
+            expect(
+                getOpenInactivePeriod({
+                    inactive_periods: [
+                        { ...cancellation, end_at: '2026-12-01T00:00:00Z' },
+                    ] as never,
+                }),
+            ).toBeUndefined();
+        });
+    });
+
+    describe('getUndoableCancellation', () => {
+        const now = new Date('2026-10-12T00:00:00Z');
+        const cancellation = { type: 'CANCEL', start_at: '2026-11-01T00:00:00Z' } as const;
+
+        it('returns a cancellation that has yet to take effect', () => {
+            expect(
+                getUndoableCancellation(
+                    { status: 'ACTIVE', inactive_periods: [cancellation] as never },
+                    now,
+                ),
+            ).toEqual(cancellation);
+        });
+
+        it('returns nothing once the cancellation has started', () => {
+            expect(
+                getUndoableCancellation(
+                    { status: 'ACTIVE', inactive_periods: [cancellation] as never },
+                    new Date('2026-11-02T00:00:00Z'),
+                ),
+            ).toBeUndefined();
         });
     });
 

@@ -270,6 +270,7 @@
     "subscription_cancellation_modal.cancel.error": "Non è stato possibile disdire il tuo abbonamento. Riprova.",
     "subscription_cancellation_modal.cancel.explanation": "Il tuo abbonamento verrà disdetto, ma manterrai l'accesso fino alla fine del periodo di fatturazione.",
     "subscription_cancellation_modal.cancel.explanation_with_date": "Il tuo abbonamento verrà disdetto, ma manterrai l'accesso fino al {date}.",
+    "subscription_cancellation_modal.cancel.keep_button.label": "Mantieni abbonamento",
     "subscription_cancellation_modal.cancel.title": "Disdici abbonamento",
     "subscription_cancellation_modal.cancel_button.label": "Annulla",
     "subscription_cancellation_modal.renew.confirm_button.label": "Rinnova abbonamento",

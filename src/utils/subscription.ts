@@ -3,6 +3,7 @@ import type {
     PricingGroupExtended,
     PricingPlan,
     PricingPlanScheduleInfoExpanded,
+    PricingPlanSubscription,
     PricingPlanSubscriptionExpanded,
 } from '@solvimon/solvimon-types';
 import { getFirstPricingPlanScheduleOfType } from './pricingPlanSchedule';
@@ -39,8 +40,43 @@ export function getSubscriptionName({
     return subscription?.name || getMostRecentPricingPlan(subscription)?.name || fallback;
 }
 
+type InactivePeriod = NonNullable<PricingPlanSubscription['inactive_periods']>[number];
+
 /**
- * Recursively searches for PRICING objects with matching IDs.
+ * The inactive period the API acts on: the earliest one without an `end_at`, optionally of one
+ * type. A cancellation is such a period, so one that has an `end_at` is not standing in the way.
+ */
+export function getOpenInactivePeriod(
+    subscription: Pick<PricingPlanSubscription, 'inactive_periods'> | undefined,
+    type?: InactivePeriod['type'],
+): InactivePeriod | undefined {
+    return (subscription?.inactive_periods ?? [])
+        .filter((period) => !period.end_at && (!type || period.type === type))
+        .reduce<
+            InactivePeriod | undefined
+        >((earliest, period) => (!earliest || new Date(period.start_at) < new Date(earliest.start_at) ? period : earliest), undefined);
+}
+
+/**
+ * The cancellation the customer can still undo. The API undoes the earliest open period whatever
+ * its type, and only before it starts, so a plan change ahead of the cancellation rules it out.
+ */
+export function getUndoableCancellation(
+    subscription: Pick<PricingPlanSubscription, 'inactive_periods' | 'status'> | undefined,
+    now: Date = new Date(),
+): InactivePeriod | undefined {
+    if (subscription?.status !== 'ACTIVE') return undefined;
+
+    const period = getOpenInactivePeriod(subscription);
+
+    if (period?.type !== 'CANCEL' || new Date(period.start_at) <= now) return undefined;
+
+    return period;
+}
+
+/**
+ * Recursively searches for PRICING objects with matching IDs, each once: a pricing is repeated in
+ * every schedule that offers it.
  */
 export function findPricingsByIds(
     data: PricingPlanSubscriptionExpanded,
@@ -53,7 +89,11 @@ export function findPricingsByIds(
         if (Array.isArray(obj)) {
             obj.forEach(recurse);
         } else if (obj && typeof obj === 'object') {
-            if (obj.object_type === 'PRICING' && ids.includes(obj.id)) {
+            if (
+                obj.object_type === 'PRICING' &&
+                ids.includes(obj.id) &&
+                !results.some(({ id }) => id === obj.id)
+            ) {
                 results.push(obj);
             }
             Object.values(obj).forEach(recurse);
@@ -136,7 +176,7 @@ export function getFallbackTrialAndSubscriptionStartAndEndDates(
                 new Date(subscriptionSchedule.end_at).getTime() -
                 new Date(subscriptionSchedule.start_at).getTime();
 
-            result.subscriptionEndDate = new Date(now.getTime() + diff);
+            result.subscriptionEndDate = new Date(result.subscriptionStartDate.getTime() + diff);
         }
     }
 

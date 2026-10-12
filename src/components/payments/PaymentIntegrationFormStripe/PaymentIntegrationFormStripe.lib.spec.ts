@@ -156,4 +156,11 @@ describe('summarizeStripeError', () => {
             message: 'Your card was declined.',
         });
     });
+
+    it('keeps only string fields and a type Stripe defines from whatever was thrown', () => {
+        expect(summarizeStripeError(new TypeError('boom'))).toEqual({ message: 'boom' });
+        expect(summarizeStripeError({ type: 'made_up', code: 1, secret: 'x' })).toEqual({});
+        expect(summarizeStripeError('pi_1_secret_abc')).toEqual({});
+        expect(summarizeStripeError(undefined)).toEqual({});
+    });
 });

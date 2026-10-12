@@ -1,6 +1,8 @@
-import { mount } from '@vue/test-utils';
+import { enableAutoUnmount, mount } from '@vue/test-utils';
 import { nextTick } from 'vue';
 import SlidingPanes from './SlidingPanes.vue';
+
+enableAutoUnmount(afterEach);
 
 const PANES = ['FIRST', 'SECOND', 'THIRD'];
 

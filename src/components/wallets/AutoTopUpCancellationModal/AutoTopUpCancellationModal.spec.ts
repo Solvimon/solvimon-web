@@ -1,7 +1,9 @@
-import { mount } from '@vue/test-utils';
+import { enableAutoUnmount, mount } from '@vue/test-utils';
 import { defineComponent, nextTick } from 'vue';
 import type { WalletAutoTopUpConfig } from '@solvimon/solvimon-types';
 import AutoTopUpCancellationModal from './AutoTopUpCancellationModal.vue';
+
+enableAutoUnmount(afterEach);
 
 const { mockDeactivate } = vi.hoisted(() => ({ mockDeactivate: vi.fn() }));
 

@@ -1,7 +1,9 @@
-import { mount } from '@vue/test-utils';
+import { enableAutoUnmount, mount } from '@vue/test-utils';
 import { defineComponent, nextTick } from 'vue';
 import AutoTopUpConfig from './AutoTopUpConfig.vue';
 import type { AutoTopUpRule } from './AutoTopUpConfig.types';
+
+enableAutoUnmount(afterEach);
 
 vi.mock('@solvimon/solvimon-ui', async () => {
     const { createSolvimonUiMock } = await import('@/test-utils/solvimonUiMock');

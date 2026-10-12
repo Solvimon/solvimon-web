@@ -1,4 +1,4 @@
-import { flushPromises, mount } from '@vue/test-utils';
+import { enableAutoUnmount, flushPromises, mount } from '@vue/test-utils';
 import { defineComponent, nextTick } from 'vue';
 import type { Customer, CustomerWalletBalanceItem, PaymentMethod } from '@solvimon/solvimon-types';
 import AutoTopUpModal from './AutoTopUpModal.vue';
@@ -174,6 +174,9 @@ const topUpItem = {
     pricing_item_id: 'prii_flexible',
     pricing_plan_schedule_id: 'ppsc_1',
 } as never;
+
+// Attached to the body, so left mounted it is torn down with jsdom and touches globals already gone.
+enableAutoUnmount(afterEach);
 
 const mountModal = (props: Record<string, unknown> = {}) =>
     mount(AutoTopUpModal, {

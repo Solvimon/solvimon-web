@@ -1,10 +1,14 @@
-import { isIndividual, isOrganization } from '@solvimon/solvimon-ui';
-import { email, required } from '@vuelidate/validators';
-import type { Customer } from '@solvimon/solvimon-types';
+import { isIndividual, isOrganization, isValidCountryCode } from '@solvimon/solvimon-ui';
+import { taxId } from '@solvimon/solvimon-ui/validators';
+import { email, required, requiredIf } from '@vuelidate/validators';
+import type { CountryCode, Customer } from '@solvimon/solvimon-types';
 import type { BillingInformationFormState } from './BillingInformationForm.types';
 import useForm from '@/composables/useForm';
+import { getRequiredFieldsForCountry } from '@/components/customer/CheckoutForm/CheckoutForm.lib';
 
 const DEFAULT_TAX_IDENTIFIER_TYPE = 'GENERIC_TAX_ID';
+
+const isCountryCode = (value: string): value is CountryCode => isValidCountryCode(value);
 
 const DEFAULT_FORM_STATE: BillingInformationFormState = {
     type: 'INDIVIDUAL',
@@ -16,7 +20,7 @@ const DEFAULT_FORM_STATE: BillingInformationFormState = {
     state: '',
 };
 
-export function useBillingInformationForm({
+export function useBillingInformationForm<TResult>({
     initialState = {},
     onSubmit,
 }: {
@@ -27,8 +31,14 @@ export function useBillingInformationForm({
     }: {
         customerId: Customer['id'];
         payload: Partial<Customer>;
-    }) => Promise<unknown>;
+    }) => Promise<TResult>;
 }) {
+    const isRequiredForCountry = (field: 'addressLine1' | 'postalCode' | 'state'): boolean =>
+        getRequiredFieldsForCountry(
+            isCountryCode(form.value.country) ? form.value.country : undefined,
+        ).includes(field);
+    const isOrganizationForm = (): boolean => form.value.type === 'ORGANIZATION';
+
     const {
         form,
         validation,
@@ -43,6 +53,12 @@ export function useBillingInformationForm({
         },
         validationRules: {
             email: { required, email },
+            country: { required },
+            addressLine1: { required: requiredIf(() => isRequiredForCountry('addressLine1')) },
+            postalCode: { required: requiredIf(() => isRequiredForCountry('postalCode')) },
+            state: { required: requiredIf(() => isRequiredForCountry('state')) },
+            companyLegalName: { required: requiredIf(isOrganizationForm) },
+            companyVatNumber: { taxId },
         },
         nullifyEmptyValues: true,
         mode: 'deep',
@@ -52,7 +68,10 @@ export function useBillingInformationForm({
         updateFormInitialState(mapCustomerToFormState(customer));
     };
 
-    const submit = (customerId: string, data: BillingInformationFormState = form.value) => {
+    const submit = (
+        customerId: string,
+        data: BillingInformationFormState = form.value,
+    ): Promise<TResult> => {
         return onSubmit({
             customerId,
             payload: mapFormStateToCustomerPayload(data),
@@ -112,14 +131,15 @@ const mapFormStateToCustomerPayload = (data: BillingInformationFormState): Parti
               email: data.email,
               organization: {
                   legal_name: data.companyLegalName ?? '',
-                  tax_ids: data.companyVatNumber
+                  // An emptied field has to reach the API as `[]`: a missing key leaves it as is.
+                  tax_ids: data.companyVatNumber?.trim()
                       ? [
                             {
-                                id: data.companyVatNumber,
+                                id: data.companyVatNumber.trim(),
                                 type: DEFAULT_TAX_IDENTIFIER_TYPE,
                             },
                         ]
-                      : undefined,
+                      : [],
                   registered_address: {
                       line1: data.addressLine1,
                       line2: data.addressLine2 ?? '',

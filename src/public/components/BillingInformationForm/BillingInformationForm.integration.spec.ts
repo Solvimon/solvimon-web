@@ -3,6 +3,7 @@ import { defineComponent, ref } from 'vue';
 import type { Customer } from '@solvimon/solvimon-types';
 import BillingInformationFormEntry from './BillingInformationForm.entry.vue';
 import type { SolvimonBillingInformationFormEntryProps } from './BillingInformationForm.entry.types';
+import { ApiError } from '@/services/apiError';
 import { createTestPortalObject } from '@/test-utils/portalObjectFixture';
 
 const { mockUseCustomer, mockGetExecute, mockUpdateExecute } = vi.hoisted(() => ({
@@ -28,6 +29,11 @@ vi.mock('@solvimon/solvimon-ui', async () => {
             props: { singleModelValue: String, label: String },
             emits: ['update:singleModelValue'],
             template: '<select data-testid="country-select"></select>',
+        }),
+        ErrorNotification: defineComponent({
+            name: 'ErrorNotificationStub',
+            props: { title: String },
+            template: '<div role="alert">{{ title }}</div>',
         }),
     });
 });
@@ -56,6 +62,8 @@ describe('BillingInformationForm entry component', () => {
         portalObject: createTestPortalObject(customerId),
     };
 
+    const updateError = ref<Error | null>(null);
+
     const mountComponent = ({
         withCustomer = true,
         isPending = false,
@@ -72,7 +80,7 @@ describe('BillingInformationForm entry component', () => {
             update: {
                 execute: mockUpdateExecute,
                 isPending: ref(false),
-                error: ref(null),
+                error: updateError,
             },
         });
 
@@ -86,6 +94,7 @@ describe('BillingInformationForm entry component', () => {
 
     beforeEach(() => {
         vi.clearAllMocks();
+        updateError.value = null;
         mockGetExecute.mockResolvedValue(undefined);
         mockUpdateExecute.mockResolvedValue(customer);
     });
@@ -147,5 +156,90 @@ describe('BillingInformationForm entry component', () => {
         expect(mockUpdateExecute).toHaveBeenCalledWith(
             expect.objectContaining({ email: 'updated@example.com' }),
         );
+    });
+
+    const getSaveButton = (wrapper: ReturnType<typeof mountComponent>) =>
+        wrapper.find('button[type="submit"]');
+
+    it('enables the save button once a field is edited', async () => {
+        const wrapper = mountComponent();
+
+        await wrapper.find('input[type="email"]').setValue('updated@example.com');
+
+        expect(getSaveButton(wrapper).attributes('disabled')).toBeUndefined();
+    });
+
+    it('does not save an invalid email address and says why', async () => {
+        const wrapper = mountComponent();
+
+        await wrapper.find('input[type="email"]').setValue('foo');
+        await wrapper.find('form').trigger('submit');
+        await flushPromises();
+
+        expect(mockUpdateExecute).not.toHaveBeenCalled();
+        expect(wrapper.text()).toContain('not a valid email');
+    });
+
+    it('shows an error the API gives on a field next to that field', async () => {
+        const wrapper = mountComponent();
+
+        updateError.value = new ApiError({
+            statusCode: 400,
+            field: 'email',
+            message: 'Email address is already in use',
+        });
+        await flushPromises();
+
+        expect(wrapper.text()).toContain('Email address is already in use');
+    });
+
+    it('shows an error the API gives on no field', async () => {
+        const wrapper = mountComponent();
+
+        updateError.value = new ApiError({ statusCode: 500, message: 'Something went wrong' });
+        await flushPromises();
+
+        expect(wrapper.text()).toContain('Something went wrong');
+    });
+
+    it('takes the saved customer as the new starting point', async () => {
+        mockUpdateExecute.mockResolvedValue({ ...customer, email: 'normalised@example.com' });
+        const wrapper = mountComponent();
+
+        await wrapper.find('input[type="email"]').setValue('Normalised@Example.com');
+        await wrapper.find('form').trigger('submit');
+        await flushPromises();
+
+        expect((wrapper.find('input[type="email"]').element as HTMLInputElement).value).toBe(
+            'normalised@example.com',
+        );
+        expect(getSaveButton(wrapper).attributes('disabled')).toBeDefined();
+    });
+
+    it('keeps the form usable after a failed save', async () => {
+        mockUpdateExecute.mockRejectedValueOnce(undefined);
+        const wrapper = mountComponent();
+
+        await wrapper.find('input[type="email"]').setValue('updated@example.com');
+        await wrapper.find('form').trigger('submit');
+        await flushPromises();
+
+        expect(getSaveButton(wrapper).attributes('disabled')).toBeUndefined();
+
+        await wrapper.find('form').trigger('submit');
+        await flushPromises();
+
+        expect(mockUpdateExecute).toHaveBeenCalledTimes(2);
+    });
+
+    it('saves once when submitted twice in a row', async () => {
+        const wrapper = mountComponent();
+
+        await wrapper.find('input[type="email"]').setValue('updated@example.com');
+        await wrapper.find('form').trigger('submit');
+        await wrapper.find('form').trigger('submit');
+        await flushPromises();
+
+        expect(mockUpdateExecute).toHaveBeenCalledOnce();
     });
 });

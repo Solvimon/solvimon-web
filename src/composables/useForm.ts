@@ -1,5 +1,5 @@
 import { type ValidationArgs } from '@vuelidate/core';
-import { computed, shallowRef } from 'vue';
+import { computed, ref, shallowRef, toRaw } from 'vue';
 import type { Ref } from 'vue';
 import { useValidation, objectDiff } from '@solvimon/solvimon-ui';
 
@@ -25,10 +25,12 @@ export default <
     const initialFormState = shallowRef<T>(structuredClone(initialState));
 
     /**
-     * Stores the form values.
+     * Stores the form values. Deep, because fields are edited in place.
      */
 
-    const form = shallowRef<T>(structuredClone(initialState));
+    // A form state holds no refs, so unwrapping them leaves `T` as it is.
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    const form = ref(structuredClone(initialState)) as Ref<T>;
 
     /**
      * Stores the form validation.
@@ -55,8 +57,8 @@ export default <
      * - `hasChanges` becomes `false`
      */
     const updateInitialState = (state: T) => {
-        form.value = structuredClone(state);
-        initialFormState.value = structuredClone(state);
+        form.value = structuredClone(toRaw(state));
+        initialFormState.value = structuredClone(toRaw(state));
     };
 
     /**

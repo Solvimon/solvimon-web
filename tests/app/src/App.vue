@@ -94,12 +94,9 @@ let unmountScreen: (() => void) | null = null;
 const getErrorMessage = (event: Event): string => {
     if (!('detail' in event)) return 'unknown error';
 
-    const detail = event.detail;
-    if (typeof detail === 'object' && detail !== null && 'message' in detail) {
-        return String(detail.message);
-    }
-
-    return 'unknown error';
+    // A Vue custom element dispatches an emit's arguments as the detail, so the Error is the first.
+    const [error] = Array.isArray(event.detail) ? event.detail : [];
+    return error instanceof Error ? error.message : 'unknown error';
 };
 
 const getActionDetail = (event: Event): { action: string; detail: Record<string, unknown> } => {

@@ -10,10 +10,6 @@ const componentName = getComponentName('invoice-header');
 
 const props = defineProps<SolvimonInvoiceHeaderEntryProps>();
 
-if (!props.configuration?.invoiceId) {
-    throw new Error('Missing invoice id');
-}
-
 const resolvedProps = computed<SolvimonInvoiceHeaderEntryProps>(() => ({
     ...props,
     configuration: {
@@ -28,6 +24,7 @@ const resolvedProps = computed<SolvimonInvoiceHeaderEntryProps>(() => ({
         :entry="$props"
         :component-name="componentName"
         :allowed-portal-types="['CUSTOMER']"
+        :required-configuration="{ invoiceId: configuration?.invoiceId }"
         @error="(error) => $emit('error', error)"
     >
         <InvoiceEntryView :invoice-id="resolvedProps.configuration.invoiceId">

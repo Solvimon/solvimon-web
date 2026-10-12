@@ -7,7 +7,7 @@ const DEFAULT_BATCH_SIZE = 15;
 
 const props = defineProps<SolvimonInvoicesListEntryProps>();
 
-const customerId = props.portalObject!.customer_id;
+const customerId = props.portalObject.customer_id;
 
 const invoices = useInvoicesList({
     customerId,

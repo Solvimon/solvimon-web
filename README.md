@@ -66,6 +66,23 @@ const unmount = solvimon.createScreen('checkout', {
 `createScreen` and `createComponent` return synchronously; the element is appended once its entry
 has loaded. An unknown id or a container that matches nothing throws straight away.
 
+### When an element fails
+
+An error the element does not handle itself — an unknown `environment`, or a bug in the SDK — is
+logged as `UNHANDLED_ERROR` and dispatched as an `error` event on the element. The event does not
+bubble, and its `detail` is an array whose first item is the `Error`:
+
+```ts
+element.addEventListener('error', (event) => {
+    const [error] = (event as CustomEvent<[Error]>).detail;
+});
+```
+
+Failures the element does handle, such as a refused payment, reach `onLog` and the `log` event
+only. An element missing `environment`, `portalObject` or the id in its `configuration` renders
+nothing until they are set, and logs `MISSING_REQUIRED_PROPERTIES` if they are still missing just
+after it mounts.
+
 ### Server-side rendering (SSR / isomorphic)
 
 Importing an entry on the server is safe — the module has no top-level browser access. It is
@@ -316,6 +333,7 @@ The SDK emits structured log entries via the [`onLog`](#error-logging) callback.
 | `APPLE_PAY_FORM_INCOMPLETE`          | Apple Pay authorization stopped: the checkout form is incomplete                                             |
 | `CHECKOUT_FORM_STATE_NOT_SAVED`      | Could not keep the checkout form for a redirect return                                                       |
 | `INVOICE_PREVIEW_SKIPPED`            | Skipped the on-demand charge invoice preview: no schedule to charge it on                                    |
+| `MISSING_REQUIRED_PROPERTIES`        | Not rendering until these properties are set:…                                                               |
 | `ON_DEMAND_CHARGE_REFUSED`           | The on-demand order was refused or its payment did not go through                                            |
 | `PAYMENT_INTEGRATION_NOT_RENDERABLE` | No Adyen payment methods to offer                                                                            |
 | `PAYMENT_OUTCOME_UNCONFIRMED`        | The payment outcome could not be confirmed yet                                                               |

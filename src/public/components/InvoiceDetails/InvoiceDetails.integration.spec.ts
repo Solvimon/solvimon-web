@@ -4,6 +4,7 @@ import type { Invoice } from '@solvimon/solvimon-types';
 import InvoiceDetailsEntry from './InvoiceDetails.entry.vue';
 import type { SolvimonInvoiceDetailsEntryProps } from './InvoiceDetails.entry.types';
 import { createTestPortalObject } from '@/test-utils/portalObjectFixture';
+import { EntryProvider } from '@/components/providers';
 
 const { mockUseInvoiceData } = vi.hoisted(() => ({
     mockUseInvoiceData: vi.fn(),
@@ -63,16 +64,20 @@ describe('InvoiceDetails entry component', () => {
         vi.clearAllMocks();
     });
 
-    it('throws when no invoice ID is provided in the configuration', () => {
-        expect(() =>
-            mount(InvoiceDetailsEntry, {
-                props: {
-                    ...defaultProps,
-                    configuration: { invoiceId: undefined as unknown as Invoice['id'] },
-                },
-                global: { stubs: { teleport: true } },
-            }),
-        ).toThrow('Missing invoice id');
+    it('waits for an invoice ID instead of throwing when the configuration has none', () => {
+        mockUseInvoiceData.mockReturnValue({ data: ref(undefined), isPending: ref(false) });
+
+        const wrapper = mount(InvoiceDetailsEntry, {
+            props: {
+                ...defaultProps,
+                configuration: { invoiceId: undefined as unknown as Invoice['id'] },
+            },
+            global: { stubs: { teleport: true } },
+        });
+
+        expect(wrapper.getComponent(EntryProvider).vm.$attrs['required-configuration']).toEqual({
+            invoiceId: undefined,
+        });
     });
 
     it('requests invoice data using the invoice ID from the configuration', () => {

@@ -73,7 +73,7 @@ const solvimon = createSolvimonCore({
 });
 
 const unmount = solvimon.createComponent('invoices-list', {
-    container: document.getElementById('invoices-section'),
+    container: '#invoices-section', // or an Element; getElementById can return null
     portalObject: customerPortalObject,
     configuration: {
         showViewButton: true,

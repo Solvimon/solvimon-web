@@ -4,6 +4,7 @@ import { tmpdir } from 'os';
 import { createRequire } from 'module';
 import { pathToFileURL, fileURLToPath } from 'url';
 import { brotliCompressSync } from 'zlib';
+import { resolveSafePath } from '../safe-path.mjs';
 
 /**
  * Consumers install this package and import it, so their bundler flattens our chunk
@@ -132,6 +133,6 @@ export async function measureConsumerBundles(distDir, projectRoot = process.cwd(
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
     const args = process.argv.slice(2);
     const distArg = args[args.indexOf('--dist') + 1];
-    const dist = args.includes('--dist') ? distArg : 'dist';
+    const dist = resolveSafePath(args.includes('--dist') ? distArg : 'dist', process.cwd());
     console.log(JSON.stringify(await measureConsumerBundles(dist)));
 }

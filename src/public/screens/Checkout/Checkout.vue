@@ -952,6 +952,7 @@ onMounted(() => {
                 <PromotionCodeSection
                     class="sv-checkout__promotion-code"
                     :promotion-code="promotionCode"
+                    :is-pending="isPromotionCodePending"
                     @update:applied-code="promotionCode = $event"
                     @remove="removePromotionCode"
                     @apply="applyPromotionCode"

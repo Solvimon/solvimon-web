@@ -61,6 +61,7 @@ vi.mock('@/components/wallets/ConvertedAmountInput/ConvertedAmountInput.vue', ()
             'name',
             'required',
             'disabled',
+            'error',
         ],
         emits: ['update:modelValue'],
         template: '<div data-testid="amount-input" />',
@@ -992,7 +993,13 @@ describe('TopUpModalForm — what a charge requires', () => {
             await wrapper.vm.submit();
 
             expect(wrapper.emitted('save-auto-top-up')).toEqual([
-                [{ rule: AUTO_TOP_UP, paymentMethodId: 'pm_default' }],
+                [
+                    {
+                        rule: AUTO_TOP_UP,
+                        paymentMethodId: 'pm_default',
+                        pricingPlanScheduleId: 'ppsc_1',
+                    },
+                ],
             ]);
         });
 
@@ -1017,5 +1024,130 @@ describe('TopUpModalForm — what a charge requires', () => {
 
             expect(wrapper.emitted('save-auto-top-up')).toBeUndefined();
         });
+    });
+});
+
+describe('TopUpModalForm — the schedule a top-up is charged on', () => {
+    beforeEach(() => {
+        vi.useFakeTimers();
+        mockPreview.mockReset();
+        mockPreview.mockResolvedValue({ id: 'inv_1' });
+        mockCharge.mockReset();
+        mockCharge.mockResolvedValue({ id: 'inv_charged' });
+    });
+
+    afterEach(() => {
+        vi.useRealTimers();
+    });
+
+    const items = () => [
+        createFixedItem({ pricingItemId: 'prii_a', scheduleId: 'ppsc_a' }),
+        createFixedItem({ pricingItemId: 'prii_b', scheduleId: 'ppsc_b' }),
+    ];
+
+    it('charges the chosen top-up on the schedule it is billed on', async () => {
+        const wrapper = mountForm(items());
+        await select(wrapper, 1);
+
+        await wrapper.vm.submit();
+
+        expect(mockCharge).toHaveBeenCalledWith(
+            expect.objectContaining({
+                pricing_plan_schedule_id: 'ppsc_b',
+                pricing_items: [{ pricing_item_id: 'prii_b' }],
+            }),
+        );
+    });
+
+    it('previews the chosen top-up on the schedule it is billed on', async () => {
+        const wrapper = mountForm(items());
+
+        await select(wrapper, 1);
+
+        expect(mockPreview).toHaveBeenLastCalledWith({
+            pricingPlanScheduleId: 'ppsc_b',
+            pricingItems: [{ pricing_item_id: 'prii_b' }],
+        });
+    });
+});
+
+describe('TopUpModalForm — the amount entered', () => {
+    beforeEach(() => {
+        vi.useFakeTimers();
+        mockPreview.mockReset();
+        mockPreview.mockResolvedValue({ id: 'inv_1' });
+        mockCharge.mockReset();
+        mockCharge.mockResolvedValue({ id: 'inv_charged' });
+    });
+
+    afterEach(() => {
+        vi.useRealTimers();
+    });
+
+    const amountErrors = (wrapper: ReturnType<typeof mountForm>) =>
+        ((amountInput(wrapper).props('error') ?? []) as { $message: string }[]).map(
+            ({ $message }) => $message,
+        );
+
+    const submitWith = async (quantity: string, inCredits = false) => {
+        const wrapper = mountForm([createFlexibleItem({ inCredits })]);
+        await select(wrapper, 0);
+        await enterAmount(wrapper, quantity);
+
+        await wrapper.vm.submit();
+        await nextTick();
+
+        return wrapper;
+    };
+
+    it('refuses an amount below the minimum and says what it is', async () => {
+        const wrapper = await submitWith('50');
+
+        expect(mockCharge).not.toHaveBeenCalled();
+        expect(amountErrors(wrapper)).toEqual([expect.stringContaining('at least')]);
+        expect(amountErrors(wrapper)[0]).toContain('100.00');
+    });
+
+    it('states the minimum in credits for a credit based wallet', async () => {
+        const wrapper = await submitWith('50', true);
+
+        expect(amountErrors(wrapper)[0]).toContain('1000 coins');
+    });
+
+    it('refuses an amount above the maximum', async () => {
+        const wrapper = await submitWith('5000');
+
+        expect(mockCharge).not.toHaveBeenCalled();
+        expect(amountErrors(wrapper)).toEqual([expect.stringContaining('at most')]);
+    });
+
+    it('refuses a negative amount', async () => {
+        const wrapper = await submitWith('-10');
+
+        expect(mockCharge).not.toHaveBeenCalled();
+        expect(amountErrors(wrapper)).toContain('Top up with more than zero.');
+    });
+
+    it('asks for an amount when there is none', async () => {
+        const wrapper = await submitWith('');
+
+        expect(amountErrors(wrapper)).toEqual(['Enter the amount to top up with.']);
+    });
+
+    it('charges an amount within the bounds', async () => {
+        const wrapper = await submitWith('100');
+
+        expect(mockCharge).toHaveBeenCalled();
+        expect(amountErrors(wrapper)).toEqual([]);
+    });
+
+    it('asks nothing of the amount when a fixed top-up is chosen', async () => {
+        const wrapper = mountForm([createFlexibleItem(), createFixedItem()]);
+        await enterAmount(wrapper, '5');
+        await select(wrapper, 1);
+
+        await wrapper.vm.submit();
+
+        expect(mockCharge).toHaveBeenCalled();
     });
 });

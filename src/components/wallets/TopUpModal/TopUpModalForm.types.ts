@@ -3,6 +3,7 @@ import type {
     Invoice,
     PaymentMethod,
     PaymentMethodOptionsResponse,
+    PricingPlanSchedule,
 } from '@solvimon/solvimon-types';
 import type { TopUpPricingItem } from './TopUpModal.lib';
 import type { AutoTopUpRule } from '@/components/wallets/AutoTopUpConfig/AutoTopUpConfig.types';
@@ -23,7 +24,12 @@ export interface TopUpModalFormEmits {
     (e: 'success', invoice: Invoice): void;
     (
         e: 'save-auto-top-up',
-        request: { rule: AutoTopUpRule; paymentMethodId: PaymentMethod['id'] },
+        request: {
+            rule: AutoTopUpRule;
+            paymentMethodId: PaymentMethod['id'];
+            /** The schedule the top-up was charged on, which the rule is billed on too. */
+            pricingPlanScheduleId: PricingPlanSchedule['id'];
+        },
     ): void;
     (e: 'failure', error: unknown): void;
 }

@@ -8,6 +8,7 @@ import type {
     Name,
     Amount,
     Invoice,
+    ConfiguredMeterValue,
 } from '@solvimon/solvimon-types';
 import { computed, onMounted, ref, watch } from 'vue';
 import { taxId } from '@solvimon/solvimon-ui/validators';
@@ -48,6 +49,24 @@ function isSavedFormState(value: unknown): value is SavedFormState {
         typeof value.savedAt === 'number' &&
         'form' in value
     );
+}
+
+/**
+ * Saved seats or units stand only if every one is a config the plan starts the form with;
+ * otherwise the plan's own values stay, as the editor shows nothing for a config it does not know.
+ */
+function onlyPlanConfigs(
+    saved: ConfiguredMeterValue[] | undefined,
+    planValues: ConfiguredMeterValue[] | undefined,
+): ConfiguredMeterValue[] | undefined {
+    if (!saved || !planValues) return undefined;
+
+    const planConfigIds = new Set(
+        planValues.map(({ pricing_item_config_id }) => pricing_item_config_id),
+    );
+    return saved.every(({ pricing_item_config_id }) => planConfigIds.has(pricing_item_config_id))
+        ? saved
+        : undefined;
 }
 
 export function useCheckoutView({
@@ -219,6 +238,8 @@ export function useCheckoutView({
             ...(seatsValues ? { seatsValues } : {}),
             ...(unitsValues ? { unitsValues } : {}),
         });
+
+        return { seatsValues, unitsValues };
     };
 
     const authorizationContext = computed<AuthorizePaymentPayload['context']>(() => {
@@ -489,8 +510,9 @@ export function useCheckoutView({
         // Everything downstream waits on the subscription — the preview prices it, and the payment
         // method options need the amount that preview returns. So a failure here reads as "nothing
         // is loading" rather than as itself, and has to be reported where it happens.
+        let plan: Awaited<ReturnType<typeof loadSubscription>>;
         try {
-            await loadSubscription();
+            plan = await loadSubscription();
         } catch (error) {
             logger.error(
                 'SUBSCRIPTION_LOAD_FAILED',
@@ -511,7 +533,14 @@ export function useCheckoutView({
         // Re-apply after loadSubscription resets enabledPricingIds/seatsValues to subscription
         // defaults, so the user's saved plan selections are preserved.
         if (savedFormState) {
-            checkoutForm.updateInitialState(savedFormState);
+            const { seatsValues, unitsValues, ...rest } = savedFormState;
+            const planSeats = onlyPlanConfigs(seatsValues, plan.seatsValues);
+            const planUnits = onlyPlanConfigs(unitsValues, plan.unitsValues);
+            checkoutForm.updateInitialState({
+                ...rest,
+                ...(planSeats ? { seatsValues: planSeats } : {}),
+                ...(planUnits ? { unitsValues: planUnits } : {}),
+            });
         }
     });
 

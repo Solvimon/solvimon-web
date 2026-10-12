@@ -25,6 +25,10 @@ beforeEach(() => {
     });
 });
 
+afterEach(() => {
+    vi.useRealTimers();
+});
+
 describe('useCopyToClipboard', () => {
     it('copies and confirms', async () => {
         const { api } = mountComposable();
@@ -44,7 +48,6 @@ describe('useCopyToClipboard', () => {
         await nextTick();
 
         expect(api.hasCopied.value).toBe(false);
-        vi.useRealTimers();
     });
 
     it('does not confirm a copy that failed', async () => {
@@ -64,6 +67,5 @@ describe('useCopyToClipboard', () => {
 
         expect(() => vi.advanceTimersByTime(50)).not.toThrow();
         expect(api.hasCopied.value).toBe(true);
-        vi.useRealTimers();
     });
 });

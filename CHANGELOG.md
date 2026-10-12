@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- An element renders only for a published portal object of the type it accepts — `INIT_PRICING_PLAN_SUBSCRIPTION` for the checkout, `CUSTOMER` for every other element — and, for any other, makes no API call beyond exchanging its token. A revoked portal logs `RESOURCE_REVOKED`; the checkout shows its "Checkout not available" notice, and the other elements, which used to render and call the API with it, render nothing. Another type logs `PORTAL_TYPE_NOT_ALLOWED` and renders nothing; the checkout used to throw on one and log `INVALID_TOKEN`.
+- An element renders only for a published portal object of the type it accepts — `INIT_PRICING_PLAN_SUBSCRIPTION` for the checkout, `CUSTOMER` for every other element — and, for any other, makes no API call at all, not even the token exchange. A revoked portal logs `RESOURCE_REVOKED`; the checkout shows its "Checkout not available" notice, and the other elements, which used to render and call the API with it, render nothing. Another type logs `PORTAL_TYPE_NOT_ALLOWED` and renders nothing; the checkout used to throw on one and log `INVALID_TOKEN`.
 - Each element's `define` function returns the tag name the element is registered under. Calling it again returns that name rather than registering another.
 - `@import` rules are removed from `cssOverrides`. Browsers that adopt stylesheets ignored them and the others loaded them; load fonts and other stylesheets from the host page.
 

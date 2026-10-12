@@ -98,4 +98,17 @@ describe('Provider', () => {
 
         expect(wrapper.find('.probe').text()).toBe('TEST|cus_1|true');
     });
+
+    it.each<[string, Partial<ProviderProps>]>([
+        ['revoked', { portalObject: { ...createTestPortalObject(), status: 'REVOKED' } }],
+        [
+            'of a type the element does not accept',
+            { allowedPortalTypes: ['INIT_PRICING_PLAN_SUBSCRIPTION'] },
+        ],
+    ])('does not exchange the token of a portal that is %s', async (_, overrides) => {
+        const wrapper = await mountProvider(overrides);
+
+        expect(mockGetAuth).not.toHaveBeenCalled();
+        expect(wrapper.find('.probe').exists()).toBe(false);
+    });
 });

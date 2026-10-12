@@ -48,29 +48,34 @@ if (!props.customElementName) {
                     >
                         <LoggerProvider :log-level="props.logLevel" :on-log="props.onLog">
                             <ErrorBoundary>
-                                <AuthProvider :key="portalObject.token" :token="portalObject.token">
-                                    <ExperimentalFeatureProvider
-                                        :experimental-features="experimentalFeatures"
-                                    >
-                                        <IconSpriteProvider>
-                                            <TranslationProvider
-                                                :locale="locale"
-                                                :date-locale="dateLocale"
-                                                :messages="messages"
+                                <ExperimentalFeatureProvider
+                                    :experimental-features="experimentalFeatures"
+                                >
+                                    <IconSpriteProvider>
+                                        <TranslationProvider
+                                            :locale="locale"
+                                            :date-locale="dateLocale"
+                                            :messages="messages"
+                                        >
+                                            <!-- Above the session, so a portal that cannot be used
+                                            is refused without exchanging its token. -->
+                                            <PortalProvider
+                                                :allowed-portal-types="allowedPortalTypes"
+                                                :portal-object="portalObject"
                                             >
-                                                <PortalProvider
-                                                    :allowed-portal-types="allowedPortalTypes"
-                                                    :portal-object="portalObject"
+                                                <AuthProvider
+                                                    :key="portalObject.token"
+                                                    :token="portalObject.token"
                                                 >
                                                     <slot />
-                                                    <template #unavailable>
-                                                        <slot name="portal-unavailable" />
-                                                    </template>
-                                                </PortalProvider>
-                                            </TranslationProvider>
-                                        </IconSpriteProvider>
-                                    </ExperimentalFeatureProvider>
-                                </AuthProvider>
+                                                </AuthProvider>
+                                                <template #unavailable>
+                                                    <slot name="portal-unavailable" />
+                                                </template>
+                                            </PortalProvider>
+                                        </TranslationProvider>
+                                    </IconSpriteProvider>
+                                </ExperimentalFeatureProvider>
                             </ErrorBoundary>
                         </LoggerProvider>
                     </ConfigProvider>

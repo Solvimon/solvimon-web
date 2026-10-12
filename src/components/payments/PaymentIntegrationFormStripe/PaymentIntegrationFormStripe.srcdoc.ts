@@ -46,6 +46,7 @@ body { overflow: hidden; }
 
     if (event.data.type === 'stripe:init') {
       parentOrigin = event.origin;
+      const initId = event.data.initId;
       countryCode = event.data.countryCode;
       email = event.data.email;
       name = event.data.name;
@@ -54,7 +55,7 @@ body { overflow: hidden; }
       const paymentElement = elements.create('payment', { layout: { type: 'accordion', defaultCollapsed: false }, wallets: event.data.options.wallets, fields: event.data.options.fields });
 
       paymentElement.on('ready', function () {
-        parent.postMessage({ type: 'stripe:ready' }, parentOrigin);
+        parent.postMessage({ type: 'stripe:ready', initId: initId }, parentOrigin);
       });
 
       paymentElement.on('change', function (e) {
@@ -82,11 +83,15 @@ body { overflow: hidden; }
       if (!parentOrigin || event.origin !== parentOrigin) return;
       const submitEmail = 'email' in event.data ? event.data.email : email;
       const submitName = 'name' in event.data ? event.data.name : name;
-      if (!elements) {
+      // A setup anew while this submit is in flight replaces both; the token comes from the
+      // elements that were submitted.
+      const submitStripe = stripe;
+      const submitElements = elements;
+      if (!submitElements) {
         postSubmitError();
         return;
       }
-      elements.submit().then(function (submitResult) {
+      submitElements.submit().then(function (submitResult) {
         if (submitResult.error) {
           postSubmitError(submitResult.error);
           return;
@@ -98,7 +103,7 @@ body { overflow: hidden; }
         const tokenParams = Object.keys(billingDetails).length
           ? { payment_method_data: { billing_details: billingDetails } }
           : {};
-        return stripe.createConfirmationToken({ elements: elements, params: tokenParams }).then(function (tokenResult) {
+        return submitStripe.createConfirmationToken({ elements: submitElements, params: tokenParams }).then(function (tokenResult) {
           if (tokenResult.error) {
             postSubmitError(tokenResult.error);
             return;

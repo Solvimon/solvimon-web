@@ -15,6 +15,7 @@ const props = defineProps<SolvimonSubscriptionSchedulesEntryProps>();
         :entry="$props"
         :component-name="componentName"
         :allowed-portal-types="['CUSTOMER']"
+        :required-configuration="{ subscriptionId: configuration?.subscriptionId }"
         @error="(error: Error) => $emit('error', error)"
     >
         <SubscriptionSchedulesEntryView v-bind="props">

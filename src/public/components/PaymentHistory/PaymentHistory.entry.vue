@@ -7,11 +7,7 @@ import { getComponentName } from '@/utils/component';
 
 const componentName = getComponentName('payment-history');
 
-const props = defineProps<SolvimonPaymentHistoryEntryProps>();
-
-if (!props.configuration?.invoiceId) {
-    throw new Error('Missing invoice id');
-}
+defineProps<SolvimonPaymentHistoryEntryProps>();
 </script>
 
 <template>
@@ -19,6 +15,7 @@ if (!props.configuration?.invoiceId) {
         :entry="$props"
         :component-name="componentName"
         :allowed-portal-types="['CUSTOMER']"
+        :required-configuration="{ invoiceId: configuration?.invoiceId }"
         @error="(error) => $emit('error', error)"
     >
         <PaymentHistoryEntryView v-bind="$props">

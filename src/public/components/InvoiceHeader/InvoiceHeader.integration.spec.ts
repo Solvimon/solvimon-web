@@ -4,6 +4,7 @@ import type { Invoice, Payment } from '@solvimon/solvimon-types';
 import InvoiceHeaderEntry from './InvoiceHeader.entry.vue';
 import type { SolvimonInvoiceHeaderEntryProps } from './InvoiceHeader.entry.types';
 import { createTestPortalObject } from '@/test-utils/portalObjectFixture';
+import { EntryProvider } from '@/components/providers';
 
 const {
     mockUseInvoice,
@@ -118,16 +119,14 @@ describe('InvoiceHeader entry component', () => {
         mockDownloadInvoicePdf.mockResolvedValue(undefined);
     });
 
-    it('throws when no invoice ID is provided in the configuration', () => {
-        expect(() =>
-            mount(InvoiceHeaderEntry, {
-                props: {
-                    ...defaultProps,
-                    configuration: { invoiceId: undefined as unknown as Invoice['id'] },
-                },
-                global: { stubs: { teleport: true } },
-            }),
-        ).toThrow('Missing invoice id');
+    it('waits for an invoice ID instead of throwing when the configuration has none', async () => {
+        const wrapper = await mountComponent({
+            configuration: { invoiceId: undefined as unknown as Invoice['id'] },
+        });
+
+        expect(wrapper.getComponent(EntryProvider).vm.$attrs['required-configuration']).toEqual({
+            invoiceId: undefined,
+        });
     });
 
     it('requests the invoice using the invoice ID from the configuration', async () => {

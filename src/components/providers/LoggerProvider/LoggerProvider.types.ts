@@ -92,6 +92,7 @@ export type WarnCode =
     /** Also an `ErrorCode`: the level separates a failure the SDK absorbed from one it did not. */
     | 'REQUEST_FAILED'
     | 'ACTIVE_SCHEDULE_NOT_FOUND'
+    | 'MISSING_REQUIRED_PROPERTIES'
     | 'ADYEN_INVALID_CONFIGURATION'
     | 'PAYMENT_INTEGRATION_NOT_RENDERABLE'
     | 'APPLE_PAY_ACTION_REQUIRED'

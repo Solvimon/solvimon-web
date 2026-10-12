@@ -7,11 +7,7 @@ import { getComponentName } from '@/utils/component';
 
 const componentName = getComponentName('invoice-details');
 
-const props = defineProps<SolvimonInvoiceDetailsEntryProps>();
-
-if (!props.configuration?.invoiceId) {
-    throw new Error('Missing invoice id');
-}
+defineProps<SolvimonInvoiceDetailsEntryProps>();
 </script>
 
 <template>
@@ -19,6 +15,7 @@ if (!props.configuration?.invoiceId) {
         :entry="$props"
         :component-name="componentName"
         :allowed-portal-types="['CUSTOMER']"
+        :required-configuration="{ invoiceId: configuration?.invoiceId }"
         @error="(error) => $emit('error', error)"
     >
         <InvoiceDetailsEntryView v-bind="$props">

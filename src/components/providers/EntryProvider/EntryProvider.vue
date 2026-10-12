@@ -1,10 +1,16 @@
 <script setup lang="ts">
+import { computed } from 'vue';
 import type { EntryProviderProps } from './EntryProvider.types';
+import { getMissingProperties } from './EntryProvider.lib';
 import Provider from '@/components/providers/Provider/Provider.vue';
 import type { EntryBaseEmits } from '@/types/EntryBaseProps';
 
-defineProps<EntryProviderProps>();
+const props = defineProps<EntryProviderProps>();
 defineEmits<EntryBaseEmits>();
+
+const missingProperties = computed(() =>
+    getMissingProperties(props.entry, props.requiredConfiguration),
+);
 </script>
 
 <template>
@@ -22,6 +28,7 @@ defineEmits<EntryBaseEmits>();
         :log-level="entry.logLevel"
         :on-log="entry.onLog"
         :css-overrides="entry.cssOverrides"
+        :missing-properties="missingProperties"
         @error="(error: Error) => $emit('error', error)"
     >
         <slot />

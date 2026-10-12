@@ -8,4 +8,6 @@ export interface EntryProviderProps {
     componentName: string;
     /** Which portal the entry accepts, decided by the entry rather than by its consumer. */
     allowedPortalTypes: NonNullable<ProviderProps['allowedPortalTypes']>;
+    /** Configuration the entry cannot render without, keyed by name, such as `{ invoiceId }`. */
+    requiredConfiguration?: Record<string, unknown>;
 }

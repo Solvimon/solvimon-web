@@ -12,7 +12,7 @@ import type {
     StripeLoadError,
     StripeSubmitError,
 } from './PaymentIntegrationFormStripeFrame.types.ts';
-import { getFrameOptions } from './PaymentIntegrationFormStripe.lib.ts';
+import { getFrameOptions, summarizeStripeError } from './PaymentIntegrationFormStripe.lib.ts';
 import { STRIPE_SCRIPT_URL } from './PaymentIntegrationFormStripe.constants.ts';
 import PaymentCompletedCard from '@/components/payments/PaymentCompletedCard/PaymentCompletedCard.vue';
 import PaymentErrorCard from '@/components/payments/PaymentErrorCard/PaymentErrorCard.vue';
@@ -288,17 +288,22 @@ async function handlePaymentResult(result: AuthorizePaymentResponse) {
         });
 
         if (error) {
+            const stripeError = summarizeStripeError(error);
             logger.error(
                 'STRIPE_ACTION_FAILED',
                 'Stripe handleNextAction failed',
                 failureContext({
                     reason: 'STRIPE_NEXT_ACTION_FAILED',
-                    cause: error,
+                    cause: stripeError,
                     extra: { stripeErrorCode: error.code, stripeErrorType: error.type },
                 }),
-                error,
+                stripeError,
             );
-            emitError({ code: 'AUTHORIZATION_FAILED', message: 'Payment action failed', error });
+            emitError({
+                code: 'AUTHORIZATION_FAILED',
+                message: 'Payment action failed',
+                error: stripeError,
+            });
             return;
         }
 
@@ -357,12 +362,12 @@ async function retrieveIntentStatus({
 
     if (intent === 'PAYMENT') {
         const result = await stripe.retrievePaymentIntent(clientSecret);
-        if (result.error) throw result.error;
+        if (result.error) throw summarizeStripeError(result.error);
         return result.paymentIntent.status;
     }
 
     const result = await stripe.retrieveSetupIntent(clientSecret);
-    if (result.error) throw result.error;
+    if (result.error) throw summarizeStripeError(result.error);
     return result.setupIntent.status;
 }
 

@@ -62,6 +62,7 @@ vi.mock('@/components/wallets/ConvertedAmountInput/ConvertedAmountInput.vue', ()
             'required',
             'disabled',
             'error',
+            'label',
         ],
         emits: ['update:modelValue'],
         template: '<div data-testid="amount-input" />',
@@ -261,12 +262,14 @@ describe('TopUpModalForm', () => {
         expect(wrapper.text()).toContain('10.00');
     });
 
-    it('labels a flexible top-up with its bounds', () => {
+    it('labels the amount input and hands it the bounds the pricing sets', () => {
         const wrapper = mountForm([createFlexibleItem()]);
 
         expect(wrapper.text()).toContain('Choose your own amount');
-        expect(wrapper.text()).toContain('100.00');
-        expect(wrapper.text()).toContain('1,000.00');
+        expect(amountInput(wrapper).props()).toMatchObject({
+            label: 'Amount',
+            bounds: { minimum: amountOf('100.00'), maximum: amountOf('1000.00') },
+        });
     });
 
     it('labels a fixed top-up in credits when the wallet holds credits', () => {
@@ -294,24 +297,24 @@ describe('TopUpModalForm', () => {
         expect(wrapper.find('.sv-top-up-form__option-cost').exists()).toBe(false);
     });
 
-    it('hides the flexible bounds while that option is not chosen', async () => {
+    it('hides the amount input while that option is not chosen', async () => {
         const wrapper = mountForm([createFlexibleItem(), createFixedItem()]);
-        expect(wrapper.find('.expand--open').text()).toContain('Between');
+        expect(wrapper.find('.expand--open [data-testid="amount-input"]').exists()).toBe(true);
 
         await select(wrapper, 1);
 
         expect(wrapper.find('.expand--open').exists()).toBe(false);
-        expect(wrapper.find('.expand').text()).toContain('Between');
+        expect(wrapper.find('.expand [data-testid="amount-input"]').exists()).toBe(true);
         expect(wrapper.text()).toContain('Choose your own amount');
     });
 
-    it('brings the flexible bounds back when that option is chosen again', async () => {
+    it('brings the amount input back when that option is chosen again', async () => {
         const wrapper = mountForm([createFlexibleItem(), createFixedItem()]);
         await select(wrapper, 1);
 
         await select(wrapper, 0);
 
-        expect(wrapper.find('.expand--open').text()).toContain('Between');
+        expect(wrapper.find('.expand--open [data-testid="amount-input"]').exists()).toBe(true);
     });
 
     it('gives a fixed top-up no expanding panel, having nothing to reveal', () => {
@@ -320,11 +323,14 @@ describe('TopUpModalForm', () => {
         expect(wrapper.find('.sv-top-up-form__options .expand').exists()).toBe(false);
     });
 
-    it('labels flexible bounds in credits when the wallet holds credits', () => {
+    // The input restates them in credits itself, from the rate it is given.
+    it('hands a credit based wallet the bounds in money', () => {
         const wrapper = mountForm([createFlexibleItem({ inCredits: true })]);
 
-        expect(wrapper.text()).toContain('1000 coins');
-        expect(wrapper.text()).toContain('10000 coins');
+        expect(amountInput(wrapper).props('bounds')).toEqual({
+            minimum: amountOf('100.00'),
+            maximum: amountOf('1000.00'),
+        });
     });
 
     it('hides the radio dot', () => {

@@ -203,6 +203,7 @@ const boundsText = computed(() => {
         :required="required"
         :disabled="disabled"
         :error="error"
+        v-bind="hasError ? { 'aria-invalid': 'true' } : {}"
     >
         <template v-if="boundsText" #label-suffix>
             <Typography

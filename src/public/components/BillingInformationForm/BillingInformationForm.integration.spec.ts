@@ -5,6 +5,7 @@ import BillingInformationFormEntry from './BillingInformationForm.entry.vue';
 import type { SolvimonBillingInformationFormEntryProps } from './BillingInformationForm.entry.types';
 import { ApiError } from '@/services/apiError';
 import { createTestPortalObject } from '@/test-utils/portalObjectFixture';
+import { providerMockLogger } from '@/test-utils/providerMock';
 
 const { mockUseCustomer, mockGetExecute, mockUpdateExecute } = vi.hoisted(() => ({
     mockUseCustomer: vi.fn(),
@@ -19,6 +20,11 @@ vi.mock('@/composables/useCustomer', () => ({
 vi.mock('@/components/providers', async () => {
     const { createProviderMock } = await import('@/test-utils/providerMock');
     return createProviderMock();
+});
+
+vi.mock('@/components/providers/LoggerProvider/composables/useLogger', async () => {
+    const { providerMockLogger } = await import('@/test-utils/providerMock');
+    return { useLogger: () => providerMockLogger };
 });
 
 vi.mock('@solvimon/solvimon-ui', async () => {
@@ -109,6 +115,21 @@ describe('BillingInformationForm entry component', () => {
         mountComponent();
 
         expect(mockGetExecute).toHaveBeenCalledOnce();
+    });
+
+    it('logs a failed load of the customer as INITIAL_DATA_LOAD_FAILED', async () => {
+        const failure = new Error('Request failed with status 500');
+        mockGetExecute.mockRejectedValue(failure);
+
+        mountComponent({ withCustomer: false });
+        await flushPromises();
+
+        expect(providerMockLogger.error).toHaveBeenCalledWith(
+            'INITIAL_DATA_LOAD_FAILED',
+            'Failed to load initial data',
+            {},
+            failure,
+        );
     });
 
     it('does not render the form when customer data has not yet loaded', () => {

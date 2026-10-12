@@ -99,18 +99,17 @@ function submit() {
             failureContext({ reason: 'STRIPE_SUBMIT_FAILED', cause: error }),
             error,
         );
+        // Nothing has been posted to Stripe at this point, so the submit was simply not sent.
+        emit('invalid');
     });
 }
 
 async function handleSubmit() {
     const isValid = await props.validateOnSubmit();
 
-    if (!isValid || !frameRef.value) {
+    if (!isValid || !frameRef.value?.triggerSubmit()) {
         emit('invalid');
-        return;
     }
-
-    frameRef.value.triggerSubmit();
 }
 
 function handleSubmitError(error: StripeSubmitError) {

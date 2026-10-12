@@ -16,8 +16,11 @@ defineExpose({ triggerSubmit });
 const iframeRef = ref<HTMLIFrameElement>();
 const iframeHeight = ref(0);
 const iframeSrc = ref<string>();
+// Until Stripe says it is ready the frame has no elements to submit, and would drop the message.
+let isReady = false;
 
 function sendInit() {
+    isReady = false;
     iframeRef.value?.contentWindow?.postMessage(
         {
             type: 'stripe:init',
@@ -31,11 +34,13 @@ function sendInit() {
     );
 }
 
-function triggerSubmit() {
-    iframeRef.value?.contentWindow?.postMessage(
-        { type: 'stripe:submit', email: props.email, name: props.name },
-        '*',
-    );
+/** Whether the submit was sent; one that was not will never be answered. */
+function triggerSubmit(): boolean {
+    const contentWindow = iframeRef.value?.contentWindow;
+    if (!isReady || !contentWindow) return false;
+
+    contentWindow.postMessage({ type: 'stripe:submit', email: props.email, name: props.name }, '*');
+    return true;
 }
 
 const STRIPE_ERROR_TYPES: Record<StripeError['type'], true> = {
@@ -67,6 +72,7 @@ function handleMessage(event: MessageEvent) {
 
     switch (type) {
         case 'stripe:ready':
+            isReady = true;
             emit('ready');
             break;
 
@@ -95,6 +101,8 @@ function handleMessage(event: MessageEvent) {
         case 'stripe:submit:success':
             if (typeof data['confirmationTokenId'] === 'string') {
                 emit('submit-success', data['confirmationTokenId']);
+            } else {
+                emit('submit-error', { message: 'Stripe returned no confirmation token' });
             }
             break;
 

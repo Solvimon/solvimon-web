@@ -13,6 +13,8 @@ export type ScreenId =
     | 'payment-methods-management';
 
 export interface ScreenOptions {
+    /** `TEST` unless a test is about an environment the SDK has to refuse. */
+    environment?: string;
     portalObject?: Json;
     configuration?: Json;
     /** Per-endpoint overrides, applied over whatever defaults the screen's harness declares. */
@@ -55,7 +57,7 @@ export async function mountScreen(
             screen,
             // The published environment, so nothing can resolve to internal infrastructure even if
             // a request were ever to escape the mocks.
-            environment: 'TEST',
+            environment: options.environment ?? 'TEST',
             locale: 'en-US',
             portalObject: options.portalObject,
             configuration: options.configuration ?? {},

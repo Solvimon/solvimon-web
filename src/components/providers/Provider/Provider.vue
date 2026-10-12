@@ -9,24 +9,18 @@ import TeleportProvider from '@/components/providers/TeleportProvider/TeleportPr
 import ErrorBoundary from '@/components/providers/ErrorBoundary/ErrorBoundary.vue';
 import AuthProvider from '@/components/providers/AuthProvider/AuthProvider.vue';
 import ConfigProvider from '@/components/providers/ConfigProvider/ConfigProvider.vue';
+import RequiredPropertiesGuard from '@/components/providers/RequiredPropertiesGuard/RequiredPropertiesGuard.vue';
 import HostElementProvider from '@/components/providers/HostElementProvider/HostElementProvider.vue';
 import PortalProvider from '@/components/providers/PortalProvider/PortalProvider.vue';
 import TranslationProvider from '@/components/providers/TranslationProvider/TranslationProvider.vue';
 
-const props = defineProps<ProviderProps>();
-defineEmits<ProviderEmits>();
-
-if (!props.environment) {
-    throw new Error('environment is required');
-}
-
-if (!props.portalObject) {
-    throw new Error('portalObject is required');
-}
-
-if (!props.customElementName) {
-    throw new Error('customElementName is required');
-}
+const props = defineProps<
+    ProviderProps & {
+        /** Required properties the entry was given no value for; nothing below renders until set. */
+        missingProperties?: string[];
+    }
+>();
+const emit = defineEmits<ProviderEmits>();
 </script>
 
 <template>
@@ -39,32 +33,38 @@ if (!props.customElementName) {
                         :secondary-color="secondaryColor"
                         is-shadow-root
                     />
-                    <ConfigProvider v-if="environment" :environment="environment">
-                        <LoggerProvider :log-level="props.logLevel" :on-log="props.onLog">
-                            <ErrorBoundary>
-                                <AuthProvider :token="portalObject.token">
-                                    <ExperimentalFeatureProvider
-                                        :experimental-features="experimentalFeatures"
-                                    >
-                                        <PortalProvider
-                                            :allowed-portal-types="allowedPortalTypes"
-                                            :portal-object="portalObject"
+                    <LoggerProvider
+                        :environment="environment"
+                        :log-level="props.logLevel"
+                        :on-log="props.onLog"
+                    >
+                        <ErrorBoundary @error="(error: Error) => emit('error', error)">
+                            <RequiredPropertiesGuard :missing="missingProperties ?? []">
+                                <ConfigProvider :environment="environment">
+                                    <AuthProvider :token="portalObject.token">
+                                        <ExperimentalFeatureProvider
+                                            :experimental-features="experimentalFeatures"
                                         >
-                                            <IconSpriteProvider>
-                                                <TranslationProvider
-                                                    :locale="locale"
-                                                    :date-locale="dateLocale"
-                                                    :messages="messages"
-                                                >
-                                                    <slot />
-                                                </TranslationProvider>
-                                            </IconSpriteProvider>
-                                        </PortalProvider>
-                                    </ExperimentalFeatureProvider>
-                                </AuthProvider>
-                            </ErrorBoundary>
-                        </LoggerProvider>
-                    </ConfigProvider>
+                                            <PortalProvider
+                                                :allowed-portal-types="allowedPortalTypes"
+                                                :portal-object="portalObject"
+                                            >
+                                                <IconSpriteProvider>
+                                                    <TranslationProvider
+                                                        :locale="locale"
+                                                        :date-locale="dateLocale"
+                                                        :messages="messages"
+                                                    >
+                                                        <slot />
+                                                    </TranslationProvider>
+                                                </IconSpriteProvider>
+                                            </PortalProvider>
+                                        </ExperimentalFeatureProvider>
+                                    </AuthProvider>
+                                </ConfigProvider>
+                            </RequiredPropertiesGuard>
+                        </ErrorBoundary>
+                    </LoggerProvider>
                 </TeleportProvider>
             </ActionDispatchProvider>
         </CssOverridesProvider>

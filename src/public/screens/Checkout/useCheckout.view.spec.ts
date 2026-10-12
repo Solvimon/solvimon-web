@@ -154,6 +154,16 @@ vi.mock('@/services/geolocation', () => ({
     createGeoLocationService: () => ({ getGeoLocation: mockGetGeoLocation }),
 }));
 
+const mockLogger = vi.hoisted(() => ({
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    capture: vi.fn(),
+}));
+
+vi.mock('@/components/providers', () => ({ useLogger: () => mockLogger }));
+
 function withSetup<T>(composable: () => T): [T, ReturnType<typeof mount>] {
     let result!: T;
     const wrapper = mount(
@@ -1604,6 +1614,37 @@ describe('useCheckoutView', () => {
             expect(result.subscription.value).toBeDefined();
             getItem.mockRestore();
             wrapper.unmount();
+        });
+    });
+
+    describe('the email the host configures', () => {
+        const withEmail = (initialEmail: string) =>
+            useCheckoutView({
+                initialCountry: undefined,
+                initialEmail,
+                subscriptionId: 'sub_123' as PricingPlanSubscription['id'],
+            });
+
+        it('keeps an email the email field accepts', () => {
+            expect(withEmail("o'brien+billing@example.co.uk").validatedEmail).toBe(
+                "o'brien+billing@example.co.uk",
+            );
+            expect(mockLogger.error).not.toHaveBeenCalled();
+        });
+
+        it.each(['not-an-email', 'jane@example', 'jane@exa_mple.com'])(
+            'drops %s, as the email field would',
+            (initialEmail) => {
+                expect(withEmail(initialEmail).validatedEmail).toBeUndefined();
+                expect(mockLogger.error).toHaveBeenCalledWith('INVALID_EMAIL', expect.any(String));
+            },
+        );
+
+        it('reports a dropped email without the address itself', () => {
+            withEmail('jane.doe@example');
+
+            const [, message] = mockLogger.error.mock.calls[0];
+            expect(message).not.toContain('jane.doe');
         });
     });
 });

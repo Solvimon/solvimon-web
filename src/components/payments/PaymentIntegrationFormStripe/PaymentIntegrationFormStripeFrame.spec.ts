@@ -126,14 +126,37 @@ describe('PaymentIntegrationFormStripeFrame', () => {
     });
 
     describe('triggerSubmit', () => {
-        it('posts stripe:submit to the iframe contentWindow', () => {
+        function setup() {
             const wrapper = mount(PaymentIntegrationFormStripeFrame, { props: defaultProps });
             const iframe = wrapper.find('iframe').element as HTMLIFrameElement;
             const cw = mockContentWindow(iframe);
+            return { wrapper, iframe, cw };
+        }
 
-            wrapper.vm.triggerSubmit();
+        it('posts stripe:submit to the iframe contentWindow once Stripe is ready', () => {
+            const { wrapper, cw } = setup();
+            dispatchMessage(cw, { type: 'stripe:ready' });
+
+            expect(wrapper.vm.triggerSubmit()).toBe(true);
 
             expect(cw.postMessage).toHaveBeenCalledWith({ type: 'stripe:submit' }, '*');
+        });
+
+        // The frame would drop it, and the screen would wait on an answer that never comes.
+        it('does not send a submit before Stripe is ready', () => {
+            const { wrapper, cw } = setup();
+
+            expect(wrapper.vm.triggerSubmit()).toBe(false);
+            expect(cw.postMessage).not.toHaveBeenCalled();
+        });
+
+        it('waits for Stripe again after it is set up anew', async () => {
+            const { wrapper, iframe, cw } = setup();
+            dispatchMessage(cw, { type: 'stripe:ready' });
+
+            await iframe.dispatchEvent(new Event('load'));
+
+            expect(wrapper.vm.triggerSubmit()).toBe(false);
         });
     });
 
@@ -208,10 +231,11 @@ describe('PaymentIntegrationFormStripeFrame', () => {
             expect(wrapper.emitted('submit-success')?.[0]).toEqual(['tok_abc123']);
         });
 
-        it('does not emit submit-success when confirmationTokenId is missing', () => {
+        it('answers a stripe:submit:success without a confirmationTokenId with submit-error', () => {
             const { wrapper, cw } = setup();
             dispatchMessage(cw, { type: 'stripe:submit:success' });
             expect(wrapper.emitted('submit-success')).toBeUndefined();
+            expect(wrapper.emitted('submit-error')).toHaveLength(1);
         });
 
         it('emits submit-error with error details on stripe:submit:error', () => {

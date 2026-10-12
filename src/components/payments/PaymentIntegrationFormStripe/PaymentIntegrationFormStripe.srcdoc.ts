@@ -28,6 +28,18 @@ body { overflow: hidden; }
 (function () {
   let stripe, elements, countryCode, email, name, parentOrigin;
 
+  // Every submit is answered, or the page waiting on it never stops waiting.
+  function postSubmitError(error) {
+    parent.postMessage({
+      type: 'stripe:submit:error',
+      error: {
+        message: error && error.message ? String(error.message) : 'Stripe submission failed',
+        type: error && error.type,
+        code: error && error.code
+      }
+    }, parentOrigin);
+  }
+
   window.addEventListener('message', function (event) {
     if (!event.data || typeof event.data !== 'object') return;
     if (event.source !== window.parent) return;
@@ -67,19 +79,16 @@ body { overflow: hidden; }
     }
 
     if (event.data.type === 'stripe:submit') {
-      if (!elements || !parentOrigin || event.origin !== parentOrigin) return;
+      if (!parentOrigin || event.origin !== parentOrigin) return;
       const submitEmail = 'email' in event.data ? event.data.email : email;
       const submitName = 'name' in event.data ? event.data.name : name;
+      if (!elements) {
+        postSubmitError();
+        return;
+      }
       elements.submit().then(function (submitResult) {
         if (submitResult.error) {
-          parent.postMessage({
-            type: 'stripe:submit:error',
-            error: {
-              message: submitResult.error.message,
-              type: submitResult.error.type,
-              code: submitResult.error.code
-            }
-          }, parentOrigin);
+          postSubmitError(submitResult.error);
           return;
         }
         const billingDetails = {};
@@ -89,16 +98,9 @@ body { overflow: hidden; }
         const tokenParams = Object.keys(billingDetails).length
           ? { payment_method_data: { billing_details: billingDetails } }
           : {};
-        stripe.createConfirmationToken({ elements: elements, params: tokenParams }).then(function (tokenResult) {
+        return stripe.createConfirmationToken({ elements: elements, params: tokenParams }).then(function (tokenResult) {
           if (tokenResult.error) {
-            parent.postMessage({
-              type: 'stripe:submit:error',
-              error: {
-                message: tokenResult.error.message,
-                type: tokenResult.error.type,
-                code: tokenResult.error.code
-              }
-            }, parentOrigin);
+            postSubmitError(tokenResult.error);
             return;
           }
           parent.postMessage({
@@ -106,7 +108,7 @@ body { overflow: hidden; }
             confirmationTokenId: tokenResult.confirmationToken.id
           }, parentOrigin);
         });
-      });
+      }).catch(postSubmitError);
     }
   });
 })();

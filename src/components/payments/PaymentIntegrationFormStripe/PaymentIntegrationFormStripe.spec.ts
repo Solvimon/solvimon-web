@@ -9,6 +9,7 @@ const mockTokenizePaymentMethod = vi.fn();
 const mockHandleNextAction = vi.fn();
 const mockRetrievePaymentIntent = vi.fn();
 const mockRetrieveSetupIntent = vi.fn();
+const mockTriggerSubmit = vi.fn();
 vi.mock('@/services/payments', () => ({
     createPaymentsService: () => ({ authorizePayment: mockAuthorizePayment }),
 }));
@@ -105,7 +106,7 @@ function mountComponent(props: Partial<PaymentIntegrationFormStripeProps> = {}) 
                     template: '<div />',
                     emits: ['ready', 'change', 'loaderror', 'submit-success', 'submit-error'],
                     expose: ['triggerSubmit'],
-                    methods: { triggerSubmit: vi.fn() },
+                    methods: { triggerSubmit: mockTriggerSubmit },
                 },
             },
         },
@@ -122,6 +123,7 @@ describe('PaymentIntegrationFormStripe', () => {
             retrieveSetupIntent: mockRetrieveSetupIntent,
         });
         mockHandleNextAction.mockResolvedValue({ paymentIntent: { status: 'succeeded' } });
+        mockTriggerSubmit.mockReturnValue(true);
     });
 
     afterEach(() => {
@@ -426,6 +428,38 @@ describe('PaymentIntegrationFormStripe', () => {
             await flushPromises();
 
             expect(wrapper.emitted('invalid')).toHaveLength(1);
+        });
+
+        it('hands a valid submit to the frame and waits for its answer', async () => {
+            const wrapper = mountComponent();
+
+            (wrapper.vm as unknown as { submit: () => void }).submit();
+            await flushPromises();
+
+            expect(mockTriggerSubmit).toHaveBeenCalledTimes(1);
+            expect(wrapper.emitted('invalid')).toBeUndefined();
+        });
+
+        it('reports the submit as invalid when the frame could not send it', async () => {
+            mockTriggerSubmit.mockReturnValue(false);
+            const wrapper = mountComponent();
+
+            (wrapper.vm as unknown as { submit: () => void }).submit();
+            await flushPromises();
+
+            expect(wrapper.emitted('invalid')).toHaveLength(1);
+        });
+
+        it('reports the submit as invalid when the screen fails to validate', async () => {
+            const wrapper = mountComponent({
+                validateOnSubmit: () => Promise.reject(new Error('validation threw')),
+            });
+
+            (wrapper.vm as unknown as { submit: () => void }).submit();
+            await flushPromises();
+
+            expect(wrapper.emitted('invalid')).toHaveLength(1);
+            expect(mockTriggerSubmit).not.toHaveBeenCalled();
         });
 
         it('reports the submit as invalid when Stripe finds the fields incomplete', async () => {

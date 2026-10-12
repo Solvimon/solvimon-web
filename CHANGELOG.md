@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- `INVALID_EMAIL` no longer includes the rejected email address in its message, which now reads `invalid email provided`. The email the host passes to checkout is checked with the same rule as the email field, so an address the field would reject, such as one with an underscore in its domain, is dropped and reported as well.
+
+### Fixed
+
+- Checkout no longer blocks the pay button on a VAT number the customer cannot see. A VAT number typed on a company purchase was still checked after switching back to an individual purchase, or to the US, where the field is hidden, so submitting did nothing and showed no error.
+- The checkout postal code shows its own error. It showed address line 1's, so in the US a missing postal code went unflagged once the address was filled in, and a filled-in postal code was flagged when the address was missing. Postal code and state errors now show above the field.
+- The checkout's VAT check result now clears when the VAT number, country or legal name changes, and a check answered after such a change is ignored. When the EU VAT service cannot give an answer, or the check fails, checkout says the VAT number could not be checked right now, instead of calling it invalid.
+- Address line 2, postal code, city and state carry a label for screen readers in checkout and the billing information form; they had only a placeholder.
+
 ## [0.1.0-alpha.27] - 2026-10-12
 
 ### Added

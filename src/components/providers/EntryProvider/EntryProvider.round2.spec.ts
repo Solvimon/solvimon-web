@@ -231,10 +231,8 @@ describe('EntryProvider round 2 (tester)', () => {
             });
 
             const [entry] = entriesOf(onLog).filter((logged) => logged.code === 'INVALID_TOKEN');
-            // The entry's message is the generic 'Unhandled error'; the CodedError's own message
-            // only survives in `error` / `errorSerialized`.
             expect(entry.errorSerialized?.message).toBe('Invalid token');
-            expect(entry.message).toBe('Unhandled error');
+            expect(entry.message).toBe('Invalid token');
         });
 
         it('falls back to UNHANDLED_ERROR for any other error, and for a non-Error', async () => {
@@ -273,48 +271,42 @@ describe('EntryProvider round 2 (tester)', () => {
                 headers: { 'content-type': 'application/json', 'x-request-id': 'req_1' },
             });
 
-        // DEFECT: a refused save is logged as REQUEST_FAILED and shown inline, but
-        // `useService.execute` rejects (with `undefined`) into the form's async submit handler,
-        // which Vue hands to the boundary: UNHANDLED_ERROR plus an `error` event.
-        it.fails(
-            'billing-information-form: a refused save is not reported as unhandled',
-            async () => {
-                vi.stubGlobal(
-                    'fetch',
-                    vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-                        const url = String(input);
-                        const method = init?.method ?? 'GET';
-                        if (url.includes('/portal/portal-urls/'))
-                            return json(200, createTestPortalObject());
-                        if (url.includes('/portal/customers/') && method === 'GET')
-                            return json(200, customer);
-                        if (url.includes('/portal/customers/'))
-                            return json(422, { message: 'Invalid email', field: 'email' });
-                        return json(404, {});
-                    }),
-                );
-                const tag = `solvimon-tester-r2-bif-${++tagCount}`;
-                customElements.define(tag, defineCustomElement(BillingInformationFormEntry));
-                const recorded = createElement(tag);
-                const onLog = vi.fn();
-                Object.assign(recorded.element, {
-                    environment: 'TEST',
-                    portalObject: createTestPortalObject(),
-                    onLog,
-                });
-                document.body.append(recorded.element);
-                await settle();
+        it('billing-information-form: a refused save is not reported as unhandled', async () => {
+            vi.stubGlobal(
+                'fetch',
+                vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+                    const url = String(input);
+                    const method = init?.method ?? 'GET';
+                    if (url.includes('/portal/portal-urls/'))
+                        return json(200, createTestPortalObject());
+                    if (url.includes('/portal/customers/') && method === 'GET')
+                        return json(200, customer);
+                    if (url.includes('/portal/customers/'))
+                        return json(422, { message: 'Invalid email', field: 'email' });
+                    return json(404, {});
+                }),
+            );
+            const tag = `solvimon-tester-r2-bif-${++tagCount}`;
+            customElements.define(tag, defineCustomElement(BillingInformationFormEntry));
+            const recorded = createElement(tag);
+            const onLog = vi.fn();
+            Object.assign(recorded.element, {
+                environment: 'TEST',
+                portalObject: createTestPortalObject(),
+                onLog,
+            });
+            document.body.append(recorded.element);
+            await settle();
 
-                const form = recorded.element.shadowRoot?.querySelector('form');
-                expect(form).toBeTruthy();
-                form?.dispatchEvent(new Event('submit', { cancelable: true }));
-                await settle();
+            const form = recorded.element.shadowRoot?.querySelector('form');
+            expect(form).toBeTruthy();
+            form?.dispatchEvent(new Event('submit', { cancelable: true }));
+            await settle();
 
-                const codes = entriesOf(onLog).map((entry) => entry.code);
-                expect(codes).toContain('REQUEST_FAILED');
-                expect(codes).not.toContain('UNHANDLED_ERROR');
-                expect(recorded.errorEvents).toEqual([]);
-            },
-        );
+            const codes = entriesOf(onLog).map((entry) => entry.code);
+            expect(codes).toContain('REQUEST_FAILED');
+            expect(codes).not.toContain('UNHANDLED_ERROR');
+            expect(recorded.errorEvents).toEqual([]);
+        });
     });
 });

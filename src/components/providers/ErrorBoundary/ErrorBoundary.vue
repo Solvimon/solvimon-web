@@ -22,7 +22,10 @@ const reportRecovered = (error: Error) =>
 // thrown below — in setup, a render, a watcher, a lifecycle hook or an event handler — and not
 // handled on the way up arrives here.
 onErrorCaptured((err, _instance, info) => {
-    logger.capture(err, { info, ...(err instanceof CodedError ? { code: err.code } : {}) });
+    logger.capture(err, {
+        info,
+        ...(err instanceof CodedError ? { code: err.code, message: err.message } : {}),
+    });
     emit('error', err instanceof Error ? err : new Error('Unhandled error', { cause: err }));
 
     return false;

@@ -75,7 +75,7 @@ describe('useService', () => {
             service,
         });
 
-        await expect(execute()).rejects.toBeUndefined();
+        await expect(execute()).rejects.toBeInstanceOf(Error);
 
         expect(error.value).toStrictEqual(new Error('Network error'));
         expect(apiStatus.value).toBe(ApiStatus.Failed);
@@ -88,7 +88,7 @@ describe('useService', () => {
             service,
         });
 
-        await expect(execute()).rejects.toBeUndefined();
+        await expect(execute()).rejects.toBeInstanceOf(Error);
 
         expect(error.value).toBeInstanceOf(Error);
         expect(error.value?.message).toBe('Something went wrong while fetching data.');

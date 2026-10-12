@@ -103,9 +103,10 @@ export function useService<TArgs extends unknown[], TResponse>({
             apiStatus.value = ApiStatus.Done;
             return mapped;
         } catch (err) {
-            error.value = toError(err);
+            const failure = toError(err);
+            error.value = failure;
             apiStatus.value = ApiStatus.Failed;
-            return Promise.reject();
+            return Promise.reject(failure);
         }
     };
 

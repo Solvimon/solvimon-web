@@ -54,6 +54,26 @@ export function useCustomerFormLabels() {
             id: 'checkout.address.title',
             description: 'Address line 1 of the customer address in the checkout form',
         }),
+        addressLine2Label: $t({
+            defaultMessage: 'Address line 2',
+            id: 'checkout.address.line2.label',
+            description: 'Address line 2 of the customer address in the checkout form',
+        }),
+        postalCodeLabel: $t({
+            defaultMessage: 'Postal code',
+            id: 'checkout.address.postal_code.label',
+            description: 'Postal code of the customer address in the checkout form',
+        }),
+        cityLabel: $t({
+            defaultMessage: 'City',
+            id: 'checkout.address.city.label',
+            description: 'City of the customer address in the checkout form',
+        }),
+        stateLabel: $t({
+            defaultMessage: 'State',
+            id: 'checkout.address.state.label',
+            description: 'State of the customer address in the checkout form',
+        }),
         postalCodePlaceholder: $t({
             defaultMessage: 'Postal code...',
             id: 'checkout.address.portal_code.placeholder',

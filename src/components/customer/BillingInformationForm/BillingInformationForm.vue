@@ -192,6 +192,8 @@ watch(
             <Input
                 v-model="fields.addressLine2"
                 name="address_line_2"
+                :label="labels.addressLine2Label"
+                label-screen-reader-only
                 :placeholder="
                     $t({
                         defaultMessage: 'Address line 2...',
@@ -205,18 +207,24 @@ watch(
                 <Input
                     v-model="fields.postalCode"
                     name="postal_code"
+                    :label="labels.postalCodeLabel"
+                    label-screen-reader-only
                     :placeholder="labels.postalCodePlaceholder"
                     :error="apiError?.postal_code"
                 />
                 <Input
                     v-model="fields.city"
                     name="city"
+                    :label="labels.cityLabel"
+                    label-screen-reader-only
                     :placeholder="labels.cityPlaceholder"
                     :error="apiError?.city"
                 />
                 <Input
                     v-model="fields.state"
                     name="state"
+                    :label="labels.stateLabel"
+                    label-screen-reader-only
                     :placeholder="labels.statePlaceholder"
                     :error="apiError?.state"
                 />

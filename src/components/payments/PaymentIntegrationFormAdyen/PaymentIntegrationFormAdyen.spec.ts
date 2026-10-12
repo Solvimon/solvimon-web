@@ -1220,4 +1220,76 @@ describe('PaymentIntegrationFormAdyen', () => {
             host.remove();
         });
     });
+
+    describe('a submit the form starts itself', () => {
+        it('tells the screen a payment is on its way', async () => {
+            mockAuthorizePayment.mockResolvedValue(authorizedResponse);
+            const wrapper = await mountComponent();
+
+            await submitThroughDropIn();
+
+            expect(wrapper.emitted('submitting')).toHaveLength(1);
+        });
+
+        it('tells the screen nothing when the screen turns it down', async () => {
+            const wrapper = await mountComponent({
+                validateOnSubmit: () => Promise.resolve(false),
+            });
+
+            await submitThroughDropIn();
+
+            expect(wrapper.emitted('submitting')).toBeUndefined();
+        });
+
+        // Enter in a card field followed by Pay authorized the same payment twice.
+        it('sends one payment while another is on its way', async () => {
+            mockAuthorizePayment.mockReturnValue(new Promise(() => {}));
+            const wrapper = await mountComponent();
+
+            await submitThroughDropIn();
+            await submitThroughDropIn();
+            (wrapper.vm as unknown as { submit: () => void }).submit();
+            await flushPromises();
+
+            expect(mockAuthorizePayment).toHaveBeenCalledTimes(1);
+            expect(adyen.dropIn.submit).not.toHaveBeenCalled();
+            expect(wrapper.emitted('invalid')).toBeUndefined();
+        });
+
+        it('takes a new payment once the last one has failed', async () => {
+            mockAuthorizePayment.mockResolvedValue(refusedResponse);
+            await mountComponent();
+
+            await submitThroughDropIn();
+            captured.checkoutConfig?.onPaymentFailed?.({ resultCode: 'Error' });
+            await submitThroughDropIn();
+
+            expect(mockAuthorizePayment).toHaveBeenCalledTimes(2);
+        });
+
+        it('takes a new payment once the screen has turned the last one down', async () => {
+            const validateOnSubmit = vi
+                .fn()
+                .mockResolvedValueOnce(false)
+                .mockResolvedValueOnce(true);
+            mockAuthorizePayment.mockResolvedValue(authorizedResponse);
+            await mountComponent({ validateOnSubmit });
+
+            await submitThroughDropIn();
+            await submitThroughDropIn();
+
+            expect(mockAuthorizePayment).toHaveBeenCalledTimes(1);
+        });
+
+        it('takes a new payment once the customer closed a wallet', async () => {
+            mockAuthorizePayment.mockResolvedValue(actionRequiredResponse);
+            await mountComponent();
+
+            await submitThroughDropIn();
+            captured.checkoutConfig?.onError?.({ name: 'CANCEL' });
+            await submitThroughDropIn();
+
+            expect(mockAuthorizePayment).toHaveBeenCalledTimes(2);
+        });
+    });
 });

@@ -75,6 +75,9 @@ const showPaymentSuccess = ref(false);
 const integrationError = ref<Error>();
 // Set once a payment is settled or may still go through, so the drop-in cannot take a second one.
 let isDropInWithheld = false;
+// Enter in a card field and a wallet's own button submit without the screen, so the screen's
+// button can start a second payment alongside one already on its way.
+let isSubmissionInFlight = false;
 // A mount that is no longer the latest one stops at its next await, so two never both land.
 let mountAttempt = 0;
 // Kept until the gateway has answered for it, so a retry can ask again after a failed call.
@@ -118,12 +121,14 @@ function failureContext(params: Omit<PaymentFailureParams, 'gateway'>): Record<s
  * they can quote back to support.
  */
 function emitError(err: Omit<Error, 'reference'>) {
+    isSubmissionInFlight = false;
     const failure = createPaymentFailureError(err);
     integrationError.value = failure;
     emit('payment-failed', failure);
 }
 
 function succeed() {
+    isSubmissionInFlight = false;
     withholdDropIn();
     showPaymentSuccess.value = true;
     emit('payment-success');
@@ -154,6 +159,9 @@ function withholdDropIn() {
 }
 
 function submit() {
+    // The screen already waits on the payment in flight; its answer settles this click too.
+    if (isSubmissionInFlight) return;
+
     if (!dropInInstance?.isValid) {
         // Drop-in validates only the open payment method; with none open it shows nothing.
         if (dropInInstance && !dropInInstance.activePaymentMethod) {
@@ -560,14 +568,20 @@ function handleOnSubmit(
 ): ReturnType<NonNullable<CoreConfiguration['onSubmit']>> {
     const [state, _component, actions] = args;
 
+    if (isSubmissionInFlight) return;
+    isSubmissionInFlight = true;
+
     props
         .validateOnSubmit()
         .then((isValid) => {
             if (!isValid) {
+                isSubmissionInFlight = false;
                 dropInInstance?.setStatus('ready');
                 emit('invalid');
                 return;
             }
+
+            emit('submitting');
 
             const paymentAcceptorId = props.paymentMethodOptionResponseEntry.payment_acceptor.id;
 
@@ -705,6 +719,7 @@ function handleOnSubmit(
                 error,
             );
             // Only what runs before the payment call can land here; that call has its own catch.
+            isSubmissionInFlight = false;
             dropInInstance?.setStatus('ready');
             emit('invalid');
         });
@@ -805,6 +820,7 @@ function handleOnError(
 
     // The customer closed a wallet's sheet or popup: nothing was paid, and the screen waits on us.
     if (data.name === 'CANCEL') {
+        isSubmissionInFlight = false;
         emit('invalid');
         return;
     }

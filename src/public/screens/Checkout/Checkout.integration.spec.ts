@@ -67,7 +67,7 @@ vi.mock('./useCheckout.view', async () => {
             hasOneOffCharges: c(() => hasOneOffCharges.value),
             loadInvoicePreview: vi.fn(),
             updateInvoicePreviewOnBillingInformationChange: vi.fn(),
-            saveFormStateForRedirect: vi.fn(),
+            saveFormStateForRedirect,
         }),
     };
 });
@@ -94,10 +94,13 @@ vi.mock('@/components/providers', () => ({
     useLogger: () => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }),
 }));
 
-const { mockExperimentalFeatures, updateInitialState } = vi.hoisted(() => ({
-    mockExperimentalFeatures: { value: { 'express-checkout': false } },
-    updateInitialState: vi.fn(),
-}));
+const { mockExperimentalFeatures, updateInitialState, saveFormStateForRedirect } = vi.hoisted(
+    () => ({
+        saveFormStateForRedirect: vi.fn(),
+        mockExperimentalFeatures: { value: { 'express-checkout': false } },
+        updateInitialState: vi.fn(),
+    }),
+);
 
 vi.mock(
     '@/components/providers/ExperimentalFeatureProvider/composables/useExperimentalFeature',
@@ -332,6 +335,21 @@ describe('Checkout', () => {
         await flushPromises();
 
         expect(submit().attributes('loading')).toBe('false');
+    });
+
+    // Enter in a card field pays without the button; the screen must still hold the button and
+    // keep the form for the redirect it may lead to.
+    it('waits on a payment the form started on its own', async () => {
+        paymentMethodOptions.value = [{ integration: { payment_gateway: { variant: 'ADYEN' } } }];
+        const wrapper = await mountCheckout({ Skeleton: false });
+        const submit = () => wrapper.find('.sv-checkout__submit');
+
+        wrapper.findComponent({ name: 'PaymentIntegrationForm' }).vm.$emit('submitting');
+        await wrapper.vm.$nextTick();
+
+        expect(submit().attributes('loading')).toBe('true');
+        expect(submit().attributes('disabled')).toBe('true');
+        expect(saveFormStateForRedirect).toHaveBeenCalledTimes(1);
     });
 
     describe('terms and conditions', () => {

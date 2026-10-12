@@ -114,6 +114,7 @@ function submit() {
             @payment-failed="$emit('payment-failed', $event)"
             @payment-success="$emit('payment-success')"
             @invalid="handleInvalid"
+            @submitting="$emit('submitting')"
             @ready="$emit('ready')"
         />
 

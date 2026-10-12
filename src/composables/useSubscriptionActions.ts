@@ -3,7 +3,11 @@ import type { Pricing } from '@solvimon/solvimon-types';
 import type { PricingPlanSubscriptionExpanded } from '@/types/subscription';
 import { useActionDispatchProvider } from '@/components/providers';
 import type { SubscriptionCancellationVariant } from '@/services/subscriptions';
-import { getOpenInactivePeriod, getUndoableCancellation } from '@/utils/subscription';
+import {
+    getOpenInactivePeriod,
+    getUndoableCancellation,
+    isCancellationManageable,
+} from '@/utils/subscription';
 
 /**
  * Availability of the actions that can be taken on a single subscription.
@@ -28,10 +32,10 @@ export function useSubscriptionActions({
 } {
     const { dispatchAction } = useActionDispatchProvider();
 
-    /** The API cancels only an active subscription, and only once until that is undone. */
+    /** The API cancels only an active billing subscription, and only once until that is undone. */
     const isCancellable = computed<boolean>(
         () =>
-            subscription.value?.status === 'ACTIVE' &&
+            isCancellationManageable(subscription.value) &&
             !getOpenInactivePeriod(subscription.value, 'CANCEL'),
     );
 

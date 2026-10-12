@@ -306,7 +306,11 @@ describe('subscription utils', () => {
         it('returns a cancellation that has yet to take effect', () => {
             expect(
                 getUndoableCancellation(
-                    { status: 'ACTIVE', inactive_periods: [cancellation] as never },
+                    {
+                        status: 'ACTIVE',
+                        type: 'BILLING',
+                        inactive_periods: [cancellation] as never,
+                    },
                     now,
                 ),
             ).toEqual(cancellation);
@@ -315,7 +319,11 @@ describe('subscription utils', () => {
         it('returns nothing once the cancellation has started', () => {
             expect(
                 getUndoableCancellation(
-                    { status: 'ACTIVE', inactive_periods: [cancellation] as never },
+                    {
+                        status: 'ACTIVE',
+                        type: 'BILLING',
+                        inactive_periods: [cancellation] as never,
+                    },
                     new Date('2026-11-02T00:00:00Z'),
                 ),
             ).toBeUndefined();

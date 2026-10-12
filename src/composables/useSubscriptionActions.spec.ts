@@ -13,10 +13,11 @@ vi.mock('@/components/providers', () => ({
 const CANCELLATION = { type: 'CANCEL', start_at: '2026-11-01T00:00:00Z' };
 const PLAN_CHANGE = { type: 'UPGRADE', start_at: '2026-10-20T00:00:00Z' };
 
-const createSubscription = (inactivePeriods?: unknown[], status = 'ACTIVE') =>
+const createSubscription = (inactivePeriods?: unknown[], status = 'ACTIVE', type = 'BILLING') =>
     ({
         id: 'ppsu_1',
         status,
+        type,
         inactive_periods: inactivePeriods,
     }) as unknown as PricingPlanSubscriptionExpanded;
 
@@ -82,6 +83,14 @@ describe('useSubscriptionActions', () => {
             expect(isCancellable.value).toBe(false);
         });
 
+        it('is false for a subscription that is not a billing one, which the API refuses', () => {
+            const { isCancellable } = useSubscriptionActions({
+                subscription: ref(createSubscription([], 'ACTIVE', 'QUOTE')),
+            });
+
+            expect(isCancellable.value).toBe(false);
+        });
+
         it('is false while there is no subscription', () => {
             const { isCancellable } = useSubscriptionActions({ subscription: ref(undefined) });
 
@@ -135,6 +144,14 @@ describe('useSubscriptionActions', () => {
         it('is false for a subscription that is no longer active', () => {
             const { isRenewable } = useSubscriptionActions({
                 subscription: ref(createSubscription([CANCELLATION], 'CANCELLED')),
+            });
+
+            expect(isRenewable.value).toBe(false);
+        });
+
+        it('is false for a subscription that is not a billing one, which the API refuses', () => {
+            const { isRenewable } = useSubscriptionActions({
+                subscription: ref(createSubscription([CANCELLATION], 'ACTIVE', 'QUOTE')),
             });
 
             expect(isRenewable.value).toBe(false);

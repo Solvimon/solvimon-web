@@ -42,6 +42,13 @@ export function getSubscriptionName({
 
 type InactivePeriod = NonNullable<PricingPlanSubscription['inactive_periods']>[number];
 
+/** The portal cancels, and undoes a cancellation of, only an active billing subscription. */
+export function isCancellationManageable(
+    subscription: Pick<PricingPlanSubscription, 'status' | 'type'> | undefined,
+): boolean {
+    return subscription?.status === 'ACTIVE' && subscription.type === 'BILLING';
+}
+
 /**
  * The inactive period the API acts on: the earliest one without an `end_at`, optionally of one
  * type, and of two that start together the later in the list, as the API picks it. A cancellation
@@ -63,10 +70,10 @@ export function getOpenInactivePeriod(
  * its type, and only before it starts, so a plan change ahead of the cancellation rules it out.
  */
 export function getUndoableCancellation(
-    subscription: Pick<PricingPlanSubscription, 'inactive_periods' | 'status'> | undefined,
+    subscription: Pick<PricingPlanSubscription, 'inactive_periods' | 'status' | 'type'> | undefined,
     now: Date = new Date(),
 ): InactivePeriod | undefined {
-    if (subscription?.status !== 'ACTIVE') return undefined;
+    if (!isCancellationManageable(subscription)) return undefined;
 
     const period = getOpenInactivePeriod(subscription);
 

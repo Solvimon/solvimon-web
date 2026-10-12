@@ -224,5 +224,32 @@ test.describe('Billing information form', () => {
         await form.save.click();
 
         await expect.poll(() => api.calls('updateCustomer').length, { timeout: 3000 }).toBe(1);
+        const body = api.lastCall('updateCustomer')!.body as { organization?: object };
+        expect(body.organization).not.toHaveProperty('tax_ids');
+    });
+
+    test('keeps the other stored tax ids when the first is edited', async ({ page }) => {
+        const customer = anOrganization([
+            { id: 'NL123456789B01', type: 'GENERIC_TAX_ID' },
+            { id: '123456789RT0001', type: 'CA_GST_HST', display_name: 'GST/HST' },
+        ]);
+        api = await mountBillingInformationForm(page, {
+            customer,
+            mocks: { updateCustomer: echo(customer) },
+        });
+        const form = billingInformationForm(page);
+
+        await form.vatNumber.fill('DE123456789');
+        await form.save.click();
+
+        await api.waitForCall('updateCustomer');
+        expect(api.lastCall('updateCustomer')!.body).toMatchObject({
+            organization: {
+                tax_ids: [
+                    { id: 'DE123456789', type: 'GENERIC_TAX_ID' },
+                    { id: '123456789RT0001', type: 'CA_GST_HST', display_name: 'GST/HST' },
+                ],
+            },
+        });
     });
 });

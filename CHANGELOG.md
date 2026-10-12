@@ -55,6 +55,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `SubscriptionManagement` only commits a change the customer has made and seen the price of. It could commit while the price was still loading or had failed, and committing what the subscription already had started a duplicate schedule. It shows an error when the subscription cannot be loaded and says so when there is nothing to change, where it showed an empty page. The form is locked while the change is committed, and Enter in the form commits it.
 - `SubscriptionDetails` lists the upgrades, and the cancel confirmation names the pricings, of the schedule billed now rather than one that has yet to start.
 - A pricing customized for the subscription is listed under Upgrades at its customized price, and `SubscriptionManagement` names its group. Both looked it up on the plan, where it does not exist under the id the subscription bills it by, so it was left out.
+- `SubscriptionDetails` offers Renew only for a cancellation that has yet to take effect, and Cancel whenever the subscription is active and not already cancelled. A pending plan change counted as a cancellation: it showed Renew, which asked the API to undo the plan change, and hid Cancel. Neither button is shown for a subscription that is no longer active, which the API refuses both for.
+- The cancel and renew confirmation dates the end of the billing period and the renewal deadline in the customer's timezone, as the subscriptions list does, where it used the browser's. Its copy no longer switches while it closes, and the cancel confirmation is dismissed with "Keep subscription" rather than "Cancel".
+- `SubscriptionDetails` keeps the subscription on screen when reloading it after a cancel or renew fails, where it replaced the screen with "Unable to load this subscription" next to the confirmation.
+- `SubscriptionsList` and the subscriptions block of `CustomerOverview` say so when the subscriptions cannot be loaded, where they showed "No subscriptions". A failed load no longer leaves the block loading for good.
+- `SubscriptionsList` shows a "Load more" button while there are more subscriptions, where it showed only the first 15.
+- The cancel confirmation names each enabled pricing once, where a pricing offered on more than one schedule was named once per schedule.
 
 ## [0.1.0-alpha.27] - 2026-10-12
 

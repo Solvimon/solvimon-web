@@ -8,6 +8,7 @@ import { usePaymentMethods } from '@/composables/usePaymentMethods';
 import { useCustomerWalletBalances } from '@/composables/useCustomerWalletBalances';
 import { useLoadInitialData } from '@/composables/useLoadInitialData';
 import { useChargeableOnDemandItems } from '@/composables/useChargeableOnDemandItems';
+import { useLogger } from '@/components/providers';
 
 const props = defineProps<SolvimonSubscriptionDetailsEntryProps>();
 
@@ -19,6 +20,21 @@ const {
     get: fetchSubscription,
     error,
 } = useSubscription({ subscriptionId: props.configuration.subscriptionId });
+
+const logger = useLogger();
+
+/** A failed reload keeps the subscription already on screen; only a failed first load replaces it. */
+const loadError = computed(() => (subscription.value ? null : error.value));
+
+const refreshSubscription = () =>
+    fetchSubscription().catch((refreshError: unknown) => {
+        logger.error(
+            'SUBSCRIPTION_LOAD_FAILED',
+            'Failed to reload the subscription after it changed',
+            {},
+            refreshError,
+        );
+    });
 
 const { customer, get: fetchCustomer } = useCustomer({ customerId });
 
@@ -60,9 +76,9 @@ const hasWalletBalancesError = computed(() => walletBalancesApiStatus.value === 
         :on-demand-schedule-id="onDemandScheduleId"
         :has-wallet-balances-error="hasWalletBalancesError"
         :is-loading="isLoading"
-        :error="error"
+        :error="loadError"
         :refresh-wallet-balances="fetchWalletBalances"
         :refresh-payment-methods="fetchPaymentMethods"
-        :refresh-subscription="fetchSubscription"
+        :refresh-subscription="refreshSubscription"
     />
 </template>

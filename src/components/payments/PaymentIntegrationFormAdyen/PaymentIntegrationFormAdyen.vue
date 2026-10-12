@@ -935,7 +935,11 @@ async function handleRedirectResult() {
 onMounted(async () => {
     // The drop-in waits for the payment the customer came back from, so it cannot be paid twice.
     await handleRedirectResult();
+    // Mounting clears the card of a previous attempt, but the returned payment is this attempt, and
+    // what happened to it matters more to the customer than a drop-in that would not load.
+    const redirectError = integrationError.value;
     await mountDropIn();
+    if (redirectError) integrationError.value = redirectError;
 });
 
 onBeforeUnmount(() => {

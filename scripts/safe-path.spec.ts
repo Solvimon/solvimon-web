@@ -105,6 +105,23 @@ describe('resolveSafePath with symlinks', () => {
     });
 });
 
+describe('resolveSafePath across a symlinked base', () => {
+    const dirs: string[] = [];
+    afterEach(() => dirs.splice(0).forEach((d) => fs.rmSync(d, { recursive: true, force: true })));
+
+    it('accepts the real path of a file under a base given through a symlink', () => {
+        const real = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'safe-path-')));
+        const holder = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'safe-path-')));
+        dirs.push(real, holder);
+        const viaLink = path.join(holder, 'base');
+        fs.symlinkSync(real, viaLink);
+
+        expect(resolveSafePath(path.join(real, 'file.json'), viaLink)).toBe(
+            path.join(real, 'file.json'),
+        );
+    });
+});
+
 describe('resolveSafePathIn', () => {
     it('resolves a path inside any of the bases', () => {
         expect(resolveSafePathIn('/second/base/file.json', ['/first/base', '/second/base'])).toBe(

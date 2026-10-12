@@ -48,13 +48,10 @@ export function resolveSafePath(filePath, baseDir) {
     if (!filePath) return filePath;
     const resolvedBase = path.resolve(baseDir);
     const resolved = path.resolve(resolvedBase, filePath);
-    const isInside = (child, parent) => child.startsWith(parent + path.sep);
-    // Checked as written and as the filesystem resolves it: a symlink inside the base can
-    // point anywhere. The written form is returned, so callers can keep relating paths to it.
-    if (
-        !isInside(resolved, resolvedBase) ||
-        !isInside(realpathOf(resolved), realpathOf(resolvedBase))
-    ) {
+    // Compared as the filesystem resolves both, so a symlink inside the base cannot point out
+    // and a base reached through a symlink still holds its files. The written form is
+    // returned, so callers can keep relating paths to it.
+    if (!realpathOf(resolved).startsWith(realpathOf(resolvedBase) + path.sep)) {
         throw new Error(`Path traversal detected: "${filePath}" is outside "${baseDir}"`);
     }
     return resolved;

@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0-alpha.27] - 2026-10-12
+
+### Added
+
+- Checkout tells one-time charges apart from the subscription when an invoice holds both, such as a plan that also sells hardware, shipping or a swap. The order summary lists them under "Subscription" and "One-time charges" headings, with a subtotal where a group has more than one row, and states what the subscription then renews at below the total. The plan editor heads its one-off items "One-time items" and prices each row "per unit, one-time". The description above the pay button and the agreement beside it state what is due today and, separately, what the subscription costs per period after that; for a plan billed on usage, they say that usage is billed every period. An invoice with only subscription charges reads as before. The one-off item price label's message id changed from `units.price_per_unit` to `units.price_per_unit_one_time`; a `messages` override for the old id no longer applies, so move it to the new one.
+- When checkout cannot tell the recurring part of the invoice from the one-off part, for example because an invoice-wide discount applies, it logs `RECURRING_AMOUNT_UNRESOLVED` as a warning and falls back to its previous wording instead of naming a price per period.
+
+### Changed
+
+- The published build no longer carries `data-testid` attributes. Tests that select the SDK's elements by test id must use another selector.
+- `jwt-decode` and `@stripe/stripe-js` are no longer dependencies of the package; their code was already bundled. The package now declares `engines.node` as `>=20.19.0`.
+- Express payment methods (Apple Pay) are rendered only where the `express-checkout` flag is on.
+
+### Fixed
+
+- Checkout no longer presents one-time charges as a price per period. It labelled the whole first invoice "per month", so every one-off item raised the stated monthly price, and the express checkout passed that figure to Apple Pay as a recurring charge. The recurring amount now comes from the plan rather than the first invoice. An order with nothing that renews is shown and authorized as a one-time purchase. A plan billed on usage is still authorized as recurring, even when its first invoice carries no usage yet.
+- The order summary's "+ Usage" note now appears at checkout for a plan billed on usage. It only appeared once usage had been reported, which never happens before checkout. Only add-ons and group items the customer selected count towards it.
+- The billing period selector no longer counts one-time charges in its prices and "Save" badge. A one-off charge was counted twelve times on the monthly option and once on the yearly one, which overstated the savings. Each option now shows its recurring price.
+- The express Apple Pay payment now creates the subscription it pays for and shows its outcome. It used to charge the customer without creating anything, show a refused payment as a success, and leave the sheet waiting when the checkout form was incomplete. It now passes the street and state from the Apple Pay contact to the checkout, and hides the button on devices that cannot pay with Apple Pay. A failed express payment tells the customer it did not go through.
+
 ## [0.1.0-alpha.26] - 2026-10-08
 
 ### Added

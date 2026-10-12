@@ -105,7 +105,7 @@ export function useService<TArgs extends unknown[], TResponse>({
         } catch (err) {
             error.value = toError(err);
             apiStatus.value = ApiStatus.Failed;
-            return Promise.reject();
+            return Promise.reject(error.value);
         }
     };
 

@@ -72,7 +72,7 @@ describe('usePaymentMethodOptions', () => {
 
         const paymentMethodOptions = usePaymentMethodOptions();
 
-        await expect(paymentMethodOptions.get(payload)).rejects.toBeUndefined();
+        await expect(paymentMethodOptions.get(payload)).rejects.toThrow('failed');
 
         expect(paymentMethodOptions.error.value).toBe(error);
         expect(paymentMethodOptions.apiStatus.value).toBe(ApiStatus.Failed);
@@ -101,7 +101,7 @@ describe('usePaymentMethodOptions', () => {
 
         const paymentMethodOptions = usePaymentMethodOptions();
 
-        await expect(paymentMethodOptions.get(payload)).rejects.toBeUndefined();
+        await expect(paymentMethodOptions.get(payload)).rejects.toThrow('failed');
         await paymentMethodOptions.get({ ...payload });
 
         expect(mockGetPaymentMethodOptions).toHaveBeenCalledTimes(2);

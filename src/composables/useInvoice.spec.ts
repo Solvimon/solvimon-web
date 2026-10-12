@@ -66,7 +66,7 @@ describe('useInvoice', () => {
             invoiceId,
         });
 
-        await expect(get()).rejects.toBeUndefined();
+        await expect(get()).rejects.toThrow('Network error');
 
         expect(mockGetInvoice).toHaveBeenCalledWith(invoiceId);
         expect(invoice.value).toBeUndefined();

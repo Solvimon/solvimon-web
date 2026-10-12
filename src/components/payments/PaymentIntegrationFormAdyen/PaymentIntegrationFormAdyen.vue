@@ -500,8 +500,8 @@ function applyPaymentResult(
             return;
         }
 
-        dropInInstance.handleAction(requiredAction);
-
+        // Resolving with the action is what hands it to the drop-in; handing it over as well ran
+        // the 3DS challenge twice.
         actions.resolve({
             resultCode: paymentResult.action.adyen.result_code,
             action: requiredAction,

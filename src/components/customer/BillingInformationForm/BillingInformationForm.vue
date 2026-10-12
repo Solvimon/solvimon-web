@@ -9,8 +9,8 @@ import {
 } from '@solvimon/solvimon-ui';
 import { computed, reactive, ref, watch } from 'vue';
 import type { BillingInformationFormProps } from './BillingInformationForm.types';
+import { getBillingInformationFormApiErrors } from './BillingInformationForm.lib';
 import { useBillingInformationForm } from './useBillingInformationForm';
-import CompanyPurchaseToggle from '@/components/customer/CompanyPurchaseToggle.vue';
 import { useCustomerFormLabels } from '@/components/customer/useCustomerFormLabels';
 import {
     asOptionalText,
@@ -47,33 +47,63 @@ const country = computed<SelectControlValue>({
     },
 });
 
-const hasHydratedFromCustomer = ref(false);
+type ValidatedField =
+    | 'email'
+    | 'country'
+    | 'addressLine1'
+    | 'postalCode'
+    | 'state'
+    | 'companyLegalName'
+    | 'companyVatNumber';
 
 const isCompanyPurchase = computed<boolean>(() => form.value.type === 'ORGANIZATION');
-const showCompanyPurchaseToggle = computed<boolean>(() => !hasHydratedFromCustomer.value);
 
-const companyPurchaseModel = computed({
-    get: () => isCompanyPurchase.value,
-    set: (value: boolean) => (form.value.type = value ? 'ORGANIZATION' : 'INDIVIDUAL'),
-});
+const apiErrors = computed(() =>
+    getBillingInformationFormApiErrors(props.apiError, [
+        'email',
+        'country',
+        'addressLine1',
+        'addressLine2',
+        'postalCode',
+        'city',
+        'state',
+        ...(isCompanyPurchase.value
+            ? (['companyLegalName', 'companyVatNumber'] as const)
+            : (['firstName', 'lastName'] as const)),
+    ]),
+);
+
+// The client-side error first: the API one describes a value that has since been edited.
+const getError = (field: ValidatedField) =>
+    validation.value[field].$errors.length
+        ? validation.value[field].$errors
+        : apiErrors.value.fields[field];
+
+const isSubmitting = ref(false);
 
 const handleSubmit = async (): Promise<void> => {
-    await validation.value.$validate();
-    const isValid = !validation.value.$invalid;
-    if (!isValid) return;
-    if (!props.customer?.id) return;
-    await submit(props.customer.id);
+    if (isSubmitting.value || !props.customer?.id) return;
+
+    isSubmitting.value = true;
+
+    try {
+        if (!(await validation.value.$validate())) return;
+
+        updateInitialState(await submit(props.customer.id));
+        validation.value.$reset();
+    } catch {
+        // Shown through `apiError`.
+    } finally {
+        isSubmitting.value = false;
+    }
 };
 
 watch(
     () => props.customer,
     (customer) => {
-        if (!customer || hasHydratedFromCustomer.value) {
-            return;
+        if (customer && !hasChanges.value) {
+            updateInitialState(customer);
         }
-
-        updateInitialState(customer);
-        hasHydratedFromCustomer.value = true;
     },
     { immediate: true },
 );
@@ -90,18 +120,13 @@ watch(
                 type="email"
                 :label="labels.emailLabel"
                 :placeholder="labels.emailPlaceholder"
-                :error="validation.email?.$errors || apiError?.email"
+                :error="getError('email')"
             />
 
             <CountrySelect
                 v-model:single-model-value="country"
                 :label="labels.countryLabel"
-                :error="apiError?.country"
-            />
-
-            <CompanyPurchaseToggle
-                v-if="showCompanyPurchaseToggle"
-                v-model="companyPurchaseModel"
+                :error="getError('country')"
             />
 
             <template v-if="isCompanyPurchase">
@@ -110,7 +135,7 @@ watch(
                     name="vat_number"
                     :label="labels.vatNumberLabel"
                     :placeholder="labels.vatNumberPlaceholder"
-                    :error="apiError?.vat_number"
+                    :error="getError('companyVatNumber')"
                 />
 
                 <Input
@@ -119,7 +144,7 @@ watch(
                     name="legal_name"
                     :label="labels.legalNameLabel"
                     :placeholder="labels.legalNamePlaceholder"
-                    :error="apiError?.legal_name"
+                    :error="getError('companyLegalName')"
                 />
             </template>
         </div>
@@ -153,7 +178,7 @@ watch(
                             description: 'The first name of the customer in the checkout form',
                         })
                     "
-                    :error="apiError?.first_name"
+                    :error="apiErrors.fields.firstName"
                 />
                 <Input
                     v-model="fields.lastName"
@@ -172,7 +197,7 @@ watch(
                             description: 'The last name of the customer in the checkout form',
                         })
                     "
-                    :error="apiError?.last_name"
+                    :error="apiErrors.fields.lastName"
                 />
             </div>
 
@@ -187,7 +212,7 @@ watch(
                         description: 'Address line 1 of the customer address in the checkout form',
                     })
                 "
-                :error="apiError?.address_line_1"
+                :error="getError('addressLine1')"
             />
             <Input
                 v-model="fields.addressLine2"
@@ -199,37 +224,37 @@ watch(
                         description: 'Address line 2 of the customer address in the checkout form',
                     })
                 "
-                :error="apiError?.address_line_2"
+                :error="apiErrors.fields.addressLine2"
             />
             <div class="grid grid-cols-3 gap-2">
                 <Input
                     v-model="fields.postalCode"
                     name="postal_code"
                     :placeholder="labels.postalCodePlaceholder"
-                    :error="apiError?.postal_code"
+                    :error="getError('postalCode')"
                 />
                 <Input
                     v-model="fields.city"
                     name="city"
                     :placeholder="labels.cityPlaceholder"
-                    :error="apiError?.city"
+                    :error="apiErrors.fields.city"
                 />
                 <Input
                     v-model="fields.state"
                     name="state"
                     :placeholder="labels.statePlaceholder"
-                    :error="apiError?.state"
+                    :error="getError('state')"
                 />
             </div>
         </div>
 
-        <ErrorNotification v-if="apiError?._generic" class="mt-4" :title="apiError._generic" />
+        <ErrorNotification v-if="apiErrors.generic" class="mt-4" :title="apiErrors.generic" />
 
         <Button
             type="submit"
             intent="primary"
             :disabled="!hasChanges"
-            :loading="isLoading"
+            :loading="isLoading || isSubmitting"
             class="mt-4"
             >{{
                 $t({

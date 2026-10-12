@@ -21,6 +21,6 @@ onMounted(async () => {
         :customer="customer"
         :is-loading="get.isPending.value || update.isPending.value"
         :update-customer="update"
-        :api-error="getApiError(update.error)"
+        :api-error="update.error.value ? getApiError(update.error.value) : undefined"
     />
 </template>

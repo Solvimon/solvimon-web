@@ -432,4 +432,127 @@ describe('SubscriptionManagement (tester, DD-3544)', () => {
             expect(isDisabled(wrapper)).toBe(true);
         });
     });
+
+    describe('round 2: the customized-pricing guard', () => {
+        const withSchedule = (schedule: Record<string, unknown>, version?: unknown) =>
+            ({
+                ...subscription,
+                pricing_plan_schedule_infos: [
+                    {
+                        ...activeScheduleInfo,
+                        pricing_plan_schedule: {
+                            ...activeScheduleInfo.pricing_plan_schedule,
+                            ...schedule,
+                        },
+                        ...(version !== undefined && { pricing_plan_version: version }),
+                    },
+                ],
+            }) as unknown as PricingPlanSubscriptionExpanded;
+
+        it('does not lock a schedule whose override list is empty', async () => {
+            const wrapper = mountComponent({
+                sub: withSchedule({ override_pricings: [] }),
+                enabledPricingId: 'pri_5000',
+            });
+            await flushPromises();
+
+            expect(wrapper.find('.sv-subscription-management__customized-pricing').exists()).toBe(
+                false,
+            );
+            expect(mockGetInvoicePreview).toHaveBeenCalled();
+            expect(isDisabled(wrapper)).toBe(false);
+        });
+
+        // A new portal schedule carries no override at all, so a customized base fee is dropped by
+        // a change to any group just the same.
+        it('locks a schedule whose only customization sits outside every group', async () => {
+            const wrapper = mountComponent({
+                sub: withSchedule(
+                    {
+                        override_pricings: [
+                            { id: 'pri_base_custom', original_pricing_id: 'pri_base' },
+                        ],
+                    },
+                    {
+                        pricing_categories: [
+                            { pricings: [{ id: 'pri_base' }], pricing_groups: [creditsGroup] },
+                        ],
+                    },
+                ),
+                enabledPricingId: 'pri_5000',
+            });
+            await flushPromises();
+
+            expect(wrapper.find('.sv-subscription-management__customized-pricing').exists()).toBe(
+                true,
+            );
+            expect(mockGetInvoicePreview).not.toHaveBeenCalled();
+            expect(isDisabled(wrapper)).toBe(true);
+        });
+
+        /**
+         * DEFECT (minor, DD-3544 tester r2): with customized pricing but no group to manage, the
+         * screen renders "Nothing to change", yet the Update button's aria-describedby still names
+         * the custom-pricing message, which is not rendered (`submitButtonAttrs` vs the
+         * `pricingGroup && isCustomized` branch in SubscriptionManagement.vue).
+         */
+        it.fails('only points the button at a message that is on screen', async () => {
+            const wrapper = mountComponent({
+                sub: withSchedule(
+                    {
+                        enabled_pricings: [],
+                        override_pricings: [
+                            { id: 'pri_base_custom', original_pricing_id: 'pri_base' },
+                        ],
+                    },
+                    { pricing_categories: [{ pricings: [{ id: 'pri_base' }] }] },
+                ),
+            });
+            await flushPromises();
+
+            const describedBy = wrapper
+                .find('.sv-subscription-management__update')
+                .attributes('aria-describedby');
+
+            if (describedBy) {
+                expect(wrapper.find(`#${describedBy}`).exists()).toBe(true);
+            }
+        });
+    });
+
+    describe('round 2: chargeable payment methods', () => {
+        it.each(['BUY_NOW_PAY_LATER', 'CARD', 'DIGITAL_WALLET', 'DIRECT_DEBIT', 'ONLINE_BANKING'])(
+            'offers an active %s method',
+            async (type) => {
+                const wrapper = mountComponent({
+                    enabledPricingId: 'pri_5000',
+                    paymentMethods: [{ ...activeMethod, type } as unknown as PaymentMethod],
+                });
+                await flushPromises();
+
+                expect(form(wrapper).props('paymentMethods')).toHaveLength(1);
+                expect(isDisabled(wrapper)).toBe(false);
+            },
+        );
+
+        it.each([
+            ['a PREPAID method', { type: 'PREPAID' }],
+            ['an UNKNOWN method', { type: 'UNKNOWN' }],
+            ['a method still in SETUP', { status: 'SETUP' }],
+            ['an ARCHIVED method', { status: 'ARCHIVED' }],
+            ["another customer's method", { customer_id: 'cus_other' }],
+        ])('does not offer %s', async (_label, patch) => {
+            const wrapper = mountComponent({
+                enabledPricingId: 'pri_5000',
+                sub: { ...subscription, customer_id: 'cus_1' } as PricingPlanSubscriptionExpanded,
+                paymentMethods: [
+                    { ...activeMethod, customer_id: 'cus_1', ...patch } as unknown as PaymentMethod,
+                ],
+            });
+            await flushPromises();
+
+            expect(form(wrapper).props('paymentMethods')).toEqual([]);
+            expect(isDisabled(wrapper)).toBe(true);
+        });
+    });
 });

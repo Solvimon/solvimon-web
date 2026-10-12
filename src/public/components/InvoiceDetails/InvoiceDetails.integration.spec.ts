@@ -165,4 +165,12 @@ describe('InvoiceDetails entry component', () => {
         expect(wrapper.text()).toContain('Due date');
         expect(wrapper.text()).toContain('15/02/2024');
     });
+
+    it('loads the invoice a host switches to after mount', async () => {
+        const wrapper = mountComponent();
+
+        await wrapper.setProps({ configuration: { invoiceId: 'inv_456' as Invoice['id'] } });
+
+        expect(mockUseInvoiceData).toHaveBeenLastCalledWith('inv_456');
+    });
 });

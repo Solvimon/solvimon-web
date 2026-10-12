@@ -114,6 +114,7 @@ const mockSubscription = {
     id: 'ppsu_1',
     name: 'Pro plan',
     status: 'ACTIVE',
+    type: 'BILLING',
     next_invoice: { invoice_date: '2026-09-01T00:00:00Z' },
 } as unknown as PricingPlanSubscriptionExpanded;
 

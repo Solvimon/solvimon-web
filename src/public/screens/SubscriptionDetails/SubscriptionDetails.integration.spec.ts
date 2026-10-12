@@ -199,6 +199,7 @@ const mockSubscription = {
     id: 'ppsu_1',
     name: 'Pro plan',
     status: 'ACTIVE',
+    type: 'BILLING',
     pricing_plan_schedule_infos: [
         {
             id: 'ppsc_1',

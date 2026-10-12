@@ -16,6 +16,7 @@ const actionsFor = (inactivePeriods?: unknown[], status = 'ACTIVE') => {
         subscription: ref({
             id: 'ppsu_1',
             status,
+            type: 'BILLING',
             inactive_periods: inactivePeriods,
         } as unknown as PricingPlanSubscriptionExpanded),
     });

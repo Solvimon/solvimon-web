@@ -208,6 +208,51 @@ describe('PaymentIntegrationFormStripeFrame', () => {
 
             expect(wrapper.vm.triggerSubmit()).toBe(false);
         });
+
+        // DD-3537 tester, round 2: the id only counts for the setup it was sent with.
+        const initIds = (cw: { postMessage: ReturnType<typeof vi.fn> }) =>
+            cw.postMessage.mock.calls
+                .map(([message]) => message as { type?: string; initId?: number })
+                .filter(({ type }) => type === 'stripe:init')
+                .map(({ initId }) => initId);
+
+        it('only takes the ready of the latest setup after the iframe loads again', async () => {
+            const { wrapper, iframe, cw } = setup();
+            iframe.dispatchEvent(new Event('load'));
+            dispatchMessage(cw, { type: 'stripe:ready', initId: 1 });
+            expect(wrapper.vm.triggerSubmit()).toBe(true);
+
+            iframe.dispatchEvent(new Event('load'));
+            await wrapper.setProps({ options: CHANGED_OPTIONS });
+            expect(initIds(cw)).toEqual([1, 2, 3]);
+
+            dispatchMessage(cw, { type: 'stripe:ready', initId: 2 });
+            expect(wrapper.vm.triggerSubmit()).toBe(false);
+            dispatchMessage(cw, { type: 'stripe:ready', initId: 3 });
+            expect(wrapper.vm.triggerSubmit()).toBe(true);
+        });
+
+        it('starts over with a frame that is created anew', () => {
+            const first = setup();
+            first.iframe.dispatchEvent(new Event('load'));
+            first.wrapper.unmount();
+
+            const { wrapper, iframe, cw } = setup();
+            iframe.dispatchEvent(new Event('load'));
+            dispatchMessage(cw, { type: 'stripe:ready', initId: 1 });
+
+            expect(initIds(cw)).toEqual([1]);
+            expect(wrapper.vm.triggerSubmit()).toBe(true);
+        });
+
+        it('stays closed when the setup is answered with no id at all', () => {
+            const { wrapper, iframe, cw } = setup();
+            iframe.dispatchEvent(new Event('load'));
+            dispatchMessage(cw, { type: 'stripe:ready' });
+
+            expect(wrapper.vm.triggerSubmit()).toBe(false);
+            expect(wrapper.emitted('ready')).toHaveLength(1);
+        });
     });
 
     describe('handleMessage', () => {

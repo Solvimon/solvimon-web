@@ -62,7 +62,12 @@ const handleSubmit = async (): Promise<void> => {
     const isValid = !validation.value.$invalid;
     if (!isValid) return;
     if (!props.customer?.id) return;
-    await submit(props.customer.id);
+
+    try {
+        await submit(props.customer.id);
+    } catch {
+        // Shown through `apiError`.
+    }
 };
 
 watch(

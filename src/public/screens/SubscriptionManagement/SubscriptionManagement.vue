@@ -55,7 +55,12 @@ const isAddingPaymentMethod = ref(false);
 
 /** The stored method is not in the list yet, so reload it before returning to the choice. */
 const handlePaymentMethodAdded = async () => {
-    await fetchPaymentMethods();
+    try {
+        await fetchPaymentMethods();
+    } catch {
+        // Logged as REQUEST_FAILED; the choice is still there to return to.
+    }
+
     isAddingPaymentMethod.value = false;
 };
 

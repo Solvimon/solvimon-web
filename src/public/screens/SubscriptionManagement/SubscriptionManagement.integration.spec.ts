@@ -470,6 +470,20 @@ describe('SubscriptionManagement', () => {
                 'false',
             );
         });
+
+        it('still closes when the reload fails, without throwing it on', async () => {
+            const wrapper = await openAddPaymentMethod(
+                mountComponent({ enabledPricingId: 'pri_1000' }),
+            );
+            mockFetchAll.mockRejectedValueOnce(new Error('Request failed with status 500'));
+
+            wrapper.findComponent({ name: 'AddPaymentMethodModalStub' }).vm.$emit('success');
+            await flushPromises();
+
+            expect(wrapper.find('.sv-add-payment-method-modal-stub').attributes('data-open')).toBe(
+                'false',
+            );
+        });
     });
 
     describe('updating the subscription', () => {

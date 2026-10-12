@@ -461,3 +461,31 @@ describe('the committed README', () => {
         expect(missing).toStrictEqual([]);
     });
 });
+
+describe('updateReadme outside its directory', () => {
+    const dirs: string[] = [];
+    afterEach(() => dirs.forEach((d) => fs.rmSync(d, { recursive: true, force: true })));
+
+    it('writes nothing through a README symlinked outside the base directory', () => {
+        const base = makeTmpDir();
+        const outside = makeTmpDir();
+        dirs.push(base, outside);
+        const target = writeFile(outside, 'README.md', '# Elsewhere\n');
+        const readme = path.join(base, 'README.md');
+        fs.symlinkSync(target, readme);
+
+        expect(() => updateReadme(readme, '## Error logging', base)).toThrow(
+            'Path traversal detected',
+        );
+        expect(fs.readFileSync(target, 'utf-8')).toBe('# Elsewhere\n');
+    });
+
+    it('refuses a path that climbs out of the base directory', () => {
+        const base = makeTmpDir();
+        dirs.push(base);
+
+        expect(() => updateReadme(path.join(base, '../README.md'), '## x', base)).toThrow(
+            'Path traversal detected',
+        );
+    });
+});

@@ -75,7 +75,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
 
     console.log(
         generateTranslationsReport({
-            translationsDir: get('--translations-dir'),
+            translationsDir: resolveSafePath(get('--translations-dir'), process.cwd()),
             supported: SUPPORTED_LOCALES,
             sha: get('--sha'),
         }),

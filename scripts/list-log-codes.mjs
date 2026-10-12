@@ -185,8 +185,8 @@ export function buildMarkdownSection(entries) {
 }
 
 export function updateReadme(readmePath, section, baseDir = ROOT) {
-    resolveSafePath(readmePath, baseDir);
-    const content = fs.readFileSync(readmePath, 'utf-8');
+    const safePath = resolveSafePath(readmePath, baseDir);
+    const content = fs.readFileSync(safePath, 'utf-8');
 
     const block = `${README_START_MARKER}\n${section}\n${README_END_MARKER}`;
 
@@ -195,11 +195,11 @@ export function updateReadme(readmePath, section, baseDir = ROOT) {
             new RegExp(`${README_START_MARKER}[\\s\\S]*?${README_END_MARKER}`),
             block,
         );
-        fs.writeFileSync(readmePath, updated, 'utf-8');
+        fs.writeFileSync(safePath, updated, 'utf-8');
         return 'updated';
     }
 
-    fs.writeFileSync(readmePath, `${content.trimEnd()}\n\n${block}\n`, 'utf-8');
+    fs.writeFileSync(safePath, `${content.trimEnd()}\n\n${block}\n`, 'utf-8');
     return 'appended';
 }
 

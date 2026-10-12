@@ -1,5 +1,26 @@
+import { execFileSync } from 'child_process';
+import path from 'path';
 import { describe, it, expect } from 'vitest';
 import { sumEagerChunks } from './measure-consumer-bundle.mjs';
+
+const SCRIPT = path.join(__dirname, 'measure-consumer-bundle.mjs');
+
+function runCli(args: string[]): { status: number; stdout: string; stderr: string } {
+    try {
+        const stdout = execFileSync(process.execPath, [SCRIPT, ...args], {
+            encoding: 'utf8',
+            stdio: 'pipe',
+        });
+        return { status: 0, stdout, stderr: '' };
+    } catch (error) {
+        const { status, stdout, stderr } = error as {
+            status: number;
+            stdout: string;
+            stderr: string;
+        };
+        return { status, stdout, stderr };
+    }
+}
 
 type Chunk = {
     type: string;
@@ -88,5 +109,17 @@ describe('sumEagerChunks', () => {
 
     it('returns zero for empty output', () => {
         expect(sumEagerChunks([])).toEqual({ raw: 0, brotli: 0, chunks: 0 });
+    });
+});
+
+describe('command line', () => {
+    it.each([
+        ['an absolute path outside', '/etc'],
+        ['a relative climb out', '../../../../../../../../etc'],
+    ])('refuses a dist directory given as %s', (_, outside) => {
+        const { status, stderr } = runCli(['--dist', outside]);
+
+        expect(status).not.toBe(0);
+        expect(stderr).toContain('Path traversal detected');
     });
 });

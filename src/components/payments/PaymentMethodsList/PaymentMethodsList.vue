@@ -26,7 +26,13 @@ const { getContextMenuItems } = usePaymentMethodContextMenuOptions({
         pendingDeletePaymentMethod.value = paymentMethod;
     },
     onSetDefault: async (paymentMethod) => {
-        await setDefault(paymentMethod.id);
+        try {
+            await setDefault(paymentMethod.id);
+        } catch {
+            // Logged as REQUEST_FAILED, and the list still shows the default that stands.
+            return;
+        }
+
         emit('set-default', paymentMethod);
     },
 });

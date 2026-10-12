@@ -223,4 +223,17 @@ describe('PaymentMethodsList', () => {
         expect(mockSetDefaultPaymentMethod).toHaveBeenCalledWith({ paymentMethodId: 'pm_1' });
         expect(wrapper.emitted('set-default')).toHaveLength(1);
     });
+
+    it('keeps a refused default to itself: no set-default, and nothing thrown on', async () => {
+        mockSetDefaultPaymentMethod.mockRejectedValueOnce(
+            new Error('Request failed with status 422'),
+        );
+        const wrapper = mountComponent();
+
+        await expect(capturedOnSetDefault!(createPaymentMethod({ id: 'pm_1' }))).resolves.toBe(
+            undefined,
+        );
+
+        expect(wrapper.emitted('set-default')).toBeUndefined();
+    });
 });

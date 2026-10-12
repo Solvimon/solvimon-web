@@ -19,7 +19,7 @@ import {
 import SepaMandateNotice from './SepaMandateNotice.vue';
 import PaymentCompletedCard from '@/components/payments/PaymentCompletedCard/PaymentCompletedCard.vue';
 import PaymentErrorCard from '@/components/payments/PaymentErrorCard/PaymentErrorCard.vue';
-import type { Error } from '@/types/errors';
+import type { SdkError } from '@/types/errors';
 import { createPaymentsService } from '@/services/payments';
 import { createPaymentMethodsService } from '@/services/paymentMethods';
 import {
@@ -72,7 +72,7 @@ const sepaNoticeRef = ref<HTMLElement | null>(null);
 const sepaNoticeTarget = ref<HTMLElement | null>(null);
 let sepaObserver: MutationObserver | undefined;
 const showPaymentSuccess = ref(false);
-const integrationError = ref<Error>();
+const integrationError = ref<SdkError>();
 // Set once a payment is settled or may still go through, so the drop-in cannot take a second one.
 let isDropInWithheld = false;
 // Enter in a card field and a wallet's own button submit without the screen, so the screen's
@@ -123,7 +123,7 @@ function failureContext(params: Omit<PaymentFailureParams, 'gateway'>): Record<s
  * Every failure leaves through here, so the card the customer sees always carries the reference
  * they can quote back to support.
  */
-function emitError(err: Omit<Error, 'reference'>) {
+function emitError(err: Omit<SdkError, 'reference'>) {
     isSubmissionInFlight = false;
     const failure = createPaymentFailureError(err);
     integrationError.value = failure;

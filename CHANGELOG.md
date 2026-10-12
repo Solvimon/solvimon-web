@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `SubscriptionManagement` offers only the subscription's own payment method, which is the one the API charges a change to, and no longer offers to add one. It used to let the customer pick or add any method and then charge the subscription's method regardless. The method is only offered while the API accepts it: active, of the subscription's customer, and not prepaid or of an unknown type. A subscription without such a method says so, the disabled Update button points at that message, and it cannot be changed.
 - `SubscriptionManagement` no longer changes a subscription that has pricing customized for it, and says to contact support instead. A new schedule carries none of the customizations, so any change, to whichever group, dropped them, and moving off a customized pricing could not be priced. `SubscriptionDetails` still lists such a pricing under Upgrades at its customized price, but offers no Upgrade action while the schedule has customized pricing.
 - The `manage-subscription` action request carries `data.enabledPricingId` when the customer chose Upgrade on a pricing in `SubscriptionDetails`. Pass it to `SubscriptionManagement` as `configuration.enabledPricingId` to open on that pricing's group.
+- The billing information block's Edit button has a message id of its own, `customer_overview.billing_information_block.edit_button_label`. It used `customer_overview.billing_information_block.view_all_payment_methods_link_label`; a `messages` override for the old id no longer applies, so move it to the new one.
 
 ### Fixed
 
@@ -61,6 +62,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `SubscriptionsList` and the subscriptions block of `CustomerOverview` say so when the subscriptions cannot be loaded, where they showed "No subscriptions". A failed load no longer leaves the block loading for good.
 - `SubscriptionsList` shows a "Load more" button while there are more subscriptions, where it showed only the first 15.
 - The cancel confirmation names each enabled pricing once, where a pricing offered on more than one schedule was named once per schedule.
+- The billing information form saves the customer's edits. Its Save button stayed disabled whatever the customer changed, and its checks looked at the values the form started with. After a save, the form starts again from the details as saved, so Save turns off and the details show as the API stored them. A second press while a save is running is ignored.
+- The billing information form says why a save failed. An API error shows on the field it names, including the email field, or as a general error when the form does not show that field; a failed save showed nothing.
+- The billing information form checks the country, legal name, VAT number and the address fields the country needs, with the rules checkout uses. Emptying the VAT number removes it from the customer.
+- Saving the billing information form leaves the customer's stored tax ids alone unless the VAT number was edited. Every save replaced them all with the first one, retyped as a generic tax id, and a stored tax id outside the EU, such as a Canadian GST/HST, Australian GST or US one, blocked every save. An edited VAT number now changes only the first tax id and keeps its type.
 
 ## [0.1.0-alpha.27] - 2026-10-12
 

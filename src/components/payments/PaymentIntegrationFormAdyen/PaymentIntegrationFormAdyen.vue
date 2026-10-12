@@ -679,6 +679,9 @@ function handleOnSubmit(
                 failureContext({ reason: 'ADYEN_SUBMISSION_FLOW_FAILED', cause: error }),
                 error,
             );
+            // Only what runs before the payment call can land here; that call has its own catch.
+            dropInInstance?.setStatus('ready');
+            emit('invalid');
         });
 }
 
@@ -775,7 +778,9 @@ function handleOnError(
 ): ReturnType<NonNullable<CoreConfiguration['onError']>> {
     const [data, component] = args;
 
+    // The customer closed a wallet's sheet or popup: nothing was paid, and the screen waits on us.
     if (data.name === 'CANCEL') {
+        emit('invalid');
         return;
     }
 

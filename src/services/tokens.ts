@@ -1,10 +1,11 @@
 import type { Token } from '@solvimon/solvimon-types';
 import { createRequestService } from './requests';
+import type { Logger } from '@/components/providers/LoggerProvider/LoggerProvider.types';
 import { useConfig } from '@/components/providers/ConfigProvider/composables/useConfig';
 
-export function createTokensService() {
+export function createTokensService({ logger }: { logger?: Logger } = {}) {
     const config = useConfig();
-    const request = createRequestService({ enableAccessCheck: false });
+    const request = createRequestService({ enableAccessCheck: false, logger });
 
     return {
         getAccessToken(tokenUserName: string) {

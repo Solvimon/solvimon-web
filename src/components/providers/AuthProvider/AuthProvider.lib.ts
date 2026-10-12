@@ -18,22 +18,23 @@ export interface Auth {
     renewAccessToken: (rejected: string | undefined) => Promise<string | undefined>;
 }
 
-interface Subscriber {
-    logger: Logger;
-    tokens: ReturnType<typeof createTokensService>;
-}
-
 interface SharedTokenState {
     accessToken: Ref<string | undefined>;
     expiresAt: number | undefined;
-    // Each mounted element, so failures reach the hosts still on the page.
+    // One per mounted element, so failures reach the hosts still on the page. Wrapped, since two
+    // elements may share a logger and the first leaving must not remove the second.
     subscribers: Set<Subscriber>;
+    tokens: ReturnType<typeof createTokensService>;
     refreshInterval: ReturnType<typeof setInterval> | undefined;
     refreshing: Promise<string | undefined> | undefined;
     lastRefreshFailed: boolean;
     consecutiveRefresh401s: number;
     isSessionExpired: boolean;
     onVisibilityChange: () => void;
+}
+
+interface Subscriber {
+    logger: Logger;
 }
 
 function isUnauthorizedError(err: unknown): boolean {
@@ -48,6 +49,19 @@ const sharedTokenStates = new Map<string, SharedTokenState>();
 const forEachLogger = (state: SharedTokenState, log: (logger: Logger) => void) =>
     state.subscribers.forEach(({ logger }) => log(logger));
 
+/** Logs to an element mounted when the entry is written, or nowhere once none is. */
+function createRoutedLogger(subscribers: Set<Subscriber>): Logger {
+    const mounted = (): Logger | undefined => subscribers.values().next().value?.logger;
+
+    return {
+        debug: (...args) => mounted()?.debug(...args),
+        info: (...args) => mounted()?.info(...args),
+        warn: (...args) => mounted()?.warn(...args),
+        error: (...args) => mounted()?.error(...args),
+        capture: (...args) => mounted()?.capture(...args),
+    };
+}
+
 function applyToken(state: SharedTokenState, { access_token, expires_in }: Token) {
     state.accessToken.value = access_token;
     // Relative to now rather than the JWT's `exp`, so a skewed client clock cannot misjudge it.
@@ -56,6 +70,9 @@ function applyToken(state: SharedTokenState, { access_token, expires_in }: Token
 
 const isDue = (state: SharedTokenState) =>
     state.expiresAt === undefined || state.expiresAt - Date.now() < REFRESH_MARGIN_MS;
+
+// A failed refresh may have left a token the API already rejects, however far from expiry.
+const shouldRetry = (state: SharedTokenState) => state.lastRefreshFailed || isDue(state);
 
 function expireSession(state: SharedTokenState, err: unknown) {
     state.isSessionExpired = true;
@@ -75,11 +92,10 @@ function expireSession(state: SharedTokenState, err: unknown) {
 }
 
 async function runRefresh(state: SharedTokenState): Promise<string | undefined> {
-    const [subscriber] = state.subscribers;
-    if (!subscriber) return undefined;
+    if (state.subscribers.size === 0) return undefined;
 
     try {
-        applyToken(state, await subscriber.tokens.refreshAccessToken());
+        applyToken(state, await state.tokens.refreshAccessToken());
         state.consecutiveRefresh401s = 0;
         state.lastRefreshFailed = false;
         return state.accessToken.value;
@@ -113,10 +129,12 @@ function refreshForRequest(state: SharedTokenState): Promise<string | undefined>
 }
 
 function createSharedState(): SharedTokenState {
+    const subscribers = new Set<Subscriber>();
     const state: SharedTokenState = {
         accessToken: ref<string | undefined>(),
         expiresAt: undefined,
-        subscribers: new Set(),
+        subscribers,
+        tokens: createTokensService({ logger: createRoutedLogger(subscribers) }),
         refreshInterval: undefined,
         refreshing: undefined,
         lastRefreshFailed: false,
@@ -124,7 +142,7 @@ function createSharedState(): SharedTokenState {
         isSessionExpired: false,
         // Timers are throttled in a background tab and stop while the laptop sleeps.
         onVisibilityChange: () => {
-            if (document.visibilityState === 'visible' && isDue(state)) void refresh(state);
+            if (document.visibilityState === 'visible' && shouldRetry(state)) void refresh(state);
         },
     };
 
@@ -133,11 +151,8 @@ function createSharedState(): SharedTokenState {
 
 function startSession(state: SharedTokenState, tokenUserName: string) {
     const fetchToken = async () => {
-        const [subscriber] = state.subscribers;
-        if (!subscriber) return;
-
         try {
-            applyToken(state, await subscriber.tokens.getAccessToken(tokenUserName));
+            applyToken(state, await state.tokens.getAccessToken(tokenUserName));
         } catch (err) {
             forEachLogger(state, (logger) =>
                 logger.error('INVALID_TOKEN', 'Failed to fetch access token', {}, err),
@@ -148,7 +163,7 @@ function startSession(state: SharedTokenState, tokenUserName: string) {
     void fetchToken();
 
     state.refreshInterval = setInterval(() => {
-        if (isDue(state)) void refresh(state);
+        if (shouldRetry(state)) void refresh(state);
     }, REFRESH_INTERVAL_MS);
     document.addEventListener('visibilitychange', state.onVisibilityChange);
 }
@@ -167,7 +182,7 @@ const inertAuth = (): Auth => ({
 });
 
 export const getAuth = (token: string): Auth => {
-    const subscriber: Subscriber = { logger: useLogger(), tokens: createTokensService() };
+    const subscriber: Subscriber = { logger: useLogger() };
 
     let tokenUserName: string;
     try {

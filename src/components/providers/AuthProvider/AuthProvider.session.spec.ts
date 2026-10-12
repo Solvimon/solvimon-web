@@ -357,9 +357,7 @@ describe('auth session through the request service', () => {
             expect(first.logger.warn).not.toHaveBeenCalled();
         });
 
-        // Expected failure: the refresh in flight runs on the first element's token service, so
-        // its REQUEST_FAILED goes to that element's logger even after it has left the page.
-        it.fails('routes the log of a refresh in flight away from a removed element', async () => {
+        it('routes the log of a refresh in flight away from a removed element', async () => {
             routes.token = () => tokenReply('T1', 30);
             const refresh = deferred<Reply>();
             routes.refresh = () => refresh.promise;
@@ -384,34 +382,25 @@ describe('auth session through the request service', () => {
             );
         });
 
-        // Expected failure: after a refresh fails, only the timer and the tab becoming visible may
-        // start another, and both start one only once the token is within a minute of expiry. A
-        // token the API rejects long before that is never replaced, so every request fails with a
-        // 401 until then, although the CHANGELOG says the timer retries.
-        it.fails(
-            'recovers from a failed refresh while the rejected token is far from expiry',
-            async () => {
-                routes.token = () => tokenReply('T1', 3600);
-                let refreshes = 0;
-                routes.refresh = () =>
-                    ++refreshes === 1
-                        ? { status: 503, body: { message: 'down' } }
-                        : tokenReply('T2');
-                routes.api = (init) => (bearerOf(init) === 'T1' ? { status: 401 } : { body: {} });
+        it('recovers from a failed refresh while the rejected token is far from expiry', async () => {
+            routes.token = () => tokenReply('T1', 3600);
+            let refreshes = 0;
+            routes.refresh = () =>
+                ++refreshes === 1 ? { status: 503, body: { message: 'down' } } : tokenReply('T2');
+            routes.api = (init) => (bearerOf(init) === 'T1' ? { status: 401 } : { body: {} });
 
-                const element = mountElement(portalToken());
-                await flush();
+            const element = mountElement(portalToken());
+            await flush();
 
-                await expect(get(element)).rejects.toMatchObject({ statusCode: 401 });
-                expect(callsTo('refresh')).toHaveLength(1);
+            await expect(get(element)).rejects.toMatchObject({ statusCode: 401 });
+            expect(callsTo('refresh')).toHaveLength(1);
 
-                await vi.advanceTimersByTimeAsync(5 * 60_000);
-                setVisible();
-                await flush();
+            await vi.advanceTimersByTimeAsync(5 * 60_000);
+            setVisible();
+            await flush();
 
-                await expect(get(element)).resolves.toEqual({});
-            },
-        );
+            await expect(get(element)).resolves.toEqual({});
+        });
 
         it('keeps two elements with different tokens apart', async () => {
             routes.token = (init) => {

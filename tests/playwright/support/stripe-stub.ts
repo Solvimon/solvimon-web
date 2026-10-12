@@ -17,6 +17,8 @@ export interface StripeStubConfig {
     confirmationTokenId: string;
     /** Makes `elements.submit()` fail, as it does when a card field is incomplete. */
     submitError?: { message: string; code?: string; type?: string };
+    /** Makes `elements.submit()` reject outright instead of answering with an error. */
+    submitRejection?: string;
     /** Makes tokenization fail, as it does when the card is rejected up front. */
     confirmationTokenError?: { message: string; code?: string; type?: string };
     /** Makes the 3DS step fail after an ACTION_REQUIRED authorization. */
@@ -86,6 +88,9 @@ export function stripeStubScript(config: StripeStubConfig): string {
                 return {
                     create: createPaymentElement,
                     submit: function () {
+                        if (config.submitRejection) {
+                            return Promise.reject(new Error(config.submitRejection));
+                        }
                         return Promise.resolve(
                             config.submitError ? { error: config.submitError } : {},
                         );

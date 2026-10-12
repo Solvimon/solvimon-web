@@ -73,7 +73,7 @@ const handleToggle = (pricingId: Pricing['id']) => {
                                     @click="handleToggle(pricing.id)"
                                     >{{
                                         $t({
-                                            defaultMessage: 'Add to subscription ',
+                                            defaultMessage: 'Add to subscription',
                                             id: 'addon_multiple_editor.add_to_subscription_button',
                                             description:
                                                 'The button to add a pricing to the subscription',

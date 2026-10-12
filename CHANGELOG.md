@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- The seat labels and prices are now in Dutch for the `nl-NL` locale ("Plaatsen", "per plaats"). They were shown in English.
+
 ## [0.1.0-alpha.27] - 2026-10-12
 
 ### Added

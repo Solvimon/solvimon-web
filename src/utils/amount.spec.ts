@@ -1,5 +1,5 @@
 import type { Amount } from '@solvimon/solvimon-types';
-import { toMinorUnitAmount } from './amount';
+import { getCurrencyDecimals, toMinorUnitAmount } from './amount';
 
 describe('toMinorUnitAmount', () => {
     it('should transform USD amount correctly', () => {
@@ -35,5 +35,20 @@ describe('toMinorUnitAmount', () => {
         const result = toMinorUnitAmount(amount);
         expect(result.currency).toBe('USD');
         expect(result.value).toBe(99999999);
+    });
+});
+
+describe('getCurrencyDecimals', () => {
+    it.each([
+        ['EUR', 2],
+        ['JPY', 0],
+        ['KWD', 3],
+        ['BHD', 3],
+    ])('counts %s in %i decimals', (currency, decimals) => {
+        expect(getCurrencyDecimals(currency)).toBe(decimals);
+    });
+
+    it.each([undefined, '', 'coins'])('falls back to cents for %p', (currency) => {
+        expect(getCurrencyDecimals(currency)).toBe(2);
     });
 });

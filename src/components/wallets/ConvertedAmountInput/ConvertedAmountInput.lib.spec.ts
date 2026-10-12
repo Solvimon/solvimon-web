@@ -75,6 +75,19 @@ describe('toMoneyQuantity', () => {
         expect(toMoneyQuantity(1000 / 3)).toBe('333.33');
     });
 
+    it.each([
+        ['EUR', '333.33'],
+        ['JPY', '333'],
+        ['KWD', '333.333'],
+        ['BHD', '333.333'],
+    ])('rounds %s to its own minor units', (currency, quantity) => {
+        expect(toMoneyQuantity(1000 / 3, currency)).toBe(quantity);
+    });
+
+    it('rounds to the cent for a currency it does not know', () => {
+        expect(toMoneyQuantity(1000 / 3, 'coins')).toBe('333.33');
+    });
+
     it('spells out the cents of a round figure', () => {
         expect(toMoneyQuantity(100)).toBe('100.00');
     });

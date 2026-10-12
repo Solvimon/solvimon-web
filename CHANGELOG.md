@@ -77,6 +77,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The `log` and `action-request` events, and `cssOverrides`, work from the moment an element starts rendering. Entries logged while it rendered for the first time used to reach `onLog` without a `log` event, and an action requested then went ahead without an `action-request` event the host could cancel.
 - An `onLog` callback that throws no longer replaces the error being logged, or stops the other log outputs. Its error is rethrown outside the SDK, where the page's own error reporting sees it.
 - The `billing-information-form` component logs a customer that fails to load as `INITIAL_DATA_LOAD_FAILED`.
+- A save the `billing-information-form` component is refused, a default payment method the API refuses, and a failed reload of the payment methods after subscription management stores one are reported once, as `REQUEST_FAILED`. They also escaped as unhandled promise rejections.
 - The logger reads `onLog`, `logLevel` and `environment` each time it logs. An element whose properties were set after it was appended never called that `onLog`, and kept writing to the console with `environment` missing from its entries even once it was set to `LIVE`.
 - `UNHANDLED_ERROR` entries carry the `componentName`, `environment` and `url` every other entry has, so a page with several elements can tell which one failed.
 

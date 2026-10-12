@@ -52,7 +52,7 @@ describe('ErrorBoundary', () => {
         expect(logger.capture).toHaveBeenCalledOnce();
         expect(logger.capture).toHaveBeenCalledWith(
             failure,
-            expect.objectContaining({ code: 'INVALID_TOKEN' }),
+            expect.objectContaining({ code: 'INVALID_TOKEN', message: 'Invalid token' }),
         );
         expect(wrapper.emitted('error')).toEqual([[failure]]);
     });

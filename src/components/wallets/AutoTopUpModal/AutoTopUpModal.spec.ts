@@ -97,6 +97,16 @@ vi.mock('@solvimon/solvimon-ui', async () => {
             props: ['invoice', 'isCustomerFacing'],
             template: '<div data-testid="invoice-preview" />',
         }),
+        ErrorNotification: defineComponent({
+            name: 'ErrorNotificationStub',
+            props: { title: String },
+            template: '<div data-testid="error">{{ title }}</div>',
+        }),
+        Alert: defineComponent({
+            name: 'AlertStub',
+            props: { title: String, type: String },
+            template: '<div data-testid="alert">{{ title }}</div>',
+        }),
         // The real one reaches for solvimon-ui's own intl provider, which is not this modal's
         Modal: defineComponent({
             name: 'ModalStub',
@@ -116,12 +126,14 @@ vi.mock('@solvimon/solvimon-ui', async () => {
                     <h1>{{ title }}</h1>
                     <p>{{ subTitle }}</p>
                     <slot name="body" />
-                    <button type="button" data-testid="cancel" @click="$emit('close')">
-                        {{ cancelButtonText }}
-                    </button>
-                    <button type="button" data-testid="confirm" @click="$emit('confirm')">
-                        {{ confirmButtonText }}
-                    </button>
+                    <slot name="footer">
+                        <button type="button" data-testid="cancel" @click="$emit('close')">
+                            {{ cancelButtonText }}
+                        </button>
+                        <button type="button" data-testid="confirm" @click="$emit('confirm')">
+                            {{ confirmButtonText }}
+                        </button>
+                    </slot>
                 </div>
             `,
         }),
@@ -230,6 +242,10 @@ describe('AutoTopUpModal', () => {
         expect(mountModal().text()).toContain('25.00');
     });
 
+    it('spells out what to turn on', () => {
+        expect(mountModal().text()).toContain('Enable auto top-up so you can stay productive.');
+    });
+
     it('opens on the rule the wallet already has', () => {
         const wrapper = mountModal({
             walletBalanceItem: {
@@ -316,6 +332,30 @@ describe('AutoTopUpModal', () => {
         expect(wrapper.emitted('saved')).toBeUndefined();
         expect(wrapper.emitted('close')).toBeUndefined();
         expect(wrapper.emitted('payment-failed')).toHaveLength(1);
+    });
+
+    it('says the rule could not be saved', async () => {
+        mockCreate.mockRejectedValue(new Error('nope'));
+        const wrapper = mountModal();
+
+        await confirm(wrapper);
+        await flushPromises();
+
+        expect(wrapper.find('[data-testid="error"]').text()).toContain(
+            "We couldn't save your automatic top-up",
+        );
+    });
+
+    it('clears the error once a retry is under way', async () => {
+        mockCreate.mockRejectedValueOnce(new Error('nope'));
+        mockCreate.mockReturnValueOnce(new Promise(() => {}));
+        const wrapper = mountModal();
+        await confirm(wrapper);
+        await flushPromises();
+
+        await confirm(wrapper);
+
+        expect(wrapper.find('[data-testid="error"]').exists()).toBe(false);
     });
 
     it('saves nothing while the rule does not validate', async () => {
@@ -430,6 +470,57 @@ describe('AutoTopUpModal', () => {
         const wrapper = mountModal();
 
         expect(wrapper.find('[data-testid="payment-method-form"]').exists()).toBe(false);
+    });
+
+    describe('a wallet a rule cannot be saved for', () => {
+        const withoutChargeTarget = () =>
+            mountModal({
+                topUpItem: undefined,
+                walletBalanceItem: {
+                    ...walletBalanceItem,
+                    charge_on_demand_pricing_items: [
+                        {
+                            ...(walletBalanceItem.charge_on_demand_pricing_items as object[])[0],
+                            pricing_plan_schedule_id: undefined,
+                        },
+                    ],
+                },
+            });
+
+        it('disables Save when there is nothing for the rule to charge', () => {
+            const wrapper = withoutChargeTarget();
+
+            expect(wrapper.find('[data-testid="confirm"]').attributes('disabled')).toBeDefined();
+        });
+
+        it('says why', () => {
+            expect(withoutChargeTarget().find('[data-testid="alert"]').text()).toContain(
+                'not available',
+            );
+        });
+
+        it('disables Save for a wallet with no id to save the rule against', () => {
+            const wrapper = mountModal({
+                walletBalanceItem: { ...walletBalanceItem, wallet_id: undefined },
+            });
+
+            expect(wrapper.find('[data-testid="confirm"]').attributes('disabled')).toBeDefined();
+        });
+
+        it('still lets the customer out', async () => {
+            const wrapper = withoutChargeTarget();
+
+            await wrapper.find('[data-testid="cancel"]').trigger('click');
+
+            expect(wrapper.emitted('close')).toHaveLength(1);
+        });
+
+        it('leaves Save usable for a wallet a rule can be saved for', () => {
+            const wrapper = mountModal();
+
+            expect(wrapper.find('[data-testid="alert"]').exists()).toBe(false);
+            expect(wrapper.find('[data-testid="confirm"]').attributes('disabled')).toBeUndefined();
+        });
     });
 
     it('asks nothing of a wallet that cannot say what its rule is written in', () => {

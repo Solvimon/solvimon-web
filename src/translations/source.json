@@ -135,13 +135,21 @@
     "defaultMessage": "Select a payment method to pay for automatic top-ups.",
     "description": "Error shown in the auto top-up modal when no payment method is selected"
   },
+  "auto_topup_modal.save_failed": {
+    "defaultMessage": "We couldn't save your automatic top-up. Please try again.",
+    "description": "Error shown in the auto top-up modal when saving the rule failed"
+  },
   "auto_topup_modal.subtitle": {
-    "defaultMessage": "Your current balance is {balance}. Enable auto top so you can stay productive",
+    "defaultMessage": "Your current balance is {balance}. Enable auto top-up so you can stay productive.",
     "description": "Subtitle of the automatic wallet top-up modal, naming the balance"
   },
   "auto_topup_modal.title": {
     "defaultMessage": "Automatic top-up",
     "description": "Title of the automatic wallet top-up modal"
+  },
+  "auto_topup_modal.unavailable": {
+    "defaultMessage": "Automatic top-up is not available for this wallet.",
+    "description": "Shown in the auto top-up modal when the wallet has nothing an automatic top-up could charge"
   },
   "billing_information_form.submit_button.label": {
     "defaultMessage": "Save changes",

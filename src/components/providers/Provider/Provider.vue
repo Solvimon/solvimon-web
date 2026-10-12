@@ -40,27 +40,38 @@ const emit = defineEmits<ProviderEmits>();
                     >
                         <ErrorBoundary @error="(error: Error) => emit('error', error)">
                             <RequiredPropertiesGuard :missing="missingProperties ?? []">
-                                <ConfigProvider :environment="environment">
-                                    <AuthProvider :token="portalObject.token">
-                                        <ExperimentalFeatureProvider
-                                            :experimental-features="experimentalFeatures"
-                                        >
-                                            <PortalProvider
-                                                :allowed-portal-types="allowedPortalTypes"
-                                                :portal-object="portalObject"
+                                <!-- Keyed, so that a new environment or portal token starts the tree
+                                below over rather than leaving it on the API and session it was
+                                mounted with. -->
+                                <ConfigProvider :key="environment" :environment="environment">
+                                    <ExperimentalFeatureProvider
+                                        :experimental-features="experimentalFeatures"
+                                    >
+                                        <IconSpriteProvider>
+                                            <TranslationProvider
+                                                :locale="locale"
+                                                :date-locale="dateLocale"
+                                                :messages="messages"
                                             >
-                                                <IconSpriteProvider>
-                                                    <TranslationProvider
-                                                        :locale="locale"
-                                                        :date-locale="dateLocale"
-                                                        :messages="messages"
+                                                <!-- Above the session, so a portal that cannot be
+                                                used is refused without exchanging its token. -->
+                                                <PortalProvider
+                                                    :allowed-portal-types="allowedPortalTypes"
+                                                    :portal-object="portalObject"
+                                                >
+                                                    <AuthProvider
+                                                        :key="portalObject.token"
+                                                        :token="portalObject.token"
                                                     >
                                                         <slot />
-                                                    </TranslationProvider>
-                                                </IconSpriteProvider>
-                                            </PortalProvider>
-                                        </ExperimentalFeatureProvider>
-                                    </AuthProvider>
+                                                    </AuthProvider>
+                                                    <template #unavailable>
+                                                        <slot name="portal-unavailable" />
+                                                    </template>
+                                                </PortalProvider>
+                                            </TranslationProvider>
+                                        </IconSpriteProvider>
+                                    </ExperimentalFeatureProvider>
                                 </ConfigProvider>
                             </RequiredPropertiesGuard>
                         </ErrorBoundary>

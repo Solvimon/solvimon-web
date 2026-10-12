@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { SolvimonCheckoutEmits, SolvimonCheckoutEntryProps } from './Checkout.entry.types';
+import CheckoutNotAvailable from '@/components/checkout/CheckoutNotAvailable.vue';
 import { EntryProvider } from '@/components/providers';
 import Checkout from '@/public/screens/Checkout/Checkout.vue';
 import { sanitizeCouponCode } from '@/public/screens/Checkout/couponCode';
@@ -36,5 +37,8 @@ const couponCode =
                 ><slot name="terms-and-conditions"
             /></template>
         </Checkout>
+        <template #portal-unavailable>
+            <CheckoutNotAvailable class="sv-checkout sv-root sv-screen sv-checkout--error" />
+        </template>
     </EntryProvider>
 </template>

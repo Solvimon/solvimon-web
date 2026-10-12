@@ -1142,6 +1142,7 @@ test.describe('Checkout', () => {
             await expect(checkout(page).unavailable).toBeVisible();
             const { logs } = await hostEvents(page);
             expect(logs.map(({ code }) => code)).toContain('RESOURCE_REVOKED');
+            expect(api.calls('subscription')).toEqual([]);
         });
 
         test('refuses a portal object meant for another screen', async ({ page }) => {
@@ -1152,7 +1153,7 @@ test.describe('Checkout', () => {
 
             await expect
                 .poll(async () => (await hostEvents(page)).logs.map(({ code }) => code))
-                .toContain('INVALID_TOKEN');
+                .toContain('PORTAL_TYPE_NOT_ALLOWED');
             await expect(checkout(page).form).toHaveCount(0);
             expect(api.calls('subscription')).toEqual([]);
 

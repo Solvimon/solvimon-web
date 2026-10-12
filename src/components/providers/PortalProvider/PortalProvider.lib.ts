@@ -1,58 +1,24 @@
-import { type InjectionKey, onMounted, ref } from 'vue';
-import { parseToken } from '@/utils/token';
-import { createPortalsService } from '@/services/portals';
-import { useLogger } from '@/components/providers/LoggerProvider/composables/useLogger';
+import type { InjectionKey, Ref } from 'vue';
 import type { PortalUrl } from '@/services/portals.types';
 
-export const PORTAL_INJECTION_KEY: InjectionKey<ReturnType<typeof getPortal>> =
-    Symbol('portalObject');
+export const PORTAL_INJECTION_KEY: InjectionKey<Readonly<Ref<PortalUrl>>> = Symbol('portalObject');
 
-export const getPortal = ({
-    token,
-    allowedPortalTypes,
-}: {
-    token: string;
-    allowedPortalTypes?: PortalUrl['type'][];
-}) => {
-    const { getPortalUrl } = createPortalsService();
-    const logger = useLogger();
+export type PortalUnavailableReason = 'missing' | 'type-not-allowed' | 'not-published';
 
-    const portal = ref<PortalUrl>();
-
-    let parsedToken: ReturnType<typeof parseToken>;
-    try {
-        parsedToken = parseToken(token);
-    } catch (err) {
-        logger.error('INVALID_TOKEN', 'Failed to parse the portal token', {}, err);
-        return portal;
+/**
+ * Why an element cannot use the portal object it was given, or `undefined` when it can. Every
+ * request the tree below makes is on the portal's behalf, so a portal of another type or one that
+ * was revoked must stop the element before any of them go out.
+ */
+export function getPortalUnavailableReason(
+    portalObject: PortalUrl | undefined,
+    allowedPortalTypes?: PortalUrl['type'][],
+): PortalUnavailableReason | undefined {
+    if (!portalObject) return 'missing';
+    if (allowedPortalTypes && !allowedPortalTypes.includes(portalObject.type)) {
+        return 'type-not-allowed';
     }
+    if (portalObject.status !== 'PUBLISHED') return 'not-published';
 
-    const getPortalObject = async () => {
-        try {
-            portal.value = await getPortalUrl(parsedToken.portalUrlResourceId);
-
-            if (!token || !parsedToken.portalUrlResourceId) {
-                throw Error('Failed getting portal url');
-            }
-
-            /**
-             * Check if we can actually get the portal url and check if the resource is published.
-             */
-            if (!portal.value || portal.value.status !== 'PUBLISHED') {
-                throw Error('Resource unavailable');
-            }
-
-            if (allowedPortalTypes && !allowedPortalTypes.includes(portal.value.type)) {
-                throw Error(`Incorrect portal url types: ${portal.value.type}`);
-            }
-        } catch (err) {
-            logger.error('RESOURCE_REVOKED', 'Failed to load portal resource', {}, err);
-        }
-    };
-
-    onMounted(async () => {
-        await getPortalObject();
-    });
-
-    return portal;
-};
+    return undefined;
+}

@@ -2,8 +2,8 @@ import type { Error as SdkError } from '@/types/errors';
 import { getSessionReference } from '@/utils/sessionReference';
 
 /**
- * The rejection `createRequestService` throws on a failed call. It is a plain object rather than an
- * `Error`, so it is recognised by shape.
+ * The fields read off the `ApiError` that `createRequestService` throws on a failed call. Recognised
+ * by its `hasError` flag rather than `instanceof`, so any rejection of the same shape reads the same.
  */
 type ApiRejection = {
     hasError?: boolean;

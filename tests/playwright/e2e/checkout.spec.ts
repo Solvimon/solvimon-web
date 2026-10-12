@@ -523,6 +523,28 @@ test.describe('Checkout', () => {
             expect(api.calls('authorizePayment')).toEqual([]);
         });
 
+        test('does not pay for a company purchase without a legal name', async ({ page }) => {
+            api = await mountLoaded(page);
+
+            await checkout(page).companyPurchase.click();
+            await checkout(page).submit.click();
+
+            await expect(page.getByTestId('input-legal_name')).toContainText(/required/i);
+            expect(api.calls('authorizePayment')).toEqual([]);
+        });
+
+        test('pays for an individual purchase without a legal name', async ({ page }) => {
+            api = await mountLoaded(page, {
+                mocks: { authorizePayment: { body: aSuccessfulAuthorization() } },
+            });
+
+            await checkout(page).companyPurchase.click();
+            await checkout(page).companyPurchase.click();
+            await checkout(page).submit.click();
+
+            await api.waitForCall('authorizePayment');
+        });
+
         test('pays once the invalid VAT number is hidden again', async ({ page }) => {
             api = await mountLoaded(page, {
                 mocks: { authorizePayment: { body: aSuccessfulAuthorization() } },

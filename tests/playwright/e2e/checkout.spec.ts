@@ -912,7 +912,7 @@ test.describe('Checkout', () => {
         const CRAFTED_QUERY = {
             redirect_status: 'succeeded',
             payment_acceptor_id: PAYMENT_ACCEPTOR_ID,
-            payment_intent_client_secret: 'pi_typed_by_hand',
+            payment_intent_client_secret: 'pi_3TypedByHand_secret_Abc123',
         };
 
         const retrievals = (page: Page) =>

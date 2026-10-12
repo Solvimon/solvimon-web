@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Section, Typography, useIntl } from '@solvimon/solvimon-ui';
 import type { Invoice } from '@solvimon/solvimon-types';
+import { getInvoiceTimezone } from '@/utils/invoiceState';
 
 defineProps<{
     invoice: Invoice;
@@ -40,7 +41,7 @@ const { $t, formatDate } = useIntl();
                         formatDate({
                             date: invoice.invoice_date,
                             format: 'date',
-                            timezone: invoice.customer.timezone,
+                            timezone: getInvoiceTimezone(invoice),
                             offsetType: 'offsetted',
                         })
                     }}</Typography
@@ -65,7 +66,7 @@ const { $t, formatDate } = useIntl();
                         formatDate({
                             date: invoice.due_date,
                             format: 'date',
-                            timezone: invoice.customer.timezone,
+                            timezone: getInvoiceTimezone(invoice),
                             offsetType: 'offsetted',
                         })
                     }}</Typography

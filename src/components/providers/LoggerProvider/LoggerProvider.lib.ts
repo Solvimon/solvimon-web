@@ -123,7 +123,6 @@ export function createLogger(
     },
 ): Logger {
     const order: Record<LogLevel, number> = { debug: 10, info: 20, warn: 30, error: 40 };
-    const min = opts?.logLevel ?? 'warn';
     const reference = opts?.reference ?? getSessionReference();
 
     const emit = (
@@ -133,7 +132,8 @@ export function createLogger(
         context?: Record<string, unknown>,
         err?: unknown,
     ) => {
-        if (order[level] < order[min]) return;
+        // Read per entry, like `environment` below: a host may set either after the element mounted.
+        if (order[level] < order[opts?.logLevel ?? 'warn']) return;
 
         const { fingerprint, context: entryContext } = extractFingerprint(context);
 
@@ -191,7 +191,13 @@ export function createLogger(
             const code = context?.code ?? 'UNHANDLED_ERROR';
             const message = context?.message ?? 'Unhandled error';
             const { code: _c, message: _m, ...rest } = context ?? {};
-            emit('error', code, message, rest, err);
+            emit(
+                'error',
+                code,
+                message,
+                createLoggingContext(rest, opts?.customElementName, opts?.environment),
+                err,
+            );
         },
     };
 }

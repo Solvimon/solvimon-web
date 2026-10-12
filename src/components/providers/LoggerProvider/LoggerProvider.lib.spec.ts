@@ -247,6 +247,32 @@ describe('createLogger', () => {
     });
 
     describe('context enrichment', () => {
+        it('names the element and environment on a captured error too', () => {
+            const logger = createLogger(sink, {
+                customElementName: 'solvimon-invoice',
+                environment: 'LIVE',
+            });
+            logger.capture(new Error('oops'), { info: 'setup function' });
+            expect(lastEntry().context).toMatchObject({
+                componentName: 'solvimon-invoice',
+                environment: 'LIVE',
+                info: 'setup function',
+            });
+            expect(lastEntry().context).toHaveProperty('url');
+        });
+
+        it('reads the environment and log level when it logs, not when it is created', () => {
+            const opts: { environment?: 'LIVE'; logLevel?: 'info' } = {};
+            const logger = createLogger(sink, opts);
+
+            logger.info('INFO_CODE', 'dropped at the default level');
+            expect(sink).not.toHaveBeenCalled();
+
+            Object.assign(opts, { environment: 'LIVE', logLevel: 'info' });
+            logger.info('INFO_CODE', 'kept');
+            expect(lastEntry().context).toMatchObject({ environment: 'LIVE' });
+        });
+
         it('adds componentName and environment to every entry', () => {
             const logger = createLogger(sink, {
                 customElementName: 'solvimon-checkout',

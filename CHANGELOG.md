@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `UNSUPPORTED_LOCALE` (warning) is logged when an element is given a locale the SDK has no translations for, such as `nl` or `en-GB`; the element renders in `en-US` as before. `PORTAL_TYPE_NOT_ALLOWED` (error) is logged when an element is given a portal object of a type it does not accept. Both are new members of the exported `WarnCode` and `ErrorCode` unions, so a `switch` over them that must be exhaustive needs a case for each.
+- The README documents the `action-request` event, its actions, and which properties an element follows after it has mounted.
+
+### Changed
+
+- An element renders only for a published portal object of the type it accepts — `INIT_PRICING_PLAN_SUBSCRIPTION` for the checkout, `CUSTOMER` for every other element — and, for any other, makes no API call beyond exchanging its token. A revoked portal logs `RESOURCE_REVOKED`; the checkout shows its "Checkout not available" notice, and the other elements, which used to render and call the API with it, render nothing. Another type logs `PORTAL_TYPE_NOT_ALLOWED` and renders nothing; the checkout used to throw on one and log `INVALID_TOKEN`.
+- Each element's `define` function returns the tag name the element is registered under. Calling it again returns that name rather than registering another.
+- `@import` rules are removed from `cssOverrides`. Browsers that adopt stylesheets ignored them and the others loaded them; load fonts and other stylesheets from the host page.
+
+### Fixed
+
+- The README examples work: they passed a `token` attribute, which no element has, and so failed with `portalObject is required`. They now set `portalObject` as a property. The core README no longer shows a `token` option or a `sandbox` environment, and lists every registered id.
+- Properties changed after an element has mounted take effect. A `portalObject` with another token or a new `environment` starts the element over with them; a new `invoiceId` or `subscriptionId` in `configuration` loads that invoice or subscription; `experimentalFeatures` apply in place; and a checkout `couponCode` set before the subscription has loaded is applied. Each was read once, when the element mounted.
+- Mounting an element through `createSolvimonCore` after defining it under your own tag name — `defineSolvimonCheckout('acme-checkout')`, say — no longer throws `NotSupportedError`. The core mounts it under the name you chose.
+- The payment method form uses the `countryCode` property it declares. It overrides the customer's country for the payment methods offered and the payment form; it was ignored.
+
 ## [0.1.0-alpha.27] - 2026-10-12
 
 ### Added

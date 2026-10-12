@@ -341,6 +341,7 @@
     "topup_modal.error.payment_declined": "Ihre Zahlung wurde abgelehnt. Versuchen Sie es mit einer anderen Zahlungsmethode.",
     "topup_modal.flexible_option.bounds": "Zwischen {minimum} und {maximum}",
     "topup_modal.flexible_option.label": "Eigenen Betrag wählen",
+    "topup_modal.invoice_preview.error": "Der Gesamtbetrag konnte nicht berechnet werden. Bitte versuchen Sie es erneut.",
     "topup_modal.invoice_preview.label": "Sie zahlen",
     "topup_modal.payment_method_required": "Wählen Sie eine Zahlungsmethode für diese Aufladung aus.",
     "topup_modal.payment_method_selector.label": "Zahlungsmethode",

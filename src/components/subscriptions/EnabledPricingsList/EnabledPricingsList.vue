@@ -7,6 +7,7 @@ import type {
 } from './EnabledPricingsList.types';
 import { getEnabledPricingsEntries } from './EnabledPricingsList.lib';
 import EnabledPricingsListItem from './EnabledPricingsListItem.vue';
+import { hasCustomizedPricings } from '@/utils/pricingPlanScheduleOverrides';
 
 const props = defineProps<EnabledPricingsListProps>();
 defineEmits<EnabledPricingsListEmits>();
@@ -14,6 +15,11 @@ defineEmits<EnabledPricingsListEmits>();
 const { $t } = useIntl();
 
 const entries = computed(() => getEnabledPricingsEntries(props.pricingPlanSchedule));
+
+/** Managing a subscription with customized pricing is refused, so it is not offered either. */
+const canUpgrade = computed(
+    () => !hasCustomizedPricings(props.pricingPlanSchedule.pricing_plan_schedule),
+);
 </script>
 
 <template>
@@ -36,6 +42,7 @@ const entries = computed(() => getEnabledPricingsEntries(props.pricingPlanSchedu
                 v-for="entry in entries"
                 :key="entry.pricingId"
                 :entry="entry"
+                :can-upgrade="canUpgrade"
                 @upgrade="$emit('upgrade', $event)"
             />
         </div>

@@ -9,6 +9,7 @@ import type {
     AuthorizePaymentPayload,
 } from '@solvimon/solvimon-types';
 import type { CheckoutFormState } from '@/components/customer/CheckoutForm/CheckoutForm.types';
+import { providerMockLogger } from '@/test-utils/providerMock';
 import { useCheckoutView } from './useCheckout.view';
 
 type AuthorizePaymentInitPricingPlanSubscriptionContext = Extract<
@@ -228,6 +229,25 @@ describe('useCheckoutView', () => {
         expect(result.isPaymentMethodsPending.value).toBe(false);
         expect(result.isInvoicePreviewPending.value).toBe(false);
         expect(mockUseCheckoutForm).toHaveBeenCalled();
+    });
+
+    it('drops and reports a country or email the host got wrong', () => {
+        const result = useCheckoutView({
+            initialCountry: 'XX' as CountryCode,
+            initialEmail: 'not-an-email',
+            subscriptionId: 'sub_123' as PricingPlanSubscription['id'],
+        });
+
+        expect(result.validatedCountry).toBeUndefined();
+        expect(result.validatedEmail).toBeUndefined();
+        expect(providerMockLogger.error).toHaveBeenCalledWith(
+            'INVALID_COUNTRY_CODE',
+            expect.stringContaining('"XX"'),
+        );
+        expect(providerMockLogger.error).toHaveBeenCalledWith(
+            'INVALID_EMAIL',
+            expect.stringContaining('"not-an-email"'),
+        );
     });
 
     it('loads subscription on mount', async () => {

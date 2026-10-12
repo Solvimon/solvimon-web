@@ -1,5 +1,9 @@
 import type { Amount } from '@solvimon/solvimon-types';
-import type { StripeFrameOptions } from './PaymentIntegrationFormStripeFrame.types';
+import type { StripeError } from '@stripe/stripe-js';
+import type {
+    StripeFrameOptions,
+    StripeSubmitError,
+} from './PaymentIntegrationFormStripeFrame.types';
 import { toMinorUnitAmount } from '@/utils/amount';
 
 const STRIPE_WALLETS = { link: 'never' as const };
@@ -62,4 +66,9 @@ export function getFrameOptions({
         fields,
         appearance: STRIPE_APPEARANCE,
     };
+}
+
+/** A Stripe error can carry the intent it is about, client secret included, so only this leaves. */
+export function summarizeStripeError(error: StripeError): StripeSubmitError {
+    return { code: error.code, type: error.type, message: error.message };
 }

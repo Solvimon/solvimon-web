@@ -12,6 +12,21 @@ import { useLogger } from '@/components/providers/LoggerProvider/composables/use
 import { appendQueryParams, getMediaType, Headers, MediaType } from '@/services/requests.lib';
 import { useAuth } from '@/components/providers/AuthProvider';
 
+type ErrorBody = Partial<Record<'message' | 'field' | 'resource_type' | 'resource_id', string>>;
+
+/** The fields an API error body carries, each only when it is a string. */
+function readErrorBody(json: unknown): ErrorBody {
+    if (typeof json !== 'object' || json === null) return {};
+
+    const body: ErrorBody = {};
+    for (const key of ['message', 'field', 'resource_type', 'resource_id'] as const) {
+        const value: unknown = Reflect.get(json, key);
+        if (typeof value === 'string') body[key] = value;
+    }
+
+    return body;
+}
+
 const defaultOptions: RequestOptions = {
     method: 'GET',
     credentials: 'omit',
@@ -44,7 +59,12 @@ export function createRequestService({ enableAccessCheck } = { enableAccessCheck
     };
 
     /** The one entry a failed request produces; callers add their own code on top. */
-    function reportFailure(url: URL, options: RequestOptions, error: unknown) {
+    function reportFailure(
+        url: URL,
+        options: RequestOptions,
+        error: unknown,
+        parseError?: unknown,
+    ) {
         const statusCode = error instanceof ApiError ? error.statusCode : undefined;
         const isExpected = !!statusCode && !!options.expectedStatusCodes?.includes(statusCode);
 
@@ -54,8 +74,23 @@ export function createRequestService({ enableAccessCheck } = { enableAccessCheck
             method: options.method,
             ...(statusCode ? { statusCode } : {}),
             ...(error instanceof ApiError && error.requestId ? { requestId: error.requestId } : {}),
-            fingerprint: ['REQUEST_FAILED', options.method ?? 'GET', url.pathname, `${statusCode}`],
+            fingerprint: [
+                parseError ? 'REQUEST_PARSE_FAILED' : 'REQUEST_FAILED',
+                options.method ?? 'GET',
+                url.pathname,
+                `${statusCode}`,
+            ],
         };
+
+        if (parseError) {
+            logger.error(
+                'REQUEST_PARSE_FAILED',
+                'Failed to parse JSON response',
+                context,
+                parseError,
+            );
+            return;
+        }
 
         if (isExpected) {
             logger.warn('REQUEST_FAILED', 'Request failed with an expected status', context, error);
@@ -74,8 +109,9 @@ export function createRequestService({ enableAccessCheck } = { enableAccessCheck
         data = undefined,
         options: rawOptions,
         query,
-    }: RequestParams): Promise<T | ApiSuccessCollectionResponse<T> | Blob | string> {
+    }: RequestParams): Promise<T | ApiSuccessCollectionResponse<T> | Blob | string | undefined> {
         const options = { ...defaultOptions, ...rawOptions };
+        let parseError: unknown;
 
         const fullUrl = new URL(url);
         appendQueryParams(fullUrl, query);
@@ -93,7 +129,7 @@ export function createRequestService({ enableAccessCheck } = { enableAccessCheck
             const mediaType = getMediaType(response.headers.get(Headers.CONTENT_TYPE));
             const isJson = mediaType === MediaType.JSON;
 
-            let json;
+            let json: T | undefined;
 
             // Parsed before the status is checked, because an error body is where the message and
             // the field it belongs to come from.
@@ -101,12 +137,7 @@ export function createRequestService({ enableAccessCheck } = { enableAccessCheck
                 try {
                     json = await response.json();
                 } catch (error) {
-                    logger.error(
-                        'REQUEST_PARSE_FAILED',
-                        'Failed to parse JSON response',
-                        {},
-                        error,
-                    );
+                    parseError = error;
 
                     throw new ApiError({
                         statusCode: response.status,
@@ -119,13 +150,15 @@ export function createRequestService({ enableAccessCheck } = { enableAccessCheck
             // Checked once, for every content type: a PDF endpoint answering with an HTML error
             // page has to reject, not resolve with the page as if it were the file.
             if (!response.ok) {
+                const body = readErrorBody(json);
+
                 throw new ApiError({
                     statusCode: response.status,
-                    message: json?.message,
+                    message: body.message,
                     requestId: response.headers.get(Headers.X_REQUEST_ID),
-                    field: json?.field,
-                    resourceType: json?.resource_type,
-                    resourceId: json?.resource_id,
+                    field: body.field,
+                    resourceType: body.resource_type,
+                    resourceId: body.resource_id,
                 });
             }
 
@@ -139,7 +172,7 @@ export function createRequestService({ enableAccessCheck } = { enableAccessCheck
 
             return json;
         } catch (error) {
-            reportFailure(fullUrl, options, error);
+            reportFailure(fullUrl, options, error, parseError);
             return Promise.reject(error);
         }
     }

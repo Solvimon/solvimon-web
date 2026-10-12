@@ -2,6 +2,8 @@ import { flushPromises, mount } from '@vue/test-utils';
 import { nextTick } from 'vue';
 import PaymentIntegrationFormAdyen from './PaymentIntegrationFormAdyen.vue';
 import type { PaymentIntegrationFormAdyenProps } from './PaymentIntegrationFormAdyen.types';
+import { ApiError } from '@/services/apiError';
+import { getQueryParam } from '@/utils/url';
 
 type SubmitActions = { resolve: (result: unknown) => void; reject: () => void };
 
@@ -81,6 +83,8 @@ const adyen = vi.hoisted(() => {
             paymentMethodsResponse?: { paymentMethods: { type: string }[] };
             onSubmit?: SubmitHandler;
             onPaymentFailed?: (data: unknown, component?: unknown) => void;
+            onPaymentCompleted?: (data: unknown, component?: unknown) => void;
+            onAdditionalDetails?: (state: unknown, component: unknown, actions: unknown) => void;
             onError?: (data: unknown, component?: unknown) => void;
         };
         dropInConfig?: {
@@ -400,8 +404,8 @@ describe('PaymentIntegrationFormAdyen', () => {
             expect(actions.resolve).toHaveBeenCalledWith({ resultCode: 'Error' });
         });
 
-        it('reports the failure and resolves as an error when the request rejects', async () => {
-            const error = new Error('network');
+        it('reports the failure and resolves as an error when the API turns the request down', async () => {
+            const error = new ApiError({ statusCode: 422 });
             mockAuthorizePayment.mockRejectedValue(error);
 
             await mountComponent();
@@ -476,6 +480,163 @@ describe('PaymentIntegrationFormAdyen', () => {
 
                 expect(cardConfig()?.enableStoreDetails).toBe(true);
             });
+        });
+    });
+
+    describe('outcomes that are not known yet', () => {
+        const failedCode = (wrapper: Awaited<ReturnType<typeof mountComponent>>) =>
+            (wrapper.emitted('payment-failed')?.[0]?.[0] as { code: string } | undefined)?.code;
+
+        // SEPA and other asynchronous methods answer SUCCESS with the payment still PENDING;
+        // reading only `AUTHORIZED` turned that into a failure and a second payment.
+        it('leaves a pending payment unconfirmed and takes the drop-in away', async () => {
+            mockAuthorizePayment.mockResolvedValue({
+                status: 'SUCCESS',
+                payment: { result: 'PENDING' },
+            });
+
+            const wrapper = await mountComponent();
+            const actions = await submitThroughDropIn();
+
+            expect(failedCode(wrapper)).toBe('PAYMENT_OUTCOME_UNCONFIRMED');
+            expect(wrapper.emitted('payment-success')).toBeUndefined();
+            expect(actions.resolve).not.toHaveBeenCalled();
+            expect(adyen.dropIn.unmount).toHaveBeenCalled();
+        });
+
+        it.each([
+            ['the request never got an answer', new TypeError('Failed to fetch')],
+            ['the server failed', new ApiError({ statusCode: 503 })],
+        ])('does not offer a retry when %s', async (_, error) => {
+            mockAuthorizePayment.mockRejectedValue(error);
+
+            const wrapper = await mountComponent();
+            const actions = await submitThroughDropIn();
+
+            expect(failedCode(wrapper)).toBe('PAYMENT_OUTCOME_UNCONFIRMED');
+            expect(actions.resolve).not.toHaveBeenCalled();
+            expect(adyen.dropIn.unmount).toHaveBeenCalled();
+        });
+    });
+
+    describe('additional details from the drop-in', () => {
+        const sendDetails = async () => {
+            const actions = { resolve: vi.fn(), reject: vi.fn() };
+            captured.checkoutConfig?.onAdditionalDetails?.(
+                { data: { details: { threeDSResult: 'abc' } } },
+                {},
+                actions,
+            );
+            await flushPromises();
+            return actions;
+        };
+
+        it('answers the drop-in as authorised when the payment succeeded', async () => {
+            mockGetPaymentDetails.mockResolvedValue({ payment_status: 'SUCCESS' });
+            await mountComponent();
+
+            const actions = await sendDetails();
+
+            expect(actions.resolve).toHaveBeenCalledWith({ resultCode: 'Authorised' });
+        });
+
+        // Ignoring REFUSED left the drop-in's spinner turning for good.
+        it('answers the drop-in as refused when the payment was refused', async () => {
+            mockGetPaymentDetails.mockResolvedValue({ payment_status: 'REFUSED' });
+            await mountComponent();
+
+            const actions = await sendDetails();
+
+            expect(actions.resolve).toHaveBeenCalledWith({ resultCode: 'Refused' });
+        });
+
+        it.each([
+            [
+                'an action is still required',
+                () =>
+                    mockGetPaymentDetails.mockResolvedValue({ payment_status: 'ACTION_REQUIRED' }),
+            ],
+            [
+                'the call fails',
+                () => mockGetPaymentDetails.mockRejectedValue(new TypeError('Failed to fetch')),
+            ],
+        ])('leaves the payment unconfirmed when %s', async (_, arrange) => {
+            arrange();
+            const wrapper = await mountComponent();
+
+            await sendDetails();
+
+            expect((wrapper.emitted('payment-failed')?.[0]?.[0] as { code: string }).code).toBe(
+                'PAYMENT_OUTCOME_UNCONFIRMED',
+            );
+            expect(adyen.dropIn.unmount).toHaveBeenCalled();
+        });
+
+        it('shows the completed card once the drop-in reports the payment completed', async () => {
+            const wrapper = await mountComponent();
+
+            captured.checkoutConfig?.onPaymentCompleted?.({ resultCode: 'Authorised' });
+            await flushPromises();
+
+            expect(wrapper.emitted('payment-success')).toHaveLength(1);
+            expect(wrapper.findComponent({ name: 'PaymentCompletedCard' }).exists()).toBe(true);
+        });
+    });
+
+    describe('returning from a redirect', () => {
+        beforeEach(() => {
+            vi.mocked(getQueryParam).mockImplementation(
+                (key: string) =>
+                    ({ redirectResult: 'res_1', payment_acceptor_id: 'paya_123' })[key] ?? null,
+            );
+        });
+
+        afterEach(() => {
+            vi.mocked(getQueryParam).mockImplementation(() => null);
+        });
+
+        // PayInvoice relies on the card: without it, "Pay" stayed on screen after a payment.
+        it('shows the completed card and keeps the drop-in away after a successful payment', async () => {
+            mockGetPaymentDetails.mockResolvedValue({ payment_status: 'SUCCESS' });
+
+            const wrapper = await mountComponent();
+
+            expect(wrapper.emitted('payment-success')).toHaveLength(1);
+            expect(wrapper.findComponent({ name: 'PaymentCompletedCard' }).exists()).toBe(true);
+            expect(mockAdyenCheckout).not.toHaveBeenCalled();
+        });
+
+        it('offers the drop-in again once the payment is known to have failed', async () => {
+            mockGetPaymentDetails.mockResolvedValue({ payment_status: 'REFUSED' });
+
+            const wrapper = await mountComponent();
+
+            expect((wrapper.emitted('payment-failed')?.[0]?.[0] as { code: string }).code).toBe(
+                'AUTHORIZATION_FAILED',
+            );
+            expect(mockAdyenCheckout).toHaveBeenCalledTimes(1);
+        });
+
+        it('keeps the drop-in away while the outcome is unconfirmed', async () => {
+            mockGetPaymentDetails.mockResolvedValue({ payment_status: 'ACTION_REQUIRED' });
+
+            const wrapper = await mountComponent();
+
+            expect((wrapper.emitted('payment-failed')?.[0]?.[0] as { code: string }).code).toBe(
+                'PAYMENT_OUTCOME_UNCONFIRMED',
+            );
+            expect(mockAdyenCheckout).not.toHaveBeenCalled();
+        });
+
+        it('keeps the drop-in away when the payment could not be checked', async () => {
+            mockGetPaymentDetails.mockRejectedValue(new TypeError('Failed to fetch'));
+
+            const wrapper = await mountComponent();
+
+            expect((wrapper.emitted('payment-failed')?.[0]?.[0] as { code: string }).code).toBe(
+                'PAYMENT_DETAILS_CALL_FAILED',
+            );
+            expect(mockAdyenCheckout).not.toHaveBeenCalled();
         });
     });
 

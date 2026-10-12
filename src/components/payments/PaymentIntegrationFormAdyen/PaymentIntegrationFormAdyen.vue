@@ -37,6 +37,11 @@ import { loadAdyenSdk } from '@/utils/adyenSdk';
 import { useExperimentalFeature } from '@/components/providers/ExperimentalFeatureProvider/composables/useExperimentalFeature';
 import { useLogger } from '@/components/providers';
 import {
+    getAuthorizeOutcome,
+    getPaymentDetailsOutcome,
+    isOutcomeUnknownAfterError,
+} from '@/utils/paymentOutcome';
+import {
     createPaymentFailureContext,
     createPaymentFailureError,
     type PaymentFailureParams,
@@ -70,6 +75,8 @@ const sepaNoticeTarget = ref<HTMLElement | null>(null);
 let sepaObserver: MutationObserver | undefined;
 const showPaymentSuccess = ref(false);
 const integrationError = ref<Error>();
+// Set once a payment is settled or may still go through, so the drop-in cannot take a second one.
+let isDropInWithheld = false;
 
 const logger = useLogger();
 const { locale } = useIntl();
@@ -112,6 +119,36 @@ function emitError(err: Omit<Error, 'reference'>) {
     const failure = createPaymentFailureError(err);
     integrationError.value = failure;
     emit('payment-failed', failure);
+}
+
+function succeed() {
+    withholdDropIn();
+    showPaymentSuccess.value = true;
+    emit('payment-success');
+}
+
+/**
+ * The drop-in is taken away rather than answered: every answer Adyen accepts ends in either its
+ * success or its failure callback, and this is neither.
+ */
+function reportUnconfirmed(reason: string, extra: Record<string, unknown> = {}, cause?: unknown) {
+    withholdDropIn();
+    logger.warn(
+        'PAYMENT_OUTCOME_UNCONFIRMED',
+        'The payment outcome could not be confirmed yet',
+        failureContext({ reason, extra, cause }),
+        cause,
+    );
+    emitError({
+        code: 'PAYMENT_OUTCOME_UNCONFIRMED',
+        message: 'Payment could not be confirmed',
+        error: cause,
+    });
+}
+
+function withholdDropIn() {
+    isDropInWithheld = true;
+    void unmountDropIn();
 }
 
 function submit() {
@@ -212,6 +249,8 @@ function loadAdyen() {
 }
 
 async function mountDropIn() {
+    if (isDropInWithheld) return;
+
     await unmountDropIn();
 
     // A fresh attempt supersedes whatever the last one failed with, so the card from it does not
@@ -242,6 +281,7 @@ async function mountDropIn() {
         const { checkoutConfig, dropInConfig } = await getConfiguration();
 
         checkoutInstance = await adyen.AdyenCheckout(checkoutConfig);
+        if (isDropInWithheld) return;
 
         dropInInstance = new adyen.Dropin(checkoutInstance, {
             ...dropInConfig,
@@ -429,6 +469,9 @@ function injectStylesToShadowRoot(adyenCss: string) {
 }
 
 type SubmitActions = Parameters<NonNullable<CoreConfiguration['onSubmit']>>[2];
+type AdditionalDetailsActions = Parameters<
+    NonNullable<CoreConfiguration['onAdditionalDetails']>
+>[2];
 
 /**
  * Turns an authorize or tokenize response into the drop-in's next step. Both take the same three
@@ -466,9 +509,20 @@ function applyPaymentResult(
         return;
     }
 
-    if (paymentResult.payment.result === 'AUTHORIZED') {
+    const outcome = getAuthorizeOutcome(paymentResult);
+
+    if (outcome === 'SUCCEEDED') {
         showPaymentSuccess.value = true;
         actions.resolve({ resultCode: 'Authorised' });
+        return;
+    }
+
+    if (outcome === 'UNCONFIRMED') {
+        reportUnconfirmed('PAYMENT_PENDING', {
+            paymentStatus: paymentResult.status,
+            paymentResult: paymentResult.payment?.result,
+            paymentMethodType,
+        });
         return;
     }
 
@@ -546,6 +600,16 @@ function handleOnSubmit(
                             }),
                             error,
                         );
+
+                        if (isOutcomeUnknownAfterError(error)) {
+                            reportUnconfirmed(
+                                'PAYMENT_AUTHORIZATION_UNANSWERED',
+                                { paymentMethodType: state.data.paymentMethod.type },
+                                error,
+                            );
+                            return;
+                        }
+
                         actions.resolve({ resultCode: 'Error' });
                     });
                 return;
@@ -646,16 +710,17 @@ function handleActionRequiredPaymentAction(
 function handleOnAdditionalDetails(
     ...args: Parameters<NonNullable<CoreConfiguration['onAdditionalDetails']>>
 ): ReturnType<NonNullable<CoreConfiguration['onAdditionalDetails']>> {
-    const [state] = args;
+    const [state, , actions] = args;
     const detailsResult = state.data.details;
     const paymentDataResult = state.data.paymentData;
 
     if (props.paymentMethodOptionResponseEntry.payment_acceptor.id) {
-        handlePaymentDetails({
+        void handlePaymentDetails({
             // For the moment: Adyen gives a null value back which is not accepted by Solvimon API, so filter that out
             detailsResult: detailsResult ? removeEmptyValues(detailsResult) : undefined,
             paymentDataResult,
             paymentAcceptorId: props.paymentMethodOptionResponseEntry.payment_acceptor.id,
+            actions,
         });
         return;
     }
@@ -702,7 +767,7 @@ function handleOnPaymentCompleted(
 ): ReturnType<NonNullable<CoreConfiguration['onPaymentCompleted']>> {
     const [, component] = args;
     component?.unmount();
-    emit('payment-success');
+    succeed();
 }
 
 function handleOnError(
@@ -728,12 +793,17 @@ function handleOnError(
     component?.unmount();
 }
 
+/**
+ * With `actions`, the drop-in is waiting on the answer and its own callbacks report it; without,
+ * this is a redirect return and the outcome is reported here.
+ */
 function handlePaymentDetails({
     detailsResult,
     threeDSResult,
     redirectResult,
     paymentDataResult,
     paymentAcceptorId,
+    actions,
 }: {
     detailsResult?: Record<string, unknown>;
     /**
@@ -746,8 +816,9 @@ function handlePaymentDetails({
     redirectResult?: string;
     paymentDataResult?: string;
     paymentAcceptorId: PaymentAcceptor['id'];
-}) {
-    getPaymentDetails({
+    actions?: AdditionalDetailsActions;
+}): Promise<void> {
+    return getPaymentDetails({
         paymentAcceptorId,
         paymentGatewayVariant: PAYMENT_GATEWAY_VARIANT_ADYEN,
         adyen: {
@@ -758,30 +829,46 @@ function handlePaymentDetails({
         },
     })
         .then((result) => {
-            if (result.payment_status === 'FAILURE') {
-                // The call went through; the payment it reports on did not. Worth its own code,
-                // because nothing is wrong with the integration here.
-                logger.error(
-                    'PAYMENT_DETAILS_REJECTED',
-                    'Payment details returned a failed payment',
-                    failureContext({
-                        reason: 'PAYMENT_DETAILS_REJECTED',
-                        paymentAcceptorId,
-                        extra: { paymentStatus: result.payment_status },
-                    }),
-                );
-                emitError({
-                    code: 'AUTHORIZATION_FAILED',
-                    message: 'Failed getting payment details',
-                    error: result,
+            const outcome = getPaymentDetailsOutcome(result);
+
+            if (outcome === 'SUCCEEDED') {
+                if (actions) {
+                    actions.resolve({ resultCode: 'Authorised' });
+                } else {
+                    succeed();
+                }
+                return;
+            }
+
+            if (outcome === 'UNCONFIRMED') {
+                reportUnconfirmed('PAYMENT_DETAILS_UNCONFIRMED', {
+                    paymentStatus: result.payment_status,
                 });
                 return;
             }
 
-            if (result.payment_status === 'SUCCESS') {
-                emit('payment-success');
+            // The call went through; the payment it reports on did not. Worth its own code,
+            // because nothing is wrong with the integration here.
+            logger.error(
+                'PAYMENT_DETAILS_REJECTED',
+                'Payment details returned a failed payment',
+                failureContext({
+                    reason: 'PAYMENT_DETAILS_REJECTED',
+                    paymentAcceptorId,
+                    extra: { paymentStatus: result.payment_status },
+                }),
+            );
+
+            if (actions) {
+                actions.resolve({ resultCode: 'Refused' });
                 return;
             }
+
+            emitError({
+                code: 'AUTHORIZATION_FAILED',
+                message: 'Failed getting payment details',
+                error: result,
+            });
         })
         .catch((error) => {
             logger.error(
@@ -794,7 +881,15 @@ function handlePaymentDetails({
                 }),
                 error,
             );
-            // The customer was left on a spinner that never resolved.
+
+            if (actions) {
+                reportUnconfirmed('PAYMENT_DETAILS_CALL_FAILED', {}, error);
+                return;
+            }
+
+            // A reload sends the same redirect result again, so the card's retry checks once more
+            // rather than paying again.
+            withholdDropIn();
             emitError({
                 code: 'PAYMENT_DETAILS_CALL_FAILED',
                 message: 'Failed fetching payment details',
@@ -808,7 +903,7 @@ function handlePaymentDetails({
  * we can use to continue the payment flow. Here we're checking if the redirect result is available
  * in a query string and act accordingly.
  */
-function handleRedirectResult() {
+async function handleRedirectResult() {
     const redirectResult = getQueryParam(REDIRECT_RESULT_QUERY_STRING);
     const paymentAcceptorId = getQueryParam(PAYMENT_ACCEPTOR_ID_QUERY_STRING);
 
@@ -829,7 +924,7 @@ function handleRedirectResult() {
         return;
     }
 
-    handlePaymentDetails({
+    await handlePaymentDetails({
         paymentAcceptorId,
         detailsResult: {
             redirectResult: decodeURI(redirectResult),
@@ -837,9 +932,10 @@ function handleRedirectResult() {
     });
 }
 
-onMounted(() => {
-    void mountDropIn();
-    handleRedirectResult();
+onMounted(async () => {
+    // The drop-in waits for the payment the customer came back from, so it cannot be paid twice.
+    await handleRedirectResult();
+    await mountDropIn();
 });
 
 onBeforeUnmount(() => {

@@ -24,7 +24,12 @@ const buttonProps = computed(() => ({
 const paymentMethodTypeLabel = computed(() => {
     switch (props.paymentMethod?.paymentMethodType) {
         case 'scheme':
-            return 'Credit Card';
+            return $t({
+                defaultMessage: 'Credit Card',
+                id: 'pay_button.payment_method.card',
+                description:
+                    'Name of card payments in the pay button label, as in "Pay €10.00 with Credit Card"',
+            });
         case 'applepay':
             return 'Apple Pay';
         case 'googlepay':

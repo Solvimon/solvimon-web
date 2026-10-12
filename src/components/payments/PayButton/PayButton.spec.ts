@@ -3,15 +3,21 @@ import type { Amount } from '@solvimon/solvimon-types';
 import PayButton from './PayButton.vue';
 import type { SelectedPaymentMethod } from '@/components/payments/PaymentIntegrationForm/PaymentIntegrationForm.types';
 
+const { translations } = vi.hoisted(() => ({ translations: {} as Record<string, string> }));
+
 vi.mock('@solvimon/solvimon-ui', async () => {
     const actual =
         await vi.importActual<typeof import('@solvimon/solvimon-ui')>('@solvimon/solvimon-ui');
     return {
         ...actual,
         useIntl: () => ({
-            $t: (message: { defaultMessage: string }, values?: Record<string, string>) => {
-                if (!values) return message.defaultMessage;
-                return message.defaultMessage.replace(/\{(\w+)\}/g, (_, key) => values[key] ?? '');
+            $t: (
+                message: { id: string; defaultMessage: string },
+                values?: Record<string, string>,
+            ) => {
+                const text = translations[message.id] ?? message.defaultMessage;
+                if (!values) return text;
+                return text.replace(/\{(\w+)\}/g, (_, key) => values[key] ?? '');
             },
         }),
         formatAmount: (amount: Amount) => `${amount.currency} ${amount.quantity}`,
@@ -40,6 +46,17 @@ describe('PayButton', () => {
             props: { amount, paymentMethod: paymentMethod('scheme') },
         });
         expect(wrapper.text()).toBe('Pay EUR 10.00 with Credit Card');
+    });
+
+    it("names card payments in the customer's language", () => {
+        translations['pay_button.payment_method.card'] = 'Creditcard';
+
+        const wrapper = mount(PayButton, {
+            props: { amount, paymentMethod: paymentMethod('scheme') },
+        });
+
+        delete translations['pay_button.payment_method.card'];
+        expect(wrapper.text()).toBe('Pay EUR 10.00 with Creditcard');
     });
 
     it.each([

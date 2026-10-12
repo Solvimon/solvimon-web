@@ -49,7 +49,19 @@ const handleAdded = () => {
             />
         </template>
         <template #content>
-            <Section no-border no-spacing content-background="none" title="Your payment methods">
+            <Section
+                no-border
+                no-spacing
+                content-background="none"
+                :title="
+                    $t({
+                        defaultMessage: 'Your payment methods',
+                        id: 'screens.payment_method_management.list_title',
+                        description:
+                            'The title above the list of saved payment methods on the payment method management screen',
+                    })
+                "
+            >
                 <PaymentMethodsList
                     :payment-methods="paymentMethods"
                     @set-default="emit('set-default')"
@@ -65,12 +77,28 @@ const handleAdded = () => {
             />
 
             <template v-if="showPaymentMethodForm">
-                <Button intent="secondary" @click="showPaymentMethodForm = false">Cancel</Button>
+                <Button intent="secondary" @click="showPaymentMethodForm = false">
+                    {{
+                        $t({
+                            defaultMessage: 'Cancel',
+                            id: 'screens.payment_method_management.cancel_button',
+                            description:
+                                'Button closing the add payment method form on the payment method management screen',
+                        })
+                    }}
+                </Button>
             </template>
             <template v-else>
-                <Button intent="secondary" @click="showPaymentMethodForm = true"
-                    >Add payment method</Button
-                >
+                <Button intent="secondary" @click="showPaymentMethodForm = true">
+                    {{
+                        $t({
+                            defaultMessage: 'Add payment method',
+                            id: 'screens.payment_method_management.add_button',
+                            description:
+                                'Button opening the add payment method form on the payment method management screen',
+                        })
+                    }}
+                </Button>
             </template>
         </template>
     </ContentWithAsideLayout>

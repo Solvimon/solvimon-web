@@ -7,6 +7,7 @@ import type {
     PricingPlanScheduleCustomization,
     PricingPlanSubscriptionExpanded,
 } from '@solvimon/solvimon-types';
+import { flushPromises } from '@vue/test-utils';
 import { useInvoicePreview } from './useInvoicePreview';
 
 const { mockGetInvoicePreview } = vi.hoisted(() => ({
@@ -423,10 +424,10 @@ describe('useInvoicePreview', () => {
             const pending = controlledPreviews();
             const { loadInvoicePreview, isPending } = useInvoicePreview();
 
-            const nl = loadInvoicePreview({ subscription, customer: individualCustomer('NL') });
+            void loadInvoicePreview({ subscription, customer: individualCustomer('NL') });
             void loadInvoicePreview({ subscription, customer: individualCustomer('US') });
             pending[0]!.resolve(previewFor('inv_nl'));
-            await nl;
+            await flushPromises();
 
             expect(isPending.value).toBe(true);
         });
@@ -463,19 +464,19 @@ describe('useInvoicePreview', () => {
             expect(invoicePreview.value).toEqual({ id: 'inv_nl' });
         });
 
-        // A superseded failure belongs to a preview nobody waits on, so callers such as the
-        // promotion code do not take it as their own.
-        it('does not reject for a preview that a later one took over', async () => {
+        // A promotion code applied through a preview a later one took over has to learn whether
+        // the later preview, which carries the same code, was accepted.
+        it('settles a preview a later one took over as that one does', async () => {
             const pending = controlledPreviews();
             const { loadInvoicePreview } = useInvoicePreview();
 
             const nl = loadInvoicePreview({ subscription, customer: individualCustomer('NL') });
             const us = loadInvoicePreview({ subscription, customer: individualCustomer('US') });
-            pending[0]!.reject(new Error('Boom'));
-            pending[1]!.resolve(previewFor('inv_us'));
+            pending[0]!.resolve(previewFor('inv_nl'));
+            pending[1]!.reject(new Error('Boom'));
 
-            await expect(nl).resolves.toBeUndefined();
-            await us;
+            await expect(nl).rejects.toThrow('Boom');
+            await expect(us).rejects.toThrow('Boom');
         });
     });
 });

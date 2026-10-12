@@ -65,10 +65,13 @@ export function usePromotionCode({
             if (isInvalidPromotionCodeError(error)) {
                 onInvalidPromotionCode?.();
             }
-            await removePromotionCode({ suppressError: true, preserveErrorMessage: true });
-        } finally {
             isPromotionCodePending.value = false;
+            // The code is off the form at once; the preview without it is the removal's to wait on,
+            // so the apply is settled even while that preview is still out.
+            void removePromotionCode({ suppressError: true, preserveErrorMessage: true });
+            return;
         }
+        isPromotionCodePending.value = false;
     };
 
     const removePromotionCode = async ({

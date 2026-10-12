@@ -75,7 +75,7 @@ describe('useService', () => {
             service,
         });
 
-        await expect(execute()).rejects.toBeUndefined();
+        await expect(execute()).rejects.toBeInstanceOf(Error);
 
         expect(error.value).toStrictEqual(new Error('Network error'));
         expect(apiStatus.value).toBe(ApiStatus.Failed);
@@ -88,7 +88,7 @@ describe('useService', () => {
             service,
         });
 
-        await expect(execute()).rejects.toBeUndefined();
+        await expect(execute()).rejects.toBeInstanceOf(Error);
 
         expect(error.value).toBeInstanceOf(Error);
         expect(error.value?.message).toBe('Something went wrong while fetching data.');
@@ -140,7 +140,7 @@ describe('useService', () => {
             const first = execute();
             const second = execute();
             pending[0]!.reject(new Error('first failed'));
-            await expect(first).rejects.toBeUndefined();
+            await expect(first).rejects.toBeInstanceOf(Error);
             pending[1]!.resolve('second');
             await second;
 
@@ -156,7 +156,7 @@ describe('useService', () => {
             const first = execute();
             settle('held');
             pending[0]!.reject(new Error('first failed'));
-            await expect(first).rejects.toBeUndefined();
+            await expect(first).rejects.toBeInstanceOf(Error);
 
             expect(data.value).toBe('held');
             expect(error.value).toBeNull();

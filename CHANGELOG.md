@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- An element that is missing `environment`, `portalObject` or the id its `configuration` needs (`invoiceId` for `invoice`, `invoice-header`, `invoice-details`, `payment-history` and `pay-invoice`; `subscriptionId` for `subscription-details` and `subscription-schedules`) renders nothing until they are set, and logs `MISSING_REQUIRED_PROPERTIES` as a warning, with the missing names in `context.missing`, if they are still missing just after it mounts.
+
+### Changed
+
+- The checkout's `error` event is typed with an `Error` as its payload, like every other element's. It was typed as `{ title, message }`, which nothing ever sent.
+- A JSON response that cannot be parsed is logged once, as `REQUEST_PARSE_FAILED` with the request's `path`, `method`, `statusCode` and `requestId`. It used to be logged a second time as `REQUEST_FAILED`, and without that context.
+
+### Fixed
+
+- The `error` event now fires. An error an element does not handle itself, thrown while it sets up, renders, watches or handles an event, is logged as `UNHANDLED_ERROR` and dispatched as an `error` event on the element, with the `Error` as the first item of `event.detail`. Such errors used to reach neither `onLog` nor the event.
+- An element mounted before its required properties were set, as plain HTML does when a script sets them after `define()`, renders once they arrive. It used to throw while setting up and stay blank for good. The same goes for the invoice components without a `configuration.invoiceId`.
+- An unknown `environment` is reported through `onLog` and the `error` event instead of only to the console.
+- The `log` and `action-request` events, and `cssOverrides`, work from the moment an element starts rendering. Entries logged while it rendered for the first time used to reach `onLog` without a `log` event, and an action requested then went ahead without an `action-request` event the host could cancel.
+- An `onLog` callback that throws no longer replaces the error being logged, or stops the other log outputs. Its error is rethrown outside the SDK, where the page's own error reporting sees it.
+- The `billing-information-form` component logs a customer that fails to load as `INITIAL_DATA_LOAD_FAILED`.
+
 ## [0.1.0-alpha.27] - 2026-10-12
 
 ### Added

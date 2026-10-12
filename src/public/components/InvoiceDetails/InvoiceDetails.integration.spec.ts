@@ -1,5 +1,5 @@
 import { mount } from '@vue/test-utils';
-import { ref } from 'vue';
+import { defineComponent, h, ref } from 'vue';
 import type { Invoice } from '@solvimon/solvimon-types';
 import InvoiceDetailsEntry from './InvoiceDetails.entry.vue';
 import type { SolvimonInvoiceDetailsEntryProps } from './InvoiceDetails.entry.types';
@@ -19,6 +19,20 @@ vi.mock('@/components/providers', async () => {
     return createProviderMock();
 });
 
+vi.mock('@solvimon/solvimon-ui', async () => {
+    const { createSolvimonUiMock } = await import('@/test-utils/solvimonUiMock');
+    return createSolvimonUiMock({
+        // ErrorNotification resolves its own IntlProvider internally, which is not mounted here.
+        ErrorNotification: defineComponent({
+            name: 'ErrorNotificationStub',
+            props: { title: String },
+            setup(props) {
+                return () => h('div', { class: 'sv-error-notification-stub' }, props.title);
+            },
+        }),
+    });
+});
+
 describe('InvoiceDetails entry component', () => {
     const invoiceId = 'inv_123' as Invoice['id'];
 
@@ -27,6 +41,7 @@ describe('InvoiceDetails entry component', () => {
         invoice_number: 'INV-001',
         invoice_date: '2024-01-15T00:00:00Z',
         due_date: '2024-02-15T00:00:00Z',
+        timezone: 'Europe/Amsterdam',
         customer: {
             id: 'cus_123',
             timezone: 'Europe/Amsterdam',
@@ -86,10 +101,47 @@ describe('InvoiceDetails entry component', () => {
         expect(mockUseInvoiceData).toHaveBeenCalledWith(invoiceId);
     });
 
-    it('does not render when invoice data has not yet loaded', () => {
+    it('shows a skeleton while the invoice loads, rather than nothing', () => {
+        const wrapper = mountComponent({ withInvoice: false, isPending: true });
+
+        expect(wrapper.find('[data-testid="invoice-details-skeleton"]').exists()).toBe(true);
+    });
+
+    it('says so when the invoice could not be loaded', () => {
         const wrapper = mountComponent({ withInvoice: false });
 
-        expect(wrapper.text()).toBe('');
+        expect(wrapper.find('[data-testid="invoice-details-skeleton"]').exists()).toBe(false);
+        expect(wrapper.text()).toContain('We could not load this invoice. Please try again.');
+    });
+
+    it('loads the other invoice when the configured invoice id changes', async () => {
+        const wrapper = mountComponent();
+
+        await wrapper.setProps({ configuration: { invoiceId: 'inv_456' } });
+
+        expect(mockUseInvoiceData).toHaveBeenLastCalledWith('inv_456');
+    });
+
+    it("dates the invoice in the timezone it was issued in, not the customer's current one", () => {
+        mockUseInvoiceData.mockReturnValue({
+            data: ref({
+                invoice: {
+                    ...invoice,
+                    // Midnight in Amsterdam is still the previous day in New York.
+                    invoice_date: '2024-01-14T23:30:00Z',
+                    timezone: 'Europe/Amsterdam',
+                    customer: { id: 'cus_123', timezone: 'America/New_York' },
+                },
+            }),
+            isPending: ref(false),
+        });
+
+        const wrapper = mount(InvoiceDetailsEntry, {
+            props: defaultProps,
+            global: { stubs: { teleport: true } },
+        });
+
+        expect(wrapper.text()).toContain('15/01/2024');
     });
 
     it('renders the skeleton when already-loaded data is being reloaded', () => {

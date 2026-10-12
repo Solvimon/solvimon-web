@@ -17,6 +17,9 @@ defineProps<SolvimonSubscriptionManagementEntryProps>();
         :required-configuration="{ subscriptionId: configuration?.subscriptionId }"
         @error="(error) => $emit('error', error)"
     >
-        <SubscriptionManagement :configuration="configuration" />
+        <SubscriptionManagement
+            :key="configuration.subscriptionId"
+            :configuration="configuration"
+        />
     </EntryProvider>
 </template>

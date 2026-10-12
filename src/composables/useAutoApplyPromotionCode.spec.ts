@@ -82,4 +82,25 @@ describe('useAutoApplyPromotionCode', () => {
 
         expect(applyPromotionCode).toHaveBeenCalledTimes(1);
     });
+
+    it('applies a code the host set after mounting, before the subscription loaded', async () => {
+        const subscription = ref<{ id: string } | undefined>(undefined);
+        const couponCode = ref<string | undefined>(undefined);
+        const applyPromotionCode = vi.fn();
+
+        withSetup(() =>
+            useAutoApplyPromotionCode({
+                subscription,
+                promotionCode: () => couponCode.value,
+                appliedPromotionCode: ref<string | null>(null),
+                applyPromotionCode,
+            }),
+        );
+
+        couponCode.value = 'LATE10';
+        subscription.value = { id: 'sub_123' };
+        await nextTick();
+
+        expect(applyPromotionCode).toHaveBeenCalledWith('LATE10');
+    });
 });

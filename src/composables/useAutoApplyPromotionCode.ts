@@ -1,4 +1,4 @@
-import { type Ref, watch } from 'vue';
+import { type MaybeRefOrGetter, type Ref, toValue, watch } from 'vue';
 
 export function useAutoApplyPromotionCode({
     subscription,
@@ -7,16 +7,19 @@ export function useAutoApplyPromotionCode({
     applyPromotionCode,
 }: {
     subscription: Ref<unknown>;
-    promotionCode: string | undefined;
+    /** Read once the subscription has loaded, so a code the host sets before then is applied. */
+    promotionCode: MaybeRefOrGetter<string | undefined>;
     appliedPromotionCode: Ref<string | null>;
     applyPromotionCode: (code: string) => void | Promise<void>;
 }) {
     watch(
         subscription,
         (loadedSubscription) => {
-            if (loadedSubscription && promotionCode) {
-                appliedPromotionCode.value = promotionCode;
-                void applyPromotionCode(promotionCode);
+            const code = toValue(promotionCode);
+
+            if (loadedSubscription && code) {
+                appliedPromotionCode.value = code;
+                void applyPromotionCode(code);
             }
         },
         { once: true },

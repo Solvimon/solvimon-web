@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The checkout postal code shows its own error. It showed address line 1's, so in the US a missing postal code went unflagged once the address was filled in, and a filled-in postal code was flagged when the address was missing. Postal code and state errors now show below the field, keeping the three fields on one row.
 - The checkout's VAT check result now clears when the VAT number, country or legal name changes, and a check answered after such a change is ignored. When the EU VAT service cannot give an answer, or the check fails, checkout says the VAT number could not be checked right now, instead of calling it invalid.
 - Address line 2, postal code, city and state carry a label for screen readers, in the customer's language, in checkout and the billing information form; they had only a placeholder.
+- Checkout no longer charges the price from before the customer's last change. The price is loaded 200ms after a change to the seats, add-ons, country or another field that prices the order, and paying within that time authorized the previous amount and currency against the new order. The pay button now stays off until the new price has loaded, and every way to pay, including Enter in a card field and the express payment sheet, first waits for the price of the form as it is. If that price cannot be loaded, the payment is not sent and checkout says so.
 
 ## [0.1.0-alpha.27] - 2026-10-12
 

@@ -14,6 +14,7 @@ import {
 } from '@solvimon/solvimon-ui';
 import { computed } from 'vue';
 import { buildInvoiceCreditsBreakdown } from './InvoiceCreditsBreakdown.utils';
+import { getInvoiceTimezone } from '@/utils/invoiceState';
 
 const props = defineProps<{
     invoice: Invoice;
@@ -34,13 +35,13 @@ const getPeriodTitle = (period: InvoicePeriod) =>
                 date: period.start_at,
                 format: 'date',
                 offsetType: 'offsetted',
-                timezone: props.invoice.customer.timezone,
+                timezone: getInvoiceTimezone(props.invoice),
             }),
             endAt: formatDate({
                 date: period.end_at,
                 format: 'date',
                 offsetType: 'offsetted',
-                timezone: props.invoice.customer.timezone,
+                timezone: getInvoiceTimezone(props.invoice),
             }),
         },
     );
@@ -96,26 +97,27 @@ const periodsWithCredits = computed(() =>
                     </tr>
 
                     <template v-for="row in period.rows" :key="row.id">
-                        <tr
-                            class="cursor-pointer border-t"
-                            tabindex="0"
-                            @click="toggle(row.id)"
-                            @keyup.enter="toggle(row.id)"
-                            @keyup.space="toggle(row.id)"
-                        >
+                        <tr class="border-t">
                             <InvoiceTableData class="p-0">
-                                <Icon
-                                    icon="keyboard_arrow_down"
-                                    size="md"
-                                    class="absolute -translate-x-7 text-slate-400"
-                                    :class="{ '-rotate-90': !getIsOpen(row.id) }"
-                                />
-                                {{ row.label }}
-                                <span
-                                    class="ml-1 inline-flex h-3.5 w-3.5 items-center justify-center rounded-full bg-blue-100 text-2xs font-bold text-blue-600"
+                                <button
+                                    type="button"
+                                    class="w-full cursor-pointer text-left"
+                                    :aria-expanded="getIsOpen(row.id)"
+                                    @click="toggle(row.id)"
                                 >
-                                    {{ row.rows.length }}
-                                </span>
+                                    <Icon
+                                        icon="keyboard_arrow_down"
+                                        size="md"
+                                        class="absolute -translate-x-7 text-slate-400"
+                                        :class="{ '-rotate-90': !getIsOpen(row.id) }"
+                                    />
+                                    {{ row.label }}
+                                    <span
+                                        class="ml-1 inline-flex h-3.5 w-3.5 items-center justify-center rounded-full bg-blue-100 text-2xs font-bold text-blue-600"
+                                    >
+                                        {{ row.rows.length }}
+                                    </span>
+                                </button>
                             </InvoiceTableData>
                         </tr>
 

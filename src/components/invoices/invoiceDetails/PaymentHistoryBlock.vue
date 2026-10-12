@@ -9,13 +9,17 @@ import {
     Section,
 } from '@solvimon/solvimon-ui';
 import type { Customer, Payment } from '@solvimon/solvimon-types';
+import { computed } from 'vue';
 
 const { $t, formatDate } = useIntl();
 
-defineProps<{
+const props = defineProps<{
     paymentAttempts: Payment[];
     customer: Customer;
 }>();
+
+// Reversed in script rather than in CSS, so screen readers meet them in the order they are seen.
+const reversedAttempts = computed(() => [...props.paymentAttempts].reverse());
 
 const intentMapping: Record<Payment['result'], ChipIntent> = {
     AUTHORIZED: 'success',
@@ -38,9 +42,9 @@ const intentMapping: Record<Payment['result'], ChipIntent> = {
                 id: 'sdk.invoice_details.payment_history.title',
             })
         }}</Typography>
-        <div class="sv-payment-history__items flex flex-col-reverse gap-1">
+        <div class="sv-payment-history__items flex flex-col gap-1">
             <Section
-                v-for="paymentAttempt in paymentAttempts"
+                v-for="paymentAttempt in reversedAttempts"
                 :key="paymentAttempt.id"
                 class="sv-payment-history__item mt-1 md:mt-2"
             >

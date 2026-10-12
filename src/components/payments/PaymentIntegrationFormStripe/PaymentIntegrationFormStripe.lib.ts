@@ -1,7 +1,9 @@
 import type { Amount } from '@solvimon/solvimon-types';
 import type { StripeError } from '@stripe/stripe-js';
+import { isEqual } from '@solvimon/solvimon-ui';
 import type {
     StripeFrameOptions,
+    StripeFrameOptionsUpdate,
     StripeSubmitError,
 } from './PaymentIntegrationFormStripeFrame.types';
 import { toMinorUnitAmount } from '@/utils/amount';
@@ -66,6 +68,39 @@ export function getFrameOptions({
         fields,
         appearance: STRIPE_APPEARANCE,
     };
+}
+
+/**
+ * What brings the mounted Payment Element from one set of options to the next while keeping what
+ * the customer typed, or `undefined` when only a new Payment Element can show the next ones.
+ */
+export function getFrameOptionsUpdate(
+    previous: StripeFrameOptions,
+    next: StripeFrameOptions,
+): StripeFrameOptionsUpdate | undefined {
+    if (
+        previous.mode !== next.mode ||
+        !isEqual(previous.fields, next.fields) ||
+        !isEqual(previous.wallets, next.wallets)
+    ) {
+        return undefined;
+    }
+
+    return {
+        currency: next.currency,
+        ...(next.mode === 'payment' ? { amount: next.amount } : {}),
+        setup_future_usage: next.setup_future_usage ?? null,
+        ...(next.appearance ? { appearance: next.appearance } : {}),
+    };
+}
+
+/**
+ * Where the frame is posted to. It is a blob document of the page, so it shares the page's origin;
+ * an opaque origin ('null') cannot be named as a target, and there the frame relies on checking
+ * that messages come from its parent window.
+ */
+export function getFrameTargetOrigin(pageOrigin: string): string {
+    return pageOrigin === 'null' ? '*' : pageOrigin;
 }
 
 /** A Stripe error can carry the intent it is about, client secret included, so only this leaves. */

@@ -1,7 +1,7 @@
 import { test, expect, type Page } from '@playwright/test';
 import type { ApiMock } from '../support/api-mock';
 import { checkout, mountCheckout, type MountOptions } from '../support/checkout';
-import { mountPayInvoice, payInvoice, stripeElementsOptions } from '../support/payInvoice';
+import { mountPayInvoice, payInvoice, stripeElementsUpdates } from '../support/payInvoice';
 import {
     mountPaymentMethodsManagement,
     paymentMethodsManagement,
@@ -164,15 +164,14 @@ test.describe('DD-3537 pay button settles', () => {
             expect(api.calls('authorizePayment')).toEqual([]);
         });
 
-        // Unticking the box changes the frame options, so the Stripe frame is set up anew and has
-        // to say it is ready again before a submit is sent.
-        test('pays after the Stripe frame is set up anew', async ({ page }) => {
+        // Unticking the box changes the frame options, which the Stripe frame takes in place.
+        test('pays after the Stripe frame options change', async ({ page }) => {
             api = await mountLoaded(page, {
                 mocks: { authorizePayment: { body: aSuccessfulAuthorization() } },
             });
 
             await payInvoice(page).storePaymentMethod.click();
-            await expect.poll(async () => (await stripeElementsOptions(page)).length).toBe(2);
+            await expect.poll(async () => (await stripeElementsUpdates(page)).length).toBe(1);
 
             await payInvoice(page).payButton.click();
             await expect.poll(() => api.calls('authorizePayment').length).toBe(1);

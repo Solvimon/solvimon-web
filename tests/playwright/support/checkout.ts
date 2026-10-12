@@ -124,7 +124,8 @@ export function checkout(page: Page) {
         stripeElement: page
             .frameLocator('iframe')
             .locator('[data-testid="stripe-payment-element"]'),
+        stripeCardNumber: page.frameLocator('iframe').getByTestId('stripe-card-number'),
     };
 }
 
-export { hostEvents } from './screen';
+export { hostEvents, stripeElementsOptions, stripeElementsUpdates } from './screen';

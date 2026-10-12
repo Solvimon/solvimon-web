@@ -5,8 +5,11 @@ import { isEqual, useIntl } from '@solvimon/solvimon-ui';
 import type {
     PaymentIntegrationFormStripeFrameEmits,
     PaymentIntegrationFormStripeFrameProps,
+    StripeFrameOptions,
+    StripeFrameOptionsUpdate,
 } from './PaymentIntegrationFormStripeFrame.types';
 import { STRIPE_FRAME_SRCDOC } from './PaymentIntegrationFormStripe.srcdoc';
+import { getFrameOptionsUpdate, getFrameTargetOrigin } from './PaymentIntegrationFormStripe.lib';
 
 const props = defineProps<PaymentIntegrationFormStripeFrameProps>();
 const emit = defineEmits<PaymentIntegrationFormStripeFrameEmits>();
@@ -21,10 +24,13 @@ const iframeSrc = ref<string>();
 let isReady = false;
 // Tells the ready of the current setup from one an earlier setup sends late.
 let initId = 0;
+// What the frame was last given; until it has loaded there is nothing to update.
+let sentOptions: StripeFrameOptions | undefined;
 
 function sendInit() {
     isReady = false;
     initId += 1;
+    sentOptions = props.options;
     iframeRef.value?.contentWindow?.postMessage(
         {
             type: 'stripe:init',
@@ -35,7 +41,15 @@ function sendInit() {
             email: props.email,
             name: props.name,
         },
-        '*',
+        getFrameTargetOrigin(window.location.origin),
+    );
+}
+
+function sendUpdate(options: StripeFrameOptions, update: StripeFrameOptionsUpdate) {
+    sentOptions = options;
+    iframeRef.value?.contentWindow?.postMessage(
+        { type: 'stripe:update', options: update },
+        getFrameTargetOrigin(window.location.origin),
     );
 }
 
@@ -44,7 +58,15 @@ function triggerSubmit(): boolean {
     const contentWindow = iframeRef.value?.contentWindow;
     if (!isReady || !contentWindow) return false;
 
-    contentWindow.postMessage({ type: 'stripe:submit', email: props.email, name: props.name }, '*');
+    contentWindow.postMessage(
+        {
+            type: 'stripe:submit',
+            countryCode: props.countryCode,
+            email: props.email,
+            name: props.name,
+        },
+        getFrameTargetOrigin(window.location.origin),
+    );
     return true;
 }
 
@@ -97,6 +119,10 @@ function handleMessage(event: MessageEvent) {
             break;
         }
 
+        case 'stripe:update:error':
+            sendInit();
+            break;
+
         case 'stripe:resize':
             if (typeof data['height'] === 'number') {
                 iframeHeight.value = data['height'];
@@ -136,9 +162,12 @@ onBeforeUnmount(() => {
 
 watch(
     () => props.options,
-    (newOptions, oldOptions) => {
-        if (isEqual(newOptions, oldOptions)) return;
-        sendInit();
+    (newOptions) => {
+        if (!sentOptions || isEqual(newOptions, sentOptions)) return;
+        // Setting the frame up anew would put a second Payment Element in it and drop the card.
+        const update = getFrameOptionsUpdate(sentOptions, newOptions);
+        if (update) sendUpdate(newOptions, update);
+        else sendInit();
     },
     { deep: true },
 );

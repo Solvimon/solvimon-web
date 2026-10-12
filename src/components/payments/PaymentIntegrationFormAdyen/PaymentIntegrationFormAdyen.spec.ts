@@ -854,4 +854,151 @@ describe('PaymentIntegrationFormAdyen', () => {
             expect(mockLogger.error).not.toHaveBeenCalled();
         });
     });
+
+    describe('settled outcomes stay settled', () => {
+        const errorCard = (wrapper: Awaited<ReturnType<typeof mountComponent>>) =>
+            wrapper.find('[data-testid="payment-error-reference"]');
+        const failedCodes = (wrapper: Awaited<ReturnType<typeof mountComponent>>) =>
+            (wrapper.emitted('payment-failed') ?? []).map(([e]) => (e as { code: string }).code);
+
+        afterEach(() => {
+            vi.mocked(getQueryParam).mockImplementation(() => null);
+        });
+
+        // The drop-in mounting afterwards clears `integrationError`, which took the card with it.
+        it.each(['REFUSED', 'FAILURE'])(
+            'keeps the failure card on screen after a redirect return answered %s',
+            async (paymentStatus) => {
+                vi.mocked(getQueryParam).mockImplementation(
+                    (key: string) =>
+                        ({ redirectResult: 'res_1', payment_acceptor_id: 'paya_123' })[key] ?? null,
+                );
+                mockGetPaymentDetails.mockResolvedValue({ payment_status: paymentStatus });
+
+                const wrapper = await mountComponent();
+
+                expect(failedCodes(wrapper)).toEqual(['AUTHORIZATION_FAILED']);
+                expect(errorCard(wrapper).exists()).toBe(true);
+            },
+        );
+
+        it('shows the failure card once the drop-in reports a refused 3DS result', async () => {
+            mockGetPaymentDetails.mockResolvedValue({ payment_status: 'REFUSED' });
+            const wrapper = await mountComponent();
+
+            const actions = { resolve: vi.fn(), reject: vi.fn() };
+            captured.checkoutConfig?.onAdditionalDetails?.(
+                { data: { details: { threeDSResult: 'abc' } } },
+                {},
+                actions,
+            );
+            await flushPromises();
+            expect(actions.resolve).toHaveBeenCalledWith({ resultCode: 'Refused' });
+
+            // What the drop-in does with a Refused answer.
+            captured.checkoutConfig?.onPaymentFailed?.({ resultCode: 'Refused' });
+            await flushPromises();
+
+            expect(failedCodes(wrapper)).toEqual(['AUTHORIZATION_FAILED']);
+            expect(errorCard(wrapper).exists()).toBe(true);
+            expect(wrapper.emitted('payment-success')).toBeUndefined();
+        });
+
+        it('emits payment-success once when an authorised 3DS result completes', async () => {
+            mockGetPaymentDetails.mockResolvedValue({ payment_status: 'SUCCESS' });
+            const wrapper = await mountComponent();
+
+            const actions = { resolve: vi.fn(), reject: vi.fn() };
+            captured.checkoutConfig?.onAdditionalDetails?.(
+                { data: { details: { threeDSResult: 'abc' } } },
+                {},
+                actions,
+            );
+            await flushPromises();
+            captured.checkoutConfig?.onPaymentCompleted?.({}, { unmount: vi.fn() });
+            await flushPromises();
+
+            expect(wrapper.emitted('payment-success')).toHaveLength(1);
+        });
+
+        it('emits payment-success once for an authorised submit', async () => {
+            mockAuthorizePayment.mockResolvedValue(authorizedResponse);
+            const wrapper = await mountComponent();
+
+            const actions = await submitThroughDropIn();
+            expect(actions.resolve).toHaveBeenCalledWith({ resultCode: 'Authorised' });
+            expect(wrapper.emitted('payment-success')).toBeUndefined();
+
+            captured.checkoutConfig?.onPaymentCompleted?.({}, { unmount: vi.fn() });
+            await flushPromises();
+            expect(wrapper.emitted('payment-success')).toHaveLength(1);
+        });
+
+        it.each([400, 402, 409, 422])(
+            'still reports a failure the API turned down (%i)',
+            async (statusCode) => {
+                mockAuthorizePayment.mockRejectedValue(new ApiError({ statusCode }));
+                const wrapper = await mountComponent();
+
+                const actions = await submitThroughDropIn();
+
+                expect(actions.resolve).toHaveBeenCalledWith({ resultCode: 'Error' });
+                expect(failedCodes(wrapper)).not.toContain('PAYMENT_OUTCOME_UNCONFIRMED');
+            },
+        );
+
+        it.each([408, 500, 502, 504])(
+            'leaves an authorize the API could not answer unconfirmed (%i)',
+            async (statusCode) => {
+                mockAuthorizePayment.mockRejectedValue(new ApiError({ statusCode }));
+                const wrapper = await mountComponent();
+
+                const actions = await submitThroughDropIn();
+
+                expect(actions.resolve).not.toHaveBeenCalled();
+                expect(failedCodes(wrapper)).toEqual(['PAYMENT_OUTCOME_UNCONFIRMED']);
+            },
+        );
+
+        it('does not bring the drop-in back when the options change after an unconfirmed outcome', async () => {
+            mockAuthorizePayment.mockResolvedValue({
+                status: 'SUCCESS',
+                payment: { result: 'PENDING' },
+            });
+            const wrapper = await mountComponent();
+            await submitThroughDropIn();
+            expect(mockAdyenCheckout).toHaveBeenCalledTimes(1);
+
+            await wrapper.setProps({
+                paymentMethodOptionResponseEntry: {
+                    ...mockProps.paymentMethodOptionResponseEntry,
+                    payment_acceptor: { id: 'paya_456' },
+                } as never,
+            });
+            await flushPromises();
+
+            expect(mockAdyenCheckout).toHaveBeenCalledTimes(1);
+            expect(failedCodes(wrapper)).toEqual(['PAYMENT_OUTCOME_UNCONFIRMED']);
+            expect(wrapper.text()).toContain('Payment not confirmed yet');
+        });
+
+        it('does not bring the drop-in back when the options change after a success', async () => {
+            mockAuthorizePayment.mockResolvedValue(authorizedResponse);
+            const wrapper = await mountComponent();
+            await submitThroughDropIn();
+            captured.checkoutConfig?.onPaymentCompleted?.({}, { unmount: vi.fn() });
+            await flushPromises();
+
+            await wrapper.setProps({
+                paymentMethodOptionResponseEntry: {
+                    ...mockProps.paymentMethodOptionResponseEntry,
+                    payment_acceptor: { id: 'paya_456' },
+                } as never,
+            });
+            await flushPromises();
+
+            expect(mockAdyenCheckout).toHaveBeenCalledTimes(1);
+            expect(wrapper.findComponent({ name: 'PaymentCompletedCard' }).exists()).toBe(true);
+        });
+    });
 });

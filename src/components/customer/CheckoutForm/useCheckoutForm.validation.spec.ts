@@ -83,3 +83,23 @@ describe('useCheckoutForm VAT number validation', () => {
         expect(await validation.value.$validate()).toBe(false);
     });
 });
+
+describe('useCheckoutForm legal name validation', () => {
+    it('requires a legal name on a company purchase', async () => {
+        const { form, validation } = mountForm();
+        form.value.type = 'ORGANIZATION';
+        form.value.companyLegalName = undefined;
+        await nextTick();
+
+        expect(await validation.value.$validate()).toBe(false);
+        expect(validation.value.companyLegalName.$invalid).toBe(true);
+    });
+
+    it('does not ask an individual for a legal name', async () => {
+        const { form, validation } = mountForm();
+        form.value.companyLegalName = undefined;
+        await nextTick();
+
+        expect(await validation.value.$validate()).toBe(true);
+    });
+});

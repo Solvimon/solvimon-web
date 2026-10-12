@@ -1,7 +1,9 @@
-import { mount } from '@vue/test-utils';
+import { enableAutoUnmount, mount } from '@vue/test-utils';
 import { nextTick } from 'vue';
 import ConvertedAmountInput from './ConvertedAmountInput.vue';
 import type { ConvertedAmountInputProps } from './ConvertedAmountInput.types';
+
+enableAutoUnmount(afterEach);
 
 vi.mock('@solvimon/solvimon-ui', async () => {
     const { createSolvimonUiMock } = await import('@/test-utils/solvimonUiMock');

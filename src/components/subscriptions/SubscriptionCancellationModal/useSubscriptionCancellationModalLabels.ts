@@ -98,11 +98,18 @@ export function useSubscriptionCancellationModalLabels({
     );
 
     const cancelButtonText = computed(() =>
-        $t({
-            defaultMessage: 'Cancel',
-            description: 'Label of the button that dismisses the cancellation modal',
-            id: 'subscription_cancellation_modal.cancel_button.label',
-        }),
+        isRenewing.value
+            ? $t({
+                  defaultMessage: 'Cancel',
+                  description: 'Label of the button that dismisses the cancellation modal',
+                  id: 'subscription_cancellation_modal.cancel_button.label',
+              })
+            : $t({
+                  defaultMessage: 'Keep subscription',
+                  description:
+                      'Label of the button that dismisses the cancel subscription modal without cancelling',
+                  id: 'subscription_cancellation_modal.cancel.keep_button.label',
+              }),
     );
 
     const errorMessage = computed(() =>

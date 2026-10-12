@@ -292,6 +292,7 @@ const title = computed<string>(() =>
                 :show-modal="Boolean(pendingVariant)"
                 :variant="pendingVariant"
                 :subscription="subscription"
+                :customer="customer"
                 :avatar="avatar"
                 @confirmed="handleCancellationConfirmed"
                 @close="handleDismissCancellation"

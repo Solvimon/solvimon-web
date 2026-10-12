@@ -184,6 +184,38 @@ test.describe('Subscription details', () => {
             await expect(ui.cancellationSuccess).toHaveCount(0);
             await expect(ui.cancelButton).toBeVisible();
         });
+
+        test('keeps the subscription on screen when reloading it fails', async ({ page }) => {
+            api = await mountLoaded(page, {
+                mocks: {
+                    subscription: [
+                        { body: aSubscription() },
+                        { status: 500, body: { message: 'Boom' } },
+                    ],
+                    cancelSubscription: { body: aSubscription({ cancelled: true }) },
+                },
+            });
+            const ui = subscriptionDetails(page);
+
+            await ui.cancelButton.click();
+            await page
+                .getByRole('button', { name: /cancel subscription/i })
+                .last()
+                .click();
+            await api.waitForCall('subscription', 2);
+
+            await expect(ui.cancellationSuccess).toBeVisible();
+            await expect(ui.schedules).toBeVisible();
+            await expect(ui.error).toHaveCount(0);
+        });
+
+        test('offers to cancel, not renew, while a plan change is pending', async ({ page }) => {
+            api = await mountLoaded(page, { subscription: aSubscription({ planChange: true }) });
+            const ui = subscriptionDetails(page);
+
+            await expect(ui.cancelButton).toBeVisible();
+            await expect(ui.renewButton).toHaveCount(0);
+        });
     });
 
     // ─── Renewing ─────────────────────────────────────────────────────────────

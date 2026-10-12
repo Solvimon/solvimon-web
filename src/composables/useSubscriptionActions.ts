@@ -3,12 +3,13 @@ import type { Pricing } from '@solvimon/solvimon-types';
 import type { PricingPlanSubscriptionExpanded } from '@/types/subscription';
 import { useActionDispatchProvider } from '@/components/providers';
 import type { SubscriptionCancellationVariant } from '@/services/subscriptions';
+import { getOpenInactivePeriod, getUndoableCancellation } from '@/utils/subscription';
 
 /**
  * Availability of the actions that can be taken on a single subscription.
  *
  * Cancelling and renewing are mutually exclusive: a subscription that is still running can be
- * cancelled, one that has been cancelled can be renewed. Both are confirmed in a modal and carried
+ * cancelled, one whose cancellation has yet to take effect can be renewed. Both are confirmed in a modal and carried
  * out by the SDK itself, so they open that modal rather than being handed to the host; only
  * managing — which is a whole flow of the host's own — is still dispatched.
  */
@@ -27,19 +28,16 @@ export function useSubscriptionActions({
 } {
     const { dispatchAction } = useActionDispatchProvider();
 
-    const isCancellable = computed<boolean>(() => {
-        if (!subscription.value) return false;
+    /** The API cancels only an active subscription, and only once until that is undone. */
+    const isCancellable = computed<boolean>(
+        () =>
+            subscription.value?.status === 'ACTIVE' &&
+            !getOpenInactivePeriod(subscription.value, 'CANCEL'),
+    );
 
-        const inactivePeriods = subscription.value.inactive_periods;
-
-        return !inactivePeriods || inactivePeriods.length === 0;
-    });
-
-    const isRenewable = computed<boolean>(() => {
-        const inactivePeriods = subscription.value?.inactive_periods;
-
-        return Array.isArray(inactivePeriods) && inactivePeriods.length > 0;
-    });
+    const isRenewable = computed<boolean>(() =>
+        Boolean(getUndoableCancellation(subscription.value)),
+    );
 
     const pendingVariant = ref<SubscriptionCancellationVariant | undefined>();
 

@@ -10,15 +10,25 @@ vi.mock('@/components/providers', () => ({
     useActionDispatchProvider: () => ({ dispatchAction: mockDispatchAction }),
 }));
 
-const createSubscription = (inactivePeriods?: unknown[]) =>
+const CANCELLATION = { type: 'CANCEL', start_at: '2026-11-01T00:00:00Z' };
+const PLAN_CHANGE = { type: 'UPGRADE', start_at: '2026-10-20T00:00:00Z' };
+
+const createSubscription = (inactivePeriods?: unknown[], status = 'ACTIVE') =>
     ({
         id: 'ppsu_1',
+        status,
         inactive_periods: inactivePeriods,
     }) as unknown as PricingPlanSubscriptionExpanded;
 
 describe('useSubscriptionActions', () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        vi.useFakeTimers();
+        vi.setSystemTime(new Date('2026-10-12T00:00:00Z'));
+    });
+
+    afterEach(() => {
+        vi.useRealTimers();
     });
 
     describe('isCancellable', () => {
@@ -40,7 +50,33 @@ describe('useSubscriptionActions', () => {
 
         it('is false when the subscription has been cancelled', () => {
             const { isCancellable } = useSubscriptionActions({
-                subscription: ref(createSubscription([{}])),
+                subscription: ref(createSubscription([CANCELLATION])),
+            });
+
+            expect(isCancellable.value).toBe(false);
+        });
+
+        it('is true while a plan change is pending, which the API still lets be cancelled', () => {
+            const { isCancellable } = useSubscriptionActions({
+                subscription: ref(createSubscription([PLAN_CHANGE])),
+            });
+
+            expect(isCancellable.value).toBe(true);
+        });
+
+        it('is true when the only cancellation has an end', () => {
+            const { isCancellable } = useSubscriptionActions({
+                subscription: ref(
+                    createSubscription([{ ...CANCELLATION, end_at: '2026-12-01T00:00:00Z' }]),
+                ),
+            });
+
+            expect(isCancellable.value).toBe(true);
+        });
+
+        it('is false for a subscription that is no longer active', () => {
+            const { isCancellable } = useSubscriptionActions({
+                subscription: ref(createSubscription([], 'CANCELLED')),
             });
 
             expect(isCancellable.value).toBe(false);
@@ -56,7 +92,7 @@ describe('useSubscriptionActions', () => {
     describe('isRenewable', () => {
         it('is true when the subscription has been cancelled', () => {
             const { isRenewable } = useSubscriptionActions({
-                subscription: ref(createSubscription([{}])),
+                subscription: ref(createSubscription([CANCELLATION])),
             });
 
             expect(isRenewable.value).toBe(true);
@@ -65,6 +101,40 @@ describe('useSubscriptionActions', () => {
         it('is false when the subscription is still running', () => {
             const { isRenewable } = useSubscriptionActions({
                 subscription: ref(createSubscription([])),
+            });
+
+            expect(isRenewable.value).toBe(false);
+        });
+
+        it('is false for a plan change, which is not a cancellation to undo', () => {
+            const { isRenewable } = useSubscriptionActions({
+                subscription: ref(createSubscription([PLAN_CHANGE])),
+            });
+
+            expect(isRenewable.value).toBe(false);
+        });
+
+        it('is false when a plan change comes first, as the API would undo that instead', () => {
+            const { isRenewable } = useSubscriptionActions({
+                subscription: ref(createSubscription([CANCELLATION, PLAN_CHANGE])),
+            });
+
+            expect(isRenewable.value).toBe(false);
+        });
+
+        it('is false once the cancellation has taken effect', () => {
+            const { isRenewable } = useSubscriptionActions({
+                subscription: ref(
+                    createSubscription([{ ...CANCELLATION, start_at: '2026-10-01T00:00:00Z' }]),
+                ),
+            });
+
+            expect(isRenewable.value).toBe(false);
+        });
+
+        it('is false for a subscription that is no longer active', () => {
+            const { isRenewable } = useSubscriptionActions({
+                subscription: ref(createSubscription([CANCELLATION], 'CANCELLED')),
             });
 
             expect(isRenewable.value).toBe(false);
@@ -88,7 +158,7 @@ describe('useSubscriptionActions', () => {
         expect(isCancellable.value).toBe(true);
         expect(isRenewable.value).toBe(false);
 
-        subscription.value = createSubscription([{}]);
+        subscription.value = createSubscription([CANCELLATION]);
 
         expect(isCancellable.value).toBe(false);
         expect(isRenewable.value).toBe(true);
@@ -178,7 +248,7 @@ describe('useSubscriptionActions', () => {
     describe('renew', () => {
         it('opens the renew confirmation', () => {
             const { renew, pendingVariant } = useSubscriptionActions({
-                subscription: ref(createSubscription([{}])),
+                subscription: ref(createSubscription([CANCELLATION])),
             });
 
             renew();
@@ -188,7 +258,7 @@ describe('useSubscriptionActions', () => {
 
         it('is not handed to the host', () => {
             const { renew } = useSubscriptionActions({
-                subscription: ref(createSubscription([{}])),
+                subscription: ref(createSubscription([CANCELLATION])),
             });
 
             renew();

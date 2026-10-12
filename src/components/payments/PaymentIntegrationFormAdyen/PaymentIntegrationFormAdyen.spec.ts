@@ -875,6 +875,29 @@ describe('PaymentIntegrationFormAdyen', () => {
 
             expect(wrapper.emitted('invalid')).toHaveLength(1);
         });
+
+        it('shows no error card when the customer cancels', async () => {
+            const wrapper = await mountComponent();
+
+            captured.checkoutConfig?.onError?.({ name: 'CANCEL' });
+            await flushPromises();
+
+            expect(reference(wrapper).exists()).toBe(false);
+            expect(wrapper.emitted('payment-failed')).toBeUndefined();
+        });
+
+        it('reports a throwing validation as invalid once, and never as a failure', async () => {
+            const wrapper = await mountComponent({
+                validateOnSubmit: () => Promise.reject(new Error('validation threw')),
+            });
+
+            const actions = await submitThroughDropIn();
+
+            expect(wrapper.emitted('invalid')).toHaveLength(1);
+            expect(wrapper.emitted('payment-failed')).toBeUndefined();
+            expect(actions.reject).not.toHaveBeenCalled();
+            expect(reference(wrapper).exists()).toBe(false);
+        });
     });
 
     describe('settled outcomes stay settled', () => {

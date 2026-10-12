@@ -55,8 +55,11 @@ const isPaymentPending = ref(false);
 const isCompleted = ref(false);
 
 function handleSubmit() {
+    // A host can call this while the form is still loading; nothing would end the pending state.
+    if (!paymentIntegrationFormRef.value) return;
+
     isPaymentPending.value = true;
-    paymentIntegrationFormRef.value?.submit();
+    paymentIntegrationFormRef.value.submit();
 }
 
 const submitLabel = computed(() =>

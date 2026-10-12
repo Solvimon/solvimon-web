@@ -21,21 +21,30 @@ src/translations/
 
 ## Scripts
 
-| Script                         | What it does                                                   |
-| ------------------------------ | -------------------------------------------------------------- |
-| `npm run translations:extract` | Re-scans `src/**/*.{ts,vue}` and regenerates `source.json`     |
-| `npm run translations:compile` | Compiles `source.json` → `en-US.json` (run after extract)      |
-| `npm run translations:check`   | Verifies every key in `source.json` exists in all locale files |
+| Script                         | What it does                                               |
+| ------------------------------ | ---------------------------------------------------------- |
+| `npm run translations:extract` | Re-scans `src/**/*.{ts,vue}` and regenerates `source.json` |
+| `npm run translations:compile` | Compiles `source.json` → `en-US.json` (run after extract)  |
+| `npm run translations:check`   | Checks every locale file against `source.json` (see below) |
 
 ## Adding a translatable string
 
-Use the `$t` function (or `useI18n().t`) with a string literal ID and a `defaultMessage`:
+Call `$t` from `useIntl()` with a message descriptor: a string literal `id`, the English `defaultMessage` and a `description` for translators. Values for the placeholders go in the second argument.
 
 ```ts
-const label = $t('my_feature.submit_button', { defaultMessage: 'Submit' });
+const { $t } = useIntl();
+
+const label = $t(
+    {
+        id: 'my_feature.submit_button',
+        defaultMessage: 'Pay {amount}',
+        description: 'Label of the button that pays the invoice',
+    },
+    { amount: formatAmount(total) },
+);
 ```
 
-The ID must be a string literal — dynamic IDs are not extracted. After adding new strings, regenerate the catalog:
+The ID must be a string literal, and the descriptor must be written out in the call. Dynamic IDs, a descriptor held in a variable, and a conditional between two descriptors are not extracted. After adding new strings, regenerate the catalog:
 
 ```sh
 npm run translations:extract
@@ -61,4 +70,14 @@ To translate a specific locale manually, edit `src/translations/locales/<locale>
 
 ## CI check
 
-The pipeline runs `npm run translations:check` on every push. It exits non-zero if any key in `source.json` is absent from any locale file listed in `SUPPORTED_LOCALES`. Resolve failures by running `/translate` and committing the updated locale files.
+The pipeline runs on every pull request. It extracts and compiles the catalogue and fails when that changes `source.json` or `en-US.json`: the committed catalogue is what ships, so commit the regenerated files with the change that altered a message.
+
+It then runs `npm run translations:check`, which fails when:
+
+- a key in `source.json` is missing from a locale file listed in `SUPPORTED_LOCALES`;
+- a locale file has a key that `source.json` does not;
+- a translation's placeholders, plurals, selects or tags differ from the source message's, or the translation does not parse;
+- one message id carries different messages in different places;
+- a locale in `SUPPORTED_LOCALES` does not name a file inside `src/translations/locales/`.
+
+Resolve missing keys by running `/translate` and committing the updated locale files. The check cannot tell that a translation is out of date after its English message changed, so update the locale files when you change the meaning of a message.

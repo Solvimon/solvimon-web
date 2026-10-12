@@ -12,6 +12,7 @@ import type {
 import { computed, onMounted, ref, watch } from 'vue';
 import { taxId } from '@solvimon/solvimon-ui/validators';
 import { isValidCountryCode } from '@solvimon/solvimon-ui';
+import { toRestorableForm } from './savedFormState';
 import { useLogger } from '@/components/providers';
 import { createSubscriptionsService } from '@/services/subscriptions';
 import { useInvoicePreview } from '@/composables/useInvoicePreview';
@@ -37,7 +38,7 @@ const LEGACY_REDIRECT_FORM_STATE_KEY = 'solvimon_checkout_redirect_state';
 const REDIRECT_FORM_STATE_KEY_PREFIX = 'solvimon_checkout_redirect_state:';
 const REDIRECT_FORM_STATE_MAX_AGE_MS = 60 * 60 * 1000;
 
-type SavedFormState = { savedAt: number; form: Partial<CheckoutFormState> };
+type SavedFormState = { savedAt: number; form: unknown };
 
 function isSavedFormState(value: unknown): value is SavedFormState {
     return (
@@ -45,9 +46,7 @@ function isSavedFormState(value: unknown): value is SavedFormState {
         value !== null &&
         'savedAt' in value &&
         typeof value.savedAt === 'number' &&
-        'form' in value &&
-        typeof value.form === 'object' &&
-        value.form !== null
+        'form' in value
     );
 }
 
@@ -472,9 +471,9 @@ export function useCheckoutView({
         if (age < 0 || age > REDIRECT_FORM_STATE_MAX_AGE_MS) return undefined;
 
         // The host's email is shown read-only, so it stands over whatever was saved.
-        const form = { ...saved.form };
+        const form = toRestorableForm(saved.form);
         if (validatedEmail) delete form.email;
-        return form;
+        return Object.keys(form).length ? form : undefined;
     }
 
     // A redirect return is not marked paid here: the payment form confirms it with the gateway and

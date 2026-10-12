@@ -1,4 +1,4 @@
-import type { Page } from '@playwright/test';
+import type { Locator, Page } from '@playwright/test';
 import { installApiMock, type ApiMock, type EndpointName, type Responder } from './api-mock';
 import { anAccessTokenResponse, type Json } from './fixtures';
 import type { StripeStubConfig } from './stripe-stub';
@@ -116,4 +116,19 @@ export function hostEvents(page: Page): Promise<HostEvents> {
             actions: Array.isArray(actions) ? actions : [],
         };
     });
+}
+
+/**
+ * solvimon-ui's `Button` drops a click that lands within 500ms of the one before it, so clicks fired
+ * back to back never reach the SDK and a test of its own guard against a double submit passes
+ * whatever that guard does. Spaced past that window, each click after the first does reach it.
+ */
+const BUTTON_DOUBLE_CLICK_WINDOW_MS = 500;
+
+export async function clickRepeatedly(button: Locator, times: number): Promise<void> {
+    for (let click = 0; click < times; click += 1) {
+        if (click > 0) await button.page().waitForTimeout(BUTTON_DOUBLE_CLICK_WINDOW_MS + 100);
+        // Forced, so a button the SDK disabled meanwhile is clicked at rather than waited for.
+        await button.click({ force: click > 0 });
+    }
 }

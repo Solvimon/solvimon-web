@@ -51,13 +51,15 @@ test.describe('Subscription details', () => {
         }) => {
             api = await mountLoaded(page);
 
-            expect(new URL(api.lastCall('customer')!.url).pathname).toBe(
+            expect(new URL((await api.waitForCall('customer')).url).pathname).toBe(
                 `/v1/portal/customers/${CUSTOMER_ID}`,
             );
             expect(
-                new URL(api.lastCall('paymentMethods')!.url).searchParams.get('customer_id'),
+                new URL((await api.waitForCall('paymentMethods')).url).searchParams.get(
+                    'customer_id',
+                ),
             ).toBe(CUSTOMER_ID);
-            expect(new URL(api.lastCall('walletBalances')!.url).pathname).toBe(
+            expect(new URL((await api.waitForCall('walletBalances')).url).pathname).toBe(
                 `/v1/portal/customers/${CUSTOMER_ID}/wallets/balance`,
             );
         });

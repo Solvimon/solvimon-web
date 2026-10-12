@@ -48,6 +48,7 @@ export function payInvoice(page: Page) {
     return {
         screen: page.locator('.sv-layout'),
         paid: page.getByText(/thank you for your payment/i),
+        paymentSucceeded: page.getByText(/payment successful/i),
         storePaymentMethod: page.getByText(/save this payment method/i),
         payButton: page.getByRole('button', { name: /^pay /i }),
         downloadInvoice: page.getByRole('button', { name: /download invoice/i }),

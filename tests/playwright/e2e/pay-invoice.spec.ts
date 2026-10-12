@@ -15,6 +15,7 @@ import {
     INVOICE_ID,
     PAYMENT_ACCEPTOR_ID,
 } from '../support/fixtures';
+import { clickRepeatedly } from '../support/screen';
 
 /**
  * The pay invoice screen, end to end against a fully mocked API. See `checkout.spec.ts` for what
@@ -40,12 +41,12 @@ test.describe('Pay invoice', () => {
         test('loads the invoice the host named and what has been tried on it', async ({ page }) => {
             api = await mountLoaded(page);
 
-            expect(new URL(api.lastCall('invoice')!.url).pathname).toBe(
+            expect(new URL((await api.waitForCall('invoice')).url).pathname).toBe(
                 `/v1/portal/invoices/${INVOICE_ID}`,
             );
-            expect(new URL(api.lastCall('payments')!.url).searchParams.get('invoice_id')).toBe(
-                INVOICE_ID,
-            );
+            expect(
+                new URL((await api.waitForCall('payments')).url).searchParams.get('invoice_id'),
+            ).toBe(INVOICE_ID);
         });
 
         test('asks what can pay the amount still open on it', async ({ page }) => {
@@ -55,7 +56,7 @@ test.describe('Pay invoice', () => {
 
             // What is left to pay, not what the invoice was for — and asked of the invoice, so
             // the answer only carries acceptors it can be paid through (DD-3533).
-            expect(api.lastCall('paymentMethodOptions')?.body).toEqual({
+            expect((await api.waitForCall('paymentMethodOptions')).body).toEqual({
                 customer_id: CUSTOMER_ID,
                 invoice_id: INVOICE_ID,
                 amount: { quantity: '25.00', currency: 'EUR' },
@@ -76,11 +77,13 @@ test.describe('Pay invoice', () => {
         test('sends the access token on every call', async ({ page }) => {
             api = await mountLoaded(page);
 
-            [
-                api.lastCall('invoice'),
-                api.lastCall('payments'),
-                api.lastCall('paymentMethods'),
-            ].forEach((call) => expect(call?.headers['authorization']).toMatch(/^Bearer .+/));
+            (
+                await Promise.all([
+                    api.waitForCall('invoice'),
+                    api.waitForCall('payments'),
+                    api.waitForCall('paymentMethods'),
+                ])
+            ).forEach((call) => expect(call.headers['authorization']).toMatch(/^Bearer .+/));
         });
     });
 
@@ -173,16 +176,17 @@ test.describe('Pay invoice', () => {
         test('authorizes once however often the customer submits', async ({ page }) => {
             api = await mountLoaded(page, {
                 mocks: {
-                    authorizePayment: { delayMs: 2000, body: aSuccessfulAuthorization() },
+                    authorizePayment: { delayMs: 3000, body: aSuccessfulAuthorization() },
                 },
             });
             const ui = payInvoice(page);
 
-            await ui.payButton.click();
-            await ui.payButton.click({ force: true });
-            await ui.payButton.click({ force: true });
+            await clickRepeatedly(ui.payButton, 3);
 
-            await expect.poll(() => api.calls('authorizePayment').length).toBe(1);
+            // Every repeat was sent while the first was still in flight, so by the time it lands a
+            // duplicate would have been recorded too.
+            await expect(ui.paymentSucceeded).toBeVisible();
+            expect(api.calls('authorizePayment')).toHaveLength(1);
         });
 
         test('never authorizes when the gateway rejects the card details', async ({ page }) => {
@@ -191,7 +195,7 @@ test.describe('Pay invoice', () => {
             });
 
             await payInvoice(page).payButton.click();
-            await page.waitForTimeout(1000);
+            await expect(payInvoice(page).screen).toContainText(/payment failed/i);
 
             expect(api.calls('authorizePayment')).toEqual([]);
         });

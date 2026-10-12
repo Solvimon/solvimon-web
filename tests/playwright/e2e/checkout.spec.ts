@@ -15,6 +15,7 @@ import {
     TOKEN_USER_NAME,
     YEARLY,
 } from '../support/fixtures';
+import { clickRepeatedly } from '../support/screen';
 
 /**
  * The checkout screen, end to end, against a fully mocked API.
@@ -743,13 +744,11 @@ test.describe('Checkout', () => {
             api = await mountLoaded(page, {
                 portalObject: aPortalObject({ successUrl: '' }),
                 mocks: {
-                    authorizePayment: { delayMs: 2000, body: aSuccessfulAuthorization() },
+                    authorizePayment: { delayMs: 3000, body: aSuccessfulAuthorization() },
                 },
             });
 
-            await checkout(page).submit.click();
-            await checkout(page).submit.click({ force: true });
-            await checkout(page).submit.click({ force: true });
+            await clickRepeatedly(checkout(page).submit, 3);
 
             await expect(checkout(page).paid).toBeVisible({ timeout: 15000 });
             expect(api.calls('authorizePayment')).toHaveLength(1);
@@ -762,7 +761,7 @@ test.describe('Checkout', () => {
             });
 
             await checkout(page).submit.click();
-            await page.waitForTimeout(1000);
+            await expect(page.locator('body')).toContainText('Your card number is incomplete.');
 
             expect(api.calls('authorizePayment')).toEqual([]);
             await expect(checkout(page).paid).toHaveCount(0);

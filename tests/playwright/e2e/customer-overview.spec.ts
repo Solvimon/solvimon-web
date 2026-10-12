@@ -44,17 +44,19 @@ test.describe('Customer overview', () => {
         test('loads everything it shows for the portal customer', async ({ page }) => {
             api = await mountLoaded(page);
 
-            expect(new URL(api.lastCall('customer')!.url).pathname).toBe(
+            expect(new URL((await api.waitForCall('customer')).url).pathname).toBe(
                 `/v1/portal/customers/${CUSTOMER_ID}`,
             );
-            [
-                api.lastCall('invoices'),
-                api.lastCall('subscriptions'),
-                api.lastCall('paymentMethods'),
-            ].forEach((call) => {
-                expect(new URL(call!.url).searchParams.get('customer_id')).toBe(CUSTOMER_ID);
+            (
+                await Promise.all([
+                    api.waitForCall('invoices'),
+                    api.waitForCall('subscriptions'),
+                    api.waitForCall('paymentMethods'),
+                ])
+            ).forEach((call) => {
+                expect(new URL(call.url).searchParams.get('customer_id')).toBe(CUSTOMER_ID);
             });
-            expect(new URL(api.lastCall('walletBalances')!.url).pathname).toBe(
+            expect(new URL((await api.waitForCall('walletBalances')).url).pathname).toBe(
                 `/v1/portal/customers/${CUSTOMER_ID}/wallets/balance`,
             );
         });

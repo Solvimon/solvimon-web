@@ -465,6 +465,74 @@ describe('PaymentIntegrationFormAdyen (DD-3538 tester)', () => {
         });
     });
 
+    describe('round 2: building the drop-in after a returned payment is answered', () => {
+        const lastEntry = () =>
+            (
+                mockGetAdyenDropInPaymentMethods.mock.calls.at(-1) as unknown as
+                    | [{ payment_acceptor: { id: string }; options?: unknown }]
+                    | undefined
+            )?.[0];
+
+        async function confirmWhileOptionsChange(answer: () => Promise<unknown>) {
+            let release: () => void = () => {};
+            mockGetPaymentDetails.mockReturnValueOnce(
+                new Promise((resolve, reject) => {
+                    release = () => void answer().then(resolve, reject);
+                }),
+            );
+            visit('?payment_acceptor_id=paya_123&redirectResult=res_1');
+
+            const wrapper = mount(PaymentIntegrationFormAdyen, { props: mockProps });
+            await flushPromises();
+            await wrapper.setProps({
+                paymentMethodOptionResponseEntry: {
+                    ...entry('paya_123'),
+                    options: [{ name: 'latest' }],
+                } as never,
+            });
+            await flushPromises();
+            expect(mockDropInMount).not.toHaveBeenCalled();
+
+            release();
+            await flushPromises();
+            return wrapper;
+        }
+
+        it('builds it once, from the latest options, when the payment was refused', async () => {
+            const wrapper = await confirmWhileOptionsChange(() =>
+                Promise.resolve({ payment_status: 'REFUSED' }),
+            );
+
+            expect(mockDropInMount).toHaveBeenCalledTimes(1);
+            expect(lastEntry()?.options).toEqual([{ name: 'latest' }]);
+            expect(failedCodes(wrapper)).toEqual(['AUTHORIZATION_FAILED']);
+            expect(wrapper.findComponent({ name: 'PaymentErrorCard' }).exists()).toBe(true);
+        });
+
+        it.each([
+            ['succeeded', () => Promise.resolve({ payment_status: 'SUCCESS' })],
+            ['is unconfirmed', () => Promise.resolve({ payment_status: 'PENDING' })],
+            ['could not be asked about', () => Promise.reject(new TypeError('Failed to fetch'))],
+        ])('builds none when the payment %s', async (_, answer) => {
+            await confirmWhileOptionsChange(answer);
+
+            expect(mockDropInMount).not.toHaveBeenCalled();
+        });
+
+        it('builds it from the latest options once "Try again" finds the payment refused', async () => {
+            const wrapper = await confirmWhileOptionsChange(() =>
+                Promise.reject(new TypeError('Failed to fetch')),
+            );
+            mockGetPaymentDetails.mockResolvedValueOnce({ payment_status: 'REFUSED' });
+
+            await retry(wrapper);
+
+            expect(mockGetPaymentDetails).toHaveBeenCalledTimes(2);
+            expect(mockDropInMount).toHaveBeenCalledTimes(1);
+            expect(lastEntry()?.options).toEqual([{ name: 'latest' }]);
+        });
+    });
+
     describe('mounting', () => {
         it('stops quietly when unmounted while a returned payment is being confirmed', async () => {
             let answer: (value: unknown) => void = () => {};

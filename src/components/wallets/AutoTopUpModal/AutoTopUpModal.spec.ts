@@ -531,3 +531,70 @@ describe('AutoTopUpModal', () => {
         expect(editor(wrapper).exists()).toBe(false);
     });
 });
+
+describe('AutoTopUpModal — a save that fails', () => {
+    beforeEach(() => {
+        mockCreate.mockReset();
+        mockPreview.mockReset();
+        mockPreview.mockResolvedValue({ id: 'inv_preview' });
+        mockAutoTopUp.validate.mockReset();
+        mockAutoTopUp.validate.mockReturnValue({
+            status: 'ACTIVE',
+            threshold: THRESHOLD,
+            topup_amount: TOP_UP_AMOUNT,
+        });
+    });
+
+    const error = (wrapper: ReturnType<typeof mountModal>) =>
+        wrapper.find('.sv-auto-topup-modal__error');
+
+    it('stays open and says so', async () => {
+        mockCreate.mockRejectedValue(new Error('nope'));
+        const wrapper = mountModal();
+
+        await confirm(wrapper);
+        await flushPromises();
+
+        expect(error(wrapper).exists()).toBe(true);
+        expect(wrapper.emitted('close')).toBeUndefined();
+        expect(wrapper.emitted('saved')).toBeUndefined();
+    });
+
+    it('drops the message while the retry is under way, having shown it first', async () => {
+        mockCreate.mockRejectedValueOnce(new Error('nope'));
+        mockCreate.mockReturnValueOnce(new Promise(() => {}));
+        const wrapper = mountModal();
+        await confirm(wrapper);
+        await flushPromises();
+        expect(error(wrapper).exists()).toBe(true);
+
+        await confirm(wrapper);
+
+        expect(error(wrapper).exists()).toBe(false);
+    });
+
+    it('drops the message once the modal is opened again, having shown it first', async () => {
+        mockCreate.mockRejectedValueOnce(new Error('nope'));
+        const wrapper = mountModal();
+        await confirm(wrapper);
+        await flushPromises();
+        expect(error(wrapper).exists()).toBe(true);
+
+        await wrapper.setProps({ showModal: false });
+        await wrapper.setProps({ showModal: true });
+
+        expect(error(wrapper).exists()).toBe(false);
+    });
+
+    it('sends nothing for a wallet it cannot save a rule for, even if confirm is forced', async () => {
+        const wrapper = mountModal({
+            walletBalanceItem: { ...walletBalanceItem, wallet_id: undefined },
+        });
+
+        wrapper.findComponent({ name: 'OnDemandPaymentModalShell' }).vm.$emit('confirm');
+        await flushPromises();
+
+        expect(mockCreate).not.toHaveBeenCalled();
+        expect(wrapper.find('[data-testid="alert"]').exists()).toBe(true);
+    });
+});

@@ -21,6 +21,11 @@ vi.mock('@solvimon/solvimon-ui', async () => {
             props: ['invoice', 'isCustomerFacing'],
             template: '<div data-testid="invoice-preview" />',
         }),
+        ErrorNotification: defineComponent({
+            name: 'ErrorNotificationStub',
+            props: { title: String },
+            template: '<div data-testid="preview-error">{{ title }}</div>',
+        }),
     });
 });
 
@@ -129,5 +134,72 @@ describe('TopUpInvoicePreview', () => {
                 },
             ],
         });
+    });
+});
+
+describe('TopUpInvoicePreview — a preview that fails or goes stale', () => {
+    beforeEach(() => {
+        vi.useFakeTimers();
+        mockPreview.mockReset();
+        mockPreview.mockResolvedValue(INVOICE);
+    });
+
+    afterEach(() => {
+        vi.useRealTimers();
+    });
+
+    const error = (wrapper: ReturnType<typeof mountPreview>) =>
+        wrapper.find('[data-testid="preview-error"]');
+
+    const total = (wrapper: ReturnType<typeof mountPreview>) =>
+        wrapper.find('[data-testid="top-up-invoice-preview"]');
+
+    it('says the total could not be calculated rather than loading forever', async () => {
+        mockPreview.mockRejectedValue(new Error('nope'));
+        const wrapper = mountPreview();
+        await vi.runAllTimersAsync();
+
+        expect(error(wrapper).text()).toContain('Unable to calculate the total');
+        expect(skeleton(wrapper).exists()).toBe(false);
+    });
+
+    it('tries again once what is being charged changes', async () => {
+        mockPreview.mockRejectedValueOnce(new Error('nope'));
+        const wrapper = mountPreview();
+        await vi.runAllTimersAsync();
+
+        await wrapper.setProps({
+            pricingItems: [
+                {
+                    pricing_item_id: 'prii_1',
+                    flexible_amount: { quantity: '50.00', currency: 'EUR' },
+                },
+            ],
+        });
+        await vi.runAllTimersAsync();
+
+        expect(error(wrapper).exists()).toBe(false);
+        expect(preview(wrapper).exists()).toBe(true);
+    });
+
+    it('marks the last total as out of date while a change is repriced', async () => {
+        const wrapper = mountPreview();
+        await vi.runAllTimersAsync();
+
+        await wrapper.setProps({
+            pricingItems: [
+                {
+                    pricing_item_id: 'prii_1',
+                    flexible_amount: { quantity: '50.00', currency: 'EUR' },
+                },
+            ],
+        });
+
+        expect(total(wrapper).classes()).toContain('opacity-60');
+        expect(total(wrapper).attributes('aria-busy')).toBe('true');
+
+        await vi.runAllTimersAsync();
+
+        expect(total(wrapper).classes()).not.toContain('opacity-60');
     });
 });

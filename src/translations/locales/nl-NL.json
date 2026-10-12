@@ -321,6 +321,7 @@
     "topup_modal.error.payment_declined": "Je betaling is geweigerd. Probeer een andere betaalmethode.",
     "topup_modal.flexible_option.bounds": "Tussen {minimum} en {maximum}",
     "topup_modal.flexible_option.label": "Kies je eigen bedrag",
+    "topup_modal.invoice_preview.error": "Het totaal kon niet worden berekend. Probeer het opnieuw.",
     "topup_modal.invoice_preview.label": "Je betaalt",
     "topup_modal.payment_method_required": "Kies een betaalmethode om deze opwaardering mee te betalen.",
     "topup_modal.payment_method_selector.label": "Betaalmethode",

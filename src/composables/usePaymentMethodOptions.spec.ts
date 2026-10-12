@@ -120,4 +120,24 @@ describe('usePaymentMethodOptions', () => {
 
         expect(mockGetPaymentMethodOptions).toHaveBeenCalledTimes(2);
     });
+
+    // DD-3537 tester: Checkout disables its pay button while `error` is set. A failed lookup for
+    // another country, followed by a return to one already held, answers from the cache and leaves
+    // the failure in place, so the error card stays and "Try again" asks nothing.
+    it.fails('clears an earlier failure when a held payload is asked for again', async () => {
+        const response = [{ id: 'pm_1' }] as unknown as PaymentMethodOptionsResponse;
+        mockGetPaymentMethodOptions
+            .mockResolvedValueOnce(response)
+            .mockRejectedValueOnce(new Error('Boom'));
+
+        const paymentMethodOptions = usePaymentMethodOptions();
+
+        await paymentMethodOptions.get({ customerId: 'cust_123', country: 'NL' });
+        await expect(
+            paymentMethodOptions.get({ customerId: 'cust_123', country: 'US' }),
+        ).rejects.toBeUndefined();
+        await paymentMethodOptions.get({ customerId: 'cust_123', country: 'NL' });
+
+        expect(paymentMethodOptions.error.value).toBeNull();
+    });
 });

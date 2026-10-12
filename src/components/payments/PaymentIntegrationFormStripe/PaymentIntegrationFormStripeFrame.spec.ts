@@ -3,6 +3,13 @@ import { nextTick } from 'vue';
 import PaymentIntegrationFormStripeFrame from './PaymentIntegrationFormStripeFrame.vue';
 import type { PaymentIntegrationFormStripeFrameProps } from './PaymentIntegrationFormStripeFrame.types';
 
+const CHANGED_OPTIONS: PaymentIntegrationFormStripeFrameProps['options'] = {
+    mode: 'payment',
+    currency: 'eur',
+    amount: 2000,
+    setup_future_usage: 'off_session',
+};
+
 const defaultProps: PaymentIntegrationFormStripeFrameProps = {
     publicKey: 'pk_test_123',
     options: {
@@ -157,6 +164,29 @@ describe('PaymentIntegrationFormStripeFrame', () => {
             await iframe.dispatchEvent(new Event('load'));
 
             expect(wrapper.vm.triggerSubmit()).toBe(false);
+        });
+
+        it('passes on the answer to a submit sent before the options changed', async () => {
+            const { wrapper, cw } = setup();
+            dispatchMessage(cw, { type: 'stripe:ready' });
+            expect(wrapper.vm.triggerSubmit()).toBe(true);
+
+            await wrapper.setProps({ options: CHANGED_OPTIONS });
+            expect(wrapper.vm.triggerSubmit()).toBe(false);
+            dispatchMessage(cw, { type: 'stripe:submit:error', error: { message: 'stale' } });
+
+            expect(wrapper.emitted('submit-error')).toHaveLength(1);
+        });
+
+        it('sends submits again once the frame set up anew says it is ready', async () => {
+            const { wrapper, cw } = setup();
+            dispatchMessage(cw, { type: 'stripe:ready' });
+
+            await wrapper.setProps({ options: CHANGED_OPTIONS });
+            dispatchMessage(cw, { type: 'stripe:ready' });
+
+            expect(wrapper.vm.triggerSubmit()).toBe(true);
+            expect(cw.postMessage).toHaveBeenLastCalledWith({ type: 'stripe:submit' }, '*');
         });
     });
 

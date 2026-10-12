@@ -309,6 +309,18 @@ describe('PaymentIntegrationFormAdyen', () => {
             expect(actions.resolve).not.toHaveBeenCalled();
             expect(mockAuthorizePayment).not.toHaveBeenCalled();
         });
+
+        it('reports the submit as invalid when the screen fails to validate', async () => {
+            const wrapper = await mountComponent({
+                validateOnSubmit: () => Promise.reject(new Error('validation threw')),
+            });
+
+            await submitThroughDropIn();
+
+            expect(adyen.dropIn.setStatus).toHaveBeenCalledWith('ready');
+            expect(wrapper.emitted('invalid')).toHaveLength(1);
+            expect(mockAuthorizePayment).not.toHaveBeenCalled();
+        });
     });
 
     it('builds the drop-in with every payment method component', async () => {
@@ -846,12 +858,22 @@ describe('PaymentIntegrationFormAdyen', () => {
         });
 
         it('stays quiet when the customer cancels', async () => {
-            await mountComponent();
+            const wrapper = await mountComponent();
 
             captured.checkoutConfig?.onError?.({ name: 'CANCEL' });
             await flushPromises();
 
             expect(mockLogger.error).not.toHaveBeenCalled();
+            expect(wrapper.emitted('payment-failed')).toBeUndefined();
+        });
+
+        it('lets the screen stop waiting when the customer cancels', async () => {
+            const wrapper = await mountComponent();
+
+            captured.checkoutConfig?.onError?.({ name: 'CANCEL' });
+            await flushPromises();
+
+            expect(wrapper.emitted('invalid')).toHaveLength(1);
         });
     });
 });

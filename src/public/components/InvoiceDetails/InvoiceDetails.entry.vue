@@ -18,7 +18,7 @@ defineProps<SolvimonInvoiceDetailsEntryProps>();
         :required-configuration="{ invoiceId: configuration?.invoiceId }"
         @error="(error) => $emit('error', error)"
     >
-        <InvoiceDetailsEntryView v-bind="$props">
+        <InvoiceDetailsEntryView :key="configuration.invoiceId" v-bind="$props">
             <template #default="{ invoice, isLoading }">
                 <InvoiceDetails
                     v-if="invoice"

@@ -18,7 +18,7 @@ defineProps<SolvimonPaymentHistoryEntryProps>();
         :required-configuration="{ invoiceId: configuration?.invoiceId }"
         @error="(error) => $emit('error', error)"
     >
-        <PaymentHistoryEntryView v-bind="$props">
+        <PaymentHistoryEntryView :key="configuration.invoiceId" v-bind="$props">
             <template #default="{ invoice, paymentAttempts, isLoading }">
                 <PaymentHistory
                     v-if="invoice && paymentAttempts"

@@ -1155,6 +1155,12 @@ test.describe('Checkout', () => {
                 .toContain('INVALID_TOKEN');
             await expect(checkout(page).form).toHaveCount(0);
             expect(api.calls('subscription')).toEqual([]);
+
+            const { logs, errors } = await hostEvents(page);
+            expect(logs.filter(({ level }) => level === 'error').map(({ code }) => code)).toEqual([
+                'INVALID_TOKEN',
+            ]);
+            expect(errors).toEqual(['Invalid token']);
         });
 
         test('renders nothing and reports when the token exchange fails', async ({ page }) => {

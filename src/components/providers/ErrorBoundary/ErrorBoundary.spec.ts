@@ -1,8 +1,10 @@
 import { flushPromises, mount } from '@vue/test-utils';
 import { defineComponent, h, nextTick, ref, watch } from 'vue';
+import { useErrorHandling } from '@solvimon/solvimon-ui';
 import ErrorBoundary from './ErrorBoundary.vue';
 import { LOGGER_PROVIDER_INJECTION_KEY } from '@/components/providers/LoggerProvider/LoggerProvider.lib';
 import type { Logger } from '@/components/providers/LoggerProvider/LoggerProvider.types';
+import { CodedError } from '@/utils/error';
 
 const createLogger = (): Logger => ({
     debug: vi.fn(),
@@ -34,6 +36,24 @@ describe('ErrorBoundary', () => {
         );
 
         expect(logger.capture).toHaveBeenCalledWith(failure, expect.any(Object));
+        expect(wrapper.emitted('error')).toEqual([[failure]]);
+    });
+
+    it('reports an error that names its own code under that code, once', () => {
+        const failure = new CodedError('INVALID_TOKEN', 'Invalid token');
+        const { wrapper, logger } = mountBoundary(
+            defineComponent({
+                setup() {
+                    throw failure;
+                },
+            }),
+        );
+
+        expect(logger.capture).toHaveBeenCalledOnce();
+        expect(logger.capture).toHaveBeenCalledWith(
+            failure,
+            expect.objectContaining({ code: 'INVALID_TOKEN' }),
+        );
         expect(wrapper.emitted('error')).toEqual([[failure]]);
     });
 
@@ -82,6 +102,27 @@ describe('ErrorBoundary', () => {
         await flushPromises();
 
         expect(wrapper.emitted('error')).toHaveLength(1);
+    });
+
+    it('logs what the UI library recovered from as a warning, without the error event', () => {
+        const recovered = new Error('Failed to format date');
+        const { wrapper, logger } = mountBoundary(
+            defineComponent({
+                setup() {
+                    useErrorHandling().onError?.(recovered);
+                    return () => h('span');
+                },
+            }),
+        );
+
+        expect(logger.warn).toHaveBeenCalledWith(
+            'UI_COMPONENT_RECOVERED',
+            expect.any(String),
+            {},
+            recovered,
+        );
+        expect(logger.capture).not.toHaveBeenCalled();
+        expect(wrapper.emitted('error')).toBeUndefined();
     });
 
     it('emits an Error even when something else was thrown, keeping it as the cause', () => {

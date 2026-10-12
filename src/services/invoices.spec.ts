@@ -32,7 +32,7 @@ describe('invoices service', () => {
 
             expect(mockRequest).toHaveBeenCalledWith({
                 url: 'https://api.test/portal/invoices/inv_123/pdf',
-                options: { headers: { 'Content-Type': 'application/pdf' } },
+                options: { headers: { Accept: 'application/pdf' } },
             });
         });
 

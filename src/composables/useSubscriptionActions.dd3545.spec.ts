@@ -110,9 +110,9 @@ describe('DD-3545 tester: Cancel / Renew matrix', () => {
     });
 
     // Backend getInactivePeriod keeps the LAST open period of equal start_at (it overwrites unless
-    // the kept one is strictly earlier); the SDK keeps the FIRST. With a CANCEL and an UPGRADE
-    // starting at the same instant, the SDK offers Renew while UNDO would act on the UPGRADE.
-    it.fails('agrees with the backend on which of two equally early periods UNDO acts on', () => {
+    // the kept one is strictly earlier). With a CANCEL and an UPGRADE starting at the same
+    // instant, UNDO acts on the UPGRADE, so there is no Renew to offer.
+    it('agrees with the backend on which of two equally early periods UNDO acts on', () => {
         expect(
             actionsFor([cancel('2026-11-01T00:00:00Z'), upgrade('2026-11-01T00:00:00Z')]).renew,
         ).toBe(false);

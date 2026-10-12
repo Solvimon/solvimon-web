@@ -129,8 +129,8 @@ const flexibleEntry = ({
     pricingItemId?: string;
     scheduleId?: string;
     currency?: string;
-    minimum?: string;
-    maximum?: string;
+    minimum?: string | null;
+    maximum?: string | null;
     rate?: string;
 }) => ({
     pricing_item_id: pricingItemId,
@@ -145,8 +145,8 @@ const flexibleEntry = ({
                     pricing_type: 'FLEXIBLE',
                     bands: [
                         {
-                            minimum_amount: { quantity: minimum, currency },
-                            maximum_amount: { quantity: maximum, currency },
+                            ...(minimum && { minimum_amount: { quantity: minimum, currency } }),
+                            ...(maximum && { maximum_amount: { quantity: maximum, currency } }),
                         },
                     ],
                 },
@@ -582,6 +582,211 @@ describe('TopUpModal (integrated) — a wallet shared by subscriptions on differ
         expect(mockCreateAutoTopUp.mock.calls[0]?.[0]).toMatchObject({
             pricing_plan_schedule_id: 'ppsc_2',
             pricing_item_id: 'prii_two',
+        });
+    });
+});
+
+describe('TopUpModal (integrated, round 2) — the amount field as the customer reads it', () => {
+    const bounds = (wrapper: Wrapper) => wrapper.find('[data-testid="top-up-amount-bounds"]');
+
+    it.each([
+        ['both bounds', { minimum: '10.00', maximum: '100.00' }, 'Between 10.00 and 100.00 EUR'],
+        ['a minimum only', { minimum: '10.00', maximum: null }, 'At least 10.00 EUR'],
+        ['a maximum only', { minimum: null, maximum: '100.00' }, 'Up to 100.00 EUR'],
+    ])('states %s beside the label of a money wallet', async (_case, range, text) => {
+        const wrapper = mountModal({
+            selectedBalanceItem: moneyWallet([flexibleEntry(range)]),
+        });
+        await settle();
+
+        expect(wrapper.text()).toContain('Amount');
+        expect(bounds(wrapper).text()).toBe(text);
+    });
+
+    it('states the bounds in credits for a credits wallet', async () => {
+        const wrapper = mountModal({ selectedBalanceItem: creditsWallet() });
+        await settle();
+
+        expect(bounds(wrapper).text()).toBe('Between 30 and 300 coins');
+    });
+
+    it('states no range for a pricing without bounds, and still charges what is typed', async () => {
+        const wrapper = mountModal({
+            selectedBalanceItem: moneyWallet([
+                flexibleEntry({ minimum: null, maximum: null }),
+                fixedEntry(),
+            ]),
+        });
+        await settle();
+
+        expect(bounds(wrapper).exists()).toBe(false);
+        expect(amountInput(wrapper).exists()).toBe(true);
+
+        await typeAmount(wrapper, '12.50');
+        await pay(wrapper);
+
+        expect(chargedItems()?.pricing_items[0].flexible_amount?.quantity).toBe('12.50');
+    });
+
+    it('marks the field invalid only once the customer has got it wrong', async () => {
+        const wrapper = mountModal();
+        await settle();
+        expect(amountInput(wrapper).attributes('aria-invalid')).toBeUndefined();
+
+        await typeAmount(wrapper, '5');
+        await pay(wrapper);
+
+        expect(amountInput(wrapper).attributes('aria-invalid')).toBe('true');
+        expect(wrapper.text()).toContain('Top up with at least');
+
+        await typeAmount(wrapper, '50');
+
+        expect(amountInput(wrapper).attributes('aria-invalid')).toBeUndefined();
+    });
+
+    it('does not mark the rule fields invalid when the rule is switched on, before anything is typed', async () => {
+        const wrapper = mountModal({ selectedBalanceItem: creditsWallet() });
+        await settle();
+
+        await wrapper
+            .find<HTMLInputElement>('.sv-top-up-form__auto-top-up input[type="checkbox"]')
+            .setValue(true);
+        await settle();
+
+        for (const name of ['auto-top-up-threshold', 'auto-top-up-amount']) {
+            expect(
+                wrapper.find(`input[name="${name}"]`).attributes('aria-invalid'),
+            ).toBeUndefined();
+        }
+    });
+});
+
+describe('TopUpModal (integrated, round 2) — a rule still being saved', () => {
+    let settleSave: (fail: boolean) => void;
+
+    beforeEach(() => {
+        mockCreateAutoTopUp.mockReset();
+        mockCreateAutoTopUp.mockReturnValue(
+            new Promise((resolve, reject) => {
+                settleSave = (fail) => (fail ? reject(new Error('nope')) : resolve({ id: 'a' }));
+            }),
+        );
+    });
+
+    const chargedWithRule = async () => {
+        const wrapper = mountModal({ selectedBalanceItem: creditsWallet() });
+        await settle();
+        await typeAmount(wrapper, '60');
+        await wrapper
+            .find<HTMLInputElement>('.sv-top-up-form__auto-top-up input[type="checkbox"]')
+            .setValue(true);
+        await settle();
+        await wrapper.find('input[name="auto-top-up-threshold"]').setValue('10');
+        await wrapper.find('input[name="auto-top-up-amount"]').setValue('60');
+        await settle();
+        await pay(wrapper);
+        expect(mockCreateAutoTopUp).toHaveBeenCalledTimes(1);
+
+        return wrapper;
+    };
+
+    const closeCross = (wrapper: Wrapper) =>
+        wrapper.findComponent({ name: 'ModalStub' }).vm.$emit('close');
+
+    it('cannot be left by Done or by the close cross while the save is out', async () => {
+        const wrapper = await chargedWithRule();
+
+        await wrapper.find('[data-testid="done"]').trigger('click');
+        closeCross(wrapper);
+        await nextTick();
+
+        expect(wrapper.emitted('close')).toBeUndefined();
+        expect(wrapper.emitted('confirm')).toBeUndefined();
+        expect(wrapper.findComponent({ name: 'ModalStub' }).props('isLoading')).toBe(true);
+    });
+
+    it('shows a failure that comes back during the same opening', async () => {
+        const wrapper = await chargedWithRule();
+
+        settleSave(true);
+        await settle();
+
+        expect(wrapper.find('.sv-topup-modal__auto-top-up-error').exists()).toBe(true);
+        await wrapper.find('[data-testid="done"]').trigger('click');
+        expect(wrapper.emitted('close')).toHaveLength(1);
+    });
+
+    // Characterisation, not a defect pinned: requests have no timeout, so a save that never
+    // answers keeps the receipt behind the loading overlay with no way out but a reload. A
+    // charge that never answers already did the same on main.
+    it('stays shut for as long as a save goes unanswered', async () => {
+        const wrapper = await chargedWithRule();
+
+        await vi.advanceTimersByTimeAsync(10 * 60 * 1000);
+        closeCross(wrapper);
+        await wrapper.find('[data-testid="done"]').trigger('click');
+
+        expect(wrapper.emitted('close')).toBeUndefined();
+    });
+});
+
+describe('TopUpModal (integrated, round 2) — a wallet whose only rule is switched off', () => {
+    const withInactiveRule = () => {
+        const wallet = creditsWallet() as unknown as Record<string, unknown>;
+
+        return {
+            ...wallet,
+            wallet: {
+                id: 'wall_1',
+                wallet_type_id: 'wtyp_1',
+                auto_top_up_configs: [
+                    {
+                        id: 'atuc_old',
+                        status: 'INACTIVE',
+                        threshold: { credits: credits('5') },
+                        topup_amount: { quantity: '20.00', currency: 'EUR' },
+                        pricing_item_id: 'prii_flexible',
+                        pricing_plan_schedule_id: 'ppsc_1',
+                        payment_method_id: 'pmet_1',
+                    },
+                ],
+            },
+        } as unknown as CustomerWalletBalanceItem;
+    };
+
+    const toggle = (wrapper: Wrapper) =>
+        wrapper.find<HTMLInputElement>('.sv-top-up-form__auto-top-up input[type="checkbox"]');
+
+    it('offers the editor, switched off, and sends nothing when it is left off', async () => {
+        const wrapper = mountModal({ selectedBalanceItem: withInactiveRule() });
+        await settle();
+
+        expect(toggle(wrapper).exists()).toBe(true);
+        expect(toggle(wrapper).element.checked).toBe(false);
+
+        await typeAmount(wrapper, '60');
+        await pay(wrapper);
+
+        expect(mockCharge).toHaveBeenCalledTimes(1);
+        expect(mockCreateAutoTopUp).not.toHaveBeenCalled();
+    });
+
+    it('creates a new ACTIVE rule when switched on, never a deactivation', async () => {
+        const wrapper = mountModal({ selectedBalanceItem: withInactiveRule() });
+        await settle();
+        await typeAmount(wrapper, '60');
+        await toggle(wrapper).setValue(true);
+        await settle();
+        await wrapper.find('input[name="auto-top-up-threshold"]').setValue('10');
+        await wrapper.find('input[name="auto-top-up-amount"]').setValue('60');
+        await settle();
+
+        await pay(wrapper);
+
+        expect(mockCreateAutoTopUp).toHaveBeenCalledTimes(1);
+        expect(mockCreateAutoTopUp.mock.calls[0]?.[0]).toMatchObject({
+            status: 'ACTIVE',
+            wallet_id: 'wall_1',
         });
     });
 });

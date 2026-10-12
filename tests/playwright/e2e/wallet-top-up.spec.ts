@@ -207,3 +207,34 @@ test.describe('Wallet top-up from the customer overview', () => {
         await expect(page.locator('input[name="auto-top-up-threshold"]')).toBeVisible();
     });
 });
+
+test.describe('Wallet top-up amount field', () => {
+    let api: ApiMock;
+
+    test.afterEach(() => {
+        expect(api?.unmatchedCalls() ?? []).toEqual([]);
+    });
+
+    test('names the field, states its range and puts the error above the field', async ({
+        page,
+    }) => {
+        api = await openTopUp(page);
+        await expect(page.getByText('Between 10.00 and 100.00 EUR')).toBeVisible();
+        await expect(page.getByRole('spinbutton', { name: /amount/i })).toBeVisible();
+        await expect(amountField(page)).not.toHaveAttribute('aria-invalid', 'true');
+
+        await amountField(page).fill('5');
+        await payButton(page).click();
+
+        const error = page.getByText('Top up with at least');
+        await expect(error).toBeVisible();
+        await expect(amountField(page)).toHaveAttribute('aria-invalid', 'true');
+        await page
+            .locator('.sv-top-up-form__amount')
+            .screenshot({ path: 'tests/playwright/test-results/dd3543-amount-error.png' });
+
+        const errorBox = await error.boundingBox();
+        const fieldBox = await amountField(page).boundingBox();
+        expect(!!errorBox && !!fieldBox && errorBox.y + errorBox.height <= fieldBox.y).toBe(true);
+    });
+});

@@ -127,6 +127,7 @@
     "checkout.payment_method_block.no_country_selected_title": "Seleziona il tuo paese di fatturazione",
     "checkout.payment_method_block.no_payment_methods_available_title": "Nessun metodo di pagamento disponibile",
     "checkout.payment_method_block.title": "Metodo di pagamento",
+    "checkout.payment_unconfirmed": "Non è stato ancora possibile confermare il pagamento, che potrebbe essere ancora in elaborazione: non pagare di nuovo.",
     "checkout.promotion_code.add_label": "Aggiungi codice promozionale",
     "checkout.promotion_code.applied_label": "Promozione applicata",
     "checkout.promotion_code.applied_status": "Codice promozionale applicato",

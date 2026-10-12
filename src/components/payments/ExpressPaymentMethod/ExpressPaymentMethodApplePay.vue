@@ -22,6 +22,7 @@ import { useLogger } from '@/components/providers';
 import { createPaymentsService } from '@/services/payments';
 import { loadAdyenSdk } from '@/utils/adyenSdk';
 import { createPaymentFailureContext, type PaymentFailureParams } from '@/utils/paymentFailure';
+import { getAuthorizeOutcome, isOutcomeUnknownAfterError } from '@/utils/paymentOutcome';
 
 const PAYMENT_GATEWAY_VARIANT_ADYEN = 'ADYEN';
 
@@ -54,6 +55,12 @@ function failureContext(params: Omit<PaymentFailureParams, 'gateway'>): Record<s
 /** A charge is only a payment once the gateway says the money moved. */
 const isAuthorized = (paymentResult: AuthorizePaymentResponse) =>
     paymentResult.status === 'SUCCESS' && paymentResult.payment?.result === 'AUTHORIZED';
+
+/** Carries the code the screen reads to stop offering a second payment. */
+const unconfirmedError = () =>
+    Object.assign(new Error('Apple Pay payment could not be confirmed'), {
+        code: 'PAYMENT_OUTCOME_UNCONFIRMED' as const,
+    });
 
 /**
  * Where the payment is made. Adyen calls this once `onAuthorized` resolves, with the Apple Pay
@@ -88,6 +95,22 @@ const handleSubmit = async (state: SubmitData, actions: SubmitActions) => {
             return;
         }
 
+        if (getAuthorizeOutcome(paymentResult) === 'UNCONFIRMED') {
+            logger.warn(
+                'PAYMENT_OUTCOME_UNCONFIRMED',
+                'The payment outcome could not be confirmed yet',
+                failureContext({
+                    reason: 'PAYMENT_PENDING',
+                    extra: {
+                        paymentStatus: paymentResult.status,
+                        paymentResult: paymentResult.payment?.result,
+                    },
+                }),
+            );
+            fail(unconfirmedError());
+            return;
+        }
+
         // Anything else — REFUSED, FAILURE, or a 3DS action this flow cannot carry out inside the
         // Apple Pay sheet — is a payment that did not happen, and must not read as one.
         logger.error(
@@ -106,6 +129,10 @@ const handleSubmit = async (state: SubmitData, actions: SubmitActions) => {
             failureContext({ reason: 'APPLE_PAY_AUTHORIZATION_FAILED', cause: error }),
             error,
         );
+        if (isOutcomeUnknownAfterError(error)) {
+            fail(unconfirmedError());
+            return;
+        }
         fail(error instanceof Error ? error : new Error('Apple Pay authorization failed'));
     }
 };

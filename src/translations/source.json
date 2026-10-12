@@ -511,6 +511,10 @@
     "defaultMessage": "Payment method",
     "description": "The title of the payment method block in the checkout form"
   },
+  "checkout.payment_unconfirmed": {
+    "defaultMessage": "Your payment could not be confirmed yet and may still go through, so please do not pay again.",
+    "description": "Shown when it is not yet known whether an express payment the customer made went through"
+  },
   "checkout.promotion_code.add_label": {
     "defaultMessage": "Add promotion code",
     "description": "Label for adding a promotion code in checkout"

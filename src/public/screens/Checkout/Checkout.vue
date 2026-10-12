@@ -180,6 +180,21 @@ const handlePaymentFailed = (error?: { message?: string; code?: string }) => {
         });
 };
 
+/** The sheet closes with nothing on screen, so an unconfirmed outcome is explained here. */
+const handleExpressPaymentFailed = (error?: { message?: string; code?: string }) => {
+    handlePaymentFailed(error);
+
+    if (error?.code === 'PAYMENT_OUTCOME_UNCONFIRMED') {
+        paymentErrorMessage.value = $t({
+            defaultMessage:
+                'Your payment could not be confirmed yet and may still go through, so please do not pay again.',
+            id: 'checkout.payment_unconfirmed',
+            description:
+                'Shown when it is not yet known whether an express payment the customer made went through',
+        });
+    }
+};
+
 const handleValidateOnSubmit = async () => {
     await checkoutForm.validation.value.$validate();
     return !checkoutForm.validation.value.$invalid;
@@ -751,6 +766,7 @@ onMounted(() => {
                 <ExpressPaymentMethods
                     v-if="
                         isExpressCheckoutEnabled &&
+                        !isPaymentUnconfirmed &&
                         checkoutForm.form.value.country &&
                         amount &&
                         expressPaymentMethodBillingInformation
@@ -766,7 +782,7 @@ onMounted(() => {
                     :validate-on-submit="handleValidateOnSubmit"
                     @update-billing-information="handleUpdateBillingInformation"
                     @payment-success="handlePaymentSuccess"
-                    @payment-failed="handlePaymentFailed"
+                    @payment-failed="handleExpressPaymentFailed"
                 />
 
                 <!-- customer information form -->

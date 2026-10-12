@@ -46,7 +46,10 @@ watch(
             props.conversionRate,
         );
 
-        entered.value = converted === undefined ? '' : toFieldQuantity(converted, entryBase.value);
+        entered.value =
+            converted === undefined
+                ? ''
+                : toFieldQuantity(converted, entryBase.value, props.currency);
     },
     { immediate: true },
 );
@@ -54,7 +57,9 @@ watch(
 function toEnteredAsModel(quantity: string): string {
     const converted = toOtherBase(quantity, entryBase.value, props.modelBase, props.conversionRate);
 
-    return converted === undefined ? '' : toFieldQuantity(converted, props.modelBase);
+    return converted === undefined
+        ? ''
+        : toFieldQuantity(converted, props.modelBase, props.currency);
 }
 
 const enteredQuantity = computed<TextControlValue>({
@@ -85,7 +90,7 @@ const creditUnitName = computed(() => {
 });
 
 const formatMoney = (quantity: number, currency: Amount['currency']) =>
-    formatAmount({ quantity: toMoneyQuantity(quantity), currency });
+    formatAmount({ quantity: toMoneyQuantity(quantity, currency), currency });
 
 const formatCredits = (quantity: number) => `${formatNumber(quantity)} ${creditUnitName.value}`;
 

@@ -14,6 +14,24 @@ export function toMinorUnitAmount(amount: Amount): { value: number; currency: st
     };
 }
 
+const DEFAULT_CURRENCY_DECIMALS = 2;
+
+/** The minor units a currency is counted in: 2 for EUR, 0 for JPY, 3 for KWD. */
+export function getCurrencyDecimals(currency?: string): number {
+    if (!currency) {
+        return DEFAULT_CURRENCY_DECIMALS;
+    }
+
+    try {
+        return (
+            new Intl.NumberFormat(undefined, { style: 'currency', currency }).resolvedOptions()
+                .maximumFractionDigits ?? DEFAULT_CURRENCY_DECIMALS
+        );
+    } catch {
+        return DEFAULT_CURRENCY_DECIMALS;
+    }
+}
+
 const decimalPlaces = (quantity: string): number => quantity.split('.')[1]?.length ?? 0;
 
 /** Summed as integers, because `0.1 + 0.2` is not `0.3` and a total a cent out is worse than none. */

@@ -27,6 +27,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A checkout given a portal object meant for another element still logs `INVALID_TOKEN`, once, and now also dispatches it as an `error` event.
 - An error the UI library recovers from by itself, such as a date it can only format in the browser's own time zone, is logged as the warning `UI_COMPONENT_RECOVERED` rather than as `UNHANDLED_ERROR`.
 - A JSON response that cannot be parsed is logged once, as `REQUEST_PARSE_FAILED` with the request's `path`, `method`, `statusCode` and `requestId`. It used to be logged a second time as `REQUEST_FAILED`, and without that context.
+- The wallet balances block offers Top up, Automatic top-up and Cancel only where it can open them. The standalone `<solvimon-wallet-balances>` component no longer shows these buttons, which did nothing there; the customer overview and subscription details screens still offer them. On the subscription details screen, a wallet offers only the top-ups billed on that subscription.
+- The wallet balances block now emits `payment-failed` when a top-up charge fails, and `auto-top-up-saved` when an automatic top-up rule set up alongside a top-up is saved, so the host can reload the wallet.
+- The top-up modal's "Between {minimum} and {maximum}" line is gone: the bounds now sit beside the amount field's new "Amount" label. Its message id, `topup_modal.flexible_option.bounds`, is no longer used, so a `messages` override for it no longer applies.
 
 ### Fixed
 
@@ -80,6 +83,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A save the `billing-information-form` component is refused, a default payment method the API refuses, and a failed reload of the payment methods after subscription management stores one are reported once, as `REQUEST_FAILED`. They also escaped as unhandled promise rejections.
 - The logger reads `onLog`, `logLevel` and `environment` each time it logs. An element whose properties were set after it was appended never called that `onLog`, and kept writing to the console with `environment` missing from its entries even once it was set to `LIVE`.
 - `UNHANDLED_ERROR` entries carry the `componentName`, `environment` and `url` every other entry has, so a page with several elements can tell which one failed.
+- The top-up modal checks the amount the customer chooses, and says under the field why it was refused: empty, zero or less, or outside the item's minimum and maximum. Such an amount was sent to the API, or silently refused.
+- A top-up is charged on the schedule of the top-up item the customer chose, and an automatic top-up rule set up with it is billed on that schedule too. It was charged on the first item's schedule, so a wallet shared by several subscriptions could bill the wrong one.
+- The top-up modal says when a top-up fails, telling a declined payment apart from any other failure; the spinner just stopped. When the automatic top-up rule set up with a top-up could not be saved, the receipt now says so, and Done waits until that save is over.
+- The automatic top-up modal shows why a rule could not be saved, and turns Save off with a note when the wallet has nothing a rule can charge; Save did nothing. Its subtitle reads "auto top-up" instead of "auto top so", and the Dutch subtitle is complete.
+- A switched-off automatic top-up rule no longer blocks the top-up with an error under a field the customer cannot see, and is no longer saved.
+- Credits are converted to money with the minor units of the currency charged, such as none for JPY and three for KWD or BHD, instead of always two decimals.
+- When the total of a top-up cannot be calculated, the modal says so instead of showing a loading placeholder for good, and a total that is about to change is dimmed until the new one arrives.
+- Each wallet row opens its own wallet when a top-up item grants credit to several wallets; every row opened the first.
+- A subscription with no name or reference is named after its plan, or "Subscription 2" and so on, in the top-up modal, instead of by its id.
 
 ## [0.1.0-alpha.27] - 2026-10-12
 

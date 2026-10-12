@@ -840,11 +840,15 @@ test.describe('Checkout', () => {
             payment_intent_client_secret: 'pi_3TestIntent_secret_Abc123',
         };
 
+        const SAVED_FORM_STATE_KEY = `solvimon_checkout_redirect_state:${SUBSCRIPTION_ID}`;
         const SAVED_FORM_STATE = JSON.stringify({
-            email: 'returning@example.com',
-            country: 'NL',
-            type: 'INDIVIDUAL',
-            firstName: 'Ada',
+            savedAt: Date.now(),
+            form: {
+                email: 'returning@example.com',
+                country: 'NL',
+                type: 'INDIVIDUAL',
+                firstName: 'Ada',
+            },
         });
 
         test('shows the payment as completed without authorizing again', async ({ page }) => {
@@ -899,13 +903,16 @@ test.describe('Checkout', () => {
             expect(Object.keys(REDIRECT_QUERY).filter((name) => params.has(name))).toEqual([]);
         });
 
+        // Declined, so the form stays on screen to be read back.
         test('restores the details the customer filled in before the redirect', async ({
             page,
         }) => {
             api = await mountCheckout(page, {
                 portalObject: aPortalObject({ successUrl: '' }),
                 configuration: { countryCode: 'NL' },
-                sessionStorage: { solvimon_checkout_redirect_state: SAVED_FORM_STATE },
+                query: REDIRECT_QUERY,
+                stripe: { intentStatus: 'requires_payment_method' },
+                sessionStorage: { [SAVED_FORM_STATE_KEY]: SAVED_FORM_STATE },
             });
 
             await expect(checkout(page).email).toHaveValue('returning@example.com');
@@ -915,13 +922,31 @@ test.describe('Checkout', () => {
             api = await mountCheckout(page, {
                 portalObject: aPortalObject({ successUrl: '' }),
                 configuration: { countryCode: 'NL' },
-                sessionStorage: { solvimon_checkout_redirect_state: SAVED_FORM_STATE },
+                query: REDIRECT_QUERY,
+                stripe: { intentStatus: 'requires_payment_method' },
+                sessionStorage: { [SAVED_FORM_STATE_KEY]: SAVED_FORM_STATE },
             });
 
             await expect(checkout(page).email).toHaveValue('returning@example.com');
             await expect
                 .poll(() =>
-                    page.evaluate(() => sessionStorage.getItem('solvimon_checkout_redirect_state')),
+                    page.evaluate((key) => sessionStorage.getItem(key), SAVED_FORM_STATE_KEY),
+                )
+                .toBeNull();
+        });
+
+        // Left behind by a payment that never redirected, the details are not this visit's.
+        test('restores nothing without a return from a redirect', async ({ page }) => {
+            api = await mountCheckout(page, {
+                configuration: { countryCode: 'NL' },
+                sessionStorage: { [SAVED_FORM_STATE_KEY]: SAVED_FORM_STATE },
+            });
+
+            await loaded(page);
+            await expect(checkout(page).email).toHaveValue('');
+            await expect
+                .poll(() =>
+                    page.evaluate((key) => sessionStorage.getItem(key), SAVED_FORM_STATE_KEY),
                 )
                 .toBeNull();
         });
@@ -929,10 +954,12 @@ test.describe('Checkout', () => {
         test('ignores saved details it cannot read', async ({ page }) => {
             api = await mountCheckout(page, {
                 configuration: { email: 'customer@example.com', countryCode: 'NL' },
-                sessionStorage: { solvimon_checkout_redirect_state: 'not json' },
+                query: REDIRECT_QUERY,
+                stripe: { intentStatus: 'requires_payment_method' },
+                sessionStorage: { [SAVED_FORM_STATE_KEY]: 'not json' },
             });
 
-            await loaded(page);
+            await expect(checkout(page).screen).toContainText(/payment failed/i);
             await expect(checkout(page).email).toHaveValue('customer@example.com');
         });
     });

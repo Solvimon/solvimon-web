@@ -314,6 +314,7 @@ The SDK emits structured log entries via the [`onLog`](#error-logging) callback.
 | `ADYEN_INVALID_CONFIGURATION`        | No environment set for adyen advanced flow, defaulted to live                                                |
 | `APPLE_PAY_ACTION_REQUIRED`          | Reserved — not currently emitted                                                                             |
 | `APPLE_PAY_FORM_INCOMPLETE`          | Apple Pay authorization stopped: the checkout form is incomplete                                             |
+| `CHECKOUT_FORM_STATE_NOT_SAVED`      | Could not keep the checkout form for a redirect return                                                       |
 | `INVOICE_PREVIEW_SKIPPED`            | Skipped the on-demand charge invoice preview: no schedule to charge it on                                    |
 | `ON_DEMAND_CHARGE_REFUSED`           | The on-demand order was refused or its payment did not go through                                            |
 | `PAYMENT_INTEGRATION_NOT_RENDERABLE` | No Adyen payment methods to offer                                                                            |

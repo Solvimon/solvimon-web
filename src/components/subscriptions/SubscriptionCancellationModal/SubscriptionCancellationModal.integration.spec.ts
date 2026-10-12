@@ -143,6 +143,7 @@ const subscriptionWithPricings = {
     pricing_plan_schedule_infos: [
         {
             id: 'ppsc_1',
+            start_at: '2020-01-01T00:00:00Z',
             pricing_plan_schedule: {
                 type: 'DEFAULT',
                 enabled_pricings: [{ pricing_id: 'pric_1' }],
@@ -299,6 +300,33 @@ describe('SubscriptionCancellationModal', () => {
             expect(summary).toContain('Credit pack 10 000 per month');
             expect(summary).toContain('100,000 monthly credits');
             // Only the pricing actually enabled on the schedule, not every option in the group.
+            expect(summary).not.toContain('Credit pack 50 000 per month');
+        });
+
+        it('names what is billed now, not a change that has yet to start', () => {
+            const [current] = subscriptionWithPricings.pricing_plan_schedule_infos;
+            const wrapper = mountComponent({
+                subscription: {
+                    ...subscriptionWithPricings,
+                    pricing_plan_schedule_infos: [
+                        current,
+                        {
+                            ...current,
+                            id: 'ppsc_future',
+                            start_at: '2999-01-01T00:00:00Z',
+                            pricing_plan_schedule: {
+                                type: 'DEFAULT',
+                                enabled_pricings: [{ pricing_id: 'pric_2' }],
+                            },
+                        },
+                    ],
+                },
+            });
+            const summary = wrapper
+                .find('.sv-subscription-cancellation-modal__subscription')
+                .text();
+
+            expect(summary).toContain('Credit pack 10 000 per month');
             expect(summary).not.toContain('Credit pack 50 000 per month');
         });
 

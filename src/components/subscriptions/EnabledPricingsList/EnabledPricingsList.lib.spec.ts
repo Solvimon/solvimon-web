@@ -61,6 +61,91 @@ describe('getEnabledPricingsEntries', () => {
         });
     });
 
+    it('lists a pricing customized for the subscription, at the price it is billed at', () => {
+        const scheduleInfo = {
+            pricing_plan_schedule: {
+                id: 'ppsc_1',
+                // A customized pricing is billed by being on the schedule, never by being enabled.
+                enabled_pricings: [],
+                override_pricings: [
+                    {
+                        id: 'pri_custom',
+                        original_pricing_id: 'pri_credits_1000',
+                        items: [
+                            {
+                                id: 'pit_custom',
+                                original_pricing_item_id: 'pit_1',
+                                configs: [
+                                    {
+                                        id: 'pic_custom',
+                                        original_pricing_item_config_id: 'pic_1',
+                                        details: {
+                                            bands: [
+                                                { amount: { currency: 'EUR', quantity: '80' } },
+                                            ],
+                                            pricing_period: { type: 'MONTH', value: 1 },
+                                        },
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                ],
+            },
+            pricing_plan_version: {
+                pricing_categories: [
+                    {
+                        id: 'pca_1',
+                        pricing_groups: [
+                            {
+                                id: 'pgr_1',
+                                name: 'Credit packs',
+                                pricings: [
+                                    {
+                                        id: 'pri_credits_1000',
+                                        name: '1.000 credits',
+                                        items: [
+                                            {
+                                                id: 'pit_1',
+                                                configs: [
+                                                    {
+                                                        id: 'pic_1',
+                                                        details: {
+                                                            bands: [
+                                                                {
+                                                                    amount: {
+                                                                        currency: 'EUR',
+                                                                        quantity: '100',
+                                                                    },
+                                                                },
+                                                            ],
+                                                            pricing_period: {
+                                                                type: 'MONTH',
+                                                                value: 1,
+                                                            },
+                                                        },
+                                                    },
+                                                ],
+                                            },
+                                        ],
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                ],
+            },
+        } as unknown as PricingPlanScheduleInfoExpanded;
+
+        expect(getEnabledPricingsEntries(scheduleInfo)).toEqual([
+            expect.objectContaining({
+                pricingId: 'pri_custom',
+                name: '1.000 credits',
+                amount: { currency: 'EUR', quantity: '80' },
+            }),
+        ]);
+    });
+
     it('leaves out pricings the schedule does not have enabled', () => {
         const entries = getEnabledPricingsEntries(
             createScheduleInfo({

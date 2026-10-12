@@ -1,5 +1,7 @@
 import {
     combinePricingPlanVersionWithOverrides,
+    getEnabledPricingIdsWithOverrides,
+    getOverridePricingIds,
     getSchedulesWithPlanData,
 } from './pricingPlanScheduleOverrides';
 import type {
@@ -519,5 +521,29 @@ describe('pricingPlanScheduleOverrides', () => {
                 ),
             ).toBe('5');
         });
+    });
+});
+
+describe('getEnabledPricingIdsWithOverrides', () => {
+    it('counts a customized pricing as billed, under its own id', () => {
+        const schedule = {
+            enabled_pricings: [{ pricing_id: 'pri_enabled' }],
+            override_pricings: [{ id: 'pri_custom', original_pricing_id: 'pri_original' }],
+        } as unknown as PricingPlanSchedule;
+
+        expect(getEnabledPricingIdsWithOverrides(schedule)).toEqual(['pri_enabled', 'pri_custom']);
+        expect(getOverridePricingIds(schedule)).toEqual(['pri_custom']);
+    });
+
+    it('leaves out an override that has not been saved yet', () => {
+        const schedule = {
+            override_pricings: [{ original_pricing_id: 'pri_original' }],
+        } as unknown as PricingPlanSchedule;
+
+        expect(getEnabledPricingIdsWithOverrides(schedule)).toEqual([]);
+    });
+
+    it('returns nothing without a schedule', () => {
+        expect(getEnabledPricingIdsWithOverrides(undefined)).toEqual([]);
     });
 });

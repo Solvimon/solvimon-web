@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - A payment whose outcome is not known yet is no longer reported as failed. A bank debit such as SEPA that is still processing, an authorization answered with a pending payment, and a payment call that got no answer or failed with a 5xx used to show "Payment failed" with a "Try again" button, so a customer whose payment was on its way could pay a second time. The customer is now told the payment may still go through and not to pay again, with no retry, and checkout and the pay invoice screen keep the pay button and the express payment methods off. It is logged as `PAYMENT_OUTCOME_UNCONFIRMED` (warning), and a `payment-failed` event for it carries that code instead of `AUTHORIZATION_FAILED`. Only a call the API turned down (a 4xx) still counts as a failed payment.
+- When checkout cannot keep its form for a payment redirect, for example because session storage throws, it logs `CHECKOUT_FORM_STATE_NOT_SAVED` as a warning and the pay button no longer stays pending.
 
 ### Changed
 
@@ -35,6 +36,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The Stripe card form keeps what the customer typed when the amount changes, for example after a promotion code, a seat change or a new country. Stripe's payment form was mounted a second time beside the first, so the customer lost the card details and Pay submitted the empty form. The billing country on the payment is the one chosen last.
 - The Stripe payment form now loads on a page sandboxed without `allow-same-origin`; it was never set up there. The publishable key, email and name are now posted to the Stripe frame for the page's own origin only, rather than for any origin, except on a page whose origin is opaque.
 - The frame that holds the Stripe payment fields has an accessible name, "Payment form", in the customer's language.
+- Checkout charges the price of the order as the customer last changed it. An invoice preview that answered after a later one replaced it, so the amount paid could come from earlier seats or another country, and a change made in the same moment as another, such as an email typed while the country changed or the country filled in from the customer's location, was not priced at all. Pay now also waits for the preview.
+- Checkout offers the payment methods of the country chosen last. A slow lookup for a country the customer had left could replace them and authorize the payment through that country's payment acceptor, and a failed lookup the customer had moved on from kept the error card and the pay button off.
+- A promotion code that the latest invoice preview turns down is no longer shown as applied, and removing a code while it is still being applied no longer says it could not be applied.
+- Checkout no longer fills in a later visit, or another plan, with the previous customer's details, seats and add-ons. The form is kept per subscription for a payment redirect only, restored on a return within the hour, and cleared once the payment ends on the page. A restored promotion code shows in its section, the email the host passes is not overwritten, and saved values that do not fit the form or the plan are dropped in favour of the plan's own.
+- The failures of loading payment methods in checkout, and of loading on-demand items for a subscription that moved on to another schedule, are logged with their error; they were logged with none.
 
 ## [0.1.0-alpha.27] - 2026-10-12
 

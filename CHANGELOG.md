@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `STRIPE_REDIRECT_RETURN_FAILED` is now also logged when the payment a Stripe redirect returned from cannot be retrieved from Stripe.
 - The SDK takes the payment redirect parameters out of the page address once it has handled a return, with `history.replaceState`: `payment_acceptor_id`, `redirectResult`, `redirect_status`, `payment_intent`, `payment_intent_client_secret`, `setup_intent` and `setup_intent_client_secret`. An Adyen return is cleared right away, a Stripe one once Stripe has answered. A host that reads these parameters must do so before the SDK's screen or component mounts.
+- A Stripe error passed to `onLog`, written to the console or carried by `payment-failed` now holds only its `code`, `type` and `message`. It used to be passed on whole, and could carry the payment or setup intent with its client secret.
 
 ### Fixed
 
@@ -31,6 +32,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - An Adyen redirect return is confirmed once, by the payment form of the payment acceptor it names. A reload sent the spent result to Adyen again, "Try again" on the error card reloaded the page and so could never retry, and with several Adyen payment methods each one confirmed the same return. "Try again" now starts the form over in place. A redirect result that is not one Adyen could have issued is not sent, and is reported as unconfirmed.
 - Coming back from 3DS while storing a payment method now confirms the method; the form that handles the return only opened after "Add payment method" was pressed.
 - Only one Adyen drop-in is shown when the payment form is rebuilt while it is still loading, and no drop-in is built while a returned payment is being confirmed, so a second payment cannot start before the first is known.
+- The Stripe card form keeps what the customer typed when the amount changes, for example after a promotion code, a seat change or a new country. Stripe's payment form was mounted a second time beside the first, so the customer lost the card details and Pay submitted the empty form. The billing country on the payment is the one chosen last.
+- The Stripe payment form now loads on a page sandboxed without `allow-same-origin`; it was never set up there. The publishable key, email and name are now posted to the Stripe frame for the page's own origin only, rather than for any origin, except on a page whose origin is opaque.
+- The frame that holds the Stripe payment fields has an accessible name, "Payment form", in the customer's language.
 
 ## [0.1.0-alpha.27] - 2026-10-12
 

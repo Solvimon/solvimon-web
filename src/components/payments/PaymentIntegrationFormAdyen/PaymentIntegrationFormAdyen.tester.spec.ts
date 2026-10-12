@@ -405,8 +405,8 @@ describe('PaymentIntegrationFormAdyen (DD-3538 tester)', () => {
         });
 
         // The brief: hostile values such as `%` never reach the API. A lone `%` survives
-        // URLSearchParams as itself and passes the printable-ASCII shape check, as does markup.
-        it.fails.each([
+        // URLSearchParams as itself, so only the shape check can stop it, as it does markup.
+        it.each([
             ['a lone percent sign', 'redirectResult=%'],
             ['markup', `redirectResult=${encodeURIComponent('<script>alert(1)</script>')}`],
         ])('does not send %s to the API', async (_, query) => {
@@ -446,26 +446,23 @@ describe('PaymentIntegrationFormAdyen (DD-3538 tester)', () => {
         });
 
         // onMounted promises the drop-in waits for the returned payment; an options change while
-        // it is being confirmed builds the drop-in anyway. The same happens on the base.
-        it.fails(
-            'offers no drop-in while the returned payment is still being confirmed',
-            async () => {
-                mockGetPaymentDetails.mockReturnValue(new Promise(() => {}));
-                visit('?payment_acceptor_id=paya_123&redirectResult=res_1');
+        // it is being confirmed used to build the drop-in anyway.
+        it('offers no drop-in while the returned payment is still being confirmed', async () => {
+            mockGetPaymentDetails.mockReturnValue(new Promise(() => {}));
+            visit('?payment_acceptor_id=paya_123&redirectResult=res_1');
 
-                const wrapper = mount(PaymentIntegrationFormAdyen, { props: mockProps });
-                await flushPromises();
-                await wrapper.setProps({
-                    paymentMethodOptionResponseEntry: {
-                        ...entry('paya_123'),
-                        options: [{ name: 'iDEAL' }],
-                    } as never,
-                });
-                await flushPromises();
+            const wrapper = mount(PaymentIntegrationFormAdyen, { props: mockProps });
+            await flushPromises();
+            await wrapper.setProps({
+                paymentMethodOptionResponseEntry: {
+                    ...entry('paya_123'),
+                    options: [{ name: 'iDEAL' }],
+                } as never,
+            });
+            await flushPromises();
 
-                expect(mockDropInMount).not.toHaveBeenCalled();
-            },
-        );
+            expect(mockDropInMount).not.toHaveBeenCalled();
+        });
     });
 
     describe('mounting', () => {

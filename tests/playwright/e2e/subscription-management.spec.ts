@@ -14,6 +14,7 @@ import {
     CUSTOMER_ID,
     DEFAULT_SCHEDULE_ID,
     SUBSCRIPTION_ID,
+    type Json,
 } from '../support/fixtures';
 
 /**
@@ -275,6 +276,58 @@ test.describe('Subscription management', () => {
                 ),
             ).toBeVisible();
             await expect(subscriptionManagement(page).updateButton).toBeDisabled();
+        });
+
+        test('offers no method the API would refuse to charge', async ({ page }) => {
+            api = await mountLoaded(page, {
+                paymentMethods: [aPaymentMethod({ isDefault: true, status: 'INACTIVE' })],
+            });
+            const ui = subscriptionManagement(page);
+
+            await expect(
+                ui.form.locator('.sv-subscription-management-form__no-payment-method'),
+            ).toBeVisible();
+            await ui.form.getByText('Large pack').click();
+            await expect(ui.updateButton).toBeDisabled();
+            await expect(ui.updateButton).toHaveAccessibleDescription(/no payment method/i);
+        });
+    });
+
+    // ─── Customized pricing ───────────────────────────────────────────────────
+
+    test.describe('customized pricing', () => {
+        /** The small pack is customized for this subscription, so it bills under an id of its own. */
+        function aCustomizedSubscription(): Json {
+            const subscription = aManageableSubscription();
+            const infos = subscription.pricing_plan_schedule_infos as Json[];
+
+            return {
+                ...subscription,
+                pricing_plan_schedule_infos: infos.map((info) => ({
+                    ...info,
+                    pricing_plan_schedule: {
+                        ...(info.pricing_plan_schedule as Json),
+                        enabled_pricings: [],
+                        override_pricings: [
+                            { id: 'pri_small_custom', original_pricing_id: 'pri_small' },
+                        ],
+                    },
+                })),
+            };
+        }
+
+        test('says to contact support rather than drop the customization', async ({ page }) => {
+            api = await mountLoaded(page, { subscription: aCustomizedSubscription() });
+            const ui = subscriptionManagement(page);
+
+            await expect(
+                page.locator('.sv-subscription-management__customized-pricing'),
+            ).toBeVisible();
+            await expect(ui.form).toHaveCount(0);
+            await expect(ui.updateButton).toBeDisabled();
+            await expect(ui.updateButton).toHaveAccessibleDescription(/contact support/i);
+            expect(api.calls('invoicePreview')).toEqual([]);
+            expect(api.calls('createPricingPlanSchedule')).toEqual([]);
         });
     });
 

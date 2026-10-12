@@ -296,6 +296,8 @@
     "subscription_details.renew_button.label": "Abonnement verlengen",
     "subscription_details.renew_success": "Je abonnement is verlengd.",
     "subscription_details.title": "Abonnementsdetails",
+    "subscription_management.customized_pricing.message": "Neem contact op met support om het te wijzigen.",
+    "subscription_management.customized_pricing.title": "Dit abonnement heeft aangepaste prijzen",
     "subscription_management.done_button.label": "Klaar",
     "subscription_management.empty_state.message": "Er is op dit moment niets aan dit abonnement te wijzigen.",
     "subscription_management.empty_state.title": "Niets te wijzigen",

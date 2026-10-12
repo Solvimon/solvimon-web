@@ -422,3 +422,86 @@ describe('PaymentIntegrationFormStripeFrame', () => {
         });
     });
 });
+
+describe('PaymentIntegrationFormStripeFrame, tried from outside (DD-3539)', () => {
+    async function loaded(props: Partial<PaymentIntegrationFormStripeFrameProps> = {}) {
+        const wrapper = mount(PaymentIntegrationFormStripeFrame, {
+            props: { ...defaultProps, ...props },
+        });
+        const iframe = wrapper.find('iframe').element as HTMLIFrameElement;
+        const cw = mockContentWindow(iframe);
+        await wrapper.find('iframe').trigger('load');
+        return { wrapper, cw };
+    }
+
+    const messages = (cw: { postMessage: ReturnType<typeof vi.fn> }) =>
+        cw.postMessage.mock.calls.map(
+            ([message]) => message as { type: string; initId?: number; options?: unknown },
+        );
+
+    it('sends an update that comes before Stripe is ready, after the init it follows', async () => {
+        const { wrapper, cw } = await loaded();
+
+        await wrapper.setProps({ options: CHANGED_OPTIONS });
+        await wrapper.setProps({ options: { ...CHANGED_OPTIONS, amount: 3000 } });
+
+        expect(messages(cw).map(({ type }) => type)).toEqual([
+            'stripe:init',
+            'stripe:init',
+            'stripe:update',
+        ]);
+        expect(messages(cw).at(-1)?.options).toMatchObject({ amount: 3000 });
+        dispatchMessage(cw, { type: 'stripe:ready', initId: 2 });
+        expect(wrapper.vm.triggerSubmit()).toBe(true);
+    });
+
+    it('compares the next change with what was sent, not with the last props', async () => {
+        const { wrapper, cw } = await loaded();
+
+        await wrapper.setProps({ options: REPRICED_OPTIONS });
+        await wrapper.setProps({ options: defaultProps.options });
+
+        expect(messages(cw).map(({ type }) => type)).toEqual([
+            'stripe:init',
+            'stripe:update',
+            'stripe:update',
+        ]);
+        expect(messages(cw).at(-1)?.options).toMatchObject({ amount: 1000 });
+    });
+
+    it('answers a submit in flight when a refused update set the frame up anew', async () => {
+        const { wrapper, cw } = await loaded();
+        dispatchMessage(cw, { type: 'stripe:ready', initId: 1 });
+        expect(wrapper.vm.triggerSubmit()).toBe(true);
+
+        await wrapper.setProps({ options: REPRICED_OPTIONS });
+        dispatchMessage(cw, { type: 'stripe:update:error' });
+        dispatchMessage(cw, { type: 'stripe:submit:success', confirmationTokenId: 'ctok_1' });
+
+        expect(wrapper.emitted('submit-success')).toEqual([['ctok_1']]);
+        expect(wrapper.vm.triggerSubmit()).toBe(false);
+    });
+
+    it('ignores an update error posted by another window', async () => {
+        const { cw } = await loaded();
+        const before = cw.postMessage.mock.calls.length;
+
+        dispatchMessage(window, { type: 'stripe:update:error' });
+
+        expect(cw.postMessage.mock.calls.length).toBe(before);
+    });
+
+    // In a frame sandboxed without allow-same-origin, location.origin is still the URL's origin
+    // while the document's, and so the blob frame's, is opaque. A message aimed at the URL's origin
+    // is dropped and the frame is never set up; self.origin is the document's origin.
+    it.fails('posts to any origin when the document origin is opaque', async () => {
+        const original = Object.getOwnPropertyDescriptor(window, 'origin');
+        Object.defineProperty(window, 'origin', { value: 'null', configurable: true });
+        try {
+            const { cw } = await loaded();
+            expect(cw.postMessage.mock.calls.map(([, target]) => target)).toEqual(['*']);
+        } finally {
+            if (original) Object.defineProperty(window, 'origin', original);
+        }
+    });
+});

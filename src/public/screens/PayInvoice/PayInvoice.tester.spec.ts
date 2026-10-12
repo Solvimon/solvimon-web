@@ -297,9 +297,9 @@ describe('PayInvoice (DD-3538 round 2 tester)', () => {
 
     // Released for the challenge, the wrapper also releases every other gateway form inside it.
     // A second Adyen acceptor's own submit (Enter in its card fields, its PayPal button) has its
-    // own in-flight guard and the screen's validation does not look at pending, so it pays again.
-    // Keyboard could already reach it while held; the release makes it reachable by pointer too.
-    it.fails('takes no payment from another acceptor while a challenge is up', async () => {
+    // own in-flight guard and the screen's validation does not look at pending, so it paid again.
+    // Keyboard could already reach it while held; the release made it reachable by pointer too.
+    it('takes no payment from another acceptor while a challenge is up', async () => {
         mockAuthorizePayment.mockResolvedValueOnce(challenge);
         mockAuthorizePayment.mockReturnValueOnce(new Promise(() => {}));
         const acceptor = (id: string) =>

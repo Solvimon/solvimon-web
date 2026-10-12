@@ -9,7 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- `SubscriptionManagement` offers only the subscription's own payment method, which is the one the API charges a change to, and no longer offers to add one. It used to let the customer pick or add any method and then charge the subscription's method regardless. A subscription without a usable method says so and cannot be changed.
+- `SubscriptionManagement` offers only the subscription's own payment method, which is the one the API charges a change to, and no longer offers to add one. It used to let the customer pick or add any method and then charge the subscription's method regardless. The method is only offered while the API accepts it: active, of the subscription's customer, and not prepaid or of an unknown type. A subscription without such a method says so, the disabled Update button points at that message, and it cannot be changed.
+- `SubscriptionManagement` no longer changes a subscription that has pricing customized for it, and says to contact support instead. A new schedule carries none of the customizations, so any change, to whichever group, dropped them, and moving off a customized pricing could not be priced. `SubscriptionDetails` still lists such a pricing under Upgrades at its customized price, but offers no Upgrade action while the schedule has customized pricing.
 - The `manage-subscription` action request carries `data.enabledPricingId` when the customer chose Upgrade on a pricing in `SubscriptionDetails`. Pass it to `SubscriptionManagement` as `configuration.enabledPricingId` to open on that pricing's group.
 
 ### Fixed
@@ -17,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `SubscriptionManagement` prices a change on the schedule that is billed now. From the second change on, it priced the change on the first schedule the subscription ever had, which had ended.
 - `SubscriptionManagement` only commits a change the customer has made and seen the price of. It could commit while the price was still loading or had failed, and committing what the subscription already had started a duplicate schedule. It shows an error when the subscription cannot be loaded and says so when there is nothing to change, where it showed an empty page. The form is locked while the change is committed, and Enter in the form commits it.
 - `SubscriptionDetails` lists the upgrades, and the cancel confirmation names the pricings, of the schedule billed now rather than one that has yet to start.
-- A pricing customized for the subscription is listed under Upgrades at its customized price, and `SubscriptionManagement` opens on its group. Both looked it up on the plan, where it does not exist under the id the subscription bills it by, so it was left out.
+- A pricing customized for the subscription is listed under Upgrades at its customized price, and `SubscriptionManagement` names its group. Both looked it up on the plan, where it does not exist under the id the subscription bills it by, so it was left out.
 
 ## [0.1.0-alpha.27] - 2026-10-12
 

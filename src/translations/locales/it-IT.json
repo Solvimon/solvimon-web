@@ -286,6 +286,8 @@
     "subscription_details.renew_button.label": "Rinnova abbonamento",
     "subscription_details.renew_success": "Il tuo abbonamento è stato rinnovato.",
     "subscription_details.title": "Dettagli abbonamento",
+    "subscription_management.customized_pricing.message": "Contatta l’assistenza per modificarlo.",
+    "subscription_management.customized_pricing.title": "Questo abbonamento ha prezzi personalizzati",
     "subscription_management.done_button.label": "Fatto",
     "subscription_management.empty_state.message": "Al momento non ci sono opzioni modificabili per questo abbonamento.",
     "subscription_management.empty_state.title": "Niente da modificare",

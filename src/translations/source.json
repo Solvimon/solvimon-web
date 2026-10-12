@@ -1147,6 +1147,14 @@
     "defaultMessage": "Subscription details",
     "description": "Title for the subscription details page"
   },
+  "subscription_management.customized_pricing.message": {
+    "defaultMessage": "Please contact support to change it.",
+    "description": "Message shown on the manage subscription screen when the subscription has pricing customized for it, which cannot be changed here"
+  },
+  "subscription_management.customized_pricing.title": {
+    "defaultMessage": "This subscription has custom pricing",
+    "description": "Title shown on the manage subscription screen in place of the form when the subscription has pricing customized for it, which cannot be changed here"
+  },
   "subscription_management.done_button.label": {
     "defaultMessage": "Done",
     "description": "Label of the button that leaves the manage subscription screen once the change is committed"

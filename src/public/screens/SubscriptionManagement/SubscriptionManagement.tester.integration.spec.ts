@@ -359,68 +359,64 @@ describe('SubscriptionManagement (tester, DD-3544)', () => {
     });
 
     describe('customized pricings', () => {
-        it('never commits the id of a customized pricing as enabled', async () => {
+        /**
+         * The portal schedule endpoint builds the new schedule from `enabled_pricings` alone and
+         * copies no `override_pricings` (PortalPricingPlanScheduleService.createPricingPlanSchedule),
+         * and refuses the original of an override as enabled (EnabledPricingsValidator). Any change,
+         * to whichever group, would drop the customized credit pack, so none is priced or committed.
+         */
+        it('does not commit a change that drops a customized pricing of another group', async () => {
             const wrapper = mountComponent({
                 sub: customizedSubscription,
                 enabledPricingId: 'pri_support_plus',
             });
             await flushPromises();
 
-            await wrapper.find('.sv-subscription-management__form').trigger('submit');
+            await wrapper.find('.sv-subscription-management__update').trigger('click');
             await flushPromises();
 
-            expect(mockCreatePricingPlanSchedule).toHaveBeenCalledTimes(1);
-            expect(mockCreatePricingPlanSchedule).toHaveBeenCalledWith(
-                expect.objectContaining({
-                    enabledPricings: expect.not.arrayContaining([
-                        { pricing_id: 'pri_1000_custom' },
-                    ]),
-                }),
+            // The form, and with it any way to submit a choice, is replaced by the explanation.
+            expect(wrapper.find('.sv-subscription-management__form').exists()).toBe(false);
+
+            const sent = mockCreatePricingPlanSchedule.mock.calls.map(
+                ([payload]) => payload.enabledPricings as { pricing_id: string }[],
+            );
+
+            // Nothing is committed, so nothing is dropped: no payload goes out without the pack.
+            expect(sent).toEqual([]);
+            expect(isDisabled(wrapper)).toBe(true);
+            expect(wrapper.find('.sv-subscription-management__customized-pricing').exists()).toBe(
+                true,
             );
         });
 
-        /**
-         * DEFECT (DD-3544 tester): the portal schedule endpoint builds the new schedule from
-         * `enabled_pricings` alone and copies no `override_pricings` (PortalPricingPlanScheduleService
-         * .createPricingPlanSchedule). A change to another group therefore drops the customized
-         * credit pack: the new schedule bills neither it nor its original, while the preview (a
-         * customization of the running schedule, which keeps its overrides) still priced it in.
-         * Either keep the group billed (send its original) or refuse the change; do not drop it.
-         */
-        it.fails(
-            'does not commit a change that drops a customized pricing of another group',
-            async () => {
-                const wrapper = mountComponent({
-                    sub: customizedSubscription,
-                    enabledPricingId: 'pri_support_plus',
-                });
-                await flushPromises();
+        it('does not price a change it cannot commit', async () => {
+            mountComponent({ sub: customizedSubscription, enabledPricingId: 'pri_support_plus' });
+            await flushPromises();
 
-                await wrapper.find('.sv-subscription-management__form').trigger('submit');
-                await flushPromises();
+            expect(mockGetInvoicePreview).not.toHaveBeenCalled();
+        });
 
-                const sent = mockCreatePricingPlanSchedule.mock.calls.map(
-                    ([payload]) => payload.enabledPricings as { pricing_id: string }[],
-                );
+        it('says why the update cannot be made, on the button itself', async () => {
+            const wrapper = mountComponent({ sub: customizedSubscription });
+            await flushPromises();
 
-                expect(
-                    sent.every((enabled) =>
-                        enabled.some(({ pricing_id }) => pricing_id === 'pri_1000'),
-                    ),
-                ).toBe(true);
-                expect(sent).not.toEqual([]);
-            },
-        );
+            const describedBy = wrapper
+                .find('.sv-subscription-management__update')
+                .attributes('aria-describedby');
+
+            expect(describedBy).toBeDefined();
+            expect(wrapper.find(`#${describedBy}`).exists()).toBe(true);
+        });
     });
 
     describe('payment method', () => {
         /**
-         * DEFECT (DD-3544 tester): the API only accepts a change when the subscription's method is
-         * ACTIVE (PortalPricingPlanScheduleService.validatePaymentMethod). Only ARCHIVED methods
-         * are filtered out of the list, so an INACTIVE or SETUP one is offered, Update is enabled,
-         * and the commit fails with a generic error instead of the "no payment method" message.
+         * The API only accepts a change when the subscription's method is ACTIVE
+         * (PortalPricingPlanScheduleService.validatePaymentMethod), so an INACTIVE one is not
+         * offered.
          */
-        it.fails('cannot be committed when the subscription method is not active', async () => {
+        it('cannot be committed when the subscription method is not active', async () => {
             const wrapper = mountComponent({
                 enabledPricingId: 'pri_5000',
                 paymentMethods: [

@@ -286,6 +286,8 @@
   "subscription_details.renew_button.label": "Renew subscription",
   "subscription_details.renew_success": "Your subscription has been renewed.",
   "subscription_details.title": "Subscription details",
+  "subscription_management.customized_pricing.message": "Please contact support to change it.",
+  "subscription_management.customized_pricing.title": "This subscription has custom pricing",
   "subscription_management.done_button.label": "Done",
   "subscription_management.empty_state.message": "This subscription has no options that can be changed right now.",
   "subscription_management.empty_state.title": "Nothing to change",

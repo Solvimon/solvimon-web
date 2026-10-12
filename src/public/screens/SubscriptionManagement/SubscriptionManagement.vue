@@ -3,6 +3,7 @@ import { computed, ref, watch } from 'vue';
 import { Button, ErrorNotification, Typography, useIntl } from '@solvimon/solvimon-ui';
 import type { PaymentMethod, Pricing } from '@solvimon/solvimon-types';
 import type { SubscriptionManagementProps } from './SubscriptionManagement.types';
+import type { PricingPlanSubscriptionExpanded } from '@/types/subscription';
 import { ContentWithAsideLayout } from '@/layouts';
 import { useActionDispatchProvider, useLogger, usePortal } from '@/components/providers';
 import { useSubscription } from '@/composables/useSubscription';
@@ -24,7 +25,7 @@ import {
 import {
     combinePricingPlanVersionWithOverrides,
     getEnabledPricingIdsWithOverrides,
-    getOverridePricingIds,
+    hasCustomizedPricings,
 } from '@/utils/pricingPlanScheduleOverrides';
 
 const props = defineProps<SubscriptionManagementProps>();
@@ -34,7 +35,27 @@ const props = defineProps<SubscriptionManagementProps>();
  * lets Enter in the form commit. Bound as a plain attribute, since `Button` does not declare it.
  */
 const FORM_ID = 'sv-subscription-management-form';
-const submitButtonAttrs = { form: FORM_ID };
+const NO_PAYMENT_METHOD_ID = `${FORM_ID}__no-payment-method`;
+const CUSTOMIZED_PRICING_ID = 'sv-subscription-management__customized-pricing-message';
+
+/** The payment method types `validatePaymentMethod` lets a portal change be charged to. */
+const CHARGEABLE_PAYMENT_METHOD_TYPES: string[] = [
+    'BUY_NOW_PAY_LATER',
+    'CARD',
+    'DIGITAL_WALLET',
+    'DIRECT_DEBIT',
+    'ONLINE_BANKING',
+];
+
+const isChargeable = (
+    paymentMethod: PaymentMethod,
+    subscription: PricingPlanSubscriptionExpanded | undefined,
+): boolean =>
+    Boolean(subscription) &&
+    paymentMethod.id === subscription?.payment_method_id &&
+    paymentMethod.status === 'ACTIVE' &&
+    paymentMethod.customer_id === subscription?.customer_id &&
+    CHARGEABLE_PAYMENT_METHOD_TYPES.includes(paymentMethod.type);
 
 const { $t } = useIntl();
 const portal = usePortal();
@@ -63,11 +84,11 @@ const { isLoading } = useLoadInitialData(
 );
 
 /**
- * The API charges the change to the subscription's own payment method and takes no other, so that
- * is the only one on offer.
+ * The API charges the change to the subscription's own payment method and takes no other, and only
+ * while that method is one it can charge — so that is all there is on offer.
  */
 const subscriptionPaymentMethods = computed(() =>
-    paymentMethods.value.filter(({ id }) => id === subscription.value?.payment_method_id),
+    paymentMethods.value.filter((paymentMethod) => isChargeable(paymentMethod, subscription.value)),
 );
 
 /** Upgrades are bought on the schedule being billed now, so that is where the group is looked up. */
@@ -96,9 +117,13 @@ const scheduledPricingIds = computed(() =>
     getEnabledPricingIdsWithOverrides(activeScheduleInfo.value?.pricing_plan_schedule),
 );
 
-/** Billed by being on the schedule; the API refuses them as enabled pricings. */
-const overridePricingIds = computed(() =>
-    getOverridePricingIds(activeScheduleInfo.value?.pricing_plan_schedule),
+/**
+ * A new schedule starts from enabled pricings alone and the API copies no customized pricing onto
+ * it, nor takes the original of one as enabled. Any change would drop the customization, so a
+ * subscription that has one is not changed here at all.
+ */
+const isCustomized = computed(() =>
+    hasCustomizedPricings(activeScheduleInfo.value?.pricing_plan_schedule),
 );
 
 /**
@@ -171,11 +196,6 @@ watch(
     { immediate: true },
 );
 
-/** What is sent as enabled: the customized pricings ride along on the schedule itself. */
-const enabledPricingIdsToSend = computed(() =>
-    enabledPricingIds.value.filter((pricingId) => !overridePricingIds.value.includes(pricingId)),
-);
-
 /** Committing what the schedule already bills would only start a duplicate of it. */
 const hasChange = computed(() => {
     const selected = new Set(enabledPricingIds.value);
@@ -196,9 +216,10 @@ const {
  * Immediate, since the ids are seeded from the schedule before this watcher is registered.
  */
 watch(
-    [enabledPricingIdsToSend, subscription, activeScheduleInfo],
-    ([pricingIds, loadedSubscription, scheduleInfo]) => {
-        if (!loadedSubscription || pricingIds.length === 0) {
+    [enabledPricingIds, subscription, activeScheduleInfo, isCustomized],
+    ([pricingIds, loadedSubscription, scheduleInfo, customized]) => {
+        // Nothing is priced that cannot be committed.
+        if (!loadedSubscription || pricingIds.length === 0 || customized) {
             return;
         }
 
@@ -230,7 +251,8 @@ const canUpdate = computed(
         !isUpdating.value &&
         Boolean(subscription.value) &&
         Boolean(pricingGroup.value) &&
-        enabledPricingIdsToSend.value.length > 0 &&
+        !isCustomized.value &&
+        enabledPricingIds.value.length > 0 &&
         hasChange.value &&
         Boolean(paymentMethodId.value) &&
         !isPreviewPending.value &&
@@ -249,7 +271,7 @@ const handleUpdate = async () => {
     try {
         await createPricingPlanSchedule({
             pricingPlanSubscriptionId: subscription.value.id,
-            enabledPricings: enabledPricingIdsToSend.value.map((pricingId) => ({
+            enabledPricings: enabledPricingIds.value.map((pricingId) => ({
                 pricing_id: pricingId,
             })),
         });
@@ -271,6 +293,17 @@ const handleUpdate = async () => {
         isUpdating.value = false;
     }
 };
+
+/** Tells a customer looking at the disabled button why it is disabled. */
+const submitButtonAttrs = computed(() => {
+    const reasonId = isCustomized.value
+        ? CUSTOMIZED_PRICING_ID
+        : pricingGroup.value && subscriptionPaymentMethods.value.length === 0
+          ? NO_PAYMENT_METHOD_ID
+          : undefined;
+
+    return { form: FORM_ID, ...(reasonId && { 'aria-describedby': reasonId }) };
+});
 
 const billingPeriod = computed(
     () =>
@@ -310,6 +343,33 @@ const billingPeriod = computed(
                     })
                 "
             />
+
+            <EmptyStatePlaceholder
+                v-else-if="pricingGroup && isCustomized"
+                class="sv-subscription-management__customized-pricing"
+                icon="info"
+            >
+                <template #title>
+                    {{
+                        $t({
+                            defaultMessage: 'This subscription has custom pricing',
+                            id: 'subscription_management.customized_pricing.title',
+                            description:
+                                'Title shown on the manage subscription screen in place of the form when the subscription has pricing customized for it, which cannot be changed here',
+                        })
+                    }}
+                </template>
+                <template #message>
+                    <span :id="CUSTOMIZED_PRICING_ID">{{
+                        $t({
+                            defaultMessage: 'Please contact support to change it.',
+                            id: 'subscription_management.customized_pricing.message',
+                            description:
+                                'Message shown on the manage subscription screen when the subscription has pricing customized for it, which cannot be changed here',
+                        })
+                    }}</span>
+                </template>
+            </EmptyStatePlaceholder>
 
             <SubscriptionManagementForm
                 v-else-if="pricingGroup && billingPeriod"
@@ -376,6 +436,7 @@ const billingPeriod = computed(
 
             <template v-else>
                 <SubscriptionManagementSummary
+                    v-if="!isCustomized"
                     class="sv-subscription-management__summary"
                     :invoice="previewInvoice"
                     :is-pending="isLoading || isPreviewPending"

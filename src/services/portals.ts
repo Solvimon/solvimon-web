@@ -1,5 +1,6 @@
 import { type PortalUrl } from './portals.types';
 import { createRequestService } from './requests';
+import { buildUrl } from './requests.lib';
 import { useConfig } from '@/components/providers/ConfigProvider/composables/useConfig';
 
 export function createPortalsService() {
@@ -10,9 +11,14 @@ export function createPortalsService() {
         /**
          * Get a portal url.
          */
-        getPortalUrl(portalResourceId: string) {
+        async getPortalUrl(portalResourceId: string) {
             return request<PortalUrl>({
-                url: `${config.apiUrls.transaction}/portal/portal-urls/${portalResourceId}`,
+                url: buildUrl(
+                    config.apiUrls.transaction,
+                    'portal',
+                    'portal-urls',
+                    portalResourceId,
+                ),
             });
         },
     };

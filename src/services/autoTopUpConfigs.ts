@@ -5,29 +5,30 @@ import type {
     WalletAutoTopUpConfigsFilters,
 } from '@solvimon/solvimon-types';
 import { createRequestService } from './requests';
+import { buildUrl } from './requests.lib';
 import { useConfig } from '@/components/providers/ConfigProvider/composables/useConfig';
 
 export function createAutoTopUpConfigsService() {
     const request = createRequestService();
     const config = useConfig();
-    const BASE_URL = '/portal/auto-top-up-configs';
+    const BASE_PATH = ['portal', 'auto-top-up-configs'];
 
     /** `wallet_id` is required by the API, so there is no listing across wallets. */
     function getAutoTopUpConfigs(
         filters: WalletAutoTopUpConfigsFilters,
     ): Promise<ApiSuccessCollectionResponse<WalletAutoTopUpConfig>> {
         return request<WalletAutoTopUpConfig>({
-            url: `${config.apiUrls.config}${BASE_URL}`,
+            url: buildUrl(config.apiUrls.config, ...BASE_PATH),
             query: { ...filters },
             isCollection: true,
         });
     }
 
-    function getAutoTopUpConfig(
-        configId: WalletAutoTopUpConfig['id'],
+    async function getAutoTopUpConfig(
+        configId: NonNullable<WalletAutoTopUpConfig['id']>,
     ): Promise<WalletAutoTopUpConfig> {
         return request<WalletAutoTopUpConfig>({
-            url: `${config.apiUrls.config}${BASE_URL}/${configId}`,
+            url: buildUrl(config.apiUrls.config, ...BASE_PATH, configId),
         });
     }
 
@@ -35,18 +36,18 @@ export function createAutoTopUpConfigsService() {
         payload: WalletAutoTopUpConfigPayload,
     ): Promise<WalletAutoTopUpConfig> {
         return request<WalletAutoTopUpConfig>({
-            url: `${config.apiUrls.config}${BASE_URL}`,
+            url: buildUrl(config.apiUrls.config, ...BASE_PATH),
             options: { method: 'POST' },
             data: payload,
         });
     }
 
     /** A status change rather than a delete: the config stays for the top-ups charged under it. */
-    function deactivateAutoTopUpConfig(
-        configId: WalletAutoTopUpConfig['id'],
+    async function deactivateAutoTopUpConfig(
+        configId: NonNullable<WalletAutoTopUpConfig['id']>,
     ): Promise<WalletAutoTopUpConfig> {
         return request<WalletAutoTopUpConfig>({
-            url: `${config.apiUrls.config}${BASE_URL}/${configId}/deactivate`,
+            url: buildUrl(config.apiUrls.config, ...BASE_PATH, configId, 'deactivate'),
             options: { method: 'POST' },
         });
     }

@@ -6,10 +6,11 @@ import type {
     AuthorizePaymentResponse,
 } from '@solvimon/solvimon-types';
 import { createRequestService } from './requests';
+import { buildUrl } from './requests.lib';
 import { useConfig } from '@/components/providers/ConfigProvider/composables/useConfig';
 import type { PaymentAuthorizationContext } from '@/components/payments/PaymentIntegrationForm/PaymentIntegrationForm.types';
 
-const BASE_URL = '/portal/payments';
+const BASE_PATH = ['portal', 'payments'];
 
 type AuthorizePaymentRequestPayload = Omit<AuthorizePaymentPayload, 'context'> & {
     context?: PaymentAuthorizationContext;
@@ -24,7 +25,7 @@ export const createPaymentsService = () => {
      */
     function getPayments(invoiceId: string) {
         return request<Payment>({
-            url: `${config.apiUrls.transaction}${BASE_URL}`,
+            url: buildUrl(config.apiUrls.transaction, ...BASE_PATH),
             query: { invoice_id: invoiceId },
             isCollection: true,
         });
@@ -48,7 +49,7 @@ export const createPaymentsService = () => {
         };
     }) {
         return request<PaymentDetailsResponse>({
-            url: `${config.apiUrls.transaction}${BASE_URL}/verify-details`,
+            url: buildUrl(config.apiUrls.transaction, ...BASE_PATH, 'verify-details'),
             options: {
                 method: 'POST',
             },
@@ -65,7 +66,7 @@ export const createPaymentsService = () => {
      */
     function authorizePayment(data: AuthorizePaymentRequestPayload) {
         return request<AuthorizePaymentResponse>({
-            url: `${config.apiUrls.transaction}${BASE_URL}/authorize`,
+            url: buildUrl(config.apiUrls.transaction, ...BASE_PATH, 'authorize'),
             options: {
                 method: 'POST',
             },

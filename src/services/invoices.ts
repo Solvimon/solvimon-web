@@ -9,6 +9,7 @@ import type {
 } from '@solvimon/solvimon-types';
 import { downloadFile, withPagination } from '@solvimon/solvimon-ui';
 import { createRequestService } from './requests';
+import { buildUrl } from './requests.lib';
 import type { GetInvoicePreviewPayload } from './invoices.types';
 import { useConfig } from '@/components/providers/ConfigProvider/composables/useConfig';
 
@@ -47,14 +48,19 @@ export function createInvoicesService(): InvoicesService {
     const config = useConfig();
 
     /** Previewing and charging on-demand pricing items share one endpoint. */
-    const chargeOnDemandPricingItemsUrl = `${config.apiUrls.transaction}/portal/invoices/charge-on-demand-pricing-items`;
+    const chargeOnDemandPricingItemsUrl = buildUrl(
+        config.apiUrls.transaction,
+        'portal',
+        'invoices',
+        'charge-on-demand-pricing-items',
+    );
 
     /**
      * Get a single invoice
      */
-    function getInvoice(invoiceId: Invoice['id']): Promise<Invoice> {
+    async function getInvoice(invoiceId: Invoice['id']): Promise<Invoice> {
         return request<Invoice>({
-            url: `${config.apiUrls.transaction}/portal/invoices/${invoiceId}`,
+            url: buildUrl(config.apiUrls.transaction, 'portal', 'invoices', invoiceId),
         });
     }
 
@@ -81,7 +87,7 @@ export function createInvoicesService(): InvoicesService {
         );
 
         return request<Invoice>({
-            url: `${config.apiUrls.transaction}/portal/invoices`,
+            url: buildUrl(config.apiUrls.transaction, 'portal', 'invoices'),
             query: queryParams,
             isCollection: true,
         });
@@ -96,7 +102,7 @@ export function createInvoicesService(): InvoicesService {
         invoice_number,
     }: Pick<Invoice, 'id' | 'invoice_number'>): Promise<void> {
         return request<Blob>({
-            url: `${config.apiUrls.transaction}/portal/invoices/${id}/pdf`,
+            url: buildUrl(config.apiUrls.transaction, 'portal', 'invoices', id, 'pdf'),
             options: { headers: { Accept: 'application/pdf', 'Content-Type': null } },
         }).then((response) => {
             const newBlob = new Blob([response], {
@@ -118,7 +124,7 @@ export function createInvoicesService(): InvoicesService {
         forExistingSubscription = false,
     }: GetInvoicePreviewPayload) {
         return request<InvoicePreview>({
-            url: `${config.apiUrls.transaction}/portal/invoices/preview`,
+            url: buildUrl(config.apiUrls.transaction, 'portal', 'invoices', 'preview'),
             options: { method: 'POST' },
             data: {
                 // A subscription that is already running is priced as itself, and its customer is

@@ -9,6 +9,7 @@ import type {
     GetDefaultHeaders,
 } from './requests.types';
 import { useLogger } from '@/components/providers/LoggerProvider/composables/useLogger';
+import type { Logger } from '@/components/providers/LoggerProvider/LoggerProvider.types';
 import { appendQueryParams, getMediaType, Headers, MediaType } from '@/services/requests.lib';
 import { useAuth } from '@/components/providers/AuthProvider';
 
@@ -32,8 +33,10 @@ const defaultOptions: RequestOptions = {
     credentials: 'omit',
 };
 
-export function createRequestService({ enableAccessCheck } = { enableAccessCheck: true }) {
-    const logger = useLogger();
+export function createRequestService({
+    enableAccessCheck = true,
+    logger = useLogger(),
+}: { enableAccessCheck?: boolean; logger?: Logger } = {}) {
     // Resolved here because inject() is only valid during setup, but read per request: the token
     // is refreshed in the background, and a value captured now would never be replaced.
     const auth = enableAccessCheck ? useAuth() : undefined;

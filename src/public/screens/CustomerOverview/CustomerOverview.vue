@@ -1,12 +1,11 @@
 <script setup lang="ts">
 import { ApiStatus } from '@solvimon/solvimon-types';
-import { computed, watch } from 'vue';
+import { computed } from 'vue';
 import type { CustomerOverviewProps } from './CustomerOverview.types';
 import { ContentWithAsideLayout } from '@/layouts';
 import InvoicesList from '@/public/components/InvoicesList/InvoicesList.vue';
 import { useInvoicesList } from '@/composables/useInvoicesList';
 import { usePortal } from '@/components/providers/PortalProvider/composables/usePortal';
-import { useLogger } from '@/components/providers';
 import { useSubscriptionsList } from '@/composables/useSubscriptionsList';
 import { useCustomer } from '@/composables/useCustomer';
 import SubscriptionsList from '@/public/components/SubscriptionsList/SubscriptionsList.vue';
@@ -17,12 +16,11 @@ import CustomerPaymentMethods from '@/public/components/CustomerPaymentMethods/C
 import { DEFAULT_MAX_ITEMS } from '@/public/components/CustomerPaymentMethods/CustomerPaymentMethods.lib';
 import { useCustomerWalletBalances } from '@/composables/useCustomerWalletBalances';
 import CustomerWalletBalances from '@/public/components/CustomerWalletBalances/CustomerWalletBalances.vue';
-import { getActiveDefaultScheduleId } from '@/utils/pricingPlanSchedule';
+import { useActiveScheduleWarning } from '@/composables/useActiveScheduleWarning';
 
 const props = defineProps<CustomerOverviewProps>();
 
 const portal = usePortal();
-const logger = useLogger();
 
 const customerId = portal.value?.customer_id;
 
@@ -65,25 +63,7 @@ const handleWalletBalancesChanged = () => {
     void customerWalletBalances.fetch();
 };
 
-/** One-off charges such as a wallet top-up are invoiced on the schedule billed right now. */
-const activeScheduleId = computed(() => getActiveDefaultScheduleId(subscriptions.items.value));
-
-watch([activeScheduleId, () => subscriptions.items.value], ([scheduleId, activeSubscriptions]) => {
-    if (scheduleId || activeSubscriptions.length === 0) {
-        return;
-    }
-
-    logger.warn('ACTIVE_SCHEDULE_NOT_FOUND', 'No schedule is currently being billed', {
-        schedules: activeSubscriptions.flatMap(({ pricing_plan_schedule_infos }) =>
-            (pricing_plan_schedule_infos ?? []).map(({ id, type, start_at, end_at, ...info }) => ({
-                id,
-                type: info.pricing_plan_schedule?.type ?? type,
-                start_at,
-                end_at,
-            })),
-        ),
-    });
-});
+useActiveScheduleWarning(subscriptions.items);
 </script>
 
 <template>

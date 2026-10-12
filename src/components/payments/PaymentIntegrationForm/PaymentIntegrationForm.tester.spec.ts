@@ -114,7 +114,7 @@ describe('PaymentIntegrationForm (DD-3538 round 3 tester)', () => {
 
         // A country switch, or anything that changes the options, can take the paying form out of
         // the list mid-payment. Nothing it does after that reaches this record.
-        it.fails('lets go when the form in flight leaves the list', async () => {
+        it('lets go when the form in flight leaves the list', async () => {
             const wrapper = mountForm([adyen('a'), adyen('b')]);
             await flushPromises();
             const [a] = forms(wrapper);
@@ -185,10 +185,10 @@ describe('PaymentIntegrationForm (DD-3538 round 3 tester)', () => {
         });
     });
 
-    // A Stripe form never says `submitting`: it pays only through the screen's button, which the
-    // screen holds itself. An Adyen form beside it can still pay from Enter in its card fields,
-    // which the keyboard reaches while the screen holds the forms.
-    it.fails('turns down an Adyen form while a Stripe payment is on its way', async () => {
+    // A Stripe form pays only through the screen's button, which the screen holds itself. An Adyen
+    // form beside it could still pay from Enter in its card fields, which the keyboard reaches
+    // while the screen holds the forms.
+    it('turns down an Adyen form while a Stripe payment is on its way', async () => {
         const { all } = await mounted([stripe('s'), adyen('a')]);
         const [s, a] = all;
         expect(s!.vm.$options.name ?? s!.vm.$.type.name).toMatch(/Stripe/);

@@ -25,5 +25,8 @@ defineEmits<EntryBaseEmits>();
         @error="(error: Error) => $emit('error', error)"
     >
         <slot />
+        <template #portal-unavailable>
+            <slot name="portal-unavailable" />
+        </template>
     </Provider>
 </template>

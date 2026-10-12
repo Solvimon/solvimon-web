@@ -19,8 +19,6 @@ import { usePortal } from '@/components/providers/PortalProvider/composables/use
 import CheckoutForm from '@/components/customer/CheckoutForm/CheckoutForm.vue';
 import CheckoutTitle from '@/components/checkout/CheckoutTitle.vue';
 import { isInvoiceUsageBased } from '@/utils/invoice';
-import CheckoutNotAvailable from '@/components/checkout/CheckoutNotAvailable.vue';
-import type { Error as ScreenError } from '@/types/errors';
 import SubscriptionPaymentCompletedCard from '@/components/payments/SubscriptionPaymentCompletedCard/SubscriptionPaymentCompletedCard.vue';
 import OrderSummary from '@/components/subscriptions/OrderSummary.vue';
 import MarkdownText from '@/components/shared/MarkdownText/MarkdownText.vue';
@@ -70,7 +68,6 @@ const props = defineProps<CheckoutProps>();
 const emit = defineEmits<CheckoutEmits>();
 const configuration = computed(() => props.configuration);
 
-const criticalError = ref<ScreenError>();
 const paymentIntegrationFormRef = ref();
 
 const logger = useLogger();
@@ -84,15 +81,6 @@ logger.info('COMPONENT_INITIALIZED', 'Checkout component initialized');
 if (portal.value?.type !== 'INIT_PRICING_PLAN_SUBSCRIPTION') {
     logger.error('INVALID_TOKEN', 'Invalid token');
     throw Error('Invalid token');
-}
-
-if (portal.value.status === 'REVOKED') {
-    criticalError.value = {
-        code: 'RESOURCE_REVOKED',
-        message: `Portal url with resource id "${portal.value.id}" is revoked`,
-    };
-
-    logger.error('RESOURCE_REVOKED', `Portal url with resource id "${portal.value.id}" is revoked`);
 }
 
 const subscriptionId = portal.value?.init_pricing_plan_subscription?.pricing_plan_subscription_id;
@@ -664,12 +652,7 @@ onMounted(() => {
 </script>
 
 <template>
-    <CheckoutNotAvailable
-        v-if="criticalError"
-        class="sv-checkout sv-root sv-screen sv-checkout--error"
-    />
     <ContentWithAsideLayout
-        v-else
         class="sv-checkout sv-root sv-screen"
         :class="{ 'sv-checkout--paid': isPaid }"
     >

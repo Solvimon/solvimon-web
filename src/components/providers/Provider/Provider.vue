@@ -46,20 +46,23 @@ if (!props.customElementName) {
                                     <ExperimentalFeatureProvider
                                         :experimental-features="experimentalFeatures"
                                     >
-                                        <PortalProvider
-                                            :allowed-portal-types="allowedPortalTypes"
-                                            :portal-object="portalObject"
-                                        >
-                                            <IconSpriteProvider>
-                                                <TranslationProvider
-                                                    :locale="locale"
-                                                    :date-locale="dateLocale"
-                                                    :messages="messages"
+                                        <IconSpriteProvider>
+                                            <TranslationProvider
+                                                :locale="locale"
+                                                :date-locale="dateLocale"
+                                                :messages="messages"
+                                            >
+                                                <PortalProvider
+                                                    :allowed-portal-types="allowedPortalTypes"
+                                                    :portal-object="portalObject"
                                                 >
                                                     <slot />
-                                                </TranslationProvider>
-                                            </IconSpriteProvider>
-                                        </PortalProvider>
+                                                    <template #unavailable>
+                                                        <slot name="portal-unavailable" />
+                                                    </template>
+                                                </PortalProvider>
+                                            </TranslationProvider>
+                                        </IconSpriteProvider>
                                     </ExperimentalFeatureProvider>
                                 </AuthProvider>
                             </ErrorBoundary>

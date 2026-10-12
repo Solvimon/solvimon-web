@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - A payment whose outcome is not known yet is no longer reported as failed. A bank debit such as SEPA that is still processing, an authorization answered with a pending payment, and a payment call that got no answer or failed with a 5xx used to show "Payment failed" with a "Try again" button, so a customer whose payment was on its way could pay a second time. The customer is now told the payment may still go through and not to pay again, with no retry, and checkout and the pay invoice screen keep the pay button and the express payment methods off. It is logged as `PAYMENT_OUTCOME_UNCONFIRMED` (warning), and a `payment-failed` event for it carries that code instead of `AUTHORIZATION_FAILED`. Only a call the API turned down (a 4xx) still counts as a failed payment.
 - When checkout cannot keep its form for a payment redirect, for example because session storage throws, it logs `CHECKOUT_FORM_STATE_NOT_SAVED` as a warning and the pay button no longer stays pending.
+- An element that is missing `environment`, `portalObject` or the id its `configuration` needs (`invoiceId` for `invoice`, `invoice-header`, `invoice-details`, `payment-history` and `pay-invoice`; `subscriptionId` for `subscription-details` and `subscription-schedules`) renders nothing until they are set, and logs `MISSING_REQUIRED_PROPERTIES` as a warning, with the missing names in `context.missing`, if they are still missing just after it mounts.
 
 ### Changed
 
@@ -22,6 +23,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `SubscriptionManagement` no longer changes a subscription that has pricing customized for it, and says to contact support instead. A new schedule carries none of the customizations, so any change, to whichever group, dropped them, and moving off a customized pricing could not be priced. `SubscriptionDetails` still lists such a pricing under Upgrades at its customized price, but offers no Upgrade action while the schedule has customized pricing.
 - The `manage-subscription` action request carries `data.enabledPricingId` when the customer chose Upgrade on a pricing in `SubscriptionDetails`. Pass it to `SubscriptionManagement` as `configuration.enabledPricingId` to open on that pricing's group.
 - The billing information block's Edit button has a message id of its own, `customer_overview.billing_information_block.edit_button_label`. It used `customer_overview.billing_information_block.view_all_payment_methods_link_label`; a `messages` override for the old id no longer applies, so move it to the new one.
+- The checkout's `error` event is typed with an `Error` as its payload, like every other element's. It was typed as `{ title, message }`, which nothing ever sent.
+- A JSON response that cannot be parsed is logged once, as `REQUEST_PARSE_FAILED` with the request's `path`, `method`, `statusCode` and `requestId`. It used to be logged a second time as `REQUEST_FAILED`, and without that context.
 
 ### Fixed
 
@@ -66,6 +69,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The billing information form says why a save failed. An API error shows on the field it names, including the email field, or as a general error when the form does not show that field; a failed save showed nothing.
 - The billing information form checks the country, legal name, VAT number and the address fields the country needs, with the rules checkout uses. Emptying the VAT number removes it from the customer.
 - Saving the billing information form leaves the customer's stored tax ids alone unless the VAT number was edited. Every save replaced them all with the first one, retyped as a generic tax id, and a stored tax id outside the EU, such as a Canadian GST/HST, Australian GST or US one, blocked every save. An edited VAT number now changes only the first tax id and keeps its type.
+- The `error` event now fires. An error an element does not handle itself, thrown while it sets up, renders, watches or handles an event, is logged as `UNHANDLED_ERROR` and dispatched as an `error` event on the element, with the `Error` as the first item of `event.detail`. Such errors used to reach neither `onLog` nor the event.
+- An element mounted before its required properties were set, as plain HTML does when a script sets them after `define()`, renders once they arrive. It used to throw while setting up and stay blank for good. The same goes for the invoice components without a `configuration.invoiceId`.
+- An unknown `environment` is reported through `onLog` and the `error` event instead of only to the console.
+- The `log` and `action-request` events, and `cssOverrides`, work from the moment an element starts rendering. Entries logged while it rendered for the first time used to reach `onLog` without a `log` event, and an action requested then went ahead without an `action-request` event the host could cancel.
+- An `onLog` callback that throws no longer replaces the error being logged, or stops the other log outputs. Its error is rethrown outside the SDK, where the page's own error reporting sees it.
+- The `billing-information-form` component logs a customer that fails to load as `INITIAL_DATA_LOAD_FAILED`.
 
 ## [0.1.0-alpha.27] - 2026-10-12
 

@@ -1,4 +1,4 @@
-import { flushPromises, mount } from '@vue/test-utils';
+import { enableAutoUnmount, flushPromises, mount } from '@vue/test-utils';
 import { defineComponent, nextTick } from 'vue';
 import type {
     Customer,
@@ -8,6 +8,8 @@ import type {
 } from '@solvimon/solvimon-types';
 import TopUpModal from './TopUpModal.vue';
 import { ApiError } from '@/services/apiError';
+
+enableAutoUnmount(afterEach);
 
 const {
     mockCharge,

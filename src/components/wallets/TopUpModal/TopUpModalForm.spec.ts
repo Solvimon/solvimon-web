@@ -1,8 +1,10 @@
-import { mount } from '@vue/test-utils';
+import { enableAutoUnmount, mount } from '@vue/test-utils';
 import { defineComponent, h, nextTick } from 'vue';
 import type { Amount } from '@solvimon/solvimon-types';
 import type { TopUpPricingItem } from './TopUpModal.lib';
 import TopUpModalForm from './TopUpModalForm.vue';
+
+enableAutoUnmount(afterEach);
 
 const { mockPreview, mockCharge, mockAutoTopUp } = vi.hoisted(() => ({
     mockPreview: vi.fn(),

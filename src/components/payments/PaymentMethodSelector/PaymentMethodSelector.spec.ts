@@ -1,8 +1,10 @@
 import type { ErrorObject } from '@vuelidate/core';
-import { mount } from '@vue/test-utils';
+import { enableAutoUnmount, mount } from '@vue/test-utils';
 import { defineComponent, h } from 'vue';
 import type { PaymentMethod, PaymentMethodOptionsResponse } from '@solvimon/solvimon-types';
 import PaymentMethodSelector from './PaymentMethodSelector.vue';
+
+enableAutoUnmount(afterEach);
 
 vi.mock('@solvimon/solvimon-ui', async () => {
     const { createSolvimonUiMock } = await import('@/test-utils/solvimonUiMock');

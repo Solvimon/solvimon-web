@@ -319,3 +319,88 @@ describe('Stripe frame script', () => {
         );
     });
 });
+
+describe('Stripe frame script, tried from outside (DD-3539)', () => {
+    const UPDATE = { type: 'stripe:update', options: { currency: 'eur', amount: 900 } };
+
+    it('applies an update that follows a setup anew to the new elements', async () => {
+        const made = [
+            stubElements(() => Promise.resolve({})),
+            stubElements(() => Promise.resolve({})),
+        ];
+        const queue = [...made];
+        const frame = loadFrame({
+            elements: () => queue.shift()!,
+            createConfirmationToken: vi.fn(),
+        });
+        frame.send({ ...INIT, initId: 1 });
+        frame.send({ ...INIT, initId: 2 });
+
+        frame.send(UPDATE);
+        await flushPromises();
+
+        expect(made[0]?.update).not.toHaveBeenCalled();
+        expect(made[1]?.update).toHaveBeenCalledWith(UPDATE.options);
+    });
+
+    it('asks for no setup anew when the elements it failed on are already gone', async () => {
+        let rejectUpdate: (error: Error) => void = () => {};
+        const first = stubElements(() => Promise.resolve({}));
+        first.update = vi.fn(
+            () =>
+                new Promise((_, reject) => {
+                    rejectUpdate = reject;
+                }),
+        );
+        const queue = [first, stubElements(() => Promise.resolve({}))];
+        const frame = loadFrame({
+            elements: () => queue.shift()!,
+            createConfirmationToken: vi.fn(),
+        });
+        frame.send({ ...INIT, initId: 1 });
+        frame.send(UPDATE);
+        await flushPromises();
+
+        frame.send({ ...INIT, initId: 2 });
+        rejectUpdate(new Error('IntegrationError'));
+        await flushPromises();
+
+        expect(frame.posted()).not.toContainEqual({ type: 'stripe:update:error' });
+    });
+
+    it('ignores an update before it has been set up', async () => {
+        const frame = loadFrame({
+            elements: () => stubElements(() => Promise.resolve({})),
+            createConfirmationToken: vi.fn(),
+        });
+
+        frame.send(UPDATE);
+        await flushPromises();
+
+        expect(frame.posted()).toEqual([]);
+    });
+
+    it('takes no init or update from a window that is not its parent', async () => {
+        const makeElements = vi.fn(() => stubElements(() => Promise.resolve({})));
+        let listener:
+            | ((event: { data: unknown; source: unknown; origin: string }) => void)
+            | undefined;
+        const parent = { postMessage: vi.fn() };
+        new Function('window', 'parent', 'Stripe', 'document', 'ResizeObserver', frameScript())(
+            { parent, addEventListener: (_: string, fn: typeof listener) => (listener = fn) },
+            parent,
+            () => ({ elements: makeElements, createConfirmationToken: vi.fn() }),
+            { documentElement: {} },
+            class {
+                observe() {}
+            },
+        );
+        const sibling = { postMessage: vi.fn() };
+
+        listener?.({ data: INIT, source: sibling, origin: PARENT_ORIGIN });
+        listener?.({ data: UPDATE, source: sibling, origin: PARENT_ORIGIN });
+        await flushPromises();
+
+        expect(makeElements).not.toHaveBeenCalled();
+    });
+});

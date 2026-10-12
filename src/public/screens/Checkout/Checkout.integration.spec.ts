@@ -5,16 +5,24 @@ import Checkout from './Checkout.vue';
 
 // ─── Mocks ────────────────────────────────────────────────────────────────────
 
-const { isPaid, subscription, invoicePreview, recurringAmount, hasOneOffCharges, SEATS_VALUES } =
-    vi.hoisted(() => ({
-        isPaid: { value: false },
-        subscription: { value: undefined as unknown },
-        invoicePreview: { value: undefined as unknown },
-        recurringAmount: { value: undefined as unknown },
-        hasOneOffCharges: { value: false },
-        /** Seats to set are the plainest reason for the editor to be on screen at all. */
-        SEATS_VALUES: [{ pricingItemConfigId: 'pic_1', value: 1 }],
-    }));
+const {
+    isPaid,
+    subscription,
+    invoicePreview,
+    recurringAmount,
+    hasOneOffCharges,
+    hasPaymentMethodOptionsError,
+    SEATS_VALUES,
+} = vi.hoisted(() => ({
+    isPaid: { value: false },
+    hasPaymentMethodOptionsError: { value: false },
+    subscription: { value: undefined as unknown },
+    invoicePreview: { value: undefined as unknown },
+    recurringAmount: { value: undefined as unknown },
+    hasOneOffCharges: { value: false },
+    /** Seats to set are the plainest reason for the editor to be on screen at all. */
+    SEATS_VALUES: [{ pricingItemConfigId: 'pic_1', value: 1 }],
+}));
 
 vi.mock('@solvimon/solvimon-ui', async () => {
     const { createSolvimonUiMock } = await import('@/test-utils/solvimonUiMock');
@@ -34,6 +42,7 @@ vi.mock('./useCheckout.view', async () => {
     return {
         useCheckoutView: () => ({
             paymentMethodOptions: c(() => paymentMethodOptions.value),
+            hasPaymentMethodOptionsError: c(() => hasPaymentMethodOptionsError.value),
             subscription: c(() => subscription.value),
             isPaymentMethodsPending: r(false),
             isInvoicePreviewPending: r(false),
@@ -178,6 +187,7 @@ const completed = (wrapper: Awaited<ReturnType<typeof mountCheckout>>) =>
 describe('Checkout', () => {
     beforeEach(() => {
         isPaid.value = false;
+        hasPaymentMethodOptionsError.value = false;
         paymentMethodOptions.value = [];
         portalNote.note = undefined;
         subscription.value = CUSTOMISABLE_SUBSCRIPTION;
@@ -302,6 +312,26 @@ describe('Checkout', () => {
 
         expect(submit().attributes('disabled')).toBe('true');
         expect(wrapper.find('.sv-checkout__payment-error').exists()).toBe(false);
+    });
+
+    // A failed reload keeps the options it had, but the form they fed is gone; nothing would
+    // answer a submit, and the button would spin for good.
+    it('keeps the pay button off while the payment methods failed to load', async () => {
+        paymentMethodOptions.value = [{ integration: { payment_gateway: { variant: 'ADYEN' } } }];
+        hasPaymentMethodOptionsError.value = true;
+        const wrapper = await mountCheckout({ Skeleton: false });
+        const submit = () => wrapper.find('.sv-checkout__submit');
+
+        expect(wrapper.findComponent({ name: 'PaymentIntegrationForm' }).exists()).toBe(false);
+        expect(submit().attributes('disabled')).toBe('true');
+
+        const submitButton = wrapper
+            .findAllComponents({ name: 'Button' })
+            .find((button) => button.classes('sv-checkout__submit'));
+        await submitButton?.vm.$emit('click');
+        await flushPromises();
+
+        expect(submit().attributes('loading')).toBe('false');
     });
 
     describe('terms and conditions', () => {

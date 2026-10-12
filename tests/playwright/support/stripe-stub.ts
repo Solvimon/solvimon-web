@@ -8,7 +8,7 @@
  * public API, so serving this in its place gives the suite a payment gateway it can steer while
  * leaving the SDK's own code — the iframe, the postMessage bridge, the authorize call — real.
  *
- * Only what the SDK calls is implemented: `elements`, `elements.submit`,
+ * Only what the SDK calls is implemented: `elements`, `elements.submit`, `elements.update`,
  * `createConfirmationToken`, `handleNextAction` and `retrievePaymentIntent`.
  */
 
@@ -39,21 +39,32 @@ export function stripeStubScript(config: StripeStubConfig): string {
 (function () {
     var config = ${JSON.stringify(config)};
 
+    /** Records on the page the frame belongs to, which is the only place a test can read. */
+    function record(key, value) {
+        try {
+            var top = window.parent || window;
+            top[key] = (top[key] || []).concat([value]);
+        } catch (error) {
+            // A frame that cannot see its parent records nothing, which is not a failure.
+        }
+    }
+
     function createPaymentElement() {
         var handlers = {};
+        var node;
 
         return {
             on: function (event, handler) {
                 handlers[event] = handler;
             },
             mount: function (selector) {
-                var root = document.querySelector(selector);
-
-                // Stands in for the card fields, so a test can see the form and type into it.
-                root.innerHTML =
-                    '<div data-testid="stripe-payment-element">' +
-                    '<label>Card number<input data-testid="stripe-card-number" /></label>' +
-                    '</div>';
+                // Added beside whatever is there, as Stripe adds its own frame, so an element
+                // mounted twice shows twice.
+                node = document.createElement('div');
+                node.setAttribute('data-testid', 'stripe-payment-element');
+                node.innerHTML =
+                    '<label>Card number<input data-testid="stripe-card-number" /></label>';
+                document.querySelector(selector).appendChild(node);
 
                 setTimeout(function () {
                     if (config.loadError && handlers.loaderror) {
@@ -66,27 +77,25 @@ export function stripeStubScript(config: StripeStubConfig): string {
                 }, 0);
             },
             unmount: function () {},
-            destroy: function () {},
+            destroy: function () {
+                if (node) node.remove();
+            },
         };
     }
 
     window.Stripe = function () {
         return {
             elements: function (options) {
-                // Recorded on the page the frame belongs to, since the options are what the SDK
-                // asks Stripe for — whether to keep the method among them — and a test can only
-                // reach them from outside the frame.
-                try {
-                    var top = window.parent || window;
-                    top.__STRIPE_STUB_ELEMENTS__ = (top.__STRIPE_STUB_ELEMENTS__ || []).concat([
-                        options,
-                    ]);
-                } catch (error) {
-                    // A frame that cannot see its parent records nothing, which is not a failure.
-                }
+                // The options are what the SDK asks Stripe for — whether to keep the method
+                // among them.
+                record('__STRIPE_STUB_ELEMENTS__', options);
 
                 return {
                     create: createPaymentElement,
+                    update: function (update) {
+                        record('__STRIPE_STUB_UPDATES__', update);
+                        return Promise.resolve();
+                    },
                     submit: function () {
                         if (config.submitRejection) {
                             return Promise.reject(new Error(config.submitRejection));

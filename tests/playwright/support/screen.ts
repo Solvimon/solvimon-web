@@ -89,6 +89,14 @@ export function stripeElementsOptions(page: Page): Promise<Record<string, unknow
     });
 }
 
+/** What the SDK asked the stubbed Stripe to change in place, in order. */
+export function stripeElementsUpdates(page: Page): Promise<Record<string, unknown>[]> {
+    return page.evaluate(() => {
+        const recorded: unknown = Reflect.get(window, '__STRIPE_STUB_UPDATES__');
+        return Array.isArray(recorded) ? recorded : [];
+    });
+}
+
 export interface HostEvents {
     logs: { level: string; code: string; message: string }[];
     errors: string[];

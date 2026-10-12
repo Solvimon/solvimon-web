@@ -1,5 +1,10 @@
 import type { StripeError } from '@stripe/stripe-js';
-import { getFrameOptions, summarizeStripeError } from './PaymentIntegrationFormStripe.lib';
+import {
+    getFrameOptions,
+    getFrameOptionsUpdate,
+    getFrameTargetOrigin,
+    summarizeStripeError,
+} from './PaymentIntegrationFormStripe.lib';
 import type { Amount } from '@solvimon/solvimon-types';
 
 const EUR_10: Amount = { quantity: '10', currency: 'EUR' };
@@ -80,6 +85,59 @@ describe('getFrameOptions', () => {
         expect(result.appearance?.variables?.borderRadius).toBe('4px');
         expect(result.appearance?.rules?.['.TermsText']?.fontSize).toBe('14px');
         expect(result.appearance?.rules?.['.Input']?.borderColor).toBe('rgb(229, 231, 235)');
+    });
+});
+
+describe('getFrameOptionsUpdate', () => {
+    const EUR_20: Amount = { quantity: '20', currency: 'EUR' };
+    const authorize = (amount: Amount, storePaymentMethod = true, email?: string) =>
+        getFrameOptions({ amount, variant: 'AUTHORIZE', storePaymentMethod, email });
+
+    it('updates the amount in place', () => {
+        expect(getFrameOptionsUpdate(authorize(EUR_10), authorize(EUR_20))).toMatchObject({
+            currency: 'eur',
+            amount: 2000,
+            setup_future_usage: 'off_session',
+        });
+    });
+
+    // Leaving it out of an update would leave the earlier value standing.
+    it('takes back keeping the method with null', () => {
+        expect(getFrameOptionsUpdate(authorize(EUR_10), authorize(EUR_10, false))).toHaveProperty(
+            'setup_future_usage',
+            null,
+        );
+    });
+
+    it('sends no amount in setup mode', () => {
+        const setup = getFrameOptions({ amount: EUR_10, variant: 'TOKENIZE' });
+        expect(getFrameOptionsUpdate(setup, setup)).not.toHaveProperty('amount');
+    });
+
+    it('needs a new element when the fields it shows change', () => {
+        expect(
+            getFrameOptionsUpdate(authorize(EUR_10), authorize(EUR_10, true, 'a@b.c')),
+        ).toBeUndefined();
+    });
+
+    it('needs a new element when the mode changes', () => {
+        expect(
+            getFrameOptionsUpdate(
+                authorize(EUR_10),
+                getFrameOptions({ amount: EUR_10, variant: 'TOKENIZE' }),
+            ),
+        ).toBeUndefined();
+    });
+});
+
+describe('getFrameTargetOrigin', () => {
+    it('names the page origin', () => {
+        expect(getFrameTargetOrigin('https://shop.example')).toBe('https://shop.example');
+    });
+
+    // postMessage throws on 'null', and nothing narrower than '*' reaches an opaque origin.
+    it('falls back to any origin when the page origin is opaque', () => {
+        expect(getFrameTargetOrigin('null')).toBe('*');
     });
 });
 

@@ -18,7 +18,14 @@ export const getPortal = ({
     const logger = useLogger();
 
     const portal = ref<PortalUrl>();
-    const parsedToken = parseToken(token);
+
+    let parsedToken: ReturnType<typeof parseToken>;
+    try {
+        parsedToken = parseToken(token);
+    } catch (err) {
+        logger.error('INVALID_TOKEN', 'Failed to parse the portal token', {}, err);
+        return portal;
+    }
 
     const getPortalObject = async () => {
         try {

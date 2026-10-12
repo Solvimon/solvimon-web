@@ -415,6 +415,201 @@ describe('PaymentIntegrationFormStripe', () => {
         });
     });
 
+    describe('confirming a redirect return, tested independently', () => {
+        const returnedWith = (redirectStatus: string) =>
+            mockGetQueryParam.mockImplementation(
+                (key: string) =>
+                    ({
+                        payment_acceptor_id: 'paya_123',
+                        redirect_status: redirectStatus,
+                        payment_intent_client_secret: 'pi_secret_redirect',
+                    })[key] ?? null,
+            );
+
+        const settle = async () => {
+            await flushPromises();
+            await nextTick();
+        };
+
+        const failedCodes = (wrapper: ReturnType<typeof mountComponent>) =>
+            (wrapper.emitted('payment-failed') ?? []).map(([e]) => (e as { code: string }).code);
+
+        it.each([
+            ['requires_capture', 'success'],
+            ['succeeded', 'success'],
+            ['processing', 'PAYMENT_OUTCOME_UNCONFIRMED'],
+            ['requires_action', 'AUTHORIZATION_FAILED'],
+            ['requires_payment_method', 'AUTHORIZATION_FAILED'],
+            ['requires_confirmation', 'AUTHORIZATION_FAILED'],
+            ['canceled', 'AUTHORIZATION_FAILED'],
+        ])('maps an intent that is %s to %s', async (intentStatus, expected) => {
+            returnedWith('succeeded');
+            mockRetrievePaymentIntent.mockResolvedValue({
+                paymentIntent: { status: intentStatus },
+            });
+
+            const wrapper = mountComponent();
+            await settle();
+
+            if (expected === 'success') {
+                expect(wrapper.emitted('payment-success')).toHaveLength(1);
+                expect(wrapper.emitted('payment-failed')).toBeUndefined();
+            } else {
+                expect(wrapper.emitted('payment-success')).toBeUndefined();
+                expect(failedCodes(wrapper)).toEqual([expected]);
+            }
+        });
+
+        it('never reports success on a crafted query string when Stripe.js throws', async () => {
+            returnedWith('succeeded');
+            mockRetrievePaymentIntent.mockRejectedValue(new Error('Stripe.js blew up'));
+
+            const wrapper = mountComponent();
+            await settle();
+
+            expect(wrapper.emitted('payment-success')).toBeUndefined();
+            expect(failedCodes(wrapper)).toEqual(['PAYMENT_OUTCOME_UNCONFIRMED']);
+            expect(wrapper.text()).toContain('Payment not confirmed yet');
+        });
+
+        it('never reports success when Stripe.js cannot be loaded at all', async () => {
+            returnedWith('succeeded');
+            delete window.Stripe;
+
+            const wrapper = mountComponent();
+            const script = document.head.querySelector<HTMLScriptElement>('script[src]');
+            script?.onerror?.(new Event('error'));
+            await settle();
+
+            expect(wrapper.emitted('payment-success')).toBeUndefined();
+            expect(failedCodes(wrapper)).toEqual(['PAYMENT_OUTCOME_UNCONFIRMED']);
+        });
+
+        it('does not authorize when submitted while the return is being confirmed', async () => {
+            returnedWith('succeeded');
+            let answer: (value: unknown) => void = () => {};
+            mockRetrievePaymentIntent.mockReturnValue(new Promise((r) => (answer = r)));
+
+            const wrapper = mountComponent();
+            await settle();
+
+            (wrapper.vm as unknown as { submit: () => void }).submit();
+            await settle();
+
+            expect(wrapper.emitted('invalid')).toHaveLength(1);
+            expect(mockAuthorizePayment).not.toHaveBeenCalled();
+
+            answer({ paymentIntent: { status: 'succeeded' } });
+            await settle();
+
+            expect(wrapper.emitted('payment-success')).toHaveLength(1);
+            expect(
+                wrapper.findComponent({ name: 'PaymentIntegrationFormStripeFrame' }).exists(),
+            ).toBe(false);
+        });
+
+        it('emits success exactly once and does not offer the form again', async () => {
+            returnedWith('succeeded');
+            mockRetrievePaymentIntent.mockResolvedValue({ paymentIntent: { status: 'succeeded' } });
+
+            const wrapper = mountComponent();
+            await settle();
+            await wrapper.setProps({ amount: { currency: 'EUR', quantity: '19.99' } });
+            await settle();
+
+            expect(wrapper.emitted('payment-success')).toHaveLength(1);
+            expect(mockRetrievePaymentIntent).toHaveBeenCalledTimes(1);
+            expect(
+                wrapper.findComponent({ name: 'PaymentIntegrationFormStripeFrame' }).exists(),
+            ).toBe(false);
+        });
+
+        it('keeps an unconfirmed outcome on screen instead of the form', async () => {
+            returnedWith('processing');
+            mockRetrievePaymentIntent.mockResolvedValue({
+                paymentIntent: { status: 'processing' },
+            });
+
+            const wrapper = mountComponent();
+            await settle();
+            await wrapper.setProps({ amount: { currency: 'EUR', quantity: '19.99' } });
+            await settle();
+
+            expect(wrapper.text()).toContain('Payment not confirmed yet');
+            expect(
+                wrapper.findComponent({ name: 'PaymentIntegrationFormStripeFrame' }).exists(),
+            ).toBe(false);
+        });
+    });
+
+    describe('authorize outcomes, tested independently', () => {
+        const submitToken = async (wrapper: ReturnType<typeof mountComponent>) => {
+            await wrapper
+                .findComponent({ name: 'PaymentIntegrationFormStripeFrame' })
+                .vm.$emit('submit-success', 'ctok_test');
+            await flushPromises();
+        };
+        const failedCodes = (wrapper: ReturnType<typeof mountComponent>) =>
+            (wrapper.emitted('payment-failed') ?? []).map(([e]) => (e as { code: string }).code);
+
+        it.each([400, 401, 402, 403, 404, 409, 422])(
+            'reports a %i as a failure',
+            async (statusCode) => {
+                mockAuthorizePayment.mockRejectedValue(new ApiError({ statusCode }));
+                const wrapper = mountComponent();
+                await submitToken(wrapper);
+                expect(failedCodes(wrapper)).toEqual(['AUTHORIZATION_FAILED']);
+            },
+        );
+
+        it.each([408, 500, 503, 504])('leaves a %i unconfirmed', async (statusCode) => {
+            mockAuthorizePayment.mockRejectedValue(new ApiError({ statusCode }));
+            const wrapper = mountComponent();
+            await submitToken(wrapper);
+            expect(failedCodes(wrapper)).toEqual(['PAYMENT_OUTCOME_UNCONFIRMED']);
+            expect(wrapper.text()).not.toMatch(/try again/i);
+        });
+
+        it('leaves a payment unconfirmed when the next action reports no intent', async () => {
+            mockAuthorizePayment.mockResolvedValue(stripeActionRequiredResponse);
+            mockHandleNextAction.mockResolvedValue({});
+            const wrapper = mountComponent();
+            await submitToken(wrapper);
+            expect(wrapper.emitted('payment-success')).toBeUndefined();
+            expect(failedCodes(wrapper)).toEqual(['PAYMENT_OUTCOME_UNCONFIRMED']);
+        });
+
+        it('fails a payment the next action left needing a new method', async () => {
+            mockAuthorizePayment.mockResolvedValue(stripeActionRequiredResponse);
+            mockHandleNextAction.mockResolvedValue({
+                paymentIntent: { status: 'requires_payment_method' },
+            });
+            const wrapper = mountComponent();
+            await submitToken(wrapper);
+            expect(wrapper.emitted('payment-success')).toBeUndefined();
+            expect(failedCodes(wrapper)).toEqual(['AUTHORIZATION_FAILED']);
+        });
+
+        it('succeeds once for a setup intent the next action completed', async () => {
+            mockAuthorizePayment.mockResolvedValue(stripeActionRequiredResponse);
+            mockHandleNextAction.mockResolvedValue({ setupIntent: { status: 'succeeded' } });
+            const wrapper = mountComponent();
+            await submitToken(wrapper);
+            expect(wrapper.emitted('payment-success')).toHaveLength(1);
+        });
+
+        it('fails an authorize answered SUCCESS with a refused payment', async () => {
+            mockAuthorizePayment.mockResolvedValue({
+                ...successResponse,
+                payment: { result: 'REFUSED' },
+            });
+            const wrapper = mountComponent();
+            await submitToken(wrapper);
+            expect(wrapper.emitted('payment-success')).toBeUndefined();
+            expect(failedCodes(wrapper)).toEqual(['AUTHORIZATION_FAILED']);
+        });
+    });
+
     describe('submitting', () => {
         const findFrame = (wrapper: ReturnType<typeof mountComponent>) =>
             wrapper.findComponent({ name: 'PaymentIntegrationFormStripeFrame' });

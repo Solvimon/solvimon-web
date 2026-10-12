@@ -121,6 +121,12 @@ const formatBound = (bound?: Amount) => {
 
 const isRequired = requiredIf(() => isEnabled.value);
 
+/** A switched-off rule hides its fields, so nothing in them may hold the form back. */
+const whenEnabled =
+    (rule: (value: number | null) => boolean) =>
+    (value: number | null): boolean =>
+        !isEnabled.value || rule(value);
+
 const validation = useValidation(
     {
         threshold: {
@@ -142,7 +148,7 @@ const validation = useValidation(
                             'Error shown under the auto top-up threshold when it is below zero',
                         id: 'auto_topup_config.threshold.not_negative',
                     }),
-                (value: number | null) => value === null || value >= 0,
+                whenEnabled((value) => value === null || value >= 0),
             ),
         },
         topUpAmount: {
@@ -164,7 +170,7 @@ const validation = useValidation(
                             'Error shown under the auto top-up amount when it is zero or negative',
                         id: 'auto_topup_config.amount.positive',
                     }),
-                (value: number | null) => value === null || value > 0,
+                whenEnabled((value) => value === null || value > 0),
             ),
             atLeastMinimum: helpers.withMessage(
                 () =>
@@ -177,7 +183,7 @@ const validation = useValidation(
                         },
                         { minimum: formatBound(props.topUpBounds?.minimum) },
                     ),
-                (value: number | null) => isAtLeastMinimum(value, props.topUpBounds?.minimum),
+                whenEnabled((value) => isAtLeastMinimum(value, props.topUpBounds?.minimum)),
             ),
             withinMaximum: helpers.withMessage(
                 () =>
@@ -190,7 +196,7 @@ const validation = useValidation(
                         },
                         { maximum: formatBound(props.topUpBounds?.maximum) },
                     ),
-                (value: number | null) => isWithinMaximum(value, props.topUpBounds?.maximum),
+                whenEnabled((value) => isWithinMaximum(value, props.topUpBounds?.maximum)),
             ),
         },
     },

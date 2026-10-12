@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Checkout reads a `coupon_code` query parameter only when it could be a code. It trims the value and ignores it when it is empty, longer than 256 characters, or contains whitespace or invisible or control characters, such as a zero-width space. A `couponCode` set in the `configuration` is used as given.
+
 ### Fixed
 
 - Ids the SDK puts in a request path, such as a customer, invoice, subscription or payment method id, are now sent as one encoded path segment. An id containing `/`, `?`, `#` or `..` could point an authenticated request at a different endpoint. An empty id, `.` or `..` now fails without sending a request.

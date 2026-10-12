@@ -13,23 +13,50 @@ vi.mock('@/components/providers', () => ({
     }),
 }));
 
+vi.mock('@solvimon/solvimon-ui', async () => {
+    const { createSolvimonUiMock } = await import('@/test-utils/solvimonUiMock');
+    const { defineComponent, h } = await import('vue');
+    return createSolvimonUiMock({
+        // ErrorNotification resolves its own IntlProvider internally, which is not mounted here.
+        ErrorNotification: defineComponent({
+            name: 'ErrorNotificationStub',
+            props: { title: String },
+            setup(props) {
+                return () => h('div', { class: 'sv-error-notification-stub' }, props.title);
+            },
+        }),
+    });
+});
+
 describe('InvoicesList component', () => {
     const createInvoice = ({
         id = 'inv_123',
         invoiceNumber = 'INV-001',
         invoiceDate = '2026-05-20T00:00:00.000Z',
         paid = false,
+        status = 'FINAL',
+        type = 'STANDARD',
+        openAmount = paid ? '0' : '1000',
+        timezone,
     }: {
         id?: string;
         invoiceNumber?: string;
         invoiceDate?: string;
         paid?: boolean;
+        status?: Invoice['status'];
+        type?: Invoice['type'];
+        openAmount?: string;
+        timezone?: string;
     } = {}) =>
         ({
             id,
             invoice_number: invoiceNumber,
             invoice_date: invoiceDate,
             paid,
+            status,
+            type,
+            timezone,
+            open_invoice_amount: { currency: 'EUR', quantity: openAmount },
             customer: {
                 timezone: 'Europe/Amsterdam',
             },
@@ -44,11 +71,13 @@ describe('InvoicesList component', () => {
         configuration,
         hasMoreItems = false,
         isLoading = false,
+        error = null,
     }: {
         invoices?: Invoice[];
         configuration?: InvoicesListConfiguration;
         hasMoreItems?: boolean;
         isLoading?: boolean;
+        error?: Error | null;
     } = {}) =>
         mount(InvoicesList, {
             props: {
@@ -56,6 +85,7 @@ describe('InvoicesList component', () => {
                 configuration,
                 hasMoreItems,
                 isLoading,
+                error,
             },
             global: {
                 stubs: {
@@ -123,6 +153,69 @@ describe('InvoicesList component', () => {
 
         expect(wrapper.text()).toContain('Paid');
         expect(wrapper.text()).not.toContain('Pay');
+    });
+
+    it.each([
+        ['a credit note', { type: 'CREDIT' }, 'Credit note'],
+        ['a one-off credit note', { type: 'ONE_OFF_CREDIT' }, 'Credit note'],
+        ['a voided invoice', { status: 'VOID' }, 'Void'],
+        ['a draft invoice', { status: 'DRAFT' }, undefined],
+        ['an empty invoice', { status: 'EMPTY' }, undefined],
+        ['an invoice with nothing left open', { openAmount: '0' }, undefined],
+    ] as const)('offers no pay button for %s', (_, overrides, chip) => {
+        const wrapper = mountComponent({ invoices: [createInvoice(overrides)] });
+
+        expect(wrapper.findAll('button').some((button) => button.text() === 'Pay')).toBe(false);
+        if (chip) {
+            expect(
+                wrapper.get('.sv-invoices-list__row .sv-invoices-list__cell--status').text(),
+            ).toBe(chip);
+        }
+    });
+
+    it('treats an invoice the API marks as paid through its payment status as paid', () => {
+        const invoice = { ...createInvoice(), paid: null, payment_status: 'PAID' } as Invoice;
+        const wrapper = mountComponent({ invoices: [invoice] });
+
+        expect(wrapper.get('.sv-invoices-list__row .sv-invoices-list__cell--status').text()).toBe(
+            'Paid',
+        );
+    });
+
+    it('dates an invoice in the timezone it was issued in', () => {
+        const wrapper = mountComponent({
+            invoices: [
+                createInvoice({
+                    // Still the 19th in Amsterdam, the customer's timezone now.
+                    invoiceDate: '2026-05-19T20:00:00.000Z',
+                    timezone: 'Asia/Tokyo',
+                }),
+            ],
+        });
+
+        expect(wrapper.text()).toContain('20/05/2026');
+        expect(wrapper.text()).not.toContain('19/05/2026');
+    });
+
+    it('names the row button after the invoice it opens', () => {
+        const wrapper = mountComponent({
+            invoices: [createInvoice({ invoiceNumber: 'INV-042' })],
+        });
+
+        expect(getRowOverlayButton(wrapper)!.attributes('aria-label')).toBe('View invoice INV-042');
+    });
+
+    it('says so when the invoices could not be loaded, and keeps load more to try again', () => {
+        const wrapper = mountComponent({ hasMoreItems: true, error: new Error('Boom') });
+
+        expect(wrapper.text()).toContain('We could not load your invoices. Please try again.');
+        expect(wrapper.text()).toContain('Load more');
+    });
+
+    it('shows no error while the invoices load fine', () => {
+        const wrapper = mountComponent();
+
+        expect(wrapper.find('.sv-invoices-list__error').exists()).toBe(false);
     });
 
     it('dispatches the pay invoice action when the pay button is clicked', async () => {

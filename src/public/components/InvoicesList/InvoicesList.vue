@@ -46,6 +46,7 @@ const { dispatchAction } = useActionDispatchProvider();
             :has-more-items="configuration.pagination.enabled && hasMoreItems"
             :invoices="invoices"
             :is-loading="isLoading"
+            :error="error"
             @load-more="$emit('load-more')"
             @view-invoice="
                 dispatchAction({ action: 'view-invoice', data: { invoiceId: $event.invoiceId } })

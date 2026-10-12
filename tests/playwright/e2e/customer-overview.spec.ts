@@ -13,6 +13,7 @@ import {
     aPaymentMethod,
     aSubscription,
     aWalletBalance,
+    collection,
     CUSTOMER_ID,
     walletBalances,
 } from '../support/fixtures';
@@ -128,6 +129,37 @@ test.describe('Customer overview', () => {
             await expect(ui.invoices).toContainText('INV-2026-001');
             await expect(ui.invoices).toContainText('INV-2026-002');
             await expect(ui.invoices).toContainText('€35.00');
+        });
+
+        test('offers Pay only on the invoices that can be paid', async ({ page }) => {
+            api = await mountLoaded(page, {
+                invoices: [
+                    anInvoiceRecord({ id: 'inv_1', number: 'INV-1' }),
+                    { ...anInvoiceRecord({ id: 'inv_2', number: 'INV-2' }), type: 'CREDIT' },
+                    anInvoiceRecord({ id: 'inv_3', number: 'INV-3', status: 'VOID' }),
+                    anInvoiceRecord({ id: 'inv_4', number: 'INV-4', status: 'DRAFT' }),
+                    anInvoiceRecord({ id: 'inv_5', number: 'INV-5', openAmount: '0.00' }),
+                ],
+            });
+            const ui = customerOverview(page);
+
+            await expect(ui.invoices).toContainText('INV-5');
+            await expect(ui.invoices.getByRole('button', { name: /^pay$/i })).toHaveCount(1);
+            await expect(ui.invoices).toContainText('Credit note');
+            await expect(ui.invoices).toContainText('Void');
+        });
+
+        test('names each invoice row after the invoice it opens', async ({ page }) => {
+            api = await mountLoaded(page, {
+                invoices: [anInvoiceRecord({ id: 'inv_1', number: 'INV-2026-001' })],
+            });
+
+            await customerOverview(page)
+                .invoices.getByRole('button', { name: 'View invoice INV-2026-001' })
+                .click();
+
+            const { actions } = await hostEvents(page);
+            expect(JSON.stringify(actions)).toContain('inv_1');
         });
 
         test('renders the billing information on file', async ({ page }) => {
@@ -255,6 +287,44 @@ test.describe('Customer overview', () => {
             await expect
                 .poll(async () => (await hostEvents(page)).logs.map(({ level }) => level))
                 .toContain('error');
+        });
+
+        test('says so when the next invoices cannot be loaded, and lets the customer retry', async ({
+            page,
+        }) => {
+            const firstPage = [1, 2, 3, 4, 5].map((n) =>
+                anInvoiceRecord({ id: `inv_${n}`, number: `INV-${n}` }),
+            );
+            api = await mountLoaded(page, {
+                mocks: {
+                    invoices: [
+                        {
+                            body: {
+                                ...collection(firstPage),
+                                links: {
+                                    current: '/v1/portal/invoices?page=1',
+                                    next: '/v1/portal/invoices?page=2',
+                                },
+                            },
+                        },
+                        { status: 500, body: { message: 'Boom' } },
+                        { body: collection([anInvoiceRecord({ id: 'inv_6', number: 'INV-6' })]) },
+                    ],
+                },
+            });
+            const ui = customerOverview(page);
+            const loadMore = ui.invoices.getByRole('button', { name: /load more/i });
+            const error = ui.invoices.getByText(/could not load your invoices/i);
+
+            await loadMore.click();
+            await expect(error).toBeVisible();
+
+            // The button ignores a second click that follows the first too closely.
+            await expect(async () => {
+                await loadMore.click();
+                await expect(ui.invoices).toContainText('INV-6', { timeout: 1000 });
+            }).toPass();
+            await expect(error).toHaveCount(0);
         });
 
         test('renders nothing that needs the customer when it cannot be loaded', async ({

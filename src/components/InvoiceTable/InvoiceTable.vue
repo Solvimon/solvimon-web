@@ -3,6 +3,7 @@ import {
     Amount,
     Button,
     Chip,
+    ErrorNotification,
     Typography,
     Table,
     TableBody,
@@ -15,6 +16,12 @@ import {
 } from '@solvimon/solvimon-ui';
 import { computed } from 'vue';
 import type { InvoiceTableEmits, InvoiceTableProps } from './InvoiceTable.types';
+import {
+    getInvoiceTimezone,
+    isCreditInvoice,
+    isInvoicePaid,
+    isInvoicePayable,
+} from '@/utils/invoiceState';
 
 const props = defineProps<InvoiceTableProps>();
 defineEmits<InvoiceTableEmits>();
@@ -85,6 +92,17 @@ const showLoadMoreButton = computed(() => props.hasMoreItems);
                         <button
                             type="button"
                             class="sv-invoices-list__row-action absolute inset-0 h-full w-full"
+                            :aria-label="
+                                $t(
+                                    {
+                                        defaultMessage: 'View invoice {invoiceNumber}',
+                                        description:
+                                            'Accessible name of the button covering an invoice row, which opens that invoice',
+                                        id: 'invoice_table.row.view_invoice_aria_label',
+                                    },
+                                    { invoiceNumber: invoice.invoice_number || invoice.id },
+                                )
+                            "
                             @click="$emit('view-invoice', { invoiceId: invoice.id })"
                         />
                     </template>
@@ -98,7 +116,7 @@ const showLoadMoreButton = computed(() => props.hasMoreItems);
                                         date: invoice.invoice_date,
                                         format: 'date',
                                         offsetType: 'offsetted',
-                                        timezone: invoice.customer.timezone,
+                                        timezone: getInvoiceTimezone(invoice),
                                     })
                                 }}
                             </Typography>
@@ -115,7 +133,7 @@ const showLoadMoreButton = computed(() => props.hasMoreItems);
                                 date: invoice.invoice_date,
                                 format: 'date',
                                 offsetType: 'offsetted',
-                                timezone: invoice.customer.timezone,
+                                timezone: getInvoiceTimezone(invoice),
                             })
                         }}
                     </TableCell>
@@ -127,7 +145,7 @@ const showLoadMoreButton = computed(() => props.hasMoreItems);
                     <TableCell
                         class="sv-table__cell sv-invoices-list__cell sv-invoices-list__cell--status h-14 text-right"
                     >
-                        <Chip v-if="invoice.paid" intent="success">
+                        <Chip v-if="isInvoicePaid(invoice)" intent="success">
                             {{
                                 $t({
                                     defaultMessage: 'Paid',
@@ -136,8 +154,26 @@ const showLoadMoreButton = computed(() => props.hasMoreItems);
                                 })
                             }}
                         </Chip>
+                        <Chip v-else-if="isCreditInvoice(invoice)" intent="neutral">
+                            {{
+                                $t({
+                                    defaultMessage: 'Credit note',
+                                    description: 'The label of the chip for credit notes',
+                                    id: 'invoice_table.chip.credit_note',
+                                })
+                            }}
+                        </Chip>
+                        <Chip v-else-if="invoice.status === 'VOID'" intent="neutral">
+                            {{
+                                $t({
+                                    defaultMessage: 'Void',
+                                    description: 'The label of the chip for voided invoices',
+                                    id: 'invoice_table.chip.void',
+                                })
+                            }}
+                        </Chip>
                         <Button
-                            v-else-if="showPayButton"
+                            v-else-if="showPayButton && isInvoicePayable(invoice)"
                             intent="secondary"
                             size="xs"
                             class="sv-action sv-action--secondary sv-invoices-list__pay"
@@ -155,6 +191,18 @@ const showLoadMoreButton = computed(() => props.hasMoreItems);
                 </TableRow>
             </TableBody>
         </Table>
+        <ErrorNotification
+            v-if="error"
+            class="sv-invoices-list__error sv-error"
+            :title="
+                $t({
+                    defaultMessage: 'We could not load your invoices. Please try again.',
+                    description:
+                        'Error shown when the invoices, or the next batch of them, fail to load',
+                    id: 'invoice_table.load_error',
+                })
+            "
+        />
         <div class="sv-invoices-list__load-more mt-2 flex items-center justify-center">
             <Button
                 v-if="showLoadMoreButton"

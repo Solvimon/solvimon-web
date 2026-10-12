@@ -806,7 +806,7 @@ test.describe('Checkout', () => {
         const REDIRECT_QUERY = {
             redirect_status: 'succeeded',
             payment_acceptor_id: PAYMENT_ACCEPTOR_ID,
-            payment_intent_client_secret: 'pi_test_secret',
+            payment_intent_client_secret: 'pi_3TestIntent_secret_Abc123',
         };
 
         const SAVED_FORM_STATE = JSON.stringify({
@@ -852,6 +852,20 @@ test.describe('Checkout', () => {
             await expect(checkout(page).screen).toContainText(/payment failed/i);
             await expect(checkout(page).paid).toHaveCount(0);
             expect(api.navigations()).toEqual([]);
+        });
+
+        // Left in the address, a reload showed the same failure and the customer could not retry.
+        test('takes the return out of the address once Stripe has answered', async ({ page }) => {
+            api = await mountCheckout(page, {
+                portalObject: aPortalObject({ successUrl: '' }),
+                configuration: { email: 'customer@example.com', countryCode: 'NL' },
+                query: REDIRECT_QUERY,
+                stripe: { intentStatus: 'requires_payment_method' },
+            });
+
+            await expect(checkout(page).screen).toContainText(/payment failed/i);
+            const params = new URL(page.url()).searchParams;
+            expect(Object.keys(REDIRECT_QUERY).filter((name) => params.has(name))).toEqual([]);
         });
 
         test('restores the details the customer filled in before the redirect', async ({

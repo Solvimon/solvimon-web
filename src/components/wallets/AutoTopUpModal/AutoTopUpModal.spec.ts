@@ -352,6 +352,7 @@ describe('AutoTopUpModal', () => {
         const wrapper = mountModal();
         await confirm(wrapper);
         await flushPromises();
+        expect(wrapper.find('[data-testid="error"]').exists()).toBe(true);
 
         await confirm(wrapper);
 

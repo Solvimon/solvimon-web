@@ -698,6 +698,27 @@ describe('STRIPE_FRAME_SRCDOC', () => {
             );
         });
 
+        it('drops the email from init when the submit clears it', async () => {
+            const frame = runFrame();
+            frame.init();
+
+            frame.send({ type: 'stripe:submit', email: undefined, name: 'New Name' });
+            await flushPromises();
+
+            expect(frame.stripe.createConfirmationToken).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    params: {
+                        payment_method_data: {
+                            billing_details: {
+                                address: { country: 'NL' },
+                                name: 'New Name',
+                            },
+                        },
+                    },
+                }),
+            );
+        });
+
         it('sends no billing details when it knows none', async () => {
             const frame = runFrame();
             frame.init({ countryCode: undefined, email: undefined, name: undefined });

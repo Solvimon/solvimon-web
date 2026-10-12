@@ -12,6 +12,12 @@ Install dependencies once from the **repo root**:
 npm run playground:install
 ```
 
+The dev server listens on `portal.local`, so point that name at your machine once:
+
+```sh
+echo '127.0.0.1 portal.local' | sudo tee -a /etc/hosts
+```
+
 ## Running
 
 You need two terminals running from the **repo root**:
@@ -24,9 +30,9 @@ npm run watch
 npm run playground:dev
 ```
 
-Then open [https://localhost:5173](https://localhost:5173) in your browser.
+Then open [https://portal.local:5175](https://portal.local:5175) in your browser.
 
-> **SSL certificate warning** — the playground uses a self-signed certificate, so your browser will show a security warning on first visit. This is expected. In Chrome click **Advanced → Proceed to localhost**; in Firefox click **Advanced → Accept the Risk and Continue**. You only need to do this once per browser.
+> **SSL certificate warning** — without a certificate of your own the playground serves a self-signed one, so your browser warns on first visit. In Chrome click **Advanced → Proceed to portal.local**; in Firefox click **Advanced → Accept the Risk and Continue**. To skip the warning, put a trusted certificate for `portal.local` in `playground/.cert/cert.pem` with its key in `playground/.cert/dev.pem`, for example with [mkcert](https://github.com/FiloSottile/mkcert): `mkcert -cert-file playground/.cert/cert.pem -key-file playground/.cert/dev.pem portal.local`.
 
 ## Usage
 

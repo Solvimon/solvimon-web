@@ -202,6 +202,17 @@ describe('PaymentMethodForm', () => {
         });
     });
 
+    describe('while the form is still loading', () => {
+        it('does not start saving, since nothing would ever finish it', () => {
+            const wrapper = mountForm({ isLoading: true, hideSubmitButton: true });
+
+            wrapper.vm.submit();
+
+            expect(mockIntegrationSubmit).not.toHaveBeenCalled();
+            expect(wrapper.vm.isPaymentPending).toBe(false);
+        });
+    });
+
     describe('when the payment fails', () => {
         it('keeps the save button, so the customer can try again', async () => {
             const wrapper = mountForm();

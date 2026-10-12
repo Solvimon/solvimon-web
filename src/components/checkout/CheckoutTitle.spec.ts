@@ -73,6 +73,41 @@ describe('CheckoutTitle', () => {
         expect(wrapper.text()).not.toContain('per');
     });
 
+    describe('with a trial', () => {
+        const START = new Date('2026-10-09T12:00:00Z');
+        const startDate = new Intl.DateTimeFormat('en-US', { dateStyle: 'long' }).format(START);
+
+        it('states the price per period and the day it starts', () => {
+            const wrapper = mountTitle({
+                trialStartDate: new Date('2026-09-25T12:00:00Z'),
+                subscriptionStartDate: START,
+            });
+
+            expect(wrapper.text()).toContain(
+                `You will be billed ${formatAmount(RECURRING)} per ${month}, starting ${startDate}.`,
+            );
+            expect(boldAmounts(wrapper)).toEqual([formatAmount(RECURRING)]);
+        });
+
+        it('states what is due today, then the price per period and the day it starts', () => {
+            const wrapper = mountTitle({
+                hasOneOffCharges: true,
+                hasRecurringCharge: true,
+                recurringAmount: RECURRING,
+                trialStartDate: new Date('2026-09-25T12:00:00Z'),
+                subscriptionStartDate: START,
+            });
+
+            expect(wrapper.text()).toContain(
+                `You will be billed ${formatAmount(DUE_TODAY)} today, then ${formatAmount(RECURRING)} per ${month}, starting ${startDate}.`,
+            );
+            expect(boldAmounts(wrapper)).toEqual([
+                formatAmount(DUE_TODAY),
+                formatAmount(RECURRING),
+            ]);
+        });
+    });
+
     it('states the price per period for a subscription without one-off charges', () => {
         const wrapper = mountTitle({});
 

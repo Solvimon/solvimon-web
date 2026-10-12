@@ -13,11 +13,15 @@ const {
     hasOneOffCharges,
     hasPaymentMethodOptionsError,
     isInvoicePreviewPending,
+    isInvoicePreviewStale,
+    settleInvoicePreview,
     checkoutFormValue,
     SEATS_VALUES,
 } = vi.hoisted(() => ({
     isPaid: { value: false },
     isInvoicePreviewPending: { value: false },
+    isInvoicePreviewStale: { value: false },
+    settleInvoicePreview: vi.fn(() => Promise.resolve(true)),
     /** The form the screen was last handed, to change it from a spec. */
     checkoutFormValue: { current: undefined as { value: Record<string, unknown> } | undefined },
     hasPaymentMethodOptionsError: { value: false },
@@ -51,6 +55,8 @@ vi.mock('./useCheckout.view', async () => {
             subscription: c(() => subscription.value),
             isPaymentMethodsPending: r(false),
             isInvoicePreviewPending: c(() => isInvoicePreviewPending.value),
+            isInvoicePreviewStale: c(() => isInvoicePreviewStale.value),
+            settleInvoicePreview,
             checkoutForm: {
                 form: (checkoutFormValue.current = r<Record<string, unknown>>({
                     country: 'NL',
@@ -205,6 +211,9 @@ describe('Checkout', () => {
     beforeEach(() => {
         isPaid.value = false;
         isInvoicePreviewPending.value = false;
+        isInvoicePreviewStale.value = false;
+        settleInvoicePreview.mockReset();
+        settleInvoicePreview.mockResolvedValue(true);
         hasPaymentMethodOptionsError.value = false;
         paymentMethodOptions.value = [];
         portalNote.note = undefined;
@@ -393,6 +402,45 @@ describe('Checkout', () => {
         const wrapper = await mountCheckout({ Skeleton: false });
 
         expect(wrapper.find('.sv-checkout__submit').attributes('disabled')).toBe('true');
+    });
+
+    // The preview is asked for 200ms after a change; paying in between would charge the old price.
+    it('keeps the pay button off while a change waits to be priced', async () => {
+        paymentMethodOptions.value = [{ integration: { payment_gateway: { variant: 'ADYEN' } } }];
+        isInvoicePreviewStale.value = true;
+        const wrapper = await mountCheckout({ Skeleton: false });
+
+        expect(wrapper.find('.sv-checkout__submit').attributes('disabled')).toBe('true');
+    });
+
+    // Enter in a card field and an express sheet pay without the button, so the check that holds
+    // a payment for the price sits where every one of them asks first.
+    describe('before any payment is sent', () => {
+        const validateOnSubmit = async () => {
+            paymentMethodOptions.value = [
+                { integration: { payment_gateway: { variant: 'ADYEN' } } },
+            ];
+            const wrapper = await mountCheckout({ Skeleton: false });
+            const form = wrapper.findComponent({ name: 'PaymentIntegrationForm' });
+            const validate = form.vm.$attrs['validate-on-submit'] as () => Promise<boolean>;
+            return { wrapper, validate };
+        };
+
+        it('waits for the price of the form as it is', async () => {
+            const { validate } = await validateOnSubmit();
+
+            await expect(validate()).resolves.toBe(true);
+            expect(settleInvoicePreview).toHaveBeenCalledTimes(1);
+        });
+
+        it('holds the payment back, and says so, when the price cannot be brought up to date', async () => {
+            settleInvoicePreview.mockResolvedValue(false);
+            const { wrapper, validate } = await validateOnSubmit();
+
+            await expect(validate()).resolves.toBe(false);
+            await wrapper.vm.$nextTick();
+            expect(wrapper.find('.sv-checkout__payment-error').exists()).toBe(true);
+        });
     });
 
     // The form is kept for a redirect; a payment that ends on this page leaves no personal data.

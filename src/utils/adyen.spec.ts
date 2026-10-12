@@ -7,8 +7,8 @@ import {
     getAdyenEnvironmentFromPaymentMethodOptionsResponse,
     getAdyenExpressCheckoutConfiguration,
     transformObjectToAdyenObject,
-    PAYMENT_ACCEPTOR_ID_QUERY_STRING,
 } from './adyen';
+import { PAYMENT_ACCEPTOR_ID_QUERY_STRING } from './paymentRedirect';
 import type {
     PaymentMethodOptionResponseEntry,
     Amount,

@@ -1,21 +1,18 @@
 <script setup lang="ts">
 import { Button, IconButton, Typography, useIntl } from '@solvimon/solvimon-ui';
 import { computed } from 'vue';
-import type { PaymentErrorCardProps } from './PaymentErrorCard.types';
+import type { PaymentErrorCardEmits, PaymentErrorCardProps } from './PaymentErrorCard.types';
 import { createErrorMap } from './PaymentErrorCard.lib';
 import PaymentFeedbackCard from '@/components/payments/PaymentFeedbackCard/PaymentFeedbackCard.vue';
 import { useCopyToClipboard } from '@/composables/useCopyToClipboard';
 
 const props = defineProps<PaymentErrorCardProps>();
+const emit = defineEmits<PaymentErrorCardEmits>();
 
 const { $t } = useIntl();
 const { copy, hasCopied } = useCopyToClipboard();
 
 const errorConfig = computed(() => createErrorMap($t)[props.error.code]);
-
-const reload = () => {
-    window.location.reload();
-};
 
 const copyLabel = computed(() =>
     $t({
@@ -47,10 +44,10 @@ const copyReference = () => {
                 errorConfig.message
             }}</Typography>
             <Button
-                v-if="errorConfig.isReloadButtonVisible"
+                v-if="errorConfig.isRetryButtonVisible"
                 type="button"
                 intent="secondary"
-                @click="reload"
+                @click="emit('retry')"
             >
                 {{
                     $t({

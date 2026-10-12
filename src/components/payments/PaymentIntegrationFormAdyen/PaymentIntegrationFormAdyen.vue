@@ -21,15 +21,12 @@ import PaymentCompletedCard from '@/components/payments/PaymentCompletedCard/Pay
 import PaymentErrorCard from '@/components/payments/PaymentErrorCard/PaymentErrorCard.vue';
 import type { Error } from '@/types/errors';
 import { createPaymentsService } from '@/services/payments';
-import { getQueryParam } from '@/utils/url';
 import { createPaymentMethodsService } from '@/services/paymentMethods';
 import {
     createReturnUrl,
     getAdyenClientKeyFromPaymentMethodOptionsResponse,
     getAdyenDropInPaymentMethods,
     getAdyenEnvironmentFromPaymentMethodOptionsResponse,
-    PAYMENT_ACCEPTOR_ID_QUERY_STRING,
-    REDIRECT_RESULT_QUERY_STRING,
     transformObjectToAdyenObject,
 } from '@/utils/adyen';
 import { toMinorUnitAmount } from '@/utils/amount';
@@ -46,6 +43,7 @@ import {
     createPaymentFailureError,
     type PaymentFailureParams,
 } from '@/utils/paymentFailure';
+import { clearPaymentRedirectParams, readAdyenRedirectReturn } from '@/utils/paymentRedirect';
 
 /**
  * The Adyen instances should be stored in plain objects to avoid issues with Vue's reactivity system.
@@ -77,6 +75,8 @@ const showPaymentSuccess = ref(false);
 const integrationError = ref<Error>();
 // Set once a payment is settled or may still go through, so the drop-in cannot take a second one.
 let isDropInWithheld = false;
+// Kept until the gateway has answered for it, so a retry can ask again after a failed call.
+let pendingRedirectResult: string | undefined;
 
 const logger = useLogger();
 const { locale } = useIntl();
@@ -834,6 +834,8 @@ function handlePaymentDetails({
         },
     })
         .then((result) => {
+            if (!actions) pendingRedirectResult = undefined;
+
             const outcome = getPaymentDetailsOutcome(result);
 
             if (outcome === 'SUCCEEDED') {
@@ -892,8 +894,8 @@ function handlePaymentDetails({
                 return;
             }
 
-            // A reload sends the same redirect result again, so the card's retry checks once more
-            // rather than paying again.
+            // The card's retry sends the same redirect result again, so it checks once more rather
+            // than paying again.
             withholdDropIn();
             emitError({
                 code: 'PAYMENT_DETAILS_CALL_FAILED',
@@ -909,14 +911,18 @@ function handlePaymentDetails({
  * in a query string and act accordingly.
  */
 async function handleRedirectResult() {
-    const redirectResult = getQueryParam(REDIRECT_RESULT_QUERY_STRING);
-    const paymentAcceptorId = getQueryParam(PAYMENT_ACCEPTOR_ID_QUERY_STRING);
+    const redirectReturn = readAdyenRedirectReturn(
+        props.paymentMethodOptionResponseEntry.payment_acceptor.id,
+    );
 
-    if (!redirectResult) {
+    if (!redirectReturn) {
         return;
     }
 
-    if (!paymentAcceptorId) {
+    // Handled once: a reload or a remount must not hand the gateway a spent result again.
+    clearPaymentRedirectParams();
+
+    if (redirectReturn.kind === 'MISSING_PAYMENT_ACCEPTOR') {
         logger.error(
             'INVALID_REDIRECT_RESULT',
             'Redirect result is set but payment acceptor id is missing',
@@ -929,12 +935,34 @@ async function handleRedirectResult() {
         return;
     }
 
+    if (redirectReturn.kind === 'INVALID') {
+        reportUnconfirmed('INVALID_REDIRECT_RESULT');
+        return;
+    }
+
+    pendingRedirectResult = redirectReturn.redirectResult;
+    await confirmRedirectResult();
+}
+
+async function confirmRedirectResult() {
+    if (!pendingRedirectResult) return;
+
     await handlePaymentDetails({
-        paymentAcceptorId,
-        detailsResult: {
-            redirectResult: decodeURI(redirectResult),
-        },
+        paymentAcceptorId: props.paymentMethodOptionResponseEntry.payment_acceptor.id,
+        detailsResult: { redirectResult: pendingRedirectResult },
     });
+}
+
+/** "Try again" on the error card: starts the form over without reloading the page. */
+async function retry() {
+    integrationError.value = undefined;
+
+    if (pendingRedirectResult) {
+        isDropInWithheld = false;
+        await confirmRedirectResult();
+    }
+
+    await mountDropIn();
 }
 
 onMounted(async () => {
@@ -970,7 +998,7 @@ watch(
         :variant="variant"
         :redirecting="redirectsOnSuccess"
     />
-    <PaymentErrorCard v-else-if="integrationError" :error="integrationError" />
+    <PaymentErrorCard v-else-if="integrationError" :error="integrationError" @retry="retry" />
     <div v-if="canMountDropIn" ref="dropInContainerRef"></div>
 
     <!-- Adyen's SEPA card has no slot of its own, so the notice is placed into it. -->

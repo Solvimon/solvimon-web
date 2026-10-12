@@ -19,8 +19,12 @@ import PaymentErrorCard from '@/components/payments/PaymentErrorCard/PaymentErro
 import type { Error } from '@/types/errors';
 import { createPaymentsService } from '@/services/payments';
 import { createPaymentMethodsService } from '@/services/paymentMethods';
-import { createReturnUrl, PAYMENT_ACCEPTOR_ID_QUERY_STRING } from '@/utils/adyen';
-import { getQueryParam } from '@/utils/url';
+import { createReturnUrl } from '@/utils/adyen';
+import {
+    clearPaymentRedirectParams,
+    readStripeRedirectReturn,
+    type StripeRedirectReturn,
+} from '@/utils/paymentRedirect';
 import {
     getAuthorizeOutcome,
     getStripeIntentOutcome,
@@ -43,7 +47,9 @@ const PAYMENT_GATEWAY_VARIANT_STRIPE = 'STRIPE';
 
 const showPaymentSuccess = ref<boolean>(false);
 const integrationError = ref<Error>();
-const redirectReturn = readRedirectReturn();
+const redirectReturn = readStripeRedirectReturn(
+    props.paymentMethodOptionResponseEntry.payment_acceptor.id,
+);
 // The form stays away until the payment the customer came back from is settled, so it cannot be
 // paid a second time in the meantime.
 const isConfirmingRedirect = ref<boolean>(!!redirectReturn);
@@ -341,31 +347,10 @@ async function handlePaymentResult(result: AuthorizePaymentResponse) {
     emitError({ code: 'AUTHORIZATION_FAILED', message: 'Payment failed', error: result });
 }
 
-function readRedirectReturn() {
-    const urlPaymentAcceptorId = getQueryParam(PAYMENT_ACCEPTOR_ID_QUERY_STRING);
-    if (urlPaymentAcceptorId !== props.paymentMethodOptionResponseEntry.payment_acceptor.id) return;
-
-    const redirectStatus = getQueryParam('redirect_status');
-    const paymentIntentClientSecret = getQueryParam('payment_intent_client_secret');
-    const setupIntentClientSecret = getQueryParam('setup_intent_client_secret');
-
-    if (!redirectStatus) return;
-    if (paymentIntentClientSecret) {
-        return {
-            redirectStatus,
-            intent: 'PAYMENT',
-            clientSecret: paymentIntentClientSecret,
-        } as const;
-    }
-    if (setupIntentClientSecret) {
-        return { redirectStatus, intent: 'SETUP', clientSecret: setupIntentClientSecret } as const;
-    }
-}
-
 async function retrieveIntentStatus({
     intent,
     clientSecret,
-}: NonNullable<typeof redirectReturn>): Promise<string> {
+}: StripeRedirectReturn): Promise<string> {
     const stripe = await getStripeInstance();
 
     if (intent === 'PAYMENT') {
@@ -410,6 +395,9 @@ async function handleRedirectReturn() {
         return;
     }
 
+    // Stripe has answered for it, so a reload starts a fresh form instead of showing this again.
+    clearPaymentRedirectParams();
+
     const outcome = getStripeIntentOutcome(intentStatus);
 
     if (outcome === 'SUCCEEDED') {
@@ -439,6 +427,11 @@ async function handleRedirectReturn() {
         message: 'Payment failed',
         error: redirectError,
     });
+}
+
+/** "Try again" on the error card: a fresh form, without reloading the page. */
+function retry() {
+    integrationError.value = undefined;
 }
 
 function handleReady() {
@@ -517,7 +510,7 @@ onBeforeUnmount(() => {
         :variant="variant"
         :redirecting="redirectsOnSuccess"
     />
-    <PaymentErrorCard v-else-if="integrationError" :error="integrationError" />
+    <PaymentErrorCard v-else-if="integrationError" :error="integrationError" @retry="retry" />
     <PaymentIntegrationFormStripeFrame
         v-else-if="publicKey && !isConfirmingRedirect"
         ref="frameRef"

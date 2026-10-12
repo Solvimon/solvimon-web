@@ -3,7 +3,7 @@
  * and support can find their logs.
  *
  * It is persisted in `sessionStorage` rather than kept in memory: payment flows leave the page for
- * 3DS and come back, and the error card's "Try again" reloads it. A reference that was reborn on
+ * 3DS and come back, and a customer may reload a page that failed. A reference that was reborn on
  * every load would name only the last fragment of the attempt the customer is telling us about.
  */
 

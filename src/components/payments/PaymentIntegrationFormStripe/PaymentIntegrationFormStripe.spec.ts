@@ -20,7 +20,6 @@ vi.mock('@/services/paymentMethods', () => ({
 
 vi.mock('@/utils/adyen', () => ({
     createReturnUrl: vi.fn(() => 'https://example.com/return?payment_acceptor_id=paya_123'),
-    PAYMENT_ACCEPTOR_ID_QUERY_STRING: 'payment_acceptor_id',
 }));
 
 vi.mock('@/utils/amount', () => ({
@@ -216,7 +215,7 @@ describe('PaymentIntegrationFormStripe', () => {
                     ({
                         payment_acceptor_id: 'paya_123',
                         redirect_status: redirectStatus,
-                        payment_intent_client_secret: 'pi_secret_redirect',
+                        payment_intent_client_secret: 'pi_3Redirect_secret_Abc123',
                         ...extra,
                     })[key] ?? null,
             );
@@ -236,7 +235,7 @@ describe('PaymentIntegrationFormStripe', () => {
             const wrapper = mountComponent();
             await settle();
 
-            expect(mockRetrievePaymentIntent).toHaveBeenCalledWith('pi_secret_redirect');
+            expect(mockRetrievePaymentIntent).toHaveBeenCalledWith('pi_3Redirect_secret_Abc123');
             expect(wrapper.emitted('payment-success')).toHaveLength(1);
         });
 
@@ -260,7 +259,7 @@ describe('PaymentIntegrationFormStripe', () => {
                     ({
                         payment_acceptor_id: 'paya_123',
                         redirect_status: 'succeeded',
-                        setup_intent_client_secret: 'seti_secret',
+                        setup_intent_client_secret: 'seti_1Setup_secret_Def456',
                     })[key] ?? null,
             );
             mockRetrieveSetupIntent.mockResolvedValue({ setupIntent: { status: 'succeeded' } });
@@ -268,7 +267,7 @@ describe('PaymentIntegrationFormStripe', () => {
             const wrapper = mountComponent({ variant: 'TOKENIZE' });
             await settle();
 
-            expect(mockRetrieveSetupIntent).toHaveBeenCalledWith('seti_secret');
+            expect(mockRetrieveSetupIntent).toHaveBeenCalledWith('seti_1Setup_secret_Def456');
             expect(wrapper.emitted('payment-success')).toHaveLength(1);
         });
 
@@ -341,6 +340,71 @@ describe('PaymentIntegrationFormStripe', () => {
             expect(
                 wrapper.findComponent({ name: 'PaymentIntegrationFormStripeFrame' }).exists(),
             ).toBe(true);
+        });
+
+        describe('the redirect return in the address', () => {
+            const visit = (search: string) =>
+                window.history.replaceState(null, '', `/pay${search}`);
+
+            beforeEach(() =>
+                visit(
+                    '?coupon_code=SAVE&payment_acceptor_id=paya_123&redirect_status=failed&payment_intent=pi_3Redirect&payment_intent_client_secret=pi_3Redirect_secret_Abc123',
+                ),
+            );
+            afterEach(() => visit(''));
+
+            // Left in, a reload showed the same failure again and the customer could never retry.
+            it('is taken out once Stripe has answered for it', async () => {
+                returnedWith('failed');
+                mockRetrievePaymentIntent.mockResolvedValue({
+                    paymentIntent: { status: 'requires_payment_method' },
+                });
+
+                mountComponent();
+                await settle();
+
+                expect(window.location.search).toBe('?coupon_code=SAVE');
+            });
+
+            it('stays while Stripe could not be asked, so a reload asks again', async () => {
+                returnedWith('succeeded');
+                mockRetrievePaymentIntent.mockResolvedValue({ error: { message: 'network' } });
+
+                mountComponent();
+                await settle();
+
+                expect(window.location.search).toContain('payment_intent_client_secret=');
+            });
+        });
+
+        it('ignores a client secret Stripe could not have issued', async () => {
+            returnedWith('succeeded', { payment_intent_client_secret: 'pi_1/../x' });
+
+            const wrapper = mountComponent();
+            await settle();
+
+            expect(mockRetrievePaymentIntent).not.toHaveBeenCalled();
+            expect(
+                wrapper.findComponent({ name: 'PaymentIntegrationFormStripeFrame' }).exists(),
+            ).toBe(true);
+        });
+
+        it('offers a fresh form when the customer tries again after a failed return', async () => {
+            returnedWith('failed');
+            mockRetrievePaymentIntent.mockResolvedValue({
+                paymentIntent: { status: 'requires_payment_method' },
+            });
+
+            const wrapper = mountComponent();
+            await settle();
+            wrapper.findComponent({ name: 'PaymentErrorCard' }).vm.$emit('retry');
+            await settle();
+
+            expect(wrapper.findComponent({ name: 'PaymentErrorCard' }).exists()).toBe(false);
+            expect(
+                wrapper.findComponent({ name: 'PaymentIntegrationFormStripeFrame' }).exists(),
+            ).toBe(true);
+            expect(mockRetrievePaymentIntent).toHaveBeenCalledTimes(1);
         });
 
         it('does nothing when redirect_status is absent', async () => {

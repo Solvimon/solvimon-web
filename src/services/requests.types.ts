@@ -1,6 +1,6 @@
 export type GetDefaultHeaders = (params: {
     headers?: Record<string, string | null>;
-    enableAccessToken?: boolean;
+    accessToken?: string;
 }) => Record<string, string>;
 
 export type RequestOptions = {

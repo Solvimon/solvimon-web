@@ -23,11 +23,11 @@ export function createRequestService({ enableAccessCheck } = { enableAccessCheck
     // is refreshed in the background, and a value captured now would never be replaced.
     const auth = enableAccessCheck ? useAuth() : undefined;
 
-    const getDefaultHeaders: GetDefaultHeaders = ({ headers: overrides = {} }) => {
+    const getDefaultHeaders: GetDefaultHeaders = ({ headers: overrides = {}, accessToken }) => {
         const headers = {
             [Headers.CONTENT_TYPE]: 'application/json',
             [Headers.X_CLIENT_VERSION]: `solvimon-web-v${version}`,
-            ...(auth ? { [Headers.AUTHORIZATION]: `Bearer ${auth.accessToken.value}` } : {}),
+            ...(auth ? { [Headers.AUTHORIZATION]: `Bearer ${accessToken}` } : {}),
         };
 
         if (overrides) {
@@ -80,15 +80,24 @@ export function createRequestService({ enableAccessCheck } = { enableAccessCheck
         const fullUrl = new URL(url);
         appendQueryParams(fullUrl, query);
 
-        try {
-            const response = await fetch(fullUrl.toString(), {
+        const send = (accessToken?: string) =>
+            fetch(fullUrl.toString(), {
                 method: options.method,
-                headers: getDefaultHeaders({
-                    headers: options.headers,
-                }),
+                headers: getDefaultHeaders({ headers: options.headers, accessToken }),
                 credentials: options.credentials,
                 body: data ? JSON.stringify(data) : undefined,
             });
+
+        try {
+            const accessToken = await auth?.getFreshAccessToken();
+            let response = await send(accessToken);
+
+            // The token can lapse between the expiry check and the server reading it; one retry
+            // with a renewed token, and the 401 stands when there is none.
+            if (auth && response.status === 401) {
+                const renewed = await auth.renewAccessToken(accessToken);
+                if (renewed) response = await send(renewed);
+            }
 
             const mediaType = getMediaType(response.headers.get(Headers.CONTENT_TYPE));
             const isJson = mediaType === MediaType.JSON;

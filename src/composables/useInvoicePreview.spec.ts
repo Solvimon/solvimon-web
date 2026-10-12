@@ -375,4 +375,107 @@ describe('useInvoicePreview', () => {
         expect(customization?.pricing_currency).toBe('AUD');
         expect(customization).not.toHaveProperty('billing_period');
     });
+
+    describe('previews answering out of order', () => {
+        const subscription = {
+            id: 'sub_125',
+            pricing_plan_schedule_infos: [
+                { id: 'default_schedule_id', pricing_plan_schedule: { type: 'DEFAULT' } },
+            ],
+            billing_period: { type: 'MONTH', value: 1 },
+        } as unknown as PricingPlanSubscriptionExpanded;
+
+        const previewFor = (id: string) =>
+            ({
+                first_invoice: { id },
+                invoice_infos: [
+                    { pricing_plan_schedule_id: 'default_schedule_id', invoices: [{ id }] },
+                ],
+            }) as unknown as InvoicePreview;
+
+        function controlledPreviews() {
+            const pending: {
+                resolve: (preview: InvoicePreview) => void;
+                reject: (error: Error) => void;
+            }[] = [];
+            mockGetInvoicePreview.mockImplementation(
+                () => new Promise((resolve, reject) => pending.push({ resolve, reject })),
+            );
+            return pending;
+        }
+
+        it('keeps the preview asked for last when an earlier one answers after it', async () => {
+            const pending = controlledPreviews();
+            const { loadInvoicePreview, invoicePreview, isPending } = useInvoicePreview();
+
+            const nl = loadInvoicePreview({ subscription, customer: individualCustomer('NL') });
+            const us = loadInvoicePreview({ subscription, customer: individualCustomer('US') });
+            pending[1]!.resolve(previewFor('inv_us'));
+            await us;
+            pending[0]!.resolve(previewFor('inv_nl'));
+            await nl;
+
+            expect(invoicePreview.value).toEqual({ id: 'inv_us' });
+            expect(isPending.value).toBe(false);
+        });
+
+        it('stays pending until the preview asked for last answers', async () => {
+            const pending = controlledPreviews();
+            const { loadInvoicePreview, isPending } = useInvoicePreview();
+
+            const nl = loadInvoicePreview({ subscription, customer: individualCustomer('NL') });
+            void loadInvoicePreview({ subscription, customer: individualCustomer('US') });
+            pending[0]!.resolve(previewFor('inv_nl'));
+            await nl;
+
+            expect(isPending.value).toBe(true);
+        });
+
+        it('asks again for a preview that failed', async () => {
+            mockGetInvoicePreview
+                .mockRejectedValueOnce(new Error('Boom'))
+                .mockResolvedValueOnce(previewFor('inv_nl'));
+            const { loadInvoicePreview, invoicePreview } = useInvoicePreview();
+
+            await expect(
+                loadInvoicePreview({ subscription, customer: individualCustomer('NL') }),
+            ).rejects.toThrow('Boom');
+            await loadInvoicePreview({ subscription, customer: individualCustomer('NL') });
+
+            expect(mockGetInvoicePreview).toHaveBeenCalledTimes(2);
+            expect(invoicePreview.value).toEqual({ id: 'inv_nl' });
+        });
+
+        it('returns to a preview it holds while another is still out', async () => {
+            const pending = controlledPreviews();
+            const { loadInvoicePreview, invoicePreview } = useInvoicePreview();
+
+            const nl = loadInvoicePreview({ subscription, customer: individualCustomer('NL') });
+            pending[0]!.resolve(previewFor('inv_nl'));
+            await nl;
+
+            const us = loadInvoicePreview({ subscription, customer: individualCustomer('US') });
+            await loadInvoicePreview({ subscription, customer: individualCustomer('NL') });
+            pending[1]!.resolve(previewFor('inv_us'));
+            await us;
+
+            expect(mockGetInvoicePreview).toHaveBeenCalledTimes(2);
+            expect(invoicePreview.value).toEqual({ id: 'inv_nl' });
+        });
+
+        // A superseded failure belongs to a preview nobody waits on, so callers such as the
+        // promotion code do not take it as their own.
+        it('does not reject for a preview that a later one took over', async () => {
+            const pending = controlledPreviews();
+            const { loadInvoicePreview } = useInvoicePreview();
+
+            const nl = loadInvoicePreview({ subscription, customer: individualCustomer('NL') });
+            const us = loadInvoicePreview({ subscription, customer: individualCustomer('US') });
+            pending[0]!.reject(new Error('Boom'));
+            pending[1]!.resolve(previewFor('inv_us'));
+
+            await expect(nl).resolves.toBeUndefined();
+            await us;
+        });
+    });
 });

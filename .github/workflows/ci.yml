@@ -271,6 +271,9 @@ jobs:
                       --translations-dir src/translations \
                       --sha ${{ github.sha }} \
                       > /tmp/translations-report.md
+            # What ships is the committed catalogue, so one that extraction changes is stale.
+            - name: Fail on a stale catalogue
+              run: git diff --exit-code -- src/translations
             - name: Post translations comment
               uses: actions/github-script@v9
               with:
@@ -299,9 +302,6 @@ jobs:
                               body,
                           });
                       }
-            # What ships is the committed catalogue, so one that extraction changes is stale.
-            - name: Fail on a stale catalogue
-              run: git diff --exit-code -- src/translations
             - name: Fail on missing translations
               run: npm run translations:check
 

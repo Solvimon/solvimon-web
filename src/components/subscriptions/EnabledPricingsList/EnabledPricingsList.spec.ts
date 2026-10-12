@@ -87,4 +87,22 @@ describe('EnabledPricingsList', () => {
             expect.objectContaining({ pricingId: 'pri_1', pricingGroupId: 'pgr_1' }),
         ]);
     });
+
+    it('lists a customized pricing but offers no upgrade, which would only dead-end', () => {
+        const scheduleInfo = createScheduleInfo([
+            { id: 'pri_1', name: '1.000 credits' },
+            { id: 'pri_2', name: 'Premium support' },
+        ]);
+        const wrapper = mountComponent({
+            ...scheduleInfo,
+            pricing_plan_schedule: {
+                ...scheduleInfo.pricing_plan_schedule,
+                enabled_pricings: [{ pricing_id: 'pri_2' }],
+                override_pricings: [{ id: 'pri_1_custom', original_pricing_id: 'pri_1' }],
+            },
+        } as unknown as PricingPlanScheduleInfoExpanded);
+
+        expect(wrapper.findAll('.sv-enabled-pricings-list__item')).toHaveLength(2);
+        expect(wrapper.find('.sv-enabled-pricings-list__item-upgrade').exists()).toBe(false);
+    });
 });

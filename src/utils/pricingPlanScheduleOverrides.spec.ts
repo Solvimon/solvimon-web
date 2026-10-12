@@ -3,6 +3,7 @@ import {
     getEnabledPricingIdsWithOverrides,
     getOverridePricingIds,
     getSchedulesWithPlanData,
+    hasCustomizedPricings,
 } from './pricingPlanScheduleOverrides';
 import type {
     Pricing,
@@ -545,5 +546,22 @@ describe('getEnabledPricingIdsWithOverrides', () => {
 
     it('returns nothing without a schedule', () => {
         expect(getEnabledPricingIdsWithOverrides(undefined)).toEqual([]);
+    });
+});
+
+describe('hasCustomizedPricings', () => {
+    it('is true for a schedule with any customized pricing, saved or not', () => {
+        expect(
+            hasCustomizedPricings({
+                override_pricings: [{ original_pricing_id: 'pri_original' }],
+            } as unknown as PricingPlanSchedule),
+        ).toBe(true);
+    });
+
+    it('is false for a schedule without one, or no schedule at all', () => {
+        expect(
+            hasCustomizedPricings({ override_pricings: [] } as unknown as PricingPlanSchedule),
+        ).toBe(false);
+        expect(hasCustomizedPricings(undefined)).toBe(false);
     });
 });

@@ -13,7 +13,7 @@ import type {
     EnabledPricingsListItemProps,
 } from './EnabledPricingsListItem.types';
 
-const props = defineProps<EnabledPricingsListItemProps>();
+const props = withDefaults(defineProps<EnabledPricingsListItemProps>(), { canUpgrade: true });
 defineEmits<EnabledPricingsListItemEmits>();
 
 const { $t } = useIntl();
@@ -76,6 +76,7 @@ const price = computed<string | undefined>(() => {
             </div>
 
             <Button
+                v-if="canUpgrade"
                 intent="secondary"
                 class="sv-action sv-action--secondary sv-enabled-pricings-list__item-upgrade shrink-0"
                 type="button"

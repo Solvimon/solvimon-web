@@ -409,3 +409,10 @@ export function getEnabledPricingIdsWithOverrides(
         ...getOverridePricingIds(schedule),
     ];
 }
+
+/** Whether a schedule bills any pricing customized for it, saved or not. */
+export function hasCustomizedPricings(
+    schedule: Pick<PricingPlanSchedule, 'override_pricings'> | undefined,
+): boolean {
+    return (schedule?.override_pricings ?? []).length > 0;
+}

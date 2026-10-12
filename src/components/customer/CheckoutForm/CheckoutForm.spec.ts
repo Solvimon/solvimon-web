@@ -87,8 +87,39 @@ describe('CheckoutForm', () => {
         ]) {
             const input = fieldRoot(wrapper, name).find('input');
             const labelElement = wrapper.find(`label[for="${input.attributes('id')}"]`);
-            expect(labelElement.text()).toContain(label);
+            expect(labelElement.text()).toBe(label);
         }
+    });
+
+    it('shows an address field error below the field rather than in a row above it', async () => {
+        const { wrapper, checkoutForm } = mountForm({
+            email: 'jane@example.com',
+            country: 'US' as CountryCode,
+            addressLine1: 'Main Street 1',
+        });
+
+        await checkoutForm.validation.value.$validate();
+        await flushPromises();
+
+        const postalCode = fieldRoot(wrapper, 'postal_code');
+        expect(postalCode.find('label').exists()).toBe(false);
+        expect(postalCode.html()).toContain('border-red-500');
+        expect(
+            postalCode.find('input').element.compareDocumentPosition(postalCode.find('p').element),
+        ).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+    });
+
+    it('shows that a company purchase needs a legal name', async () => {
+        const { wrapper, checkoutForm } = mountForm({
+            email: 'jane@example.com',
+            country: 'NL' as CountryCode,
+            type: 'ORGANIZATION',
+        });
+
+        expect(await checkoutForm.validation.value.$validate()).toBe(false);
+        await flushPromises();
+
+        expect(fieldRoot(wrapper, 'legal_name').text()).toContain('The value is required');
     });
 
     it('says when a VAT number could not be checked, rather than calling it invalid', async () => {

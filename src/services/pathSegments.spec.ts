@@ -2,7 +2,6 @@ import { createAutoTopUpConfigsService } from './autoTopUpConfigs';
 import { createCustomerService } from './customer';
 import { createInvoicesService } from './invoices';
 import { createPaymentMethodsService } from './paymentMethods';
-import { createPortalsService } from './portals';
 import { createPricingPlanSchedulesService } from './pricingPlanSchedules';
 import { createSubscriptionsService } from './subscriptions';
 import { createWalletsService } from './wallets';
@@ -84,11 +83,6 @@ const calls: [
         'getOnDemandPricingItems',
         (id) => createPricingPlanSchedulesService().getOnDemandPricingItems({ scheduleId: id }),
         (id) => `/v1/portal/pricing-plan-schedules/${id}/on-demand-pricing-items`,
-    ],
-    [
-        'getPortalUrl',
-        (id) => createPortalsService().getPortalUrl(id),
-        (id) => `/v1/portal/portal-urls/${id}`,
     ],
     [
         'getCustomerWalletBalances',

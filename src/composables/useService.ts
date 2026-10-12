@@ -19,6 +19,7 @@ type UseServiceState<TData, TArgs extends unknown[], TFetchResult = TData> = {
     apiStatus: Ref<ApiStatus>;
     isPending: ComputedRef<boolean>;
     error: Ref<Error | null>;
+    settle: (value: TFetchResult) => void;
 };
 
 function isCollectionResponse<TData>(
@@ -93,21 +94,37 @@ export function useService<TArgs extends unknown[], TResponse>({
     const error = ref<Error | null>(null);
     const isPending = computed(() => apiStatus.value === ApiStatus.Loading);
 
+    // Only the request asked last may write state: an earlier one can answer after it.
+    let latestRequest = 0;
+
     const execute = async (...args: TArgs): Promise<ServiceResponseData<TResponse>> => {
+        const request = ++latestRequest;
         try {
             apiStatus.value = ApiStatus.Loading;
             error.value = null;
             const response = await service(...args);
             const mapped = mapServiceResponse(response, isCollection);
-            updateRefIfChanged(data, mapped);
-            apiStatus.value = ApiStatus.Done;
+            if (request === latestRequest) {
+                updateRefIfChanged(data, mapped);
+                apiStatus.value = ApiStatus.Done;
+            }
             return mapped;
         } catch (err) {
-            error.value = toError(err);
-            apiStatus.value = ApiStatus.Failed;
+            if (request === latestRequest) {
+                error.value = toError(err);
+                apiStatus.value = ApiStatus.Failed;
+            }
             return Promise.reject();
         }
     };
 
-    return { data, execute, apiStatus, isPending, error };
+    /** Shows a value the caller already has, as the answer to a request that supersedes all others. */
+    const settle = (value: ServiceResponseData<TResponse>) => {
+        latestRequest++;
+        updateRefIfChanged(data, value);
+        error.value = null;
+        apiStatus.value = ApiStatus.Done;
+    };
+
+    return { data, execute, settle, apiStatus, isPending, error };
 }

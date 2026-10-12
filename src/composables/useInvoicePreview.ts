@@ -28,19 +28,29 @@ export const useInvoicePreview = () => {
 
     const getBillingPeriodKey = (period: BillingPeriod) => `${period.type}:${period.value}`;
 
-    // Only the preview asked for last may write state: an earlier one can answer after it.
+    // Only the preview asked for last may write state: an earlier one can answer after it. One it
+    // took over settles as it does, so a caller such as a promotion code learns how its code fared.
     let latestLoad = 0;
+    let latestPreview: Promise<void> = Promise.resolve();
 
-    const loadInvoicePreview = async ({
-        subscription,
-        subscriptionStartAt,
-        customer = {},
-        seatsValues,
-        unitsValues,
-        enabledPricingIds,
-        promotionCode,
-    }: LoadInvoicePreviewParams) => {
+    const loadInvoicePreview = (params: LoadInvoicePreviewParams): Promise<void> => {
         const load = ++latestLoad;
+        latestPreview = loadPreview(params, load);
+        return latestPreview;
+    };
+
+    const loadPreview = async (
+        {
+            subscription,
+            subscriptionStartAt,
+            customer = {},
+            seatsValues,
+            unitsValues,
+            enabledPricingIds,
+            promotionCode,
+        }: LoadInvoicePreviewParams,
+        load: number,
+    ): Promise<void> => {
         const customerPayload = buildCustomerPayload(customer);
 
         status.value = ApiStatus.Loading;
@@ -142,7 +152,7 @@ export const useInvoicePreview = () => {
         try {
             const results = await Promise.all(previewPromises);
 
-            if (load !== latestLoad) return;
+            if (load !== latestLoad) return latestPreview;
 
             const updatedPreviews: Record<string, Invoice> = {
                 ...invoicePreviewByBillingPeriod.value,
@@ -198,8 +208,7 @@ export const useInvoicePreview = () => {
                 { preview: 'CHECKOUT' },
                 error,
             );
-            // A later preview has taken over, and its outcome is the one the caller acts on.
-            if (load !== latestLoad) return;
+            if (load !== latestLoad) return latestPreview;
 
             status.value = ApiStatus.Failed;
             throw error;

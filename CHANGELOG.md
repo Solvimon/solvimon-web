@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `STRIPE_REDIRECT_RETURN_FAILED` is now also logged when the payment a Stripe redirect returned from cannot be retrieved from Stripe.
 - The SDK takes the payment redirect parameters out of the page address once it has handled a return, with `history.replaceState`: `payment_acceptor_id`, `redirectResult`, `redirect_status`, `payment_intent`, `payment_intent_client_secret`, `setup_intent` and `setup_intent_client_secret`. An Adyen return is cleared right away, a Stripe one once Stripe has answered. A host that reads these parameters must do so before the SDK's screen or component mounts.
 - A Stripe error passed to `onLog`, written to the console or carried by `payment-failed` now holds only its `code`, `type` and `message`. It used to be passed on whole, and could carry the payment or setup intent with its client secret.
+- `INVALID_EMAIL` no longer includes the rejected email address in its message, which now reads `invalid email provided`. The email the host passes to checkout is checked with the same rule as the email field, so an address the field would reject, such as one with an underscore in its domain, is dropped and reported as well.
 
 ### Fixed
 
@@ -41,6 +42,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A promotion code that the latest invoice preview turns down is no longer shown as applied, and removing a code while it is still being applied no longer says it could not be applied.
 - Checkout no longer fills in a later visit, or another plan, with the previous customer's details, seats and add-ons. The form is kept per subscription for a payment redirect only, restored on a return within the hour, and cleared once the payment ends on the page. A restored promotion code shows in its section, the email the host passes is not overwritten, and saved values that do not fit the form or the plan are dropped in favour of the plan's own.
 - The failures of loading payment methods in checkout, and of loading on-demand items for a subscription that moved on to another schedule, are logged with their error; they were logged with none.
+- Checkout no longer blocks the pay button on a VAT number the customer cannot see. A VAT number typed on a company purchase was still checked after switching back to an individual purchase, or to the US, where the field is hidden, so submitting did nothing and showed no error.
+- The checkout postal code shows its own error. It showed address line 1's, so in the US a missing postal code went unflagged once the address was filled in, and a filled-in postal code was flagged when the address was missing. Postal code and state errors now show above the field.
+- The checkout's VAT check result now clears when the VAT number, country or legal name changes, and a check answered after such a change is ignored. When the EU VAT service cannot give an answer, or the check fails, checkout says the VAT number could not be checked right now, instead of calling it invalid.
+- Address line 2, postal code, city and state carry a label for screen readers in checkout and the billing information form; they had only a placeholder.
 
 ## [0.1.0-alpha.27] - 2026-10-12
 

@@ -14,9 +14,13 @@ import type {
     SubscriptionCancellationModalProps,
 } from './SubscriptionCancellationModal.types';
 import { useSubscriptionCancellationModalLabels } from './useSubscriptionCancellationModalLabels';
-import { createSubscriptionsService } from '@/services/subscriptions';
+import {
+    createSubscriptionsService,
+    type SubscriptionCancellationVariant,
+} from '@/services/subscriptions';
 import SubscriptionSummary from '@/components/subscriptions/SubscriptionSummary.vue';
 import { getActiveDefaultScheduleInfo } from '@/utils/pricingPlanSchedule';
+import { getUndoableCancellation } from '@/utils/subscription';
 import { usePaymentMethod } from '@/composables/usePaymentMethod';
 import { useLogger } from '@/components/providers';
 
@@ -28,31 +32,35 @@ const logger = useLogger();
 
 const { setSubscriptionCancellation } = createSubscriptionsService();
 
-const variant = computed(() => props.variant);
+/** Holds the last variant while the modal closes, so its copy does not flip mid-animation. */
+const variant = ref<SubscriptionCancellationVariant | undefined>(props.variant);
+
+watch(
+    () => props.variant,
+    (next) => {
+        if (next) variant.value = next;
+    },
+);
+
+/** In the customer's own timezone, as the rest of the portal dates their subscription. */
+const formatCustomerDate = (date: string): string => {
+    const timezone = props.customer?.timezone;
+
+    return timezone
+        ? formatDate({ date, format: 'date', offsetType: 'offsetted', timezone })
+        : formatDate({ date, format: 'date', offsetType: 'local' });
+};
 
 const renewableUntil = computed(() => {
-    const periods = props.subscription?.inactive_periods ?? [];
-    const cancellation = periods.find(({ type }) => type === 'CANCEL') ?? periods[0];
+    const cancellation = getUndoableCancellation(props.subscription);
 
-    if (!cancellation) return undefined;
-
-    return formatDate({
-        date: cancellation.start_at,
-        format: 'date',
-        offsetType: 'local',
-    });
+    return cancellation ? formatCustomerDate(cancellation.start_at) : undefined;
 });
 
 const billingPeriodEndsAt = computed(() => {
     const invoiceDate = props.subscription?.next_invoice?.invoice_date;
 
-    if (!invoiceDate) return undefined;
-
-    return formatDate({
-        date: invoiceDate,
-        format: 'date',
-        offsetType: 'local',
-    });
+    return invoiceDate ? formatCustomerDate(invoiceDate) : undefined;
 });
 
 const renewsOn = billingPeriodEndsAt;

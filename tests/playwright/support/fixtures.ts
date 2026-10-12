@@ -185,6 +185,7 @@ export function aSubscription({
     addons = [],
     trial = false,
     cancelled = false,
+    planChange = false,
 }: {
     id?: string;
     name?: string;
@@ -194,8 +195,10 @@ export function aSubscription({
     seats?: SeatPricing[];
     addons?: AddonPricing[];
     trial?: boolean;
-    /** A subscription with an inactive period ahead of it is one that has been cancelled. */
+    /** Cancelled, with the cancellation still ahead of it, so it can be undone. */
     cancelled?: boolean;
+    /** Moving to another subscription, which the API also records as an inactive period. */
+    planChange?: boolean;
 } = {}): Json {
     const startAt = '2026-01-01T00:00:00Z';
 
@@ -286,8 +289,15 @@ export function aSubscription({
         billing_period: billingPeriods[0],
         created_at: startAt,
         updated_at: startAt,
-        ...(cancelled
-            ? { inactive_periods: [{ start_at: '2026-02-01T00:00:00Z', type: 'CANCELLED' }] }
+        ...(cancelled || planChange
+            ? {
+                  inactive_periods: [
+                      ...(cancelled ? [{ start_at: '2099-02-01T00:00:00Z', type: 'CANCEL' }] : []),
+                      ...(planChange
+                          ? [{ start_at: '2099-01-01T00:00:00Z', type: 'UPGRADE' }]
+                          : []),
+                  ],
+              }
             : {}),
         payment_method_id: PAYMENT_METHOD_ID,
         pricing_plan_schedule_infos: [

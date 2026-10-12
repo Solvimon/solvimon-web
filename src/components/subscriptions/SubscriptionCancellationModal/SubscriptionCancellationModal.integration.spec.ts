@@ -1,7 +1,7 @@
 import { flushPromises, mount } from '@vue/test-utils';
 import { defineComponent, h } from 'vue';
 import SubscriptionCancellationModal from './SubscriptionCancellationModal.vue';
-import type { PaymentMethod } from '@solvimon/solvimon-types';
+import type { Customer, PaymentMethod } from '@solvimon/solvimon-types';
 import type { PricingPlanSubscriptionExpanded } from '@/types/subscription';
 
 const { mockSetSubscriptionCancellation, mockLogError, mockGetPaymentMethod, storedPaymentMethod } =
@@ -113,6 +113,7 @@ vi.mock('@/components/providers', () => ({
 const mockSubscription = {
     id: 'ppsu_1',
     name: 'Pro plan',
+    status: 'ACTIVE',
     next_invoice: { invoice_date: '2026-09-01T00:00:00Z' },
 } as unknown as PricingPlanSubscriptionExpanded;
 
@@ -347,11 +348,37 @@ describe('SubscriptionCancellationModal', () => {
             );
         });
 
-        it('names the action in the confirm button and dismisses with a plain "Cancel"', () => {
+        it('names the action in the confirm button and dismisses by keeping the subscription', () => {
             const wrapper = mountComponent();
 
             expect(wrapper.find('.modal__confirm').text()).toBe('Cancel subscription');
-            expect(wrapper.find('.modal__cancel').text()).toBe('Cancel');
+            expect(wrapper.find('.modal__cancel').text()).toBe('Keep subscription');
+        });
+
+        it("dates the end of the billing period in the customer's timezone", () => {
+            const wrapper = mountComponent({
+                subscription: {
+                    ...mockSubscription,
+                    next_invoice: { invoice_date: '2026-09-01T02:00:00Z' },
+                },
+                customer: { id: 'cust_1', timezone: 'America/New_York' } as Customer,
+            });
+
+            expect(
+                wrapper.find('.sv-subscription-cancellation-modal__explanation').text(),
+            ).toContain('31/08/2026');
+            expect(wrapper.find('.sv-subscription-cancellation-modal__renews').text()).toContain(
+                '31/08/2026',
+            );
+        });
+
+        it('keeps its copy while it closes', async () => {
+            const wrapper = mountComponent();
+
+            await wrapper.setProps({ variant: undefined });
+
+            expect(wrapper.find('.modal__title').text()).toBe('Cancel subscription');
+            expect(wrapper.find('.modal__cancel').text()).toBe('Keep subscription');
         });
 
         it('cancels through the API when confirmed', async () => {
@@ -377,6 +404,15 @@ describe('SubscriptionCancellationModal', () => {
     });
 
     describe('renewing', () => {
+        beforeEach(() => {
+            vi.useFakeTimers({ toFake: ['Date'] });
+            vi.setSystemTime(new Date('2026-06-01T00:00:00Z'));
+        });
+
+        afterEach(() => {
+            vi.useRealTimers();
+        });
+
         it('names the deadline for undoing the cancellation', () => {
             const wrapper = mountComponent({
                 variant: 'RENEW',
@@ -389,7 +425,7 @@ describe('SubscriptionCancellationModal', () => {
             );
         });
 
-        it('dismisses with the same plain "Cancel" as the other variant', () => {
+        it('dismisses with a plain "Cancel"', () => {
             const wrapper = mountComponent({
                 variant: 'RENEW',
                 subscription: cancelledSubscription,
@@ -407,13 +443,17 @@ describe('SubscriptionCancellationModal', () => {
             );
         });
 
-        it('reads the date off the cancellation, not an upgrade', () => {
+        it('reads the date off the cancellation, not an upgrade that has ended', () => {
             const wrapper = mountComponent({
                 variant: 'RENEW',
                 subscription: {
                     ...mockSubscription,
                     inactive_periods: [
-                        { type: 'UPGRADE', start_at: '2026-01-01T00:00:00Z' },
+                        {
+                            type: 'UPGRADE',
+                            start_at: '2026-01-01T00:00:00Z',
+                            end_at: '2026-02-01T00:00:00Z',
+                        },
                         { type: 'CANCEL', start_at: '2026-09-01T00:00:00Z' },
                     ],
                 },
@@ -422,6 +462,46 @@ describe('SubscriptionCancellationModal', () => {
             expect(
                 wrapper.find('.sv-subscription-cancellation-modal__explanation').text(),
             ).toContain('01/09/2026');
+        });
+
+        it('names no deadline for a cancellation that cannot be undone any more', () => {
+            vi.setSystemTime(new Date('2026-09-02T00:00:00Z'));
+
+            const wrapper = mountComponent({
+                variant: 'RENEW',
+                subscription: cancelledSubscription,
+            });
+
+            expect(
+                wrapper.find('.sv-subscription-cancellation-modal__explanation').text(),
+            ).not.toContain('01/09/2026');
+        });
+
+        it("dates the deadline in the customer's timezone", () => {
+            const wrapper = mountComponent({
+                variant: 'RENEW',
+                subscription: {
+                    ...mockSubscription,
+                    inactive_periods: [{ type: 'CANCEL', start_at: '2026-09-01T02:00:00Z' }],
+                },
+                customer: { id: 'cust_1', timezone: 'America/New_York' } as Customer,
+            });
+
+            expect(
+                wrapper.find('.sv-subscription-cancellation-modal__explanation').text(),
+            ).toContain('31/08/2026');
+        });
+
+        it('keeps its copy while it closes', async () => {
+            const wrapper = mountComponent({
+                variant: 'RENEW',
+                subscription: cancelledSubscription,
+            });
+
+            await wrapper.setProps({ variant: undefined });
+
+            expect(wrapper.find('.modal__title').text()).toBe('Renew subscription');
+            expect(wrapper.find('.modal__confirm').text()).toBe('Renew subscription');
         });
 
         it('renews through the API when confirmed', async () => {

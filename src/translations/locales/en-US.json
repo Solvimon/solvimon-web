@@ -280,6 +280,7 @@
   "subscription_cancellation_modal.cancel.error": "We could not cancel your subscription. Please try again.",
   "subscription_cancellation_modal.cancel.explanation": "Your subscription will be canceled, but you’ll continue to have access until the end of the billing period.",
   "subscription_cancellation_modal.cancel.explanation_with_date": "Your subscription will be canceled, but you’ll continue to have access until {date}.",
+  "subscription_cancellation_modal.cancel.keep_button.label": "Keep subscription",
   "subscription_cancellation_modal.cancel.title": "Cancel subscription",
   "subscription_cancellation_modal.cancel_button.label": "Cancel",
   "subscription_cancellation_modal.renew.confirm_button.label": "Renew subscription",

@@ -192,9 +192,13 @@ const sharedWalletBalance = {
     ],
 } as unknown as CustomerWalletBalanceItem;
 
+/** Undoable until it takes effect, which this one does long after the test runs. */
+const CANCELLATION = { type: 'CANCEL', start_at: '2099-01-01T00:00:00Z' };
+
 const mockSubscription = {
     id: 'ppsu_1',
     name: 'Pro plan',
+    status: 'ACTIVE',
     pricing_plan_schedule_infos: [
         {
             id: 'ppsc_1',
@@ -305,7 +309,7 @@ describe('SubscriptionDetails', () => {
 
         it('is not rendered when the subscription is already cancelled', () => {
             const wrapper = mountComponent({
-                subscription: { ...mockSubscription, inactive_periods: [{}] },
+                subscription: { ...mockSubscription, inactive_periods: [CANCELLATION] },
             });
 
             expect(wrapper.find('.sv-subscription-details__cancel').exists()).toBe(false);
@@ -680,7 +684,7 @@ describe('SubscriptionDetails', () => {
     describe('renew subscription button', () => {
         it('is rendered when the subscription is cancelled', () => {
             const wrapper = mountComponent({
-                subscription: { ...mockSubscription, inactive_periods: [{}] },
+                subscription: { ...mockSubscription, inactive_periods: [CANCELLATION] },
             });
 
             expect(wrapper.find('.sv-subscription-details__renew').text()).toBe(
@@ -694,9 +698,21 @@ describe('SubscriptionDetails', () => {
             expect(wrapper.find('.sv-subscription-details__renew').exists()).toBe(false);
         });
 
+        it('is not rendered for a plan change, which leaves the subscription cancellable', () => {
+            const wrapper = mountComponent({
+                subscription: {
+                    ...mockSubscription,
+                    inactive_periods: [{ type: 'UPGRADE', start_at: '2099-01-01T00:00:00Z' }],
+                },
+            });
+
+            expect(wrapper.find('.sv-subscription-details__renew').exists()).toBe(false);
+            expect(wrapper.find('.sv-subscription-details__cancel').exists()).toBe(true);
+        });
+
         it('opens the renewal modal when clicked, rather than handing it to the host', async () => {
             const wrapper = mountComponent({
-                subscription: { ...mockSubscription, inactive_periods: [{}] },
+                subscription: { ...mockSubscription, inactive_periods: [CANCELLATION] },
             });
 
             await wrapper.find('.sv-subscription-details__renew').trigger('click');
@@ -709,7 +725,7 @@ describe('SubscriptionDetails', () => {
 
         it('asks the host to refetch once the renewal is confirmed', async () => {
             const wrapper = mountComponent({
-                subscription: { ...mockSubscription, inactive_periods: [{}] },
+                subscription: { ...mockSubscription, inactive_periods: [CANCELLATION] },
             });
 
             await wrapper.find('.sv-subscription-details__renew').trigger('click');

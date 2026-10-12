@@ -1,3 +1,4 @@
+import path from 'node:path';
 import { describe, it, expect } from 'vitest';
 import {
     isTranslationRecord,
@@ -5,6 +6,8 @@ import {
     checkTranslations,
     findMessages,
     findDuplicateMessageIds,
+    findPlaceholderMismatch,
+    resolveLocaleFiles,
 } from './check-translations.mjs';
 
 describe('isTranslationRecord', () => {
@@ -52,27 +55,45 @@ describe('parseTranslationFile', () => {
 });
 
 describe('checkTranslations', () => {
-    const sourceKeys = ['greeting', 'farewell', 'error'];
+    const sourceMessages = { greeting: 'Hello {name}', farewell: 'Bye', error: 'Oops' };
+    const complete = { greeting: 'Hallo {name}', farewell: 'Dag', error: 'Fout' };
 
-    it('returns empty missingKeys when locale is complete', () => {
-        const readFile = () => JSON.stringify({ greeting: 'Hi', farewell: 'Bye', error: 'Oops' });
-        const results = checkTranslations(sourceKeys, ['nl.json'], readFile);
-        expect(results).toEqual([{ file: 'nl.json', missingKeys: [] }]);
+    it('finds nothing wrong with a complete locale', () => {
+        const readFile = () => JSON.stringify(complete);
+        const results = checkTranslations(sourceMessages, ['nl.json'], readFile);
+        expect(results).toEqual([
+            { file: 'nl.json', missingKeys: [], extraKeys: [], placeholderMismatches: [] },
+        ]);
     });
 
     it('reports missing keys', () => {
-        const readFile = () => JSON.stringify({ greeting: 'Hallo' });
-        const results = checkTranslations(sourceKeys, ['nl.json'], readFile);
+        const readFile = () => JSON.stringify({ greeting: 'Hallo {name}' });
+        const results = checkTranslations(sourceMessages, ['nl.json'], readFile);
         expect(results[0].missingKeys).toEqual(['farewell', 'error']);
+    });
+
+    it('reports keys the source does not have', () => {
+        const readFile = () => JSON.stringify({ ...complete, removed: 'Weg' });
+        const results = checkTranslations(sourceMessages, ['nl.json'], readFile);
+        expect(results[0].missingKeys).toEqual([]);
+        expect(results[0].extraKeys).toEqual(['removed']);
+    });
+
+    it('reports a translation whose placeholders differ from the source', () => {
+        const readFile = () => JSON.stringify({ ...complete, greeting: 'Hallo {naam}' });
+        const results = checkTranslations(sourceMessages, ['nl.json'], readFile);
+        expect(results[0].placeholderMismatches).toEqual([
+            { key: 'greeting', reason: expect.stringContaining('name') },
+        ]);
     });
 
     it('handles multiple locale files', () => {
         const files: Record<string, object> = {
-            'nl.json': { greeting: 'Hallo', farewell: 'Dag', error: 'Fout' },
-            'de.json': { greeting: 'Hallo' },
+            'nl.json': complete,
+            'de.json': { greeting: 'Hallo {name}' },
         };
         const readFile = (f: string) => JSON.stringify(files[f]);
-        const results = checkTranslations(sourceKeys, ['nl.json', 'de.json'], readFile);
+        const results = checkTranslations(sourceMessages, ['nl.json', 'de.json'], readFile);
 
         expect(results[0].missingKeys).toEqual([]);
         expect(results[1].missingKeys).toEqual(['farewell', 'error']);
@@ -80,31 +101,60 @@ describe('checkTranslations', () => {
 
     it('throws when a locale file contains invalid JSON structure', () => {
         const readFile = () => '["not","an","object"]';
-        expect(() => checkTranslations(sourceKeys, ['nl.json'], readFile)).toThrow(
+        expect(() => checkTranslations(sourceMessages, ['nl.json'], readFile)).toThrow(
             'Invalid translation file nl.json',
         );
     });
 
-    it('returns empty missingKeys for all locales when source has no keys', () => {
-        const readFile = () => JSON.stringify({ greeting: 'Hallo' });
-        const results = checkTranslations([], ['nl.json', 'de.json'], readFile);
-        expect(results).toEqual([
-            { file: 'nl.json', missingKeys: [] },
-            { file: 'de.json', missingKeys: [] },
-        ]);
-    });
-
-    it('does not flag extra keys in a locale as missing', () => {
-        const readFile = () =>
-            JSON.stringify({ greeting: 'Hi', farewell: 'Bye', error: 'Oops', extra: 'Bonus' });
-        const results = checkTranslations(sourceKeys, ['en.json'], readFile);
-        expect(results[0].missingKeys).toEqual([]);
-    });
-
     it('returns one result per locale file', () => {
         const readFile = () => JSON.stringify({});
-        const results = checkTranslations(sourceKeys, ['a.json', 'b.json', 'c.json'], readFile);
+        const results = checkTranslations(sourceMessages, ['a.json', 'b.json', 'c.json'], readFile);
         expect(results).toHaveLength(3);
+    });
+});
+
+describe('findPlaceholderMismatch', () => {
+    it('accepts a translation with the same placeholders, plurals and tags', () => {
+        expect(
+            findPlaceholderMismatch(
+                'Pay <strong>{price}</strong> for {count, plural, one {# seat} other {# seats}}',
+                'Betaal <strong>{price}</strong> voor {count, plural, one {# plek} other {# plekken}}',
+            ),
+        ).toBeUndefined();
+    });
+
+    it('rejects a renamed placeholder', () => {
+        expect(findPlaceholderMismatch('Hello {name}', 'Hallo {naam}')).toMatch(/name/);
+    });
+
+    it('rejects a dropped tag', () => {
+        expect(findPlaceholderMismatch('Pay <strong>{price}</strong>', 'Betaal {price}')).toMatch(
+            /strong/,
+        );
+    });
+
+    it('rejects a placeholder formatted as another type', () => {
+        expect(findPlaceholderMismatch('From {date, date, long}', 'Vanaf {date}')).toMatch(/date/);
+    });
+
+    it('rejects a translation that does not parse', () => {
+        expect(findPlaceholderMismatch('Hello {name}', 'Hallo {name')).toBeDefined();
+    });
+});
+
+describe('resolveLocaleFiles', () => {
+    it('resolves each locale to a file in the locales directory', () => {
+        expect(resolveLocaleFiles(['nl-NL'], '/locales')).toEqual({
+            files: [path.resolve('/locales', 'nl-NL.json')],
+            rejected: [],
+        });
+    });
+
+    it('rejects a locale that would name a file outside it', () => {
+        expect(resolveLocaleFiles(['nl-NL', '../../secrets'], '/locales')).toEqual({
+            files: [path.resolve('/locales', 'nl-NL.json')],
+            rejected: ['../../secrets'],
+        });
     });
 });
 

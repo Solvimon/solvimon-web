@@ -264,7 +264,7 @@ jobs:
                   path: node_modules
                   key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json') }}
             - name: Extract translations
-              run: npm run translations:extract
+              run: npm run translations:extract && npm run translations:compile
             - name: Generate translations report
               run: |
                   node scripts/ci/translations-report.mjs \
@@ -299,6 +299,9 @@ jobs:
                               body,
                           });
                       }
+            # What ships is the committed catalogue, so one that extraction changes is stale.
+            - name: Fail on a stale catalogue
+              run: git diff --exit-code -- src/translations
             - name: Fail on missing translations
               run: npm run translations:check
 

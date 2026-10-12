@@ -428,6 +428,160 @@ describe('auth session through the request service', () => {
         });
     });
 
+    describe('after a failed refresh', () => {
+        const failOnce = () => {
+            let refreshes = 0;
+            routes.refresh = () =>
+                ++refreshes === 1 ? { status: 503, body: { message: 'down' } } : tokenReply('T2');
+        };
+
+        it('retries on the next timer tick, once, and stops once it succeeds', async () => {
+            routes.token = () => tokenReply('T1', 3600);
+            failOnce();
+            routes.api = (init) => (bearerOf(init) === 'T1' ? { status: 401 } : { body: {} });
+
+            const element = mountElement(portalToken());
+            await flush();
+            await Promise.allSettled(Array.from({ length: 5 }, () => get(element)));
+            expect(callsTo('refresh')).toHaveLength(1);
+
+            await vi.advanceTimersByTimeAsync(29_000);
+            expect(callsTo('refresh')).toHaveLength(1);
+            await vi.advanceTimersByTimeAsync(1_000);
+            expect(callsTo('refresh')).toHaveLength(2);
+            await expect(get(element)).resolves.toEqual({});
+
+            // A token far from expiry after a successful refresh is left alone.
+            await vi.advanceTimersByTimeAsync(30 * 60_000);
+            setVisible();
+            await flush();
+            expect(callsTo('refresh')).toHaveLength(2);
+        });
+
+        it('retries once when the tab becomes visible, however often it fires', async () => {
+            routes.token = () => tokenReply('T1', 3600);
+            failOnce();
+            routes.api = (init) => (bearerOf(init) === 'T1' ? { status: 401 } : { body: {} });
+
+            const element = mountElement(portalToken());
+            await flush();
+            await expect(get(element)).rejects.toMatchObject({ statusCode: 401 });
+
+            setVisible();
+            setVisible();
+            setVisible();
+            await flush();
+            expect(callsTo('refresh')).toHaveLength(2);
+            await expect(get(element)).resolves.toEqual({});
+
+            setVisible();
+            await flush();
+            expect(callsTo('refresh')).toHaveLength(2);
+        });
+
+        it('keeps retrying every 30s while identity is down, never faster', async () => {
+            routes.token = () => tokenReply('T1', 3600);
+            routes.refresh = () => ({ status: 503, body: { message: 'down' } });
+            routes.api = () => ({ status: 401 });
+
+            const element = mountElement(portalToken());
+            await flush();
+            await Promise.allSettled(Array.from({ length: 5 }, () => get(element)));
+
+            await vi.advanceTimersByTimeAsync(5 * 60_000);
+            expect(callsTo('refresh')).toHaveLength(11);
+        });
+
+        it('expires after a 401 refresh far from expiry, then never refreshes again', async () => {
+            routes.token = () => tokenReply('T1', 3600);
+            routes.refresh = () => ({ status: 401 });
+            routes.api = () => ({ status: 401 });
+
+            const element = mountElement(portalToken());
+            await flush();
+            await expect(get(element)).rejects.toMatchObject({ statusCode: 401 });
+            await vi.advanceTimersByTimeAsync(30_000);
+            expect(codesLogged(element.logger, 'SESSION_EXPIRED')).toBe(1);
+
+            await vi.advanceTimersByTimeAsync(10 * 60_000);
+            setVisible();
+            await Promise.allSettled([get(element), get(element)]);
+            expect(callsTo('refresh')).toHaveLength(2);
+        });
+    });
+
+    describe('the session tokens service', () => {
+        it('logs nowhere when every element left while a refresh was in flight', async () => {
+            routes.token = () => tokenReply('T1', 30);
+            const refresh = deferred<Reply>();
+            routes.refresh = () => refresh.promise;
+
+            const token = portalToken();
+            const first = mountElement(token);
+            const second = mountElement(token);
+            await flush();
+
+            void get(second).catch(() => {});
+            await flush();
+            first.wrapper.unmount();
+            second.wrapper.unmount();
+            refresh.resolve({ status: 500, body: { message: 'down' } });
+            await flush();
+
+            [first, second].forEach(({ logger }) => {
+                expect(logger.error).not.toHaveBeenCalled();
+                expect(logger.warn).not.toHaveBeenCalled();
+            });
+        });
+
+        it('keeps working for the elements that mount after the first one left', async () => {
+            routes.token = () => tokenReply('T1', 30);
+            routes.refresh = () => tokenReply('T2', 30);
+
+            const token = portalToken();
+            const first = mountElement(token);
+            const second = mountElement(token);
+            await flush();
+            first.wrapper.unmount();
+
+            await expect(get(second)).resolves.toEqual({ ok: true });
+            const third = mountElement(token);
+            await expect(get(third)).resolves.toEqual({ ok: true });
+
+            expect(callsTo('token')).toHaveLength(1);
+            expect(callsTo('refresh')).toHaveLength(2);
+            expect(callsTo('api').map(([, init]) => bearerOf(init))).toEqual(['T2', 'T2']);
+        });
+
+        it('gives each token its own refreshes and its own failure log', async () => {
+            routes.token = (init) => {
+                const alias = JSON.parse(String(init.body)).token_alias as string;
+                return alias === `portal-user-${portalCounter}`
+                    ? tokenReply('Y1', 30)
+                    : tokenReply('X1', 30);
+            };
+            routes.refresh = () => ({ status: 500, body: { message: 'down' } });
+
+            const x = mountElement(portalToken());
+            const y = mountElement(portalToken());
+            await flush();
+
+            await get(x);
+            expect(callsTo('refresh')).toHaveLength(1);
+            expect(x.logger.error).toHaveBeenCalledWith(
+                'REQUEST_FAILED',
+                expect.anything(),
+                expect.anything(),
+                expect.anything(),
+            );
+            expect(y.logger.error).not.toHaveBeenCalled();
+
+            // X's failure does not stop Y from refreshing before its own request.
+            await get(y);
+            expect(callsTo('refresh')).toHaveLength(2);
+        });
+    });
+
     describe('what is retried', () => {
         it.each([
             ['a 500', () => ({ status: 500 })],

@@ -97,7 +97,7 @@ export function createInvoicesService(): InvoicesService {
     }: Pick<Invoice, 'id' | 'invoice_number'>): Promise<void> {
         return request<Blob>({
             url: `${config.apiUrls.transaction}/portal/invoices/${id}/pdf`,
-            options: { headers: { Accept: 'application/pdf' } },
+            options: { headers: { Accept: 'application/pdf', 'Content-Type': null } },
         }).then((response) => {
             const newBlob = new Blob([response], {
                 type: 'application/pdf',

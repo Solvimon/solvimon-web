@@ -176,6 +176,8 @@
     "customer_overview.payment_methods_block.add_payment_method_helper_text": "Fügen Sie eine Zahlungsmethode für wiederkehrende Rechnungszahlungen hinzu.",
     "customer_overview.payment_methods_block.view_all_payment_methods_link_label": "Alle anzeigen",
     "customer_overview.subscriptions_block.fallback_subscription_name": "Abonnement",
+    "customer_overview.subscriptions_block.load_error": "Ihre Abonnements konnten nicht geladen werden. Bitte versuchen Sie es später erneut.",
+    "customer_overview.subscriptions_block.load_more_button_label": "Mehr laden",
     "customer_overview.subscriptions_block.no_active_subscription_content": "Es gibt kein aktives Abonnement zum Anzeigen.",
     "customer_overview.subscriptions_block.no_active_subscription_title": "Keine Abonnements",
     "customer_overview.subscriptions_block.title": "{count,plural,one{Mein Abonnement} other{Meine Abonnements}}",

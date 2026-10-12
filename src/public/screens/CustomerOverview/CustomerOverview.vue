@@ -96,6 +96,7 @@ watch([activeScheduleId, () => subscriptions.items.value], ([scheduleId, activeS
                 :subscriptions="shownSubscriptions"
                 :payment-methods="paymentMethods.items.value"
                 :is-loading="isLoading"
+                :has-error="Boolean(subscriptions.error.value)"
             />
         </template>
         <template #content>

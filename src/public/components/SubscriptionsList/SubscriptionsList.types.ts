@@ -15,6 +15,9 @@ export interface SubscriptionsListProps {
     subscriptions: PricingPlanSubscriptionExpanded[];
     paymentMethods?: PaymentMethod[];
     isLoading: boolean;
+    hasError?: boolean;
+    hasMoreItems?: boolean;
+    isLoadingMore?: boolean;
     configuration?: SubscriptionsListConfiguration;
 }
 

@@ -176,6 +176,8 @@
   "customer_overview.payment_methods_block.add_payment_method_helper_text": "Add a payment method for recurring invoice payments.",
   "customer_overview.payment_methods_block.view_all_payment_methods_link_label": "View all",
   "customer_overview.subscriptions_block.fallback_subscription_name": "Subscription",
+  "customer_overview.subscriptions_block.load_error": "We could not load your subscriptions. Please try again later.",
+  "customer_overview.subscriptions_block.load_more_button_label": "Load more",
   "customer_overview.subscriptions_block.no_active_subscription_content": "There’s no active subscription to display.",
   "customer_overview.subscriptions_block.no_active_subscription_title": "No subscriptions",
   "customer_overview.subscriptions_block.title": "{count,plural,one{My subscription} other{My subscriptions}}",

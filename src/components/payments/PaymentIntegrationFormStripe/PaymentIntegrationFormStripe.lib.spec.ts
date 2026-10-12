@@ -1,4 +1,5 @@
-import { getFrameOptions } from './PaymentIntegrationFormStripe.lib';
+import type { StripeError } from '@stripe/stripe-js';
+import { getFrameOptions, summarizeStripeError } from './PaymentIntegrationFormStripe.lib';
 import type { Amount } from '@solvimon/solvimon-types';
 
 const EUR_10: Amount = { quantity: '10', currency: 'EUR' };
@@ -79,5 +80,22 @@ describe('getFrameOptions', () => {
         expect(result.appearance?.variables?.borderRadius).toBe('4px');
         expect(result.appearance?.rules?.['.TermsText']?.fontSize).toBe('14px');
         expect(result.appearance?.rules?.['.Input']?.borderColor).toBe('rgb(229, 231, 235)');
+    });
+});
+
+describe('summarizeStripeError', () => {
+    it('keeps the client secret Stripe attaches out of what is logged', () => {
+        const error = {
+            type: 'card_error',
+            code: 'card_declined',
+            message: 'Your card was declined.',
+            payment_intent: { id: 'pi_1', client_secret: 'pi_1_secret_abc' },
+        } as unknown as StripeError;
+
+        expect(summarizeStripeError(error)).toEqual({
+            type: 'card_error',
+            code: 'card_declined',
+            message: 'Your card was declined.',
+        });
     });
 });

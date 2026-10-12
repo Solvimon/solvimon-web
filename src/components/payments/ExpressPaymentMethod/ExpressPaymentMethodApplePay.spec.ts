@@ -616,6 +616,34 @@ describe('ExpressPaymentMethodApplePay', () => {
         });
     });
 
+    describe('outcomes the API did settle, round 2', () => {
+        it.each([400, 402, 422])('still reports a %i as a plain failure', async (statusCode) => {
+            mockAuthorizePayment.mockRejectedValueOnce(new ApiError({ statusCode }));
+            const wrapper = await mountAndSettle();
+            const actions = { resolve: vi.fn(), reject: vi.fn() };
+
+            await submit(submitState, actions);
+
+            const [error] = wrapper.emitted('payment-failed')?.[0] ?? [];
+            expect((error as { code?: string }).code).not.toBe('PAYMENT_OUTCOME_UNCONFIRMED');
+            expect(actions.reject).toHaveBeenCalled();
+            expect(wrapper.emitted('payment-success')).toBeUndefined();
+        });
+
+        it('rejects the sheet and never succeeds when the outcome is unconfirmed', async () => {
+            mockAuthorizePayment.mockRejectedValueOnce(new ApiError({ statusCode: 502 }));
+            const wrapper = await mountAndSettle();
+            const actions = { resolve: vi.fn(), reject: vi.fn() };
+
+            await submit(submitState, actions);
+
+            expect(actions.reject).toHaveBeenCalledOnce();
+            expect(actions.resolve).not.toHaveBeenCalled();
+            expect(wrapper.emitted('payment-failed')).toHaveLength(1);
+            expect(wrapper.emitted('payment-success')).toBeUndefined();
+        });
+    });
+
     describe('lifecycle', () => {
         // The sheet quotes the amount it was built with, so a promo code or a seat change would
         // otherwise have the customer authorizing a total the checkout no longer shows.

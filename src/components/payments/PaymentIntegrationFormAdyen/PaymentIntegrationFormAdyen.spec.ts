@@ -1001,4 +1001,77 @@ describe('PaymentIntegrationFormAdyen', () => {
             expect(wrapper.findComponent({ name: 'PaymentCompletedCard' }).exists()).toBe(true);
         });
     });
+
+    describe('a refused redirect return beside the drop-in, round 2', () => {
+        const failedCodes = (wrapper: Awaited<ReturnType<typeof mountComponent>>) =>
+            (wrapper.emitted('payment-failed') ?? []).map(([e]) => (e as { code: string }).code);
+
+        beforeEach(() => {
+            vi.mocked(getQueryParam).mockImplementation(
+                (key: string) =>
+                    ({ redirectResult: 'res_1', payment_acceptor_id: 'paya_123' })[key] ?? null,
+            );
+            mockGetPaymentDetails.mockResolvedValue({ payment_status: 'REFUSED' });
+        });
+
+        afterEach(() => {
+            vi.mocked(getQueryParam).mockImplementation(() => null);
+            mockAdyenCheckout.mockReset();
+        });
+
+        it('still tells the host the drop-in failed to mount when the refusal card wins', async () => {
+            mockAdyenCheckout.mockImplementation(() => {
+                throw new Error('Adyen down');
+            });
+
+            const wrapper = await mountComponent();
+
+            expect(failedCodes(wrapper)).toEqual([
+                'AUTHORIZATION_FAILED',
+                'PAYMENT_INTEGRATION_INITIALIZATION_FAILED',
+            ]);
+            expect(wrapper.text()).toContain('Payment failed');
+            expect(wrapper.text()).toMatch(/try again/i);
+            expect(mockLogger.error).toHaveBeenCalledWith(
+                'PAYMENT_INTEGRATION_INITIALIZATION_FAILED',
+                expect.anything(),
+                expect.anything(),
+                expect.anything(),
+            );
+        });
+
+        it('shows the refusal above a drop-in that mounted, so the customer can pay again', async () => {
+            const wrapper = await mountComponent();
+
+            expect(wrapper.text()).toContain('Payment failed');
+            expect(mockAdyenCheckout).toHaveBeenCalledTimes(1);
+            expect(adyen.dropIn.mount).toHaveBeenCalled();
+        });
+
+        it('drops the stale refusal card once the drop-in is rebuilt for new options', async () => {
+            const wrapper = await mountComponent();
+            expect(wrapper.text()).toContain('Payment failed');
+
+            await wrapper.setProps({
+                paymentMethodOptionResponseEntry: {
+                    ...mockProps.paymentMethodOptionResponseEntry,
+                    payment_acceptor: { id: 'paya_456' },
+                } as never,
+            });
+            await flushPromises();
+
+            expect(mockAdyenCheckout).toHaveBeenCalledTimes(2);
+            expect(wrapper.find('[data-testid="payment-error-reference"]').exists()).toBe(false);
+        });
+
+        it('lets a new failure in the rebuilt drop-in replace the old card', async () => {
+            const wrapper = await mountComponent();
+
+            captured.checkoutConfig?.onPaymentFailed?.({ resultCode: 'Refused' });
+            await flushPromises();
+
+            expect(failedCodes(wrapper)).toEqual(['AUTHORIZATION_FAILED', 'AUTHORIZATION_FAILED']);
+            expect(wrapper.findAll('[data-testid="payment-error-reference"]')).toHaveLength(1);
+        });
+    });
 });

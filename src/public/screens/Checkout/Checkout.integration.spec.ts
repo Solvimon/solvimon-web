@@ -470,4 +470,66 @@ describe('Checkout', () => {
             expect(wrapper.find('.sv-checkout__submit').attributes('disabled')).toBe('true');
         });
     });
+
+    describe('express outcomes, round 2', () => {
+        afterEach(() => {
+            mockExperimentalFeatures.value = { 'express-checkout': false };
+        });
+
+        const express = (wrapper: Awaited<ReturnType<typeof mountCheckout>>) =>
+            wrapper.findComponent({ name: 'ExpressPaymentMethods' });
+
+        it('takes express away, turns pay off and explains an unconfirmed express payment', async () => {
+            mockExperimentalFeatures.value = { 'express-checkout': true };
+            paymentMethodOptions.value = [
+                { integration: { payment_gateway: { variant: 'ADYEN' } } },
+            ];
+            const wrapper = await mountCheckout({ Skeleton: false });
+
+            express(wrapper).vm.$emit(
+                'payment-failed',
+                Object.assign(new Error('Apple Pay payment could not be confirmed'), {
+                    code: 'PAYMENT_OUTCOME_UNCONFIRMED',
+                }),
+            );
+            await flushPromises();
+
+            expect(express(wrapper).exists()).toBe(false);
+            expect(wrapper.find('.sv-checkout__submit').attributes('disabled')).toBe('true');
+            expect(wrapper.find('.sv-checkout__payment-error').attributes('title')).toContain(
+                'may still go through',
+            );
+        });
+
+        it('keeps express and pay on offer after a plain express failure', async () => {
+            mockExperimentalFeatures.value = { 'express-checkout': true };
+            paymentMethodOptions.value = [
+                { integration: { payment_gateway: { variant: 'ADYEN' } } },
+            ];
+            const wrapper = await mountCheckout({ Skeleton: false });
+
+            express(wrapper).vm.$emit('payment-failed', new Error('Apple Pay payment was refused'));
+            await flushPromises();
+
+            expect(express(wrapper).exists()).toBe(true);
+            expect(wrapper.find('.sv-checkout__submit').attributes('disabled')).toBe('false');
+        });
+
+        it('says nothing extra beside the card form when it is the card form that is unconfirmed', async () => {
+            mockExperimentalFeatures.value = { 'express-checkout': true };
+            paymentMethodOptions.value = [
+                { integration: { payment_gateway: { variant: 'ADYEN' } } },
+            ];
+            const wrapper = await mountCheckout({ Skeleton: false });
+
+            wrapper.findComponent({ name: 'PaymentIntegrationForm' }).vm.$emit('payment-failed', {
+                code: 'PAYMENT_OUTCOME_UNCONFIRMED',
+                message: 'Payment could not be confirmed',
+            });
+            await flushPromises();
+
+            expect(express(wrapper).exists()).toBe(false);
+            expect(wrapper.find('.sv-checkout__payment-error').exists()).toBe(false);
+        });
+    });
 });

@@ -139,14 +139,15 @@ const isPaymentPending = ref(false);
 const handleSubmit = async () => {
     await checkoutForm.validation.value.$validate();
 
-    if (checkoutForm.validation.value.$invalid) {
+    // Without a mounted form nothing would ever answer the submit and end the pending state.
+    if (checkoutForm.validation.value.$invalid || !paymentIntegrationFormRef.value) {
         return;
     }
 
     isPaymentPending.value = true;
     paymentErrorMessage.value = null;
     saveFormStateForRedirect();
-    paymentIntegrationFormRef.value?.submit();
+    paymentIntegrationFormRef.value.submit();
 };
 
 const paymentErrorMessage = ref<string | null>(null);
@@ -996,6 +997,7 @@ onMounted(() => {
                             class="sv-action sv-action--primary sv-action--full-width sv-checkout__submit w-full"
                             :disabled="
                                 isPromotionCodePending ||
+                                hasPaymentMethodOptionsError ||
                                 paymentMethodOptions.length === 0 ||
                                 isPaymentPending ||
                                 isPaymentUnconfirmed

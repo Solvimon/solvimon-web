@@ -109,6 +109,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A malformed portal token no longer leaves every later element with that token blank. The token was parsed after its shared session had been registered, and the failure threw before the cleanup hook was set up, so the session leaked and nothing was logged. The token is now parsed first, and a malformed one logs `INVALID_TOKEN` (DD-3547).
 - `SESSION_EXPIRED` and `INVALID_TOKEN` now reach the elements still on the page. When several elements shared a portal token, these entries went to the `onLog` of the first element that mounted, even after it had been removed. Every mounted element that shares the token now receives them. The `REQUEST_FAILED` entry from a failed refresh goes to an element still mounted, or nowhere when none is (DD-3547).
 - Ids the SDK puts in a request path, such as a customer, invoice, subscription or payment method id, are now sent as one encoded path segment. An id containing `/`, `?`, `#` or `..` could point an authenticated request at a different endpoint. An empty id, `.` or `..` now fails without sending a request.
+- The checkout description no longer renders the price and billing period as HTML. They are shown as text, with the amounts still in bold.
 
 ## [0.1.0-alpha.27] - 2026-10-12
 

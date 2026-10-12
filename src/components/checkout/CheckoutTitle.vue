@@ -11,6 +11,7 @@ import {
     useIntl,
 } from '@solvimon/solvimon-ui';
 import { computed } from 'vue';
+import { strong, toRichTextParts } from './CheckoutTitle.lib';
 import type { CheckoutTitleProps } from './CheckoutTitle.types';
 
 const props = defineProps<CheckoutTitleProps>();
@@ -20,8 +21,6 @@ const { $t } = useIntl();
 const periodName = computed(() =>
     formatBillingPeriod(props.billingPeriod, { short: true, hideValueForExactPeriods: true }),
 );
-
-const strong = (text: string) => `<strong>${text}</strong>`;
 
 const description = computed(() => {
     const dueToday = formatAmount(props.dueTodayAmount);
@@ -131,6 +130,8 @@ const description = computed(() => {
           );
 });
 
+const descriptionParts = computed(() => toRichTextParts(description.value));
+
 const descriptionWithoutPrice = computed(() =>
     props.trialStartDate
         ? $t(
@@ -200,9 +201,14 @@ const descriptionWithoutPrice = computed(() =>
                         </TooltipContent>
                     </template>
                 </Tooltip>
-                <span v-html="descriptionWithoutPrice" />
+                <span>{{ descriptionWithoutPrice }}</span>
             </span>
-            <span v-else v-html="description" />
+            <span v-else
+                ><template v-for="(part, index) in descriptionParts" :key="index"
+                    ><strong v-if="part.strong">{{ part.text }}</strong
+                    ><template v-else>{{ part.text }}</template></template
+                ></span
+            >
         </Typography>
     </div>
 </template>

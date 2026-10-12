@@ -280,6 +280,14 @@ describe('subscription utils', () => {
             ).toEqual(cancellation);
         });
 
+        it('picks the later of two that start together, as the API does', () => {
+            const sameStart = { ...planChange, start_at: cancellation.start_at };
+
+            expect(
+                getOpenInactivePeriod({ inactive_periods: [cancellation, sameStart] as never }),
+            ).toEqual(sameStart);
+        });
+
         it('skips a period that has ended', () => {
             expect(
                 getOpenInactivePeriod({

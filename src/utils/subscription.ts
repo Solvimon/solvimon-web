@@ -44,7 +44,8 @@ type InactivePeriod = NonNullable<PricingPlanSubscription['inactive_periods']>[n
 
 /**
  * The inactive period the API acts on: the earliest one without an `end_at`, optionally of one
- * type. A cancellation is such a period, so one that has an `end_at` is not standing in the way.
+ * type, and of two that start together the later in the list, as the API picks it. A cancellation
+ * is such a period, so one that has an `end_at` is not standing in the way.
  */
 export function getOpenInactivePeriod(
     subscription: Pick<PricingPlanSubscription, 'inactive_periods'> | undefined,
@@ -54,7 +55,7 @@ export function getOpenInactivePeriod(
         .filter((period) => !period.end_at && (!type || period.type === type))
         .reduce<
             InactivePeriod | undefined
-        >((earliest, period) => (!earliest || new Date(period.start_at) < new Date(earliest.start_at) ? period : earliest), undefined);
+        >((earliest, period) => (!earliest || new Date(period.start_at) <= new Date(earliest.start_at) ? period : earliest), undefined);
 }
 
 /**

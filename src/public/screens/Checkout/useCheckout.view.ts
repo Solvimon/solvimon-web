@@ -12,6 +12,7 @@ import type {
 } from '@solvimon/solvimon-types';
 import { computed, onMounted, ref, watch } from 'vue';
 import { taxId } from '@solvimon/solvimon-ui/validators';
+import { email } from '@vuelidate/validators';
 import { isValidCountryCode } from '@solvimon/solvimon-ui';
 import { toRestorableForm } from './savedFormState';
 import { useLogger } from '@/components/providers';
@@ -97,9 +98,10 @@ export function useCheckoutView({
 
     const validatedEmail = (() => {
         if (!initialEmail) return undefined;
-        if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(initialEmail)) return initialEmail;
+        // The same check the email field makes, and the address is personal data: not logged.
+        if (email.$validator(initialEmail, {}, {}) === true) return initialEmail;
 
-        logger.error('INVALID_EMAIL', `invalid email provided: "${initialEmail}"`);
+        logger.error('INVALID_EMAIL', 'invalid email provided');
         return undefined;
     })();
 

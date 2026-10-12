@@ -62,7 +62,20 @@ watch(
 const hasSubscriptionChoice = computed(() => topUpSubscriptions.value.length > 1);
 
 const subscriptionOptions = computed(() =>
-    topUpSubscriptions.value.map(({ id, name }) => ({ value: id, label: name })),
+    topUpSubscriptions.value.map(({ id, name }, index) => ({
+        value: id,
+        label:
+            name ??
+            $t(
+                {
+                    defaultMessage: 'Subscription {number}',
+                    description:
+                        'Accessible name of a subscription in the top-up modal when it has no name, numbered by its place in the list',
+                    id: 'topup_modal.subscriptions.unnamed',
+                },
+                { number: String(index + 1) },
+            ),
+    })),
 );
 
 const summaryById = computed(() =>

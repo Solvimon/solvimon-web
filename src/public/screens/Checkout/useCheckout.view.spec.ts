@@ -1310,78 +1310,20 @@ describe('useCheckoutView', () => {
             mockGetQueryParam.mockImplementation((name: string) => params[name] ?? null);
         }
 
-        it('sets isPaid to true synchronously when all redirect params are present', async () => {
-            setupRedirectParams();
-
-            const [result, wrapper] = withSetup(() =>
-                useCheckoutView({
-                    initialCountry: undefined,
-                    initialEmail: undefined,
-                    subscriptionId: 'sub_123' as PricingPlanSubscription['id'],
-                }),
-            );
-
-            expect(result.isPaid.value).toBe(true);
-            await flushPromises();
-            wrapper.unmount();
-        });
-
-        it('accepts setup_intent_client_secret as the client secret param', async () => {
-            setupRedirectParams({
-                payment_intent_client_secret: null,
-                setup_intent_client_secret: 'seti_secret_123',
-            });
-
-            const [result, wrapper] = withSetup(() =>
-                useCheckoutView({
-                    initialCountry: undefined,
-                    initialEmail: undefined,
-                    subscriptionId: 'sub_123' as PricingPlanSubscription['id'],
-                }),
-            );
-
-            expect(result.isPaid.value).toBe(true);
-            await flushPromises();
-            wrapper.unmount();
-        });
-
-        it('does not set isPaid when redirect_status is not succeeded', async () => {
-            setupRedirectParams({ redirect_status: 'failed' });
-
-            const [result, wrapper] = withSetup(() =>
-                useCheckoutView({
-                    initialCountry: undefined,
-                    initialEmail: undefined,
-                    subscriptionId: 'sub_123' as PricingPlanSubscription['id'],
-                }),
-            );
-
-            await flushPromises();
-            expect(result.isPaid.value).toBe(false);
-            wrapper.unmount();
-        });
-
-        it('does not set isPaid when payment_acceptor_id is missing', async () => {
-            setupRedirectParams({ payment_acceptor_id: null });
-
-            const [result, wrapper] = withSetup(() =>
-                useCheckoutView({
-                    initialCountry: undefined,
-                    initialEmail: undefined,
-                    subscriptionId: 'sub_123' as PricingPlanSubscription['id'],
-                }),
-            );
-
-            await flushPromises();
-            expect(result.isPaid.value).toBe(false);
-            wrapper.unmount();
-        });
-
-        it('does not set isPaid when both client secrets are absent', async () => {
-            setupRedirectParams({
-                payment_intent_client_secret: null,
-                setup_intent_client_secret: null,
-            });
+        // The query string is not proof of payment: anyone can type it. Marking the checkout paid
+        // from it also kept the payment form from mounting, so the success handler, the host's
+        // `onPaymentSuccess` and the `success_url` redirect never ran.
+        it.each([
+            ['a payment intent', {}],
+            [
+                'a setup intent',
+                {
+                    payment_intent_client_secret: null,
+                    setup_intent_client_secret: 'seti_secret_123',
+                },
+            ],
+        ])('leaves a redirect return with %s to the payment form to confirm', async (_, params) => {
+            setupRedirectParams(params);
 
             const [result, wrapper] = withSetup(() =>
                 useCheckoutView({
@@ -1474,7 +1416,7 @@ describe('useCheckoutView', () => {
             );
 
             await expect(flushPromises()).resolves.not.toThrow();
-            expect(result.isPaid.value).toBe(true);
+            expect(result.subscription.value).toBeDefined();
             wrapper.unmount();
         });
     });

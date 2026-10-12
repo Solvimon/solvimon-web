@@ -1,9 +1,6 @@
 <script setup lang="ts">
 import { Typography, useIntl } from '@solvimon/solvimon-ui';
-import type { SubscriptionPaymentCompletedCardEmits } from './SubscriptionPaymentCompletedCard.types';
 import PaymentFeedbackCard from '@/components/payments/PaymentFeedbackCard/PaymentFeedbackCard.vue';
-
-defineEmits<SubscriptionPaymentCompletedCardEmits>();
 
 const { $t } = useIntl();
 </script>

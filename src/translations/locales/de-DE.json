@@ -296,6 +296,8 @@
     "subscription_details.renew_button.label": "Abonnement verlängern",
     "subscription_details.renew_success": "Ihr Abonnement wurde verlängert.",
     "subscription_details.title": "Abonnementdetails",
+    "subscription_management.customized_pricing.message": "Bitte wenden Sie sich an den Support, um es zu ändern.",
+    "subscription_management.customized_pricing.title": "Dieses Abonnement hat individuelle Preise",
     "subscription_management.done_button.label": "Fertig",
     "subscription_management.empty_state.message": "Bei diesem Abonnement kann derzeit nichts geändert werden.",
     "subscription_management.empty_state.title": "Nichts zu ändern",

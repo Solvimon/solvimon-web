@@ -152,6 +152,17 @@ describe('SubscriptionManagementForm', () => {
         );
     });
 
+    it('names the message after the form, so a button outside it can point at it', async () => {
+        const wrapper = mountComponent({ paymentMethods: [] });
+
+        await wrapper.setProps({ id: 'sv-form' });
+
+        expect(wrapper.find('form').attributes('id')).toBe('sv-form');
+        expect(
+            wrapper.find('.sv-subscription-management-form__no-payment-method').attributes('id'),
+        ).toBe('sv-form__no-payment-method');
+    });
+
     it('reports being submitted, so Enter commits the change too', async () => {
         const wrapper = mountComponent();
 

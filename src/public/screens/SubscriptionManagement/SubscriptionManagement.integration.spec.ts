@@ -132,6 +132,7 @@ const NOW = new Date('2026-08-06T12:00:00.000Z');
 
 const mockSubscription = {
     id: 'ppsu_1',
+    customer_id: 'cus_123',
     payment_method_id: 'pm_saved',
     pricing_plan_schedule_infos: [
         {
@@ -172,7 +173,12 @@ const subscriptionWithoutGroups = {
 } as unknown as PricingPlanSubscriptionExpanded;
 
 /** The screen only commits a change once something pays for it, so most cases start with one. */
-const savedPaymentMethod = { id: 'pm_saved' } as unknown as PaymentMethod;
+const savedPaymentMethod = {
+    id: 'pm_saved',
+    status: 'ACTIVE',
+    type: 'CARD',
+    customer_id: 'cus_123',
+} as unknown as PaymentMethod;
 
 const mountComponent = ({
     enabledPricingId,
@@ -450,32 +456,58 @@ describe('SubscriptionManagement', () => {
     });
 
     describe('payment method', () => {
+        const methodsOffered = (wrapper: ReturnType<typeof mountComponent>) =>
+            wrapper.findComponent({ name: 'SubscriptionManagementForm' }).props('paymentMethods');
+
         it("offers only the subscription's own method, since that is what the API charges", () => {
             const wrapper = mountComponent({
                 enabledPricingId: 'pri_5000',
-                paymentMethods: [
-                    { id: 'pm_other' } as unknown as PaymentMethod,
-                    savedPaymentMethod,
-                ],
+                paymentMethods: [{ ...savedPaymentMethod, id: 'pm_other' }, savedPaymentMethod],
             });
 
+            expect(methodsOffered(wrapper)).toEqual([savedPaymentMethod]);
+        });
+
+        it.each([
+            ['is not active', { status: 'INACTIVE' }],
+            ['is still being set up', { status: 'SETUP' }],
+            ['is prepaid', { type: 'PREPAID' }],
+            ['is of an unknown type', { type: 'UNKNOWN' }],
+            ['belongs to another customer', { customer_id: 'cus_other' }],
+        ])('offers nothing when the method %s, since the API refuses it', async (_, change) => {
+            const wrapper = mountComponent({
+                enabledPricingId: 'pri_5000',
+                paymentMethods: [{ ...savedPaymentMethod, ...change } as unknown as PaymentMethod],
+            });
+            await flushPromises();
+
+            expect(methodsOffered(wrapper)).toEqual([]);
             expect(
-                wrapper
-                    .findComponent({ name: 'SubscriptionManagementForm' })
-                    .props('paymentMethods'),
-            ).toEqual([savedPaymentMethod]);
+                wrapper.find('.sv-subscription-management__update').attributes('disabled'),
+            ).toBeDefined();
         });
 
         it('cannot be committed when the subscription has no method among the saved ones', async () => {
             const wrapper = mountComponent({
                 enabledPricingId: 'pri_5000',
-                paymentMethods: [{ id: 'pm_other' } as unknown as PaymentMethod],
+                paymentMethods: [{ ...savedPaymentMethod, id: 'pm_other' }],
             });
             await flushPromises();
 
+            const button = wrapper.find('.sv-subscription-management__update');
+
+            expect(button.attributes('disabled')).toBeDefined();
+            expect(button.attributes('aria-describedby')).toBe(
+                'sv-subscription-management-form__no-payment-method',
+            );
+        });
+
+        it('describes the button by nothing while there is a method', () => {
+            const wrapper = mountComponent({ enabledPricingId: 'pri_5000' });
+
             expect(
-                wrapper.find('.sv-subscription-management__update').attributes('disabled'),
-            ).toBeDefined();
+                wrapper.find('.sv-subscription-management__update').attributes('aria-describedby'),
+            ).toBeUndefined();
         });
     });
 
@@ -532,51 +564,42 @@ describe('SubscriptionManagement', () => {
             ],
         } as unknown as PricingPlanSubscriptionExpanded;
 
-        it('finds the group of a customized pricing', () => {
-            const wrapper = mountComponent({ subscription: customizedSubscription });
-
-            expect(wrapper.find('.sv-subscription-management__title').text()).toBe(
-                'Manage Credit packs',
-            );
-            expect(
-                wrapper.findComponent({ name: 'SubscriptionManagementForm' }).props('pricingGroup'),
-            ).toEqual(
-                expect.objectContaining({
-                    pricings: [
-                        expect.objectContaining({ id: 'pri_1000_custom' }),
-                        expect.objectContaining({ id: 'pri_5000' }),
-                    ],
-                }),
-            );
-        });
-
-        it('opens on the customized pricing the host named', () => {
+        it('names the group of a customized pricing', () => {
             const wrapper = mountComponent({
                 subscription: customizedSubscription,
                 enabledPricingId: 'pri_1000_custom',
             });
 
-            expect(
-                wrapper
-                    .findComponent({ name: 'SubscriptionManagementForm' })
-                    .props('enabledPricingIds'),
-            ).toEqual(['pri_1000_custom']);
+            expect(wrapper.find('.sv-subscription-management__title').text()).toBe(
+                'Manage Credit packs',
+            );
         });
 
-        it('never sends a customized pricing as enabled, since the API refuses it', async () => {
+        it('says it cannot be changed here, in place of a form that would drop it', () => {
+            const wrapper = mountComponent({ subscription: customizedSubscription });
+
+            expect(wrapper.find('.sv-subscription-management__customized-pricing').exists()).toBe(
+                true,
+            );
+            expect(wrapper.find('.sv-subscription-management__form').exists()).toBe(false);
+            expect(wrapper.find('.sv-subscription-management__summary').exists()).toBe(false);
+        });
+
+        it('neither prices nor commits a change', async () => {
             const wrapper = mountComponent({
                 subscription: customizedSubscription,
-                extraEnabledPricingIds: ['pri_other_group'],
+                enabledPricingId: 'pri_5000',
             });
-
-            wrapper
-                .findComponent({ name: 'SubscriptionManagementForm' })
-                .vm.$emit('update:enabledPricingIds', ['pri_other_group', 'pri_1000_custom']);
             await flushPromises();
 
-            expect(mockLoadPreview).toHaveBeenLastCalledWith(
-                expect.objectContaining({ enabledPricingIds: ['pri_other_group'] }),
-            );
+            await wrapper.find('.sv-subscription-management__update').trigger('click');
+            await flushPromises();
+
+            expect(mockLoadPreview).not.toHaveBeenCalled();
+            expect(mockCreatePricingPlanSchedule).not.toHaveBeenCalled();
+            expect(
+                wrapper.find('.sv-subscription-management__update').attributes('aria-describedby'),
+            ).toBe('sv-subscription-management__customized-pricing-message');
         });
     });
 

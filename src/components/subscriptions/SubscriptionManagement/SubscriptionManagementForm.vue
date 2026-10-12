@@ -95,6 +95,7 @@ watch(
 
             <Typography
                 v-else
+                :id="id && `${id}__no-payment-method`"
                 variant="body-sm"
                 color="subtle"
                 tag="p"

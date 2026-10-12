@@ -33,6 +33,14 @@ vi.mock('@solvimon/solvimon-ui', async () => {
                     h('div', { 'data-testid': 'payment-method-stub' }, [slots.description?.()]);
             },
         }),
+        // ErrorNotification resolves its own IntlProvider internally, which is not mounted here.
+        ErrorNotification: defineComponent({
+            name: 'ErrorNotificationStub',
+            props: { title: String },
+            setup(props) {
+                return () => h('div', { class: 'sv-error-notification-stub' }, props.title);
+            },
+        }),
     });
 });
 
@@ -70,10 +78,10 @@ describe('PaymentHistory entry component', () => {
         data = createData(),
     }: {
         isPending?: boolean;
-        data?: ReturnType<typeof createData> | undefined;
+        data?: ReturnType<typeof createData> | null;
     } = {}) => {
         mockUseInvoiceData.mockReturnValue({
-            data: ref(data),
+            data: ref(data ?? undefined),
             isPending: ref(isPending),
         });
 
@@ -98,13 +106,43 @@ describe('PaymentHistory entry component', () => {
     it('calls useInvoiceData with the configured invoice id', () => {
         mountComponent();
 
-        expect(mockUseInvoiceData).toHaveBeenCalledWith(invoiceId);
+        expect(mockUseInvoiceData).toHaveBeenCalledWith(invoiceId, { includePayments: true });
     });
 
-    it('renders nothing while data is initially being fetched', () => {
-        const wrapper = mountComponent({ isPending: true, data: undefined });
+    it('shows a skeleton while the payment history loads, rather than nothing', () => {
+        const wrapper = mountComponent({ isPending: true, data: null });
 
-        expect(wrapper.text()).toBe('');
+        expect(wrapper.find('[data-testid="payment-history-skeleton"]').exists()).toBe(true);
+    });
+
+    it('says so when the payment history could not be loaded', () => {
+        const wrapper = mountComponent({ data: null });
+
+        expect(wrapper.text()).toContain(
+            'We could not load the payment history. Please try again.',
+        );
+    });
+
+    it('loads the other invoice when the configured invoice id changes', async () => {
+        const wrapper = mountComponent();
+
+        await wrapper.setProps({ configuration: { invoiceId: 'inv_456' } });
+
+        expect(mockUseInvoiceData).toHaveBeenLastCalledWith('inv_456', { includePayments: true });
+    });
+
+    it('lists the attempts in the order it shows them, without reversing them in CSS', () => {
+        const wrapper = mountComponent({
+            data: createData([
+                createPayment({ id: 'pay_1', result: 'REFUSED' }),
+                createPayment({ id: 'pay_2', result: 'AUTHORIZED' }),
+            ]),
+        });
+
+        const items = wrapper.get('.sv-payment-history__items');
+        expect(
+            items.findAll('.sv-payment-history__item-status').map((chip) => chip.text()),
+        ).toEqual(['Authorized', 'Refused']);
     });
 
     // The skeleton is shown when already-loaded data is being refetched (isPending re-triggers

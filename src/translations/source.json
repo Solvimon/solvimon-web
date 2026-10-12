@@ -711,6 +711,10 @@
     "defaultMessage": "Upgrades",
     "description": "Title for the block listing the pricings enabled on a subscription"
   },
+  "invoice.load_error": {
+    "defaultMessage": "We could not load this invoice. Please try again.",
+    "description": "Error shown in place of an invoice that failed to load"
+  },
   "invoice_credits.balance.table_header": {
     "defaultMessage": "Balance",
     "description": "Column header for the available wallet balance amount"
@@ -834,6 +838,10 @@
   "payment_completed_card.title.tokenize": {
     "defaultMessage": "Your payment method is added",
     "description": "The title for when a payment method was successfully added"
+  },
+  "payment_history.load_error": {
+    "defaultMessage": "We could not load the payment history. Please try again.",
+    "description": "Error shown in place of the payment history when it failed to load"
   },
   "payment_integration_form.select_payment_method_error": {
     "defaultMessage": "Select a payment method",

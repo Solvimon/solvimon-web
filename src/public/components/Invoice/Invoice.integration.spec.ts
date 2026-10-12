@@ -43,6 +43,14 @@ vi.mock('@solvimon/solvimon-ui', async () => {
             },
         }),
         PaymentMethod: defineComponent({ template: '<div />' }),
+        // ErrorNotification resolves its own IntlProvider internally, which is not mounted here.
+        ErrorNotification: defineComponent({
+            name: 'ErrorNotificationStub',
+            props: { title: String },
+            setup(props) {
+                return () => h('div', { class: 'sv-error-notification-stub' }, props.title);
+            },
+        }),
     });
 });
 
@@ -89,11 +97,13 @@ describe('Invoice entry component', () => {
     const mountComponent = async ({
         withInvoice = true,
         isLoading = false,
+        isInvoicePending = false,
         paymentsData = payments,
         configuration = defaultConfiguration,
     }: {
         withInvoice?: boolean;
         isLoading?: boolean;
+        isInvoicePending?: boolean;
         paymentsData?: Payment[];
         configuration?: SolvimonInvoiceEntryProps['configuration'];
     } = {}) => {
@@ -101,7 +111,7 @@ describe('Invoice entry component', () => {
             invoice: ref(withInvoice ? invoice : undefined),
             downloadInvoicePdf: mockDownloadInvoicePdf,
             get: mockInvoiceGet,
-            isPending: ref(false),
+            isPending: ref(isInvoicePending),
             error: ref(null),
         });
 
@@ -169,10 +179,37 @@ describe('Invoice entry component', () => {
         expect(mockPaymentsGet).toHaveBeenCalledWith(invoiceId);
     });
 
-    it('does not render the invoice when data has not yet loaded', async () => {
+    it('shows a skeleton while the invoice loads, rather than nothing', async () => {
+        const wrapper = await mountComponent({ withInvoice: false, isLoading: true });
+
+        expect(wrapper.find('[data-testid="invoice-skeleton"]').exists()).toBe(true);
+        expect(wrapper.text()).not.toContain('Invoice details');
+    });
+
+    it('keeps the skeleton up while the invoice is still on its way after the payments failed', async () => {
+        const wrapper = await mountComponent({ withInvoice: false, isInvoicePending: true });
+
+        expect(wrapper.find('[data-testid="invoice-skeleton"]').exists()).toBe(true);
+        expect(wrapper.find('.sv-error-notification-stub').exists()).toBe(false);
+    });
+
+    it('says so when the invoice could not be loaded', async () => {
         const wrapper = await mountComponent({ withInvoice: false });
 
-        expect(wrapper.text()).toBe('');
+        expect(wrapper.find('[data-testid="invoice-skeleton"]').exists()).toBe(false);
+        expect(wrapper.text()).toContain('We could not load this invoice. Please try again.');
+    });
+
+    it('loads the other invoice when the configured invoice id changes', async () => {
+        const wrapper = await mountComponent();
+
+        await wrapper.setProps({
+            configuration: { ...defaultConfiguration, invoiceId: 'inv_456' },
+        });
+        await flushPromises();
+
+        expect(mockUseInvoice).toHaveBeenLastCalledWith({ invoiceId: 'inv_456' });
+        expect(mockPaymentsGet).toHaveBeenLastCalledWith('inv_456');
     });
 
     it('renders the invoice details section when data is loaded', async () => {

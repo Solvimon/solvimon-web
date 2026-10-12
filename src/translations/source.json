@@ -267,6 +267,10 @@
     "defaultMessage": "Go to invoice",
     "description": "Opens the invoice of the on-demand order the customer just placed"
   },
+  "checkout.address.city.label": {
+    "defaultMessage": "City",
+    "description": "City of the customer address in the checkout form"
+  },
   "checkout.address.city.placeholder": {
     "defaultMessage": "City...",
     "description": "City of the customer address in the checkout form"
@@ -275,6 +279,10 @@
     "defaultMessage": "Address line 1...",
     "description": "Address line 1 of the customer address in the checkout form"
   },
+  "checkout.address.line2.label": {
+    "defaultMessage": "Address line 2",
+    "description": "Address line 2 of the customer address in the checkout form"
+  },
   "checkout.address.line2.placeholder": {
     "defaultMessage": "Address line 2...",
     "description": "Address line 2 of the customer address in the checkout form"
@@ -282,6 +290,14 @@
   "checkout.address.portal_code.placeholder": {
     "defaultMessage": "Postal code...",
     "description": "Postal code of the customer address in the checkout form"
+  },
+  "checkout.address.postal_code.label": {
+    "defaultMessage": "Postal code",
+    "description": "Postal code of the customer address in the checkout form"
+  },
+  "checkout.address.state.label": {
+    "defaultMessage": "State",
+    "description": "State of the customer address in the checkout form"
   },
   "checkout.address.state.placeholder": {
     "defaultMessage": "State...",
@@ -1230,6 +1246,10 @@
   "tax_check.invalid_vat_number": {
     "defaultMessage": "VAT number is invalid.",
     "description": "The message shown when the VAT number is invalid"
+  },
+  "tax_check.unknown_vat_number": {
+    "defaultMessage": "The VAT number could not be checked right now.",
+    "description": "The message shown when the VAT number check could not give an answer, for instance because the EU VAT service is unavailable"
   },
   "tax_check.valid_vat_number": {
     "defaultMessage": "VAT number is valid.",

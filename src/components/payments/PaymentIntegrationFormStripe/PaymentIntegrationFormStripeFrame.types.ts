@@ -33,6 +33,14 @@ export type StripeFrameOptions =
           appearance?: StripeAppearanceOption;
       };
 
+/** What `elements.update()` is given; `null` takes back a `setup_future_usage` sent before. */
+export type StripeFrameOptionsUpdate = {
+    currency: string;
+    amount?: number;
+    setup_future_usage: 'off_session' | null;
+    appearance?: StripeAppearanceOption;
+};
+
 export interface PaymentIntegrationFormStripeFrameProps {
     publicKey: string;
     options: StripeFrameOptions;

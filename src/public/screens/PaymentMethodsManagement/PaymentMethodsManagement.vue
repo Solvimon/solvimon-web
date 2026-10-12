@@ -6,13 +6,15 @@ import ScreenTitle from '@/components/shared/ScreenTitle/ScreenTitle.vue';
 import { ContentWithAsideLayout } from '@/layouts';
 import PaymentMethodsList from '@/components/payments/PaymentMethodsList/PaymentMethodsList.vue';
 import PaymentMethodForm from '@/public/components/PaymentMethodForm/PaymentMethodForm.vue';
+import { hasPaymentRedirectReturn } from '@/utils/paymentRedirect';
 
 defineProps<PaymentMethodsManagementProps>();
 const emit = defineEmits<{ 'set-default': []; delete: []; added: [] }>();
 
 const { $t } = useIntl();
 
-const showPaymentMethodForm = ref(false);
+// Back from a 3DS or bank redirect: only the form can confirm the method, so it opens on its own.
+const showPaymentMethodForm = ref(hasPaymentRedirectReturn());
 
 /**
  * The new method appears in the list above, which is confirmation enough. Leaving the spent form

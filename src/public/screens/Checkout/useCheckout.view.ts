@@ -437,7 +437,8 @@ export function useCheckoutView({
 
         // Everything downstream waits on the subscription — the preview prices it, and the payment
         // method options need the amount that preview returns. So a failure here reads as "nothing
-        // is loading" rather than as itself, and has to be reported where it happens.
+        // is loading" rather than as itself, and has to be reported where it happens. Reported, it
+        // is handled: rethrowing would report it again as unhandled.
         try {
             await loadSubscription();
         } catch (error) {
@@ -447,7 +448,7 @@ export function useCheckoutView({
                 {},
                 error,
             );
-            throw error;
+            return;
         }
 
         try {

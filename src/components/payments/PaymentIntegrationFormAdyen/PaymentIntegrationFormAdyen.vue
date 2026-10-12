@@ -82,6 +82,9 @@ let isSubmissionInFlight = false;
 let mountAttempt = 0;
 // Kept until the gateway has answered for it, so a retry can ask again after a failed call.
 let pendingRedirectResult: string | undefined;
+// No drop-in while the payment the customer came back from is being asked about, whatever asks for
+// one: it could take a second payment before the first is known.
+let isConfirmingRedirect = false;
 
 const logger = useLogger();
 const { locale } = useIntl();
@@ -262,7 +265,7 @@ async function mountDropIn() {
     const attempt = ++mountAttempt;
     const isSuperseded = () => attempt !== mountAttempt;
 
-    if (isDropInWithheld) return;
+    if (isDropInWithheld || isConfirmingRedirect) return;
 
     await unmountDropIn();
 
@@ -988,10 +991,15 @@ async function handleRedirectResult() {
 async function confirmRedirectResult() {
     if (!pendingRedirectResult) return;
 
-    await handlePaymentDetails({
-        paymentAcceptorId: props.paymentMethodOptionResponseEntry.payment_acceptor.id,
-        detailsResult: { redirectResult: pendingRedirectResult },
-    });
+    isConfirmingRedirect = true;
+    try {
+        await handlePaymentDetails({
+            paymentAcceptorId: props.paymentMethodOptionResponseEntry.payment_acceptor.id,
+            detailsResult: { redirectResult: pendingRedirectResult },
+        });
+    } finally {
+        isConfirmingRedirect = false;
+    }
 }
 
 /**

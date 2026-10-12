@@ -202,6 +202,22 @@ describe('ConvertedAmountInput', () => {
             expect(wrapper.emitted('update:modelValue')?.at(-1)).toEqual(['333.33']);
         });
 
+        it('rounds to the minor units of the currency it charges', async () => {
+            const wrapper = mountCreditsEntry({ conversionRate: '3', currency: 'JPY' });
+
+            await wrapper.find('input').setValue('1000');
+
+            expect(wrapper.emitted('update:modelValue')?.at(-1)).toEqual(['333']);
+        });
+
+        it('keeps the third decimal of a currency that has one', async () => {
+            const wrapper = mountCreditsEntry({ conversionRate: '3', currency: 'KWD' });
+
+            await wrapper.find('input').setValue('1000');
+
+            expect(wrapper.emitted('update:modelValue')?.at(-1)).toEqual(['333.333']);
+        });
+
         it('shows a money model as the credits it buys', () => {
             expect(inputValue(mountCreditsEntry({}, '25.00'))).toBe('250');
         });

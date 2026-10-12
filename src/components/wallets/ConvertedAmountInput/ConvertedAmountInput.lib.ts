@@ -1,5 +1,6 @@
 import type { Amount } from '@solvimon/solvimon-types';
 import type { ConversionBase } from './ConvertedAmountInput.types';
+import { getCurrencyDecimals } from '@/utils/amount';
 
 export const toNumber = (quantity?: string | null): number | undefined => {
     const parsed = Number(quantity);
@@ -49,10 +50,16 @@ export const toBaseQuantity = (
         ? toConvertedQuantity(quantity, 'AMOUNT', conversionRate)
         : toNumber(quantity);
 
-export const toMoneyQuantity = (value: number): string => value.toFixed(2);
+/** Rounded to the currency's own minor units, since that is what can be charged. */
+export const toMoneyQuantity = (value: number, currency?: Amount['currency']): string =>
+    value.toFixed(getCurrencyDecimals(currency));
 
-export const toFieldQuantity = (value: number, base: ConversionBase): string =>
-    base === 'AMOUNT' ? toMoneyQuantity(value) : String(Number(value.toFixed(6)));
+export const toFieldQuantity = (
+    value: number,
+    base: ConversionBase,
+    currency?: Amount['currency'],
+): string =>
+    base === 'AMOUNT' ? toMoneyQuantity(value, currency) : String(Number(value.toFixed(6)));
 
 export const toBoundQuantity = (
     bound: Amount | undefined,
@@ -66,5 +73,5 @@ export const toBoundQuantity = (
         return undefined;
     }
 
-    return base === 'CREDITS' ? formatNumber(quantity) : toMoneyQuantity(quantity);
+    return base === 'CREDITS' ? formatNumber(quantity) : toMoneyQuantity(quantity, bound?.currency);
 };

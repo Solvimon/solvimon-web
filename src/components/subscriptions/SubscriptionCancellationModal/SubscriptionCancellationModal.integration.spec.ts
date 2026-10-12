@@ -1,8 +1,8 @@
 import { flushPromises, mount } from '@vue/test-utils';
 import { defineComponent, h } from 'vue';
+import type { Customer, PaymentMethod } from '@solvimon/solvimon-types';
 import SubscriptionCancellationModal from './SubscriptionCancellationModal.vue';
 import SubscriptionsListItem from '@/components/subscriptions/SubscriptionsList/SubscriptionsListItem.vue';
-import type { Customer, PaymentMethod } from '@solvimon/solvimon-types';
 import type { PricingPlanSubscriptionExpanded } from '@/types/subscription';
 
 const { mockSetSubscriptionCancellation, mockLogError, mockGetPaymentMethod, storedPaymentMethod } =

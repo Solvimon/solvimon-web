@@ -1,10 +1,10 @@
-import { getPricingItemByPricingConfigId } from './pricingItem';
 import type {
     PricingExtended,
     PricingItemConfigExtended,
     PricingItemExtended,
     ProductItemExtended,
 } from '@solvimon/solvimon-types';
+import { getPricingItemByPricingConfigId } from './pricingItem';
 
 describe('pricingItem utils', () => {
     describe('getPricingItemByPricingConfigId', () => {

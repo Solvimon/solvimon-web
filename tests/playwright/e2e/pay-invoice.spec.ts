@@ -9,7 +9,6 @@ import {
     type MountOptions,
 } from '../support/payInvoice';
 import {
-    aCustomerPortalObject,
     aFailedAuthorization,
     anInvoiceRecord,
     aSuccessfulAuthorization,

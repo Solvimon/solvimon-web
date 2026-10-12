@@ -1,6 +1,6 @@
 import type { Invoice, PricingPlanScheduleInfoExpanded } from '@solvimon/solvimon-types';
-import type { PricingPlanSubscriptionExpanded } from '@/types/subscription';
 import { useSubscriptionUpgradePreview } from './useSubscriptionUpgradePreview';
+import type { PricingPlanSubscriptionExpanded } from '@/types/subscription';
 
 const { mockGetInvoicePreview, mockLoggerError } = vi.hoisted(() => ({
     mockGetInvoicePreview: vi.fn(),

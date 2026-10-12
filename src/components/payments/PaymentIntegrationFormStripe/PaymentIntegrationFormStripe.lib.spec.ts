@@ -1,11 +1,11 @@
 import type { StripeError } from '@stripe/stripe-js';
+import type { Amount } from '@solvimon/solvimon-types';
 import {
     getFrameOptions,
     getFrameOptionsUpdate,
     getFrameTargetOrigin,
     summarizeStripeError,
 } from './PaymentIntegrationFormStripe.lib';
-import type { Amount } from '@solvimon/solvimon-types';
 
 const EUR_10: Amount = { quantity: '10', currency: 'EUR' };
 

@@ -1,8 +1,8 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { execFileSync } from 'child_process';
 import { mkdtempSync, rmSync, symlinkSync, writeFileSync } from 'fs';
 import { tmpdir } from 'os';
 import path from 'path';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { generateBundleSizeReport } from './bundle-size-report.mjs';
 
 const SCRIPT = path.join(__dirname, 'bundle-size-report.mjs');

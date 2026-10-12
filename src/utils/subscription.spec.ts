@@ -1,5 +1,4 @@
 import type {
-    PricingGroupExtended,
     PricingPlanScheduleInfoExpanded,
     PricingPlanSubscriptionExpanded,
 } from '@solvimon/solvimon-types';
@@ -189,7 +188,6 @@ describe('subscription utils', () => {
     });
 
     describe('findPricingsByIds', () => {
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         const mockData = {
             pricing_plan_schedule_infos: [
                 {

@@ -1,5 +1,4 @@
 import { flushPromises, mount } from '@vue/test-utils';
-import { nextTick } from 'vue';
 import PaymentIntegrationFormAdyen from './PaymentIntegrationFormAdyen.vue';
 import type { PaymentIntegrationFormAdyenProps } from './PaymentIntegrationFormAdyen.types';
 import { ApiError } from '@/services/apiError';

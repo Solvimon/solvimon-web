@@ -1,5 +1,5 @@
 import { flushPromises, mount } from '@vue/test-utils';
-import { defineComponent, h, ref } from 'vue';
+import { defineComponent, h } from 'vue';
 import type { Customer } from '@solvimon/solvimon-types';
 import AddPaymentMethodModal from './AddPaymentMethodModal.vue';
 

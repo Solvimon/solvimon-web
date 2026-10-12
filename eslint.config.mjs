@@ -1,6 +1,5 @@
 import pluginVue from 'eslint-plugin-vue';
 import { defineConfigWithVueTs, vueTsConfigs } from '@vue/eslint-config-typescript';
-import globals from 'globals';
 import { globalIgnores } from 'eslint/config';
 import formatjs from 'eslint-plugin-formatjs';
 import unusedImports from 'eslint-plugin-unused-imports';
@@ -10,7 +9,6 @@ import skipFormatting from '@vue/eslint-config-prettier/skip-formatting';
 
 export default defineConfigWithVueTs(
     globalIgnores([
-        '**/*.spec.ts',
         '**/*.cy.ts',
         '**/__tests__/*.{ts,js}',
         '**/dist/**',
@@ -25,9 +23,6 @@ export default defineConfigWithVueTs(
         files: ['**/*.ts', '**/*.vue'],
         languageOptions: {
             ecmaVersion: 'latest',
-            globals: {
-                ...globals.node,
-            },
             parserOptions: {
                 parser: '@typescript-eslint/parser',
                 tsconfigRootDir: import.meta.dirname,
@@ -160,6 +155,14 @@ export default defineConfigWithVueTs(
                         'The log message (second argument) must be a string or template literal so npm run logs:list can extract it.',
                 },
             ],
+        },
+    },
+    // Specs build partial fixtures and reach into mocks, which is what these rules exist to stop.
+    {
+        files: ['**/*.spec.ts'],
+        rules: {
+            '@typescript-eslint/consistent-type-assertions': 'off',
+            '@typescript-eslint/no-explicit-any': 'off',
         },
     },
     // Override for test app files

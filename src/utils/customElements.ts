@@ -1,7 +1,7 @@
 import { defineCustomElement as defineCustomElementVue } from 'vue';
 import type { CustomElementOptions } from 'vue';
 import { componentStyles } from '@solvimon/solvimon-ui/component-styles';
-import tailwindStyles from '../../.sdk/tailwind.css?inline';
+import tailwindStyles from '@sdk/tailwind.css?inline';
 import {
     adoptStyleSheet,
     createStyleSheet,
@@ -37,8 +37,9 @@ export function defineCustomElement(
     if (!supportsConstructedStyleSheets) {
         return defineCustomElementVue(component, {
             shadowRoot: true,
-            styles: [...baseStyles, ...ownStyles],
             ...options,
+            // After the spread: `ownStyles` already holds `options.styles`, on top of the base.
+            styles: [...baseStyles, ...ownStyles],
         });
     }
 

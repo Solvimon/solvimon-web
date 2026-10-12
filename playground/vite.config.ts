@@ -38,6 +38,10 @@ export default defineConfig({
             // The SDK source files use @/ as their src alias — map it to the SDK src.
             // The playground itself uses only relative imports, so there is no conflict.
             {
+                find: '@sdk',
+                replacement: fileURLToPath(new URL('../.sdk', import.meta.url)),
+            },
+            {
                 find: '@',
                 replacement: fileURLToPath(new URL('../src', import.meta.url)),
             },

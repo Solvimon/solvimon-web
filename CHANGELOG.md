@@ -125,6 +125,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Checkout says a trial is "Free" however the API writes its zero amount; it only recognised `0.00`. Where it states a fallback amount, that amount is now in the checkout's own currency instead of always in EUR.
 - The promotion code field tells screen readers a code is applied only once checkout has accepted it, and announces nothing for a code it turned down. Pressing Enter in the field applies the code once; it applied it twice.
 - A checkout note no longer reads an underscore inside a word, such as `customer_reference_id` or a URL, as italics.
+- The seat labels and prices are now in Dutch for the `nl-NL` locale ("Plaatsen", "per plaats"). They were shown in English.
 
 ## [0.1.0-alpha.27] - 2026-10-12
 

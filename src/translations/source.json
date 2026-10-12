@@ -1367,6 +1367,10 @@
     "defaultMessage": "Choose your own amount",
     "description": "Label of the choose-your-amount option in the top-up modal"
   },
+  "topup_modal.invoice_preview.error": {
+    "defaultMessage": "Unable to calculate the total. Please try again.",
+    "description": "Shown in place of the top-up total when it failed to load"
+  },
   "topup_modal.invoice_preview.label": {
     "defaultMessage": "You will pay",
     "description": "Label above the preview of what topping up will be invoiced for"

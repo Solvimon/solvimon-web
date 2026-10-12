@@ -12,10 +12,18 @@ npm install @solvimon/solvimon-web
 
 Every component requires at minimum:
 
-| Property      | Type                 | Description                                 |
-| ------------- | -------------------- | ------------------------------------------- |
-| `token`       | `string`             | Session token fetched from the Solvimon API |
-| `environment` | `"TEST"` \| `"LIVE"` | Target environment                          |
+| Property       | Type                 | Description                                                                     |
+| -------------- | -------------------- | ------------------------------------------------------------------------------- |
+| `portalObject` | `PortalUrl`          | The portal URL your server creates through the Solvimon API, passed on as it is |
+| `environment`  | `"TEST"` \| `"LIVE"` | Target environment                                                              |
+
+`portalObject` is an object, so set it as a JavaScript property rather than an HTML attribute. It
+carries the portal token the element signs in with; there is no separate `token` property.
+
+An element renders only for a published portal of the type it accepts: `checkout` takes an
+`INIT_PRICING_PLAN_SUBSCRIPTION` portal, every other element a `CUSTOMER` one. Any other type logs
+`PORTAL_TYPE_NOT_ALLOWED` and renders nothing. A revoked portal logs `RESOURCE_REVOKED`; the
+checkout shows its "Checkout not available" notice, and the other elements render nothing.
 
 ## Usage
 
@@ -26,14 +34,14 @@ The SDK ships web components (Custom Elements), and there are two ways to put on
 Call the entry's `define` function once — it registers the custom element globally and is safe to
 call more than once.
 
-```tsx
+```ts
 import { defineSolvimonCheckout } from '@solvimon/solvimon-web/screens/checkout';
 
 defineSolvimonCheckout();
 
-export default function Page() {
-    return <solvimon-checkout token="<token>" environment="LIVE" />;
-}
+const checkout = document.createElement('solvimon-checkout');
+Object.assign(checkout, { environment: 'LIVE', portalObject });
+document.querySelector('#checkout')?.append(checkout);
 ```
 
 This is the lighter of the two: you download only the entries you name.
@@ -46,10 +54,13 @@ the second registration is silently ignored.
 defineSolvimonCheckout('acme-checkout');
 ```
 
+An element is registered under one name only. `define` returns the name it is registered under, and
+calling it again — with or without a name — returns that first name instead of registering another.
+`createSolvimonCore` mounts the element under the name you chose.
+
 ### Mount through the core
 
-`createSolvimonCore` configures once and mounts by id, and is the only way to pass `cssOverrides`.
-It loads each entry on demand, so you pay for what you mount, and it hands back an unmount
+`createSolvimonCore` configures once and mounts by id. It loads each entry on demand, so you pay for what you mount, and it hands back an unmount
 function.
 
 ```ts
@@ -94,21 +105,72 @@ Importing an entry on the server is safe — the module has no top-level browser
 client-only lifecycle hook:
 
 ```tsx
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
+import type { CheckoutPagePortalUrl } from '@solvimon/solvimon-web/core';
 // Importing at the top level is fine; only the call below has to wait for the browser.
 import { defineSolvimonCheckout } from '@solvimon/solvimon-web/screens/checkout';
 
-export default function Page() {
+export default function Page({ portalObject }: { portalObject: CheckoutPagePortalUrl }) {
+    const checkout = useRef<HTMLElement>(null);
+
     useEffect(() => {
         defineSolvimonCheckout();
     }, []);
 
-    return <solvimon-checkout token="<token>" environment="LIVE" />;
+    // An object has to reach the element as a property, which JSX attributes do not do everywhere.
+    useEffect(() => {
+        if (checkout.current) Object.assign(checkout.current, { portalObject });
+    }, [portalObject]);
+
+    return <solvimon-checkout ref={checkout} environment="LIVE" />;
 }
 ```
 
 A lazy `import()` inside the hook also works, and is worth keeping if you want the entry out of your
 server bundle for size reasons rather than correctness ones.
+
+### Changing properties after mount
+
+An element follows the properties you change after it has mounted:
+
+- A `portalObject` with another token, or another `environment`, starts the element over: it signs
+  in again and reloads everything.
+- An id in `configuration` — `invoiceId` or `subscriptionId` — loads the new invoice or
+  subscription. Whatever the customer had open for the old one is closed.
+- `experimentalFeatures`, `branding` and `cssOverrides` apply in place.
+- A new `locale` loads its translations and renders the element again from the start, so anything
+  the customer had typed is lost. Set it before the element mounts where you can.
+
+The checkout reads `email`, `countryCode` and `enabledPricingIds` from its `configuration` when it
+loads, as the values its form starts with, and applies `couponCode` once the subscription is in.
+
+The supported locales are `en-US`, `nl-NL`, `de-DE` and `it-IT`. Any other — `nl` or `en-GB`, say
+— renders in `en-US` and logs `UNSUPPORTED_LOCALE`.
+
+### Navigation requests
+
+The SDK does not navigate for you. Where a customer asks to go somewhere — open an invoice, manage a
+subscription — the element dispatches an `action-request` event, and your page decides what that
+means. The event bubbles and crosses the shadow root, so one listener on a container catches every
+element in it:
+
+```ts
+import type { RequestActionEvent } from '@solvimon/solvimon-web/core';
+
+container.addEventListener('action-request', (event) => {
+    const { detail } = event as RequestActionEvent;
+
+    if (detail.action === 'view-invoice') {
+        router.push(`/invoices/${detail.data.invoiceId}`);
+    }
+});
+```
+
+`detail.action` is one of `view-invoice`, `pay-invoice`, `view-subscription-details`,
+`view-all-subscriptions`, `manage-subscription`, `edit-billing-information`,
+`view-all-payment-methods`, `add-payment-method` and `navigate-to-customer-overview`. None of them
+does anything unless you handle it. The event is cancelable so that an action the SDK gives a
+default later can be taken over with `preventDefault()`; today that call has no effect.
 
 ## CSS overrides
 
@@ -132,6 +194,11 @@ const solvimon = createSolvimonCore({
 ```
 
 Use the public `sv-*` classes as styling hooks. Do not rely on internal Tailwind utility classes, because those can change.
+
+`@import` rules are removed from the overrides: a browser applies them in some cases and not in
+others, so load fonts and other stylesheets from your own page instead.
+
+`cssOverrides` is also a property on every element, for a page that registers the elements itself.
 
 For more details, see [`@solvimon/solvimon-web/core`](./src/public/core/README.md).
 
@@ -311,11 +378,12 @@ The SDK emits structured log entries via the [`onLog`](#error-logging) callback.
 | `PAYMENT_DETAILS_REJECTED`                  | Payment details returned a failed payment                          |
 | `PAYMENT_INTEGRATION_INITIALIZATION_FAILED` | Failed to mount Adyen web drop-in                                  |
 | `PAYMENT_METHOD_OPTIONS_LOAD_FAILED`        | Failed to load the payment methods that can be offered             |
+| `PORTAL_TYPE_NOT_ALLOWED`                   | This element does not accept a portal object of type…              |
 | `PROMOTION_CODE_APPLY_FAILED`               | Failed to apply promotion code                                     |
 | `PROMOTION_CODE_REMOVE_FAILED`              | Failed to remove promotion code                                    |
 | `REQUEST_FAILED`                            | Request failed                                                     |
 | `REQUEST_PARSE_FAILED`                      | Failed to parse JSON response                                      |
-| `RESOURCE_REVOKED`                          | Failed to load portal resource                                     |
+| `RESOURCE_REVOKED`                          | The portal object is not published                                 |
 | `SESSION_EXPIRED`                           | Stopped refreshing the access token after repeated 401 responses   |
 | `STRIPE_ACTION_FAILED`                      | Missing client_secret in Stripe ACTION_REQUIRED response           |
 | `STRIPE_CONFIRMATION_TOKEN_FAILED`          | Stripe submission failed                                           |
@@ -346,5 +414,6 @@ The SDK emits structured log entries via the [`onLog`](#error-logging) callback.
 | `REQUEST_FAILED`                     | Request failed with an expected status                                                                       |
 | `TRANSLATION_LOAD_FAILED`            | Failed to load translations for locale…                                                                      |
 | `UI_COMPONENT_RECOVERED`             | A UI component recovered from an error and carried on                                                        |
+| `UNSUPPORTED_LOCALE`                 | The locale is not supported, showing en-US instead                                                           |
 
 <!-- log-codes:end — DO NOT EDIT: auto-generated by `npm run logs:list` -->

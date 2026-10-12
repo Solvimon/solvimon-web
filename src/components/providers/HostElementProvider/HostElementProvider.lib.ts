@@ -1,4 +1,4 @@
-import type { InjectionKey, Ref } from 'vue';
+import type { ComponentInternalInstance, InjectionKey, Ref } from 'vue';
 
 export interface HostElementContext {
     /**
@@ -13,3 +13,16 @@ export interface HostElementContext {
 
 export const HOST_ELEMENT_PROVIDER_INJECTION_KEY: InjectionKey<HostElementContext> =
     Symbol('hostElement');
+
+/**
+ * The element a `defineCustomElement` tree renders into. Vue sets `ce` on the tree's root instance
+ * only, which is why `useHost()` returns nothing below the entry component.
+ */
+export function getCustomElementHost(
+    instance: ComponentInternalInstance | null,
+): HTMLElement | null {
+    const root = instance?.root;
+    const host = root && 'ce' in root ? root.ce : undefined;
+
+    return host instanceof HTMLElement ? host : null;
+}

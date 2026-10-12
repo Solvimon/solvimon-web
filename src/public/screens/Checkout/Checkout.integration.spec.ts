@@ -286,6 +286,24 @@ describe('Checkout', () => {
         ).toBe('ACME B.V.');
     });
 
+    // The payment may still go through; a second press of the button could charge twice.
+    it('keeps the pay button off once a payment outcome is unconfirmed', async () => {
+        paymentMethodOptions.value = [{ integration: { payment_gateway: { variant: 'ADYEN' } } }];
+        const wrapper = await mountCheckout({ Skeleton: false });
+        const submit = () => wrapper.find('.sv-checkout__submit');
+
+        expect(submit().attributes('disabled')).toBe('false');
+
+        wrapper.findComponent({ name: 'PaymentIntegrationForm' }).vm.$emit('payment-failed', {
+            code: 'PAYMENT_OUTCOME_UNCONFIRMED',
+            message: 'Payment could not be confirmed',
+        });
+        await wrapper.vm.$nextTick();
+
+        expect(submit().attributes('disabled')).toBe('true');
+        expect(wrapper.find('.sv-checkout__payment-error').exists()).toBe(false);
+    });
+
     describe('terms and conditions', () => {
         it('shows the merchant note in the footer, below both columns', async () => {
             portalNote.note = 'By subscribing you agree to the [terms](https://example.com).';

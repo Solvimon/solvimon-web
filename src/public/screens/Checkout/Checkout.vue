@@ -158,8 +158,16 @@ const handlePaymentNotSubmitted = () => {
     isPaymentPending.value = false;
 };
 
-const handlePaymentFailed = (error?: { message?: string }) => {
+/** The payment may still go through, so paying again could charge the customer twice. */
+const isPaymentUnconfirmed = ref(false);
+
+const handlePaymentFailed = (error?: { message?: string; code?: string }) => {
     isPaymentPending.value = false;
+
+    if (error?.code === 'PAYMENT_OUTCOME_UNCONFIRMED') {
+        isPaymentUnconfirmed.value = true;
+        return;
+    }
 
     // The card form shows its own failure inside the drop-in; an express sheet closes with nothing
     // on screen unless the checkout says something itself.
@@ -699,10 +707,7 @@ onMounted(() => {
         <!-- content -->
         <template #content>
             <template v-if="isPaid">
-                <SubscriptionPaymentCompletedCard
-                    class="sv-checkout__completed-payment"
-                    @continue-to-merchant="handleRedirect"
-                />
+                <SubscriptionPaymentCompletedCard class="sv-checkout__completed-payment" />
             </template>
 
             <template v-else>
@@ -976,7 +981,8 @@ onMounted(() => {
                             :disabled="
                                 isPromotionCodePending ||
                                 paymentMethodOptions.length === 0 ||
-                                isPaymentPending
+                                isPaymentPending ||
+                                isPaymentUnconfirmed
                             "
                             :loading="isPaymentPending"
                             @click="handleSubmit"

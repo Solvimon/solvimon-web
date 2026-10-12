@@ -796,6 +796,33 @@ test.describe('Checkout', () => {
             expect(api.calls('authorizePayment')).toEqual([]);
         });
 
+        // It used to be marked paid before the form mounted, so the redirect never ran.
+        test('sends the customer back to the merchant once the payment is confirmed', async ({
+            page,
+        }) => {
+            api = await mountCheckout(page, {
+                configuration: { email: 'customer@example.com', countryCode: 'NL' },
+                query: REDIRECT_QUERY,
+            });
+
+            await page.waitForURL(SUCCESS_URL);
+            expect(api.navigations()).toContain(SUCCESS_URL);
+        });
+
+        // The query string is typed by whoever opens the page; Stripe is asked instead.
+        test('does not take the query string as proof of payment', async ({ page }) => {
+            api = await mountCheckout(page, {
+                portalObject: aPortalObject({ successUrl: '' }),
+                configuration: { email: 'customer@example.com', countryCode: 'NL' },
+                query: REDIRECT_QUERY,
+                stripe: { intentStatus: 'requires_payment_method' },
+            });
+
+            await expect(checkout(page).screen).toContainText(/payment failed/i);
+            await expect(checkout(page).paid).toHaveCount(0);
+            expect(api.navigations()).toEqual([]);
+        });
+
         test('restores the details the customer filled in before the redirect', async ({
             page,
         }) => {

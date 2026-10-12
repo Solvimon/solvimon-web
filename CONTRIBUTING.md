@@ -184,7 +184,7 @@ Any change that affects what consumers see when they install `@solvimon/solvimon
 
 ## Security hygiene
 
-- **No secrets** — never commit tokens, credentials, API keys, private URLs, or debug logs. The `.env` file is gitignored for this reason.
+- **No secrets** — never commit tokens, credentials, API keys, private URLs, or debug logs. `.env` and `.env.*` files (other than `.env.example`) are gitignored for this reason.
 - **Dependencies** — before adding a new dependency, justify why it is needed. Prefer actively maintained packages with a healthy release cadence. Check download counts, last publish date, and open issues before adding. Avoid packages that pull in large transitive dependency trees without good reason.
 - **Dependency updates** — Dependabot monitors this repository. Review and merge security updates promptly. `npm audit` should report zero high or critical vulnerabilities on `main`.
 - **CI scripts** — treat CI configuration and scripts as security-sensitive. Changes to `.github/workflows/` and `scripts/ci/` require careful review; a compromised workflow can exfiltrate secrets or publish malicious releases.

@@ -62,7 +62,7 @@ const country = computed<SelectControlValue>({
 
 const showVatIdInput = computed(() => isVatNumberShown(model.value));
 
-const { isTaxIDCheckEnabled, isTaxIDCheckPending, taxIdValidationData, runTaxIDCheck } =
+const { isTaxIDCheckEnabled, isTaxIDCheckPending, taxIdCheckStatus, runTaxIDCheck } =
     useTaxIDValidationCheck(model);
 
 const { $t } = useIntl();
@@ -276,10 +276,10 @@ const readableCountryName = computed(() =>
                             </Input>
 
                             <div
-                                v-if="taxIdValidationData"
+                                v-if="taxIdCheckStatus"
                                 :class="{ 'opacity-75': isTaxIDCheckPending }"
                             >
-                                <TaxIDCheckNotice :tax-id-validation-result="taxIdValidationData" />
+                                <TaxIDCheckNotice :status="taxIdCheckStatus" />
                             </div>
                         </div>
                     </div>

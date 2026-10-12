@@ -533,13 +533,52 @@ describe('createRequestService', () => {
             );
         });
 
-        it('sends them when the caller asks for it', async () => {
+        it.each([
+            'https://identity.test/oauth/token',
+            'https://identity.test/v1/oauth/refresh-token',
+        ])(
+            'sends them to the refresh-cookie endpoint %s when the service asks for it',
+            async (url) => {
+                const request = createRequestService({
+                    enableAccessCheck: false,
+                    includeRefreshCookie: true,
+                });
+                await request({ url });
+
+                expect(mockFetch).toHaveBeenCalledWith(
+                    url,
+                    expect.objectContaining({ credentials: 'include' }),
+                );
+            },
+        );
+
+        it.each([
+            CALLED_URL,
+            'https://identity.test/oauth/token/../../portal/customers',
+            'https://identity.test/oauth/tokens',
+            'https://identity.test/oauth/token%2F..%2Fportal',
+            'https://identity.test/portal/oauth/token-exchange',
+        ])('omits them from %s even when the service asks for them', async (url) => {
+            const request = createRequestService({
+                enableAccessCheck: false,
+                includeRefreshCookie: true,
+            });
+            await request({ url });
+
+            expect(mockFetch.mock.calls[0][1].credentials).toBe('omit');
+        });
+
+        it('omits them however a caller passes them in the request options', async () => {
             const request = createRequestService();
-            await request({ url: CALLED_URL, options: { credentials: 'include' } });
+            await request({
+                url: 'https://identity.test/oauth/token',
+                // @ts-expect-error credentials are not a request option
+                options: { credentials: 'include' },
+            });
 
             expect(mockFetch).toHaveBeenCalledWith(
-                CALLED_URL,
-                expect.objectContaining({ credentials: 'include' }),
+                'https://identity.test/oauth/token',
+                expect.objectContaining({ credentials: 'omit' }),
             );
         });
     });

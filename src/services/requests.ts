@@ -9,15 +9,28 @@ import type {
     GetDefaultHeaders,
 } from './requests.types';
 import { useLogger } from '@/components/providers/LoggerProvider/composables/useLogger';
-import { appendQueryParams, getMediaType, Headers, MediaType } from '@/services/requests.lib';
+import {
+    appendQueryParams,
+    getMediaType,
+    Headers,
+    isRefreshCookieEndpoint,
+    MediaType,
+} from '@/services/requests.lib';
 import { useAuth } from '@/components/providers/AuthProvider';
 
 const defaultOptions: RequestOptions = {
     method: 'GET',
-    credentials: 'omit',
 };
 
-export function createRequestService({ enableAccessCheck } = { enableAccessCheck: true }) {
+/**
+ * `includeRefreshCookie` is for the identity token service alone: the refresh token lives in an
+ * `HttpOnly` cookie, which `omit` neither stores from the response nor sends back. It only takes
+ * effect on the two endpoints that read that cookie; every other request omits credentials.
+ */
+export function createRequestService({
+    enableAccessCheck = true,
+    includeRefreshCookie = false,
+}: { enableAccessCheck?: boolean; includeRefreshCookie?: boolean } = {}) {
     const logger = useLogger();
     // Resolved here because inject() is only valid during setup, but read per request: the token
     // is refreshed in the background, and a value captured now would never be replaced.
@@ -79,6 +92,8 @@ export function createRequestService({ enableAccessCheck } = { enableAccessCheck
 
         const fullUrl = new URL(url);
         appendQueryParams(fullUrl, query);
+        const credentials: RequestCredentials =
+            includeRefreshCookie && isRefreshCookieEndpoint(fullUrl) ? 'include' : 'omit';
 
         try {
             const response = await fetch(fullUrl.toString(), {
@@ -86,7 +101,7 @@ export function createRequestService({ enableAccessCheck } = { enableAccessCheck
                 headers: getDefaultHeaders({
                     headers: options.headers,
                 }),
-                credentials: options.credentials,
+                credentials,
                 body: data ? JSON.stringify(data) : undefined,
             });
 

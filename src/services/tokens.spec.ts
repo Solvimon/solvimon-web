@@ -1,9 +1,12 @@
 import { createTokensService } from './tokens';
 
-const { mockRequest } = vi.hoisted(() => ({ mockRequest: vi.fn() }));
+const { mockRequest, mockCreateRequestService } = vi.hoisted(() => {
+    const mockRequest = vi.fn();
+    return { mockRequest, mockCreateRequestService: vi.fn(() => mockRequest) };
+});
 
 vi.mock('./requests', () => ({
-    createRequestService: () => mockRequest,
+    createRequestService: mockCreateRequestService,
 }));
 
 vi.mock('@/components/providers/ConfigProvider/composables/useConfig', () => ({
@@ -35,7 +38,9 @@ describe('tokens service', () => {
             const { getAccessToken } = createTokensService();
             await getAccessToken('alias');
 
-            expect(mockRequest.mock.calls[0][0].options.credentials).toBe('include');
+            expect(mockCreateRequestService).toHaveBeenCalledWith(
+                expect.objectContaining({ enableAccessCheck: false, includeRefreshCookie: true }),
+            );
         });
     });
 
@@ -45,11 +50,11 @@ describe('tokens service', () => {
             const { refreshAccessToken } = createTokensService();
             await refreshAccessToken();
 
+            expect(mockCreateRequestService).toHaveBeenCalledWith(
+                expect.objectContaining({ includeRefreshCookie: true }),
+            );
             expect(mockRequest).toHaveBeenCalledWith(
-                expect.objectContaining({
-                    url: 'https://identity.test/oauth/refresh-token',
-                    options: expect.objectContaining({ credentials: 'include' }),
-                }),
+                expect.objectContaining({ url: 'https://identity.test/oauth/refresh-token' }),
             );
         });
 

@@ -10,7 +10,7 @@ export NVM_DIR="$HOME/.nvm"
 if [ "$SKIP_LINT_STAGED" != "1" ]; then
     patch="$(git rev-parse --git-path lint-staged_unstaged.patch)"
     if [ -s "$patch" ]; then
-        kept="$patch.$(date +%s)"
+        kept="$patch.$(date +%s).$$"
         mv "$patch" "$kept"
         echo "lint-staged left unrestored changes from an earlier commit; they are in $kept" >&2
     fi
@@ -18,11 +18,12 @@ if [ "$SKIP_LINT_STAGED" != "1" ]; then
     status=0
     ./node_modules/.bin/lint-staged --no-stash || status=$?
 
+    # The patch has no context lines, so it applies only with the arguments lint-staged uses itself.
+    # A reverse check cannot tell whether it is already applied: a removed line reverses to an
+    # insertion, which always applies.
     if [ "$status" -ne 0 ] && [ -s "$patch" ]; then
-        if git apply --check --reverse "$patch" 2>/dev/null; then
-            : # already back in the working tree
-        elif ! git apply --whitespace=nowarn "$patch"; then
-            kept="$patch.$(date +%s)"
+        if ! git apply --whitespace=nowarn --recount --unidiff-zero "$patch"; then
+            kept="$patch.$(date +%s).$$"
             mv "$patch" "$kept"
             echo "Could not restore your unstaged changes; they are in $kept" >&2
         fi

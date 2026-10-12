@@ -14,6 +14,7 @@ import {
     isSelectedIntegration,
     isStripePaymentIntegration,
 } from './PaymentIntegrationForm.lib';
+import type { Error as PaymentError } from '@/types/errors';
 
 const PaymentIntegrationFormStripe = defineAsyncComponent(() =>
     import('@/components/payments/PaymentIntegrationFormStripe/PaymentIntegrationFormStripe.vue').then(
@@ -61,7 +62,51 @@ const setIntegrationRef = (paymentMethodOption: PaymentMethodOptionResponseEntry
         integrationRefs.value.set(paymentMethodOption.integration.payment_gateway?.variant, el);
 };
 
-const handleInvalid = (reason?: 'NO_PAYMENT_METHOD') => {
+/**
+ * The form a payment is on its way through. A form can take a payment without the screen, from
+ * Enter in its card fields or its own wallet button, and the screen lets go of the forms while one
+ * waits on the customer, so every other form is held off here until that payment is over.
+ */
+let formInFlight: string | undefined;
+const validators = new Map<string, () => Promise<boolean>>();
+
+function validateFor(formId: string): () => Promise<boolean> {
+    let validate = validators.get(formId);
+    if (!validate) {
+        validate = () =>
+            formInFlight !== undefined && formInFlight !== formId
+                ? Promise.resolve(false)
+                : (props.validateOnSubmit?.() ?? Promise.resolve(true));
+        validators.set(formId, validate);
+    }
+    return validate;
+}
+
+function settle(formId: string) {
+    if (formInFlight === formId) formInFlight = undefined;
+}
+
+const handleSubmitting = (formId: string) => {
+    formInFlight = formId;
+    emit('submitting');
+};
+
+const handlePaymentFailed = (formId: string, error: PaymentError) => {
+    settle(formId);
+    emit('payment-failed', error);
+};
+
+const handlePaymentSuccess = (formId: string) => {
+    settle(formId);
+    emit('payment-success');
+};
+
+const handleInvalid = (formId: string, reason?: 'NO_PAYMENT_METHOD') => {
+    // Held off while another form's payment is on its way: the screen is still waiting on that one.
+    if (formInFlight !== undefined && formInFlight !== formId) return;
+
+    settle(formId);
+
     if (reason === 'NO_PAYMENT_METHOD') {
         showIntegrationError.value = true;
     }
@@ -105,16 +150,16 @@ function submit() {
             :amount="amount"
             :invoice-id="invoiceId"
             :selected="isSelectedIntegration({ selectedIntegration, paymentMethodOption })"
-            :validate-on-submit="validateOnSubmit"
+            :validate-on-submit="validateFor(paymentMethodOption.integration.id)"
             :force-store-payment-method="forceStorePaymentMethod"
             :store-payment-method="storePaymentMethod"
             :redirects-on-success="redirectsOnSuccess"
             :billing-entity-name="billingEntityName"
             @select="handleSelect"
-            @payment-failed="$emit('payment-failed', $event)"
-            @payment-success="$emit('payment-success')"
-            @invalid="handleInvalid"
-            @submitting="$emit('submitting')"
+            @payment-failed="handlePaymentFailed(paymentMethodOption.integration.id, $event)"
+            @payment-success="handlePaymentSuccess(paymentMethodOption.integration.id)"
+            @invalid="(reason) => handleInvalid(paymentMethodOption.integration.id, reason)"
+            @submitting="handleSubmitting(paymentMethodOption.integration.id)"
             @action-required="$emit('action-required')"
             @ready="$emit('ready')"
         />
@@ -133,15 +178,15 @@ function submit() {
             :selected="isSelectedIntegration({ selectedIntegration, paymentMethodOption })"
             :email="email"
             :name="name"
-            :validate-on-submit="validateOnSubmit"
+            :validate-on-submit="validateFor(paymentMethodOption.integration.id)"
             :force-store-payment-method="forceStorePaymentMethod"
             :store-payment-method="storePaymentMethod"
             :redirects-on-success="redirectsOnSuccess"
             :billing-entity-name="billingEntityName"
             @select="handleSelect"
-            @payment-failed="$emit('payment-failed', $event)"
-            @payment-success="$emit('payment-success')"
-            @invalid="$emit('invalid')"
+            @payment-failed="handlePaymentFailed(paymentMethodOption.integration.id, $event)"
+            @payment-success="handlePaymentSuccess(paymentMethodOption.integration.id)"
+            @invalid="handleInvalid(paymentMethodOption.integration.id)"
             @ready="$emit('ready')"
         />
     </template>

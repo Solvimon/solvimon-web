@@ -223,6 +223,34 @@ describe('CustomerWalletBalances', () => {
         });
     });
 
+    it('offers the top-up buttons where topping up is offered', () => {
+        expect(rows(mountBlock()).props()).toMatchObject({
+            showManualTopUp: true,
+            showAutoTopUp: true,
+        });
+    });
+
+    // Without the modals behind them, the buttons would do nothing.
+    it('offers no top-up buttons where topping up is not offered', () => {
+        expect(rows(mountBlock({ showTopUpButton: false })).props()).toMatchObject({
+            showManualTopUp: false,
+            showAutoTopUp: false,
+        });
+    });
+
+    it('offers only the top-ups billed on the subscriptions it is handed', () => {
+        const wrapper = mountBlock({
+            walletBalances: [walletBalance, otherWallet],
+            subscriptions: [{ id: 'ppsu_1', pricing_plan_schedule_infos: [{ id: 'ppsc_1' }] }],
+        });
+
+        const offered = (
+            rows(wrapper).props('customerWalletBalances') as CustomerWalletBalanceItem[]
+        ).map(({ charge_on_demand_pricing_items }) => charge_on_demand_pricing_items);
+
+        expect(offered).toEqual([[flexibleTopUp], []]);
+    });
+
     it('builds neither modal where topping up is not offered', () => {
         const wrapper = mountBlock({ showTopUpButton: false });
 

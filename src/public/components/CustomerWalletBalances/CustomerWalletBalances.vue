@@ -6,7 +6,10 @@ import type {
     CustomerWalletBalancesEmits,
     CustomerWalletBalancesProps,
 } from './CustomerWalletBalances.types';
-import { getWalletBalanceForTopUpItem } from './CustomerWalletBalances.lib';
+import {
+    getWalletBalanceForTopUpItem,
+    getWalletBalancesForSubscriptions,
+} from './CustomerWalletBalances.lib';
 import Skeleton from '@/components/shared/Skeleton.vue';
 import TopUpModal from '@/components/wallets/TopUpModal/TopUpModal.vue';
 import AutoTopUpModal from '@/components/wallets/AutoTopUpModal/AutoTopUpModal.vue';
@@ -19,10 +22,14 @@ const emit = defineEmits<CustomerWalletBalancesEmits>();
 
 const { $t } = useIntl();
 
+const shownWalletBalances = computed(() =>
+    getWalletBalancesForSubscriptions(props.walletBalances, props.subscriptions),
+);
+
 const selectedTopUpItem = ref<ChargeOnDemandPricingItem | undefined>();
 
 const selectedBalanceItem = computed(() =>
-    getWalletBalanceForTopUpItem(props.walletBalances, selectedTopUpItem.value),
+    getWalletBalanceForTopUpItem(shownWalletBalances.value, selectedTopUpItem.value),
 );
 
 const showTopUpModal = computed(() => !!selectedBalanceItem.value);
@@ -32,7 +39,7 @@ const selectedAutoTopUpItem = ref<ChargeOnDemandPricingItem | undefined>();
 const showAutoTopUpModal = computed(() => !!selectedAutoTopUpItem.value);
 
 const autoTopUpWallet = computed(() =>
-    getWalletBalanceForTopUpItem(props.walletBalances, selectedAutoTopUpItem.value),
+    getWalletBalanceForTopUpItem(shownWalletBalances.value, selectedAutoTopUpItem.value),
 );
 
 const cancellingAutoTopUpConfig = ref<WalletAutoTopUpConfig | undefined>();
@@ -64,9 +71,9 @@ const showAutoTopUpCancellation = computed(() => !!cancellingAutoTopUpConfig.val
         v-else-if="walletBalances.length > 0"
         v-bind="$attrs"
         class="sv-wallet-balances sv-root sv-component"
-        :customer-wallet-balances="walletBalances"
-        show-auto-top-up
-        show-manual-top-up
+        :customer-wallet-balances="shownWalletBalances"
+        :show-auto-top-up="showTopUpButton"
+        :show-manual-top-up="showTopUpButton"
         :title="
             $t(
                 {

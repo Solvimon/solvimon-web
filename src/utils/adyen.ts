@@ -7,9 +7,7 @@ import type {
 import type { Logger } from '@/components/providers/LoggerProvider/LoggerProvider.types';
 import { toMinorUnitAmount } from '@/utils/amount';
 import { filterOutExpressPaymentMethods } from '@/utils/paymentMethods';
-
-export const PAYMENT_ACCEPTOR_ID_QUERY_STRING = 'payment_acceptor_id';
-export const REDIRECT_RESULT_QUERY_STRING = 'redirectResult';
+import { PAYMENT_ACCEPTOR_ID_QUERY_STRING } from '@/utils/paymentRedirect';
 
 export function getAdyenClientKeyFromPaymentMethodOptionsResponse(
     paymentMethodOptionResponse: PaymentMethodOptionResponseEntry,

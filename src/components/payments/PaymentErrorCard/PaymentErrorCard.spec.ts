@@ -30,15 +30,15 @@ describe('createErrorMap', () => {
     it('offers a retry where starting over could work, and not where it cannot', () => {
         const map = createErrorMap(mockUseIntl().$t as never);
 
-        expect(map.AUTHORIZATION_FAILED.isReloadButtonVisible).toBe(true);
-        expect(map.REDIRECT_RESULT_PAYMENT_ACCEPTOR_MISSING.isReloadButtonVisible).toBeUndefined();
+        expect(map.AUTHORIZATION_FAILED.isRetryButtonVisible).toBe(true);
+        expect(map.REDIRECT_RESULT_PAYMENT_ACCEPTOR_MISSING.isRetryButtonVisible).toBeUndefined();
     });
 
     // A retry here is how a customer whose payment was still processing ends up charged twice.
     it('offers no retry while the outcome is unconfirmed', () => {
         const map = createErrorMap(mockUseIntl().$t as never);
 
-        expect(map.PAYMENT_OUTCOME_UNCONFIRMED.isReloadButtonVisible).toBeUndefined();
+        expect(map.PAYMENT_OUTCOME_UNCONFIRMED.isRetryButtonVisible).toBeUndefined();
     });
 });
 
@@ -69,6 +69,24 @@ describe('PaymentErrorCard', () => {
         });
 
         expect(declined.text()).not.toBe(formFailed.text());
+    });
+
+    // Reloading the page handed a spent redirect result to the gateway again, so a failed
+    // redirect could never be retried.
+    it('asks the form to start over rather than reloading the page', async () => {
+        const reload = vi.fn();
+        const location = window.location;
+        Object.defineProperty(window, 'location', {
+            configurable: true,
+            value: { ...location, reload },
+        });
+
+        const wrapper = mountCard({ code: 'AUTHORIZATION_FAILED', message: 'Payment failed' });
+        await wrapper.find('button:not([aria-label])').trigger('click');
+
+        expect(wrapper.emitted('retry')).toHaveLength(1);
+        expect(reload).not.toHaveBeenCalled();
+        Object.defineProperty(window, 'location', { configurable: true, value: location });
     });
 
     it('copies the reference', async () => {

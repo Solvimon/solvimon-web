@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue';
 import { helpers, required } from '@vuelidate/validators';
-import { useIntl, useValidation } from '@solvimon/solvimon-ui';
+import { Alert, Button, ErrorNotification, useIntl, useValidation } from '@solvimon/solvimon-ui';
 import type { AutoTopUpModalEmits, AutoTopUpModalProps } from './AutoTopUpModal.types';
 import { AUTO_TOP_UP_MODAL_STEPS, type AutoTopUpModalStep } from './AutoTopUpModal.types';
 import {
@@ -47,6 +47,15 @@ const chargeTarget = computed(() =>
 );
 
 const autoTopUpFormRef = ref<InstanceType<typeof AutoTopUpConfigEditor>>();
+
+/** A rule belongs to a wallet and charges its choose-your-amount item, so it needs both. */
+const canSave = computed(
+    () => !!autoTopUpEditor.value && !!chargeTarget.value && !!props.walletBalanceItem?.wallet_id,
+);
+
+const isUnavailable = computed(() => step.value === 'AUTO_TOP_UP' && !canSave.value);
+
+const saveError = ref<string>();
 
 const previewPricingItems = computed(() => {
     const amount = autoTopUpFormRef.value?.rule?.topup_amount;
@@ -136,7 +145,7 @@ const subTitle = computed(() =>
         : $t(
               {
                   defaultMessage:
-                      'Your current balance is {balance}. Enable auto top so you can stay productive',
+                      'Your current balance is {balance}. Enable auto top-up so you can stay productive.',
                   description: 'Subtitle of the automatic wallet top-up modal, naming the balance',
                   id: 'auto_topup_modal.subtitle',
               },
@@ -175,9 +184,11 @@ const confirmButtonText = computed(() =>
 async function save() {
     validation.value.$touch();
 
-    if (isPending.value) {
+    if (isPending.value || !canSave.value) {
         return;
     }
+
+    saveError.value = undefined;
 
     const { saved, error } = await saveRule(
         toCreateAutoTopUpConfigPayload({
@@ -195,6 +206,11 @@ async function save() {
     }
 
     if (error) {
+        saveError.value = $t({
+            defaultMessage: "We couldn't save your automatic top-up. Please try again.",
+            description: 'Error shown in the auto top-up modal when saving the rule failed',
+            id: 'auto_topup_modal.save_failed',
+        });
         emit('payment-failed', error);
     }
 }
@@ -245,6 +261,7 @@ watch(
 
         step.value = 'AUTO_TOP_UP';
         selectedPaymentMethodId.value = undefined;
+        saveError.value = undefined;
         formKey.value += 1;
     },
 );
@@ -273,6 +290,20 @@ watch(
     >
         <template #AUTO_TOP_UP>
             <div class="grid grid-cols-1 gap-4">
+                <Alert
+                    v-if="!canSave"
+                    type="warning"
+                    class="sv-auto-topup-modal__unavailable"
+                    :title="
+                        $t({
+                            defaultMessage: 'Automatic top-up is not available for this wallet.',
+                            description:
+                                'Shown in the auto top-up modal when the wallet has nothing an automatic top-up could charge',
+                            id: 'auto_topup_modal.unavailable',
+                        })
+                    "
+                />
+
                 <AutoTopUpConfigEditor
                     v-if="autoTopUpEditor"
                     :key="formKey"
@@ -306,6 +337,21 @@ watch(
                     "
                     @add-payment-method="openAddPaymentMethod"
                 />
+
+                <ErrorNotification
+                    v-if="saveError"
+                    class="sv-auto-topup-modal__error sv-error"
+                    :title="saveError"
+                />
+            </div>
+        </template>
+
+        <template v-if="isUnavailable" #footer>
+            <div class="flex flex-col gap-2">
+                <Button size="lg" disabled data-testid="confirm">{{ confirmButtonText }}</Button>
+                <Button size="lg" intent="subtle" data-testid="cancel" @click="handleCancel">{{
+                    cancelButtonText
+                }}</Button>
             </div>
         </template>
     </OnDemandPaymentModalShell>

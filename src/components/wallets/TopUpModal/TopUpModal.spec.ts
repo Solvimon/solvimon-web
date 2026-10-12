@@ -709,6 +709,18 @@ describe('TopUpModal — a wallet topped up through several subscriptions', () =
         expect(wrapper.text()).toContain('Credits add-on');
     });
 
+    it('gives a subscription with no name a readable label rather than its id', () => {
+        const wrapper = mountWithChoice({
+            subscriptions: [twoSubscriptions[0], { ...twoSubscriptions[1], name: undefined }],
+        });
+
+        const labels = wrapper.findComponent({ name: 'RadioGroupExtended' }).props('options') as {
+            label: string;
+        }[];
+
+        expect(labels.map(({ label }) => label)).toEqual(['Pro plan', 'Subscription 2']);
+    });
+
     it('draws each option as a subscription summary', () => {
         const wrapper = mountWithChoice();
 

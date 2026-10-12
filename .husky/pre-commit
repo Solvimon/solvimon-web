@@ -4,6 +4,9 @@ export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 
 # Lints and formats staged files only. Set SKIP_LINT_STAGED=1 to bypass.
+# --no-stash: the backup stash lives in the stash list every worktree shares, and lint-staged drops
+# it by index, so concurrent commits could drop each other's entries. Unstaged hunks of partially
+# staged files are still hidden and restored; a failed task just leaves its fixes in place.
 if [ "$SKIP_LINT_STAGED" != "1" ]; then
-    ./node_modules/.bin/lint-staged
+    ./node_modules/.bin/lint-staged --no-stash
 fi

@@ -44,7 +44,7 @@ function sendInit() {
             email: props.email,
             name: props.name,
         },
-        getFrameTargetOrigin(window.location.origin),
+        getFrameTargetOrigin(window.origin),
     );
 }
 
@@ -52,7 +52,7 @@ function sendUpdate(options: StripeFrameOptions, update: StripeFrameOptionsUpdat
     sentOptions = options;
     iframeRef.value?.contentWindow?.postMessage(
         { type: 'stripe:update', options: update },
-        getFrameTargetOrigin(window.location.origin),
+        getFrameTargetOrigin(window.origin),
     );
 }
 
@@ -68,7 +68,7 @@ function triggerSubmit(): boolean {
             email: props.email,
             name: props.name,
         },
-        getFrameTargetOrigin(window.location.origin),
+        getFrameTargetOrigin(window.origin),
     );
     return true;
 }

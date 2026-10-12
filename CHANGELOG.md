@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - `STRIPE_REDIRECT_RETURN_FAILED` is now also logged when the payment a Stripe redirect returned from cannot be retrieved from Stripe.
+- The SDK takes the payment redirect parameters out of the page address once it has handled a return, with `history.replaceState`: `payment_acceptor_id`, `redirectResult`, `redirect_status`, `payment_intent`, `payment_intent_client_secret`, `setup_intent` and `setup_intent_client_secret`. An Adyen return is cleared right away, a Stripe one once Stripe has answered. A host that reads these parameters must do so before the SDK's screen or component mounts.
 
 ### Fixed
 
@@ -25,6 +26,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The pay button no longer keeps spinning after a payment that was never sent. With Stripe, a press before the payment form was ready or a submit Stripe rejected left it waiting for good; with Adyen, so did closing a wallet's payment sheet or the PayPal popup. The button now comes back, in checkout, the pay invoice screen and the payment method form. A Stripe payment submitted just as its form was set up anew, for example after a change of amount, is no longer refused by Stripe.
 - Checkout keeps the pay button off while its payment methods failed to load, when there is no payment form to pay with. Going back to a country whose payment methods were already loaded now clears a load failure of the country in between, so the error card goes and "Try again" works.
 - Calling `submit()` on the payment method form while it is still loading no longer leaves it pending for good.
+- An Adyen 3DS challenge is shown once. It could be shown twice, and the second verification reported "Payment failed" after the payment had gone through. The customer can now click the challenge while the payment is pending; the payment form was dimmed and did not take clicks.
+- A customer can no longer pay twice with Adyen by pressing Enter in a card field, or the drop-in's own PayPal button, and then Pay, or by paying through a second payment method on the same screen while the first payment is on its way. Checkout, the pay invoice screen and the payment method form hold their pay button as soon as any payment starts, and checkout keeps its form for a redirect that such a payment leads to.
+- An Adyen redirect return is confirmed once, by the payment form of the payment acceptor it names. A reload sent the spent result to Adyen again, "Try again" on the error card reloaded the page and so could never retry, and with several Adyen payment methods each one confirmed the same return. "Try again" now starts the form over in place. A redirect result that is not one Adyen could have issued is not sent, and is reported as unconfirmed.
+- Coming back from 3DS while storing a payment method now confirms the method; the form that handles the return only opened after "Add payment method" was pressed.
+- Only one Adyen drop-in is shown when the payment form is rebuilt while it is still loading, and no drop-in is built while a returned payment is being confirmed, so a second payment cannot start before the first is known.
 
 ## [0.1.0-alpha.27] - 2026-10-12
 

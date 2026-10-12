@@ -68,6 +68,17 @@ describe('CheckoutForm.lib', () => {
             });
         });
 
+        it('leaves out a VAT number a US company cannot see', () => {
+            const customer = toCustomer({
+                type: 'ORGANIZATION',
+                companyLegalName: 'Acme Inc.',
+                companyVatNumber: 'NL863950310B01',
+                country: 'US',
+            });
+
+            expect(customer).not.toHaveProperty('organization.tax_ids');
+        });
+
         it('omits empty fields so consumers can apply their own defaults', () => {
             expect(toCustomer({})).toEqual({
                 type: 'INDIVIDUAL',

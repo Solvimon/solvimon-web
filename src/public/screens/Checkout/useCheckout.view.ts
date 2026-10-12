@@ -21,6 +21,7 @@ import { useInvoicePreview } from '@/composables/useInvoicePreview';
 import { useCheckoutForm } from '@/components/customer/CheckoutForm/useCheckoutForm';
 import {
     DEFAULT_TAX_IDENTIFIER_TYPE,
+    isVatNumberShown,
     toCustomer,
 } from '@/components/customer/CheckoutForm/CheckoutForm.lib';
 import { usePaymentMethodOptions } from '@/composables/usePaymentMethodOptions';
@@ -374,6 +375,7 @@ export function useCheckoutView({
                                   registered_address: address,
                                   ...{ legal_name: checkoutForm.form.value.companyLegalName ?? '' },
                                   ...(checkoutForm.form.value.companyVatNumber &&
+                                  isVatNumberShown(checkoutForm.form.value) &&
                                   taxId.$validator(checkoutForm.form.value.companyVatNumber, {}, {})
                                       ? {
                                             tax_ids: [

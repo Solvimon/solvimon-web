@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, watch } from 'vue';
-import { Divider, useIntl } from '@solvimon/solvimon-ui';
+import { Divider, Typography, useIntl } from '@solvimon/solvimon-ui';
 import type { PaymentMethod, Pricing } from '@solvimon/solvimon-types';
 import type {
     SubscriptionManagementFormEmits,
@@ -60,7 +60,7 @@ watch(
 </script>
 
 <template>
-    <form class="sv-subscription-management-form" @submit.prevent>
+    <form :id="id" class="sv-subscription-management-form" @submit.prevent="emit('submit')">
         <div class="sv-subscription-management-form__body grid grid-cols-1 gap-4">
             <PricingGroupSingleEditor
                 v-model="enabledPricingIds"
@@ -76,10 +76,11 @@ watch(
             </div>
 
             <PaymentMethodSelector
+                v-if="sortedPaymentMethods.length > 0"
                 v-model="paymentMethodId"
                 class="sv-subscription-management-form__payment-methods"
                 :payment-methods="sortedPaymentMethods"
-                :payment-method-options="paymentMethodOptions"
+                :show-add-option="false"
                 required
                 :disabled="disabled"
                 :label="
@@ -90,8 +91,25 @@ watch(
                             'Label above the payment method that pays for the subscription change',
                     })
                 "
-                @add-payment-method="emit('add-payment-method')"
             />
+
+            <Typography
+                v-else
+                variant="body-sm"
+                color="subtle"
+                tag="p"
+                class="sv-subscription-management-form__no-payment-method"
+            >
+                {{
+                    $t({
+                        defaultMessage:
+                            'This subscription has no payment method to charge the change to. Please contact support to change it.',
+                        id: 'subscription_management.no_payment_method',
+                        description:
+                            'Shown in place of the payment method on the manage subscription screen when the subscription has no usable payment method',
+                    })
+                }}
+            </Typography>
         </div>
     </form>
 </template>

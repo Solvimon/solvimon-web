@@ -6,7 +6,6 @@ import type { SubscriptionManagementProps } from './SubscriptionManagement.types
 import { ContentWithAsideLayout } from '@/layouts';
 import { useActionDispatchProvider, useLogger, usePortal } from '@/components/providers';
 import { useSubscription } from '@/composables/useSubscription';
-import { useCustomer } from '@/composables/useCustomer';
 import { usePaymentMethods } from '@/composables/usePaymentMethods';
 import { usePaymentMethodOptions } from '@/composables/usePaymentMethodOptions';
 import { useLoadInitialData } from '@/composables/useLoadInitialData';
@@ -16,14 +15,26 @@ import SecurePaymentsKPI from '@/components/payments/SecurePaymentsKPI/SecurePay
 import SubscriptionManagementForm from '@/components/subscriptions/SubscriptionManagement/SubscriptionManagementForm.vue';
 import SubscriptionManagementSummary from '@/components/subscriptions/SubscriptionManagement/SubscriptionManagementSummary.vue';
 import SubscriptionManagementSuccess from '@/components/subscriptions/SubscriptionManagement/SubscriptionManagementSuccess.vue';
-import AddPaymentMethodModal from '@/components/payments/AddPaymentMethodModal/AddPaymentMethodModal.vue';
+import EmptyStatePlaceholder from '@/components/checkout/EmptyStatePlaceholder.vue';
 import Skeleton from '@/components/shared/Skeleton.vue';
 import {
     getActiveDefaultScheduleInfo,
     getPricingGroupByPricingId,
 } from '@/utils/pricingPlanSchedule';
+import {
+    combinePricingPlanVersionWithOverrides,
+    getEnabledPricingIdsWithOverrides,
+    getOverridePricingIds,
+} from '@/utils/pricingPlanScheduleOverrides';
 
 const props = defineProps<SubscriptionManagementProps>();
+
+/**
+ * The submit button sits in the aside, outside the form, so it names the form — which is also what
+ * lets Enter in the form commit. Bound as a plain attribute, since `Button` does not declare it.
+ */
+const FORM_ID = 'sv-subscription-management-form';
+const submitButtonAttrs = { form: FORM_ID };
 
 const { $t } = useIntl();
 const portal = usePortal();
@@ -31,7 +42,11 @@ const logger = useLogger();
 const { dispatchAction } = useActionDispatchProvider();
 const { createPricingPlanSchedule } = createPricingPlanSchedulesService();
 
-const { subscription, get: fetchSubscription } = useSubscription({
+const {
+    subscription,
+    get: fetchSubscription,
+    error: subscriptionError,
+} = useSubscription({
     subscriptionId: props.configuration.subscriptionId,
 });
 
@@ -39,29 +54,51 @@ const { items: paymentMethods, fetchAll: fetchPaymentMethods } = usePaymentMetho
     customerId: portal.value.customer_id,
 });
 
-const { customer, get: fetchCustomer } = useCustomer({ customerId: portal.value.customer_id });
-
 const { paymentMethodOptions, get: fetchPaymentMethodOptions } = usePaymentMethodOptions();
 
 const { isLoading } = useLoadInitialData(
     fetchSubscription(),
     fetchPaymentMethods(),
-    fetchCustomer.execute(),
     fetchPaymentMethodOptions({ customerId: portal.value.customer_id }),
 );
 
-/** Adding a method happens over the screen, so the plan choice behind it is never lost. */
-const isAddingPaymentMethod = ref(false);
-
-/** The stored method is not in the list yet, so reload it before returning to the choice. */
-const handlePaymentMethodAdded = async () => {
-    await fetchPaymentMethods();
-    isAddingPaymentMethod.value = false;
-};
+/**
+ * The API charges the change to the subscription's own payment method and takes no other, so that
+ * is the only one on offer.
+ */
+const subscriptionPaymentMethods = computed(() =>
+    paymentMethods.value.filter(({ id }) => id === subscription.value?.payment_method_id),
+);
 
 /** Upgrades are bought on the schedule being billed now, so that is where the group is looked up. */
 const activeScheduleInfo = computed(() =>
     getActiveDefaultScheduleInfo(subscription.value?.pricing_plan_schedule_infos ?? []),
+);
+
+/** With its customized pricings in place, under the ids the schedule bills them by. */
+const billedScheduleInfo = computed(() => {
+    const scheduleInfo = activeScheduleInfo.value;
+
+    if (!scheduleInfo?.pricing_plan_version) {
+        return scheduleInfo;
+    }
+
+    return {
+        ...scheduleInfo,
+        pricing_plan_version: combinePricingPlanVersionWithOverrides({
+            pricingPlanVersion: scheduleInfo.pricing_plan_version,
+            overridePricings: scheduleInfo.pricing_plan_schedule?.override_pricings,
+        }),
+    };
+});
+
+const scheduledPricingIds = computed(() =>
+    getEnabledPricingIdsWithOverrides(activeScheduleInfo.value?.pricing_plan_schedule),
+);
+
+/** Billed by being on the schedule; the API refuses them as enabled pricings. */
+const overridePricingIds = computed(() =>
+    getOverridePricingIds(activeScheduleInfo.value?.pricing_plan_schedule),
 );
 
 /**
@@ -70,18 +107,14 @@ const activeScheduleInfo = computed(() =>
  * opening the screen on a subscription alone still lands on something to change.
  */
 const pricingGroup = computed(() => {
-    const scheduleInfo = activeScheduleInfo.value;
+    const scheduleInfo = billedScheduleInfo.value;
 
     if (!scheduleInfo) {
         return undefined;
     }
 
     const { enabledPricingId } = props.configuration;
-    const pricingIds = enabledPricingId
-        ? [enabledPricingId]
-        : (scheduleInfo.pricing_plan_schedule?.enabled_pricings ?? []).map(
-              ({ pricing_id }) => pricing_id,
-          );
+    const pricingIds = enabledPricingId ? [enabledPricingId] : scheduledPricingIds.value;
 
     return pricingIds
         .map((pricingId) =>
@@ -125,11 +158,8 @@ const paymentMethodId = ref<PaymentMethod['id'] | undefined>();
  * schedule has since moved on.
  */
 watch(
-    [activeScheduleInfo, pricingGroup],
-    ([scheduleInfo, group]) => {
-        const scheduled = (scheduleInfo?.pricing_plan_schedule?.enabled_pricings ?? []).map(
-            ({ pricing_id }) => pricing_id,
-        );
+    [scheduledPricingIds, pricingGroup],
+    ([scheduled, group]) => {
         const { enabledPricingId } = props.configuration;
         const groupPricingIds = (group?.pricings ?? []).map(({ id }) => id);
 
@@ -140,6 +170,19 @@ watch(
     },
     { immediate: true },
 );
+
+/** What is sent as enabled: the customized pricings ride along on the schedule itself. */
+const enabledPricingIdsToSend = computed(() =>
+    enabledPricingIds.value.filter((pricingId) => !overridePricingIds.value.includes(pricingId)),
+);
+
+/** Committing what the schedule already bills would only start a duplicate of it. */
+const hasChange = computed(() => {
+    const selected = new Set(enabledPricingIds.value);
+    const scheduled = new Set(scheduledPricingIds.value);
+
+    return selected.size !== scheduled.size || [...selected].some((id) => !scheduled.has(id));
+});
 
 const {
     invoice: previewInvoice,
@@ -153,14 +196,15 @@ const {
  * Immediate, since the ids are seeded from the schedule before this watcher is registered.
  */
 watch(
-    [enabledPricingIds, subscription],
-    ([pricingIds, loadedSubscription]) => {
+    [enabledPricingIdsToSend, subscription, activeScheduleInfo],
+    ([pricingIds, loadedSubscription, scheduleInfo]) => {
         if (!loadedSubscription || pricingIds.length === 0) {
             return;
         }
 
         void loadPreview({
             subscription: loadedSubscription,
+            scheduleInfo,
             enabledPricingIds: pricingIds,
         });
     },
@@ -176,14 +220,22 @@ const updateError = ref<string | undefined>();
  */
 const isUpdated = ref(false);
 
-/** The change is paid for, so it cannot be committed until the customer has said with what. */
+/**
+ * Only a change whose price the customer has seen can be committed, and only once there is a
+ * payment method to charge it to.
+ */
 const canUpdate = computed(
     () =>
         !isLoading.value &&
         !isUpdating.value &&
-        enabledPricingIds.value.length > 0 &&
         Boolean(subscription.value) &&
-        Boolean(paymentMethodId.value),
+        Boolean(pricingGroup.value) &&
+        enabledPricingIdsToSend.value.length > 0 &&
+        hasChange.value &&
+        Boolean(paymentMethodId.value) &&
+        !isPreviewPending.value &&
+        !previewError.value &&
+        Boolean(previewInvoice.value),
 );
 
 const handleUpdate = async () => {
@@ -197,7 +249,7 @@ const handleUpdate = async () => {
     try {
         await createPricingPlanSchedule({
             pricingPlanSubscriptionId: subscription.value.id,
-            enabledPricings: enabledPricingIds.value.map((pricingId) => ({
+            enabledPricings: enabledPricingIdsToSend.value.map((pricingId) => ({
                 pricing_id: pricingId,
             })),
         });
@@ -246,26 +298,60 @@ const billingPeriod = computed(
 
             <Skeleton v-else-if="isLoading" variant="section" class="min-h-[220px]" />
 
+            <ErrorNotification
+                v-else-if="subscriptionError"
+                class="sv-subscription-management__load-error sv-error"
+                :title="
+                    $t({
+                        defaultMessage: 'Unable to load this subscription. Please try again later.',
+                        id: 'subscription_management.load_error',
+                        description:
+                            'Error shown in place of the manage subscription form when the subscription cannot be loaded',
+                    })
+                "
+            />
+
             <SubscriptionManagementForm
                 v-else-if="pricingGroup && billingPeriod"
+                :id="FORM_ID"
                 v-model:enabled-pricing-ids="enabledPricingIds"
                 v-model:payment-method-id="paymentMethodId"
                 class="sv-subscription-management__form"
                 :pricing-group="pricingGroup"
-                :payment-methods="paymentMethods"
-                :payment-method-options="paymentMethodOptions"
+                :payment-methods="subscriptionPaymentMethods"
                 :billing-period="billingPeriod"
                 :currency="subscription?.billing_currency"
-                @add-payment-method="isAddingPaymentMethod = true"
+                :disabled="isUpdating"
+                @submit="handleUpdate"
             />
 
-            <AddPaymentMethodModal
-                :show-modal="isAddingPaymentMethod"
-                :customer="customer"
-                :payment-method-options="paymentMethodOptions"
-                @success="handlePaymentMethodAdded"
-                @close="isAddingPaymentMethod = false"
-            />
+            <EmptyStatePlaceholder
+                v-else
+                class="sv-subscription-management__empty-state"
+                icon="receipt_long"
+            >
+                <template #title>
+                    {{
+                        $t({
+                            defaultMessage: 'Nothing to change',
+                            id: 'subscription_management.empty_state.title',
+                            description:
+                                'Title shown on the manage subscription screen when the subscription has nothing the customer can change',
+                        })
+                    }}
+                </template>
+                <template #message>
+                    {{
+                        $t({
+                            defaultMessage:
+                                'This subscription has no options that can be changed right now.',
+                            id: 'subscription_management.empty_state.message',
+                            description:
+                                'Message shown on the manage subscription screen when the subscription is not running or has no group of options to choose from',
+                        })
+                    }}
+                </template>
+            </EmptyStatePlaceholder>
         </template>
 
         <template #aside>
@@ -306,10 +392,10 @@ const billingPeriod = computed(
                     <Button
                         size="lg"
                         class="sv-action sv-action--primary sv-action--full-width sv-subscription-management__update w-full"
-                        type="button"
+                        type="submit"
+                        v-bind="submitButtonAttrs"
                         :disabled="!canUpdate"
                         :loading="isUpdating"
-                        @click="handleUpdate"
                     >
                         {{
                             $t({

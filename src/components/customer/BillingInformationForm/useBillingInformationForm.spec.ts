@@ -104,6 +104,23 @@ describe('useBillingInformationForm', () => {
             });
         });
 
+        it('takes the first of several tax ids as the VAT number', () => {
+            const { form, updateInitialState } = setup();
+
+            updateInitialState({
+                ...organization,
+                organization: {
+                    legal_name: 'Acme B.V.',
+                    tax_ids: [
+                        { id: 'NL123456789B01', type: 'EU_VAT' },
+                        { id: 'GB987654321', type: 'GB_VAT' },
+                    ],
+                },
+            } as Customer);
+
+            expect(form.value.companyVatNumber).toBe('NL123456789B01');
+        });
+
         it('uses empty strings for whatever the customer is missing', () => {
             const { form, updateInitialState } = setup();
 
@@ -132,6 +149,17 @@ describe('useBillingInformationForm', () => {
             expect(initialState.value.city).toBe('Amsterdam');
             expect(hasChanges.value).toBe(true);
             expect(changes.value).toEqual({ city: 'Utrecht' });
+        });
+    });
+
+    describe('changes', () => {
+        it('reports a field the user cleared as null, not as an empty string', () => {
+            const { form, updateInitialState, changes } = setup();
+
+            updateInitialState(individual);
+            form.value = { ...form.value, addressLine2: '' };
+
+            expect(changes.value).toEqual({ addressLine2: null });
         });
     });
 

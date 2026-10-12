@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A payment whose outcome is not known yet is no longer reported as failed. A bank debit such as SEPA that is still processing, an authorization answered with a pending payment, and a payment call that got no answer or failed with a 5xx used to show "Payment failed" with a "Try again" button, so a customer whose payment was on its way could pay a second time. The customer is now told the payment may still go through and not to pay again, with no retry, and checkout and the pay invoice screen keep the pay button and the express payment methods off. It is logged as `PAYMENT_OUTCOME_UNCONFIRMED` (warning), and a `payment-failed` event for it carries that code instead of `AUTHORIZATION_FAILED`. Only a call the API turned down (a 4xx) still counts as a failed payment.
 - When checkout cannot keep its form for a payment redirect, for example because session storage throws, it logs `CHECKOUT_FORM_STATE_NOT_SAVED` as a warning and the pay button no longer stays pending.
 - An element that is missing `environment`, `portalObject` or the id its `configuration` needs (`invoiceId` for `invoice`, `invoice-header`, `invoice-details`, `payment-history` and `pay-invoice`; `subscriptionId` for `subscription-details`, `subscription-schedules` and `subscription-management`) renders nothing until they are set, and logs `MISSING_REQUIRED_PROPERTIES` as a warning, with the missing names in `context.missing`, if they are still missing just after it mounts.
+- The invoices list marks a credit note with a "Credit note" chip and a voided invoice with a "Void" chip, where an unpaid invoice shows its Pay button.
+- The invoices list says so when its invoices, or the next batch of them, fail to load (`sv-invoices-list__error`); "Load more" stays to try again. The invoice, invoice header, invoice details and payment history components say so too when their invoice fails to load, instead of rendering nothing.
 
 ### Changed
 
@@ -30,6 +32,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The wallet balances block offers Top up, Automatic top-up and Cancel only where it can open them. The standalone `<solvimon-wallet-balances>` component no longer shows these buttons, which did nothing there; the customer overview and subscription details screens still offer them. On the subscription details screen, a wallet offers only the top-ups billed on that subscription.
 - The wallet balances block now emits `payment-failed` when a top-up charge fails, and `auto-top-up-saved` when an automatic top-up rule set up alongside a top-up is saved, so the host can reload the wallet.
 - The top-up modal's "Between {minimum} and {maximum}" line is gone: the bounds now sit beside the amount field's new "Amount" label. Its message id, `topup_modal.flexible_option.bounds`, is no longer used, so a `messages` override for it no longer applies.
+- The invoices list caps `pagination.batchSize` at the documented maximum of 50, and at a minimum of 1.
+- The payment history lists its attempts in the order it shows them, and the invoice's wallet balance table toggles each row with a button that reports whether it is expanded, so screen readers read and operate both as they appear.
+- Each invoice row's button now has an accessible name, "View invoice {invoiceNumber}" (`invoice_table.row.view_invoice_aria_label`).
+- The invoice PDF download asks for `Accept: application/pdf` instead of sending that as its `Content-Type`.
 
 ### Fixed
 
@@ -92,6 +98,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - When the total of a top-up cannot be calculated, the modal says so instead of showing a loading placeholder for good, and a total that is about to change is dimmed until the new one arrives.
 - Each wallet row opens its own wallet when a top-up item grants credit to several wallets; every row opened the first.
 - A subscription with no name or reference is named after its plan, or "Subscription 2" and so on, in the top-up modal, instead of by its id.
+- The invoices list no longer offers Pay on an invoice that cannot be paid. It only checked `paid`, so credit notes, draft, empty and voided invoices, and invoices with nothing left open got a Pay button that led to a payment the API refuses. Pay now shows only for a `FINAL` invoice that is not a credit note, has an amount left open and is not paid by either `paid` or `payment_status`.
+- The invoice details component no longer goes blank when the invoice's payments fail to load: it fetched payments it does not show, and a failure there discarded the invoice too. It now fetches only the invoice.
+- The invoice, invoice header, invoice details and payment history components show their loading skeleton while the invoice loads, where they rendered nothing, and load the new invoice when `configuration.invoiceId` changes instead of keeping the first one.
+- Invoice dates in the invoices list and the invoice details, and the wallet balance table's service periods, are given in the timezone the invoice was issued in (`invoice.timezone`) rather than the customer's current one, as the API does when it dates the invoice's periods. The customer's timezone is still used for an invoice without one.
+- The invoices list's "Load more" button shows that it is loading while the next batch loads.
 
 ## [0.1.0-alpha.27] - 2026-10-12
 

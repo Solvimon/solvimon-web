@@ -429,6 +429,21 @@ describe('PaymentIntegrationFormStripe', () => {
         const failedCode = (wrapper: ReturnType<typeof mountComponent>) =>
             (wrapper.emitted('payment-failed')?.[0]?.[0] as { code: string } | undefined)?.code;
 
+        // The form around it holds every other form off from here until this payment is over.
+        it('says a payment is on its way before it asks for one', async () => {
+            let emittedFirst = false;
+            const wrapper = mountComponent();
+            mockAuthorizePayment.mockImplementation(async () => {
+                emittedFirst = wrapper.emitted('submitting')?.length === 1;
+                return successResponse;
+            });
+
+            await submitToken(wrapper);
+
+            expect(emittedFirst).toBe(true);
+            expect(wrapper.emitted('submitting')).toHaveLength(1);
+        });
+
         it('does not offer a retry when authorize never answered', async () => {
             mockAuthorizePayment.mockRejectedValue(new TypeError('Failed to fetch'));
             const wrapper = mountComponent();

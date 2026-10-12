@@ -173,6 +173,8 @@ async function getStripeInstance(): Promise<Stripe> {
 }
 
 async function handleConfirmationToken(confirmationTokenId: string) {
+    emit('submitting');
+
     const paymentAcceptorId = props.paymentMethodOptionResponseEntry.payment_acceptor.id;
     const returnUrl = createReturnUrl({
         paymentAcceptorId,

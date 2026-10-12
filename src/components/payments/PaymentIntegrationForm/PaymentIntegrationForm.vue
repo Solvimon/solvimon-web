@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, defineAsyncComponent, ref } from 'vue';
+import { computed, defineAsyncComponent, ref, watch } from 'vue';
 import { FormMessage, useIntl } from '@solvimon/solvimon-ui';
 import type {
     PaymentGatewayVariant,
@@ -70,17 +70,42 @@ const setIntegrationRef = (paymentMethodOption: PaymentMethodOptionResponseEntry
 let formInFlight: string | undefined;
 const validators = new Map<string, () => Promise<boolean>>();
 
-function validateFor(formId: string): () => Promise<boolean> {
+const isHeldOff = (formId: string) => formInFlight !== undefined && formInFlight !== formId;
+
+/**
+ * Every form is held off again once its validation is through, in case another started paying
+ * meanwhile. A Stripe form takes the record there and then: it says `submitting` only once Stripe
+ * has made it a token, and nothing else would hold the other forms off until that point.
+ */
+function validateFor(formId: string, { claims }: { claims: boolean }): () => Promise<boolean> {
     let validate = validators.get(formId);
     if (!validate) {
-        validate = () =>
-            formInFlight !== undefined && formInFlight !== formId
-                ? Promise.resolve(false)
-                : (props.validateOnSubmit?.() ?? Promise.resolve(true));
+        validate = async () => {
+            if (isHeldOff(formId)) return false;
+
+            const isValid = await (props.validateOnSubmit?.() ?? Promise.resolve(true));
+            if (!isValid || isHeldOff(formId)) return false;
+
+            if (claims) formInFlight = formId;
+            return true;
+        };
         validators.set(formId, validate);
     }
     return validate;
 }
+
+// A form taken out of the list mid-payment can no longer settle its record.
+watch(
+    () => props.paymentMethodOptions.map(({ integration }) => integration.id),
+    (formIds) => {
+        if (formInFlight !== undefined && !formIds.includes(formInFlight)) {
+            formInFlight = undefined;
+        }
+        [...validators.keys()]
+            .filter((formId) => !formIds.includes(formId))
+            .forEach((formId) => validators.delete(formId));
+    },
+);
 
 function settle(formId: string) {
     if (formInFlight === formId) formInFlight = undefined;
@@ -150,7 +175,7 @@ function submit() {
             :amount="amount"
             :invoice-id="invoiceId"
             :selected="isSelectedIntegration({ selectedIntegration, paymentMethodOption })"
-            :validate-on-submit="validateFor(paymentMethodOption.integration.id)"
+            :validate-on-submit="validateFor(paymentMethodOption.integration.id, { claims: false })"
             :force-store-payment-method="forceStorePaymentMethod"
             :store-payment-method="storePaymentMethod"
             :redirects-on-success="redirectsOnSuccess"
@@ -178,7 +203,7 @@ function submit() {
             :selected="isSelectedIntegration({ selectedIntegration, paymentMethodOption })"
             :email="email"
             :name="name"
-            :validate-on-submit="validateFor(paymentMethodOption.integration.id)"
+            :validate-on-submit="validateFor(paymentMethodOption.integration.id, { claims: true })"
             :force-store-payment-method="forceStorePaymentMethod"
             :store-payment-method="storePaymentMethod"
             :redirects-on-success="redirectsOnSuccess"
@@ -187,6 +212,7 @@ function submit() {
             @payment-failed="handlePaymentFailed(paymentMethodOption.integration.id, $event)"
             @payment-success="handlePaymentSuccess(paymentMethodOption.integration.id)"
             @invalid="handleInvalid(paymentMethodOption.integration.id)"
+            @submitting="handleSubmitting(paymentMethodOption.integration.id)"
             @ready="$emit('ready')"
         />
     </template>

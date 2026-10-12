@@ -206,6 +206,7 @@
   "payment_completed_card.title.authorize": "Payment successful",
   "payment_completed_card.title.tokenize": "Your payment method is added",
   "payment_integration_form.select_payment_method_error": "Select a payment method",
+  "payment_integration_form_stripe.frame_title": "Payment form",
   "payment_method.context_menu.delete.label": "Delete",
   "payment_method.context_menu.set_as_default.label": "Set as default",
   "payment_method_selector.add_payment_method": "Add payment method",

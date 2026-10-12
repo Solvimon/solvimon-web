@@ -11,7 +11,13 @@ const TOKEN = 'some-token-123';
 const loggerError = vi.fn();
 const loggerWarn = vi.fn();
 
-const authState = { accessToken: { value: TOKEN } };
+const authState = {
+    accessToken: { value: TOKEN },
+    getFreshAccessToken: vi.fn(() => Promise.resolve(authState.accessToken.value)),
+    renewAccessToken: vi.fn<(rejected: string | undefined) => Promise<string | undefined>>(() =>
+        Promise.resolve(undefined),
+    ),
+};
 vi.mock('@/components/providers/AuthProvider', () => ({
     useAuth: vi.fn(() => authState),
 }));
@@ -43,6 +49,9 @@ describe('createRequestService', () => {
         loggerWarn.mockClear();
         loggerError.mockClear();
         authState.accessToken.value = TOKEN;
+        authState.getFreshAccessToken.mockClear();
+        authState.renewAccessToken.mockReset();
+        authState.renewAccessToken.mockResolvedValue(undefined);
     });
 
     describe('headers', () => {
@@ -538,6 +547,72 @@ describe('createRequestService', () => {
             });
 
             await expect(request({ url: CALLED_URL })).resolves.toBe(pdf);
+        });
+    });
+
+    describe('access token', () => {
+        const RENEWED = 'renewed-token-789';
+        const unauthorized = () =>
+            Promise.resolve({
+                ok: false,
+                status: 401,
+                json: () => ({ message: 'Unauthorized' }),
+                headers: new Headers({ 'Content-Type': 'application/json' }),
+            });
+        const bearers = () =>
+            mockFetch.mock.calls.map(
+                ([, init]) => (init as RequestInit & { headers: Record<string, string> }).headers,
+            );
+
+        it('waits for a fresh token before sending', async () => {
+            authState.getFreshAccessToken.mockResolvedValueOnce(RENEWED);
+            await createRequestService()({ url: CALLED_URL });
+
+            expect(bearers()[0][HeadersConst.AUTHORIZATION]).toBe(`Bearer ${RENEWED}`);
+        });
+
+        it('retries once with a renewed token after a 401', async () => {
+            mockFetch.mockImplementationOnce(unauthorized);
+            authState.renewAccessToken.mockResolvedValueOnce(RENEWED);
+
+            await expect(createRequestService()({ url: CALLED_URL })).resolves.toEqual({});
+
+            expect(authState.renewAccessToken).toHaveBeenCalledWith(TOKEN);
+            expect(bearers().map((h) => h[HeadersConst.AUTHORIZATION])).toEqual([
+                `Bearer ${TOKEN}`,
+                `Bearer ${RENEWED}`,
+            ]);
+            expect(loggerError).not.toHaveBeenCalled();
+        });
+
+        it('rejects with the 401 when no renewed token is to be had', async () => {
+            mockFetch.mockImplementation(unauthorized);
+
+            await expect(createRequestService()({ url: CALLED_URL })).rejects.toMatchObject({
+                statusCode: 401,
+            });
+            expect(mockFetch).toHaveBeenCalledTimes(1);
+        });
+
+        it('does not retry a second time when the renewed token is rejected too', async () => {
+            mockFetch.mockImplementation(unauthorized);
+            authState.renewAccessToken.mockResolvedValue(RENEWED);
+
+            await expect(createRequestService()({ url: CALLED_URL })).rejects.toMatchObject({
+                statusCode: 401,
+            });
+            expect(mockFetch).toHaveBeenCalledTimes(2);
+            expect(authState.renewAccessToken).toHaveBeenCalledTimes(1);
+        });
+
+        it('leaves a 401 alone on calls that carry no access token', async () => {
+            mockFetch.mockImplementation(unauthorized);
+
+            await expect(
+                createRequestService({ enableAccessCheck: false })({ url: CALLED_URL }),
+            ).rejects.toMatchObject({ statusCode: 401 });
+            expect(mockFetch).toHaveBeenCalledTimes(1);
+            expect(authState.renewAccessToken).not.toHaveBeenCalled();
         });
     });
 

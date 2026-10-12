@@ -22,7 +22,9 @@ export type MarkdownParagraph = { type: 'paragraph'; children: MarkdownInlineNod
 const UNDERLINE = /^<u>([\s\S]*?)<\/u>/i;
 const BOLD = /^\*\*([\s\S]+?)\*\*/;
 const ITALIC_STAR = /^\*([\s\S]+?)\*/;
-const ITALIC_UNDERSCORE = /^_([\s\S]+?)_/;
+/** Not inside a word, as in CommonMark: `snake_case_name` stays text. See `opensItalicUnderscore`. */
+const ITALIC_UNDERSCORE = /^_([\s\S]+?)_(?![\p{L}\p{N}])/u;
+const WORD_CHARACTER = /[\p{L}\p{N}]/u;
 const LINK = /^\[([^\]]*)\]\(\s*([^)\s]*)\s*\)/;
 /** A link whose text is its own href serializes as a CommonMark autolink. */
 const AUTOLINK = /^<([a-z][a-z0-9+.-]*:[^>\s]+)>/i;
@@ -52,7 +54,9 @@ function parseInline(source: string): MarkdownInlineNode[] {
             continue;
         }
 
-        const italic = ITALIC_STAR.exec(rest) ?? ITALIC_UNDERSCORE.exec(rest);
+        const italic =
+            ITALIC_STAR.exec(rest) ??
+            (opensItalicUnderscore(source, index) ? ITALIC_UNDERSCORE.exec(rest) : null);
         if (italic) {
             flush();
             nodes.push({ type: 'italic', children: parseInline(italic[1]) });
@@ -97,6 +101,10 @@ function parseInline(source: string): MarkdownInlineNode[] {
 
     flush();
     return nodes;
+}
+
+function opensItalicUnderscore(source: string, index: number): boolean {
+    return index === 0 || !WORD_CHARACTER.test(source[index - 1]);
 }
 
 /**

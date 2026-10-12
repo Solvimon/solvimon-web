@@ -49,6 +49,28 @@ describe('parseMarkdownSubset', () => {
         ]);
     });
 
+    it('leaves an underscore inside a word alone', () => {
+        expect(inline('Quote your customer_reference_id when you call.')).toEqual([
+            { type: 'text', value: 'Quote your customer_reference_id when you call.' },
+        ]);
+        expect(textOf(inline('See https://example.com/terms_and_conditions_v2'))).toBe(
+            'See https://example.com/terms_and_conditions_v2',
+        );
+    });
+
+    it('still reads underscores around a word as italics, beside punctuation', () => {
+        expect(inline('Read _carefully_, please.')).toEqual([
+            { type: 'text', value: 'Read ' },
+            { type: 'italic', children: [{ type: 'text', value: 'carefully' }] },
+            { type: 'text', value: ', please.' },
+        ]);
+        expect(inline('(_note_)')).toEqual([
+            { type: 'text', value: '(' },
+            { type: 'italic', children: [{ type: 'text', value: 'note' }] },
+            { type: 'text', value: ')' },
+        ]);
+    });
+
     it('does not read bold as two italics', () => {
         expect(inline('**bold**')[0].type).toBe('bold');
     });

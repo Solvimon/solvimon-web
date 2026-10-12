@@ -6,6 +6,7 @@ import { TEST_APP_HOST, TEST_APP_PORT } from './global.config';
  */
 export default defineConfig({
     testDir: './tests/playwright/e2e',
+    globalSetup: './tests/playwright/global-setup.ts',
     outputDir: './tests/playwright/test-results',
     fullyParallel: true,
     forbidOnly: !!process.env.CI,

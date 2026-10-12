@@ -1,9 +1,9 @@
 import { fileURLToPath, URL } from 'node:url';
 import { resolve, dirname } from 'node:path';
 import fs from 'node:fs';
-import { defineConfig } from 'vite';
+import { defineConfig, type Plugin } from 'vite';
 import vue from '@vitejs/plugin-vue';
-import { TEST_APP_HOST, TEST_APP_PORT } from '../../global.config';
+import { TEST_APP_HOST, TEST_APP_IDENTITY_PATH, TEST_APP_PORT } from '../../global.config';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -20,6 +20,45 @@ const HTTPS_CONFIG =
           }
         : undefined;
 
+const REPO_ROOT = fs.realpathSync(resolve(__dirname, '../..'));
+
+/**
+ * The SDK is a `file:` dependency, so it reaches this checkout's `dist` only if this checkout's
+ * `node_modules` holds the link. A `node_modules` linked in from another checkout brings that
+ * checkout's link with it, and the whole suite then runs against a build nobody is looking at.
+ */
+function sdkRoot(): string {
+    const linked = resolve(__dirname, 'node_modules/@solvimon/solvimon-web');
+    if (!fs.existsSync(linked)) {
+        throw new Error(`The test app has no ${linked}. Run \`npm ci --prefix tests/app\`.`);
+    }
+
+    const root = fs.realpathSync(linked);
+    if (root !== REPO_ROOT) {
+        throw new Error(
+            `The test app resolves @solvimon/solvimon-web to ${root}, not to ${REPO_ROOT}, so the ` +
+                "e2e suite would run against another checkout's build. " +
+                'See "Running e2e tests from a second checkout" in docs/development/testing.md.',
+        );
+    }
+
+    return root;
+}
+
+function testAppIdentity(): Plugin {
+    const identity = JSON.stringify({ repoRoot: REPO_ROOT, sdkRoot: sdkRoot() });
+
+    return {
+        name: 'solvimon-test-app-identity',
+        configureServer(server) {
+            server.middlewares.use(TEST_APP_IDENTITY_PATH, (_request, response) => {
+                response.setHeader('content-type', 'application/json');
+                response.end(identity);
+            });
+        },
+    };
+}
+
 export default defineConfig({
     plugins: [
         vue({
@@ -29,14 +68,9 @@ export default defineConfig({
                 },
             },
         }),
+        testAppIdentity(),
     ],
     server: {
-        proxy: {
-            ...getProxyConfig('/identity'),
-            ...getProxyConfig('/config'),
-            ...getProxyConfig('/transaction'),
-            ...getProxyConfig('/event'),
-        },
         https: HTTPS_CONFIG,
         host: TEST_APP_HOST,
         port: TEST_APP_PORT,
@@ -48,24 +82,3 @@ export default defineConfig({
         },
     },
 });
-
-function getProxyConfig(targetPath: '/identity' | '/config' | '/transaction' | '/event') {
-    return {
-        [targetPath]: {
-            target:
-                targetPath === '/identity'
-                    ? 'https://identity.solvimon.com/v1'
-                    : 'https://test.api.solvimon.com/v1',
-            changeOrigin: true,
-            secure: false,
-            rewrite: (path: string) => path.replace(new RegExp(`^${targetPath}`), ''),
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            configure: (proxy: any) => {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                proxy.on('proxyReq', (proxyReq: any) => {
-                    proxyReq.setHeader('origin', 'https://test.desk.solvimon.com');
-                });
-            },
-        },
-    };
-}

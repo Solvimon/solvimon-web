@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- A payment whose outcome is not known yet is no longer reported as failed. A bank debit such as SEPA that is still processing, an authorization answered with a pending payment, and a payment call that got no answer or failed with a 5xx used to show "Payment failed" with a "Try again" button, so a customer whose payment was on its way could pay a second time. The customer is now told the payment may still go through and not to pay again, with no retry, and checkout and the pay invoice screen keep the pay button and the express payment methods off. It is logged as `PAYMENT_OUTCOME_UNCONFIRMED` (warning), and a `payment-failed` event for it carries that code instead of `AUTHORIZATION_FAILED`. Only a call the API turned down (a 4xx) still counts as a failed payment.
+
+### Changed
+
+- `STRIPE_REDIRECT_RETURN_FAILED` is now also logged when the payment a Stripe redirect returned from cannot be retrieved from Stripe.
+
+### Fixed
+
+- A return from a Stripe redirect counts as paid only once Stripe says the payment succeeded. It was read from the address alone, so typing the redirect parameters into it showed the payment as paid and fired `payment-success`. The payment form stays away while the payment is checked, so the customer cannot pay again meanwhile.
+- Checkout handles a return from a payment redirect like any other payment: `onPaymentSuccess` is called and `success_url` is followed. It marked itself paid from the address before the payment form could confirm the payment, so neither happened and the customer had no way on.
+- The Adyen drop-in no longer spins for good after 3DS or another additional-details step: a refused payment now shows as refused. A successful return from an Adyen redirect shows the completed card, and a refused one shows its failure instead of an empty payment section.
+- The pay invoice screen shows the invoice as paid and takes the pay button away once a payment succeeds, and reloads the invoice. "Pay" stayed enabled on an invoice that had just been paid.
+- An Apple Pay payment that got no answer, failed with a 5xx or is still pending no longer tells the customer to try again; checkout says it may still go through and not to pay again.
+
 ## [0.1.0-alpha.27] - 2026-10-12
 
 ### Added

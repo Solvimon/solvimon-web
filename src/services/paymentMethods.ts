@@ -12,6 +12,7 @@ import type {
 } from '@solvimon/solvimon-types';
 import { withPagination } from '@solvimon/solvimon-ui';
 import { createRequestService } from './requests';
+import { buildUrl } from './requests.lib';
 import type {
     ArchivePaymentMethodPayload,
     GetPaymentMethodOptionsByCustomerIdPayload,
@@ -25,13 +26,13 @@ import { useConfig } from '@/components/providers/ConfigProvider/composables/use
 export function createPaymentMethodsService() {
     const request = createRequestService();
     const config = useConfig();
-    const BASE_URL = '/portal/payment-methods';
+    const BASE_PATH = ['portal', 'payment-methods'];
 
-    function setDefaultPaymentMethod({
+    async function setDefaultPaymentMethod({
         paymentMethodId,
     }: SetDefaultPaymentMethodPayload): Promise<PaymentMethod> {
         return request<PaymentMethod>({
-            url: `${config.apiUrls.config}${BASE_URL}/${paymentMethodId}`,
+            url: buildUrl(config.apiUrls.config, ...BASE_PATH, paymentMethodId),
             options: { method: 'PATCH' },
             data: { is_default: true },
         });
@@ -41,11 +42,11 @@ export function createPaymentMethodsService() {
      * Deleting a payment method archives it: the API has no DELETE, and the record has to survive
      * for the invoices already paid with it.
      */
-    function archivePaymentMethod({
+    async function archivePaymentMethod({
         paymentMethodId,
     }: ArchivePaymentMethodPayload): Promise<PaymentMethod> {
         return request<PaymentMethod>({
-            url: `${config.apiUrls.config}${BASE_URL}/${paymentMethodId}`,
+            url: buildUrl(config.apiUrls.config, ...BASE_PATH, paymentMethodId),
             options: { method: 'PATCH' },
             data: { status: 'ARCHIVED' },
         });
@@ -62,7 +63,7 @@ export function createPaymentMethodsService() {
         );
 
         const response = await request<PaymentMethod>({
-            url: `${config.apiUrls.config}${BASE_URL}`,
+            url: buildUrl(config.apiUrls.config, ...BASE_PATH),
             query: queryParams,
             isCollection: true,
         });
@@ -92,7 +93,7 @@ export function createPaymentMethodsService() {
         amount,
     }: GetPaymentMethodOptionsPayload): Promise<PaymentMethodOptionsResponse> {
         return request<PaymentMethodOptionsResponse>({
-            url: `${config.apiUrls.config}/portal/payment-method-options`,
+            url: buildUrl(config.apiUrls.config, 'portal', 'payment-method-options'),
             options: { method: 'POST' },
             data: {
                 ...(customerId && { customer_id: customerId }),
@@ -125,7 +126,7 @@ export function createPaymentMethodsService() {
         data: PaymentMethodTokenizePayload,
     ): Promise<AuthorizePaymentResponse> {
         return request<AuthorizePaymentActionRequiredResponse>({
-            url: `${config.apiUrls.config}/portal/payment-methods/tokenize`,
+            url: buildUrl(config.apiUrls.config, 'portal', 'payment-methods', 'tokenize'),
             options: { method: 'POST' },
             data,
         });

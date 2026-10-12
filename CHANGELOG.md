@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Ids the SDK puts in a request path, such as a customer, invoice, subscription or payment method id, are now sent as one encoded path segment. An id containing `/`, `?`, `#` or `..` could point an authenticated request at a different endpoint. An empty id, `.` or `..` now fails without sending a request.
+
 ## [0.1.0-alpha.27] - 2026-10-12
 
 ### Added

@@ -4,11 +4,12 @@ import type {
 } from '@solvimon/solvimon-types';
 import { withExpand, withPagination, type WithPagination } from '@solvimon/solvimon-ui';
 import { createRequestService } from './requests';
+import { buildUrl } from './requests.lib';
 import { useConfig } from '@/components/providers/ConfigProvider/composables/useConfig';
 import { EXPAND_ALL } from '@/constants';
 import type { PricingPlanSubscriptionExpanded } from '@/types/subscription';
 
-const ENDPOINT = '/portal/pricing-plan-subscriptions';
+const ENDPOINT = ['portal', 'pricing-plan-subscriptions'];
 
 export const SUBSCRIPTION_CANCELLATION_TYPES = {
     CANCEL: 'NEXT_BILLING_PERIOD',
@@ -52,7 +53,7 @@ export function createSubscriptionsService(): SubscriptionsService {
         id: PricingPlanSubscription['id'];
         expanded: true;
     }): Promise<PricingPlanSubscriptionExpanded>;
-    function getSubscription({
+    async function getSubscription({
         id,
         expanded = false,
     }: {
@@ -60,7 +61,7 @@ export function createSubscriptionsService(): SubscriptionsService {
         expanded?: boolean;
     }): Promise<PricingPlanSubscription | PricingPlanSubscriptionExpanded> {
         return request<PricingPlanSubscription>({
-            url: `${config.apiUrls.config}${ENDPOINT}/${id}`,
+            url: buildUrl(config.apiUrls.config, ...ENDPOINT, id),
             query: withExpand({ expandParams: EXPAND_ALL, expand: expanded }),
         });
     }
@@ -82,13 +83,13 @@ export function createSubscriptionsService(): SubscriptionsService {
             expandParams: EXPAND_ALL,
         });
         return request<PricingPlanSubscriptionExpanded>({
-            url: `${config.apiUrls.config}${ENDPOINT}`,
+            url: buildUrl(config.apiUrls.config, ...ENDPOINT),
             query: withPagination(queryWithExpand, paginationParams),
             isCollection: true,
         });
     }
 
-    function setSubscriptionCancellation({
+    async function setSubscriptionCancellation({
         id,
         variant,
     }: {
@@ -96,7 +97,7 @@ export function createSubscriptionsService(): SubscriptionsService {
         variant: SubscriptionCancellationVariant;
     }): Promise<PricingPlanSubscription> {
         return request<PricingPlanSubscription>({
-            url: `${config.apiUrls.config}${ENDPOINT}/${id}/cancel`,
+            url: buildUrl(config.apiUrls.config, ...ENDPOINT, id, 'cancel'),
             data: { type: SUBSCRIPTION_CANCELLATION_TYPES[variant] },
             options: { method: 'POST' },
         });

@@ -31,8 +31,9 @@ export const getRequiredFieldsForCountry = (
 };
 
 /** The VAT number is asked for on a company purchase only, and not in the US. */
-export const isVatNumberShown = (state: Pick<CheckoutFormState, 'type' | 'country'>): boolean =>
-    state.type === 'ORGANIZATION' && state.country !== 'US';
+export const isVatNumberShown = (
+    state: Partial<Pick<CheckoutFormState, 'type' | 'country'>>,
+): boolean => state.type === 'ORGANIZATION' && state.country !== 'US';
 
 /**
  * Map the checkout form state onto the customer it describes, so consumers that work with
@@ -54,9 +55,12 @@ export const toCustomer = (state: Partial<CheckoutFormState>): Partial<Customer>
             organization: {
                 legal_name: state.companyLegalName ?? '',
                 registered_address: address,
-                ...(state.companyVatNumber && {
-                    tax_ids: [{ id: state.companyVatNumber, type: DEFAULT_TAX_IDENTIFIER_TYPE }],
-                }),
+                ...(state.companyVatNumber &&
+                    isVatNumberShown(state) && {
+                        tax_ids: [
+                            { id: state.companyVatNumber, type: DEFAULT_TAX_IDENTIFIER_TYPE },
+                        ],
+                    }),
             },
         };
     }

@@ -1137,6 +1137,31 @@ describe('useCheckoutView', () => {
         ).toBeUndefined();
     });
 
+    it('leaves out a VAT number a US company cannot see', () => {
+        mockTaxIdValidator.mockReturnValue(true);
+        mockUseCheckoutForm.mockReturnValue(
+            createMockCheckoutForm({
+                email: 'company@example.com',
+                country: 'US' as CountryCode,
+                type: 'ORGANIZATION' as const,
+                companyLegalName: 'Acme Corp',
+                companyVatNumber: 'NL123456789B01',
+            }),
+        );
+
+        const result = useCheckoutView({
+            initialCountry: undefined,
+            initialEmail: undefined,
+            subscriptionId: 'sub_123' as PricingPlanSubscription['id'],
+        });
+
+        const context = result.authorizationContext
+            .value as AuthorizePaymentInitPricingPlanSubscriptionContext;
+        expect(
+            context.init_pricing_plan_subscription.customer_details.organization?.tax_ids,
+        ).toBeUndefined();
+    });
+
     describe('payment method options failing to load', () => {
         const mountCheckout = async () => {
             const form = createMockCheckoutForm();

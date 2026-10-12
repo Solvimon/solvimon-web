@@ -14,7 +14,7 @@ import {
     isSelectedIntegration,
     isStripePaymentIntegration,
 } from './PaymentIntegrationForm.lib';
-import type { Error as PaymentError } from '@/types/errors';
+import type { SdkError as PaymentError } from '@/types/errors';
 
 const PaymentIntegrationFormStripe = defineAsyncComponent(() =>
     import('@/components/payments/PaymentIntegrationFormStripe/PaymentIntegrationFormStripe.vue').then(

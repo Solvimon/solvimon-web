@@ -7,7 +7,7 @@ import type {
     PaymentMethodOptionResponseEntry,
     PaymentMethodOptionsResponse,
 } from '@solvimon/solvimon-types';
-import type { Error } from '@/types/errors';
+import type { SdkError } from '@/types/errors';
 
 export interface ChargeOnDemandAuthorizationContext {
     type: 'CHARGE_ON_DEMAND';
@@ -76,7 +76,7 @@ export interface PaymentIntegrationFormEmits {
     /**
      * Emitted when a payment fails.
      */
-    (e: 'payment-failed', error: Error): void;
+    (e: 'payment-failed', error: SdkError): void;
     /**
      * Emitted when a payment is successful.
      */

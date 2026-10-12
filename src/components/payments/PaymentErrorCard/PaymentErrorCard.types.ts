@@ -1,7 +1,7 @@
-import type { Error } from '@/types/errors';
+import type { SdkError } from '@/types/errors';
 
 export interface PaymentErrorCardProps {
-    error: Error;
+    error: SdkError;
 }
 
 export interface PaymentErrorCardEmits {

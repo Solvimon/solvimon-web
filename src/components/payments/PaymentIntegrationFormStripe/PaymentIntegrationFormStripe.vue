@@ -16,7 +16,7 @@ import { getFrameOptions, summarizeStripeError } from './PaymentIntegrationFormS
 import { STRIPE_SCRIPT_URL } from './PaymentIntegrationFormStripe.constants.ts';
 import PaymentCompletedCard from '@/components/payments/PaymentCompletedCard/PaymentCompletedCard.vue';
 import PaymentErrorCard from '@/components/payments/PaymentErrorCard/PaymentErrorCard.vue';
-import type { Error } from '@/types/errors';
+import type { SdkError } from '@/types/errors';
 import { createPaymentsService } from '@/services/payments';
 import { createPaymentMethodsService } from '@/services/paymentMethods';
 import { createReturnUrl } from '@/utils/adyen';
@@ -46,7 +46,7 @@ defineExpose({ submit });
 const PAYMENT_GATEWAY_VARIANT_STRIPE = 'STRIPE';
 
 const showPaymentSuccess = ref<boolean>(false);
-const integrationError = ref<Error>();
+const integrationError = ref<SdkError>();
 const redirectReturn = readStripeRedirectReturn(
     props.paymentMethodOptionResponseEntry.payment_acceptor.id,
 );
@@ -478,7 +478,7 @@ function handleLoadError(error: StripeLoadError) {
  * Every failure leaves through here, so the card the customer sees always carries the reference
  * they can quote back to support.
  */
-function emitError(err: Omit<Error, 'reference'>) {
+function emitError(err: Omit<SdkError, 'reference'>) {
     const failure = createPaymentFailureError(err);
     integrationError.value = failure;
     emit('payment-failed', failure);

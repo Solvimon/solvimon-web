@@ -22,7 +22,8 @@ defineProps<SolvimonInvoicesListEntryProps>();
                 <InvoicesList
                     :configuration="configuration"
                     :invoices="invoices.items.value"
-                    :is-loading="isLoading"
+                    :is-loading="isLoading || invoices.isPending.value"
+                    :error="invoices.error.value"
                     :has-more-items="invoices.hasNextBatch.value"
                     @load-more="invoices.fetchMore"
                 />

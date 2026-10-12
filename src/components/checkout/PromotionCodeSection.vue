@@ -16,6 +16,7 @@ defineOptions({ inheritAttrs: false });
 
 const props = withDefaults(defineProps<PromotionCodeSectionProps>(), {
     promotionCode: null,
+    isPending: false,
 });
 
 const emit = defineEmits<PromotionCodeSectionEmits>();
@@ -23,6 +24,8 @@ const emit = defineEmits<PromotionCodeSectionEmits>();
 const isExpanded = ref(false);
 const inputValue = ref('');
 const statusMessage = ref('');
+/** An applied code is only announced once the checkout has accepted it. */
+const isAwaitingApply = ref(false);
 const toggleRef = ref<HTMLButtonElement | null>(null);
 const panelRef = ref<HTMLElement | null>(null);
 const baseId = uniqueId('promotion-code-');
@@ -105,17 +108,15 @@ const applyCode = () => {
         return;
     }
     const value = inputValue.value.trim();
+    statusMessage.value = '';
+    isAwaitingApply.value = true;
     emit('update:appliedCode', value);
     emit('apply', value);
-    statusMessage.value = $t({
-        defaultMessage: 'Promotion code applied',
-        id: 'checkout.promotion_code.applied_status',
-        description: 'Aria live message when a promotion code is applied in checkout',
-    });
     isExpanded.value = false;
 };
 
 const removeCode = () => {
+    isAwaitingApply.value = false;
     emit('update:appliedCode', null);
     emit('remove');
     statusMessage.value = $t({
@@ -147,6 +148,26 @@ watch(
     (value) => {
         if (!value) {
             clearInput();
+        }
+    },
+);
+
+// A rejected code is taken off again before the checkout settles, and says so in its own error.
+watch(
+    () => props.isPending,
+    (isPending) => {
+        if (isPending || !isAwaitingApply.value) {
+            return;
+        }
+
+        isAwaitingApply.value = false;
+
+        if (isApplied.value) {
+            statusMessage.value = $t({
+                defaultMessage: 'Promotion code applied',
+                id: 'checkout.promotion_code.applied_status',
+                description: 'Aria live message when a promotion code is applied in checkout',
+            });
         }
     },
 );
@@ -191,6 +212,7 @@ watch(
             class="flex w-full flex-row items-center gap-2 overflow-hidden border-t px-3 py-2"
             @keydown.esc.prevent="collapseExpanded"
         >
+            <!-- Input binds listeners to its wrapper as well as its <input>: `.self` keeps one Enter to one apply. -->
             <Input
                 v-model="inputModel"
                 :placeholder="
@@ -208,7 +230,7 @@ watch(
                     })
                 "
                 class="w-full"
-                @keydown.enter.prevent="applyCode"
+                @keydown.enter.self.prevent="applyCode"
             />
             <Button
                 type="button"

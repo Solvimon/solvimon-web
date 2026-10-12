@@ -55,7 +55,7 @@ test.describe('DD-3538 tester', () => {
             const errors = pageErrors(page);
             api = await returnTo(
                 page,
-                `/?utm_source=mail&payment_acceptor_id=${PAYMENT_ACCEPTOR_ID}&redirectResult=Ab%2Bc%25%3D!x#frag`,
+                `/?utm_source=mail&payment_acceptor_id=${PAYMENT_ACCEPTOR_ID}&redirectResult=X6XtfGC3%21H4sI%2B%2F%3D#frag`,
                 {
                     gateways: ['ADYEN'],
                     mocks: { verifyPaymentDetails: { body: { payment_status: 'SUCCESS' } } },
@@ -66,7 +66,7 @@ test.describe('DD-3538 tester', () => {
             expect(verifications(api)).toHaveLength(1);
             expect(verifications(api)[0]?.body).toMatchObject({
                 payment_acceptor_id: PAYMENT_ACCEPTOR_ID,
-                adyen: { details: { redirectResult: 'Ab+c%=!x' } },
+                adyen: { details: { redirectResult: 'X6XtfGC3!H4sI+/=' } },
             });
 
             const url = new URL(page.url());

@@ -30,6 +30,14 @@ describe('useInvoicesList', () => {
         expect(await requestedPageSize(-3)).toBe(1);
     });
 
+    it.each([
+        ['a string', 'abc'],
+        ['NaN', Number.NaN],
+        ['Infinity', Number.POSITIVE_INFINITY],
+    ])('falls back to the default batch size when given %s', async (_, batchSize) => {
+        expect(await requestedPageSize(batchSize as number)).toBe(15);
+    });
+
     it('asks for a whole number of invoices', async () => {
         expect(await requestedPageSize(12.7)).toBe(12);
     });

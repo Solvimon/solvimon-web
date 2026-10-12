@@ -1562,6 +1562,36 @@ describe('useCheckoutView', () => {
             wrapper.unmount();
         });
 
+        // The editor shows nothing for a seat config the plan does not have.
+        it.each([
+            ['keeps saved seats the plan has', 'pic_1', true],
+            ['drops saved seats for a config the plan does not have', 'pic_other', false],
+        ])('%s', async (_, configId, isKept) => {
+            mockGetFirstPricingPlanScheduleOfType.mockReturnValue({
+                ...mockSubscription.pricing_plan_schedule_infos[0],
+                pricing_plan_schedule: {
+                    type: 'DEFAULT',
+                    seats_values: [{ pricing_item_config_id: 'pic_1' }],
+                },
+            });
+            setupRedirectParams();
+            saveForm({
+                firstName: 'Hans',
+                seatsValues: [{ pricing_item_config_id: configId, number: '7' }],
+            });
+            const checkoutFormMock = createMockCheckoutForm();
+            mockUseCheckoutForm.mockReturnValue(checkoutFormMock);
+
+            const [, wrapper] = mountView();
+            await flushPromises();
+
+            const lastRestored = restoredStates(checkoutFormMock).at(-1);
+            expect(lastRestored?.seatsValues).toEqual(
+                isKept ? [{ pricing_item_config_id: 'pic_1', number: '7' }] : undefined,
+            );
+            wrapper.unmount();
+        });
+
         it('starts normally when storage cannot be read', async () => {
             setupRedirectParams();
             const getItem = vi.spyOn(sessionStorage, 'getItem').mockImplementation(() => {

@@ -27,10 +27,7 @@ describe('DD-3540 tester: toRestorableForm on hostile input', () => {
         expect(form.seatsValues).toHaveLength(200_000);
     });
 
-    // Expected failure (low): the seat is kept without a number, or with one that is not a count,
-    // and replaces the plan's default. In the checkout the preview is then priced on
-    // `{ pricing_item_config_id }` alone, or on `number: 'abc'`, while the editor shows 1 or nothing.
-    it.fails.each([
+    it.each([
         ['a number given as a number', 5],
         ['a number that is not numeric', 'abc'],
         ['a negative number', '-3'],

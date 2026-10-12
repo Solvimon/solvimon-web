@@ -146,6 +146,25 @@ describe('Stripe frame script', () => {
         resolveFirstSubmit({});
         await flushPromises();
 
-        expect(frame.answers()).toHaveLength(1);
+        expect(frame.answers()).toEqual([
+            { type: 'stripe:submit:success', confirmationTokenId: 'ctoken_1' },
+        ]);
+        expect(createConfirmationToken).toHaveBeenCalledWith(
+            expect.objectContaining({ elements: first }),
+        );
+    });
+
+    it('names the setup it is ready for', () => {
+        const element = paymentElement();
+        const frame = loadFrame({
+            elements: () => ({ submit: vi.fn(), create: vi.fn(() => element) }),
+            createConfirmationToken: vi.fn(),
+        });
+        frame.send({ ...INIT, initId: 7 });
+
+        const [, onReady] = element.on.mock.calls.find(([event]) => event === 'ready') ?? [];
+        (onReady as () => void)();
+
+        expect(frame.posted()).toContainEqual({ type: 'stripe:ready', initId: 7 });
     });
 });

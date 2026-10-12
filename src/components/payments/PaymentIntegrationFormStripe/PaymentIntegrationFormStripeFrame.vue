@@ -18,12 +18,16 @@ const iframeHeight = ref(0);
 const iframeSrc = ref<string>();
 // Until Stripe says it is ready the frame has no elements to submit, and would drop the message.
 let isReady = false;
+// Tells the ready of the current setup from one an earlier setup sends late.
+let initId = 0;
 
 function sendInit() {
     isReady = false;
+    initId += 1;
     iframeRef.value?.contentWindow?.postMessage(
         {
             type: 'stripe:init',
+            initId,
             publicKey: props.publicKey,
             options: props.options,
             countryCode: props.countryCode,
@@ -72,7 +76,7 @@ function handleMessage(event: MessageEvent) {
 
     switch (type) {
         case 'stripe:ready':
-            isReady = true;
+            if (data['initId'] === initId) isReady = true;
             emit('ready');
             break;
 

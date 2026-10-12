@@ -93,6 +93,7 @@ describe('PaymentIntegrationFormStripeFrame', () => {
             expect(cw.postMessage).toHaveBeenCalledWith(
                 {
                     type: 'stripe:init',
+                    initId: 1,
                     publicKey: 'pk_test_123',
                     options: defaultProps.options,
                     countryCode: 'NL',
@@ -140,9 +141,18 @@ describe('PaymentIntegrationFormStripeFrame', () => {
             return { wrapper, iframe, cw };
         }
 
+        /** The ready the current setup sends, echoing the id of the last `stripe:init`. */
+        function sendReady(cw: { postMessage: ReturnType<typeof vi.fn> }) {
+            const lastInit = cw.postMessage.mock.calls
+                .map(([message]) => message as { type?: string; initId?: number })
+                .filter(({ type }) => type === 'stripe:init')
+                .at(-1);
+            dispatchMessage(cw, { type: 'stripe:ready', initId: lastInit?.initId ?? 0 });
+        }
+
         it('posts stripe:submit to the iframe contentWindow once Stripe is ready', () => {
             const { wrapper, cw } = setup();
-            dispatchMessage(cw, { type: 'stripe:ready' });
+            sendReady(cw);
 
             expect(wrapper.vm.triggerSubmit()).toBe(true);
 
@@ -159,7 +169,7 @@ describe('PaymentIntegrationFormStripeFrame', () => {
 
         it('waits for Stripe again after it is set up anew', async () => {
             const { wrapper, iframe, cw } = setup();
-            dispatchMessage(cw, { type: 'stripe:ready' });
+            sendReady(cw);
 
             await iframe.dispatchEvent(new Event('load'));
 
@@ -168,7 +178,7 @@ describe('PaymentIntegrationFormStripeFrame', () => {
 
         it('passes on the answer to a submit sent before the options changed', async () => {
             const { wrapper, cw } = setup();
-            dispatchMessage(cw, { type: 'stripe:ready' });
+            sendReady(cw);
             expect(wrapper.vm.triggerSubmit()).toBe(true);
 
             await wrapper.setProps({ options: CHANGED_OPTIONS });
@@ -180,13 +190,23 @@ describe('PaymentIntegrationFormStripeFrame', () => {
 
         it('sends submits again once the frame set up anew says it is ready', async () => {
             const { wrapper, cw } = setup();
-            dispatchMessage(cw, { type: 'stripe:ready' });
+            sendReady(cw);
 
             await wrapper.setProps({ options: CHANGED_OPTIONS });
-            dispatchMessage(cw, { type: 'stripe:ready' });
+            sendReady(cw);
 
             expect(wrapper.vm.triggerSubmit()).toBe(true);
             expect(cw.postMessage).toHaveBeenLastCalledWith({ type: 'stripe:submit' }, '*');
+        });
+
+        it('ignores a ready left over from before the frame was set up anew', async () => {
+            const { wrapper, cw } = setup();
+            sendReady(cw);
+
+            await wrapper.setProps({ options: CHANGED_OPTIONS });
+            dispatchMessage(cw, { type: 'stripe:ready', initId: 0 });
+
+            expect(wrapper.vm.triggerSubmit()).toBe(false);
         });
     });
 

@@ -450,4 +450,58 @@ describe('PayInvoice', () => {
             wrapper.findComponent({ name: 'PayButton' }).find('button').attributes('disabled'),
         ).toBeDefined();
     });
+
+    describe('returning from an Adyen redirect, tested independently', () => {
+        beforeEach(() => {
+            window.history.replaceState(
+                {},
+                '',
+                '/?redirectResult=res_1&payment_acceptor_id=pa_123',
+            );
+        });
+
+        afterEach(() => {
+            window.history.replaceState({}, '', '/');
+        });
+
+        it('settles a successful return once and stops offering payment', async () => {
+            mockGetPaymentDetails.mockResolvedValue({ payment_status: 'SUCCESS' });
+            const onPaymentSuccess = vi.fn();
+            const refresh = vi.fn().mockResolvedValue(undefined);
+
+            const wrapper = mountComponent({
+                refresh,
+                configuration: { invoiceId: 'inv_123', onPaymentSuccess },
+            });
+            await waitForAdyenMount();
+
+            expect(onPaymentSuccess).toHaveBeenCalledOnce();
+            expect(refresh).toHaveBeenCalledOnce();
+            expect(MockDropIn).not.toHaveBeenCalled();
+            expect(wrapper.text()).toContain('Thank you for your payment!');
+            expect(wrapper.findComponent({ name: 'PayButton' }).exists()).toBe(false);
+        });
+
+        it('keeps reading as paid when the reloaded invoice has not caught up yet', async () => {
+            mockGetPaymentDetails.mockResolvedValue({ payment_status: 'SUCCESS' });
+            const wrapper = mountComponent({ refresh: vi.fn().mockResolvedValue(undefined) });
+            await waitForAdyenMount();
+
+            await wrapper.setProps({ invoice: { ...mockInvoice } });
+            await flushPromises();
+
+            expect(wrapper.text()).toContain('Thank you for your payment!');
+            expect(wrapper.findComponent({ name: 'PayButton' }).exists()).toBe(false);
+        });
+
+        // PayInvoice says nothing itself on a failure; the form's card is all the customer gets.
+        it('tells the customer a refused return did not go through', async () => {
+            mockGetPaymentDetails.mockResolvedValue({ payment_status: 'REFUSED' });
+            const wrapper = mountComponent();
+            await waitForAdyenMount();
+
+            expect(MockDropIn).toHaveBeenCalledOnce();
+            expect(wrapper.text()).toContain('Payment failed');
+        });
+    });
 });

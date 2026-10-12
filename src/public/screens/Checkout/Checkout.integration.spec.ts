@@ -407,4 +407,48 @@ describe('Checkout', () => {
             expect(wrapper.find('.sv-checkout__payment-error').exists()).toBe(true);
         });
     });
+
+    describe('after an unconfirmed payment, tested independently', () => {
+        afterEach(() => {
+            mockExperimentalFeatures.value = { 'express-checkout': false };
+        });
+
+        const reportUnconfirmed = (wrapper: Awaited<ReturnType<typeof mountCheckout>>) =>
+            wrapper.findComponent({ name: 'PaymentIntegrationForm' }).vm.$emit('payment-failed', {
+                code: 'PAYMENT_OUTCOME_UNCONFIRMED',
+                message: 'Payment could not be confirmed',
+            });
+
+        // The card form is out of reach, but an express sheet is a second way to pay.
+        it('offers no express payment method while the first payment may still go through', async () => {
+            mockExperimentalFeatures.value = { 'express-checkout': true };
+            paymentMethodOptions.value = [
+                { integration: { payment_gateway: { variant: 'ADYEN' } } },
+            ];
+            const wrapper = await mountCheckout({ Skeleton: false });
+            expect(wrapper.findComponent({ name: 'ExpressPaymentMethods' }).exists()).toBe(true);
+
+            reportUnconfirmed(wrapper);
+            await flushPromises();
+
+            expect(wrapper.findComponent({ name: 'ExpressPaymentMethods' }).exists()).toBe(false);
+        });
+
+        it('keeps the pay button off after a later failure is reported', async () => {
+            paymentMethodOptions.value = [
+                { integration: { payment_gateway: { variant: 'ADYEN' } } },
+            ];
+            const wrapper = await mountCheckout({ Skeleton: false });
+
+            reportUnconfirmed(wrapper);
+            await flushPromises();
+            wrapper.findComponent({ name: 'PaymentIntegrationForm' }).vm.$emit('payment-failed', {
+                code: 'AUTHORIZATION_FAILED',
+                message: 'Payment failed',
+            });
+            await flushPromises();
+
+            expect(wrapper.find('.sv-checkout__submit').attributes('disabled')).toBe('true');
+        });
+    });
 });

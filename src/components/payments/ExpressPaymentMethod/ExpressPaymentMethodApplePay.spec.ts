@@ -4,6 +4,7 @@ import type { AuthorizePaymentPayload, BillingPeriod } from '@solvimon/solvimon-
 import type { ApplePayConfiguration } from '@adyen/adyen-web';
 import type { ExpressPaymentMethodApplePayProps } from './ExpressPaymentMethodApplePay.types';
 import ExpressPaymentMethodApplePay from './ExpressPaymentMethodApplePay.vue';
+import { ApiError } from '@/services/apiError';
 
 const mockApplePayInstance = {
     isAvailable: vi.fn().mockResolvedValue(true),
@@ -583,6 +584,35 @@ describe('ExpressPaymentMethodApplePay', () => {
                 expect.anything(),
                 expect.anything(),
             );
+        });
+    });
+
+    describe('outcomes that are not known yet, tested independently', () => {
+        const failedCode = (wrapper: Awaited<ReturnType<typeof mountAndSettle>>) =>
+            (wrapper.emitted('payment-failed')?.[0]?.[0] as { code?: string } | undefined)?.code;
+
+        it.each([
+            ['the request never got an answer', () => new TypeError('Failed to fetch')],
+            ['the server failed', () => new ApiError({ statusCode: 503 })],
+        ])('does not report a plain failure when %s', async (_, makeError) => {
+            mockAuthorizePayment.mockRejectedValueOnce(makeError());
+            const wrapper = await mountAndSettle();
+
+            await submit(submitState, { resolve: vi.fn(), reject: vi.fn() });
+
+            expect(failedCode(wrapper)).toBe('PAYMENT_OUTCOME_UNCONFIRMED');
+        });
+
+        it('does not report a pending payment as a plain failure', async () => {
+            mockAuthorizePayment.mockResolvedValueOnce({
+                status: 'SUCCESS',
+                payment: { result: 'PENDING' },
+            });
+            const wrapper = await mountAndSettle();
+
+            await submit(submitState, { resolve: vi.fn(), reject: vi.fn() });
+
+            expect(failedCode(wrapper)).toBe('PAYMENT_OUTCOME_UNCONFIRMED');
         });
     });
 

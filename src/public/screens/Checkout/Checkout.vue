@@ -1032,6 +1032,7 @@ onMounted(() => {
                     class="sv-checkout__promotion-code"
                     v-bind="orderLockAttrs"
                     :promotion-code="promotionCode"
+                    :is-pending="isPromotionCodePending"
                     @update:applied-code="promotionCode = $event"
                     @remove="removePromotionCode"
                     @apply="applyPromotionCode"

@@ -1542,6 +1542,26 @@ describe('useCheckoutView', () => {
             wrapper.unmount();
         });
 
+        // Storage is shared with every script on the page, so what comes back is checked field by field.
+        it('restores only the saved fields that have the shape the form gives them', async () => {
+            setupRedirectParams();
+            saveForm({
+                firstName: 'Hans',
+                country: 'XX',
+                seatsValues: 'many',
+            } as unknown as Partial<CheckoutFormState>);
+            const checkoutFormMock = createMockCheckoutForm();
+            mockUseCheckoutForm.mockReturnValue(checkoutFormMock);
+
+            const [, wrapper] = mountView();
+            await flushPromises();
+
+            const restored = restoredStates(checkoutFormMock);
+            expect(restored.length).toBeGreaterThan(0);
+            restored.forEach((state) => expect(state).toEqual({ firstName: 'Hans' }));
+            wrapper.unmount();
+        });
+
         it('starts normally when storage cannot be read', async () => {
             setupRedirectParams();
             const getItem = vi.spyOn(sessionStorage, 'getItem').mockImplementation(() => {

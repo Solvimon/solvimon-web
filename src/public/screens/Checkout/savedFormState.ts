@@ -17,6 +17,9 @@ const TEXT_FIELDS = [
     'promotionCode',
 ] as const satisfies (keyof CheckoutFormState)[];
 
+/** The API takes a count as a string, and the seats editor reads it back with `+number`. */
+const COUNT_PATTERN = /^\d{1,9}$/;
+
 const isCountryCode = (country: string): country is CountryCode => isValidCountryCode(country);
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -26,13 +29,11 @@ function toMeterValues(value: unknown): ConfiguredMeterValue[] | undefined {
     if (!Array.isArray(value)) return undefined;
 
     const meterValues = value.flatMap((entry): ConfiguredMeterValue[] =>
-        isRecord(entry) && typeof entry.pricing_item_config_id === 'string'
-            ? [
-                  {
-                      pricing_item_config_id: entry.pricing_item_config_id,
-                      ...(typeof entry.number === 'string' ? { number: entry.number } : {}),
-                  },
-              ]
+        isRecord(entry) &&
+        typeof entry.pricing_item_config_id === 'string' &&
+        typeof entry.number === 'string' &&
+        COUNT_PATTERN.test(entry.number)
+            ? [{ pricing_item_config_id: entry.pricing_item_config_id, number: entry.number }]
             : [],
     );
 

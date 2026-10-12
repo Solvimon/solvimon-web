@@ -328,6 +328,7 @@
     "topup_modal.pricing_items.label": "Importo della ricarica",
     "topup_modal.save_payment_method.label": "Salva metodo di pagamento",
     "topup_modal.subscriptions.label": "Abbonamento da ricaricare",
+    "topup_modal.subscriptions.unnamed": "Abbonamento {number}",
     "topup_modal.subtitle": "Il tuo saldo attuale è {balance}.",
     "topup_modal.success.auto_top_up_failed": "Il tuo wallet è stato ricaricato, ma non è stato possibile salvare la ricarica automatica. Puoi configurarla dal tuo wallet.",
     "topup_modal.success.modal_subtitle": "Il tuo pagamento è andato a buon fine.",

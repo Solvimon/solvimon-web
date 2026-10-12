@@ -499,7 +499,7 @@ describe('getTopUpSubscriptions', () => {
         expect(ids).toEqual(['ppsu_2', 'ppsu_1']);
     });
 
-    it('falls back to the reference, then the id, for a subscription with no name', () => {
+    it('falls back to the reference, then the plan, for a subscription with no name', () => {
         const withReference = {
             id: 'ppsu_1',
             reference: 'credits',
@@ -513,7 +513,20 @@ describe('getTopUpSubscriptions', () => {
         expect(getTopUpSubscriptions(balanceOn(['ppsc_a']), [withReference])[0].name).toBe(
             'credits',
         );
-        expect(getTopUpSubscriptions(balanceOn(['ppsc_a']), [bare])[0].name).toBe('ppsu_1');
+        const onPlan = {
+            id: 'ppsu_1',
+            pricing_plan_schedule_infos: [
+                {
+                    id: 'ppsc_a',
+                    start_at: '2026-01-01T00:00:00Z',
+                    pricing_plan_schedule: { type: 'DEFAULT' },
+                    pricing_plan_version: { pricing_plan: { name: 'Pro plan' } },
+                },
+            ],
+        } as unknown as PricingPlanSubscriptionExpanded;
+
+        expect(getTopUpSubscriptions(balanceOn(['ppsc_a']), [onPlan])[0].name).toBe('Pro plan');
+        expect(getTopUpSubscriptions(balanceOn(['ppsc_a']), [bare])[0].name).toBeUndefined();
     });
 
     it('comes back empty without a wallet or without subscriptions', () => {

@@ -1315,6 +1315,10 @@
     "defaultMessage": "Subscription to top up",
     "description": "Label above the list of subscriptions a top-up can be charged against, in the top-up modal"
   },
+  "topup_modal.subscriptions.unnamed": {
+    "defaultMessage": "Subscription {number}",
+    "description": "Accessible name of a subscription in the top-up modal when it has no name, numbered by its place in the list"
+  },
   "topup_modal.subtitle": {
     "defaultMessage": "Your current balance is {balance}.",
     "description": "Subtitle of the top-up modal showing the current wallet balance"

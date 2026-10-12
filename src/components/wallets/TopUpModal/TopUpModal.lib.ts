@@ -16,6 +16,7 @@ import type {
     AutoTopUpEditorConfig,
 } from '@/components/wallets/AutoTopUpConfig/AutoTopUpConfig.types';
 import type { FlexibleTopUpBounds } from '@/components/wallets/ConvertedAmountInput/ConvertedAmountInput.types';
+import { getMostRecentPricingPlan } from '@/utils/subscription';
 
 /**
  * What `charge_on_demand_pricing_items` actually contains: an entry naming the pricing item and the
@@ -100,8 +101,11 @@ export const getTopUpScheduleIds = (
 
 export interface TopUpSubscription {
     id: PricingPlanSubscription['id'];
-    /** What the customer knows it as, for the selector. */
-    name: string;
+    /**
+     * What the customer knows it as, for the selector. Absent rather than the raw id when nothing
+     * names it, so the caller can say something a person can read.
+     */
+    name?: string;
     /** The schedules of this subscription that this wallet is topped up on. */
     scheduleIds: PricingPlanSchedule['id'][];
     /**
@@ -136,7 +140,11 @@ export const getTopUpSubscriptions = (
         return [
             {
                 id: subscription.id,
-                name: subscription.name || subscription.reference || subscription.id,
+                name:
+                    subscription.name ||
+                    subscription.reference ||
+                    getMostRecentPricingPlan(subscription)?.name ||
+                    undefined,
                 scheduleIds: scheduleInfos.map(({ id }) => id),
                 enabledPricingIds: scheduleInfos.flatMap((info) =>
                     (info.pricing_plan_schedule?.enabled_pricings ?? []).flatMap(

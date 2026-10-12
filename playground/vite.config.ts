@@ -2,6 +2,7 @@ import { fileURLToPath, URL } from 'node:url';
 import fs from 'fs';
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
+import basicSsl from '@vitejs/plugin-basic-ssl';
 import vueDevTools from 'vite-plugin-vue-devtools';
 
 const SSL_CERT_DIR = './.cert';
@@ -26,6 +27,8 @@ export default defineConfig({
             },
         }),
         vueDevTools(),
+        // A certificate in .cert (e.g. one from mkcert) is trusted; without one, a self-signed one.
+        ...(HTTPS_CONFIG ? [] : [basicSsl()]),
     ],
     resolve: {
         alias: [

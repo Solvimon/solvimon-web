@@ -210,22 +210,19 @@ test.describe('Billing information form', () => {
         expect(api.calls('updateCustomer')).toHaveLength(0);
     });
 
-    // DEFECT: the `taxId` rule only knows European formats, so a stored Canadian GST/HST number
-    // (a type the API offers) blocks every save, even of an unrelated field.
-    test.fail(
-        'saves an email change for a customer with a stored Canadian tax id',
-        async ({ page }) => {
-            const customer = anOrganization([{ id: '123456789RT0001', type: 'CA_GST_HST' }], 'CA');
-            api = await mountBillingInformationForm(page, {
-                customer,
-                mocks: { updateCustomer: echo(customer) },
-            });
-            const form = billingInformationForm(page);
+    // The `taxId` rule only knows European formats; a stored Canadian GST/HST number must not
+    // block a save of an unrelated field.
+    test('saves an email change for a customer with a stored Canadian tax id', async ({ page }) => {
+        const customer = anOrganization([{ id: '123456789RT0001', type: 'CA_GST_HST' }], 'CA');
+        api = await mountBillingInformationForm(page, {
+            customer,
+            mocks: { updateCustomer: echo(customer) },
+        });
+        const form = billingInformationForm(page);
 
-            await form.email.fill('edited@example.com');
-            await form.save.click();
+        await form.email.fill('edited@example.com');
+        await form.save.click();
 
-            await expect.poll(() => api.calls('updateCustomer').length, { timeout: 3000 }).toBe(1);
-        },
-    );
+        await expect.poll(() => api.calls('updateCustomer').length, { timeout: 3000 }).toBe(1);
+    });
 });

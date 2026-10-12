@@ -188,8 +188,8 @@ test.describe('DD-3538 tester', () => {
             expect(errors).toEqual([]);
         });
 
-        // A lone `%` is read back as `%` and passes the printable-ASCII check, so it is posted.
-        test.fail('does not post a lone percent sign to the API', async ({ page }) => {
+        // A lone `%` is read back as `%`, so only the shape check keeps it from being posted.
+        test('does not post a lone percent sign to the API', async ({ page }) => {
             api = await returnTo(
                 page,
                 `/?payment_acceptor_id=${PAYMENT_ACCEPTOR_ID}&redirectResult=%`,

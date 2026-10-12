@@ -146,13 +146,18 @@ const {
     submit: submitPaymentMethod,
 } = useAddPaymentMethodStep({ step, name: 'ADD_PAYMENT_METHOD', returnTo: 'TOP_UP' });
 
-const { save: saveRule } = useSaveAutoTopUpConfig();
+const { save: saveRule, isSaving: isSavingRule } = useSaveAutoTopUpConfig();
+
+/** Bumped on every opening, so a rule save still out from the last one cannot land on this one. */
+let opening = 0;
 
 const topUpFormRef = ref<InstanceType<typeof TopUpModalForm>>();
 
 const topUpValue = computed(() => topUpFormRef.value?.chargedValue);
 
-const isPending = computed(() => isSavingPaymentMethod.value || !!topUpFormRef.value?.isCharging);
+const isPending = computed(
+    () => isSavingPaymentMethod.value || isSavingRule.value || !!topUpFormRef.value?.isCharging,
+);
 
 const { title, subTitle, cancelButtonText, confirmButtonText } = useTopUpModalLabels({
     step,
@@ -216,6 +221,7 @@ const handleSaveAutoTopUp = async ({
     paymentMethodId: string;
     pricingPlanScheduleId: string;
 }) => {
+    const savedFor = opening;
     const { saved } = await saveRule(
         toCreateAutoTopUpConfigPayload({
             rule,
@@ -235,7 +241,9 @@ const handleSaveAutoTopUp = async ({
         return;
     }
 
-    hasAutoTopUpSaveFailed.value = true;
+    if (savedFor === opening) {
+        hasAutoTopUpSaveFailed.value = true;
+    }
 };
 
 const handleTopUpSuccess = (invoice: Invoice) => {
@@ -246,6 +254,10 @@ const handleTopUpSuccess = (invoice: Invoice) => {
 
 /** Reported on the way out, so the balance is not reloaded under a receipt still being read. */
 const handleDone = () => {
+    if (isPending.value) {
+        return;
+    }
+
     emit('confirm');
     emit('close');
 };
@@ -277,6 +289,7 @@ watch(
             return;
         }
 
+        opening += 1;
         step.value = 'TOP_UP';
         chargedInvoice.value = undefined;
         chargedValue.value = undefined;
@@ -385,6 +398,7 @@ watch(
                     v-if="step === 'SUCCESS'"
                     size="lg"
                     data-testid="done"
+                    :loading="isPending"
                     @click="handleDone"
                     >{{ confirmButtonText }}</Button
                 >

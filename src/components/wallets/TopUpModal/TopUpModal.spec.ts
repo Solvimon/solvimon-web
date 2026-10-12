@@ -903,6 +903,59 @@ describe('TopUpModal — a rule set alongside the top-up', () => {
         );
     });
 
+    describe('while the rule is still being saved', () => {
+        let settleSave: (outcome: { fail: boolean }) => void;
+
+        beforeEach(() => {
+            mockCharge.mockReset();
+            mockCharge.mockResolvedValue({ id: 'inv_charged' });
+            mockCreateAutoTopUp.mockReturnValue(
+                new Promise((resolve, reject) => {
+                    settleSave = ({ fail }) =>
+                        fail ? reject(new Error('nope')) : resolve({ id: 'atuc_1' });
+                }),
+            );
+        });
+
+        const chargedWithRuleOut = async () => {
+            const wrapper = await chargeTopUp(
+                mountModal({ selectedBalanceItem: flexibleBalanceItem }),
+            );
+            wrapper.findComponent({ name: 'TopUpModalForm' }).vm.$emit('save-auto-top-up', {
+                rule: RULE,
+                paymentMethodId: 'pmet_1',
+                pricingPlanScheduleId: 'ppsc_1',
+            });
+            await nextTick();
+
+            return wrapper;
+        };
+
+        it('holds the receipt open until the save comes back', async () => {
+            const wrapper = await chargedWithRuleOut();
+
+            await wrapper.find('[data-testid="done"]').trigger('click');
+            expect(wrapper.emitted('confirm')).toBeUndefined();
+
+            settleSave({ fail: false });
+            await vi.runAllTimersAsync();
+            await wrapper.find('[data-testid="done"]').trigger('click');
+
+            expect(wrapper.emitted('confirm')).toHaveLength(1);
+        });
+
+        it('keeps a failure from the last opening off the next receipt', async () => {
+            const wrapper = await chargedWithRuleOut();
+            await wrapper.setProps({ showModal: false });
+            await wrapper.setProps({ showModal: true });
+
+            settleSave({ fail: true });
+            await vi.runAllTimersAsync();
+
+            expect(wrapper.find('.sv-topup-modal__auto-top-up-error').exists()).toBe(false);
+        });
+    });
+
     // A rule tops up by an amount of its own, which a wallet of fixed packs cannot charge.
     it('saves nothing for a wallet with no choose-your-amount top-up', async () => {
         const wrapper = mountModal();
@@ -1007,6 +1060,7 @@ describe('TopUpModal — a charge that fails', () => {
         mockCharge.mockRejectedValueOnce(new Error('network'));
         mockCharge.mockReturnValueOnce(new Promise(() => {}));
         const wrapper = await chargeTopUp(mountModal());
+        expect(error(wrapper).exists()).toBe(true);
 
         await wrapper.find('[data-testid="confirm"]').trigger('click');
 
@@ -1016,6 +1070,7 @@ describe('TopUpModal — a charge that fails', () => {
     it('clears the error when the modal is opened again', async () => {
         mockCharge.mockRejectedValue(new Error('network'));
         const wrapper = await chargeTopUp(mountModal());
+        expect(error(wrapper).exists()).toBe(true);
         await wrapper.setProps({ showModal: false });
 
         await wrapper.setProps({ showModal: true });

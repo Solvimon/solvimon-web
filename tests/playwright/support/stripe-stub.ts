@@ -26,6 +26,8 @@ export interface StripeStubConfig {
      * redirect. `succeeded` unless a test says otherwise.
      */
     intentStatus?: string;
+    /** Makes retrieving the payment fail, as it does when Stripe cannot be reached. */
+    retrieveError?: { message: string; code?: string; type?: string };
     /** Makes the payment element report that it could not load at all. */
     loadError?: { message: string; type?: string };
 }
@@ -105,9 +107,12 @@ export function stripeStubScript(config: StripeStubConfig): string {
                 );
             },
             retrievePaymentIntent: function () {
-                return Promise.resolve({
-                    paymentIntent: { status: config.intentStatus || 'succeeded' },
-                });
+                window.__STRIPE_STUB_RETRIEVALS__ = (window.__STRIPE_STUB_RETRIEVALS__ || 0) + 1;
+                return Promise.resolve(
+                    config.retrieveError
+                        ? { error: config.retrieveError }
+                        : { paymentIntent: { status: config.intentStatus || 'succeeded' } },
+                );
             },
         };
     };

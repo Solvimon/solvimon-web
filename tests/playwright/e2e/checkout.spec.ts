@@ -861,6 +861,123 @@ test.describe('Checkout', () => {
         });
     });
 
+    // ─── Unconfirmed outcomes, tested independently ───────────────────────────
+
+    test.describe('payment outcomes, tested independently', () => {
+        const CRAFTED_QUERY = {
+            redirect_status: 'succeeded',
+            payment_acceptor_id: PAYMENT_ACCEPTOR_ID,
+            payment_intent_client_secret: 'pi_typed_by_hand',
+        };
+
+        const retrievals = (page: Page) =>
+            page.evaluate(() => Number(Reflect.get(window, '__STRIPE_STUB_RETRIEVALS__') ?? 0));
+
+        test('a crafted succeeded return Stripe reports processing is not paid', async ({
+            page,
+        }) => {
+            api = await mountCheckout(page, {
+                configuration: { email: 'customer@example.com', countryCode: 'NL' },
+                query: CRAFTED_QUERY,
+                stripe: { intentStatus: 'processing' },
+            });
+
+            await expect(checkout(page).screen).toContainText('Payment not confirmed yet');
+            await expect(checkout(page).paid).toHaveCount(0);
+            await expect(checkout(page).submit).toBeDisabled();
+            await expect(checkout(page).screen).not.toContainText(/try again/i);
+            expect(api.navigations()).toEqual([]);
+            expect(api.calls('authorizePayment')).toEqual([]);
+        });
+
+        test('a crafted succeeded return Stripe cannot confirm is not paid', async ({ page }) => {
+            api = await mountCheckout(page, {
+                configuration: { email: 'customer@example.com', countryCode: 'NL' },
+                query: CRAFTED_QUERY,
+                stripe: { retrieveError: { message: 'No such payment_intent' } },
+            });
+
+            await expect(checkout(page).screen).toContainText('Payment not confirmed yet');
+            await expect(checkout(page).paid).toHaveCount(0);
+            await expect(checkout(page).submit).toBeDisabled();
+            expect(api.navigations()).toEqual([]);
+        });
+
+        test('a confirmed return goes to the merchant exactly once', async ({ page }) => {
+            api = await mountCheckout(page, {
+                configuration: { email: 'customer@example.com', countryCode: 'NL' },
+                query: CRAFTED_QUERY,
+            });
+
+            await page.waitForURL(SUCCESS_URL);
+            expect(api.navigations().filter((url) => url === SUCCESS_URL)).toHaveLength(1);
+            expect(api.calls('authorizePayment')).toEqual([]);
+        });
+
+        test('a confirmed return asks Stripe once and shows one completed card', async ({
+            page,
+        }) => {
+            api = await mountCheckout(page, {
+                portalObject: aPortalObject({ successUrl: '' }),
+                configuration: { email: 'customer@example.com', countryCode: 'NL' },
+                query: CRAFTED_QUERY,
+            });
+
+            await expect(checkout(page).paid).toBeVisible();
+            await expect(checkout(page).completedCard).toHaveCount(1);
+            await page.waitForTimeout(500);
+            expect(await retrievals(page)).toBe(1);
+            await expect(checkout(page).submit).toHaveCount(0);
+        });
+
+        test('a server error on authorize leaves the outcome unconfirmed', async ({ page }) => {
+            api = await mountLoaded(page, {
+                portalObject: aPortalObject({ successUrl: '' }),
+                mocks: { authorizePayment: { status: 503, body: { message: 'Unavailable' } } },
+            });
+
+            await checkout(page).submit.click();
+            await api.waitForCall('authorizePayment');
+
+            await expect(checkout(page).screen).toContainText('Payment not confirmed yet');
+            await expect(checkout(page).submit).toBeDisabled();
+            await expect(checkout(page).screen).not.toContainText(/try again/i);
+            await checkout(page).submit.click({ force: true });
+            await page.waitForTimeout(500);
+            expect(api.calls('authorizePayment')).toHaveLength(1);
+        });
+
+        test('an authorize the API turns down still reads as failed', async ({ page }) => {
+            api = await mountLoaded(page, {
+                portalObject: aPortalObject({ successUrl: '' }),
+                mocks: { authorizePayment: { status: 422, body: { message: 'Refused' } } },
+            });
+
+            await checkout(page).submit.click();
+            await api.waitForCall('authorizePayment');
+
+            await expect(checkout(page).screen).toContainText(/payment failed/i);
+            await expect(checkout(page).screen).not.toContainText('Payment not confirmed yet');
+            await expect(checkout(page).submit).toBeEnabled();
+        });
+
+        test('a payment still processing after the further step is unconfirmed', async ({
+            page,
+        }) => {
+            api = await mountLoaded(page, {
+                portalObject: aPortalObject({ successUrl: '' }),
+                mocks: { authorizePayment: { body: anActionRequiredAuthorization() } },
+                stripe: { intentStatus: 'processing' },
+            });
+
+            await checkout(page).submit.click();
+
+            await expect(checkout(page).screen).toContainText('Payment not confirmed yet');
+            await expect(checkout(page).paid).toHaveCount(0);
+            await expect(checkout(page).submit).toBeDisabled();
+        });
+    });
+
     // ─── Failure modes ────────────────────────────────────────────────────────
 
     test.describe('failure modes', () => {

@@ -42,19 +42,19 @@ describe('useViewport', () => {
         vi.restoreAllMocks();
     });
 
-    it('uses the sm breakpoint query (max-width: 640px)', () => {
+    it("stops short of the sm breakpoint, where Tailwind's sm: classes start (max-width: 639px)", () => {
         mountViewport(false);
 
-        expect(window.matchMedia).toHaveBeenCalledWith('(max-width: 640px)');
+        expect(window.matchMedia).toHaveBeenCalledWith('(max-width: 639px)');
     });
 
-    it('isMobileViewport is true when the viewport is at or below 640px', () => {
+    it('isMobileViewport is true when the viewport is below 640px', () => {
         const { isMobileViewport } = mountViewport(true);
 
         expect(isMobileViewport.value).toBe(true);
     });
 
-    it('isMobileViewport is false when the viewport is above 640px', () => {
+    it('isMobileViewport is false when the viewport is 640px or wider', () => {
         const { isMobileViewport } = mountViewport(false);
 
         expect(isMobileViewport.value).toBe(false);

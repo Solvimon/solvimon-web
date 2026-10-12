@@ -1,11 +1,6 @@
 import { mount } from '@vue/test-utils';
 import { defineComponent, h } from 'vue';
-import type {
-    BillingPeriod,
-    PaymentMethod,
-    PaymentMethodOptionsResponse,
-    PricingGroupExtended,
-} from '@solvimon/solvimon-types';
+import type { BillingPeriod, PaymentMethod, PricingGroupExtended } from '@solvimon/solvimon-types';
 import SubscriptionManagementForm from './SubscriptionManagementForm.vue';
 
 vi.mock('@solvimon/solvimon-ui', async () => {
@@ -54,18 +49,15 @@ const mountComponent = ({
     enabledPricingIds = ['pric_basic'],
     paymentMethods = [createPaymentMethod()],
     paymentMethodId,
-    paymentMethodOptions,
 }: {
     enabledPricingIds?: string[];
     paymentMethods?: PaymentMethod[];
     paymentMethodId?: string;
-    paymentMethodOptions?: PaymentMethodOptionsResponse;
 } = {}) =>
     mount(SubscriptionManagementForm, {
         props: {
             pricingGroup,
             paymentMethods,
-            paymentMethodOptions,
             billingPeriod,
             enabledPricingIds,
             paymentMethodId,
@@ -140,23 +132,32 @@ describe('SubscriptionManagementForm', () => {
         });
     });
 
-    it('reports the customer wanting to add a payment method', async () => {
+    it('offers no other payment method, since the change is charged to the subscription', () => {
         const wrapper = mountComponent();
 
-        wrapper.findComponent({ name: 'PaymentMethodSelector' }).vm.$emit('add-payment-method');
-        await wrapper.vm.$nextTick();
-
-        expect(wrapper.emitted('add-payment-method')).toHaveLength(1);
+        expect(
+            wrapper.findComponent({ name: 'PaymentMethodSelector' }).props('showAddOption'),
+        ).toBe(false);
+        expect(wrapper.find('.sv-payment-method-selector__add').exists()).toBe(false);
     });
 
-    it('tells the selector what the customer is allowed to add', () => {
-        const wrapper = mountComponent({
-            paymentMethodOptions: [] as unknown as PaymentMethodOptionsResponse,
-        });
+    it('says so when there is no payment method to charge the change to', () => {
+        const wrapper = mountComponent({ paymentMethods: [] });
 
-        expect(
-            wrapper.findComponent({ name: 'PaymentMethodSelector' }).props('paymentMethodOptions'),
-        ).toEqual([]);
+        expect(wrapper.find('.sv-subscription-management-form__payment-methods').exists()).toBe(
+            false,
+        );
+        expect(wrapper.find('.sv-subscription-management-form__no-payment-method').exists()).toBe(
+            true,
+        );
+    });
+
+    it('reports being submitted, so Enter commits the change too', async () => {
+        const wrapper = mountComponent();
+
+        await wrapper.find('form').trigger('submit');
+
+        expect(wrapper.emitted('submit')).toHaveLength(1);
     });
 
     it('moves to a payment method the customer has just added', async () => {

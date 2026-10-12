@@ -1191,6 +1191,22 @@
     "defaultMessage": "Done",
     "description": "Label of the button that leaves the manage subscription screen once the change is committed"
   },
+  "subscription_management.empty_state.message": {
+    "defaultMessage": "This subscription has no options that can be changed right now.",
+    "description": "Message shown on the manage subscription screen when the subscription is not running or has no group of options to choose from"
+  },
+  "subscription_management.empty_state.title": {
+    "defaultMessage": "Nothing to change",
+    "description": "Title shown on the manage subscription screen when the subscription has nothing the customer can change"
+  },
+  "subscription_management.load_error": {
+    "defaultMessage": "Unable to load this subscription. Please try again later.",
+    "description": "Error shown in place of the manage subscription form when the subscription cannot be loaded"
+  },
+  "subscription_management.no_payment_method": {
+    "defaultMessage": "This subscription has no payment method to charge the change to. Please contact support to change it.",
+    "description": "Shown in place of the payment method on the manage subscription screen when the subscription has no usable payment method"
+  },
   "subscription_management.payment_method_selector.label": {
     "defaultMessage": "Payment method",
     "description": "Label above the payment method that pays for the subscription change"

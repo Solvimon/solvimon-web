@@ -246,8 +246,10 @@ describe('PayInvoice (DD-3538 round 2 tester)', () => {
         await waitForAdyenMount();
         vi.clearAllMocks();
         // A form per acceptor builds its own drop-in, which an arrow implementation cannot be.
+        // `setStatus` is what a turned-down submit calls, now that another form can turn it down.
         MockDropIn.mockImplementation(function Dropin() {
-            return { mount: vi.fn().mockReturnValue({ unmount: vi.fn(), submit: vi.fn() }) };
+            const dropIn = { unmount: vi.fn(), submit: vi.fn(), setStatus: vi.fn() };
+            return { mount: vi.fn().mockReturnValue(dropIn) };
         });
     });
 

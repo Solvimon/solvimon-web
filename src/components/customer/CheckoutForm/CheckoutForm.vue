@@ -17,6 +17,7 @@ import type { CheckoutFormState, CheckoutFormProps, CheckoutFormEmits } from './
 import TaxIDCheckNotice from './TaxIDCheckNotice.vue';
 import { isVatNumberShown } from './CheckoutForm.lib';
 import CompanyPurchaseToggle from '@/components/customer/CompanyPurchaseToggle.vue';
+import HiddenLabelInput from '@/components/customer/HiddenLabelInput.vue';
 import { useCustomerFormLabels } from '@/components/customer/useCustomerFormLabels';
 import { useTaxIDValidationCheck } from '@/composables/useTaxIDValidationCheck';
 import { asOptionalText, formControlModel, type SelectControlValue } from '@/utils/formControl';
@@ -184,11 +185,10 @@ const readableCountryName = computed(() =>
                                 required
                                 :error="validation.value.addressLine1.$errors"
                             />
-                            <Input
+                            <HiddenLabelInput
                                 v-model="fields.addressLine2"
                                 name="address_line_2"
                                 :label="labels.addressLine2Label"
-                                label-screen-reader-only
                                 :placeholder="
                                     $t({
                                         defaultMessage: 'Address line 2...',
@@ -199,34 +199,28 @@ const readableCountryName = computed(() =>
                                 "
                             />
                             <div class="grid grid-cols-3 gap-2">
-                                <Input
+                                <HiddenLabelInput
                                     v-model="fields.postalCode"
                                     name="postal_code"
                                     :label="labels.postalCodeLabel"
-                                    label-screen-reader-only
-                                    :required="getIsFieldRequired('postalCode')"
                                     :placeholder="
                                         labels.postalCodePlaceholder +
                                         getOptionalSuffix('postalCode')
                                     "
                                     :error="validation.value.postalCode.$errors"
                                 />
-                                <Input
+                                <HiddenLabelInput
                                     v-model="fields.city"
                                     name="city"
                                     :label="labels.cityLabel"
-                                    label-screen-reader-only
-                                    :required="getIsFieldRequired('city')"
                                     :placeholder="
                                         labels.cityPlaceholder + getOptionalSuffix('city')
                                     "
                                 />
-                                <Input
+                                <HiddenLabelInput
                                     v-model="fields.state"
                                     name="state"
                                     :label="labels.stateLabel"
-                                    label-screen-reader-only
-                                    :required="getIsFieldRequired('state')"
                                     :placeholder="
                                         labels.statePlaceholder + getOptionalSuffix('state')
                                     "

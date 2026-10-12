@@ -11,6 +11,7 @@ import { computed, reactive, ref, watch } from 'vue';
 import type { BillingInformationFormProps } from './BillingInformationForm.types';
 import { useBillingInformationForm } from './useBillingInformationForm';
 import CompanyPurchaseToggle from '@/components/customer/CompanyPurchaseToggle.vue';
+import HiddenLabelInput from '@/components/customer/HiddenLabelInput.vue';
 import { useCustomerFormLabels } from '@/components/customer/useCustomerFormLabels';
 import {
     asOptionalText,
@@ -189,11 +190,10 @@ watch(
                 "
                 :error="apiError?.address_line_1"
             />
-            <Input
+            <HiddenLabelInput
                 v-model="fields.addressLine2"
                 name="address_line_2"
                 :label="labels.addressLine2Label"
-                label-screen-reader-only
                 :placeholder="
                     $t({
                         defaultMessage: 'Address line 2...',
@@ -204,27 +204,24 @@ watch(
                 :error="apiError?.address_line_2"
             />
             <div class="grid grid-cols-3 gap-2">
-                <Input
+                <HiddenLabelInput
                     v-model="fields.postalCode"
                     name="postal_code"
                     :label="labels.postalCodeLabel"
-                    label-screen-reader-only
                     :placeholder="labels.postalCodePlaceholder"
                     :error="apiError?.postal_code"
                 />
-                <Input
+                <HiddenLabelInput
                     v-model="fields.city"
                     name="city"
                     :label="labels.cityLabel"
-                    label-screen-reader-only
                     :placeholder="labels.cityPlaceholder"
                     :error="apiError?.city"
                 />
-                <Input
+                <HiddenLabelInput
                     v-model="fields.state"
                     name="state"
                     :label="labels.stateLabel"
-                    label-screen-reader-only
                     :placeholder="labels.statePlaceholder"
                     :error="apiError?.state"
                 />

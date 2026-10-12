@@ -23,3 +23,14 @@ export const isInvoicePayable = (
 /** The invoice's own dates are set in the timezone it was issued in, which the customer's can drift from. */
 export const getInvoiceTimezone = (invoice: Pick<Invoice, 'timezone' | 'customer'>): string =>
     invoice.timezone || invoice.customer.timezone;
+
+/**
+ * For library components that date an invoice in `invoice.customer.timezone`: hands them the
+ * invoice's own timezone there, so every date on one invoice agrees.
+ */
+export const withInvoiceTimezone = <T extends Pick<Invoice, 'timezone' | 'customer'>>(
+    invoice: T,
+): T => ({
+    ...invoice,
+    customer: { ...invoice.customer, timezone: getInvoiceTimezone(invoice) },
+});

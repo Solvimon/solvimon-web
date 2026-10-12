@@ -51,9 +51,8 @@ describe('Invoice dates across the header and the details', () => {
         expect(wrapper.get('[data-testid="header"]').text()).toContain('INV-1');
     });
 
-    // Defect: the details moved to invoice.timezone, the library header (and InvoiceSummary) did not,
-    // so one Invoice component shows the invoice dated 15/01 in its header and 14/01 in its details.
-    it.fails('gives the invoice the same date in the header as in the details', () => {
+    // The library header dates the invoice in `customer.timezone`; it is handed the invoice's own.
+    it('gives the invoice the same date in the header as in the details', () => {
         const wrapper = mountBoth();
         const header = wrapper.get('[data-testid="header"]').text();
         const details = wrapper.get('[data-testid="details"]').text();

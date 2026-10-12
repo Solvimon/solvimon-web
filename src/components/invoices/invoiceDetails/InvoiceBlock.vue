@@ -1,12 +1,16 @@
 <script setup lang="ts">
 import { InvoiceSummary, InfoBlock, useIntl, Section } from '@solvimon/solvimon-ui';
 import type { Invoice } from '@solvimon/solvimon-types';
+import { computed } from 'vue';
 import InvoiceCreditsBreakdown from './InvoiceCreditsBreakdown.vue';
 import { useViewport } from '@/composables/useViewport';
+import { withInvoiceTimezone } from '@/utils/invoiceState';
 
-defineProps<{
+const props = defineProps<{
     invoice: Invoice;
 }>();
+
+const datedInvoice = computed(() => withInvoiceTimezone(props.invoice));
 
 const { $t } = useIntl();
 
@@ -40,7 +44,7 @@ const { isMobileViewport: isSmallScreen } = useViewport();
             >
             <InvoiceSummary
                 class="sv-invoice__summary-content"
-                :invoice="invoice"
+                :invoice="datedInvoice"
                 :is-expandable="!isSmallScreen"
             >
                 <template #logo> <slot name="logo" /> </template

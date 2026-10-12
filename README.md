@@ -297,7 +297,7 @@ The SDK emits structured log entries via the [`onLog`](#error-logging) callback.
 | `SESSION_EXPIRED`                           | Stopped refreshing the access token after repeated 401 responses   |
 | `STRIPE_ACTION_FAILED`                      | Missing client_secret in Stripe ACTION_REQUIRED response           |
 | `STRIPE_CONFIRMATION_TOKEN_FAILED`          | Stripe submission failed                                           |
-| `STRIPE_REDIRECT_RETURN_FAILED`             | Stripe redirect returned non-succeeded status                      |
+| `STRIPE_REDIRECT_RETURN_FAILED`             | Could not retrieve the payment the Stripe redirect returned from   |
 | `STRIPE_SUBMIT_FAILED`                      | Unexpected error during Stripe submission                          |
 | `SUBSCRIPTION_CANCELLATION_FAILED`          | Failed to change the cancellation state of a subscription          |
 | `SUBSCRIPTION_LOAD_FAILED`                  | Failed to load the subscription the checkout prices                |
@@ -317,6 +317,7 @@ The SDK emits structured log entries via the [`onLog`](#error-logging) callback.
 | `INVOICE_PREVIEW_SKIPPED`            | Skipped the on-demand charge invoice preview: no schedule to charge it on                                    |
 | `ON_DEMAND_CHARGE_REFUSED`           | The on-demand order was refused or its payment did not go through                                            |
 | `PAYMENT_INTEGRATION_NOT_RENDERABLE` | No Adyen payment methods to offer                                                                            |
+| `PAYMENT_OUTCOME_UNCONFIRMED`        | The payment outcome could not be confirmed yet                                                               |
 | `RECURRING_AMOUNT_UNRESOLVED`        | Could not tell the recurring part of the invoice from the one-off part; the mandate states the invoice total |
 | `REQUEST_FAILED`                     | Request failed with an expected status                                                                       |
 | `TRANSLATION_LOAD_FAILED`            | Failed to load translations for locale…                                                                      |

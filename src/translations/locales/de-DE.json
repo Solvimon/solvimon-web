@@ -229,6 +229,8 @@
     "payments.error_card.payment_integration_initialization_failed.title": "Zahlungsmethoden konnten nicht geladen werden",
     "payments.error_card.payment_method_storage_failed.message": "Beim Speichern Ihrer Zahlungsmethode ist etwas schiefgelaufen.",
     "payments.error_card.payment_method_storage_failed.title": "Zahlungsmethode konnte nicht gespeichert werden",
+    "payments.error_card.payment_outcome_unconfirmed.message": "Ihre Zahlung wird möglicherweise noch verarbeitet. Bitte zahlen Sie daher nicht erneut. Wenden Sie sich im Zweifel mit der untenstehenden Referenz an den Support.",
+    "payments.error_card.payment_outcome_unconfirmed.title": "Zahlung noch nicht bestätigt",
     "payments.error_card.redirect_result_payment_acceptor_missing.message": "Ihre Zahlung konnte dieser Bestellung nicht zugeordnet werden.",
     "payments.error_card.redirect_result_payment_acceptor_missing.title": "Zahlung konnte nicht abgeschlossen werden",
     "payments.error_card.reference.copied.label": "Kopiert",

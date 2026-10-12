@@ -33,6 +33,13 @@ describe('createErrorMap', () => {
         expect(map.AUTHORIZATION_FAILED.isReloadButtonVisible).toBe(true);
         expect(map.REDIRECT_RESULT_PAYMENT_ACCEPTOR_MISSING.isReloadButtonVisible).toBeUndefined();
     });
+
+    // A retry here is how a customer whose payment was still processing ends up charged twice.
+    it('offers no retry while the outcome is unconfirmed', () => {
+        const map = createErrorMap(mockUseIntl().$t as never);
+
+        expect(map.PAYMENT_OUTCOME_UNCONFIRMED.isReloadButtonVisible).toBeUndefined();
+    });
 });
 
 describe('PaymentErrorCard', () => {

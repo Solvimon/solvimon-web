@@ -229,6 +229,8 @@
   "payments.error_card.payment_integration_initialization_failed.title": "Payment methods could not be loaded",
   "payments.error_card.payment_method_storage_failed.message": "Something went wrong while saving your payment method.",
   "payments.error_card.payment_method_storage_failed.title": "Payment method could not be saved",
+  "payments.error_card.payment_outcome_unconfirmed.message": "Your payment may still go through, so please do not pay again. Contact support with the reference below if you are unsure.",
+  "payments.error_card.payment_outcome_unconfirmed.title": "Payment not confirmed yet",
   "payments.error_card.redirect_result_payment_acceptor_missing.message": "Your payment could not be matched to this order.",
   "payments.error_card.redirect_result_payment_acceptor_missing.title": "Payment could not be completed",
   "payments.error_card.reference.copied.label": "Copied",

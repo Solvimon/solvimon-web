@@ -65,6 +65,22 @@ export function createErrorMap($t: Translate): Record<Error['code'], PaymentErro
             }),
             isReloadButtonVisible: true,
         },
+        // No retry: the payment may still go through, and a second attempt could charge twice.
+        PAYMENT_OUTCOME_UNCONFIRMED: {
+            title: $t({
+                defaultMessage: 'Payment not confirmed yet',
+                description:
+                    'Title of the card shown when it is not yet known whether a payment went through',
+                id: 'payments.error_card.payment_outcome_unconfirmed.title',
+            }),
+            message: $t({
+                defaultMessage:
+                    'Your payment may still go through, so please do not pay again. Contact support with the reference below if you are unsure.',
+                description:
+                    'Message of the card shown when it is not yet known whether a payment went through',
+                id: 'payments.error_card.payment_outcome_unconfirmed.message',
+            }),
+        },
         PAYMENT_METHOD_STORAGE_FAILED: {
             title: $t({
                 defaultMessage: 'Payment method could not be saved',

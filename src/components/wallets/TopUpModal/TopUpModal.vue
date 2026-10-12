@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { Invoice, WalletBalanceValue } from '@solvimon/solvimon-types';
-import { Button, RadioGroupExtended, useIntl } from '@solvimon/solvimon-ui';
+import { Button, ErrorNotification, RadioGroupExtended, useIntl } from '@solvimon/solvimon-ui';
 import { computed, ref, watch } from 'vue';
 import type { TopUpModalEmits, TopUpModalProps, TopUpModalStep } from './TopUpModal.types';
 import { TOP_UP_MODAL_STEPS } from './TopUpModal.types';
@@ -25,6 +25,7 @@ import {
 import type { AutoTopUpRule } from '@/components/wallets/AutoTopUpConfig/AutoTopUpConfig.types';
 import { useAddPaymentMethodStep } from '@/composables/useAddPaymentMethodStep';
 import { useSaveAutoTopUpConfig } from '@/composables/useSaveAutoTopUpConfig';
+import { getChargeError } from '@/components/subscriptions/ChargeOnDemandModal/ChargeOnDemandModal.lib';
 
 const props = defineProps<TopUpModalProps>();
 const emit = defineEmits<TopUpModalEmits>();
@@ -146,38 +147,82 @@ const { title, subTitle, cancelButtonText, confirmButtonText } = useTopUpModalLa
     topUpValue,
 });
 
+const topUpError = ref<string>();
+const hasAutoTopUpSaveFailed = ref(false);
+
+const autoTopUpSaveError = computed(() =>
+    hasAutoTopUpSaveFailed.value
+        ? $t({
+              defaultMessage:
+                  "Your wallet was topped up, but we couldn't save your automatic top-up. You can set it up from your wallet.",
+              description:
+                  'Error shown on the top-up receipt when the automatic top-up rule set alongside it failed to save',
+              id: 'topup_modal.success.auto_top_up_failed',
+          })
+        : undefined,
+);
+
 const handleConfirm = () => {
     if (isAddingPaymentMethod.value) {
         submitPaymentMethod();
         return;
     }
 
+    topUpError.value = undefined;
     void topUpFormRef.value?.submit();
+};
+
+const handleTopUpFailure = (error: unknown) => {
+    topUpError.value =
+        getChargeError(error) === 'PAYMENT_FAILED'
+            ? $t({
+                  defaultMessage: 'Your payment was declined. Try another payment method.',
+                  description: 'Error shown in the top-up modal when the payment was declined',
+                  id: 'topup_modal.error.payment_declined',
+              })
+            : $t({
+                  defaultMessage: "We couldn't top up your wallet. Please try again.",
+                  description: 'Error shown in the top-up modal when charging the top-up failed',
+                  id: 'topup_modal.error.charge_failed',
+              });
+
+    emit('payment-failed', error);
 };
 
 /**
  * Billed against the wallet's choose-your-amount item rather than whichever pack was bought — the
- * only kind a rule can charge. The money is already taken, so a failed save is reported, not raised.
+ * only kind a rule can charge — on the schedule the top-up was charged on. The money is already
+ * taken, so a failed save is reported on the receipt, not raised.
  */
 const handleSaveAutoTopUp = async ({
     rule,
     paymentMethodId,
+    pricingPlanScheduleId,
 }: {
     rule: AutoTopUpRule;
     paymentMethodId: string;
+    pricingPlanScheduleId: string;
 }) => {
     const { saved } = await saveRule(
         toCreateAutoTopUpConfigPayload({
             rule,
             walletBalanceItem: props.selectedBalanceItem,
-            chargeTarget: getAutoTopUpChargeTarget(undefined, topUpPricingItems.value),
+            chargeTarget: getAutoTopUpChargeTarget(
+                undefined,
+                topUpPricingItems.value.filter(
+                    (item) => item.pricingPlanScheduleId === pricingPlanScheduleId,
+                ),
+            ),
             paymentMethodId,
         }),
     );
 
     if (saved) {
         emit('auto-top-up-saved');
+        return;
     }
+
+    hasAutoTopUpSaveFailed.value = true;
 };
 
 const handleTopUpSuccess = (invoice: Invoice) => {
@@ -222,6 +267,8 @@ watch(
         step.value = 'TOP_UP';
         chargedInvoice.value = undefined;
         chargedValue.value = undefined;
+        topUpError.value = undefined;
+        hasAutoTopUpSaveFailed.value = false;
         topUpFormKey.value += 1;
     },
 );
@@ -294,11 +341,24 @@ watch(
                 :payment-method-options="settledOptions"
                 @add-payment-method="openAddPaymentMethod"
                 @success="handleTopUpSuccess"
+                @failure="handleTopUpFailure"
                 @save-auto-top-up="handleSaveAutoTopUp"
+            />
+
+            <ErrorNotification
+                v-if="topUpError"
+                class="sv-topup-modal__error sv-error mt-4"
+                :title="topUpError"
             />
         </template>
 
         <template #SUCCESS>
+            <ErrorNotification
+                v-if="autoTopUpSaveError"
+                class="sv-topup-modal__auto-top-up-error sv-error mb-4"
+                :title="autoTopUpSaveError"
+            />
+
             <TopUpModalSuccess
                 v-if="chargedInvoice"
                 :added-value="chargedValue"

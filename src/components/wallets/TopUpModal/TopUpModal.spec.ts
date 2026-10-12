@@ -7,6 +7,7 @@ import type {
     PricingPlanSubscriptionExpanded,
 } from '@solvimon/solvimon-types';
 import TopUpModal from './TopUpModal.vue';
+import { ApiError } from '@/services/apiError';
 
 const {
     mockCharge,
@@ -97,6 +98,11 @@ vi.mock('@solvimon/solvimon-ui', async () => {
             name: 'InvoicePreviewStub',
             props: ['invoice', 'isCustomerFacing'],
             template: '<div data-testid="invoice-preview" />',
+        }),
+        ErrorNotification: defineComponent({
+            name: 'ErrorNotificationStub',
+            props: { title: String },
+            template: '<div>{{ title }}</div>',
         }),
         Modal: defineComponent({
             name: 'ModalStub',
@@ -793,9 +799,11 @@ describe('TopUpModal — a rule set alongside the top-up', () => {
     });
 
     const saveRule = async (wrapper: ReturnType<typeof mountModal>) => {
-        wrapper
-            .findComponent({ name: 'TopUpModalForm' })
-            .vm.$emit('save-auto-top-up', { rule: RULE, paymentMethodId: 'pmet_1' });
+        wrapper.findComponent({ name: 'TopUpModalForm' }).vm.$emit('save-auto-top-up', {
+            rule: RULE,
+            paymentMethodId: 'pmet_1',
+            pricingPlanScheduleId: 'ppsc_1',
+        });
         await vi.runAllTimersAsync();
     };
 
@@ -823,7 +831,7 @@ describe('TopUpModal — a rule set alongside the top-up', () => {
         expect(wrapper.emitted('auto-top-up-saved')).toHaveLength(1);
     });
 
-    it('keeps quiet about a rule that fails to save, the charge having gone through', async () => {
+    it('does not raise a rule that fails to save, the charge having gone through', async () => {
         mockCreateAutoTopUp.mockRejectedValue(new Error('nope'));
         const wrapper = mountModal({ selectedBalanceItem: flexibleBalanceItem });
 
@@ -831,6 +839,56 @@ describe('TopUpModal — a rule set alongside the top-up', () => {
 
         expect(wrapper.emitted('auto-top-up-saved')).toBeUndefined();
         expect(wrapper.emitted('failure')).toBeUndefined();
+    });
+
+    it('says on the receipt that the rule failed to save', async () => {
+        mockCreateAutoTopUp.mockRejectedValue(new Error('nope'));
+        const wrapper = mountModal({ selectedBalanceItem: flexibleBalanceItem });
+
+        await saveRule(wrapper);
+
+        expect(wrapper.find('.sv-topup-modal__auto-top-up-error').text()).toContain(
+            "we couldn't save your automatic top-up",
+        );
+    });
+
+    it('says nothing on the receipt when the rule saved', async () => {
+        const wrapper = mountModal({ selectedBalanceItem: flexibleBalanceItem });
+
+        await saveRule(wrapper);
+
+        expect(wrapper.find('.sv-topup-modal__auto-top-up-error').exists()).toBe(false);
+    });
+
+    it('bills the rule on the schedule the top-up was charged on', async () => {
+        const [flexibleEntry] = flexibleBalanceItem.charge_on_demand_pricing_items as unknown[];
+        const wrapper = mountModal({
+            selectedBalanceItem: {
+                ...flexibleBalanceItem,
+                charge_on_demand_pricing_items: [
+                    flexibleEntry,
+                    {
+                        ...(flexibleEntry as object),
+                        pricing_item_id: 'prii_flexible_2',
+                        pricing_plan_schedule_id: 'ppsc_2',
+                    },
+                ],
+            },
+        });
+
+        wrapper.findComponent({ name: 'TopUpModalForm' }).vm.$emit('save-auto-top-up', {
+            rule: RULE,
+            paymentMethodId: 'pmet_1',
+            pricingPlanScheduleId: 'ppsc_2',
+        });
+        await vi.runAllTimersAsync();
+
+        expect(mockCreateAutoTopUp).toHaveBeenCalledWith(
+            expect.objectContaining({
+                pricing_plan_schedule_id: 'ppsc_2',
+                pricing_item_id: 'prii_flexible_2',
+            }),
+        );
     });
 
     // A rule tops up by an amount of its own, which a wallet of fixed packs cannot charge.
@@ -892,5 +950,64 @@ describe('TopUpModal — a wallet that already tops itself up', () => {
 
     it('tells the form nothing for a wallet that never had one', () => {
         expect(handedRule(mountModal())).toBeUndefined();
+    });
+});
+
+describe('TopUpModal — a charge that fails', () => {
+    beforeEach(() => {
+        vi.useFakeTimers();
+        mockCharge.mockReset();
+        gateway.options.value = [{ id: 'pmo_card' }];
+        gateway.isPending.value = false;
+    });
+
+    afterEach(() => {
+        vi.useRealTimers();
+    });
+
+    const error = (wrapper: ReturnType<typeof mountModal>) =>
+        wrapper.find('.sv-topup-modal__error');
+
+    it('says the top-up failed', async () => {
+        mockCharge.mockRejectedValue(new Error('network'));
+        const wrapper = await chargeTopUp(mountModal());
+
+        expect(error(wrapper).text()).toContain("We couldn't top up your wallet");
+        expect(trackOffset(wrapper)).toBe(atStep(0));
+    });
+
+    it('says the payment was declined when the API refuses the payment', async () => {
+        mockCharge.mockRejectedValue(new ApiError({ statusCode: 422, resourceType: 'PAYMENT' }));
+        const wrapper = await chargeTopUp(mountModal());
+
+        expect(error(wrapper).text()).toContain('Your payment was declined');
+    });
+
+    it('passes the failure on', async () => {
+        const failure = new Error('network');
+        mockCharge.mockRejectedValue(failure);
+        const wrapper = await chargeTopUp(mountModal());
+
+        expect(wrapper.emitted('payment-failed')).toEqual([[failure]]);
+    });
+
+    it('clears the error when the customer tries again', async () => {
+        mockCharge.mockRejectedValueOnce(new Error('network'));
+        mockCharge.mockReturnValueOnce(new Promise(() => {}));
+        const wrapper = await chargeTopUp(mountModal());
+
+        await wrapper.find('[data-testid="confirm"]').trigger('click');
+
+        expect(error(wrapper).exists()).toBe(false);
+    });
+
+    it('clears the error when the modal is opened again', async () => {
+        mockCharge.mockRejectedValue(new Error('network'));
+        const wrapper = await chargeTopUp(mountModal());
+        await wrapper.setProps({ showModal: false });
+
+        await wrapper.setProps({ showModal: true });
+
+        expect(error(wrapper).exists()).toBe(false);
     });
 });

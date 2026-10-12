@@ -91,6 +91,7 @@ const showAutoTopUpCancellation = computed(() => !!cancellingAutoTopUpConfig.val
         :subscriptions="subscriptions"
         @close="selectedTopUpItem = undefined"
         @confirm="emit('top-up-charged')"
+        @auto-top-up-saved="emit('auto-top-up-saved')"
         @payment-success="emit('payment-method-stored')"
         @payment-failed="(error) => emit('payment-failed', error)"
     />

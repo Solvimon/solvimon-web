@@ -199,8 +199,9 @@ test.describe('DD-3539 Stripe frame hardening', () => {
             });
         });
 
-        // Not among the changes the ticket names, and the same on the base: an email typed after
-        // the card changes the fields the Payment Element hides, which it is set up anew for.
+        // Known limitation, expected to fail until it is decided on: an email typed after the card
+        // changes the fields the Payment Element hides, which it is set up anew for, so the card is
+        // dropped. Out of scope for DD-3539 and the same on the base.
         test.fail('keeps the card when the email is typed after it', async ({ page }) => {
             api = await mountCheckout(page, {
                 configuration: { countryCode: 'NL' },

@@ -37,13 +37,15 @@ test.describe('Payment methods management', () => {
         test('loads the customer, their methods and what they can add', async ({ page }) => {
             api = await mountLoaded(page);
 
-            expect(new URL(api.lastCall('customer')!.url).pathname).toBe(
+            expect(new URL((await api.waitForCall('customer')).url).pathname).toBe(
                 `/v1/portal/customers/${CUSTOMER_ID}`,
             );
             expect(
-                new URL(api.lastCall('paymentMethods')!.url).searchParams.get('customer_id'),
+                new URL((await api.waitForCall('paymentMethods')).url).searchParams.get(
+                    'customer_id',
+                ),
             ).toBe(CUSTOMER_ID);
-            expect(api.lastCall('paymentMethodOptions')?.body).toEqual({
+            expect((await api.waitForCall('paymentMethodOptions')).body).toEqual({
                 customer_id: CUSTOMER_ID,
             });
         });

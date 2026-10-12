@@ -55,10 +55,10 @@ test.describe('Subscription management', () => {
         test('loads the subscription and what can pay for a change', async ({ page }) => {
             api = await mountLoaded(page);
 
-            expect(new URL(api.lastCall('subscription')!.url).pathname).toBe(
+            expect(new URL((await api.waitForCall('subscription')).url).pathname).toBe(
                 `/v1/portal/pricing-plan-subscriptions/${SUBSCRIPTION_ID}`,
             );
-            expect(api.lastCall('paymentMethodOptions')?.body).toEqual({
+            expect((await api.waitForCall('paymentMethodOptions')).body).toEqual({
                 customer_id: CUSTOMER_ID,
             });
         });
@@ -68,10 +68,12 @@ test.describe('Subscription management', () => {
 
             // Priced as itself rather than as a template for a new subscription, so the customer
             // it is invoiced to is the one the API already holds.
-            expect(api.lastCall('invoicePreview')?.body).toMatchObject({
+            expect((await api.waitForCall('invoicePreview')).body).toMatchObject({
                 pricing_plan_subscription_id: SUBSCRIPTION_ID,
             });
-            expect(customizationsOf(api.lastCall('invoicePreview')?.body)[0]).toMatchObject({
+            expect(
+                customizationsOf((await api.waitForCall('invoicePreview')).body)[0],
+            ).toMatchObject({
                 pricing_plan_schedule_id: DEFAULT_SCHEDULE_ID,
             });
         });
@@ -95,7 +97,9 @@ test.describe('Subscription management', () => {
         test('opens on what the subscription already has', async ({ page }) => {
             api = await mountLoaded(page);
 
-            expect(customizationsOf(api.lastCall('invoicePreview')?.body)[0]).toMatchObject({
+            expect(
+                customizationsOf((await api.waitForCall('invoicePreview')).body)[0],
+            ).toMatchObject({
                 enabled_pricings: [{ pricing_id: 'pri_small' }],
             });
             await expect(page.getByRole('radio', { name: /small pack/i })).toBeChecked();

@@ -110,12 +110,12 @@ export function useCheckoutView({
                 country,
                 amount: amountValue,
             });
-        } catch {
+        } catch (error) {
             logger.error(
                 'PAYMENT_METHOD_OPTIONS_LOAD_FAILED',
                 'Failed to load the payment methods that can be offered',
                 { flow: 'CHECKOUT' },
-                paymentMethodOptionsError.value,
+                error,
             );
         }
     };

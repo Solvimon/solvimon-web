@@ -59,7 +59,7 @@ describe('usePayments', () => {
 
         const { payments, get, error, apiStatus, isPending } = usePayments();
 
-        await expect(get(invoiceId)).rejects.toBeUndefined();
+        await expect(get(invoiceId)).rejects.toBeInstanceOf(Error);
 
         expect(mockGetPayments).toHaveBeenCalledWith(invoiceId);
         expect(payments.value).toBeUndefined();

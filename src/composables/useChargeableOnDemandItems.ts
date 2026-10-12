@@ -14,7 +14,7 @@ export function useChargeableOnDemandItems({
     const { getOnDemandPricingItems } = createPricingPlanSchedulesService();
     const logger = useLogger();
 
-    const { data, execute, error } = useService({ service: getOnDemandPricingItems });
+    const { data, execute } = useService({ service: getOnDemandPricingItems });
 
     const scheduleInfo = computed(() =>
         subscription.value?.variant === 'DEFAULT'
@@ -29,12 +29,12 @@ export function useChargeableOnDemandItems({
         (id) => {
             if (!id) return;
 
-            execute({ scheduleId: id }).catch(() =>
+            execute({ scheduleId: id }).catch((failure: unknown) =>
                 logger.error(
                     'ON_DEMAND_ITEMS_LOAD_FAILED',
                     'Failed to load the on-demand items of the subscription',
                     { scheduleId: id },
-                    error.value,
+                    failure,
                 ),
             );
         },

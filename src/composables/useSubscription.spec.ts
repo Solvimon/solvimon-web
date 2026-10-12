@@ -68,7 +68,7 @@ describe('useSubscription', () => {
             subscriptionId,
         });
 
-        await expect(get()).rejects.toBeUndefined();
+        await expect(get()).rejects.toBeInstanceOf(Error);
 
         expect(mockGetSubscription).toHaveBeenCalledWith({ id: subscriptionId, expanded: true });
         expect(subscription.value).toBeUndefined();

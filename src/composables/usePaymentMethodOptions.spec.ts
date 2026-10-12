@@ -72,7 +72,7 @@ describe('usePaymentMethodOptions', () => {
 
         const paymentMethodOptions = usePaymentMethodOptions();
 
-        await expect(paymentMethodOptions.get(payload)).rejects.toBeUndefined();
+        await expect(paymentMethodOptions.get(payload)).rejects.toBeInstanceOf(Error);
 
         expect(paymentMethodOptions.error.value).toBe(error);
         expect(paymentMethodOptions.apiStatus.value).toBe(ApiStatus.Failed);
@@ -101,7 +101,7 @@ describe('usePaymentMethodOptions', () => {
 
         const paymentMethodOptions = usePaymentMethodOptions();
 
-        await expect(paymentMethodOptions.get(payload)).rejects.toBeUndefined();
+        await expect(paymentMethodOptions.get(payload)).rejects.toBeInstanceOf(Error);
         await paymentMethodOptions.get({ ...payload });
 
         expect(mockGetPaymentMethodOptions).toHaveBeenCalledTimes(2);
@@ -135,7 +135,7 @@ describe('usePaymentMethodOptions', () => {
         await paymentMethodOptions.get({ customerId: 'cust_123', country: 'NL' });
         await expect(
             paymentMethodOptions.get({ customerId: 'cust_123', country: 'US' }),
-        ).rejects.toBeUndefined();
+        ).rejects.toBeInstanceOf(Error);
         await paymentMethodOptions.get({ customerId: 'cust_123', country: 'NL' });
 
         expect(paymentMethodOptions.error.value).toBeNull();
@@ -153,7 +153,7 @@ describe('usePaymentMethodOptions', () => {
         await paymentMethodOptions.get({ customerId: 'cust_123', country: 'NL' });
         await expect(
             paymentMethodOptions.get({ customerId: 'cust_123', country: 'US' }),
-        ).rejects.toBeUndefined();
+        ).rejects.toBeInstanceOf(Error);
         await paymentMethodOptions.get({ customerId: 'cust_123', country: 'US' });
 
         expect(mockGetPaymentMethodOptions).toHaveBeenCalledTimes(3);
@@ -173,7 +173,7 @@ describe('usePaymentMethodOptions', () => {
         const pendingUs = paymentMethodOptions.get({ customerId: 'cust_123', country: 'US' });
         await paymentMethodOptions.get({ customerId: 'cust_123', country: 'NL' });
         failLookup(new Error('Boom'));
-        await expect(pendingUs).rejects.toBeUndefined();
+        await expect(pendingUs).rejects.toBeInstanceOf(Error);
 
         expect(paymentMethodOptions.error.value).toBeNull();
         expect(paymentMethodOptions.apiStatus.value).toBe(ApiStatus.Done);

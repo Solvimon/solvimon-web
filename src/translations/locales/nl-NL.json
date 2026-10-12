@@ -229,6 +229,8 @@
     "payments.error_card.payment_integration_initialization_failed.title": "Betaalmethoden konden niet worden geladen",
     "payments.error_card.payment_method_storage_failed.message": "Er ging iets mis bij het opslaan van je betaalmethode.",
     "payments.error_card.payment_method_storage_failed.title": "Betaalmethode kon niet worden opgeslagen",
+    "payments.error_card.payment_outcome_unconfirmed.message": "Je betaling kan nog worden verwerkt, dus betaal niet opnieuw. Neem bij twijfel contact op met de klantenservice en vermeld de referentie hieronder.",
+    "payments.error_card.payment_outcome_unconfirmed.title": "Betaling nog niet bevestigd",
     "payments.error_card.redirect_result_payment_acceptor_missing.message": "We konden je betaling niet koppelen aan deze bestelling.",
     "payments.error_card.redirect_result_payment_acceptor_missing.title": "Betaling kon niet worden voltooid",
     "payments.error_card.reference.copied.label": "Gekopieerd",

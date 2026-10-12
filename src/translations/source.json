@@ -1307,6 +1307,22 @@
     "defaultMessage": "Add payment method",
     "description": "Title of the top-up modal while the customer is adding a payment method"
   },
+  "topup_modal.amount.at_least_minimum": {
+    "defaultMessage": "Top up with at least {minimum}.",
+    "description": "Error shown under the choose-your-amount input in the top-up modal when it is below what the pricing allows"
+  },
+  "topup_modal.amount.positive": {
+    "defaultMessage": "Top up with more than zero.",
+    "description": "Error shown under the choose-your-amount input in the top-up modal when it is zero or negative"
+  },
+  "topup_modal.amount.required": {
+    "defaultMessage": "Enter the amount to top up with.",
+    "description": "Error shown under the choose-your-amount input in the top-up modal when it is left empty"
+  },
+  "topup_modal.amount.within_maximum": {
+    "defaultMessage": "Top up with at most {maximum}.",
+    "description": "Error shown under the choose-your-amount input in the top-up modal when it is above what the pricing allows"
+  },
   "topup_modal.back_button.label": {
     "defaultMessage": "Back",
     "description": "Label of the button that leaves the add payment method step in the top-up modal"

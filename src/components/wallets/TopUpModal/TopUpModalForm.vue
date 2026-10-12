@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { Amount, PaymentMethod, WalletBalanceValue } from '@solvimon/solvimon-types';
 import { computed, reactive, ref, watch } from 'vue';
-import { helpers, required } from '@vuelidate/validators';
+import { helpers, required, requiredIf } from '@vuelidate/validators';
 import {
     Expand,
     formatAmount,
@@ -25,6 +25,11 @@ import {
     type TopUpPricingItem,
 } from './TopUpModal.lib';
 import AutoTopUpConfigEditor from '@/components/wallets/AutoTopUpConfig/AutoTopUpConfig.vue';
+import {
+    isAtLeastMinimum,
+    isWithinMaximum,
+} from '@/components/wallets/AutoTopUpConfig/AutoTopUpConfig.lib';
+import { toNumber } from '@/components/wallets/ConvertedAmountInput/ConvertedAmountInput.lib';
 import ConvertedAmountInput from '@/components/wallets/ConvertedAmountInput/ConvertedAmountInput.vue';
 import PaymentMethodSelector from '@/components/payments/PaymentMethodSelector/PaymentMethodSelector.vue';
 import { useDefaultPaymentMethod } from '@/composables/useDefaultPaymentMethod';
@@ -65,24 +70,6 @@ const chargeableItems = computed(() => {
 
 const findItem = (pricingItemId?: string) =>
     chargeableItems.value.find((item) => item.pricingItemId === pricingItemId);
-
-/**
- * The top-up is charged on the schedule the pricing item is billed on — the wallet balance itself
- * does not say which that is.
- */
-const pricingPlanScheduleId = computed(
-    () =>
-        props.topUpPricingItems?.find((item) => item.pricingPlanScheduleId)?.pricingPlanScheduleId,
-);
-
-// The payload is submitted as-is, so keep its copy current as the pricing items arrive.
-watch(
-    pricingPlanScheduleId,
-    (scheduleId) => {
-        model.value.pricing_plan_schedule_id = scheduleId ?? '';
-    },
-    { immediate: true },
-);
 
 /**
  * The amount a choose-your-amount top-up starts at, matching what its input would seed itself with.
@@ -140,6 +127,23 @@ watch(
         const preferred = items.find(({ flexiblePricing }) => flexiblePricing) ?? items[0];
 
         selectedPricingItemId.value = preferred?.pricingItemId;
+    },
+    { immediate: true },
+);
+
+/**
+ * The top-up is charged on the schedule the chosen pricing item is billed on — a wallet shared by
+ * several subscriptions offers items from each, and the wallet balance itself does not say which.
+ */
+const pricingPlanScheduleId = computed(
+    () => findItem(model.value.pricing_items[0]?.pricing_item_id)?.pricingPlanScheduleId,
+);
+
+// The payload is submitted as-is, so keep its copy current as the choice changes.
+watch(
+    pricingPlanScheduleId,
+    (scheduleId) => {
+        model.value.pricing_plan_schedule_id = scheduleId ?? '';
     },
     { immediate: true },
 );
@@ -290,10 +294,67 @@ const canSubmit = computed(
  */
 const validationState = reactive({
     paymentMethodId: computed(() => model.value.payment_method_id ?? null),
+    flexibleAmount: computed(() => toNumber(flexibleAmount.value?.quantity) ?? null),
 });
+
+const formatFlexibleBound = (bound: 'minimum' | 'maximum') => {
+    const value = selectedFlexiblePricing.value?.bounds[bound];
+
+    return value ? formatValue(value) : '';
+};
 
 const validation = useValidation(
     {
+        flexibleAmount: {
+            required: helpers.withMessage(
+                () =>
+                    $t({
+                        defaultMessage: 'Enter the amount to top up with.',
+                        description:
+                            'Error shown under the choose-your-amount input in the top-up modal when it is left empty',
+                        id: 'topup_modal.amount.required',
+                    }),
+                requiredIf(() => !!selectedFlexiblePricing.value),
+            ),
+            positive: helpers.withMessage(
+                () =>
+                    $t({
+                        defaultMessage: 'Top up with more than zero.',
+                        description:
+                            'Error shown under the choose-your-amount input in the top-up modal when it is zero or negative',
+                        id: 'topup_modal.amount.positive',
+                    }),
+                (value: number | null) => value === null || value > 0,
+            ),
+            atLeastMinimum: helpers.withMessage(
+                () =>
+                    $t(
+                        {
+                            defaultMessage: 'Top up with at least {minimum}.',
+                            description:
+                                'Error shown under the choose-your-amount input in the top-up modal when it is below what the pricing allows',
+                            id: 'topup_modal.amount.at_least_minimum',
+                        },
+                        { minimum: formatFlexibleBound('minimum') },
+                    ),
+                (value: number | null) =>
+                    isAtLeastMinimum(value, selectedFlexiblePricing.value?.config?.minimum_amount),
+            ),
+            withinMaximum: helpers.withMessage(
+                () =>
+                    $t(
+                        {
+                            defaultMessage: 'Top up with at most {maximum}.',
+                            description:
+                                'Error shown under the choose-your-amount input in the top-up modal when it is above what the pricing allows',
+                            id: 'topup_modal.amount.within_maximum',
+                        },
+                        { maximum: formatFlexibleBound('maximum') },
+                    ),
+                (value: number | null) =>
+                    isWithinMaximum(value, selectedFlexiblePricing.value?.config?.maximum_amount),
+            ),
+        },
         paymentMethodId: {
             required: helpers.withMessage(
                 () =>
@@ -364,6 +425,7 @@ async function submit() {
             emit('save-auto-top-up', {
                 rule: editedAutoTopUp,
                 paymentMethodId: model.value.payment_method_id,
+                pricingPlanScheduleId: model.value.pricing_plan_schedule_id,
             });
         }
 
@@ -472,6 +534,7 @@ const { sortedPaymentMethods } = useDefaultPaymentMethod({
                                         "
                                         required
                                         :disabled="isCharging"
+                                        :error="validation.flexibleAmount.$errors"
                                     />
                                 </div>
                             </Expand>

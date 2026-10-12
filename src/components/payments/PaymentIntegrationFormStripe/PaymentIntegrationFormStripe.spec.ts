@@ -10,6 +10,15 @@ const mockHandleNextAction = vi.fn();
 const mockRetrievePaymentIntent = vi.fn();
 const mockRetrieveSetupIntent = vi.fn();
 const mockTriggerSubmit = vi.fn();
+const mockLogger = vi.hoisted(() => ({
+    error: vi.fn(),
+    warn: vi.fn(),
+    info: vi.fn(),
+    debug: vi.fn(),
+    capture: vi.fn(),
+}));
+vi.mock('@/components/providers', () => ({ useLogger: () => mockLogger }));
+
 vi.mock('@/services/payments', () => ({
     createPaymentsService: () => ({ authorizePayment: mockAuthorizePayment }),
 }));
@@ -189,6 +198,57 @@ describe('PaymentIntegrationFormStripe', () => {
 
             expect(wrapper.emitted('payment-failed')).toHaveLength(1);
             expect(wrapper.emitted('payment-success')).toBeUndefined();
+        });
+    });
+
+    // A StripeError carries the intent it is about, and the intent carries its client secret.
+    describe('Stripe errors that carry a client secret', () => {
+        const LEAKY_ERROR = {
+            type: 'card_error',
+            code: 'payment_intent_authentication_failure',
+            message: 'We are unable to authenticate your payment method.',
+            payment_intent: { id: 'pi_1', client_secret: 'pi_1_secret_LEAK' },
+        };
+
+        /** Everything that leaves the form: what is logged, and what the host is told. */
+        const reported = (wrapper: ReturnType<typeof mountComponent>) =>
+            JSON.stringify([
+                mockLogger.error.mock.calls,
+                mockLogger.warn.mock.calls,
+                wrapper.emitted('payment-failed'),
+            ]);
+
+        it('reports a failed next action without it', async () => {
+            mockAuthorizePayment.mockResolvedValue(stripeActionRequiredResponse);
+            mockHandleNextAction.mockResolvedValue({ error: LEAKY_ERROR });
+            const wrapper = mountComponent();
+
+            await wrapper
+                .findComponent({ name: 'PaymentIntegrationFormStripeFrame' })
+                .vm.$emit('submit-success', 'ctok_test');
+            await flushPromises();
+
+            expect(mockLogger.error).toHaveBeenCalled();
+            expect(reported(wrapper)).toContain('payment_intent_authentication_failure');
+            expect(reported(wrapper)).not.toContain('pi_1_secret_LEAK');
+        });
+
+        it('reports a redirect return Stripe could not look up without it', async () => {
+            mockGetQueryParam.mockImplementation(
+                (key: string) =>
+                    ({
+                        payment_acceptor_id: 'paya_123',
+                        redirect_status: 'succeeded',
+                        payment_intent_client_secret: 'pi_3Redirect_secret_Abc123',
+                    })[key] ?? null,
+            );
+            mockRetrievePaymentIntent.mockResolvedValue({ error: LEAKY_ERROR });
+            const wrapper = mountComponent();
+
+            await flushPromises();
+
+            expect(mockLogger.error).toHaveBeenCalled();
+            expect(reported(wrapper)).not.toContain('pi_1_secret_LEAK');
         });
     });
 

@@ -122,10 +122,7 @@ test.describe('DD-3542 tester', () => {
             expect(api.calls('authorizePayment')).toEqual([]);
         });
 
-        // Known gap, also on the base: `authorizationContext` sends any well-formed VAT number on an
-        // organization, shown or not, so a US company carries a tax id the customer cannot see.
         test('does not send a hidden VAT number for a US company', async ({ page }) => {
-            test.fail();
             api = await mountLoaded(page, {
                 mocks: { authorizePayment: { body: aSuccessfulAuthorization() } },
             });
@@ -135,11 +132,19 @@ test.describe('DD-3542 tester', () => {
             await expect(checkout(page).vatNumber).toBeHidden();
             await checkout(page).addressLine1.fill('1 Main St');
             await checkout(page).postalCode.fill('10001');
+            // The preview is debounced, so the US one is waited for rather than raced.
+            await expect
+                .poll(() => JSON.stringify(api.lastCall('invoicePreview')?.body))
+                .toContain('"postal_code":"10001"');
             await checkout(page).submit.click();
 
             const authorization = await api.waitForCall('authorizePayment');
-            const preview = api.lastCall('invoicePreview');
-            expect(JSON.stringify(preview?.body)).not.toContain(VALID_NL_VAT);
+            const usPreviews = api
+                .calls('invoicePreview')
+                .map(({ body }) => JSON.stringify(body))
+                .filter((body) => body.includes('"country":"US"'));
+            expect(usPreviews.length).toBeGreaterThan(0);
+            usPreviews.forEach((body) => expect(body).not.toContain(VALID_NL_VAT));
             expect(JSON.stringify(authorization.body)).not.toContain(VALID_NL_VAT);
         });
 
@@ -190,9 +195,6 @@ test.describe('DD-3542 tester', () => {
         test('keeps postal code, city and state on one row with an error showing', async ({
             page,
         }, testInfo) => {
-            // Defect: the postal code's error now renders in its label row, which pushes its input
-            // 16px below city and state.
-            test.fail();
             api = await mountLoaded(page);
 
             await selectCountry(page, 'United States');
@@ -455,9 +457,6 @@ test.describe('DD-3542 tester', () => {
         test('does not put an untranslated "(optional)" in the accessible names', async ({
             page,
         }) => {
-            // Defect: solvimon-ui's Label appends a hard-coded English "(optional)" to a label
-            // whose input is not `required`, so nl-NL reads "Adresregel 2 (optional)".
-            test.fail();
             await forceLocale(page, 'nl-NL');
             api = await mountCheckout(page, {
                 configuration: { email: 'customer@example.com', countryCode: 'US' },

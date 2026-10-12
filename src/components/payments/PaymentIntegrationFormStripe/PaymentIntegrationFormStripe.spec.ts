@@ -2,10 +2,13 @@ import { flushPromises, mount } from '@vue/test-utils';
 import { nextTick } from 'vue';
 import PaymentIntegrationFormStripe from './PaymentIntegrationFormStripe.vue';
 import type { PaymentIntegrationFormStripeProps } from './PaymentIntegrationFormStripe.types';
+import { ApiError } from '@/services/apiError';
 
 const mockAuthorizePayment = vi.fn();
 const mockTokenizePaymentMethod = vi.fn();
 const mockHandleNextAction = vi.fn();
+const mockRetrievePaymentIntent = vi.fn();
+const mockRetrieveSetupIntent = vi.fn();
 vi.mock('@/services/payments', () => ({
     createPaymentsService: () => ({ authorizePayment: mockAuthorizePayment }),
 }));
@@ -113,8 +116,12 @@ describe('PaymentIntegrationFormStripe', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         mockGetQueryParam.mockReturnValue(null);
-        window.Stripe = vi.fn().mockReturnValue({ handleNextAction: mockHandleNextAction });
-        mockHandleNextAction.mockResolvedValue({ error: null });
+        window.Stripe = vi.fn().mockReturnValue({
+            handleNextAction: mockHandleNextAction,
+            retrievePaymentIntent: mockRetrievePaymentIntent,
+            retrieveSetupIntent: mockRetrieveSetupIntent,
+        });
+        mockHandleNextAction.mockResolvedValue({ paymentIntent: { status: 'succeeded' } });
     });
 
     afterEach(() => {
@@ -201,51 +208,137 @@ describe('PaymentIntegrationFormStripe', () => {
     });
 
     describe('handleRedirectReturn', () => {
-        it('emits payment-success on a succeeded redirect with matching acceptor id', async () => {
-            mockGetQueryParam.mockImplementation((key: string) => {
-                if (key === 'payment_acceptor_id') return 'paya_123';
-                if (key === 'redirect_status') return 'succeeded';
-                if (key === 'payment_intent_client_secret') return 'pi_secret_redirect';
-                return null;
-            });
+        const returnedWith = (redirectStatus: string, extra: Record<string, string> = {}) =>
+            mockGetQueryParam.mockImplementation(
+                (key: string) =>
+                    ({
+                        payment_acceptor_id: 'paya_123',
+                        redirect_status: redirectStatus,
+                        payment_intent_client_secret: 'pi_secret_redirect',
+                        ...extra,
+                    })[key] ?? null,
+            );
+
+        const settle = async () => {
+            await flushPromises();
+            await nextTick();
+        };
+
+        const failedCode = (wrapper: ReturnType<typeof mountComponent>) =>
+            (wrapper.emitted('payment-failed')?.[0]?.[0] as { code: string } | undefined)?.code;
+
+        it('emits payment-success once Stripe confirms the payment succeeded', async () => {
+            returnedWith('succeeded');
+            mockRetrievePaymentIntent.mockResolvedValue({ paymentIntent: { status: 'succeeded' } });
 
             const wrapper = mountComponent();
-            await nextTick();
-            await new Promise((r) => setTimeout(r, 0));
+            await settle();
 
+            expect(mockRetrievePaymentIntent).toHaveBeenCalledWith('pi_secret_redirect');
             expect(wrapper.emitted('payment-success')).toHaveLength(1);
         });
 
-        it('emits payment-failed on a failed redirect', async () => {
-            mockGetQueryParam.mockImplementation((key: string) => {
-                if (key === 'payment_acceptor_id') return 'paya_123';
-                if (key === 'redirect_status') return 'failed';
-                if (key === 'payment_intent_client_secret') return 'pi_secret_redirect';
-                return null;
+        // Anyone can type `redirect_status=succeeded` into the address bar.
+        it('does not take the query string at its word', async () => {
+            returnedWith('succeeded');
+            mockRetrievePaymentIntent.mockResolvedValue({
+                paymentIntent: { status: 'requires_payment_method' },
             });
 
             const wrapper = mountComponent();
-            await nextTick();
-            await new Promise((r) => setTimeout(r, 0));
+            await settle();
 
-            expect(wrapper.emitted('payment-failed')).toHaveLength(1);
+            expect(wrapper.emitted('payment-success')).toBeUndefined();
+            expect(failedCode(wrapper)).toBe('AUTHORIZATION_FAILED');
+        });
+
+        it('confirms a setup intent the same way', async () => {
+            mockGetQueryParam.mockImplementation(
+                (key: string) =>
+                    ({
+                        payment_acceptor_id: 'paya_123',
+                        redirect_status: 'succeeded',
+                        setup_intent_client_secret: 'seti_secret',
+                    })[key] ?? null,
+            );
+            mockRetrieveSetupIntent.mockResolvedValue({ setupIntent: { status: 'succeeded' } });
+
+            const wrapper = mountComponent({ variant: 'TOKENIZE' });
+            await settle();
+
+            expect(mockRetrieveSetupIntent).toHaveBeenCalledWith('seti_secret');
+            expect(wrapper.emitted('payment-success')).toHaveLength(1);
+        });
+
+        // SEPA and other bank debits come back `processing`; calling that a failure invited a
+        // second payment.
+        it('leaves a processing payment unconfirmed rather than failed', async () => {
+            returnedWith('processing');
+            mockRetrievePaymentIntent.mockResolvedValue({
+                paymentIntent: { status: 'processing' },
+            });
+
+            const wrapper = mountComponent();
+            await settle();
+
+            expect(wrapper.emitted('payment-success')).toBeUndefined();
+            expect(failedCode(wrapper)).toBe('PAYMENT_OUTCOME_UNCONFIRMED');
+        });
+
+        it('leaves the payment unconfirmed when Stripe cannot be asked', async () => {
+            returnedWith('succeeded');
+            mockRetrievePaymentIntent.mockResolvedValue({ error: { message: 'network' } });
+
+            const wrapper = mountComponent();
+            await settle();
+
+            expect(wrapper.emitted('payment-success')).toBeUndefined();
+            expect(failedCode(wrapper)).toBe('PAYMENT_OUTCOME_UNCONFIRMED');
+        });
+
+        it('emits payment-failed when Stripe says the payment failed', async () => {
+            returnedWith('failed');
+            mockRetrievePaymentIntent.mockResolvedValue({
+                paymentIntent: { status: 'requires_payment_method' },
+            });
+
+            const wrapper = mountComponent();
+            await settle();
+
+            expect(failedCode(wrapper)).toBe('AUTHORIZATION_FAILED');
             expect(wrapper.emitted('payment-success')).toBeUndefined();
         });
 
-        it('ignores redirect params when acceptor id does not match', async () => {
-            mockGetQueryParam.mockImplementation((key: string) => {
-                if (key === 'payment_acceptor_id') return 'paya_OTHER';
-                if (key === 'redirect_status') return 'succeeded';
-                if (key === 'payment_intent_client_secret') return 'pi_secret_redirect';
-                return null;
-            });
+        it('keeps the form away while the returned payment is being confirmed', async () => {
+            returnedWith('succeeded');
+            let answer: (value: unknown) => void = () => {};
+            mockRetrievePaymentIntent.mockReturnValue(new Promise((r) => (answer = r)));
 
             const wrapper = mountComponent();
-            await nextTick();
-            await new Promise((r) => setTimeout(r, 0));
+            await settle();
 
+            expect(
+                wrapper.findComponent({ name: 'PaymentIntegrationFormStripeFrame' }).exists(),
+            ).toBe(false);
+
+            answer({ paymentIntent: { status: 'requires_payment_method' } });
+            await settle();
+
+            expect(wrapper.emitted('payment-failed')).toHaveLength(1);
+        });
+
+        it('ignores redirect params when acceptor id does not match', async () => {
+            returnedWith('succeeded', { payment_acceptor_id: 'paya_OTHER' });
+
+            const wrapper = mountComponent();
+            await settle();
+
+            expect(mockRetrievePaymentIntent).not.toHaveBeenCalled();
             expect(wrapper.emitted('payment-success')).toBeUndefined();
             expect(wrapper.emitted('payment-failed')).toBeUndefined();
+            expect(
+                wrapper.findComponent({ name: 'PaymentIntegrationFormStripeFrame' }).exists(),
+            ).toBe(true);
         });
 
         it('does nothing when redirect_status is absent', async () => {
@@ -256,6 +349,69 @@ describe('PaymentIntegrationFormStripe', () => {
 
             expect(wrapper.emitted('payment-success')).toBeUndefined();
             expect(wrapper.emitted('payment-failed')).toBeUndefined();
+        });
+    });
+
+    describe('outcomes that are not known yet', () => {
+        const submitToken = async (wrapper: ReturnType<typeof mountComponent>) => {
+            await wrapper
+                .findComponent({ name: 'PaymentIntegrationFormStripeFrame' })
+                .vm.$emit('submit-success', 'ctok_test');
+            await flushPromises();
+        };
+
+        const failedCode = (wrapper: ReturnType<typeof mountComponent>) =>
+            (wrapper.emitted('payment-failed')?.[0]?.[0] as { code: string } | undefined)?.code;
+
+        it('does not offer a retry when authorize never answered', async () => {
+            mockAuthorizePayment.mockRejectedValue(new TypeError('Failed to fetch'));
+            const wrapper = mountComponent();
+
+            await submitToken(wrapper);
+
+            expect(failedCode(wrapper)).toBe('PAYMENT_OUTCOME_UNCONFIRMED');
+        });
+
+        it('does not offer a retry after a server error', async () => {
+            mockAuthorizePayment.mockRejectedValue(new ApiError({ statusCode: 502 }));
+            const wrapper = mountComponent();
+
+            await submitToken(wrapper);
+
+            expect(failedCode(wrapper)).toBe('PAYMENT_OUTCOME_UNCONFIRMED');
+        });
+
+        it('still fails a payment the API turned down', async () => {
+            mockAuthorizePayment.mockRejectedValue(new ApiError({ statusCode: 422 }));
+            const wrapper = mountComponent();
+
+            await submitToken(wrapper);
+
+            expect(failedCode(wrapper)).toBe('AUTHORIZATION_FAILED');
+        });
+
+        it('leaves a pending payment unconfirmed', async () => {
+            mockAuthorizePayment.mockResolvedValue({
+                ...successResponse,
+                payment: { result: 'PENDING' },
+            });
+            const wrapper = mountComponent();
+
+            await submitToken(wrapper);
+
+            expect(wrapper.emitted('payment-success')).toBeUndefined();
+            expect(failedCode(wrapper)).toBe('PAYMENT_OUTCOME_UNCONFIRMED');
+        });
+
+        it('leaves a payment still processing after the next action unconfirmed', async () => {
+            mockAuthorizePayment.mockResolvedValue(stripeActionRequiredResponse);
+            mockHandleNextAction.mockResolvedValue({ paymentIntent: { status: 'processing' } });
+            const wrapper = mountComponent();
+
+            await submitToken(wrapper);
+
+            expect(wrapper.emitted('payment-success')).toBeUndefined();
+            expect(failedCode(wrapper)).toBe('PAYMENT_OUTCOME_UNCONFIRMED');
         });
     });
 

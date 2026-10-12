@@ -21,6 +21,11 @@ import { createPaymentsService } from '@/services/payments';
 import { createPaymentMethodsService } from '@/services/paymentMethods';
 import { createReturnUrl, PAYMENT_ACCEPTOR_ID_QUERY_STRING } from '@/utils/adyen';
 import { getQueryParam } from '@/utils/url';
+import {
+    getAuthorizeOutcome,
+    getStripeIntentOutcome,
+    isOutcomeUnknownAfterError,
+} from '@/utils/paymentOutcome';
 import { useLogger } from '@/components/providers';
 import {
     createPaymentFailureContext,
@@ -38,6 +43,10 @@ const PAYMENT_GATEWAY_VARIANT_STRIPE = 'STRIPE';
 
 const showPaymentSuccess = ref<boolean>(false);
 const integrationError = ref<Error>();
+const redirectReturn = readRedirectReturn();
+// The form stays away until the payment the customer came back from is settled, so it cannot be
+// paid a second time in the meantime.
+const isConfirmingRedirect = ref<boolean>(!!redirectReturn);
 const frameRef = ref<InstanceType<typeof PaymentIntegrationFormStripeFrame>>();
 /**
  * Whether the method is kept for later, read the way the Adyen integration reads it: an answer from
@@ -187,7 +196,9 @@ async function handleConfirmationToken(confirmationTokenId: string) {
                 error,
             );
             emitError({
-                code: 'AUTHORIZATION_FAILED',
+                code: isOutcomeUnknownAfterError(error)
+                    ? 'PAYMENT_OUTCOME_UNCONFIRMED'
+                    : 'AUTHORIZATION_FAILED',
                 message: 'Payment authorization failed',
                 error,
             });
@@ -265,7 +276,9 @@ async function handlePaymentResult(result: AuthorizePaymentResponse) {
             return;
         }
 
-        const { error } = await stripe.handleNextAction({ clientSecret });
+        const { error, paymentIntent, setupIntent } = await stripe.handleNextAction({
+            clientSecret,
+        });
 
         if (error) {
             logger.error(
@@ -282,14 +295,39 @@ async function handlePaymentResult(result: AuthorizePaymentResponse) {
             return;
         }
 
-        showPaymentSuccess.value = true;
-        emit('payment-success');
+        const intentStatus = (paymentIntent ?? setupIntent)?.status;
+        const outcome = getStripeIntentOutcome(intentStatus);
+
+        if (outcome === 'SUCCEEDED') {
+            succeed();
+        } else if (outcome === 'UNCONFIRMED') {
+            reportUnconfirmed('STRIPE_NEXT_ACTION_UNCONFIRMED', { intentStatus });
+        } else {
+            logger.error(
+                'STRIPE_ACTION_FAILED',
+                'Stripe handleNextAction left the payment incomplete',
+                failureContext({
+                    reason: 'STRIPE_NEXT_ACTION_INCOMPLETE',
+                    extra: { intentStatus },
+                }),
+            );
+            emitError({ code: 'AUTHORIZATION_FAILED', message: 'Payment action failed' });
+        }
         return;
     }
 
-    if (result.status === 'SUCCESS') {
-        showPaymentSuccess.value = true;
-        emit('payment-success');
+    const outcome = getAuthorizeOutcome(result);
+
+    if (outcome === 'SUCCEEDED') {
+        succeed();
+        return;
+    }
+
+    if (outcome === 'UNCONFIRMED') {
+        reportUnconfirmed('PAYMENT_PENDING', {
+            paymentStatus: result.status,
+            paymentResult: result.payment?.result,
+        });
         return;
     }
 
@@ -304,32 +342,96 @@ async function handlePaymentResult(result: AuthorizePaymentResponse) {
     emitError({ code: 'AUTHORIZATION_FAILED', message: 'Payment failed', error: result });
 }
 
-async function handleRedirectReturn() {
-    const paymentAcceptorId = props.paymentMethodOptionResponseEntry.payment_acceptor.id;
+function readRedirectReturn() {
     const urlPaymentAcceptorId = getQueryParam(PAYMENT_ACCEPTOR_ID_QUERY_STRING);
-    if (urlPaymentAcceptorId !== paymentAcceptorId) return;
+    if (urlPaymentAcceptorId !== props.paymentMethodOptionResponseEntry.payment_acceptor.id) return;
 
     const redirectStatus = getQueryParam('redirect_status');
     const paymentIntentClientSecret = getQueryParam('payment_intent_client_secret');
     const setupIntentClientSecret = getQueryParam('setup_intent_client_secret');
 
-    if (!redirectStatus || (!paymentIntentClientSecret && !setupIntentClientSecret)) return;
+    if (!redirectStatus) return;
+    if (paymentIntentClientSecret) {
+        return {
+            redirectStatus,
+            intent: 'PAYMENT',
+            clientSecret: paymentIntentClientSecret,
+        } as const;
+    }
+    if (setupIntentClientSecret) {
+        return { redirectStatus, intent: 'SETUP', clientSecret: setupIntentClientSecret } as const;
+    }
+}
 
-    if (redirectStatus === 'succeeded') {
-        showPaymentSuccess.value = true;
-        emit('payment-success');
+async function retrieveIntentStatus({
+    intent,
+    clientSecret,
+}: NonNullable<typeof redirectReturn>): Promise<string> {
+    const stripe = await getStripeInstance();
+
+    if (intent === 'PAYMENT') {
+        const result = await stripe.retrievePaymentIntent(clientSecret);
+        if (result.error) throw result.error;
+        return result.paymentIntent.status;
+    }
+
+    const result = await stripe.retrieveSetupIntent(clientSecret);
+    if (result.error) throw result.error;
+    return result.setupIntent.status;
+}
+
+/**
+ * The query string only says what the customer was redirected back with, and anyone can type it,
+ * so the outcome is asked of Stripe itself.
+ */
+async function handleRedirectReturn() {
+    if (!redirectReturn) return;
+
+    const { redirectStatus } = redirectReturn;
+    let intentStatus: string;
+
+    try {
+        intentStatus = await retrieveIntentStatus(redirectReturn);
+    } catch (error) {
+        logger.error(
+            'STRIPE_REDIRECT_RETURN_FAILED',
+            'Could not retrieve the payment the Stripe redirect returned from',
+            failureContext({
+                reason: 'STRIPE_REDIRECT_RETRIEVE_FAILED',
+                cause: error,
+                extra: { redirectStatus },
+            }),
+            error,
+        );
+        emitError({
+            code: 'PAYMENT_OUTCOME_UNCONFIRMED',
+            message: 'Payment could not be confirmed',
+            error,
+        });
+        return;
+    }
+
+    const outcome = getStripeIntentOutcome(intentStatus);
+
+    if (outcome === 'SUCCEEDED') {
+        succeed();
+        return;
+    }
+
+    if (outcome === 'UNCONFIRMED') {
+        reportUnconfirmed('STRIPE_REDIRECT_UNCONFIRMED', { redirectStatus, intentStatus });
         return;
     }
 
     const redirectError = new globalThis.Error(
-        `Stripe redirect returned status: ${redirectStatus}`,
+        `Stripe redirect returned a payment with status: ${intentStatus}`,
     );
     logger.error(
         'STRIPE_REDIRECT_RETURN_FAILED',
         'Stripe redirect returned non-succeeded status',
         failureContext({
             reason: 'STRIPE_REDIRECT_RETURN_FAILED',
-            extra: { redirectStatus },
+            extra: { redirectStatus, intentStatus },
         }),
         redirectError,
     );
@@ -376,15 +478,33 @@ function emitError(err: Omit<Error, 'reference'>) {
     emit('payment-failed', failure);
 }
 
+function succeed() {
+    showPaymentSuccess.value = true;
+    emit('payment-success');
+}
+
+function reportUnconfirmed(reason: string, extra: Record<string, unknown>) {
+    logger.warn(
+        'PAYMENT_OUTCOME_UNCONFIRMED',
+        'The payment outcome could not be confirmed yet',
+        failureContext({ reason, extra }),
+    );
+    emitError({ code: 'PAYMENT_OUTCOME_UNCONFIRMED', message: 'Payment could not be confirmed' });
+}
+
 onMounted(() => {
-    handleRedirectReturn().catch((error) => {
-        logger.error(
-            'STRIPE_REDIRECT_RETURN_FAILED',
-            'handleRedirectReturn threw unexpectedly',
-            failureContext({ reason: 'STRIPE_REDIRECT_RETURN_THREW', cause: error }),
-            error,
-        );
-    });
+    handleRedirectReturn()
+        .catch((error) => {
+            logger.error(
+                'STRIPE_REDIRECT_RETURN_FAILED',
+                'handleRedirectReturn threw unexpectedly',
+                failureContext({ reason: 'STRIPE_REDIRECT_RETURN_THREW', cause: error }),
+                error,
+            );
+        })
+        .finally(() => {
+            isConfirmingRedirect.value = false;
+        });
 });
 
 onBeforeUnmount(() => {
@@ -400,7 +520,7 @@ onBeforeUnmount(() => {
     />
     <PaymentErrorCard v-else-if="integrationError" :error="integrationError" />
     <PaymentIntegrationFormStripeFrame
-        v-else-if="publicKey"
+        v-else-if="publicKey && !isConfirmingRedirect"
         ref="frameRef"
         :public-key="publicKey"
         :options="frameOptions"

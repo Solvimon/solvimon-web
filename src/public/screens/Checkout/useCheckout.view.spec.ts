@@ -1246,9 +1246,9 @@ describe('useCheckoutView', () => {
     });
 
     describe('saveFormStateForRedirect', () => {
-        const REDIRECT_FORM_STATE_KEY = 'solvimon_checkout_redirect_state';
+        const REDIRECT_FORM_STATE_KEY = 'solvimon_checkout_redirect_state:sub_123';
 
-        it('writes the current form state to sessionStorage', () => {
+        it('writes the current form state to sessionStorage, under the subscription', () => {
             const checkoutFormMock = createMockCheckoutForm({
                 email: 'test@example.com',
                 country: 'NL' as CountryCode,
@@ -1267,7 +1267,8 @@ describe('useCheckoutView', () => {
             const raw = sessionStorage.getItem(REDIRECT_FORM_STATE_KEY);
             expect(raw).not.toBeNull();
             const parsed = JSON.parse(raw!);
-            expect(parsed).toMatchObject({
+            expect(parsed.savedAt).toEqual(expect.any(Number));
+            expect(parsed.form).toMatchObject({
                 email: 'test@example.com',
                 country: 'NL',
                 firstName: 'Jan',
@@ -1277,7 +1278,7 @@ describe('useCheckoutView', () => {
         it('overwrites any previously saved state', () => {
             sessionStorage.setItem(
                 REDIRECT_FORM_STATE_KEY,
-                JSON.stringify({ email: 'old@example.com' }),
+                JSON.stringify({ savedAt: Date.now(), form: { email: 'old@example.com' } }),
             );
 
             const checkoutFormMock = createMockCheckoutForm({ email: 'new@example.com' });
@@ -1292,12 +1293,54 @@ describe('useCheckoutView', () => {
             result.saveFormStateForRedirect();
 
             const parsed = JSON.parse(sessionStorage.getItem(REDIRECT_FORM_STATE_KEY)!);
-            expect(parsed.email).toBe('new@example.com');
+            expect(parsed.form.email).toBe('new@example.com');
+        });
+
+        // Thrown after the pay button went pending, it kept the payment from being submitted.
+        it('does not throw when storage is blocked', () => {
+            const setItem = vi.spyOn(sessionStorage, 'setItem').mockImplementation(() => {
+                throw new DOMException('blocked', 'SecurityError');
+            });
+
+            const result = useCheckoutView({
+                initialCountry: undefined,
+                initialEmail: undefined,
+                subscriptionId: 'sub_123' as PricingPlanSubscription['id'],
+            });
+
+            expect(() => result.saveFormStateForRedirect()).not.toThrow();
+            setItem.mockRestore();
+        });
+
+        it('clears what was saved, and what an older version saved unscoped', () => {
+            sessionStorage.setItem('solvimon_checkout_redirect_state', '{"email":"a@b.com"}');
+
+            const result = useCheckoutView({
+                initialCountry: undefined,
+                initialEmail: undefined,
+                subscriptionId: 'sub_123' as PricingPlanSubscription['id'],
+            });
+
+            result.saveFormStateForRedirect();
+            result.clearSavedFormState();
+
+            expect(sessionStorage.length).toBe(0);
         });
     });
 
     describe('redirect detection', () => {
-        const REDIRECT_FORM_STATE_KEY = 'solvimon_checkout_redirect_state';
+        const REDIRECT_FORM_STATE_KEY = 'solvimon_checkout_redirect_state:sub_123';
+        const saveForm = (form: Partial<CheckoutFormState>, savedAt = Date.now()) =>
+            sessionStorage.setItem(REDIRECT_FORM_STATE_KEY, JSON.stringify({ savedAt, form }));
+        const mountView = (overrides: { initialEmail?: string; subscriptionId?: string } = {}) =>
+            withSetup(() =>
+                useCheckoutView({
+                    initialCountry: undefined,
+                    initialEmail: overrides.initialEmail,
+                    subscriptionId: (overrides.subscriptionId ??
+                        'sub_123') as PricingPlanSubscription['id'],
+                }),
+            );
 
         function setupRedirectParams(overrides: Record<string, string | null> = {}) {
             const defaults: Record<string, string | null> = {
@@ -1341,8 +1384,12 @@ describe('useCheckoutView', () => {
         it('restores form state from sessionStorage after subscription loads', async () => {
             setupRedirectParams();
 
-            const savedState = { email: 'restored@example.com', country: 'DE', firstName: 'Hans' };
-            sessionStorage.setItem(REDIRECT_FORM_STATE_KEY, JSON.stringify(savedState));
+            const savedState = {
+                email: 'restored@example.com',
+                country: 'DE' as CountryCode,
+                firstName: 'Hans',
+            };
+            saveForm(savedState);
 
             const checkoutFormMock = createMockCheckoutForm();
             mockUseCheckoutForm.mockReturnValue(checkoutFormMock);
@@ -1365,7 +1412,7 @@ describe('useCheckoutView', () => {
 
         it('removes the sessionStorage item after restoring form state', async () => {
             setupRedirectParams();
-            sessionStorage.setItem(REDIRECT_FORM_STATE_KEY, JSON.stringify({ email: 'a@b.com' }));
+            saveForm({ email: 'a@b.com' });
 
             const [, wrapper] = withSetup(() =>
                 useCheckoutView({
@@ -1417,6 +1464,95 @@ describe('useCheckoutView', () => {
 
             await expect(flushPromises()).resolves.not.toThrow();
             expect(result.subscription.value).toBeDefined();
+            wrapper.unmount();
+        });
+
+        const restoredStates = (checkoutFormMock: ReturnType<typeof createMockCheckoutForm>) =>
+            checkoutFormMock.updateInitialState.mock.calls
+                .map(([state]) => state as Partial<CheckoutFormState>)
+                .filter((state) => state.firstName === 'Hans');
+
+        // A failed inline payment used to leave the form behind, to be filled in on the next visit.
+        it('restores nothing without a redirect return, and drops what was saved', async () => {
+            saveForm({ firstName: 'Hans' });
+            const checkoutFormMock = createMockCheckoutForm();
+            mockUseCheckoutForm.mockReturnValue(checkoutFormMock);
+
+            const [, wrapper] = mountView();
+            await flushPromises();
+
+            expect(restoredStates(checkoutFormMock)).toHaveLength(0);
+            expect(sessionStorage.getItem(REDIRECT_FORM_STATE_KEY)).toBeNull();
+            wrapper.unmount();
+        });
+
+        it('restores nothing saved for another subscription', async () => {
+            mockUseCheckoutForm.mockReturnValue(createMockCheckoutForm({ firstName: 'Hans' }));
+            useCheckoutView({
+                initialCountry: undefined,
+                initialEmail: undefined,
+                subscriptionId: 'sub_other' as PricingPlanSubscription['id'],
+            }).saveFormStateForRedirect();
+
+            setupRedirectParams();
+            const checkoutFormMock = createMockCheckoutForm();
+            mockUseCheckoutForm.mockReturnValue(checkoutFormMock);
+
+            const [, wrapper] = mountView();
+            await flushPromises();
+
+            expect(restoredStates(checkoutFormMock)).toHaveLength(0);
+            wrapper.unmount();
+        });
+
+        it('restores nothing saved too long ago', async () => {
+            vi.useFakeTimers({ toFake: ['Date'] });
+            mockUseCheckoutForm.mockReturnValue(createMockCheckoutForm({ firstName: 'Hans' }));
+            useCheckoutView({
+                initialCountry: undefined,
+                initialEmail: undefined,
+                subscriptionId: 'sub_123' as PricingPlanSubscription['id'],
+            }).saveFormStateForRedirect();
+            vi.setSystemTime(Date.now() + 2 * 60 * 60 * 1000);
+
+            setupRedirectParams();
+            const checkoutFormMock = createMockCheckoutForm();
+            mockUseCheckoutForm.mockReturnValue(checkoutFormMock);
+
+            const [, wrapper] = mountView();
+            await flushPromises();
+            vi.useRealTimers();
+
+            expect(restoredStates(checkoutFormMock)).toHaveLength(0);
+            wrapper.unmount();
+        });
+
+        it('keeps the email the host configured over a saved one', async () => {
+            setupRedirectParams();
+            saveForm({ firstName: 'Hans', email: 'saved@example.com' });
+            const checkoutFormMock = createMockCheckoutForm();
+            mockUseCheckoutForm.mockReturnValue(checkoutFormMock);
+
+            const [, wrapper] = mountView({ initialEmail: 'host@example.com' });
+            await flushPromises();
+
+            const restored = restoredStates(checkoutFormMock);
+            expect(restored.length).toBeGreaterThan(0);
+            restored.forEach((state) => expect(state).not.toHaveProperty('email'));
+            wrapper.unmount();
+        });
+
+        it('starts normally when storage cannot be read', async () => {
+            setupRedirectParams();
+            const getItem = vi.spyOn(sessionStorage, 'getItem').mockImplementation(() => {
+                throw new DOMException('blocked', 'SecurityError');
+            });
+
+            const [result, wrapper] = mountView();
+
+            await expect(flushPromises()).resolves.not.toThrow();
+            expect(result.subscription.value).toBeDefined();
+            getItem.mockRestore();
             wrapper.unmount();
         });
     });

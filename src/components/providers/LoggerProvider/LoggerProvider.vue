@@ -18,17 +18,25 @@ const props = withDefaults(defineProps<LoggerProviderProps & { environment?: Env
 });
 const { customElementName, hostRef } = useHostElementProvider();
 
-// Outside production the entries also go to the console: an integration that passes no `onLog`
-// and does not listen for the `log` event would otherwise show nothing at all while debugging.
+// Every prop is read when an entry is logged rather than here: plain HTML sets them on the element
+// after it has mounted. Outside production the entries also go to the console, since an
+// integration that passes no `onLog` and does not listen for `log` would otherwise see nothing.
+const consoleSink = createConsoleLogSink();
 const sink = combineLogSinks(
-    createCustomElementLogSink(props.onLog, hostRef),
-    ...(props.environment === 'LIVE' ? [] : [createConsoleLogSink()]),
+    createCustomElementLogSink((entry) => props.onLog(entry), hostRef),
+    (entry) => {
+        if (props.environment !== 'LIVE') consoleSink(entry);
+    },
 );
 
 const logger = createLogger(sink, {
-    logLevel: props.logLevel,
+    get logLevel() {
+        return props.logLevel;
+    },
     customElementName,
-    environment: props.environment,
+    get environment() {
+        return props.environment;
+    },
 });
 
 provide(LOGGER_PROVIDER_INJECTION_KEY, logger);

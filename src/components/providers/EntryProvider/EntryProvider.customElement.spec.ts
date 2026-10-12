@@ -436,8 +436,7 @@ describe('EntryProvider inside a custom element', () => {
             expect(recorded.element.shadowRoot?.querySelector('.tester-content')).toBeTruthy();
         });
 
-        // DEFECT: LoggerProvider reads `onLog` once, in setup, before the host could set it.
-        it.fails('calls an onLog set after the element was connected', async () => {
+        it('calls an onLog set after the element was connected', async () => {
             const recorded = createElement(
                 defineEntryElement(
                     defineComponent({
@@ -462,36 +461,34 @@ describe('EntryProvider inside a custom element', () => {
             );
         });
 
-        // DEFECT: LoggerProvider reads `environment` once, in setup. Mounted before it is set, the
-        // logger keeps `environment: undefined` and the console sink stays on in LIVE.
-        it.fails(
-            'keeps a LIVE element out of the console when environment is set after connecting',
-            async () => {
-                const recorded = createElement(
-                    defineEntryElement(
-                        defineComponent({
-                            setup() {
-                                throw new Error('setup broke');
-                            },
-                        }),
-                    ),
-                );
-                document.body.append(recorded.element);
-                Object.assign(recorded.element, {
-                    environment: 'LIVE',
-                    portalObject: createTestPortalObject(),
-                });
-                await settle();
+        it('keeps a LIVE element out of the console when environment is set after connecting', async () => {
+            const recorded = createElement(
+                defineEntryElement(
+                    defineComponent({
+                        setup() {
+                            throw new Error('setup broke');
+                        },
+                    }),
+                ),
+            );
+            document.body.append(recorded.element);
+            Object.assign(recorded.element, {
+                environment: 'LIVE',
+                portalObject: createTestPortalObject(),
+            });
+            await settle();
 
-                const [entry] = recorded.logEvents
-                    .map((event) => event.detail as LogEntry)
-                    .filter((e) => e.code === 'UNHANDLED_ERROR');
-                expect(entry).toBeDefined();
-                expect(consoleError).not.toHaveBeenCalled();
-                expect(consoleWarn).not.toHaveBeenCalled();
-                expect(consoleInfo).not.toHaveBeenCalled();
-            },
-        );
+            const [entry] = recorded.logEvents
+                .map((event) => event.detail as LogEntry)
+                .filter((e) => e.code === 'UNHANDLED_ERROR');
+            expect(entry).toBeDefined();
+            // Only the SDK's own output: Vue's development build also warns about the required
+            // props the element mounted without, which the published build does not.
+            const sdkOutput = [consoleError, consoleWarn, consoleInfo]
+                .flatMap((spy) => spy.mock.calls)
+                .filter(([first]) => String(first).startsWith('[solvimon]'));
+            expect(sdkOutput).toEqual([]);
+        });
 
         it('unmounts the tree when a required property is unset again, and remounts it when restored', async () => {
             let setups = 0;

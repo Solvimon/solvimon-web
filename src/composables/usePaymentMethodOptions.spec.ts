@@ -121,10 +121,10 @@ describe('usePaymentMethodOptions', () => {
         expect(mockGetPaymentMethodOptions).toHaveBeenCalledTimes(2);
     });
 
-    // DD-3537 tester: Checkout disables its pay button while `error` is set. A failed lookup for
-    // another country, followed by a return to one already held, answers from the cache and leaves
-    // the failure in place, so the error card stays and "Try again" asks nothing.
-    it.fails('clears an earlier failure when a held payload is asked for again', async () => {
+    // Checkout disables its pay button while `error` is set. A failed lookup for another country,
+    // followed by a return to one already held, used to answer from the cache and leave the failure
+    // in place, so the error card stayed and "Try again" asked nothing.
+    it('clears an earlier failure when a held payload is asked for again', async () => {
         const response = [{ id: 'pm_1' }] as unknown as PaymentMethodOptionsResponse;
         mockGetPaymentMethodOptions
             .mockResolvedValueOnce(response)
@@ -139,5 +139,44 @@ describe('usePaymentMethodOptions', () => {
         await paymentMethodOptions.get({ customerId: 'cust_123', country: 'NL' });
 
         expect(paymentMethodOptions.error.value).toBeNull();
+    });
+
+    it('asks again for a payload that failed', async () => {
+        const response = [{ id: 'pm_1' }] as unknown as PaymentMethodOptionsResponse;
+        mockGetPaymentMethodOptions
+            .mockResolvedValueOnce(response)
+            .mockRejectedValueOnce(new Error('Boom'))
+            .mockResolvedValueOnce(response);
+
+        const paymentMethodOptions = usePaymentMethodOptions();
+
+        await paymentMethodOptions.get({ customerId: 'cust_123', country: 'NL' });
+        await expect(
+            paymentMethodOptions.get({ customerId: 'cust_123', country: 'US' }),
+        ).rejects.toBeUndefined();
+        await paymentMethodOptions.get({ customerId: 'cust_123', country: 'US' });
+
+        expect(mockGetPaymentMethodOptions).toHaveBeenCalledTimes(3);
+        expect(paymentMethodOptions.error.value).toBeNull();
+    });
+
+    it('drops a failure that lands after the caller went back to a held payload', async () => {
+        const response = [{ id: 'pm_1' }] as unknown as PaymentMethodOptionsResponse;
+        let failLookup: (error: Error) => void = () => {};
+        mockGetPaymentMethodOptions
+            .mockResolvedValueOnce(response)
+            .mockReturnValueOnce(new Promise((_, reject) => (failLookup = reject)));
+
+        const paymentMethodOptions = usePaymentMethodOptions();
+
+        await paymentMethodOptions.get({ customerId: 'cust_123', country: 'NL' });
+        const pendingUs = paymentMethodOptions.get({ customerId: 'cust_123', country: 'US' });
+        await paymentMethodOptions.get({ customerId: 'cust_123', country: 'NL' });
+        failLookup(new Error('Boom'));
+        await expect(pendingUs).rejects.toBeUndefined();
+
+        expect(paymentMethodOptions.error.value).toBeNull();
+        expect(paymentMethodOptions.apiStatus.value).toBe(ApiStatus.Done);
+        expect(paymentMethodOptions.paymentMethodOptions.value).toEqual(response);
     });
 });

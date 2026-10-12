@@ -88,13 +88,11 @@ test.describe('DD-3537 pay button settles', () => {
             await expect(checkout(page).submit).toBeDisabled();
         });
 
-        // A→B(fail)→A: the options for A are answered from the cache, which leaves the error of B
-        // in place, so the error card and the disabled button stay, and "Try again" asks nothing.
-        // Known defect (usePaymentMethodOptions keeps the error on a cache hit); flip when fixed.
+        // A→B(fail)→A: the options for A are answered from the cache, which must not keep the
+        // error of B, or the error card and the disabled button stay with nothing to retry.
         test('comes back when the customer returns to a country whose options loaded', async ({
             page,
         }) => {
-            test.fail();
             api = await mountCheckoutLoaded(page, {
                 mocks: {
                     paymentMethodOptions: (request) =>

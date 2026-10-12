@@ -531,6 +531,10 @@
     "defaultMessage": "Your payment could not be confirmed yet and may still go through, so please do not pay again.",
     "description": "Shown when it is not yet known whether an express payment the customer made went through"
   },
+  "checkout.price_not_settled": {
+    "defaultMessage": "The price could not be brought up to date. Please try again.",
+    "description": "Error shown when a payment is held back because the price of the latest changes could not be loaded"
+  },
   "checkout.promotion_code.add_label": {
     "defaultMessage": "Add promotion code",
     "description": "Label for adding a promotion code in checkout"

@@ -10,7 +10,7 @@ import type {
     Invoice,
     ConfiguredMeterValue,
 } from '@solvimon/solvimon-types';
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { taxId } from '@solvimon/solvimon-ui/validators';
 import { email } from '@vuelidate/validators';
 import { isValidCountryCode } from '@solvimon/solvimon-ui';
@@ -548,6 +548,32 @@ export function useCheckoutView({
         }
     });
 
+    /**
+     * Whether the price on screen is the price of the form as it is. The amount authorized comes
+     * from the preview, and the server takes it as given, so a payment waits on this first: a
+     * change the debounce still holds back is asked for now, and a failed preview is asked again.
+     */
+    const settleInvoicePreview = async (): Promise<boolean> => {
+        if (!subscription.value) return false;
+
+        checkoutForm.flushPreviewChange();
+        if (invoicePreview.isFailed.value) {
+            void loadInvoicePreview().catch(() => {
+                // Settled below.
+            });
+        }
+
+        try {
+            await invoicePreview.whenLoaded();
+        } catch {
+            return false;
+        }
+        // The payment form reads the amount from its props, which follow on the next render.
+        await nextTick();
+
+        return !checkoutForm.isPreviewStale.value && !invoicePreview.isPending.value;
+    };
+
     watch(
         shouldLoadPaymentMethodOptions,
         (shouldLoad) => {
@@ -574,6 +600,8 @@ export function useCheckoutView({
         retryPaymentMethodOptions: loadPaymentMethodOptionsIfReady,
         isPaymentMethodsPending: isPaymentMethodsPending,
         isInvoicePreviewPending: invoicePreview.isPending,
+        isInvoicePreviewStale: checkoutForm.isPreviewStale,
+        settleInvoicePreview,
         subscription,
         checkoutForm,
         authorizationContext,

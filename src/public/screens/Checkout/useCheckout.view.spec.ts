@@ -1672,4 +1672,94 @@ describe('useCheckoutView', () => {
             expect(message).not.toContain('jane.doe');
         });
     });
+
+    // The amount authorized is the preview's, and the server takes it as given.
+    describe('settleInvoicePreview', () => {
+        function setup({
+            isStale = false,
+            isFailed = false,
+            loaded = Promise.resolve(),
+        }: { isStale?: boolean; isFailed?: boolean; loaded?: Promise<void> } = {}) {
+            const form = {
+                ...createMockCheckoutForm(),
+                isPreviewStale: ref(isStale),
+                flushPreviewChange: vi.fn(),
+            };
+            form.flushPreviewChange.mockImplementation(() => {
+                form.isPreviewStale.value = false;
+            });
+            mockUseCheckoutForm.mockReturnValue(form);
+
+            const whenLoaded = vi.fn(() => loaded);
+            mockUseInvoicePreview.mockReturnValue({
+                invoicePreview: { value: null },
+                trialInvoicePreview: { value: null },
+                trialPeriod: { value: null },
+                isPending: { value: false },
+                loadInvoicePreview: mockLoadInvoicePreview,
+                ...{ isFailed: { value: isFailed }, whenLoaded },
+            });
+
+            const [view, wrapper] = withSetup(() =>
+                useCheckoutView({
+                    initialCountry: undefined,
+                    initialEmail: undefined,
+                    subscriptionId: 'sub_123' as PricingPlanSubscription['id'],
+                }),
+            );
+            return { view, wrapper, form, whenLoaded };
+        }
+
+        it('asks now for a preview the debounce holds back, and waits for it', async () => {
+            let land: () => void = () => {};
+            const { view, wrapper, form } = setup({
+                isStale: true,
+                loaded: new Promise<void>((resolve) => (land = resolve)),
+            });
+            await flushPromises();
+
+            let settled: boolean | undefined;
+            void view.settleInvoicePreview().then((result) => (settled = result));
+            await flushPromises();
+
+            expect(form.flushPreviewChange).toHaveBeenCalled();
+            expect(settled).toBeUndefined();
+
+            land();
+            await flushPromises();
+            expect(settled).toBe(true);
+            wrapper.unmount();
+        });
+
+        it('holds the payment back when the preview fails', async () => {
+            const loaded = Promise.reject(new Error('Boom'));
+            loaded.catch(() => {});
+            const { view, wrapper } = setup({ loaded });
+            await flushPromises();
+
+            await expect(view.settleInvoicePreview()).resolves.toBe(false);
+            wrapper.unmount();
+        });
+
+        it('asks again for a preview that failed', async () => {
+            const { view, wrapper } = setup({ isFailed: true });
+            await flushPromises();
+            mockLoadInvoicePreview.mockClear();
+
+            await view.settleInvoicePreview();
+
+            expect(mockLoadInvoicePreview).toHaveBeenCalledTimes(1);
+            wrapper.unmount();
+        });
+
+        it('holds the payment back when the form changed again meanwhile', async () => {
+            const { view, wrapper, form } = setup();
+            await flushPromises();
+            form.flushPreviewChange.mockImplementation(() => {});
+            form.isPreviewStale.value = true;
+
+            await expect(view.settleInvoicePreview()).resolves.toBe(false);
+            wrapper.unmount();
+        });
+    });
 });

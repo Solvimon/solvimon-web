@@ -209,4 +209,60 @@ describe('useCheckoutForm', () => {
             expect(getResult().form.value.country).toBeUndefined();
         });
     });
+
+    // The preview is asked for 200ms after the last change; a payment in between would carry the
+    // price of the form before it.
+    describe('a change the preview has not been asked for yet', () => {
+        it('marks the preview stale from the change until it is asked for', async () => {
+            const onRequiredFieldChange = vi.fn();
+            const getResult = mountForm(onRequiredFieldChange);
+
+            getResult().form.value.seatsValues = [{ pricing_item_config_id: 'pic_1', number: '5' }];
+            await nextTick();
+
+            expect(getResult().isPreviewStale.value).toBe(true);
+            expect(onRequiredFieldChange).not.toHaveBeenCalled();
+
+            vi.advanceTimersByTime(200);
+
+            expect(onRequiredFieldChange).toHaveBeenCalledTimes(1);
+            expect(getResult().isPreviewStale.value).toBe(false);
+        });
+
+        it('does not mark it stale for a change that leaves the price as it is', async () => {
+            const getResult = mountForm(vi.fn());
+
+            getResult().form.value.email = 'customer@example.com';
+            await nextTick();
+
+            expect(getResult().isPreviewStale.value).toBe(false);
+        });
+
+        it('asks for the preview at once when flushed, and only once', async () => {
+            const onRequiredFieldChange = vi.fn();
+            const getResult = mountForm(onRequiredFieldChange);
+
+            getResult().form.value.country = 'DE' as CountryCode;
+            await nextTick();
+            getResult().flushPreviewChange();
+
+            expect(onRequiredFieldChange).toHaveBeenCalledTimes(1);
+            expect(onRequiredFieldChange).toHaveBeenCalledWith(
+                expect.objectContaining({ country: 'DE' }),
+            );
+            expect(getResult().isPreviewStale.value).toBe(false);
+
+            vi.advanceTimersByTime(200);
+            expect(onRequiredFieldChange).toHaveBeenCalledTimes(1);
+        });
+
+        it('asks for nothing when flushed with no change held back', () => {
+            const onRequiredFieldChange = vi.fn();
+            const getResult = mountForm(onRequiredFieldChange);
+
+            getResult().flushPreviewChange();
+
+            expect(onRequiredFieldChange).not.toHaveBeenCalled();
+        });
+    });
 });

@@ -30,7 +30,7 @@ export function usePaymentMethodOptions() {
                   country: payload.country,
               });
 
-    /** The last lookup that succeeded. Only successes are held, so a failed payload is asked again. */
+    /** The options on screen and what they answer. Only successes are held, so a failure is asked again. */
     let held:
         | { payload: GetPaymentMethodOptionsPayload; options: PaymentMethodOptionsResponse }
         | undefined;
@@ -55,10 +55,7 @@ export function usePaymentMethodOptions() {
             return inFlight.options;
         }
 
-        const options = request(payload).then((response) => {
-            held = { payload, options: response };
-            return response;
-        });
+        const options = request(payload);
         const clear = () => {
             if (inFlight?.options === options) {
                 inFlight = undefined;
@@ -81,15 +78,24 @@ export function usePaymentMethodOptions() {
      * two callers reacting to the same change ask in the same tick, before there is an answer to
      * hold on to. Whatever answers last, what is shown is the answer to the payload asked last.
      */
+    let latestPayload: GetPaymentMethodOptionsPayload | undefined;
+
     const get = async (
         payload: GetPaymentMethodOptionsPayload,
     ): Promise<PaymentMethodOptionsResponse> => {
+        latestPayload = payload;
+
         if (held && isEqual(payload, held.payload)) {
             settle(held.options);
             return held.options;
         }
 
-        return execute(payload);
+        const options = await execute(payload);
+        // An answer the caller moved on from is not shown, so it does not take the place of one that is.
+        if (latestPayload === payload) {
+            held = { payload, options };
+        }
+        return options;
     };
 
     return { paymentMethodOptions: data, get, apiStatus, error, isPending };

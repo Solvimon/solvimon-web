@@ -30,7 +30,10 @@ const resolvedProps = computed<SolvimonInvoiceHeaderEntryProps>(() => ({
         :allowed-portal-types="['CUSTOMER']"
         @error="(error) => $emit('error', error)"
     >
-        <InvoiceEntryView :invoice-id="resolvedProps.configuration.invoiceId">
+        <InvoiceEntryView
+            :key="resolvedProps.configuration.invoiceId"
+            :invoice-id="resolvedProps.configuration.invoiceId"
+        >
             <template #default="{ invoice, payments, isLoading, invoiceDownloadService }">
                 <InvoiceHeader
                     v-if="invoice"

@@ -21,7 +21,7 @@ if (!props.configuration?.invoiceId) {
         :allowed-portal-types="['CUSTOMER']"
         @error="(error) => $emit('error', error)"
     >
-        <PaymentHistoryEntryView v-bind="$props">
+        <PaymentHistoryEntryView :key="configuration.invoiceId" v-bind="$props">
             <template #default="{ invoice, paymentAttempts, isLoading }">
                 <PaymentHistory
                     v-if="invoice && paymentAttempts"

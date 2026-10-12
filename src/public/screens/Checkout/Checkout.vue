@@ -598,7 +598,7 @@ const {
 
 useAutoApplyPromotionCode({
     subscription,
-    promotionCode: props.configuration?.couponCode,
+    promotionCode: () => props.configuration?.couponCode,
     appliedPromotionCode: promotionCode,
     applyPromotionCode,
 });

@@ -7,7 +7,7 @@ import {
 import type { ExperimentalFeatureProviderProps } from './ExperimentalFeatureProvider.types';
 
 const props = defineProps<ExperimentalFeatureProviderProps>();
-const experimentalFeatures = getExperimentalFeatures(props.experimentalFeatures);
+const experimentalFeatures = getExperimentalFeatures(() => props.experimentalFeatures);
 
 provide(EXPERIMENTAL_FEATURE_INJECTION_KEY, experimentalFeatures);
 </script>

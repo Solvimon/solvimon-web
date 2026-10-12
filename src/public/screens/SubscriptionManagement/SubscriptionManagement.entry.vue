@@ -16,6 +16,9 @@ defineProps<SolvimonSubscriptionManagementEntryProps>();
         :allowed-portal-types="['CUSTOMER']"
         @error="(error) => $emit('error', error)"
     >
-        <SubscriptionManagement :configuration="configuration" />
+        <SubscriptionManagement
+            :key="configuration.subscriptionId"
+            :configuration="configuration"
+        />
     </EntryProvider>
 </template>

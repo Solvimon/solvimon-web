@@ -18,7 +18,7 @@ const props = defineProps<SolvimonSubscriptionDetailsEntryProps>();
         :allowed-portal-types="['CUSTOMER']"
         @error="(error) => $emit('error', error)"
     >
-        <SubscriptionDetailsEntryView v-bind="$props">
+        <SubscriptionDetailsEntryView :key="configuration.subscriptionId" v-bind="$props">
             <template
                 #default="{
                     subscription,

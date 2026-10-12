@@ -39,10 +39,16 @@ if (!props.customElementName) {
                         :secondary-color="secondaryColor"
                         is-shadow-root
                     />
-                    <ConfigProvider v-if="environment" :environment="environment">
+                    <!-- Keyed, so that a new environment or portal token starts the tree below over
+                    rather than leaving it on the API and session it was mounted with. -->
+                    <ConfigProvider
+                        v-if="environment"
+                        :key="environment"
+                        :environment="environment"
+                    >
                         <LoggerProvider :log-level="props.logLevel" :on-log="props.onLog">
                             <ErrorBoundary>
-                                <AuthProvider :token="portalObject.token">
+                                <AuthProvider :key="portalObject.token" :token="portalObject.token">
                                     <ExperimentalFeatureProvider
                                         :experimental-features="experimentalFeatures"
                                     >

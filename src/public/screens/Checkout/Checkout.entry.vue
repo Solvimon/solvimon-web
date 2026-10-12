@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed } from 'vue';
 import type { SolvimonCheckoutEmits, SolvimonCheckoutEntryProps } from './Checkout.entry.types';
 import CheckoutNotAvailable from '@/components/checkout/CheckoutNotAvailable.vue';
 import { EntryProvider } from '@/components/providers';
@@ -11,7 +12,9 @@ const componentName = getComponentName('checkout');
 const props = defineProps<SolvimonCheckoutEntryProps>();
 const emit = defineEmits<SolvimonCheckoutEmits>();
 
-const couponCode = props.configuration?.couponCode ?? getQueryParam('coupon_code') ?? undefined;
+const couponCode = computed(
+    () => props.configuration?.couponCode ?? getQueryParam('coupon_code') ?? undefined,
+);
 </script>
 
 <template>

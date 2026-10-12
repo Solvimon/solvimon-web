@@ -1,3 +1,4 @@
+import { ref } from 'vue';
 import { getExperimentalFeatures, EXPERIMENTAL_FEATURES } from './ExperimentalFeatureProvider.lib';
 import type { ExperimentalFeature } from './ExperimentalFeatureProvider.lib';
 
@@ -36,6 +37,17 @@ describe('getExperimentalFeatures', () => {
     it('should correctly identify which features are enabled', () => {
         const enabledFeatures: ExperimentalFeature[] = ['express-checkout'];
         const result = getExperimentalFeatures(enabledFeatures);
+
+        expect(result.value['express-checkout']).toBe(true);
+    });
+
+    it('follows the features it is given when they change', () => {
+        const enabledFeatures = ref<ExperimentalFeature[] | undefined>(undefined);
+        const result = getExperimentalFeatures(enabledFeatures);
+
+        expect(result.value['express-checkout']).toBe(false);
+
+        enabledFeatures.value = ['express-checkout'];
 
         expect(result.value['express-checkout']).toBe(true);
     });

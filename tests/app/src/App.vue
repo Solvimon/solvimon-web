@@ -1,6 +1,11 @@
 <script setup lang="ts">
 import { createSolvimonCore } from '@solvimon/solvimon-web/core';
-import type { Environment, LogEntry, RegisteredScreenId } from '@solvimon/solvimon-web/core';
+import type {
+    Environment,
+    LogEntry,
+    RegisteredComponentId,
+    RegisteredScreenId,
+} from '@solvimon/solvimon-web/core';
 import { onMounted, onUnmounted, ref } from 'vue';
 
 /**
@@ -10,6 +15,8 @@ import { onMounted, onUnmounted, ref } from 'vue';
  */
 interface TestConfig {
     screen?: RegisteredScreenId;
+    /** Mounts this component instead of a screen. */
+    component?: RegisteredComponentId;
     environment?: string;
     locale?: string;
     portalObject?: Record<string, unknown>;
@@ -125,6 +132,15 @@ onMounted(() => {
     if (!screenContainer.value) return;
 
     recordScreenEvents(screenContainer.value);
+
+    if (testConfig?.component) {
+        unmountScreen = solvimon.createComponent(testConfig.component, {
+            container: screenContainer.value,
+            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+            portalObject: portalObject as never,
+        });
+        return;
+    }
 
     unmountScreen = solvimon.createScreen(testConfig?.screen ?? 'checkout', {
         container: screenContainer.value,

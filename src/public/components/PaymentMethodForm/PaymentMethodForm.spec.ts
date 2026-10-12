@@ -50,6 +50,7 @@ vi.mock('@/components/payments/PaymentIntegrationForm/PaymentIntegrationForm.vue
                 'invalid',
                 'ready',
                 'submitting',
+                'action-required',
             ],
             setup(_props, { expose }) {
                 expose({ submit: mockIntegrationSubmit });
@@ -215,6 +216,21 @@ describe('PaymentMethodForm', () => {
         wrapper.findComponent({ name: 'PaymentIntegrationFormStub' }).vm.$emit('submitting');
         await nextTick();
 
+        expect(wrapper.vm.isPaymentPending).toBe(true);
+    });
+
+    it('leaves the form within reach while the gateway waits on the customer', async () => {
+        const wrapper = mountForm();
+        const integration = wrapper.findComponent({ name: 'PaymentIntegrationFormStub' });
+
+        integration.vm.$emit('submitting');
+        await nextTick();
+        expect(wrapper.find('.pointer-events-none').exists()).toBe(true);
+
+        integration.vm.$emit('action-required');
+        await nextTick();
+
+        expect(wrapper.find('.pointer-events-none').exists()).toBe(false);
         expect(wrapper.vm.isPaymentPending).toBe(true);
     });
 

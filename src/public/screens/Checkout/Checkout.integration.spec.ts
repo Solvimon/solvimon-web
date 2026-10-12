@@ -352,6 +352,25 @@ describe('Checkout', () => {
         expect(saveFormStateForRedirect).toHaveBeenCalledTimes(1);
     });
 
+    // Adyen draws a 3DS challenge inside the form; held, the customer could not click it.
+    it('leaves the form within reach while the gateway waits on the customer', async () => {
+        paymentMethodOptions.value = [{ integration: { payment_gateway: { variant: 'ADYEN' } } }];
+        const wrapper = await mountCheckout({ Skeleton: false });
+        const form = wrapper.findComponent({ name: 'PaymentIntegrationForm' });
+        const isHeld = () =>
+            wrapper.find('.sv-checkout__payment-form .pointer-events-none').exists();
+
+        form.vm.$emit('submitting');
+        await wrapper.vm.$nextTick();
+        expect(isHeld()).toBe(true);
+
+        form.vm.$emit('action-required');
+        await wrapper.vm.$nextTick();
+
+        expect(isHeld()).toBe(false);
+        expect(wrapper.find('.sv-checkout__submit').attributes('disabled')).toBe('true');
+    });
+
     describe('terms and conditions', () => {
         it('shows the merchant note in the footer, below both columns', async () => {
             portalNote.note = 'By subscribing you agree to the [terms](https://example.com).';

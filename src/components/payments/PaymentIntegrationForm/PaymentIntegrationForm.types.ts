@@ -92,6 +92,11 @@ export interface PaymentIntegrationFormEmits {
      */
     (e: 'submitting'): void;
     /**
+     * Emitted when the gateway hands the customer a step to complete inside the form, such as a 3DS
+     * challenge. The payment is still on its way, but the form has to stay within reach.
+     */
+    (e: 'action-required'): void;
+    /**
      * Emitted when the payment integration form is ready and the payment integration form is initialized.
      */
     (e: 'ready'): void;

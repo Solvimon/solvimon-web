@@ -73,6 +73,15 @@ describe('PaymentIntegrationForm', () => {
         expect(wrapper.emitted('submitting')).toHaveLength(1);
     });
 
+    it('tells the screen when the gateway form waits on the customer', async () => {
+        const wrapper = mountForm();
+        await flushPromises();
+
+        wrapper.findComponent({ name: 'PaymentIntegrationFormAdyen' }).vm.$emit('action-required');
+
+        expect(wrapper.emitted('action-required')).toHaveLength(1);
+    });
+
     it('leaves marking what is missing to the gateway form otherwise', async () => {
         const wrapper = mountForm();
         await flushPromises();

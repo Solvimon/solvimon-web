@@ -519,4 +519,34 @@ describe('PayInvoice', () => {
             wrapper.findComponent({ name: 'PayButton' }).find('button').attributes('disabled'),
         ).toBeDefined();
     });
+
+    // Adyen draws a 3DS challenge inside the form; held, the customer could not click it.
+    it('leaves the form within reach while the customer completes a challenge', async () => {
+        mockAuthorizePayment.mockResolvedValue({
+            status: 'ACTION_REQUIRED',
+            action: {
+                payment_gateway_variant: 'ADYEN',
+                method: 'GET',
+                url: 'https://adyen.test/3ds',
+                data: {},
+                adyen: {
+                    result_code: 'ChallengeShopper',
+                    action_type: 'threeDS2',
+                    payment_method_type: 'scheme',
+                },
+            },
+        });
+        const wrapper = mountComponent();
+        await waitForAdyenMount();
+
+        const [, dropInConfig] = MockDropIn.mock.calls[0];
+        dropInConfig.onSelect({ props: { type: 'scheme' } });
+        await wrapper.findComponent({ name: 'PayButton' }).find('button').trigger('click');
+        await submitThroughDropIn();
+
+        expect(wrapper.find('.pointer-events-none').exists()).toBe(false);
+        expect(
+            wrapper.findComponent({ name: 'PayButton' }).find('button').attributes('disabled'),
+        ).toBeDefined();
+    });
 });

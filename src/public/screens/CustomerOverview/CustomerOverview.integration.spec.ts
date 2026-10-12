@@ -11,7 +11,7 @@ const {
     mockFetchInitial,
     mockFetchWalletBalances,
 } = vi.hoisted(() => ({
-    subscriptionsState: {} as { items: { value: unknown[] } },
+    subscriptionsState: {} as { items: { value: unknown[] }; error: { value: Error | null } },
     paymentMethodsState: {} as { items: { value: unknown[] } },
     mockFetchAll: vi.fn(),
     mockFetchInitial: vi.fn(),
@@ -22,6 +22,7 @@ vi.mock('@/composables/useSubscriptionsList', async () => {
     const { ref: createRef } = await import('vue');
 
     subscriptionsState.items = createRef<unknown[]>([]);
+    subscriptionsState.error = createRef<Error | null>(null);
 
     return {
         useSubscriptionsList: () => ({
@@ -31,7 +32,7 @@ vi.mock('@/composables/useSubscriptionsList', async () => {
             fetchMore: vi.fn(),
             hasNextBatch: createRef(false),
             isPending: createRef(false),
-            error: createRef(null),
+            error: subscriptionsState.error,
         }),
     };
 });
@@ -88,7 +89,7 @@ vi.mock('@/components/providers/LoggerProvider/composables/useLogger', () => ({
 vi.mock('@/public/components/SubscriptionsList/SubscriptionsList.vue', () => ({
     default: defineComponent({
         name: 'SubscriptionsListStub',
-        props: ['subscriptions', 'customer', 'paymentMethods', 'isLoading'],
+        props: ['subscriptions', 'customer', 'paymentMethods', 'isLoading', 'hasError'],
         setup: () => () => h('div'),
     }),
 }));
@@ -158,6 +159,7 @@ const shownPaymentMethods = (wrapper: Awaited<ReturnType<typeof mountOverview>>)
 describe('CustomerOverview — subscriptions', () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        subscriptionsState.error.value = null;
         subscriptionsState.items.value = subscriptionsOf(5);
         paymentMethodsState.items.value = paymentMethodsOf(5);
     });
@@ -167,6 +169,16 @@ describe('CustomerOverview — subscriptions', () => {
 
         expect(mockFetchAll).toHaveBeenCalled();
         expect(mockFetchInitial).not.toHaveBeenCalled();
+    });
+
+    it('tells the list when the subscriptions could not be loaded', async () => {
+        subscriptionsState.error.value = new Error('Network error');
+
+        const wrapper = await mountOverview();
+
+        expect(wrapper.findComponent({ name: 'SubscriptionsListStub' }).props('hasError')).toBe(
+            true,
+        );
     });
 
     it('shows only the first two in the list', async () => {

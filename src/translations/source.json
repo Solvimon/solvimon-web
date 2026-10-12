@@ -679,6 +679,14 @@
     "defaultMessage": "Subscription",
     "description": "The fallback name for when no subscription name can be determined"
   },
+  "customer_overview.subscriptions_block.load_error": {
+    "defaultMessage": "We could not load your subscriptions. Please try again later.",
+    "description": "Error shown when the subscriptions in the subscriptions block fail to load"
+  },
+  "customer_overview.subscriptions_block.load_more_button_label": {
+    "defaultMessage": "Load more",
+    "description": "The label for the button that loads more subscriptions"
+  },
   "customer_overview.subscriptions_block.no_active_subscription_content": {
     "defaultMessage": "There’s no active subscription to display.",
     "description": "Text that is being displayed when there is no active subscription in the subscriptions block"

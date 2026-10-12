@@ -169,6 +169,8 @@
     "customer_overview.payment_methods_block.add_payment_method_helper_text": "Voeg een betaalmethode toe voor terugkerende factuurbetalingen.",
     "customer_overview.payment_methods_block.view_all_payment_methods_link_label": "Alles weergeven",
     "customer_overview.subscriptions_block.fallback_subscription_name": "Abonnement",
+    "customer_overview.subscriptions_block.load_error": "We konden je abonnementen niet laden. Probeer het later opnieuw.",
+    "customer_overview.subscriptions_block.load_more_button_label": "Meer laden",
     "customer_overview.subscriptions_block.no_active_subscription_content": "Er is geen actief abonnement om weer te geven.",
     "customer_overview.subscriptions_block.no_active_subscription_title": "Geen abonnementen",
     "customer_overview.subscriptions_block.title": "{count,plural,one{Mijn abonnement} other{Mijn abonnementen}}",

@@ -234,6 +234,19 @@ test.describe('Customer overview', () => {
             await expect(customerOverview(page).billingInformation).toBeVisible();
         });
 
+        test('says so when the subscriptions cannot be loaded', async ({ page }) => {
+            api = await mountLoaded(page, {
+                mocks: { subscriptions: { status: 500, body: { message: 'Boom' } } },
+            });
+
+            await expect(customerOverview(page).subscriptions).toContainText(
+                /could not load your subscriptions/i,
+            );
+            await expect(customerOverview(page).subscriptions).not.toContainText(
+                /no subscriptions/i,
+            );
+        });
+
         test('reports invoices that cannot be loaded', async ({ page }) => {
             api = await mountCustomerOverview(page, {
                 mocks: { invoices: { status: 500, body: { message: 'Boom' } } },

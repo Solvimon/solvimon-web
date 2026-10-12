@@ -1,4 +1,5 @@
 import { mount } from '@vue/test-utils';
+import { defineComponent, h } from 'vue';
 import type {
     Customer,
     PaymentMethod,
@@ -69,6 +70,9 @@ describe('SubscriptionsList component', () => {
         subscriptions = [createSubscription()],
         configuration,
         isLoading = false,
+        hasError = false,
+        hasMoreItems = false,
+        isLoadingMore = false,
     }: {
         subscriptions?: PricingPlanSubscriptionExpanded[];
         configuration?: {
@@ -77,6 +81,9 @@ describe('SubscriptionsList component', () => {
             showViewDetailsButton?: boolean;
         };
         isLoading?: boolean;
+        hasError?: boolean;
+        hasMoreItems?: boolean;
+        isLoadingMore?: boolean;
     } = {}) =>
         mount(SubscriptionsList, {
             props: {
@@ -84,11 +91,19 @@ describe('SubscriptionsList component', () => {
                 subscriptions,
                 paymentMethods,
                 isLoading,
+                hasError,
+                hasMoreItems,
+                isLoadingMore,
                 configuration,
             },
             global: {
                 stubs: {
                     teleport: true,
+                    // It resolves its own IntlProvider, which is not mounted here.
+                    ErrorNotification: defineComponent({
+                        props: { title: String },
+                        setup: (props) => () => h('div', props.title),
+                    }),
                 },
             },
         });
@@ -234,6 +249,49 @@ describe('SubscriptionsList component', () => {
                 action: 'view-subscription-details',
                 data: { subscriptionId: 'sub_details' },
             });
+        });
+    });
+
+    describe('when the subscriptions fail to load', () => {
+        it('says so instead of claiming there are none', () => {
+            const wrapper = mountComponent({ subscriptions: [], hasError: true });
+
+            expect(wrapper.find('.sv-subscriptions-list__error').exists()).toBe(true);
+            expect(wrapper.text()).toContain('We could not load your subscriptions');
+            expect(wrapper.find('.sv-subscriptions-list__empty').exists()).toBe(false);
+        });
+
+        it('keeps the subscriptions already loaded on screen', () => {
+            const wrapper = mountComponent({
+                subscriptions: [createSubscription({ name: 'Pro subscription' })],
+                hasError: true,
+            });
+
+            expect(wrapper.find('.sv-subscriptions-list__error').exists()).toBe(true);
+            expect(wrapper.text()).toContain('Pro subscription');
+        });
+
+        it('shows the empty state only when the load succeeded', () => {
+            const wrapper = mountComponent({ subscriptions: [] });
+
+            expect(wrapper.find('.sv-subscriptions-list__empty').exists()).toBe(true);
+            expect(wrapper.find('.sv-subscriptions-list__error').exists()).toBe(false);
+        });
+    });
+
+    describe('load more button', () => {
+        it('is not rendered when there are no more subscriptions', () => {
+            const wrapper = mountComponent();
+
+            expect(wrapper.find('.sv-subscriptions-list__load-more').exists()).toBe(false);
+        });
+
+        it('re-emits load-more when clicked', async () => {
+            const wrapper = mountComponent({ hasMoreItems: true });
+
+            await getButtonByText(wrapper, 'Load more').trigger('click');
+
+            expect(wrapper.emitted('load-more')).toEqual([[]]);
         });
     });
 });

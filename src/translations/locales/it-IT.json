@@ -169,6 +169,8 @@
     "customer_overview.payment_methods_block.add_payment_method_helper_text": "Aggiungi un metodo di pagamento per i pagamenti ricorrenti delle fatture.",
     "customer_overview.payment_methods_block.view_all_payment_methods_link_label": "Mostra tutti",
     "customer_overview.subscriptions_block.fallback_subscription_name": "Abbonamento",
+    "customer_overview.subscriptions_block.load_error": "Impossibile caricare i tuoi abbonamenti. Riprova più tardi.",
+    "customer_overview.subscriptions_block.load_more_button_label": "Carica altri",
     "customer_overview.subscriptions_block.no_active_subscription_content": "Non c'è nessun abbonamento attivo da mostrare.",
     "customer_overview.subscriptions_block.no_active_subscription_title": "Nessun abbonamento",
     "customer_overview.subscriptions_block.title": "{count,plural,one{Il mio abbonamento} other{I miei abbonamenti}}",

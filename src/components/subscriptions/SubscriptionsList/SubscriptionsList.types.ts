@@ -9,6 +9,10 @@ export interface SubscriptionsListProps {
     subscriptions: PricingPlanSubscriptionExpanded[];
     paymentMethods?: PaymentMethod[];
     isLoading: boolean;
+    /** The subscriptions could not be loaded, so an empty list says nothing about them. */
+    hasError?: boolean;
+    hasMoreItems?: boolean;
+    isLoadingMore?: boolean;
     showViewAllButton?: boolean;
     showViewDetailsButton?: boolean;
 }

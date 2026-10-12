@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { onMounted } from 'vue';
 import { getApiError } from '@solvimon/solvimon-ui';
 import type { SolvimonBillingInformationFormEntryProps } from './BillingInformationForm.entry.types';
 import { useCustomer } from '@/composables/useCustomer';
+import { useLoadInitialData } from '@/composables/useLoadInitialData';
 
 const props = defineProps<SolvimonBillingInformationFormEntryProps>();
 
@@ -10,9 +10,7 @@ const customerId = props.portalObject.customer_id;
 
 const { customer, get, update } = useCustomer({ customerId });
 
-onMounted(async () => {
-    await get.execute();
-});
+useLoadInitialData(get.execute());
 </script>
 
 <template>

@@ -22,6 +22,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The Adyen drop-in no longer spins for good after 3DS or another additional-details step: a refused payment now shows as refused. A successful return from an Adyen redirect shows the completed card, and a refused one shows its failure instead of an empty payment section.
 - The pay invoice screen shows the invoice as paid and takes the pay button away once a payment succeeds, and reloads the invoice. "Pay" stayed enabled on an invoice that had just been paid.
 - An Apple Pay payment that got no answer, failed with a 5xx or is still pending no longer tells the customer to try again; checkout says it may still go through and not to pay again.
+- The pay button no longer keeps spinning after a payment that was never sent. With Stripe, a press before the payment form was ready or a submit Stripe rejected left it waiting for good; with Adyen, so did closing a wallet's payment sheet or the PayPal popup. The button now comes back, in checkout, the pay invoice screen and the payment method form. A Stripe payment submitted just as its form was set up anew, for example after a change of amount, is no longer refused by Stripe.
+- Checkout keeps the pay button off while its payment methods failed to load, when there is no payment form to pay with. Going back to a country whose payment methods were already loaded now clears a load failure of the country in between, so the error card goes and "Try again" works.
+- Calling `submit()` on the payment method form while it is still loading no longer leaves it pending for good.
 
 ## [0.1.0-alpha.27] - 2026-10-12
 

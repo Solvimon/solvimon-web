@@ -1,7 +1,9 @@
 import { isIndividual, isOrganization, isValidCountryCode } from '@solvimon/solvimon-ui';
 import { taxId } from '@solvimon/solvimon-ui/validators';
+import type { ValidatorFn } from '@vuelidate/core';
 import { email, required, requiredIf } from '@vuelidate/validators';
-import type { CountryCode, Customer } from '@solvimon/solvimon-types';
+import type { CountryCode, Customer, TaxIdentifier } from '@solvimon/solvimon-types';
+import { ref } from 'vue';
 import type { BillingInformationFormState } from './BillingInformationForm.types';
 import useForm from '@/composables/useForm';
 import { getRequiredFieldsForCountry } from '@/components/customer/CheckoutForm/CheckoutForm.lib';
@@ -39,6 +41,17 @@ export function useBillingInformationForm<TResult>({
         ).includes(field);
     const isOrganizationForm = (): boolean => form.value.type === 'ORGANIZATION';
 
+    // The customer's tax ids as stored. The form edits the first one only; the rest are kept.
+    const storedTaxIds = ref<TaxIdentifier[]>([]);
+
+    const isVatNumberChanged = (value: string | undefined): boolean =>
+        (value?.trim() ?? '') !== (currentInitialState.value.companyVatNumber?.trim() ?? '');
+
+    // A stored tax id may be of a type the format rule does not know, such as `CA_GST_HST`, so
+    // the rule only judges a number typed in this edit.
+    const changedTaxId: ValidatorFn = (value, siblings, vm) =>
+        !isVatNumberChanged(value) || taxId.$validator(value, siblings, vm);
+
     const {
         form,
         validation,
@@ -58,13 +71,14 @@ export function useBillingInformationForm<TResult>({
             postalCode: { required: requiredIf(() => isRequiredForCountry('postalCode')) },
             state: { required: requiredIf(() => isRequiredForCountry('state')) },
             companyLegalName: { required: requiredIf(isOrganizationForm) },
-            companyVatNumber: { taxId },
+            companyVatNumber: { taxId: { ...taxId, $validator: changedTaxId } },
         },
         nullifyEmptyValues: true,
         mode: 'deep',
     });
 
     const updateInitialState = (customer: Customer) => {
+        storedTaxIds.value = isOrganization(customer) ? (customer.organization.tax_ids ?? []) : [];
         updateFormInitialState(mapCustomerToFormState(customer));
     };
 
@@ -74,7 +88,12 @@ export function useBillingInformationForm<TResult>({
     ): Promise<TResult> => {
         return onSubmit({
             customerId,
-            payload: mapFormStateToCustomerPayload(data),
+            payload: mapFormStateToCustomerPayload(
+                data,
+                isVatNumberChanged(data.companyVatNumber)
+                    ? getTaxIds(storedTaxIds.value, data.companyVatNumber)
+                    : undefined,
+            ),
         });
     };
 
@@ -124,22 +143,40 @@ const mapCustomerToFormState = (customer: Customer): BillingInformationFormState
     };
 };
 
-const mapFormStateToCustomerPayload = (data: BillingInformationFormState): Partial<Customer> =>
+const toTaxIdPayload = ({ id, type, display_name }: TaxIdentifier): TaxIdentifier => ({
+    id,
+    type,
+    ...(display_name && { display_name }),
+});
+
+/**
+ * The tax ids to send once the VAT number was edited. The API replaces the whole list, so the
+ * other stored ids go along unchanged, and the edited one keeps its type. An emptied field removes
+ * that one id only.
+ */
+const getTaxIds = (stored: TaxIdentifier[], vatNumber: string | undefined): TaxIdentifier[] => {
+    const id = vatNumber?.trim();
+    const [first, ...rest] = stored.map(toTaxIdPayload);
+
+    if (!id) {
+        return rest;
+    }
+
+    return [{ ...first, id, type: first?.type ?? DEFAULT_TAX_IDENTIFIER_TYPE }, ...rest];
+};
+
+/** Leaving `taxIds` out leaves the stored tax ids as they are. */
+const mapFormStateToCustomerPayload = (
+    data: BillingInformationFormState,
+    taxIds: TaxIdentifier[] | undefined,
+): Partial<Customer> =>
     data.type === 'ORGANIZATION'
         ? {
               type: 'ORGANIZATION' as const,
               email: data.email,
               organization: {
                   legal_name: data.companyLegalName ?? '',
-                  // An emptied field has to reach the API as `[]`: a missing key leaves it as is.
-                  tax_ids: data.companyVatNumber?.trim()
-                      ? [
-                            {
-                                id: data.companyVatNumber.trim(),
-                                type: DEFAULT_TAX_IDENTIFIER_TYPE,
-                            },
-                        ]
-                      : [],
+                  ...(taxIds && { tax_ids: taxIds }),
                   registered_address: {
                       line1: data.addressLine1,
                       line2: data.addressLine2 ?? '',

@@ -184,21 +184,21 @@ describe('BillingInformationForm (tester)', () => {
             },
         );
 
-        it('names the stored tax id as the reason a save is refused', async () => {
+        it('still refuses a malformed VAT number typed in this edit', async () => {
             const { wrapper, updateCustomer } = mountForm(
                 organization([{ id: '123456789RT0001', type: 'CA_GST_HST' }], 'CA'),
             );
 
-            await emailInput(wrapper).setValue('edited@example.com');
+            await wrapper.find('input[name="vat_number"]').setValue('NL123');
             await submit(wrapper);
 
             expect(updateCustomer).not.toHaveBeenCalled();
             expect(wrapper.text()).toContain('Invalid tax ID');
         });
 
-        // DEFECT: the `taxId` rule only knows EU/UK/CH/NO formats, but the API stores CA, AU
-        // and generic tax ids too. A customer with one cannot save anything, not even an email.
-        it.fails.each([
+        // The `taxId` rule only knows EU/UK/CH/NO formats, but the API stores CA, AU and generic
+        // tax ids too: a stored one must not stop a save.
+        it.each([
             ['CA', { id: '123456789RT0001', type: 'CA_GST_HST' }],
             ['AU', { id: '51824753556', type: 'AU_GST' }],
             ['US', { id: '12-3456789', type: 'GENERIC_TAX_ID' }],
@@ -214,9 +214,7 @@ describe('BillingInformationForm (tester)', () => {
             },
         );
 
-        // DEFECT (pre-existing mapping, reachable now that Save works): every save replaces the
-        // stored tax ids with the first id typed as GENERIC_TAX_ID, dropping the rest.
-        it.fails('keeps the stored tax ids when only the email changes', async () => {
+        it('keeps the stored tax ids when only the email changes', async () => {
             const taxIds = [
                 { id: 'NL123456789B01', type: 'GENERIC_TAX_ID' },
                 { id: 'DE123456789', type: 'GENERIC_TAX_ID' },

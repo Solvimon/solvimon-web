@@ -9,7 +9,7 @@
  * leaving the SDK's own code — the iframe, the postMessage bridge, the authorize call — real.
  *
  * Only what the SDK calls is implemented: `elements`, `elements.submit`,
- * `createConfirmationToken` and `handleNextAction`.
+ * `createConfirmationToken`, `handleNextAction` and `retrievePaymentIntent`.
  */
 
 export interface StripeStubConfig {
@@ -21,6 +21,11 @@ export interface StripeStubConfig {
     confirmationTokenError?: { message: string; code?: string; type?: string };
     /** Makes the 3DS step fail after an ACTION_REQUIRED authorization. */
     nextActionError?: { message: string; code?: string; type?: string };
+    /**
+     * The status Stripe reports for the payment, after a further step or on return from a
+     * redirect. `succeeded` unless a test says otherwise.
+     */
+    intentStatus?: string;
     /** Makes the payment element report that it could not load at all. */
     loadError?: { message: string; type?: string };
 }
@@ -94,8 +99,15 @@ export function stripeStubScript(config: StripeStubConfig): string {
             },
             handleNextAction: function () {
                 return Promise.resolve(
-                    config.nextActionError ? { error: config.nextActionError } : {},
+                    config.nextActionError
+                        ? { error: config.nextActionError }
+                        : { paymentIntent: { status: config.intentStatus || 'succeeded' } },
                 );
+            },
+            retrievePaymentIntent: function () {
+                return Promise.resolve({
+                    paymentIntent: { status: config.intentStatus || 'succeeded' },
+                });
             },
         };
     };

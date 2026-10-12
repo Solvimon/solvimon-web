@@ -1,4 +1,4 @@
-import type { Invoice } from '@solvimon/solvimon-types';
+import type { Invoice, PricingPlanScheduleInfoExpanded } from '@solvimon/solvimon-types';
 import type { PricingPlanSubscriptionExpanded } from '@/types/subscription';
 import { useSubscriptionUpgradePreview } from './useSubscriptionUpgradePreview';
 
@@ -17,15 +17,16 @@ vi.mock('@/components/providers', () => ({
 
 const invoice = { id: 'invo_1' } as unknown as Invoice;
 
+const createScheduleInfo = (id = 'ppsc_1', scheduleType = 'DEFAULT') =>
+    ({
+        id,
+        pricing_plan_schedule: { id, type: scheduleType },
+    }) as unknown as PricingPlanScheduleInfoExpanded;
+
 const createSubscription = (scheduleType = 'DEFAULT') =>
     ({
         id: 'ppsu_1',
-        pricing_plan_schedule_infos: [
-            {
-                id: 'ppsc_1',
-                pricing_plan_schedule: { id: 'ppsc_1', type: scheduleType },
-            },
-        ],
+        pricing_plan_schedule_infos: [createScheduleInfo('ppsc_1', scheduleType)],
     }) as unknown as PricingPlanSubscriptionExpanded;
 
 describe('useSubscriptionUpgradePreview', () => {
@@ -39,6 +40,7 @@ describe('useSubscriptionUpgradePreview', () => {
 
         await load({
             subscription: createSubscription(),
+            scheduleInfo: createScheduleInfo(),
             enabledPricingIds: ['pric_premium'],
         });
 
@@ -56,11 +58,74 @@ describe('useSubscriptionUpgradePreview', () => {
         expect(previewed.value).toEqual(invoice);
     });
 
+    it('previews on the schedule it is given, not the first one the subscription lists', async () => {
+        const { load } = useSubscriptionUpgradePreview();
+
+        await load({
+            subscription: {
+                id: 'ppsu_1',
+                pricing_plan_schedule_infos: [
+                    createScheduleInfo('ppsc_ended'),
+                    createScheduleInfo('ppsc_active'),
+                ],
+            } as unknown as PricingPlanSubscriptionExpanded,
+            scheduleInfo: createScheduleInfo('ppsc_active'),
+            enabledPricingIds: ['pric_premium'],
+        });
+
+        expect(mockGetInvoicePreview).toHaveBeenCalledWith(
+            expect.objectContaining({
+                customizations: [
+                    expect.objectContaining({ pricing_plan_schedule_id: 'ppsc_active' }),
+                ],
+            }),
+        );
+    });
+
+    it('does not request a preview while no schedule is being billed', async () => {
+        const { load, invoice: previewed } = useSubscriptionUpgradePreview();
+
+        await load({
+            subscription: createSubscription(),
+            scheduleInfo: undefined,
+            enabledPricingIds: ['pric_premium'],
+        });
+
+        expect(mockGetInvoicePreview).not.toHaveBeenCalled();
+        expect(previewed.value).toBeUndefined();
+    });
+
+    it('lets a request still in flight go once there is no schedule to bill on', async () => {
+        let resolveSlow: (value: unknown) => void = () => {};
+        mockGetInvoicePreview.mockImplementationOnce(
+            () =>
+                new Promise((resolve) => {
+                    resolveSlow = resolve;
+                }),
+        );
+        const { load, invoice: previewed, isPending } = useSubscriptionUpgradePreview();
+        const subscription = createSubscription();
+
+        const slow = load({
+            subscription,
+            scheduleInfo: createScheduleInfo(),
+            enabledPricingIds: ['pric_basic'],
+        });
+        await load({ subscription, scheduleInfo: undefined, enabledPricingIds: ['pric_basic'] });
+
+        resolveSlow({ invoice });
+        await slow;
+
+        expect(previewed.value).toBeUndefined();
+        expect(isPending.value).toBe(false);
+    });
+
     it('prices the subscription as it stands rather than as a template for a new one', async () => {
         const { load } = useSubscriptionUpgradePreview();
 
         await load({
             subscription: createSubscription(),
+            scheduleInfo: createScheduleInfo(),
             enabledPricingIds: ['pric_premium'],
         });
 
@@ -74,6 +139,7 @@ describe('useSubscriptionUpgradePreview', () => {
 
         await load({
             subscription: createSubscription(),
+            scheduleInfo: createScheduleInfo(),
             enabledPricingIds: ['pric_premium'],
         });
 
@@ -85,6 +151,7 @@ describe('useSubscriptionUpgradePreview', () => {
 
         await load({
             subscription: createSubscription('TRIAL'),
+            scheduleInfo: createScheduleInfo('ppsc_1', 'TRIAL'),
             enabledPricingIds: ['pric_premium'],
         });
 
@@ -98,6 +165,7 @@ describe('useSubscriptionUpgradePreview', () => {
 
         await load({
             subscription: createSubscription(),
+            scheduleInfo: createScheduleInfo(),
             enabledPricingIds: ['pric_premium'],
         });
 
@@ -116,6 +184,7 @@ describe('useSubscriptionUpgradePreview', () => {
 
         const pending = load({
             subscription: createSubscription(),
+            scheduleInfo: createScheduleInfo(),
             enabledPricingIds: ['pric_premium'],
         });
 
@@ -143,8 +212,10 @@ describe('useSubscriptionUpgradePreview', () => {
         const { load, invoice: previewed } = useSubscriptionUpgradePreview();
         const subscription = createSubscription();
 
-        const slow = load({ subscription, enabledPricingIds: ['pric_basic'] });
-        await load({ subscription, enabledPricingIds: ['pric_premium'] });
+        const scheduleInfo = createScheduleInfo();
+
+        const slow = load({ subscription, scheduleInfo, enabledPricingIds: ['pric_basic'] });
+        await load({ subscription, scheduleInfo, enabledPricingIds: ['pric_premium'] });
 
         resolveSlow({ invoice: slowInvoice });
         await slow;

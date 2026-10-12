@@ -2,21 +2,20 @@ import type {
     BillingPeriod,
     Currency,
     PaymentMethod,
-    PaymentMethodOptionsResponse,
     Pricing,
     PricingGroupExtended,
 } from '@solvimon/solvimon-types';
 
 export interface SubscriptionManagementFormProps {
+    /** Lets a submit button outside the form name it with its `form` attribute. */
+    id?: string;
     /** The group being changed. Its pricings are the options the customer picks between. */
     pricingGroup: PricingGroupExtended;
-    /** The customer's saved payment methods, to pay the change with. */
-    paymentMethods?: PaymentMethod[];
     /**
-     * The methods the customer is allowed to add. Adding is only offered while there is something
-     * to add.
+     * What the change can be charged to. The API only charges the subscription's own method, so
+     * nothing can be added here.
      */
-    paymentMethodOptions?: PaymentMethodOptionsResponse;
+    paymentMethods?: PaymentMethod[];
     /** Drives how each pricing's amount is rendered on its option. */
     billingPeriod: BillingPeriod;
     currency?: Currency['currencyCode'];
@@ -24,8 +23,8 @@ export interface SubscriptionManagementFormProps {
 }
 
 export interface SubscriptionManagementFormEmits {
-    /** The customer wants to pay with a method they have not saved yet. */
-    (e: 'add-payment-method'): void;
+    /** The customer submitted the form, from its own fields or a button tied to it by `form`. */
+    (e: 'submit'): void;
 }
 
 export interface SubscriptionManagementFormModel {

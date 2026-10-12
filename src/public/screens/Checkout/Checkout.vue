@@ -41,6 +41,7 @@ import { getPricingCurrencyForCountry } from '@/utils/countryCurrency';
 import { getModelTypesFromScheduleInfo } from '@/utils/pricing';
 import { ContentWithAsideLayout } from '@/layouts';
 import { useViewport } from '@/composables/useViewport';
+import { usePaymentFormHold } from '@/composables/usePaymentFormHold';
 import PromotionCodeSection from '@/components/checkout/PromotionCodeSection.vue';
 import {
     getFallbackTrialAndSubscriptionStartAndEndDates,
@@ -135,6 +136,7 @@ const isExpressCheckoutEnabled = computed(
 );
 
 const isPaymentPending = ref(false);
+const { isFormHeld, handleActionRequired } = usePaymentFormHold(isPaymentPending);
 
 const handleSubmit = async () => {
     await checkoutForm.validation.value.$validate();
@@ -917,9 +919,7 @@ onMounted(() => {
                                 v-else-if="amount && checkoutForm.form.value.country"
                                 class="sv-checkout__payment-form"
                             >
-                                <div
-                                    :class="{ 'pointer-events-none opacity-60': isPaymentPending }"
-                                >
+                                <div :class="{ 'pointer-events-none opacity-60': isFormHeld }">
                                     <PaymentIntegrationForm
                                         ref="paymentIntegrationFormRef"
                                         :country-code="checkoutForm.form.value.country"
@@ -938,6 +938,7 @@ onMounted(() => {
                                         @payment-failed="handlePaymentFailed"
                                         @invalid="handlePaymentNotSubmitted"
                                         @submitting="handlePaymentSubmitting"
+                                        @action-required="handleActionRequired"
                                         @ready="emit('ready')"
                                     />
                                 </div>

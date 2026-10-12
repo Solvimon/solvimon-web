@@ -47,28 +47,23 @@ describe('usePaymentMethodOptions, lookups settling out of order', () => {
         mockGetPaymentMethodOptions.mockReset();
     });
 
-    // Known defect: flip to `it` when fixed.
-    it.fails(
-        'keeps the options of the payload returned to when a slow lookup for another succeeds',
-        async () => {
-            const lookups = controlledLookups();
-            const options = usePaymentMethodOptions();
+    it('keeps the options of the payload returned to when a slow lookup for another succeeds', async () => {
+        const lookups = controlledLookups();
+        const options = usePaymentMethodOptions();
 
-            const nl = options.get(NL);
-            lookups[0]!.resolve(optionsFor('NL'));
-            await nl;
+        const nl = options.get(NL);
+        lookups[0]!.resolve(optionsFor('NL'));
+        await nl;
 
-            const us = options.get(US);
-            await options.get(NL);
-            lookups[1]!.resolve(optionsFor('US'));
-            await settled(us);
+        const us = options.get(US);
+        await options.get(NL);
+        lookups[1]!.resolve(optionsFor('US'));
+        await settled(us);
 
-            expect(options.paymentMethodOptions.value).toEqual(optionsFor('NL'));
-        },
-    );
+        expect(options.paymentMethodOptions.value).toEqual(optionsFor('NL'));
+    });
 
-    // Known defect: flip to `it` when fixed.
-    it.fails('shows no failure once the payload asked for last has loaded', async () => {
+    it('shows no failure once the payload asked for last has loaded', async () => {
         const lookups = controlledLookups();
         const options = usePaymentMethodOptions();
 

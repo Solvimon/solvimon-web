@@ -218,6 +218,8 @@ export default defineConfig(({ mode }) => {
                               ),
                           },
                       ]),
+                // Build output the source imports, such as `.sdk/tailwind.css`.
+                { find: '@sdk', replacement: fileURLToPath(new URL('./.sdk', import.meta.url)) },
                 { find: '@', replacement: fileURLToPath(new URL('./src', import.meta.url)) },
             ],
         },

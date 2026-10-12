@@ -16,7 +16,7 @@ export default mergeConfig(
             // empty stylesheet instead of depending on a build artifact.
             alias: [
                 {
-                    find: /(?:\.\.\/)*\.sdk\/tailwind\.css/,
+                    find: /^@sdk\/tailwind\.css/,
                     replacement: fileURLToPath(
                         new URL('./src/test-utils/generatedStyles.css', import.meta.url),
                     ),

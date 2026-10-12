@@ -163,6 +163,29 @@ describe('PaymentMethodsManagement', () => {
         expect(wrapper.text()).toContain('Add payment method');
     });
 
+    // Only the form confirms a method that went through 3DS; left closed, the return was dropped.
+    describe('coming back from a gateway redirect', () => {
+        afterEach(() => window.history.replaceState(null, '', '/'));
+
+        it('opens the form so it can confirm the method', () => {
+            window.history.replaceState(
+                null,
+                '',
+                '/?payment_acceptor_id=paya_1&redirectResult=res_1',
+            );
+
+            const wrapper = mountComponent();
+
+            expect(wrapper.find('[data-testid="payment-method-form"]').exists()).toBe(true);
+        });
+
+        it('keeps the form closed on an ordinary visit', () => {
+            const wrapper = mountComponent();
+
+            expect(wrapper.find('[data-testid="payment-method-form"]').exists()).toBe(false);
+        });
+    });
+
     describe('once a payment method is added', () => {
         const addPaymentMethod = async (wrapper: ReturnType<typeof mountComponent>) => {
             await getButtonByText(wrapper, 'Add payment method').trigger('click');

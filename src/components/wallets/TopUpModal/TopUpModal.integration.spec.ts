@@ -484,13 +484,7 @@ describe('TopUpModal (integrated) — an auto top-up rule switched off again', (
         expect(mockCharge).not.toHaveBeenCalled();
     });
 
-    // DD-3543 tester: confirmed defect. With the rule switched off, its out-of-range values are no
-    // longer validated, but the form still hands the changed (INACTIVE) rule over to be saved. The
-    // backend validates `topup_amount` against the pricing bounds whatever the status
-    // (CreateAutoTopupConfig.resolveTopupAmount), so the receipt then says the rule the customer
-    // switched off failed to save — or, for a threshold-only problem, an INACTIVE rule with a
-    // negative threshold is stored.
-    it.fails('saves no rule the customer switched off', async () => {
+    it('saves no rule the customer switched off', async () => {
         const wrapper = await switchedOffWithBadValues();
 
         await pay(wrapper);
@@ -499,7 +493,7 @@ describe('TopUpModal (integrated) — an auto top-up rule switched off again', (
         expect(mockCreateAutoTopUp).not.toHaveBeenCalled();
     });
 
-    it.fails('says nothing about a rule on the receipt when it was switched off', async () => {
+    it('says nothing about a rule on the receipt when it was switched off', async () => {
         mockCreateAutoTopUp.mockRejectedValue(
             new ApiError({ statusCode: 400, field: 'topup_amount' }),
         );

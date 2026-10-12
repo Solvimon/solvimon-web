@@ -401,8 +401,10 @@ async function submit() {
         });
 
         // Only a rule the customer changed: every top-up would otherwise re-save the one it opened on.
+        // And only one switched on: the editor is offered only where the wallet has no active rule,
+        // so a rule left off is no rule, not one to store with values nobody checked.
         if (
-            editedAutoTopUp &&
+            editedAutoTopUp?.status === 'ACTIVE' &&
             autoTopUpFormRef.value?.hasChanges &&
             model.value.payment_method_id
         ) {

@@ -1009,6 +1009,17 @@ describe('TopUpModalForm — what a charge requires', () => {
             ]);
         });
 
+        it('hands over no rule the customer switched back off', async () => {
+            mockAutoTopUp.hasChanges = true;
+            mockAutoTopUp.validate.mockReturnValue({ ...AUTO_TOP_UP, status: 'INACTIVE' });
+            const wrapper = mountForm([createFlexibleItem()]);
+
+            await wrapper.vm.submit();
+
+            expect(mockCharge).toHaveBeenCalled();
+            expect(wrapper.emitted('save-auto-top-up')).toBeUndefined();
+        });
+
         it('leaves a rule the customer never touched alone', async () => {
             const wrapper = mountForm([createFlexibleItem()]);
 

@@ -132,22 +132,91 @@ describe('useIncrementalLoading', () => {
         expect(isPending.value).toBe(false);
     });
 
-    it('does not run concurrent loadPage when already pending', async () => {
-        let resolveFirst: () => void;
-        const firstPromise = new Promise<ReturnType<typeof createSuccessResponse>>((resolve) => {
-            resolveFirst = () => resolve(createSuccessResponse([{ id: '1' }], 1));
+    it('does not load another page while one is pending', async () => {
+        let resolveSecond: () => void;
+        const secondPage = new Promise<ReturnType<typeof createSuccessResponse>>((resolve) => {
+            resolveSecond = () => resolve(createSuccessResponse([{ id: '2' }], 2, true));
         });
-        const service = vi.fn().mockReturnValue(firstPromise);
+        const service = vi
+            .fn()
+            .mockResolvedValueOnce(createSuccessResponse([{ id: '1' }], 1, true))
+            .mockReturnValueOnce(secondPage);
 
-        const { items, fetchInitial } = useIncrementalLoading<{ id: string }>({ service });
+        const { items, fetchInitial, fetchMore } = useIncrementalLoading<{ id: string }>({
+            service,
+        });
 
-        const p1 = fetchInitial();
-        const p2 = fetchInitial();
+        await fetchInitial();
 
-        resolveFirst!();
+        const p1 = fetchMore();
+        const p2 = fetchMore();
+
+        resolveSecond!();
         await Promise.all([p1, p2]);
 
-        expect(service).toHaveBeenCalledTimes(1);
+        expect(service).toHaveBeenCalledTimes(2);
+        expect(items.value).toStrictEqual([{ id: '1' }, { id: '2' }]);
+    });
+
+    it('lets a refresh replace a page still loading instead of dropping it', async () => {
+        let resolveStalePage: () => void;
+        const stalePage = new Promise<ReturnType<typeof createSuccessResponse>>((resolve) => {
+            resolveStalePage = () => resolve(createSuccessResponse([{ id: 'stale' }], 2));
+        });
+        const service = vi
+            .fn()
+            .mockResolvedValueOnce(createSuccessResponse([{ id: '1' }], 1, true))
+            .mockReturnValueOnce(stalePage)
+            .mockResolvedValueOnce(createSuccessResponse([{ id: 'fresh' }], 1, true));
+
+        const { items, fetchInitial, fetchMore, hasNextBatch, isPending } = useIncrementalLoading<{
+            id: string;
+        }>({ service });
+
+        await fetchInitial();
+
+        const more = fetchMore();
+        const refresh = fetchInitial();
+        await refresh;
+        resolveStalePage!();
+        await more;
+
+        expect(service).toHaveBeenCalledTimes(3);
+        expect(items.value).toStrictEqual([{ id: 'fresh' }]);
+        expect(hasNextBatch.value).toBe(true);
+        expect(isPending.value).toBe(false);
+    });
+
+    it('fetchAll records a failure and stops loading, so a later load still runs', async () => {
+        const service = vi
+            .fn()
+            .mockRejectedValueOnce(new Error('Network error'))
+            .mockResolvedValueOnce(createSuccessResponse([{ id: '1' }], 1));
+
+        const { items, error, fetchAll, fetchInitial, isPending } = useIncrementalLoading<{
+            id: string;
+        }>({ service });
+
+        await expect(fetchAll()).resolves.toBeUndefined();
+
+        expect(error.value).toStrictEqual(new Error('Network error'));
+        expect(isPending.value).toBe(false);
+
+        await fetchInitial();
+
+        expect(service).toHaveBeenCalledTimes(2);
+        expect(error.value).toBeNull();
         expect(items.value).toStrictEqual([{ id: '1' }]);
+    });
+
+    it('fetchAll records an error response as a failure', async () => {
+        const service = vi.fn().mockResolvedValue({ message: 'Forbidden', hasError: true });
+
+        const { error, fetchAll, isPending } = useIncrementalLoading({ service });
+
+        await fetchAll();
+
+        expect(error.value).toStrictEqual(new Error('Forbidden'));
+        expect(isPending.value).toBe(false);
     });
 });

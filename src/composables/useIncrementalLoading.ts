@@ -17,9 +17,14 @@ export function useIncrementalLoading<T>({
     const hasNextBatch = ref<boolean>(false);
     const isPending = computed<boolean>(() => status.value === ApiStatus.Loading);
 
+    /** Only the latest request may write: a refresh supersedes whatever was in flight before it. */
+    let latestRequest = 0;
+
     const loadPage = async (pageNumber: number, { replace = false } = {}) => {
-        // Prevent concurrent requests
-        if (isPending.value) return;
+        // A refresh always runs; another page waits until nothing is in flight
+        if (!replace && isPending.value) return;
+
+        const request = ++latestRequest;
 
         try {
             // Reset the loading state
@@ -28,6 +33,8 @@ export function useIncrementalLoading<T>({
 
             // Fetch the date
             const response = await service(pageNumber);
+
+            if (request !== latestRequest) return;
 
             // Check if we get a valid response
             if (!isApiSuccessCollectionResponse(response)) {
@@ -42,27 +49,39 @@ export function useIncrementalLoading<T>({
             status.value = ApiStatus.Done;
             page.value = pageNumber;
         } catch (err) {
+            if (request !== latestRequest) return;
+
             error.value = toError(err);
             status.value = ApiStatus.Failed;
         }
     };
 
     const fetchAll = async () => {
+        const request = ++latestRequest;
+
         error.value = null;
         status.value = ApiStatus.Loading;
 
-        const response = await getPaginatedFullList(async (pageNum: number) => {
-            const response = await service(pageNum);
-            if (!isApiSuccessCollectionResponse(response)) {
-                status.value = ApiStatus.Failed;
+        try {
+            const response = await getPaginatedFullList(async (pageNum: number) => {
+                const response = await service(pageNum);
+                if (!isApiSuccessCollectionResponse(response)) {
+                    throw new Error('message' in response ? response.message : 'Request failed');
+                }
+                return response;
+            });
 
-                throw new Error('message' in response ? response.message : 'Request failed');
-            }
-            return response;
-        });
+            if (request !== latestRequest) return;
 
-        items.value = response.data;
-        status.value = ApiStatus.Done;
+            items.value = response.data;
+            hasNextBatch.value = false;
+            status.value = ApiStatus.Done;
+        } catch (err) {
+            if (request !== latestRequest) return;
+
+            error.value = toError(err);
+            status.value = ApiStatus.Failed;
+        }
     };
 
     const fetchMore = async () => {

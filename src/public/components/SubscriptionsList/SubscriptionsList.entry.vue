@@ -18,13 +18,27 @@ defineProps<SolvimonSubscriptionsListEntryProps>();
         @error="(error) => $emit('error', error)"
     >
         <SubscriptionsListView v-bind="$props">
-            <template #default="{ customer, subscriptions, paymentMethods, isLoading, loadMore }">
+            <template
+                #default="{
+                    customer,
+                    subscriptions,
+                    paymentMethods,
+                    isLoading,
+                    hasError,
+                    hasMoreItems,
+                    isLoadingMore,
+                    loadMore,
+                }"
+            >
                 <SubscriptionsList
                     :configuration="configuration"
                     :customer="customer.customer.value"
                     :subscriptions="subscriptions.value"
                     :payment-methods="paymentMethods.value"
                     :is-loading="isLoading"
+                    :has-error="hasError"
+                    :has-more-items="hasMoreItems"
+                    :is-loading-more="isLoadingMore"
                     @load-more="loadMore"
                 />
             </template>

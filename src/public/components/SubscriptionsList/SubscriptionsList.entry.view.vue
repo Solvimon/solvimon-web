@@ -27,6 +27,9 @@ const { isLoading } = useLoadInitialData(
         :subscriptions="subscriptions.items"
         :payment-methods="paymentMethods.items"
         :is-loading="isLoading"
+        :has-error="Boolean(subscriptions.error.value)"
+        :has-more-items="subscriptions.hasNextBatch.value"
+        :is-loading-more="subscriptions.isPending.value"
         :load-more="subscriptions.fetchMore"
     />
 </template>

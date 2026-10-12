@@ -123,6 +123,7 @@ const {
     loadInvoicePreview,
     updateInvoicePreviewOnBillingInformationChange,
     saveFormStateForRedirect,
+    clearSavedFormState,
 } = useCheckoutView({
     initialCountry: props.configuration?.countryCode,
     initialEmail: props.configuration?.email,
@@ -164,6 +165,7 @@ const paymentErrorMessage = ref<string | null>(null);
 /** The gateway would not submit. It shows the customer what is missing, so nothing is said here. */
 const handlePaymentNotSubmitted = () => {
     isPaymentPending.value = false;
+    clearSavedFormState();
 };
 
 /** The payment may still go through, so paying again could charge the customer twice. */
@@ -171,6 +173,7 @@ const isPaymentUnconfirmed = ref(false);
 
 const handlePaymentFailed = (error?: { message?: string; code?: string }) => {
     isPaymentPending.value = false;
+    clearSavedFormState();
 
     if (error?.code === 'PAYMENT_OUTCOME_UNCONFIRMED') {
         isPaymentUnconfirmed.value = true;
@@ -611,6 +614,14 @@ const showPlanCustomizationEditor = computed(() => {
 
 const promotionCode = ref<string | null>(null);
 
+// The code the preview and the payment are priced with can also come from a redirect return.
+watch(
+    () => checkoutForm.form.value.promotionCode,
+    (code) => {
+        promotionCode.value = code ?? null;
+    },
+);
+
 const {
     applyPromotionCode,
     removePromotionCode,
@@ -662,6 +673,7 @@ const redirectsOnSuccess = computed(
 
 const handlePaymentSuccess = () => {
     isPaid.value = true;
+    clearSavedFormState();
     promotionCodeErrorMessage.value = null;
     paymentErrorMessage.value = null;
 
@@ -1004,6 +1016,7 @@ onMounted(() => {
                             class="sv-action sv-action--primary sv-action--full-width sv-checkout__submit w-full"
                             :disabled="
                                 isPromotionCodePending ||
+                                isInvoicePreviewPending ||
                                 hasPaymentMethodOptionsError ||
                                 paymentMethodOptions.length === 0 ||
                                 isPaymentPending ||

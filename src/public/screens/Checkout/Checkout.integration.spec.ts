@@ -12,9 +12,14 @@ const {
     recurringAmount,
     hasOneOffCharges,
     hasPaymentMethodOptionsError,
+    isInvoicePreviewPending,
+    checkoutFormValue,
     SEATS_VALUES,
 } = vi.hoisted(() => ({
     isPaid: { value: false },
+    isInvoicePreviewPending: { value: false },
+    /** The form the screen was last handed, to change it from a spec. */
+    checkoutFormValue: { current: undefined as { value: Record<string, unknown> } | undefined },
     hasPaymentMethodOptionsError: { value: false },
     subscription: { value: undefined as unknown },
     invoicePreview: { value: undefined as unknown },
@@ -45,9 +50,13 @@ vi.mock('./useCheckout.view', async () => {
             hasPaymentMethodOptionsError: c(() => hasPaymentMethodOptionsError.value),
             subscription: c(() => subscription.value),
             isPaymentMethodsPending: r(false),
-            isInvoicePreviewPending: r(false),
+            isInvoicePreviewPending: c(() => isInvoicePreviewPending.value),
             checkoutForm: {
-                form: r({ country: 'NL', enabledPricingIds: [], seatsValues: SEATS_VALUES }),
+                form: (checkoutFormValue.current = r<Record<string, unknown>>({
+                    country: 'NL',
+                    enabledPricingIds: [],
+                    seatsValues: SEATS_VALUES,
+                })),
                 initialState: r({ seatsValues: SEATS_VALUES }),
                 validation: r({ $validate: vi.fn(), $invalid: false }),
                 getIsFieldRequired: () => false,
@@ -68,6 +77,7 @@ vi.mock('./useCheckout.view', async () => {
             loadInvoicePreview: vi.fn(),
             updateInvoicePreviewOnBillingInformationChange: vi.fn(),
             saveFormStateForRedirect,
+            clearSavedFormState,
         }),
     };
 });
@@ -94,13 +104,17 @@ vi.mock('@/components/providers', () => ({
     useLogger: () => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }),
 }));
 
-const { mockExperimentalFeatures, updateInitialState, saveFormStateForRedirect } = vi.hoisted(
-    () => ({
-        saveFormStateForRedirect: vi.fn(),
-        mockExperimentalFeatures: { value: { 'express-checkout': false } },
-        updateInitialState: vi.fn(),
-    }),
-);
+const {
+    mockExperimentalFeatures,
+    updateInitialState,
+    saveFormStateForRedirect,
+    clearSavedFormState,
+} = vi.hoisted(() => ({
+    saveFormStateForRedirect: vi.fn(),
+    clearSavedFormState: vi.fn(),
+    mockExperimentalFeatures: { value: { 'express-checkout': false } },
+    updateInitialState: vi.fn(),
+}));
 
 vi.mock(
     '@/components/providers/ExperimentalFeatureProvider/composables/useExperimentalFeature',
@@ -190,6 +204,7 @@ const completed = (wrapper: Awaited<ReturnType<typeof mountCheckout>>) =>
 describe('Checkout', () => {
     beforeEach(() => {
         isPaid.value = false;
+        isInvoicePreviewPending.value = false;
         hasPaymentMethodOptionsError.value = false;
         paymentMethodOptions.value = [];
         portalNote.note = undefined;
@@ -369,6 +384,44 @@ describe('Checkout', () => {
 
         expect(isHeld()).toBe(false);
         expect(wrapper.find('.sv-checkout__submit').attributes('disabled')).toBe('true');
+    });
+
+    // The amount authorized is the preview's; paying while it reloads would charge the old one.
+    it('keeps the pay button off while the invoice preview reloads', async () => {
+        paymentMethodOptions.value = [{ integration: { payment_gateway: { variant: 'ADYEN' } } }];
+        isInvoicePreviewPending.value = true;
+        const wrapper = await mountCheckout({ Skeleton: false });
+
+        expect(wrapper.find('.sv-checkout__submit').attributes('disabled')).toBe('true');
+    });
+
+    // The form is kept for a redirect; a payment that ends on this page leaves no personal data.
+    it.each([
+        ['fails', 'payment-failed', [{ message: 'Declined' }]],
+        ['is not submitted', 'invalid', []],
+        ['succeeds', 'payment-success', []],
+    ])('clears the form kept for a redirect when a payment %s', async (_, event, args) => {
+        paymentMethodOptions.value = [{ integration: { payment_gateway: { variant: 'ADYEN' } } }];
+        const wrapper = await mountCheckout({ Skeleton: false });
+        clearSavedFormState.mockClear();
+
+        wrapper.findComponent({ name: 'PaymentIntegrationForm' }).vm.$emit(event, ...args);
+        await wrapper.vm.$nextTick();
+
+        expect(clearSavedFormState).toHaveBeenCalledTimes(1);
+    });
+
+    // A code restored with the form from a redirect is priced and sent, so it has to be on screen
+    // where the customer can see and remove it.
+    it('shows a promotion code the form was given', async () => {
+        const wrapper = await mountCheckout();
+
+        checkoutFormValue.current!.value.promotionCode = 'SPRING';
+        await wrapper.vm.$nextTick();
+
+        expect(
+            wrapper.findComponent({ name: 'PromotionCodeSection' }).attributes('promotioncode'),
+        ).toBe('SPRING');
     });
 
     describe('terms and conditions', () => {

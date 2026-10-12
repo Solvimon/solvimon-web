@@ -30,8 +30,26 @@ import { withPreselectedEnabledPricings } from '@/utils/enabledPricings';
 import { splitInvoiceByRecurrence } from '@/utils/invoice';
 import { getInitialSeatsValues } from '@/utils/seatsValues';
 import { getInitialUnitsValues } from '@/utils/unitsValues';
+import { hasPaymentRedirectReturn } from '@/utils/paymentRedirect';
 
-const REDIRECT_FORM_STATE_KEY = 'solvimon_checkout_redirect_state';
+/** Unscoped and without a timestamp; only read to be removed. */
+const LEGACY_REDIRECT_FORM_STATE_KEY = 'solvimon_checkout_redirect_state';
+const REDIRECT_FORM_STATE_KEY_PREFIX = 'solvimon_checkout_redirect_state:';
+const REDIRECT_FORM_STATE_MAX_AGE_MS = 60 * 60 * 1000;
+
+type SavedFormState = { savedAt: number; form: Partial<CheckoutFormState> };
+
+function isSavedFormState(value: unknown): value is SavedFormState {
+    return (
+        typeof value === 'object' &&
+        value !== null &&
+        'savedAt' in value &&
+        typeof value.savedAt === 'number' &&
+        'form' in value &&
+        typeof value.form === 'object' &&
+        value.form !== null
+    );
+}
 
 export function useCheckoutView({
     initialCountry,
@@ -401,22 +419,68 @@ export function useCheckoutView({
         },
     );
 
+    const redirectFormStateKey = `${REDIRECT_FORM_STATE_KEY_PREFIX}${subscriptionId}`;
+    // Read before anything mounts: the payment form takes the redirect parameters out of the URL.
+    const isRedirectReturn = hasPaymentRedirectReturn();
+
+    /** Kept only for the redirect a payment may make; a payment that ends here clears it. */
     function saveFormStateForRedirect() {
-        sessionStorage.setItem(REDIRECT_FORM_STATE_KEY, JSON.stringify(checkoutForm.form.value));
+        const saved: SavedFormState = { savedAt: Date.now(), form: checkoutForm.form.value };
+        try {
+            sessionStorage.setItem(redirectFormStateKey, JSON.stringify(saved));
+        } catch (error) {
+            logger.warn(
+                'CHECKOUT_FORM_STATE_NOT_SAVED',
+                'Could not keep the checkout form for a redirect return',
+                {},
+                error,
+            );
+        }
+    }
+
+    function clearSavedFormState() {
+        try {
+            sessionStorage.removeItem(redirectFormStateKey);
+            sessionStorage.removeItem(LEGACY_REDIRECT_FORM_STATE_KEY);
+        } catch {
+            // Storage that cannot be read holds nothing to clear.
+        }
+    }
+
+    /** The form as it was before the redirect this page returns from, at most once. */
+    function takeSavedFormState(): Partial<CheckoutFormState> | undefined {
+        let raw: string | null = null;
+        try {
+            raw = sessionStorage.getItem(redirectFormStateKey);
+        } catch {
+            return undefined;
+        }
+        clearSavedFormState();
+
+        if (!raw || !isRedirectReturn) return undefined;
+
+        let saved: unknown;
+        try {
+            saved = JSON.parse(raw);
+        } catch {
+            return undefined;
+        }
+
+        if (!isSavedFormState(saved)) return undefined;
+
+        const age = Date.now() - saved.savedAt;
+        if (age < 0 || age > REDIRECT_FORM_STATE_MAX_AGE_MS) return undefined;
+
+        // The host's email is shown read-only, so it stands over whatever was saved.
+        const form = { ...saved.form };
+        if (validatedEmail) delete form.email;
+        return form;
     }
 
     // A redirect return is not marked paid here: the payment form confirms it with the gateway and
     // goes through the same success handler as any other payment.
     onMounted(async () => {
-        const raw = sessionStorage.getItem(REDIRECT_FORM_STATE_KEY);
-        let savedFormState: Partial<CheckoutFormState> | null = null;
-        if (raw) {
-            try {
-                savedFormState = JSON.parse(raw);
-            } catch {
-                // Ignore malformed state
-            }
-        }
+        const savedFormState = takeSavedFormState();
 
         // Apply early so the form shows the user's data immediately, before API calls complete.
         if (savedFormState) {
@@ -449,7 +513,6 @@ export function useCheckoutView({
         // defaults, so the user's saved plan selections are preserved.
         if (savedFormState) {
             checkoutForm.updateInitialState(savedFormState);
-            sessionStorage.removeItem(REDIRECT_FORM_STATE_KEY);
         }
     });
 
@@ -487,5 +550,6 @@ export function useCheckoutView({
         recurringAmount,
         hasOneOffCharges,
         saveFormStateForRedirect,
+        clearSavedFormState,
     };
 }

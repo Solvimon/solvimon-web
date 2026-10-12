@@ -1,92 +1,41 @@
-import type { Component } from 'vue';
 import type { RegisteredScreenId, RegisteredComponentId } from './types';
-import PaymentMethodForm from '@/public/components/PaymentMethodForm/PaymentMethodForm.entry.vue';
-import CustomerOverviewEntry from '@/public/screens/CustomerOverview/CustomerOverview.entry.vue';
-import CheckoutEntry from '@/public/screens/Checkout/Checkout.entry.vue';
-import SubscriptionManagementEntry from '@/public/screens/SubscriptionManagement/SubscriptionManagement.entry.vue';
-import SubscriptionDetailsEntry from '@/public/screens/SubscriptionDetails/SubscriptionDetails.entry.vue';
-import PayInvoiceEntry from '@/public/screens/PayInvoice/PayInvoice.entry.vue';
-import PaymentMethodsManagementEntry from '@/public/screens/PaymentMethodsManagement/PaymentMethodsManagement.entry.vue';
-import InvoiceEntry from '@/public/components/Invoice/Invoice.entry.vue';
-import InvoiceHeaderEntry from '@/public/components/InvoiceHeader/InvoiceHeader.entry.vue';
-import InvoiceDetailsEntry from '@/public/components/InvoiceDetails/InvoiceDetails.entry.vue';
-import InvoicesListEntry from '@/public/components/InvoicesList/InvoicesList.entry.vue';
-import PaymentHistoryEntry from '@/public/components/PaymentHistory/PaymentHistory.entry.vue';
-import SubscriptionsListEntry from '@/public/components/SubscriptionsList/SubscriptionsList.entry.vue';
-import SubscriptionSchedulesEntry from '@/public/components/SubscriptionSchedules/SubscriptionSchedules.entry.vue';
-import CustomerPaymentMethodsEntry from '@/public/components/CustomerPaymentMethods/CustomerPaymentMethods.entry.vue';
-import WalletBalancesEntry from '@/public/components/WalletBalances/WalletBalances.entry.vue';
-import BillingInformationEntry from '@/public/components/BillingInformation/BillingInformation.entry.vue';
-import BillingInformationFormEntry from '@/public/components/BillingInformationForm/BillingInformationForm.entry.vue';
 
-const SCREENS: Record<RegisteredScreenId, Component> = {
-    'customer-overview': CustomerOverviewEntry,
-    checkout: CheckoutEntry,
-    'subscription-management': SubscriptionManagementEntry,
-    'subscription-details': SubscriptionDetailsEntry,
-    'pay-invoice': PayInvoiceEntry,
-    'payment-methods-management': PaymentMethodsManagementEntry,
+/**
+ * Keyed by id so the compiler holds the list to the ids `types.ts` declares: one missing, or one
+ * that is not declared, is a type error. The loaders in `registry.ce.ts` are keyed the same way.
+ */
+const SCREEN_IDS: Record<RegisteredScreenId, true> = {
+    'customer-overview': true,
+    checkout: true,
+    'subscription-management': true,
+    'subscription-details': true,
+    'pay-invoice': true,
+    'payment-methods-management': true,
 };
 
-const COMPONENTS: Record<RegisteredComponentId, Component> = {
-    invoice: InvoiceEntry,
-    'invoice-header': InvoiceHeaderEntry,
-    'invoice-details': InvoiceDetailsEntry,
-    'invoices-list': InvoicesListEntry,
-    'payment-history': PaymentHistoryEntry,
-    'subscriptions-list': SubscriptionsListEntry,
-    'subscription-schedules': SubscriptionSchedulesEntry,
-    'customer-payment-methods': CustomerPaymentMethodsEntry,
-    'wallet-balances': WalletBalancesEntry,
-    'billing-information': BillingInformationEntry,
-    'billing-information-form': BillingInformationFormEntry,
-    'payment-method-form': PaymentMethodForm,
+const COMPONENT_IDS: Record<RegisteredComponentId, true> = {
+    invoice: true,
+    'invoice-header': true,
+    'invoice-details': true,
+    'invoices-list': true,
+    'payment-history': true,
+    'subscriptions-list': true,
+    'subscription-schedules': true,
+    'customer-payment-methods': true,
+    'wallet-balances': true,
+    'billing-information': true,
+    'billing-information-form': true,
+    'payment-method-form': true,
 };
 
-const REGISTERED_SCREEN_IDS = [
-    'customer-overview',
-    'checkout',
-    'subscription-management',
-    'subscription-details',
-    'pay-invoice',
-    'payment-methods-management',
-] satisfies RegisteredScreenId[];
+const isScreenId = (id: string): id is RegisteredScreenId => Object.hasOwn(SCREEN_IDS, id);
 
-const REGISTERED_COMPONENT_IDS = [
-    'invoice',
-    'invoice-header',
-    'invoice-details',
-    'invoices-list',
-    'payment-history',
-    'subscriptions-list',
-    'subscription-schedules',
-    'customer-payment-methods',
-    'wallet-balances',
-    'billing-information',
-    'billing-information-form',
-    'payment-method-form',
-] satisfies RegisteredComponentId[];
-
-function isRegisteredScreenId(id: string): id is RegisteredScreenId {
-    return Object.hasOwn(SCREENS, id);
-}
-
-function isRegisteredComponentId(id: string): id is RegisteredComponentId {
-    return Object.hasOwn(COMPONENTS, id);
-}
-
-export function getScreenComponent(id: string): Component | undefined {
-    return isRegisteredScreenId(id) ? SCREENS[id] : undefined;
-}
-
-export function getComponent(id: string): Component | undefined {
-    return isRegisteredComponentId(id) ? COMPONENTS[id] : undefined;
-}
+const isComponentId = (id: string): id is RegisteredComponentId => Object.hasOwn(COMPONENT_IDS, id);
 
 export function getRegisteredScreenIds(): RegisteredScreenId[] {
-    return [...REGISTERED_SCREEN_IDS];
+    return Object.keys(SCREEN_IDS).filter(isScreenId);
 }
 
 export function getRegisteredComponentIds(): RegisteredComponentId[] {
-    return [...REGISTERED_COMPONENT_IDS];
+    return Object.keys(COMPONENT_IDS).filter(isComponentId);
 }

@@ -5,6 +5,7 @@ import {
     mountPayInvoice,
     payInvoice,
     stripeElementsOptions,
+    stripeElementsUpdates,
     type MountOptions,
 } from '../support/payInvoice';
 import {
@@ -154,8 +155,22 @@ test.describe('Pay invoice', () => {
             await payInvoice(page).storePaymentMethod.click();
 
             await expect
-                .poll(async () => (await stripeElementsOptions(page)).at(-1))
-                .not.toHaveProperty('setup_future_usage');
+                .poll(async () => (await stripeElementsUpdates(page)).at(-1))
+                .toMatchObject({ setup_future_usage: null });
+        });
+
+        // Setting the frame up anew put a second, empty card form under the first.
+        test('keeps the card the customer typed when the box is unticked', async ({ page }) => {
+            api = await mountLoaded(page);
+            const ui = payInvoice(page);
+            await ui.stripeCardNumber.fill('4242 4242 4242 4242');
+
+            await ui.storePaymentMethod.click();
+            await expect.poll(async () => (await stripeElementsUpdates(page)).length).toBe(1);
+
+            await expect(ui.stripeElement).toHaveCount(1);
+            await expect(ui.stripeCardNumber).toHaveValue('4242 4242 4242 4242');
+            expect(await stripeElementsOptions(page)).toHaveLength(1);
         });
 
         test('reports a payment the gateway refuses', async ({ page }) => {

@@ -1,6 +1,13 @@
 import { test, expect, type Page } from '@playwright/test';
 import type { ApiMock } from '../support/api-mock';
-import { checkout, hostEvents, mountCheckout, type MountOptions } from '../support/checkout';
+import {
+    checkout,
+    hostEvents,
+    mountCheckout,
+    stripeElementsOptions,
+    stripeElementsUpdates,
+    type MountOptions,
+} from '../support/checkout';
 import {
     aFailedAuthorization,
     anActionRequiredAuthorization,
@@ -384,6 +391,30 @@ test.describe('Checkout', () => {
 
             // One request for the change, not one per keystroke — the editor is debounced.
             expect(api.calls('invoicePreview').length - before).toBe(1);
+        });
+
+        // Setting the frame up anew put a second, empty card form under the first, and the
+        // submit went to the empty one.
+        test('keeps the card the customer typed when the price changes', async ({ page }) => {
+            api = await mountLoaded(page, {
+                subscription: aSubscription({
+                    seats: [
+                        { pricingItemConfigId: 'pico_seats', name: 'Seats', defaultNumber: '2' },
+                    ],
+                }),
+            });
+            const ui = checkout(page);
+            await ui.stripeCardNumber.fill('4242 4242 4242 4242');
+
+            api.on('invoicePreview', { body: anInvoicePreview({ total: '50.00' }) });
+            await ui.seats.fill('5');
+
+            await expect
+                .poll(async () => (await stripeElementsUpdates(page)).at(-1))
+                .toMatchObject({ amount: 5000, currency: 'eur' });
+            await expect(ui.stripeElement).toHaveCount(1);
+            await expect(ui.stripeCardNumber).toHaveValue('4242 4242 4242 4242');
+            expect(await stripeElementsOptions(page)).toHaveLength(1);
         });
 
         test('previews again when an add-on is enabled', async ({ page }) => {

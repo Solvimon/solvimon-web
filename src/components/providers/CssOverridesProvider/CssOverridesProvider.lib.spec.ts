@@ -1,5 +1,9 @@
 import { normalizeCssOverrides } from './CssOverridesProvider.lib';
 
+/**
+ * Which `@import` rules are dropped is decided by the browser's CSS parser, which jsdom does not
+ * have; `tests/playwright/e2e/css-overrides.spec.ts` checks that part in Chromium.
+ */
 describe('normalizeCssOverrides', () => {
     it('is empty without overrides', () => {
         expect(normalizeCssOverrides(undefined)).toBe('');
@@ -12,21 +16,15 @@ describe('normalizeCssOverrides', () => {
         );
     });
 
-    it.each([
-        ['@import "theme.css";'],
-        ["@import 'theme.css' screen;"],
-        ['@import url(https://fonts.example.com/inter.css);'],
-        ['@IMPORT url("theme.css") layer(base) supports(display: grid) print;'],
-        ['@import url("data:text/css;base64,LmEgeyBjb2xvcjogcmVkOyB9");'],
-    ])('drops %s and keeps the rules around it', (rule) => {
-        expect(normalizeCssOverrides(`${rule}\n.sv-root { color: red; }`)).toBe(
-            '.sv-root { color: red; }',
-        );
+    it('leaves CSS without an at-rule exactly as written', () => {
+        const css = '.a::before { content: "x"; }\n.b{color:red}';
+
+        expect(normalizeCssOverrides(`  ${css}\n`)).toBe(css);
     });
 
-    it('drops an @import from any entry of a list', () => {
-        expect(normalizeCssOverrides(['.a { color: red; }', '@import "b.css";'])).toBe(
-            '.a { color: red; }',
-        );
+    it('leaves the CSS as written where there is no parser to ask', () => {
+        const css = '@import "theme.css";\n.a { color: red; }';
+
+        expect(normalizeCssOverrides(css)).toBe(css);
     });
 });

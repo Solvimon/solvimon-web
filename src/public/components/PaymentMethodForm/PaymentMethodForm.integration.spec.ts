@@ -1,7 +1,8 @@
-import { mount } from '@vue/test-utils';
+import { flushPromises, mount } from '@vue/test-utils';
 import { ref } from 'vue';
 import type { Customer, PaymentMethodOptionsResponse } from '@solvimon/solvimon-types';
 import PaymentMethodFormEntry from './PaymentMethodForm.entry.vue';
+import PaymentMethodForm from './PaymentMethodForm.vue';
 import type { SolvimonPaymentMethodFormEntryProps } from './PaymentMethodForm.entry.types';
 import { createTestPortalObject } from '@/test-utils/portalObjectFixture';
 import {
@@ -62,10 +63,12 @@ describe('PaymentMethodForm entry component', () => {
         withCustomer = true,
         isLoading = false,
         paymentMethodOptions = [createPaymentMethodOptionEntry()] as PaymentMethodOptionsResponse,
+        props = {},
     }: {
         withCustomer?: boolean;
         isLoading?: boolean;
         paymentMethodOptions?: PaymentMethodOptionsResponse;
+        props?: Partial<SolvimonPaymentMethodFormEntryProps>;
     } = {}) => {
         mockUseCustomer.mockReturnValue({
             customer: ref(withCustomer ? customer : undefined),
@@ -86,7 +89,7 @@ describe('PaymentMethodForm entry component', () => {
         });
 
         return mount(PaymentMethodFormEntry, {
-            props: defaultProps,
+            props: { ...defaultProps, ...props },
             global: {
                 stubs: { teleport: true },
             },
@@ -116,6 +119,25 @@ describe('PaymentMethodForm entry component', () => {
 
         expect(wrapper.get('[data-testid="payment-method-form-skeleton"]')).toBeTruthy();
         expect(wrapper.text()).toBe('');
+    });
+
+    it("offers the payment methods for the customer's own country by default", async () => {
+        mountComponent();
+        await flushPromises();
+
+        expect(mockPaymentMethodOptionsGet).toHaveBeenCalledWith(
+            expect.objectContaining({ country: 'NL' }),
+        );
+    });
+
+    it('uses the countryCode the host passes over the customer country', async () => {
+        const wrapper = mountComponent({ props: { countryCode: 'DE' } });
+        await flushPromises();
+
+        expect(mockPaymentMethodOptionsGet).toHaveBeenCalledWith(
+            expect.objectContaining({ country: 'DE' }),
+        );
+        expect(wrapper.getComponent(PaymentMethodForm).props('countryCode')).toBe('DE');
     });
 
     it('renders the available payment methods section when data is loaded', () => {

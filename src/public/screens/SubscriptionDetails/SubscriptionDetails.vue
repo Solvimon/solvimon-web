@@ -8,7 +8,8 @@ import type {
 import { ContentWithAsideLayout } from '@/layouts';
 import { useActionDispatchProvider } from '@/components/providers';
 import { useSubscriptionActions } from '@/composables/useSubscriptionActions';
-import { getMostRecentScheduleInfo, getSubscriptionName } from '@/utils/subscription';
+import { getSubscriptionName } from '@/utils/subscription';
+import { getActiveDefaultScheduleInfo } from '@/utils/pricingPlanSchedule';
 import CustomerWalletBalances from '@/public/components/CustomerWalletBalances/CustomerWalletBalances.vue';
 import CustomerPaymentMethods from '@/public/components/CustomerPaymentMethods/CustomerPaymentMethods.vue';
 import EmptyStatePlaceholder from '@/components/checkout/EmptyStatePlaceholder.vue';
@@ -87,8 +88,13 @@ const cancellationSuccessMessage = computed<string | undefined>(() => {
           });
 });
 
-/** The upgrades on offer are the ones enabled on the schedule the subscription runs on now. */
-const currentScheduleInfo = computed(() => getMostRecentScheduleInfo(props.subscription));
+/**
+ * The upgrades on offer are the ones enabled on the schedule the subscription is billed on now — not
+ * one that is only scheduled to start.
+ */
+const currentScheduleInfo = computed(() =>
+    getActiveDefaultScheduleInfo(props.subscription?.pricing_plan_schedule_infos ?? []),
+);
 
 const subscriptionPaymentMethod = computed(() =>
     (props.paymentMethods ?? []).find(({ id }) => id === props.subscription?.payment_method_id),
@@ -254,7 +260,7 @@ const title = computed<string>(() =>
                 v-if="currentScheduleInfo"
                 class="sv-subscription-details__upgrades"
                 :pricing-plan-schedule="currentScheduleInfo"
-                @upgrade="handleUpgrade"
+                @upgrade="(entry) => handleUpgrade(entry.pricingId)"
             />
 
             <CustomerPaymentMethods

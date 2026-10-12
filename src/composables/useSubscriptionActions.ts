@@ -1,4 +1,5 @@
 import { computed, ref, type ComputedRef, type Ref } from 'vue';
+import type { Pricing } from '@solvimon/solvimon-types';
 import type { PricingPlanSubscriptionExpanded } from '@/types/subscription';
 import { useActionDispatchProvider } from '@/components/providers';
 import type { SubscriptionCancellationVariant } from '@/services/subscriptions';
@@ -22,7 +23,7 @@ export function useSubscriptionActions({
     cancel: () => void;
     renew: () => void;
     dismiss: () => void;
-    manage: () => void;
+    manage: (enabledPricingId?: Pricing['id']) => void;
 } {
     const { dispatchAction } = useActionDispatchProvider();
 
@@ -58,12 +59,16 @@ export function useSubscriptionActions({
         pendingVariant.value = undefined;
     };
 
-    const manage = () => {
+    /** Names the pricing the customer came from, so the host opens the group it belongs to. */
+    const manage = (enabledPricingId?: Pricing['id']) => {
         if (!subscription.value) return;
 
         dispatchAction({
             action: 'manage-subscription',
-            data: { subscriptionId: subscription.value.id },
+            data: {
+                subscriptionId: subscription.value.id,
+                ...(enabledPricingId && { enabledPricingId }),
+            },
         });
     };
 

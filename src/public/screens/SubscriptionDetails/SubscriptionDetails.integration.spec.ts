@@ -454,32 +454,73 @@ describe('SubscriptionDetails', () => {
     });
 
     describe('upgrades', () => {
-        const withUpgrade = {
-            ...mockSubscription,
-            pricing_plan_schedule_infos: [
-                {
-                    id: 'ppsc_1',
-                    pricing_plan_schedule: {
-                        id: 'ppsc_1',
-                        enabled_pricings: [{ pricing_id: 'pri_1' }],
-                    },
-                    pricing_plan_version: {
-                        pricing_plan: { name: 'Pro plan' },
-                        pricing_categories: [
+        const createScheduleInfo = ({
+            id,
+            startAt,
+            pricingId,
+            pricingName,
+        }: {
+            id: string;
+            startAt: string;
+            pricingId: string;
+            pricingName: string;
+        }) => ({
+            id,
+            start_at: startAt,
+            pricing_plan_schedule: {
+                id,
+                type: 'DEFAULT',
+                start_at: startAt,
+                enabled_pricings: [{ pricing_id: pricingId }],
+            },
+            pricing_plan_version: {
+                pricing_plan: { name: 'Pro plan' },
+                pricing_categories: [
+                    {
+                        pricing_groups: [
                             {
-                                pricing_groups: [
-                                    {
-                                        id: 'pgr_1',
-                                        name: 'Credit packs',
-                                        pricings: [{ id: 'pri_1', name: '1.000 credits' }],
-                                    },
-                                ],
+                                id: 'pgr_1',
+                                name: 'Credit packs',
+                                pricings: [{ id: pricingId, name: pricingName }],
                             },
                         ],
                     },
-                },
+                ],
+            },
+        });
+
+        const withUpgrade = {
+            ...mockSubscription,
+            pricing_plan_schedule_infos: [
+                createScheduleInfo({
+                    id: 'ppsc_1',
+                    startAt: '2020-01-01T00:00:00.000Z',
+                    pricingId: 'pri_1',
+                    pricingName: '1.000 credits',
+                }),
             ],
         } as unknown as PricingPlanSubscriptionExpanded;
+
+        it('lists what the running schedule has, not one that has yet to start', () => {
+            const wrapper = mountComponent({
+                subscription: {
+                    ...withUpgrade,
+                    pricing_plan_schedule_infos: [
+                        ...withUpgrade.pricing_plan_schedule_infos,
+                        createScheduleInfo({
+                            id: 'ppsc_future',
+                            startAt: '2999-01-01T00:00:00.000Z',
+                            pricingId: 'pri_5',
+                            pricingName: '5.000 credits',
+                        }),
+                    ],
+                } as unknown as PricingPlanSubscriptionExpanded,
+            });
+
+            expect(wrapper.find('.sv-enabled-pricings-list__item-name').text()).toBe(
+                '1.000 credits',
+            );
+        });
 
         it('lists the pricings enabled on the current schedule', () => {
             const wrapper = mountComponent({ subscription: withUpgrade });
@@ -495,14 +536,14 @@ describe('SubscriptionDetails', () => {
             expect(wrapper.find('.sv-enabled-pricings-list').exists()).toBe(false);
         });
 
-        it('hands an upgrade off to the host', async () => {
+        it('hands an upgrade off to the host, naming the pricing it starts from', async () => {
             const wrapper = mountComponent({ subscription: withUpgrade });
 
             await wrapper.find('.sv-enabled-pricings-list__item-upgrade').trigger('click');
 
             expect(mockDispatchAction).toHaveBeenCalledWith({
                 action: 'manage-subscription',
-                data: { subscriptionId: 'ppsu_1' },
+                data: { subscriptionId: 'ppsu_1', enabledPricingId: 'pri_1' },
             });
         });
     });

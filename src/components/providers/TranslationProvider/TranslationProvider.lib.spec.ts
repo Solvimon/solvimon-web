@@ -5,6 +5,7 @@ import {
     isSupportedLocale,
     loadLocaleMessages,
     supportedLocaleSet,
+    warnIfUnsupportedLocale,
 } from './TranslationProvider.lib';
 
 vi.mock('@solvimon/solvimon-ui/translations/en-US', () => ({
@@ -91,5 +92,27 @@ describe('loadLocaleMessages', () => {
             {},
             expect.any(Error),
         );
+    });
+});
+
+describe('warnIfUnsupportedLocale', () => {
+    it.each(['nl', 'en-GB'])('warns that %s falls back to en-US', (locale) => {
+        const logger = makeLogger();
+
+        warnIfUnsupportedLocale(locale, logger);
+
+        expect(logger.warn).toHaveBeenCalledWith(
+            'UNSUPPORTED_LOCALE',
+            expect.stringContaining('en-US'),
+            expect.objectContaining({ locale }),
+        );
+    });
+
+    it.each([undefined, 'nl-NL', 'en-US'])('says nothing about %s', (locale) => {
+        const logger = makeLogger();
+
+        warnIfUnsupportedLocale(locale, logger);
+
+        expect(logger.warn).not.toHaveBeenCalled();
     });
 });

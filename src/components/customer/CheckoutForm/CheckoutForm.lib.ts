@@ -30,6 +30,10 @@ export const getRequiredFieldsForCountry = (
     return [...countrySpecificRequiredFieldsMap[country], ...DEFAULT_REQUIRED_FIELDS];
 };
 
+/** The VAT number is asked for on a company purchase only, and not in the US. */
+export const isVatNumberShown = (state: Pick<CheckoutFormState, 'type' | 'country'>): boolean =>
+    state.type === 'ORGANIZATION' && state.country !== 'US';
+
 /**
  * Map the checkout form state onto the customer it describes, so consumers that work with
  * customers (the invoice preview for instance) do not have to know about this form.

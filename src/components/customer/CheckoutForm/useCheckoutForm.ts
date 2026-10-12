@@ -3,7 +3,7 @@ import { taxId } from '@solvimon/solvimon-ui/validators';
 import { email, required, requiredIf } from '@vuelidate/validators';
 import { computed, onMounted, ref, toRaw } from 'vue';
 import type { CheckoutFormState } from './CheckoutForm.types';
-import { getRequiredFieldsForCountry } from './CheckoutForm.lib';
+import { getRequiredFieldsForCountry, isVatNumberShown } from './CheckoutForm.lib';
 import { useWatchDebounced } from '@/composables/useWatchDebounced';
 import { createGeoLocationService } from '@/services/geolocation';
 
@@ -31,16 +31,17 @@ export function useCheckoutForm({
     const getIsFieldRequired = (field: keyof CheckoutFormState): boolean =>
         requiredFields.value.includes(field);
 
+    // A hidden VAT number is not checked: the customer could not see or correct it.
     const validation = useValidation(
-        {
+        computed(() => ({
             email: { required, email },
             country: { required },
             state: { required: requiredIf(() => getIsFieldRequired('state')) },
             addressLine1: { required: requiredIf(() => getIsFieldRequired('addressLine1')) },
             postalCode: { required: requiredIf(() => getIsFieldRequired('postalCode')) },
             companyLegalName: requiredIf(form.value.type === 'ORGANIZATION'),
-            companyVatNumber: { taxId },
-        },
+            companyVatNumber: isVatNumberShown(form.value) ? { taxId } : {},
+        })),
         form,
     );
 

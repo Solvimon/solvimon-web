@@ -39,7 +39,6 @@ test.describe('DD-3537 payment method options, out of order', () => {
     test('pays through the country on screen when a slow lookup for another lands late', async ({
         page,
     }) => {
-        test.fail(); // Known defect: remove when fixed.
         api = await mountCheckout(page, {
             portalObject: aPortalObject({ successUrl: '' }),
             configuration: { email: 'customer@example.com', countryCode: 'NL' },
@@ -74,7 +73,6 @@ test.describe('DD-3537 payment method options, out of order', () => {
     test('drops the failure of a country the customer already left for another', async ({
         page,
     }) => {
-        test.fail(); // Known defect: remove when fixed.
         api = await mountCheckout(page, {
             configuration: { email: 'customer@example.com', countryCode: 'NL' },
             mocks: {

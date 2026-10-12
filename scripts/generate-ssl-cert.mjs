@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { execSync } from 'child_process';
+import { execFileSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'node:url';
@@ -24,8 +24,23 @@ if (fs.existsSync(SSL_CERT_FILE) && fs.existsSync(SSL_KEY_FILE)) {
 console.log('Generating SSL certificates for localhost...');
 
 try {
-    execSync(
-        `openssl req -x509 -newkey rsa:4096 -keyout "${SSL_KEY_FILE}" -out "${SSL_CERT_FILE}" -days 365 -nodes -subj "/C=NL/ST=Test/L=Test/O=Test/CN=localhost"`,
+    execFileSync(
+        'openssl',
+        [
+            'req',
+            '-x509',
+            '-newkey',
+            'rsa:4096',
+            '-keyout',
+            SSL_KEY_FILE,
+            '-out',
+            SSL_CERT_FILE,
+            '-days',
+            '365',
+            '-nodes',
+            '-subj',
+            '/C=NL/ST=Test/L=Test/O=Test/CN=localhost',
+        ],
         { stdio: 'inherit' },
     );
     console.log('SSL certificates generated successfully');

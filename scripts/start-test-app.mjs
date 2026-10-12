@@ -8,39 +8,36 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const testAppDir = path.join(__dirname, '../tests/app');
+const viteBin = path.join(testAppDir, 'node_modules/vite/bin/vite.js');
 
 console.log(`Starting test app server in ${testAppDir}...`);
 
-const child = spawn('npm', ['run', 'dev'], {
+// Vite is run directly rather than through `npm run dev` in a shell: a signal sent to a shell or
+// to npm does not reliably reach the server, which then outlives the run and holds the port.
+const child = spawn(process.execPath, [viteBin], {
     cwd: testAppDir,
     stdio: 'inherit',
-    shell: true,
     env: {
         ...process.env,
         NODE_ENV: process.env.NODE_ENV || 'development',
     },
 });
 
-const cleanup = () => {
-    if (child.pid) {
-        try {
-            child.kill('SIGTERM');
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        } catch (_) {
-            // ignore errors during cleanup
-        }
-    }
-    process.exit(0);
+let stopping = false;
+
+const stop = (signal) => {
+    stopping = true;
+    child.kill(signal);
 };
 
-process.on('SIGTERM', cleanup);
-process.on('SIGINT', cleanup);
+process.on('SIGTERM', () => stop('SIGTERM'));
+process.on('SIGINT', () => stop('SIGINT'));
 
-child.on('exit', (code) => {
-    if (code !== 0 && code !== null) {
-        console.error(`Server process exited with code ${code}`);
-    }
-    process.exit(code || 0);
+child.on('exit', (code, signal) => {
+    if (stopping) process.exit(0);
+
+    console.error(`Test app server stopped unexpectedly (${signal ?? `exit code ${code}`})`);
+    process.exit(code || 1);
 });
 
 child.on('error', (error) => {

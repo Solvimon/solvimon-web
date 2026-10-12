@@ -123,6 +123,14 @@ An element follows the properties you change after it has mounted:
 The checkout reads `email`, `countryCode` and `enabledPricingIds` from its `configuration` when it
 loads, as the values its form starts with, and applies `couponCode` once the subscription is in.
 
+A few more are read once, when the element loads, and a later change does not reach it; to change
+one, mount a new element:
+
+- the payment method form's `countryCode` and `configuration.invoiceId`, which it sets up the
+  payment methods it offers with;
+- the subscription management screen's `configuration.enabledPricingId`, which picks the pricing
+  it opens on.
+
 The supported locales are `en-US`, `nl-NL`, `de-DE` and `it-IT`. Any other — `nl` or `en-GB`, say
 — renders in `en-US` and logs `UNSUPPORTED_LOCALE`.
 

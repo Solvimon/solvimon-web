@@ -1,5 +1,5 @@
 import type { CountryCode } from '@solvimon/solvimon-types';
-import type { Error } from '@/types/errors';
+import type { SdkError } from '@/types/errors';
 
 export interface CheckoutConfiguration {
     /**
@@ -41,7 +41,7 @@ export interface CheckoutEmits {
     /**
      * Emitted when an error occurs.
      */
-    (e: 'error', error: Error): void;
+    (e: 'error', error: SdkError): void;
     /**
      * Emitted when the checkout is ready.
      */

@@ -8,7 +8,8 @@ type ErrorCode =
     | 'RESOURCE_REVOKED'
     | 'PAYMENT_INTEGRATION_INITIALIZATION_FAILED';
 
-export interface Error {
+/** Not named `Error`, so importing it does not hide the global one. */
+export interface SdkError {
     code: ErrorCode;
     message: string;
     error?: unknown;

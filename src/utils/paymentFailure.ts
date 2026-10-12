@@ -1,4 +1,4 @@
-import type { Error as SdkError } from '@/types/errors';
+import type { SdkError } from '@/types/errors';
 import { getSessionReference } from '@/utils/sessionReference';
 
 /**

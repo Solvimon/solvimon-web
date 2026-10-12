@@ -1,6 +1,4 @@
 import type { InjectionKey } from 'vue';
-import { getConfig } from '@/config/lib';
+import type { Config } from './ConfigProvider.types';
 
-export const CONFIG_INJECTION_KEY: InjectionKey<
-    ReturnType<typeof getConfig & { customElementName: string }>
-> = Symbol('config');
+export const CONFIG_INJECTION_KEY: InjectionKey<Config> = Symbol('config');

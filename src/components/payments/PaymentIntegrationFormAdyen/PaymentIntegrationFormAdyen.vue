@@ -19,7 +19,7 @@ import {
 import SepaMandateNotice from './SepaMandateNotice.vue';
 import PaymentCompletedCard from '@/components/payments/PaymentCompletedCard/PaymentCompletedCard.vue';
 import PaymentErrorCard from '@/components/payments/PaymentErrorCard/PaymentErrorCard.vue';
-import type { Error } from '@/types/errors';
+import type { SdkError } from '@/types/errors';
 import { createPaymentsService } from '@/services/payments';
 import { getQueryParam } from '@/utils/url';
 import { createPaymentMethodsService } from '@/services/paymentMethods';
@@ -69,7 +69,7 @@ const sepaNoticeRef = ref<HTMLElement | null>(null);
 const sepaNoticeTarget = ref<HTMLElement | null>(null);
 let sepaObserver: MutationObserver | undefined;
 const showPaymentSuccess = ref(false);
-const integrationError = ref<Error>();
+const integrationError = ref<SdkError>();
 
 const logger = useLogger();
 const { locale } = useIntl();
@@ -108,7 +108,7 @@ function failureContext(params: Omit<PaymentFailureParams, 'gateway'>): Record<s
  * Every failure leaves through here, so the card the customer sees always carries the reference
  * they can quote back to support.
  */
-function emitError(err: Omit<Error, 'reference'>) {
+function emitError(err: Omit<SdkError, 'reference'>) {
     const failure = createPaymentFailureError(err);
     integrationError.value = failure;
     emit('payment-failed', failure);

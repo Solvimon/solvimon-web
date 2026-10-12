@@ -1,5 +1,5 @@
 import type { useIntl } from '@solvimon/solvimon-ui';
-import type { Error } from '@/types/errors';
+import type { SdkError } from '@/types/errors';
 
 type Translate = ReturnType<typeof useIntl>['$t'];
 
@@ -19,7 +19,7 @@ export type PaymentErrorContent = {
  * customer can replace, a form that failed to load. It is left off where the fault is in the
  * integration, since reloading only shows the same message again.
  */
-export function createErrorMap($t: Translate): Record<Error['code'], PaymentErrorContent> {
+export function createErrorMap($t: Translate): Record<SdkError['code'], PaymentErrorContent> {
     return {
         UNKNOWN_ERROR: {
             title: $t({

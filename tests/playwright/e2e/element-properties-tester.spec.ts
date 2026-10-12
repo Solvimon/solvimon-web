@@ -316,26 +316,22 @@ test.describe('DD-3549 tester: how a host puts the element on the page', () => {
 
 test.describe('DD-3549 tester: portal checks', () => {
     /**
-     * The portal check runs below `AuthProvider`, so the token is exchanged before the element knows
-     * the portal is revoked, and nothing below renders until that exchange succeeds. If identity
-     * refuses a revoked portal's token, the checkout never reaches its "not available" notice.
-     * Whether identity does refuse it is not verified here (no backend), hence plausible, not
-     * confirmed: marked as an expected failure until the check runs before the exchange.
+     * The portal check runs above `AuthProvider`, so a revoked portal's token is never exchanged,
+     * and identity refusing it cannot keep the checkout from its "not available" notice.
      */
-    test.fail(
-        'a revoked checkout shows its notice even when identity refuses the token',
-        async ({ page }) => {
-            const api = await mountCheckout(page, {
-                portalObject: aPortalObject({ status: 'REVOKED' }),
-                mocks: { accessToken: { status: 401, body: { message: 'Portal url revoked' } } },
-            });
+    test('a revoked checkout shows its notice even when identity refuses the token', async ({
+        page,
+    }) => {
+        const api = await mountCheckout(page, {
+            portalObject: aPortalObject({ status: 'REVOKED' }),
+            mocks: { accessToken: { status: 401, body: { message: 'Portal url revoked' } } },
+        });
 
-            await expect(checkout(page).unavailable).toBeVisible({ timeout: 5000 });
-            expect(api.calls('subscription')).toEqual([]);
-        },
-    );
+        await expect(checkout(page).unavailable).toBeVisible({ timeout: 5000 });
+        expect(api.calls('subscription')).toEqual([]);
+    });
 
-    test('a wrong-type portal makes no call beyond the token exchange', async ({ page }) => {
+    test('a wrong-type portal makes no call, not even the token exchange', async ({ page }) => {
         const api = await mountSubscriptionDetails(page, {
             portalObject: aCustomerPortalObject({ type: 'INIT_PRICING_PLAN_SUBSCRIPTION' }),
         });
@@ -344,7 +340,7 @@ test.describe('DD-3549 tester: portal checks', () => {
             .poll(async () => (await hostEvents(page)).logs.map(({ code }) => code))
             .toContain('PORTAL_TYPE_NOT_ALLOWED');
         await page.waitForTimeout(1000);
-        expect(api.calls('accessToken')).toHaveLength(1);
+        expect(api.calls('accessToken')).toHaveLength(0);
         (['customer', 'subscription', 'paymentMethods', 'walletBalances'] as const).forEach(
             (name) => expect(api.calls(name)).toEqual([]),
         );

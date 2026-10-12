@@ -75,6 +75,8 @@ const showPaymentSuccess = ref(false);
 const integrationError = ref<Error>();
 // Set once a payment is settled or may still go through, so the drop-in cannot take a second one.
 let isDropInWithheld = false;
+// A mount that is no longer the latest one stops at its next await, so two never both land.
+let mountAttempt = 0;
 // Kept until the gateway has answered for it, so a retry can ask again after a failed call.
 let pendingRedirectResult: string | undefined;
 
@@ -249,6 +251,9 @@ function loadAdyen() {
 }
 
 async function mountDropIn() {
+    const attempt = ++mountAttempt;
+    const isSuperseded = () => attempt !== mountAttempt;
+
     if (isDropInWithheld) return;
 
     await unmountDropIn();
@@ -273,15 +278,18 @@ async function mountDropIn() {
     // The container renders only once there is something to put in it.
     await nextTick();
 
-    if (!dropInContainerRef.value) return;
+    if (isSuperseded() || !dropInContainerRef.value) return;
 
     try {
         const [adyen, adyenCss] = await loadAdyen();
+        if (isSuperseded()) return;
 
         const { checkoutConfig, dropInConfig } = await getConfiguration();
 
-        checkoutInstance = await adyen.AdyenCheckout(checkoutConfig);
-        if (isDropInWithheld) return;
+        const checkout = await adyen.AdyenCheckout(checkoutConfig);
+        if (isSuperseded() || isDropInWithheld || !dropInContainerRef.value) return;
+
+        checkoutInstance = checkout;
 
         dropInInstance = new adyen.Dropin(checkoutInstance, {
             ...dropInConfig,
@@ -291,6 +299,8 @@ async function mountDropIn() {
         injectStylesToShadowRoot(adyenCss);
         observeSepaNotice();
     } catch (error) {
+        if (isSuperseded()) return;
+
         logger.error(
             'PAYMENT_INTEGRATION_INITIALIZATION_FAILED',
             'Failed to mount Adyen web drop-in',
@@ -352,16 +362,28 @@ async function unmountDropIn() {
     }
 }
 
+const ADYEN_STYLE_ATTRIBUTE = 'data-sv-adyen-styles';
+
+/** Every form in a shadow root shares its styles, so each goes in once however often it remounts. */
+function appendStyleOnce(root: ShadowRoot, name: string, css: string) {
+    if (root.querySelector(`style[${ADYEN_STYLE_ATTRIBUTE}="${name}"]`)) return;
+
+    const style = document.createElement('style');
+    style.setAttribute(ADYEN_STYLE_ATTRIBUTE, name);
+    style.textContent = css;
+    root.appendChild(style);
+}
+
 function injectStylesToShadowRoot(adyenCss: string) {
     const root = dropInContainerRef.value?.getRootNode();
     if (root instanceof ShadowRoot) {
-        const adyenStyle = document.createElement('style');
-        adyenStyle.textContent = adyenCss;
-        root.appendChild(adyenStyle);
+        appendStyleOnce(root, 'sdk', adyenCss);
 
         // Inject custom overrides as an inline style
-        const style = document.createElement('style');
-        style.textContent = `
+        appendStyleOnce(
+            root,
+            'overrides',
+            `
             :host {
                 --adyen-sdk-color-background-secondary: transparent;
                 --adyen-sdk-color-background-primary: rgb(243 244 246 / 0.5);
@@ -454,17 +476,20 @@ function injectStylesToShadowRoot(adyenCss: string) {
             .adyen-checkout__checkbox__input + .adyen-checkout__checkbox__label:after {
                 border-color: rgb(229, 231, 235);
             }
-        `;
+        `,
+        );
 
         if (props.variant === 'AUTHORIZE') {
-            style.textContent += `
+            appendStyleOnce(
+                root,
+                'authorize',
+                `
             .adyen-checkout__payment-method--cashapp .adyen-checkout-pm-details-wrapper {
                 display: none;
             }
-            `;
+            `,
+            );
         }
-
-        root.appendChild(style);
     }
 }
 
@@ -976,6 +1001,7 @@ onMounted(async () => {
 });
 
 onBeforeUnmount(() => {
+    mountAttempt++;
     void unmountDropIn();
 });
 

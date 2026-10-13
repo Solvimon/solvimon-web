@@ -1,10 +1,8 @@
 import { ensureCustomElementDefined } from './registry.ce';
 import type {
-    ComponentMountConfiguration,
     CoreConfiguration,
     RegisteredComponentId,
     RegisteredScreenId,
-    ScreenMountConfiguration,
     SolvimonMountConfig,
 } from './types';
 import type { LogSink } from '@/components/providers/LoggerProvider/LoggerProvider.types';
@@ -99,57 +97,19 @@ function mountSolvimonElement(
     };
 }
 
-function splitContainer<TConfiguration extends { container: Element | string }>(
-    configuration: TConfiguration,
-) {
-    const { container, ...props } = configuration;
-    return { container, props: Object.fromEntries(Object.entries(props)) };
-}
-
-function mergeElementProps(
-    config: SolvimonMountConfig,
-    props: Record<string, unknown>,
-): ElementProps {
-    return {
-        ...config,
-        ...props,
-    };
-}
-
 export function createSolvimonCore(): CoreConfiguration<SolvimonMountConfig>;
 export function createSolvimonCore<TConfig extends SolvimonMountConfig>(
     config: TConfig,
 ): CoreConfiguration<TConfig>;
-export function createSolvimonCore(config: SolvimonMountConfig = {}) {
-    return {
-        config,
-        createComponent<TId extends RegisteredComponentId>(
-            id: TId,
-            configuration: ComponentMountConfiguration<TId>,
-        ) {
-            const { container, props } = splitContainer(configuration);
+export function createSolvimonCore(config: SolvimonMountConfig = {}): CoreConfiguration {
+    const mount =
+        (type: 'component' | 'screen') =>
+        (
+            id: RegisteredComponentId | RegisteredScreenId,
+            { container, ...props }: { container: Element | string },
+        ) =>
+            mountSolvimonElement(container, id, type, { ...config, ...props }, config.onLog)
+                .unmount;
 
-            return mountSolvimonElement(
-                container,
-                id,
-                'component',
-                mergeElementProps(config, props),
-                config.onLog,
-            ).unmount;
-        },
-        createScreen<TId extends RegisteredScreenId>(
-            id: TId,
-            configuration: ScreenMountConfiguration<TId>,
-        ) {
-            const { container, props } = splitContainer(configuration);
-
-            return mountSolvimonElement(
-                container,
-                id,
-                'screen',
-                mergeElementProps(config, props),
-                config.onLog,
-            ).unmount;
-        },
-    };
+    return { config, createComponent: mount('component'), createScreen: mount('screen') };
 }

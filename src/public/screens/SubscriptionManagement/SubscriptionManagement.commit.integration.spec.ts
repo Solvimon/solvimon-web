@@ -218,7 +218,7 @@ const choose = async (wrapper: ReturnType<typeof mountComponent>, pricingIds: st
 
 enableAutoUnmount(afterEach);
 
-describe('SubscriptionManagement (tester, DD-3544)', () => {
+describe('SubscriptionManagement committing a change', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         mockCreatePricingPlanSchedule.mockResolvedValue({ id: 'ppsc_new' });
@@ -433,7 +433,7 @@ describe('SubscriptionManagement (tester, DD-3544)', () => {
         });
     });
 
-    describe('round 2: the customized-pricing guard', () => {
+    describe('which customizations lock the screen', () => {
         const withSchedule = (schedule: Record<string, unknown>, version?: unknown) =>
             ({
                 ...subscription,
@@ -490,12 +490,7 @@ describe('SubscriptionManagement (tester, DD-3544)', () => {
             expect(isDisabled(wrapper)).toBe(true);
         });
 
-        /**
-         * DEFECT (minor, DD-3544 tester r2): with customized pricing but no group to manage, the
-         * screen renders "Nothing to change", yet the Update button's aria-describedby still names
-         * the custom-pricing message, which is not rendered (`submitButtonAttrs` vs the
-         * `pricingGroup && isCustomized` branch in SubscriptionManagement.vue).
-         */
+        // With no group to manage, "Nothing to change" replaces the custom-pricing message.
         it('only points the button at a message that is on screen', async () => {
             const wrapper = mountComponent({
                 sub: withSchedule(
@@ -520,7 +515,7 @@ describe('SubscriptionManagement (tester, DD-3544)', () => {
         });
     });
 
-    describe('round 2: chargeable payment methods', () => {
+    describe('chargeable payment methods', () => {
         it.each(['BUY_NOW_PAY_LATER', 'CARD', 'DIGITAL_WALLET', 'DIRECT_DEBIT', 'ONLINE_BANKING'])(
             'offers an active %s method',
             async (type) => {

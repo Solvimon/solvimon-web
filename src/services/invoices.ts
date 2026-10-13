@@ -1,7 +1,6 @@
 import type {
     ChargeOnDemandPricingItemsPayload,
     ChargeOnDemandPricingItemsPricingItemConfig,
-    Customer,
     Invoice,
     InvoicePreview,
     ApiSuccessCollectionResponse,
@@ -11,6 +10,7 @@ import { downloadFile, withPagination } from '@solvimon/solvimon-ui';
 import { createRequestService } from './requests';
 import { buildUrl } from './requests.lib';
 import type { GetInvoicePreviewPayload } from './invoices.types';
+import type { CustomerCollectionPayload } from './requests.types';
 import { useConfig } from '@/components/providers/ConfigProvider/composables/useConfig';
 
 interface ChargeOnDemandPricingItemsPreviewPayload {
@@ -25,16 +25,9 @@ interface ChargeOnDemandPricingItemsPreviewPayload {
 
 interface InvoicesService {
     getInvoice: (invoiceId: Invoice['id']) => Promise<Invoice>;
-    getInvoices: (args: {
-        customerId: Customer['id'];
-        pagination: {
-            page?: number;
-            pageSize?: number;
-            orderBy?: string;
-            orderDirection?: 'asc' | 'desc';
-        };
-        query?: Record<string, string | number | null | undefined>;
-    }) => Promise<ApiSuccessCollectionResponse<Invoice>>;
+    getInvoices: (
+        args: CustomerCollectionPayload,
+    ) => Promise<ApiSuccessCollectionResponse<Invoice>>;
     getInvoicePdf: (invoice: Pick<Invoice, 'id' | 'invoice_number'>) => Promise<void>;
     getInvoicePreview: (args: GetInvoicePreviewPayload) => Promise<InvoicePreview>;
     previewChargeOnDemandPricingItems: (
@@ -68,16 +61,7 @@ export function createInvoicesService(): InvoicesService {
         customerId,
         pagination,
         query,
-    }: {
-        customerId: Customer['id'];
-        pagination: {
-            page?: number;
-            pageSize?: number;
-            orderBy?: string;
-            orderDirection?: 'asc' | 'desc';
-        };
-        query?: Record<string, string | number | null | undefined>;
-    }): Promise<ApiSuccessCollectionResponse<Invoice>> {
+    }: CustomerCollectionPayload): Promise<ApiSuccessCollectionResponse<Invoice>> {
         const queryParams = withPagination(
             {
                 customer_id: customerId,

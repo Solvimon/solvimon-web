@@ -73,6 +73,7 @@ When a change touches the shared chunk, an entry's imports, styles, or dependenc
 - Unit tests live next to the file they test (`foo.spec.ts` beside `foo.ts`).
 - Use `@vue/test-utils` for component tests and Vitest for everything else.
 - Do not mock the HTTP layer with fake data unless testing error paths — prefer testing the composable/service logic directly.
+- Name tests by the behaviour they check, and add them to the spec beside their source (or an e2e file named by its subject) rather than a new file per change. Test and file names, `describe` titles and comments carry no ticket numbers (`DD-1234`), review rounds, or who wrote or reviewed the test ("tester", "implementer", "tested independently"); a reader later knows none of that. This holds for tests written by agents reviewing a change too. `npm run tests:check-labels` enforces it in CI and on commit.
 
 ## Translations
 

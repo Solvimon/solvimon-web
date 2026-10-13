@@ -320,7 +320,7 @@ describe('Stripe frame script', () => {
     });
 });
 
-describe('Stripe frame script, tried from outside (DD-3539)', () => {
+describe('Stripe frame script, with updates out of order and messages across windows', () => {
     const UPDATE = { type: 'stripe:update', options: { currency: 'eur', amount: 900 } };
 
     it('applies an update that follows a setup anew to the new elements', async () => {

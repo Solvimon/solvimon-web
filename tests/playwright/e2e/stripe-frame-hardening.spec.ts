@@ -17,12 +17,6 @@ import {
     PAYMENT_ACCEPTOR_ID,
 } from '../support/fixtures';
 
-/**
- * DD-3539, from the outside: a price that changes under a typed card keeps one Payment Element and
- * the card, the frame takes nothing from a window that is not its parent, and no Stripe error
- * carries a client secret out to the host.
- */
-
 const CARD = '4242 4242 4242 4242';
 const SECRET = 'pi_3Leaky_secret_DoNotLog';
 
@@ -91,7 +85,7 @@ async function recordEverything(page: Page): Promise<() => Promise<string>> {
         });
 }
 
-test.describe('DD-3539 Stripe frame hardening', () => {
+test.describe('Stripe frame hardening', () => {
     let api: ApiMock;
 
     test.afterEach(() => {
@@ -201,7 +195,7 @@ test.describe('DD-3539 Stripe frame hardening', () => {
 
         // Known limitation, expected to fail until it is decided on: an email typed after the card
         // changes the fields the Payment Element hides, which it is set up anew for, so the card is
-        // dropped. Out of scope for DD-3539 and the same on the base.
+        // dropped.
         test.fail('keeps the card when the email is typed after it', async ({ page }) => {
             api = await mountCheckout(page, {
                 configuration: { countryCode: 'NL' },

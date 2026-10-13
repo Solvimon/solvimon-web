@@ -89,7 +89,7 @@ describe('PayInvoice.entry.view', () => {
 
     // Asked of the invoice, so the API answers with the acceptors it can be paid through rather
     // than every acceptor the customer has — paying through one of those fails with a 400 the
-    // customer can do nothing about (DD-3533).
+    // customer can do nothing about.
     it('asks for the options of the invoice being paid, not of the customer alone', async () => {
         await mountEntryView();
 

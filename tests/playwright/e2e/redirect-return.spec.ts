@@ -8,8 +8,7 @@ import {
 } from '../support/paymentMethodsManagement';
 
 /**
- * DD-3538, from the tester: redirect returns read and cleared in a real browser, against the built
- * SDK. Adyen's drop-in cannot be driven here (its card fields come from Adyen's hosts), but the
+ * Adyen's drop-in cannot be driven here (its card fields come from Adyen's hosts), but a redirect
  * return is confirmed before the drop-in is built, through `/payments/verify-details`, which the
  * suite does answer.
  */
@@ -40,7 +39,7 @@ async function returnTo(page: Page, path: string, options: Parameters<typeof mou
 
 const verifications = (api: ApiMock) => api.calls('verifyPaymentDetails');
 
-test.describe('DD-3538 tester', () => {
+test.describe('Redirect returns', () => {
     let api: ApiMock;
 
     test.afterEach(() => {

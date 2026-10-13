@@ -423,7 +423,7 @@ describe('PaymentIntegrationFormStripeFrame', () => {
     });
 });
 
-describe('PaymentIntegrationFormStripeFrame, tried from outside (DD-3539)', () => {
+describe('PaymentIntegrationFormStripeFrame, with updates out of order and messages across windows', () => {
     async function loaded(props: Partial<PaymentIntegrationFormStripeFrameProps> = {}) {
         const wrapper = mount(PaymentIntegrationFormStripeFrame, {
             props: { ...defaultProps, ...props },

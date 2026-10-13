@@ -587,7 +587,7 @@ describe('ExpressPaymentMethodApplePay', () => {
         });
     });
 
-    describe('outcomes that are not known yet, tested independently', () => {
+    describe('outcomes that are not known yet', () => {
         const failedCode = (wrapper: Awaited<ReturnType<typeof mountAndSettle>>) =>
             (wrapper.emitted('payment-failed')?.[0]?.[0] as { code?: string } | undefined)?.code;
 

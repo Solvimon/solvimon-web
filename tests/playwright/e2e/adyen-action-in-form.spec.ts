@@ -4,8 +4,6 @@ import { checkout, mountCheckout } from '../support/checkout';
 import { aPortalObject, paymentMethodOptions, type Json } from '../support/fixtures';
 
 /**
- * DD-3538 round 2, from the tester: the form is let go while Adyen waits on the customer.
- *
  * Adyen's card fields come from Adyen's hosts, so the drop-in is offered a method without fields
  * of its own, which it can submit as it is. A real challenge cannot be drawn here (the API's action
  * carries no 3DS token for Adyen to render), so a stand-in iframe is put where Adyen draws one and
@@ -47,7 +45,7 @@ const customerStep = {
     },
 };
 
-test.describe('DD-3538 round 2 tester', () => {
+test.describe('Adyen waiting on the customer inside the form', () => {
     let api: ApiMock;
 
     test.afterEach(() => {

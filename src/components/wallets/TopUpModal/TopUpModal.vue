@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Invoice, WalletBalanceValue } from '@solvimon/solvimon-types';
+import type { Invoice } from '@solvimon/solvimon-types';
 import { Button, ErrorNotification, RadioGroupExtended, useIntl } from '@solvimon/solvimon-ui';
 import { computed, ref, watch } from 'vue';
 import type { TopUpModalEmits, TopUpModalProps, TopUpModalStep } from './TopUpModal.types';
@@ -130,7 +130,6 @@ const isTopUpUnavailable = computed(
 
 /** Kept here rather than read off the form, which the customer may touch again. */
 const chargedInvoice = ref<Invoice>();
-const chargedValue = ref<WalletBalanceValue>();
 
 const handlePaymentSuccess = () => {
     leaveAddPaymentMethod();
@@ -248,7 +247,6 @@ const handleSaveAutoTopUp = async ({
 
 const handleTopUpSuccess = (invoice: Invoice) => {
     chargedInvoice.value = invoice;
-    chargedValue.value = topUpFormRef.value?.chargedValue;
     step.value = 'SUCCESS';
 };
 
@@ -292,7 +290,6 @@ watch(
         opening += 1;
         step.value = 'TOP_UP';
         chargedInvoice.value = undefined;
-        chargedValue.value = undefined;
         topUpError.value = undefined;
         hasAutoTopUpSaveFailed.value = false;
         topUpFormKey.value += 1;
@@ -315,7 +312,6 @@ watch(
         :customer="customer"
         :payment-method-options="paymentMethodOptions"
         :is-payment-method-options-pending="isPaymentMethodOptionsPending"
-        :is-adding-payment-method="isAddingPaymentMethod"
         @confirm="handleConfirm"
         @cancel="handleCancel"
         @payment-success="handlePaymentSuccess"
@@ -385,11 +381,7 @@ watch(
                 :title="autoTopUpSaveError"
             />
 
-            <TopUpModalSuccess
-                v-if="chargedInvoice"
-                :added-value="chargedValue"
-                :invoice="chargedInvoice"
-            />
+            <TopUpModalSuccess v-if="chargedInvoice" :invoice="chargedInvoice" />
         </template>
 
         <template v-if="step === 'SUCCESS' || isTopUpUnavailable" #footer>

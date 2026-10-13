@@ -7,7 +7,6 @@ import {
     getAutoTopUpConversionRate,
     getAutoTopUpCreditUnitName,
     getAutoTopUpDenomination,
-    getFlexibleTopUpPricing,
     getTopUpPricingItems,
     getTopUpSubscriptions,
     withTopUpPricingItemsForSchedules,
@@ -76,10 +75,12 @@ const createWalletBalanceItem = ({
         ],
     }) as unknown as CustomerWalletBalanceItem;
 
-describe('getFlexibleTopUpPricing', () => {
+describe('getTopUpPricingItems flexible pricing', () => {
+    const flexiblePricingOf = (walletBalanceItem: CustomerWalletBalanceItem) =>
+        getTopUpPricingItems(walletBalanceItem)[0]?.flexiblePricing;
+
     it('reads the bounds, currency and credits conversion of the flexible item', () => {
-        expect(getFlexibleTopUpPricing(createWalletBalanceItem())).toEqual({
-            pricingItemId: 'prii_1',
+        expect(flexiblePricingOf(createWalletBalanceItem())).toEqual({
             config: {
                 minimum_amount: { quantity: '5.00', currency: 'EUR' },
                 maximum_amount: { quantity: '500.00', currency: 'EUR' },
@@ -100,8 +101,7 @@ describe('getFlexibleTopUpPricing', () => {
     it('omits the credits configuration when the item grants no credits', () => {
         const configs = [{ ...flexibleConfig, wallet_grants: undefined }];
 
-        expect(getFlexibleTopUpPricing(createWalletBalanceItem({ configs }))).toEqual({
-            pricingItemId: 'prii_1',
+        expect(flexiblePricingOf(createWalletBalanceItem({ configs }))).toEqual({
             config: {
                 minimum_amount: { quantity: '5.00', currency: 'EUR' },
                 maximum_amount: { quantity: '500.00', currency: 'EUR' },
@@ -118,13 +118,13 @@ describe('getFlexibleTopUpPricing', () => {
         const balance = { amount: { quantity: '100.00', currency: 'EUR' } };
 
         expect(
-            getFlexibleTopUpPricing(createWalletBalanceItem({ balance }))?.creditsConfiguration,
+            flexiblePricingOf(createWalletBalanceItem({ balance }))?.creditsConfiguration,
         ).toBeUndefined();
     });
 
     it('uses the credits grant when the balance carries no wallet type', () => {
         expect(
-            getFlexibleTopUpPricing(createWalletBalanceItem({ walletTypeId: null }))
+            flexiblePricingOf(createWalletBalanceItem({ walletTypeId: null }))
                 ?.creditsConfiguration,
         ).toEqual({
             conversionRate: '10',
@@ -147,14 +147,13 @@ describe('getFlexibleTopUpPricing', () => {
         ];
 
         expect(
-            getFlexibleTopUpPricing(createWalletBalanceItem({ configs }))?.creditsConfiguration,
+            flexiblePricingOf(createWalletBalanceItem({ configs }))?.creditsConfiguration,
         ).toBeUndefined();
     });
 
     it('keeps the conversion rate when the credit type has no unit name', () => {
         expect(
-            getFlexibleTopUpPricing(createWalletBalanceItem({ unitName: null }))
-                ?.creditsConfiguration,
+            flexiblePricingOf(createWalletBalanceItem({ unitName: null }))?.creditsConfiguration,
         ).toEqual({ conversionRate: '10' });
     });
 
@@ -163,21 +162,10 @@ describe('getFlexibleTopUpPricing', () => {
         const notOnDemand = { ...flexibleConfig, on_demand: false };
 
         expect(
-            getFlexibleTopUpPricing(createWalletBalanceItem({ configs: [notFlexible] })),
+            flexiblePricingOf(createWalletBalanceItem({ configs: [notFlexible] })),
         ).toBeUndefined();
         expect(
-            getFlexibleTopUpPricing(createWalletBalanceItem({ configs: [notOnDemand] })),
-        ).toBeUndefined();
-    });
-
-    it('returns undefined without a wallet or without on-demand items', () => {
-        expect(getFlexibleTopUpPricing(undefined)).toBeUndefined();
-        expect(
-            getFlexibleTopUpPricing({
-                wallet_id: 'wall_1',
-                wallet: { wallet_type_id: WALLET_TYPE_ID },
-                wallet_balance: {},
-            } as unknown as CustomerWalletBalanceItem),
+            flexiblePricingOf(createWalletBalanceItem({ configs: [notOnDemand] })),
         ).toBeUndefined();
     });
 });

@@ -13,7 +13,11 @@ import { createTestPortalObject } from '@/test-utils/portalObjectFixture';
 
 vi.mock('@/components/providers/AuthProvider/AuthProvider.lib', async (importOriginal) => ({
     ...(await importOriginal<object>()),
-    getAuth: () => ({ accessToken: ref('access-token') }),
+    getAuth: () => ({
+        accessToken: ref('access-token'),
+        getFreshAccessToken: async () => 'access-token',
+        renewAccessToken: async () => undefined,
+    }),
 }));
 
 let tagCount = 0;

@@ -20,35 +20,6 @@ describe('useForm composable', () => {
                 lastName: 'Doe',
             });
         });
-        it('returns the initial state when `reset` is invoked', () => {
-            const { form, reset } = useForm({
-                initialState: {
-                    firstName: '',
-                    lastName: '',
-                },
-                validationRules: {},
-            });
-
-            expect(form.value).toEqual({
-                firstName: '',
-                lastName: '',
-            });
-
-            form.value.firstName = 'John';
-            form.value.lastName = 'Doe';
-
-            expect(form.value).toEqual({
-                firstName: 'John',
-                lastName: 'Doe',
-            });
-
-            reset();
-
-            expect(form.value).toEqual({
-                firstName: '',
-                lastName: '',
-            });
-        });
         it('invoking `updateInitialState` updates the initial state', () => {
             const { form, updateInitialState, changes } = useForm({
                 initialState: {

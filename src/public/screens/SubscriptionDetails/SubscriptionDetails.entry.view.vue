@@ -9,6 +9,7 @@ import { useCustomerWalletBalances } from '@/composables/useCustomerWalletBalanc
 import { useLoadInitialData } from '@/composables/useLoadInitialData';
 import { useChargeableOnDemandItems } from '@/composables/useChargeableOnDemandItems';
 import { useLogger } from '@/components/providers';
+import { getSchedulesWithPlanData } from '@/utils/pricingPlanScheduleOverrides';
 
 const props = defineProps<SolvimonSubscriptionDetailsEntryProps>();
 
@@ -16,7 +17,6 @@ const customerId = props.portalObject.customer_id;
 
 const {
     subscription,
-    withPlanData,
     get: fetchSubscription,
     error,
 } = useSubscription({ subscriptionId: props.configuration.subscriptionId });
@@ -57,7 +57,9 @@ const { items: onDemandItems, scheduleId: onDemandScheduleId } = useChargeableOn
     subscription,
 });
 
-const schedulesData = computed(() => (subscription.value ? withPlanData(subscription.value) : []));
+const schedulesData = computed(() =>
+    subscription.value ? getSchedulesWithPlanData(subscription.value) : [],
+);
 
 const walletBalanceItems = computed(() => walletBalances.value?.wallet_balances ?? []);
 

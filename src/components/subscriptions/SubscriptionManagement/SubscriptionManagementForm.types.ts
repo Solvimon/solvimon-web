@@ -2,7 +2,6 @@ import type {
     BillingPeriod,
     Currency,
     PaymentMethod,
-    Pricing,
     PricingGroupExtended,
 } from '@solvimon/solvimon-types';
 
@@ -25,13 +24,4 @@ export interface SubscriptionManagementFormProps {
 export interface SubscriptionManagementFormEmits {
     /** The customer submitted the form, from its own fields or a button tied to it by `form`. */
     (e: 'submit'): void;
-}
-
-export interface SubscriptionManagementFormModel {
-    /**
-     * Every enabled pricing on the schedule, not just this group's. The group editor swaps its own
-     * entry and leaves the rest alone, so the list stays whole and can be submitted as-is.
-     */
-    enabledPricingIds: Pricing['id'][];
-    paymentMethodId?: PaymentMethod['id'];
 }

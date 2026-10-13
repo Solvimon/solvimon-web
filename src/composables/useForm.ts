@@ -61,21 +61,11 @@ export default <
         initialFormState.value = structuredClone(toRaw(state));
     };
 
-    /**
-     * Reset the entire form to the initial form state, normally only applicable
-     * when a form keeps mounted after closing or submitting.
-     */
-    const reset = () => {
-        form.value = structuredClone(initialState);
-        validation.value.$reset();
-    };
-
     return {
         form,
         validation,
         changes,
         hasChanges,
-        reset,
         updateInitialState,
         initialState: initialFormState,
     };

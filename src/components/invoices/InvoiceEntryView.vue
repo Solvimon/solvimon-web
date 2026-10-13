@@ -40,6 +40,5 @@ const { isLoading } = useLoadInitialData(invoice.get(), payments.get(props.invoi
         :invoice="invoice.invoice.value"
         :invoice-download-service="invoice.downloadInvoicePdf"
         :payments="payments"
-        :is-loading="isLoading"
     />
 </template>

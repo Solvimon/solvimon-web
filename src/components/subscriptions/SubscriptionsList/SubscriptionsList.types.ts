@@ -8,7 +8,6 @@ export interface SubscriptionsListProps {
     customer: Customer;
     subscriptions: PricingPlanSubscriptionExpanded[];
     paymentMethods?: PaymentMethod[];
-    isLoading: boolean;
     /** The subscriptions could not be loaded, so an empty list says nothing about them. */
     hasError?: boolean;
     hasMoreItems?: boolean;

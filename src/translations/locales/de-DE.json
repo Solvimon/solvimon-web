@@ -1,8 +1,4 @@
 {
-    "add_payment_method_modal.cancel_button.label": "Abbrechen",
-    "add_payment_method_modal.confirm_button.label": "Zahlungsmethode speichern",
-    "add_payment_method_modal.subtitle": "Fügen Sie eine neue Zahlungsmethode hinzu, mit der Sie bezahlen möchten.",
-    "add_payment_method_modal.title": "Zahlungsmethode hinzufügen",
     "addon_multiple_editor.add_to_subscription_button": "Zum Abonnement hinzufügen",
     "addon_multiple_editor.description": "Wählen Sie beliebig viele Produkte aus",
     "addon_single_editor.description.at_most_one": "Wählen Sie höchstens ein Produkt aus",

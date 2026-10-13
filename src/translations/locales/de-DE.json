@@ -268,6 +268,8 @@
     "payments.sepa_mandate.recurrence_unnamed": "Dieses Bankkonto wird automatisch zur Zahlung weiterer Rechnungen verwendet, bis Sie dieses Mandat widerrufen.",
     "payments.sepa_mandate.refund_rights": "Im Rahmen Ihrer Rechte haben Sie Anspruch auf eine Erstattung durch Ihre Bank gemäß den Bedingungen Ihrer Vereinbarung mit Ihrer Bank. Sie müssen die Erstattung innerhalb von 8 Wochen ab dem Datum der Belastung Ihres Kontos beantragen. Sie können bei Ihrer Bank eine Erläuterung Ihrer Rechte anfordern.",
     "payments.sepa_mandate.title": "SEPA-Lastschriftmandat — wiederkehrende Zahlungen",
+    "portal.not_available.description": "Wenden Sie sich an den Kundenservice, wenn Sie glauben, dass es sich um einen Fehler handelt.",
+    "portal.not_available.title": "Dies ist nicht mehr verfügbar.",
     "pricing_item_pricing.unsupported_pricing_error": "Nicht unterstützte Preisgestaltung",
     "screens.payment_method_management.add_button": "Zahlungsmethode hinzufügen",
     "screens.payment_method_management.cancel_button": "Abbrechen",

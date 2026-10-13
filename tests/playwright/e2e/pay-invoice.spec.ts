@@ -82,7 +82,7 @@ test.describe('Pay invoice', () => {
                 await Promise.all([
                     api.waitForCall('invoice'),
                     api.waitForCall('payments'),
-                    api.waitForCall('paymentMethods'),
+                    api.waitForCall('paymentMethodOptions'),
                 ])
             ).forEach((call) => expect(call.headers['authorization']).toMatch(/^Bearer .+/));
         });

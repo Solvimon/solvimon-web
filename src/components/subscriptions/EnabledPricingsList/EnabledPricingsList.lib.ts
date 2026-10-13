@@ -1,10 +1,8 @@
 import type { PricingExtended, PricingPlanScheduleInfoExpanded } from '@solvimon/solvimon-types';
+import { getEnabledPricingIds } from '@solvimon/solvimon-ui';
 import type { EnabledPricingsListEntry } from './EnabledPricingsList.types';
 import { getNameFromPricing } from '@/utils/pricing';
-import {
-    combinePricingPlanVersionWithOverrides,
-    getEnabledPricingIdsWithOverrides,
-} from '@/utils/pricingPlanScheduleOverrides';
+import { withScheduleOverrides } from '@/utils/pricingPlanScheduleOverrides';
 
 /**
  * The amount and period to show for a pricing. Only the first config of the first item is read:
@@ -33,18 +31,18 @@ function getHeadlinePrice(pricing: PricingExtended) {
 export function getEnabledPricingsEntries(
     scheduleInfo: PricingPlanScheduleInfoExpanded,
 ): EnabledPricingsListEntry[] {
-    const schedule = scheduleInfo.pricing_plan_schedule;
-    const enabledPricingIds = new Set(getEnabledPricingIdsWithOverrides(schedule));
+    const enabledPricingIds = new Set(
+        getEnabledPricingIds(scheduleInfo.pricing_plan_schedule ?? {}),
+    );
 
     if (enabledPricingIds.size === 0 || !scheduleInfo.pricing_plan_version) {
         return [];
     }
 
     const pricingGroups =
-        combinePricingPlanVersionWithOverrides({
-            pricingPlanVersion: scheduleInfo.pricing_plan_version,
-            overridePricings: schedule?.override_pricings,
-        }).pricing_categories?.flatMap((category) => category.pricing_groups ?? []) ?? [];
+        withScheduleOverrides(scheduleInfo).pricing_categories?.flatMap(
+            (category) => category.pricing_groups ?? [],
+        ) ?? [];
 
     return pricingGroups.flatMap((group) =>
         (group.pricings ?? [])

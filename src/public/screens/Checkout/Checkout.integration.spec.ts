@@ -1,7 +1,7 @@
 import { flushPromises, mount } from '@vue/test-utils';
 import { computed, ref } from 'vue';
+import type { PortalUrl } from '@solvimon/solvimon-types';
 import Checkout from './Checkout.vue';
-import type { PortalUrl } from '@/services/portals.types';
 
 // ─── Mocks ────────────────────────────────────────────────────────────────────
 

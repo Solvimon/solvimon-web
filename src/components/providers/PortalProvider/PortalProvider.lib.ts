@@ -1,5 +1,5 @@
 import type { InjectionKey, Ref } from 'vue';
-import type { PortalUrl } from '@/services/portals.types';
+import type { PortalUrl } from '@solvimon/solvimon-types';
 
 export const PORTAL_INJECTION_KEY: InjectionKey<Readonly<Ref<PortalUrl>>> = Symbol('portalObject');
 

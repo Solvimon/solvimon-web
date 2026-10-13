@@ -7,8 +7,6 @@ import {
 } from '../support/subscriptionDetails';
 import { aSubscription, type Json } from '../support/fixtures';
 
-/** DD-3545 tester: which of Cancel and Renew the API would accept, and reloads that fail. */
-
 async function mountLoaded(page: Page, options: MountOptions = {}): Promise<ApiMock> {
     const api = await mountSubscriptionDetails(page, options);
     await expect(subscriptionDetails(page).title).toBeVisible();
@@ -21,7 +19,7 @@ const withPeriods = (periods: Json[], overrides: Json = {}): Json => ({
     ...(overrides as Record<string, unknown>),
 });
 
-test.describe('DD-3545 tester: subscription details', () => {
+test.describe('Subscription details: Cancel and Renew', () => {
     let api: ApiMock | undefined;
 
     test.afterEach(() => {

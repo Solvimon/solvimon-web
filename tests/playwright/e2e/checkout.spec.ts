@@ -1159,9 +1159,11 @@ test.describe('Checkout', () => {
 
             const { logs, errors } = await hostEvents(page);
             expect(logs.filter(({ level }) => level === 'error').map(({ code }) => code)).toEqual([
-                'INVALID_TOKEN',
+                'PORTAL_TYPE_NOT_ALLOWED',
             ]);
-            expect(errors).toEqual(['Invalid token']);
+            expect(errors).toEqual([
+                'This element does not accept a portal object of type CUSTOMER',
+            ]);
         });
 
         test('renders nothing and reports when the token exchange fails', async ({ page }) => {

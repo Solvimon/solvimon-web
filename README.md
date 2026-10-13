@@ -22,7 +22,7 @@ carries the portal token the element signs in with; there is no separate `token`
 
 An element renders only for a published portal of the type it accepts: `checkout` takes an
 `INIT_PRICING_PLAN_SUBSCRIPTION` portal, every other element a `CUSTOMER` one. Any other type logs
-`PORTAL_TYPE_NOT_ALLOWED` and renders nothing. A revoked portal logs `RESOURCE_REVOKED`; the
+`PORTAL_TYPE_NOT_ALLOWED`, dispatches an `error` event and renders nothing. A revoked portal logs `RESOURCE_REVOKED`; the
 checkout shows its "Checkout not available" notice, and the other elements render nothing.
 
 ## Usage
@@ -81,9 +81,9 @@ has loaded. An unknown id or a container that matches nothing throws straight aw
 
 An error the element cannot carry on from — an unknown `environment`, a portal object meant for
 another element, or a bug in the SDK — is logged once and dispatched as an `error` event on the
-element. It is logged as `UNHANDLED_ERROR` unless it has a code of its own, such as `INVALID_TOKEN`
-for a checkout given another element's portal object. Its context names the element in `componentName`, so a page with several can tell which
-one failed. The event does not bubble, and its `detail` is an array whose first item is the `Error`:
+element. It is logged as `UNHANDLED_ERROR` unless it has a code of its own, such as
+`PORTAL_TYPE_NOT_ALLOWED` for a portal object meant for another element. Its context names the
+element in `componentName`, so a page with several can tell which one failed. The event does not bubble, and its `detail` is an array whose first item is the `Error`:
 
 ```ts
 element.addEventListener('error', (event) => {

@@ -10,10 +10,12 @@ export function toError(error: unknown): Error {
  */
 export class CodedError extends Error {
     readonly code: ErrorCode;
+    readonly context: Record<string, unknown>;
 
-    constructor(code: ErrorCode, message: string) {
+    constructor(code: ErrorCode, message: string, context: Record<string, unknown> = {}) {
         super(message);
         this.name = 'CodedError';
         this.code = code;
+        this.context = context;
     }
 }

@@ -8,11 +8,6 @@ import BillingInformationFormEntry from '@/public/components/BillingInformationF
 import { createTestPortalObject } from '@/test-utils/portalObjectFixture';
 import { CodedError } from '@/utils/error';
 
-/**
- * DD-3548 round 2, from the host's side: logging properties changed after render, `CodedError`,
- * and whether a failure the element handles stays out of `UNHANDLED_ERROR` and the `error` event.
- */
-
 // The real entry below imports `EntryProvider` from the barrel, which `vitest.setup.ts` mocks.
 vi.unmock('@/components/providers');
 
@@ -34,7 +29,7 @@ const ENTRY_PROPS: string[] = [
 ];
 
 const defineEntryElement = (child: Component) => {
-    const tag = `solvimon-tester-r2-${++tagCount}`;
+    const tag = `solvimon-logging-${++tagCount}`;
     const Entry = defineComponent({
         props: ENTRY_PROPS,
         emits: ['error'],
@@ -91,7 +86,7 @@ const LoggingButton = defineComponent({
             h(
                 'button',
                 {
-                    class: 'tester-log',
+                    class: 'log-button',
                     onClick: () => {
                         logger.info('COMPONENT_INITIALIZED', 'info after render');
                         logger.warn('MISSING_REQUIRED_PROPERTIES', 'warn after render');
@@ -105,7 +100,7 @@ const LoggingButton = defineComponent({
 const click = (element: HTMLElement, selector: string) =>
     element.shadowRoot?.querySelector<HTMLElement>(selector)?.click();
 
-describe('EntryProvider round 2 (tester)', () => {
+describe('EntryProvider logging seen from the host', () => {
     let consoleError: ReturnType<typeof vi.spyOn>;
     let consoleWarn: ReturnType<typeof vi.spyOn>;
     let consoleInfo: ReturnType<typeof vi.spyOn>;
@@ -150,7 +145,7 @@ describe('EntryProvider round 2 (tester)', () => {
 
             Object.assign(recorded.element, { onLog: second });
             await settle();
-            click(recorded.element, '.tester-log');
+            click(recorded.element, '.log-button');
 
             expect(first).not.toHaveBeenCalled();
             expect(entriesOf(second).map((entry) => entry.message)).toEqual(['warn after render']);
@@ -166,7 +161,7 @@ describe('EntryProvider round 2 (tester)', () => {
             consoleWarn.mockClear();
             consoleInfo.mockClear();
             onLog.mockClear();
-            click(recorded.element, '.tester-log');
+            click(recorded.element, '.log-button');
 
             expect(sdkConsoleOutput()).toEqual([]);
             expect(entriesOf(onLog)[0]?.context).toMatchObject({ environment: 'LIVE' });
@@ -179,7 +174,7 @@ describe('EntryProvider round 2 (tester)', () => {
             Object.assign(recorded.element, { logLevel: 'info' });
             await settle();
             onLog.mockClear();
-            click(recorded.element, '.tester-log');
+            click(recorded.element, '.log-button');
 
             expect(entriesOf(onLog).map((entry) => entry.message)).toEqual([
                 'info after render',
@@ -192,7 +187,7 @@ describe('EntryProvider round 2 (tester)', () => {
             const recorded = await mountRendered(LoggingButton, { onLog, logLevel: 'info' });
             onLog.mockClear();
             recorded.logEvents.length = 0;
-            click(recorded.element, '.tester-log');
+            click(recorded.element, '.log-button');
 
             expect(onLog).toHaveBeenCalledTimes(2);
             expect(recorded.logEvents).toHaveLength(2);
@@ -217,7 +212,7 @@ describe('EntryProvider round 2 (tester)', () => {
             const errors = entriesOf(onLog).filter((entry) => entry.level === 'error');
             expect(errors.map((entry) => entry.code)).toEqual(['INVALID_TOKEN']);
             expect(errors[0].context).toMatchObject({
-                componentName: expect.stringContaining('solvimon-tester-r2-'),
+                componentName: expect.stringContaining('solvimon-logging-'),
                 environment: 'TEST',
             });
             expect(recorded.errorEvents).toHaveLength(1);
@@ -286,7 +281,7 @@ describe('EntryProvider round 2 (tester)', () => {
                     return json(404, {});
                 }),
             );
-            const tag = `solvimon-tester-r2-bif-${++tagCount}`;
+            const tag = `solvimon-billing-form-${++tagCount}`;
             customElements.define(tag, defineCustomElement(BillingInformationFormEntry));
             const recorded = createElement(tag);
             const onLog = vi.fn();

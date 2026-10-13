@@ -7,9 +7,7 @@ import type {
 } from './CustomerPaymentMethodsBlock.types';
 import PaymentMethodsList from '@/components/payments/PaymentMethodsList/PaymentMethodsList.vue';
 
-const props = withDefaults(defineProps<CustomerPaymentMethodsBlockProps>(), {
-    limit: 2,
-});
+const props = defineProps<CustomerPaymentMethodsBlockProps>();
 defineEmits<CustomerPaymentMethodsBlockEmits>();
 
 const { $t } = useIntl();

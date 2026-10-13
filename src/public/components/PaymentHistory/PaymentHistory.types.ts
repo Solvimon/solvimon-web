@@ -7,6 +7,4 @@ export interface PaymentHistoryConfiguration {
 export interface PaymentHistoryProps {
     customer: Customer;
     paymentAttempts: Payment[];
-    isLoading: boolean;
-    configuration: PaymentHistoryConfiguration;
 }

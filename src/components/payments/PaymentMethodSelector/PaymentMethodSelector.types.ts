@@ -27,10 +27,6 @@ export interface PaymentMethodSelectorProps {
      */
     error?: RadioGroupExtendedProps['error'];
     /**
-     * Optional classes that will be applied to the root element.
-     */
-    rootClass?: string;
-    /**
      * Whether to offer an "Add payment method" button below the saved methods, for when the customer
      * wants to pay with a method that is not saved yet.
      *

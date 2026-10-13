@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Button, CustomerBillingInformation, useIntl } from '@solvimon/solvimon-ui';
 import { computed } from 'vue';
-import type { BillingInformationEmits, BillingInformationProps } from './BillingInformation.types';
+import type { BillingInformationProps } from './BillingInformation.types';
 import Skeleton from '@/components/shared/Skeleton.vue';
 import { useActionDispatchProvider } from '@/components/providers';
 import { resolveConfiguration } from '@/utils/configuration';
@@ -11,7 +11,6 @@ const DEFAULT_CONFIGURATION = {
 };
 
 const props = defineProps<BillingInformationProps>();
-defineEmits<BillingInformationEmits>();
 
 const configuration = computed(() =>
     resolveConfiguration(DEFAULT_CONFIGURATION, props.configuration),

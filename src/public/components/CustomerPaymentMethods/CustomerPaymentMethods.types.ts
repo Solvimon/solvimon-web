@@ -19,6 +19,5 @@ export interface CustomerPaymentMethodsConfiguration {
 export interface CustomerPaymentMethodsProps {
     isLoading: boolean;
     paymentMethods: PaymentMethod[];
-    maxPaymentMethods?: number;
     configuration?: CustomerPaymentMethodsConfiguration;
 }

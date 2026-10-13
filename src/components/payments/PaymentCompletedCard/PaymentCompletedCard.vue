@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { formatAmount, Icon, Typography, useIntl } from '@solvimon/solvimon-ui';
+import { Typography, useIntl } from '@solvimon/solvimon-ui';
 import { computed } from 'vue';
 import type { PaymentCompletedCardProps } from './PaymentCompletedCard.types';
 import PaymentFeedbackCard from '@/components/payments/PaymentFeedbackCard/PaymentFeedbackCard.vue';
@@ -25,9 +25,6 @@ const title = computed(() =>
 
 <template>
     <PaymentFeedbackCard status="success" :title="title">
-        <Typography v-if="amount" variant="body-sm" class="mt-1">
-            <Icon icon="check" />{{ formatAmount(amount) }}
-        </Typography>
         <Typography v-if="redirecting" variant="body-xs" color="subtle">{{
             $t({
                 defaultMessage: 'You are being redirected...',

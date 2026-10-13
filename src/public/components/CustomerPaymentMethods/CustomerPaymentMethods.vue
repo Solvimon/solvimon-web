@@ -31,7 +31,6 @@ const { dispatchAction } = useActionDispatchProvider();
     <CustomerPaymentMethodsBlock
         v-else
         class="sv-payment-methods sv-root sv-component"
-        :is-loading="isLoading"
         :payment-methods="paymentMethods"
         :show-view-all-button="configuration.showViewAllButton"
         :show-add-button="configuration.showAddButton"

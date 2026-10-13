@@ -235,14 +235,6 @@ describe('PaymentMethodSelector', () => {
         expect(radios(wrapper)[0].element.disabled).toBe(true);
         expect(wrapper.find('[data-testid="add-button"]').attributes('disabled')).toBeDefined();
     });
-
-    it('applies the given rootClass alongside its own', () => {
-        const wrapper = mountComponent({ rootClass: 'my-class' });
-
-        expect(wrapper.classes()).toEqual(
-            expect.arrayContaining(['sv-payment-method-selector', 'my-class']),
-        );
-    });
 });
 
 describe('PaymentMethodSelector — reporting an error', () => {

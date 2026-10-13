@@ -6,6 +6,4 @@ export interface InvoiceDetailsConfiguration {
 
 export interface InvoiceDetailsProps {
     invoice: Invoice;
-    isLoading: boolean;
-    configuration: InvoiceDetailsConfiguration;
 }

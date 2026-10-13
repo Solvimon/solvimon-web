@@ -63,8 +63,6 @@ vi.mock('@/services/payments', () => ({
 vi.mock('@/services/paymentMethods', () => ({
     createPaymentMethodsService: () => ({
         tokenizePaymentMethod: mockTokenizePaymentMethod,
-        fetchInitial: vi.fn().mockResolvedValue([]),
-        get: vi.fn().mockResolvedValue([]),
     }),
 }));
 

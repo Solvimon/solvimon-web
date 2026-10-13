@@ -37,7 +37,7 @@ const canAddPaymentMethod = computed(() => props.paymentMethodOptions?.length !=
 </script>
 
 <template>
-    <div class="sv-payment-method-selector grid grid-cols-1 gap-2" :class="rootClass">
+    <div class="sv-payment-method-selector grid grid-cols-1 gap-2">
         <EmptyStatePlaceholder
             v-if="!hasPaymentMethods && !canAddPaymentMethod"
             class="sv-payment-method-selector__empty"

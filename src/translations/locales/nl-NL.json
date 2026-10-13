@@ -1,8 +1,4 @@
 {
-    "add_payment_method_modal.cancel_button.label": "Annuleren",
-    "add_payment_method_modal.confirm_button.label": "Betaalmethode opslaan",
-    "add_payment_method_modal.subtitle": "Voeg een nieuwe betaalmethode toe om mee te betalen.",
-    "add_payment_method_modal.title": "Betaalmethode toevoegen",
     "addon_multiple_editor.add_to_subscription_button": "Toevoegen aan abonnement",
     "addon_multiple_editor.description": "Selecteer een of meer producten",
     "addon_single_editor.description.at_most_one": "Selecteer maximaal één product",

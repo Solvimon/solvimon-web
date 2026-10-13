@@ -14,9 +14,9 @@ describe('mockUseIntl', () => {
     });
 
     it('reads the message from the en-US catalogue, not the call site', () => {
-        expect(
-            $t({ id: 'add_payment_method_modal.cancel_button.label', defaultMessage: 'Stale' }),
-        ).toBe('Cancel');
+        expect($t({ id: 'topup_modal.cancel_button.label', defaultMessage: 'Stale' })).toBe(
+            'Cancel',
+        );
     });
 
     it('falls back to the default message for an id the catalogue does not have', () => {

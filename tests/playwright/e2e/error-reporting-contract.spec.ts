@@ -6,12 +6,12 @@ import { mountSubscriptionManagement } from '../support/subscriptionManagement';
 import { aCustomerPortalObject } from '../support/fixtures';
 
 /**
- * Independent checks of DD-3548 against the published contract in the README: an unhandled failure
- * is an `error` event and an `UNHANDLED_ERROR` entry; a failure the element handles reaches `onLog`
- * only; and an element given its properties late renders once they arrive.
+ * The contract the README publishes: an unhandled failure is an `error` event and an
+ * `UNHANDLED_ERROR` entry; a failure the element handles reaches `onLog` only; and an element given
+ * its properties late renders once they arrive.
  */
 
-test.describe('Error reporting (tester)', () => {
+test.describe('Error reporting contract', () => {
     let api: ApiMock | undefined;
 
     test.afterEach(() => {

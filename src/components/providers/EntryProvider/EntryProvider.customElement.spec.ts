@@ -33,7 +33,7 @@ const defineEntryElement = (
     child: Component,
     required?: (props: Record<string, unknown>) => Record<string, unknown>,
 ) => {
-    const tag = `solvimon-tester-${++tagCount}`;
+    const tag = `solvimon-entry-${++tagCount}`;
     const Entry = defineComponent({
         props: ENTRY_PROPS,
         emits: ['error'],
@@ -193,7 +193,7 @@ describe('EntryProvider inside a custom element', () => {
                         h(
                             'button',
                             {
-                                class: 'tester-button',
+                                class: 'throwing-button',
                                 onClick: () => {
                                     throw new Error('click broke');
                                 },
@@ -203,7 +203,7 @@ describe('EntryProvider inside a custom element', () => {
                 }),
             );
             const button =
-                recorded.element.shadowRoot?.querySelector<HTMLButtonElement>('.tester-button');
+                recorded.element.shadowRoot?.querySelector<HTMLButtonElement>('.throwing-button');
             expect(button).toBeTruthy();
             button?.click();
             await settle();
@@ -389,7 +389,7 @@ describe('EntryProvider inside a custom element', () => {
 
     describe('properties set after the element is connected, as plain HTML does', () => {
         const Content = defineComponent({
-            setup: () => () => h('p', { class: 'tester-content' }, 'content'),
+            setup: () => () => h('p', { class: 'entry-content' }, 'content'),
         });
 
         it('renders once they are set in the same task, without a warning', async () => {
@@ -404,7 +404,7 @@ describe('EntryProvider inside a custom element', () => {
             vi.runOnlyPendingTimers();
             await settle();
 
-            expect(recorded.element.shadowRoot?.querySelector('.tester-content')).toBeTruthy();
+            expect(recorded.element.shadowRoot?.querySelector('.entry-content')).toBeTruthy();
             expect(
                 recorded.logEvents.map((event) => (event.detail as LogEntry).code),
             ).not.toContain('MISSING_REQUIRED_PROPERTIES');
@@ -425,7 +425,7 @@ describe('EntryProvider inside a custom element', () => {
                 'environment',
                 'portalObject',
             ]);
-            expect(recorded.element.shadowRoot?.querySelector('.tester-content')).toBeNull();
+            expect(recorded.element.shadowRoot?.querySelector('.entry-content')).toBeNull();
 
             Object.assign(recorded.element, {
                 environment: 'TEST',
@@ -433,7 +433,7 @@ describe('EntryProvider inside a custom element', () => {
             });
             await settle();
 
-            expect(recorded.element.shadowRoot?.querySelector('.tester-content')).toBeTruthy();
+            expect(recorded.element.shadowRoot?.querySelector('.entry-content')).toBeTruthy();
         });
 
         it('calls an onLog set after the element was connected', async () => {
@@ -496,7 +496,7 @@ describe('EntryProvider inside a custom element', () => {
                 defineComponent({
                     setup() {
                         setups++;
-                        return () => h('p', { class: 'tester-content' }, 'content');
+                        return () => h('p', { class: 'entry-content' }, 'content');
                     },
                 }),
             );
@@ -504,11 +504,11 @@ describe('EntryProvider inside a custom element', () => {
 
             Object.assign(recorded.element, { portalObject: undefined });
             await settle();
-            expect(recorded.element.shadowRoot?.querySelector('.tester-content')).toBeNull();
+            expect(recorded.element.shadowRoot?.querySelector('.entry-content')).toBeNull();
 
             Object.assign(recorded.element, { portalObject: createTestPortalObject() });
             await settle();
-            expect(recorded.element.shadowRoot?.querySelector('.tester-content')).toBeTruthy();
+            expect(recorded.element.shadowRoot?.querySelector('.entry-content')).toBeTruthy();
             expect(setups).toBe(2);
         });
     });

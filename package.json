@@ -36,6 +36,7 @@
         "translations:extract": "formatjs extract 'src/**/*.{ts,vue}*' --ignore='**/*.d.ts' --out-file 'src/translations/source.json' --flatten --additional-function-names '$t'",
         "translations:compile": "formatjs compile 'src/translations/source.json' --out-file 'src/translations/locales/en-US.json'",
         "translations:check": "node ./scripts/check-translations.mjs",
+        "tests:check-labels": "node ./scripts/check-test-labels.mjs",
         "types:check-published": "node ./scripts/ci/check-published-types.mjs",
         "types:check-consumer": "node ./scripts/ci/check-consumer-types.mjs",
         "bundle:check-contents": "node ./scripts/ci/check-bundle-contents.mjs",
@@ -57,6 +58,7 @@
     },
     "lint-staged": {
         "*.{ts,vue,mjs}": "eslint --fix --max-warnings 0 --no-warn-ignored",
+        "*.spec.ts": "node ./scripts/check-test-labels.mjs",
         "*": "prettier --write --ignore-unknown"
     },
     "files": [

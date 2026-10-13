@@ -201,6 +201,8 @@ jobs:
                   path: node_modules
                   key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json') }}
             - run: npm run lint:ci
+            - name: Check tests are named by what they test
+              run: npm run tests:check-labels
 
     format:
         name: Format

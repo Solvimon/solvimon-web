@@ -9,11 +9,6 @@ import {
     type Json,
 } from '../support/fixtures';
 
-/**
- * DD-3537 tester, round 2: Checkout must pay through the options of the country on screen, however
- * the lookups for the countries the customer passed through settle.
- */
-
 const US_ACCEPTOR_ID = 'paya_test_us';
 
 function usOptions(): Json[] {
@@ -29,7 +24,7 @@ async function selectCountry(page: Page, country: string) {
     await page.getByRole('option', { name: country, exact: true }).first().click();
 }
 
-test.describe('DD-3537 payment method options, out of order', () => {
+test.describe('Checkout payment method options settling out of order', () => {
     let api: ApiMock;
 
     test.afterEach(() => {

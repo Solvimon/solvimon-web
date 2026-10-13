@@ -63,15 +63,11 @@ const parseBillingPeriodKey = (key?: string): BillingPeriod | undefined => {
 const selectedBillingPeriodKey = computed<string | undefined>({
     get: () => {
         const period = props.subscription.billing_period;
-        return period ? `${period.type}:${period.value}` : undefined;
+        return period ? getBillingPeriodKey(period) : undefined;
     },
     set: (value) => {
-        if (!value) return;
-        const [type, rawValue] = value.split(':');
-        const numericValue = Number(rawValue);
-        if (!numericValue) return;
-        if (!isBillingPeriodType(type)) return;
-        emit('billing-period-change', { type, value: numericValue });
+        const period = parseBillingPeriodKey(value);
+        if (period) emit('billing-period-change', period);
     },
 });
 
@@ -278,8 +274,8 @@ const billingPeriodOptions = computed<SelectExtendedOptionEntry[]>(() => {
                       },
                   }
                 : undefined,
-            hidden: selectedBillingPeriodKey.value === `${period.type}:${period.value}`,
-            value: `${period.type}:${period.value}`,
+            hidden: selectedBillingPeriodKey.value === getBillingPeriodKey(period),
+            value: getBillingPeriodKey(period),
         };
     });
 
@@ -359,11 +355,8 @@ const handleBinaryBillingToggle = (checked: boolean) => {
                 <SubscriptionSummary
                     v-if="subscription"
                     :avatar="avatar"
-                    :invoice="invoice"
                     :subscription="subscription"
                     :enabled-pricing-ids="enabledPricingIds"
-                    :loading="isPreviewAndPaymentMethodsPending"
-                    :trial-period="trialPeriod"
                 />
             </Section>
 

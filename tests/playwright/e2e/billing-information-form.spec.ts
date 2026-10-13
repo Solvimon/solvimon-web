@@ -6,10 +6,6 @@ import {
 } from '../support/billingInformationForm';
 import { aCustomer, type Json } from '../support/fixtures';
 
-/**
- * The billing information form (DD-3541), end to end against the built SDK and a mocked API.
- */
-
 const anOrganization = (taxIds: Json[], country = 'NL'): Json => {
     const customer = aCustomer({ type: 'ORGANIZATION', name: 'Acme B.V.', country });
     const organization = Reflect.get(customer, 'organization') as Record<string, unknown>;

@@ -1,4 +1,4 @@
-import { getChargeError, isInvoiceSettled, isFixableChargeError } from './ChargeOnDemandModal.lib';
+import { getChargeError, isFixableChargeError } from './ChargeOnDemandModal.lib';
 import { ApiError } from '@/services/apiError';
 
 describe('getChargeError', () => {
@@ -43,18 +43,5 @@ describe('isFixableChargeError', () => {
         expect(isFixableChargeError('SUBSCRIPTION_INACTIVE')).toBe(true);
         expect(isFixableChargeError('PAYMENT_FAILED')).toBe(false);
         expect(isFixableChargeError('FAILED')).toBe(false);
-    });
-});
-
-describe('isInvoiceSettled', () => {
-    it.each([
-        ['PAID', true],
-        ['OVERPAID', true],
-        ['UNPAID', false],
-        ['PARTIALLY_PAID', false],
-        [null, false],
-        [undefined, false],
-    ] as const)('treats %s as settled: %s', (payment_status, settled) => {
-        expect(isInvoiceSettled({ payment_status })).toBe(settled);
     });
 });

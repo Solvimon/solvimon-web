@@ -18,8 +18,9 @@ import type {
     ChargeOnDemandModalStep,
 } from './ChargeOnDemandModal.types';
 import { CHARGE_ON_DEMAND_MODAL_STEPS } from './ChargeOnDemandModal.types';
-import { isInvoiceSettled, isFixableChargeError } from './ChargeOnDemandModal.lib';
+import { isFixableChargeError } from './ChargeOnDemandModal.lib';
 import { useChargeOnDemandOrder } from './useChargeOnDemandOrder';
+import { isInvoicePaid } from '@/utils/invoiceState';
 import {
     getPayablePaymentMethods,
     isOrderableUnits,
@@ -291,9 +292,7 @@ const editorErrors = computed(() =>
 
 const isOrderPlaced = computed(() => step.value === 'PLACED');
 
-const isOrderPaid = computed(
-    () => !!chargedInvoice.value && isInvoiceSettled(chargedInvoice.value),
-);
+const isOrderPaid = computed(() => !!chargedInvoice.value && isInvoicePaid(chargedInvoice.value));
 
 const hasChargeFailed = computed(() => step.value === 'PAYMENT_FAILED' || step.value === 'FAILED');
 

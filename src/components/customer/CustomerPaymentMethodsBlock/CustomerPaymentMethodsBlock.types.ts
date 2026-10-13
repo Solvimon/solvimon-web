@@ -2,8 +2,6 @@ import type { PaymentMethod } from '@solvimon/solvimon-types';
 
 export interface CustomerPaymentMethodsBlockProps {
     paymentMethods: PaymentMethod[];
-    limit?: number;
-    isLoading: boolean;
     showViewAllButton?: boolean;
     showAddButton?: boolean;
 }

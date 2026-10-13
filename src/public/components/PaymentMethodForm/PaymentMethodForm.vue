@@ -23,7 +23,6 @@ import type {
     AuthorizePaymentIntegrationFormProps,
     PaymentIntegrationFormProps,
     TokenizePaymentIntegrationFormProps,
-    SelectedPaymentMethod,
 } from '@/components/payments/PaymentIntegrationForm/PaymentIntegrationForm.types';
 
 const FALLBACK_COUNTRY_CODE = 'NL';
@@ -47,7 +46,6 @@ const { availability } = usePaymentMethodAvailability({
 });
 
 const paymentIntegrationFormRef = ref<InstanceType<typeof PaymentIntegrationForm>>();
-const selectedPaymentMethod = ref<SelectedPaymentMethod>();
 const isPaymentPending = ref(false);
 const { isFormHeld, handleActionRequired } = usePaymentFormHold(isPaymentPending);
 /**
@@ -135,24 +133,9 @@ function handleContinue() {
     }
 }
 
-const countryCode = computed<string>(() => {
-    let result = FALLBACK_COUNTRY_CODE;
-
-    if (props.countryCode) {
-        result = props.countryCode;
-        return result;
-    }
-
-    if (props.customer) {
-        const country = getCustomerCountry(props.customer);
-        if (country) {
-            result = country;
-            return result;
-        }
-    }
-
-    return FALLBACK_COUNTRY_CODE;
-});
+const countryCode = computed<string>(
+    () => props.countryCode || getCustomerCountry(props.customer) || FALLBACK_COUNTRY_CODE,
+);
 
 const paymentIntegrationProps = computed<PaymentIntegrationFormProps>(() => {
     const variant = configuration.value.variant;
@@ -218,7 +201,6 @@ const paymentIntegrationProps = computed<PaymentIntegrationFormProps>(() => {
                 ref="paymentIntegrationFormRef"
                 class="sv-payment-method-form__integration"
                 v-bind="paymentIntegrationProps"
-                @select="(payload: SelectedPaymentMethod) => (selectedPaymentMethod = payload)"
                 @payment-success="handlePaymentSuccess"
                 @payment-failed="handlePaymentFailed"
                 @invalid="handleInvalid"

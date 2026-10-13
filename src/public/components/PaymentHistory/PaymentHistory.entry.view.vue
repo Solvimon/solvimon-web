@@ -34,6 +34,5 @@ const invoiceData = useInvoiceData(props.configuration.invoiceId, { includePayme
         name="default"
         :invoice="invoiceData.data.value.invoice"
         :payment-attempts="invoiceData.data.value.paymentAttempts?.data"
-        :is-loading="invoiceData.isPending.value"
     />
 </template>

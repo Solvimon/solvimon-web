@@ -19,13 +19,11 @@ defineProps<SolvimonPaymentHistoryEntryProps>();
         @error="(error) => $emit('error', error)"
     >
         <PaymentHistoryEntryView :key="configuration.invoiceId" v-bind="$props">
-            <template #default="{ invoice, paymentAttempts, isLoading }">
+            <template #default="{ invoice, paymentAttempts }">
                 <PaymentHistory
                     v-if="invoice && paymentAttempts"
-                    :is-loading="isLoading"
                     :customer="invoice.customer"
                     :payment-attempts="paymentAttempts"
-                    :configuration="configuration"
                 />
             </template>
         </PaymentHistoryEntryView>

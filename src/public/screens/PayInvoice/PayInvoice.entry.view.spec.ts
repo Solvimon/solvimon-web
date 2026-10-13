@@ -24,10 +24,6 @@ vi.mock('@/composables/usePayments', () => ({
     usePayments: () => ({ payments: ref([]), get: vi.fn().mockResolvedValue([]) }),
 }));
 
-vi.mock('@/composables/usePaymentMethods', () => ({
-    usePaymentMethods: () => ({ fetchInitial: vi.fn().mockResolvedValue([]) }),
-}));
-
 vi.mock('@/composables/useLoadInitialData', () => ({
     useLoadInitialData: () => ({ isLoading: ref(false) }),
 }));

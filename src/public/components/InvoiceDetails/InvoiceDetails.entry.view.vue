@@ -29,10 +29,5 @@ const invoiceData = useInvoiceData(props.configuration.invoiceId);
             })
         "
     />
-    <slot
-        v-else
-        name="default"
-        :invoice="invoiceData.data.value.invoice"
-        :is-loading="invoiceData.isPending.value"
-    />
+    <slot v-else name="default" :invoice="invoiceData.data.value.invoice" />
 </template>

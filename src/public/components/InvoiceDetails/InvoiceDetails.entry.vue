@@ -19,13 +19,8 @@ defineProps<SolvimonInvoiceDetailsEntryProps>();
         @error="(error) => $emit('error', error)"
     >
         <InvoiceDetailsEntryView :key="configuration.invoiceId" v-bind="$props">
-            <template #default="{ invoice, isLoading }">
-                <InvoiceDetails
-                    v-if="invoice"
-                    :is-loading="isLoading"
-                    :invoice="invoice"
-                    :configuration="configuration"
-                />
+            <template #default="{ invoice }">
+                <InvoiceDetails v-if="invoice" :invoice="invoice" />
             </template>
         </InvoiceDetailsEntryView>
     </EntryProvider>

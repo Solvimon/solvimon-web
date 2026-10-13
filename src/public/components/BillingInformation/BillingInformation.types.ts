@@ -9,7 +9,3 @@ export interface BillingInformationProps {
     isLoading: boolean;
     configuration?: BillingInformationConfiguration;
 }
-
-export interface BillingInformationEmits {
-    (e: 'edit-billing-information'): void;
-}

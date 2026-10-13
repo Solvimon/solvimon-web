@@ -1,12 +1,9 @@
 import { mount } from '@vue/test-utils';
-import type { Amount } from '@solvimon/solvimon-types';
 import PaymentCompletedCard from './PaymentCompletedCard.vue';
 
 vi.mock('@solvimon/solvimon-ui', async () => {
     const { createSolvimonUiMock } = await import('@/test-utils/solvimonUiMock');
-    return createSolvimonUiMock({
-        formatAmount: (amount: Amount) => `${amount.currency} ${amount.quantity}`,
-    });
+    return createSolvimonUiMock();
 });
 
 const REDIRECT_NOTICE = 'You are being redirected';

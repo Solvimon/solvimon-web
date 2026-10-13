@@ -6,9 +6,10 @@ import type { CountryCode, Customer, TaxIdentifier } from '@solvimon/solvimon-ty
 import { ref } from 'vue';
 import type { BillingInformationFormState } from './BillingInformationForm.types';
 import useForm from '@/composables/useForm';
-import { getRequiredFieldsForCountry } from '@/components/customer/CheckoutForm/CheckoutForm.lib';
-
-const DEFAULT_TAX_IDENTIFIER_TYPE = 'GENERIC_TAX_ID';
+import {
+    DEFAULT_TAX_IDENTIFIER_TYPE,
+    getRequiredFieldsForCountry,
+} from '@/components/customer/CheckoutForm/CheckoutForm.lib';
 
 const isCountryCode = (value: string): value is CountryCode => isValidCountryCode(value);
 
@@ -99,38 +100,19 @@ export function useBillingInformationForm<TResult>({
 
     return {
         form,
-        isOrganization,
         validation,
         changes,
         hasChanges,
         updateInitialState,
         submit,
-        initialState: currentInitialState,
     };
 }
 
 const mapCustomerToFormState = (customer: Customer): BillingInformationFormState => {
-    if (isIndividual(customer)) {
-        const address = customer.individual.residential_address;
-
-        return {
-            type: 'INDIVIDUAL',
-            email: customer.email ?? '',
-            country: address?.country ?? '',
-            addressLine1: address?.line1 ?? '',
-            addressLine2: address?.line2 ?? '',
-            postalCode: address?.postal_code ?? '',
-            city: address?.city ?? '',
-            state: address?.state ?? '',
-            firstName: customer.individual.name?.first_name ?? '',
-            lastName: customer.individual.name?.last_name ?? '',
-        };
-    }
-
-    const address = customer.organization.registered_address;
-
-    return {
-        type: 'ORGANIZATION',
+    const address = isIndividual(customer)
+        ? customer.individual.residential_address
+        : customer.organization.registered_address;
+    const shared = {
         email: customer.email ?? '',
         country: address?.country ?? '',
         addressLine1: address?.line1 ?? '',
@@ -138,6 +120,20 @@ const mapCustomerToFormState = (customer: Customer): BillingInformationFormState
         postalCode: address?.postal_code ?? '',
         city: address?.city ?? '',
         state: address?.state ?? '',
+    };
+
+    if (isIndividual(customer)) {
+        return {
+            type: 'INDIVIDUAL',
+            ...shared,
+            firstName: customer.individual.name?.first_name ?? '',
+            lastName: customer.individual.name?.last_name ?? '',
+        };
+    }
+
+    return {
+        type: 'ORGANIZATION',
+        ...shared,
         companyLegalName: customer.organization.legal_name ?? '',
         companyVatNumber: customer.organization.tax_ids?.[0]?.id ?? '',
     };
@@ -169,22 +165,24 @@ const getTaxIds = (stored: TaxIdentifier[], vatNumber: string | undefined): TaxI
 const mapFormStateToCustomerPayload = (
     data: BillingInformationFormState,
     taxIds: TaxIdentifier[] | undefined,
-): Partial<Customer> =>
-    data.type === 'ORGANIZATION'
+): Partial<Customer> => {
+    const address = {
+        line1: data.addressLine1,
+        line2: data.addressLine2 ?? '',
+        postal_code: data.postalCode,
+        city: data.city,
+        country: data.country,
+        state: data.state ?? '',
+    };
+
+    return data.type === 'ORGANIZATION'
         ? {
               type: 'ORGANIZATION' as const,
               email: data.email,
               organization: {
                   legal_name: data.companyLegalName ?? '',
                   ...(taxIds && { tax_ids: taxIds }),
-                  registered_address: {
-                      line1: data.addressLine1,
-                      line2: data.addressLine2 ?? '',
-                      postal_code: data.postalCode,
-                      city: data.city,
-                      country: data.country,
-                      state: data.state ?? '',
-                  },
+                  registered_address: address,
               },
           }
         : {
@@ -195,13 +193,7 @@ const mapFormStateToCustomerPayload = (
                       first_name: data.firstName ?? '',
                       last_name: data.lastName ?? '',
                   },
-                  residential_address: {
-                      line1: data.addressLine1,
-                      line2: data.addressLine2 ?? '',
-                      postal_code: data.postalCode,
-                      city: data.city,
-                      country: data.country,
-                      state: data.state ?? '',
-                  },
+                  residential_address: address,
               },
           };
+};

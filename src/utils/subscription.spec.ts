@@ -435,3 +435,17 @@ describe('subscription utils', () => {
         });
     });
 });
+
+describe('findPricingsByIds across schedules and nested groups', () => {
+    it('returns each id once, in first-seen order, across schedules and nested groups', () => {
+        const pricing = (id: string) => ({ object_type: 'PRICING', id, name: id });
+        const data = {
+            pricing_plan_schedule_infos: [
+                { pricing_plan_version: { pricings: [pricing('a'), pricing('b'), pricing('a')] } },
+                { pricing_plan_version: { nested: { pricings: [pricing('b'), pricing('c')] } } },
+            ],
+        } as unknown as PricingPlanSubscriptionExpanded;
+
+        expect(findPricingsByIds(data, ['a', 'b']).map(({ id }) => id)).toEqual(['a', 'b']);
+    });
+});

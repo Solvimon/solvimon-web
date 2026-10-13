@@ -1,6 +1,7 @@
 import { flushPromises, mount } from '@vue/test-utils';
 import { defineComponent, h } from 'vue';
 import SubscriptionCancellationModal from './SubscriptionCancellationModal.vue';
+import SubscriptionsListItem from '@/components/subscriptions/SubscriptionsList/SubscriptionsListItem.vue';
 import type { Customer, PaymentMethod } from '@solvimon/solvimon-types';
 import type { PricingPlanSubscriptionExpanded } from '@/types/subscription';
 
@@ -593,5 +594,44 @@ describe('SubscriptionCancellationModal', () => {
         await wrapper.find('.modal__confirm').trigger('click');
 
         expect(mockSetSubscriptionCancellation).toHaveBeenCalledTimes(1);
+    });
+});
+
+describe('SubscriptionCancellationModal dates the renewal the way the subscriptions list does', () => {
+    const subscriptionWithInvoiceOn = (invoiceDate: string) =>
+        ({
+            id: 'ppsu_1',
+            name: 'Pro plan',
+            status: 'ACTIVE',
+            next_invoice: { invoice_date: invoiceDate },
+        }) as unknown as PricingPlanSubscriptionExpanded;
+
+    const modalDate = (subscription: PricingPlanSubscriptionExpanded, customer: Customer) =>
+        mount(SubscriptionCancellationModal, {
+            props: { showModal: true, variant: 'CANCEL', subscription, customer },
+        })
+            .find('.sv-subscription-cancellation-modal__renews')
+            .text()
+            .replace(/^Renews\s*/, '');
+
+    const listDate = (subscription: PricingPlanSubscriptionExpanded, customer: Customer) =>
+        mount(SubscriptionsListItem, {
+            props: { subscription, customer, paymentMethods: [] },
+        })
+            .find('.sv-subscriptions-list__item-next-invoice')
+            .text()
+            .replace(/^Next billing date\s*/, '');
+
+    it.each([
+        ['America/New_York', '2026-09-01T02:00:00Z', '31/08/2026'],
+        ['Pacific/Auckland', '2026-08-31T13:00:00Z', '01/09/2026'],
+        ['UTC', '2026-08-31T23:59:59Z', '31/08/2026'],
+        ['Pacific/Auckland', '2026-08-31T23:59:59Z', '01/09/2026'],
+    ])('%s at %s', (timezone, invoiceDate, expected) => {
+        const subscription = subscriptionWithInvoiceOn(invoiceDate);
+        const customer = { id: 'cust_1', timezone } as Customer;
+
+        expect(modalDate(subscription, customer)).toBe(expected);
+        expect(listDate(subscription, customer)).toBe(expected);
     });
 });

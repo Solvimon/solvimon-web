@@ -29,7 +29,6 @@ describe('Invoice dates across the header and the details', () => {
                                     invoice,
                                     payments: [],
                                     invoiceDownloadService: async () => {},
-                                    isLoading: false,
                                     configuration: {
                                         invoiceId: 'inv_1',
                                         enableDownloadButton: false,

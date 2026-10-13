@@ -2,20 +2,20 @@
 import type { SolvimonSubscriptionSchedulesEntryProps } from './SubscriptionSchedules.entry.types';
 import { useSubscription } from '@/composables/useSubscription';
 import { useLoadInitialData } from '@/composables/useLoadInitialData';
+import { getSchedulesWithPlanData } from '@/utils/pricingPlanScheduleOverrides';
 
 const props = defineProps<SolvimonSubscriptionSchedulesEntryProps>();
 
-const { subscription, withPlanData, get } = useSubscription({
+const { subscription, get } = useSubscription({
     subscriptionId: props.configuration.subscriptionId,
 });
 
-const { isLoading } = useLoadInitialData(get());
+useLoadInitialData(get());
 </script>
 
 <template>
     <slot
         name="default"
-        :schedules-data="subscription ? withPlanData(subscription) : undefined"
-        :is-loading="isLoading"
+        :schedules-data="subscription ? getSchedulesWithPlanData(subscription) : undefined"
     />
 </template>

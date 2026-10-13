@@ -33,10 +33,9 @@ const resolvedProps = computed<SolvimonInvoiceEntryProps>(() => ({
             :key="resolvedProps.configuration.invoiceId"
             :invoice-id="resolvedProps.configuration.invoiceId"
         >
-            <template #default="{ invoice, payments, isLoading, invoiceDownloadService }">
+            <template #default="{ invoice, payments, invoiceDownloadService }">
                 <Invoice
                     v-if="invoice"
-                    :is-loading="isLoading"
                     :invoice="invoice"
                     :invoice-download-service="invoiceDownloadService"
                     :payments="payments.payments.value"

@@ -12,8 +12,7 @@ const props = withDefaults(defineProps<SubscriptionsListItemProps>(), {
 });
 defineEmits<SubscriptionsListItemEmits>();
 
-const { $t } = useIntl();
-const { formatDate } = useIntl();
+const { $t, formatDate } = useIntl();
 
 const mostRecentPricingPlan = computed(() => getMostRecentPricingPlan(props.subscription));
 

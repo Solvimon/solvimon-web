@@ -19,13 +19,8 @@ const props = defineProps<SolvimonSubscriptionSchedulesEntryProps>();
         @error="(error: Error) => $emit('error', error)"
     >
         <SubscriptionSchedulesEntryView :key="configuration.subscriptionId" v-bind="props">
-            <template #default="{ schedulesData, isLoading }">
-                <SubscriptionSchedules
-                    v-if="schedulesData"
-                    :schedules-data="schedulesData"
-                    :is-loading="isLoading"
-                    :configuration="configuration"
-                />
+            <template #default="{ schedulesData }">
+                <SubscriptionSchedules v-if="schedulesData" :schedules-data="schedulesData" />
             </template>
         </SubscriptionSchedulesEntryView>
     </EntryProvider>

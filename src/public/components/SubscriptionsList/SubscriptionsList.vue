@@ -23,7 +23,6 @@ const { dispatchAction } = useActionDispatchProvider();
         :customer="customer"
         :subscriptions="subscriptions"
         :payment-methods="paymentMethods"
-        :is-loading="isLoading"
         :has-error="hasError"
         :has-more-items="hasMoreItems"
         :is-loading-more="isLoadingMore"

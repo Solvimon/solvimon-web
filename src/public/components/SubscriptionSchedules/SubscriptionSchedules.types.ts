@@ -7,6 +7,4 @@ export interface SubscriptionSchedulesConfiguration {
 
 export interface SubscriptionSchedulesProps {
     schedulesData: PricingPlanScheduleWithPlanData[];
-    configuration: SubscriptionSchedulesConfiguration;
-    isLoading?: boolean;
 }

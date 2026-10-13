@@ -8,17 +8,20 @@ import SubscriptionSchedulesEntry from './SubscriptionSchedules.entry.vue';
 import type { SolvimonSubscriptionSchedulesEntryProps } from './SubscriptionSchedules.entry.types';
 import { createTestPortalObject } from '@/test-utils/portalObjectFixture';
 
-const { mockUseSubscription, mockUseLoadInitialData, mockGet, mockWithPlanData } = vi.hoisted(
-    () => ({
+const { mockUseSubscription, mockUseLoadInitialData, mockGet, mockGetSchedulesWithPlanData } =
+    vi.hoisted(() => ({
         mockUseSubscription: vi.fn(),
         mockUseLoadInitialData: vi.fn(),
         mockGet: vi.fn(),
-        mockWithPlanData: vi.fn(),
-    }),
-);
+        mockGetSchedulesWithPlanData: vi.fn(),
+    }));
 
 vi.mock('@/composables/useSubscription', () => ({
     useSubscription: mockUseSubscription,
+}));
+
+vi.mock('@/utils/pricingPlanScheduleOverrides', () => ({
+    getSchedulesWithPlanData: mockGetSchedulesWithPlanData,
 }));
 
 vi.mock('@/composables/useLoadInitialData', () => ({
@@ -78,7 +81,6 @@ describe('SubscriptionSchedules entry component', () => {
     } = {}) => {
         mockUseSubscription.mockReturnValue({
             subscription: ref(withSubscription ? subscription : undefined),
-            withPlanData: mockWithPlanData,
             get: mockGet,
         });
 
@@ -97,7 +99,7 @@ describe('SubscriptionSchedules entry component', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         mockGet.mockResolvedValue(subscription);
-        mockWithPlanData.mockReturnValue(schedulesData);
+        mockGetSchedulesWithPlanData.mockReturnValue(schedulesData);
     });
 
     it('requests the subscription using the subscription ID from the configuration', () => {
@@ -122,6 +124,6 @@ describe('SubscriptionSchedules entry component', () => {
         const wrapper = mountComponent();
 
         expect(wrapper.get('[data-testid="pricing-plan-schedules-stub"]')).toBeTruthy();
-        expect(mockWithPlanData).toHaveBeenCalledWith(subscription);
+        expect(mockGetSchedulesWithPlanData).toHaveBeenCalledWith(subscription);
     });
 });

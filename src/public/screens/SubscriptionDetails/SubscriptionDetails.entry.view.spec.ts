@@ -15,9 +15,12 @@ vi.mock('@/composables/useSubscription', () => ({
     useSubscription: () => ({
         subscription: subscriptionState.subscription,
         error: subscriptionState.error,
-        withPlanData: () => [],
         get: mockFetchSubscription,
     }),
+}));
+
+vi.mock('@/utils/pricingPlanScheduleOverrides', () => ({
+    getSchedulesWithPlanData: () => [],
 }));
 
 vi.mock('@/composables/useCustomer', () => ({

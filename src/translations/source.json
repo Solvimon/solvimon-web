@@ -23,17 +23,9 @@
     "defaultMessage": "Select any number of products",
     "description": "The description of the addon multiple editor"
   },
-  "addon_single_editor.description.at_least_one": {
-    "defaultMessage": "Select at least one product",
-    "description": "The description of the addon single editor for at least one product"
-  },
   "addon_single_editor.description.at_most_one": {
     "defaultMessage": "Select up to one product",
     "description": "The description of the addon single editor for at most one product"
-  },
-  "addon_single_editor.description.exactly_one": {
-    "defaultMessage": "Select one product",
-    "description": "The description of the addon single editor for exactly one product"
   },
   "auto_topup_cancellation_modal.cancel": {
     "defaultMessage": "Cancel",

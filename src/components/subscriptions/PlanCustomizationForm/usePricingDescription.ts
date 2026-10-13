@@ -28,5 +28,5 @@ export function usePricingDescription({
               });
     };
 
-    return { describePricing, renderPricingForPricingItem };
+    return { describePricing };
 }

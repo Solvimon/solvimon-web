@@ -20,7 +20,6 @@ export interface InvoiceConfiguration {
 }
 
 export interface InvoiceProps {
-    isLoading: boolean;
     invoice: Invoice;
     payments?: Payment[];
     invoiceDownloadService: (invoice: Pick<Invoice, 'id' | 'invoice_number'>) => Promise<void>;

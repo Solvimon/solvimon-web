@@ -22,7 +22,6 @@ const { $t } = useIntl();
             :invoice="invoice"
             :payments="payments"
             :invoice-download-service="invoiceDownloadService"
-            :is-loading="isLoading"
             :configuration="configuration"
         />
 

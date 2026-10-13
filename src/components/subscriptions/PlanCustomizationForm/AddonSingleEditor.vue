@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import { Section, Toggle, useIntl } from '@solvimon/solvimon-ui';
-import { computed, toRef } from 'vue';
+import { toRef } from 'vue';
 import type { Pricing } from '@solvimon/solvimon-types';
-import type { AddonSingleEditorProps } from './AddonSingleEditor.types';
+import type { PricingGroupEditorBaseProps } from './PricingGroupEditorBase.types';
 import PricingGroupTitle from './PricingGroupTitle.vue';
 import { usePricingDescription } from './usePricingDescription';
 import PricingGroupContent from './PricingGroupContent.vue';
 import { getNameFromPricing } from '@/utils/pricing';
 
-const props = defineProps<AddonSingleEditorProps>();
+const props = defineProps<PricingGroupEditorBaseProps>();
 const model = defineModel<Pricing['id'][]>('modelValue', { required: true });
 
 const { $t } = useIntl();
@@ -18,34 +18,6 @@ const { describePricing } = usePricingDescription({
 });
 
 const groupPricingIds = props.pricings.map((pricing) => pricing.id);
-
-const constraintDescription = computed(() => {
-    if (props.constraint === 'AT_MOST_ONE') {
-        return $t({
-            defaultMessage: 'Select up to one product',
-            id: 'addon_single_editor.description.at_most_one',
-            description: 'The description of the addon single editor for at most one product',
-        });
-    }
-
-    if (props.constraint === 'EXACTLY_ONE') {
-        return $t({
-            defaultMessage: 'Select one product',
-            id: 'addon_single_editor.description.exactly_one',
-            description: 'The description of the addon single editor for exactly one product',
-        });
-    }
-
-    if (props.constraint === 'AT_LEAST_ONE') {
-        return $t({
-            defaultMessage: 'Select at least one product',
-            id: 'addon_single_editor.description.at_least_one',
-            description: 'The description of the addon single editor for at least one product',
-        });
-    }
-
-    return '';
-});
 
 const isSelected = (pricingId: Pricing['id']) => {
     return props.modelValue.includes(pricingId);
@@ -66,7 +38,14 @@ const handleToggle = (pricingId: Pricing['id']) => {
         <div class="p-1">
             <PricingGroupTitle>
                 <template #title>{{ groupName }}</template>
-                <template #description>{{ constraintDescription }}</template>
+                <template #description>{{
+                    $t({
+                        defaultMessage: 'Select up to one product',
+                        id: 'addon_single_editor.description.at_most_one',
+                        description:
+                            'The description of the addon single editor for at most one product',
+                    })
+                }}</template>
             </PricingGroupTitle>
 
             <div class="grid grid-cols-1 gap-1 pt-1">

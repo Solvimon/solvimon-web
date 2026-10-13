@@ -200,8 +200,6 @@ const title = computed<string>(() =>
                 <SubscriptionSchedules
                     class="sv-subscription-details__schedules"
                     :schedules-data="schedulesData ?? []"
-                    :configuration="{ subscriptionId: subscription.id }"
-                    :is-loading="isLoading"
                 />
             </template>
 

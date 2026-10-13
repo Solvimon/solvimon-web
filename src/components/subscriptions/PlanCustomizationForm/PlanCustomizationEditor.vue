@@ -95,7 +95,6 @@ const pricingGroups = computed(() =>
                     class="sv-plan-customization__group"
                     :group-name="pricingGroup.name"
                     :pricings="pricingGroup.pricings"
-                    :constraint="pricingGroup.selection_constraint"
                     :billing-period="billingPeriod"
                     :currency="currency"
                 />

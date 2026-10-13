@@ -1,9 +1,4 @@
-import type { Invoice } from '@solvimon/solvimon-types';
 import { isApiError } from '@/services/apiError';
-
-export function isInvoiceSettled(invoice: Pick<Invoice, 'payment_status'>): boolean {
-    return invoice.payment_status === 'PAID' || invoice.payment_status === 'OVERPAID';
-}
 
 export type ChargeError =
     | 'PAYMENT_METHOD'

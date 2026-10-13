@@ -1,5 +1,22 @@
 import type { Invoice } from '@solvimon/solvimon-types';
-import { getInvoiceTimezone, isInvoicePayable } from './invoiceState';
+import { getInvoiceTimezone, isInvoicePaid, isInvoicePayable } from './invoiceState';
+
+describe('isInvoicePaid', () => {
+    it.each([
+        ['PAID', true],
+        ['OVERPAID', true],
+        ['UNPAID', false],
+        ['PARTIALLY_PAID', false],
+        [null, false],
+        [undefined, false],
+    ] as const)('treats a payment status of %s as paid: %s', (payment_status, paid) => {
+        expect(isInvoicePaid({ payment_status })).toBe(paid);
+    });
+
+    it('treats an invoice flagged as paid as paid whatever its payment status', () => {
+        expect(isInvoicePaid({ paid: true, payment_status: 'UNPAID' })).toBe(true);
+    });
+});
 
 describe('isInvoicePayable', () => {
     const payable = {

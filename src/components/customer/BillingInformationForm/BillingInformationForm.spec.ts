@@ -75,7 +75,7 @@ const submit = async (wrapper: ReturnType<typeof mountForm>['wrapper']) => {
     await flushPromises();
 };
 
-describe('BillingInformationForm (tester)', () => {
+describe('BillingInformationForm', () => {
     describe('a new customer from the parent', () => {
         it('keeps unsaved edits when the parent passes an equal customer object', async () => {
             const { wrapper } = mountForm(individual);

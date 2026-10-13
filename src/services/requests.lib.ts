@@ -1,5 +1,3 @@
-import type { QueryParams } from './requests.types';
-
 export const Headers = {
     AUTHORIZATION: 'Authorization',
     CONTENT_TYPE: 'Content-Type',
@@ -19,22 +17,6 @@ export const MediaType = {
  */
 export const getMediaType = (contentType: string | null | undefined): string =>
     (contentType ?? '').split(';')[0].trim().toLowerCase();
-
-/** Nulls and undefineds are left out entirely; arrays go out as repeated `key[]` entries. */
-export const appendQueryParams = (url: URL, query: QueryParams = {}): void => {
-    Object.entries(query).forEach(([key, value]) => {
-        if (value === null || value === undefined) {
-            return;
-        }
-
-        if (Array.isArray(value)) {
-            value.forEach((entry) => url.searchParams.append(`${key}[]`, `${entry}`));
-            return;
-        }
-
-        url.searchParams.append(key, `${value}`);
-    });
-};
 
 /**
  * `base` with each segment appended as exactly one path segment, so an id can never add a segment,

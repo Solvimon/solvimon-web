@@ -5,6 +5,7 @@ import type {
     PaymentMethod,
     PricingPlanSubscription,
 } from '@solvimon/solvimon-types';
+import type { CustomerCollectionPayload } from '@/services/requests.types';
 
 export interface SetDefaultPaymentMethodPayload {
     paymentMethodId: PaymentMethod['id'];
@@ -14,16 +15,7 @@ export interface ArchivePaymentMethodPayload {
     paymentMethodId: PaymentMethod['id'];
 }
 
-export interface GetPaymentMethodsPayload {
-    customerId: Customer['id'];
-    pagination: {
-        page?: number;
-        pageSize?: number;
-        orderBy?: string;
-        orderDirection?: 'asc' | 'desc';
-    };
-    query?: Record<string, string | number | null | undefined>;
-}
+export type GetPaymentMethodsPayload = CustomerCollectionPayload;
 
 interface GetPaymentMethodOptionsBasePayload {
     amount?: Amount;

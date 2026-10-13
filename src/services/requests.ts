@@ -1,4 +1,5 @@
 import type { ApiSuccessCollectionResponse } from '@solvimon/solvimon-types';
+import { appendQueryParams } from '@solvimon/solvimon-ui';
 import { version } from '../../package.json';
 import { ApiError } from './apiError';
 import type {
@@ -10,13 +11,7 @@ import type {
 } from './requests.types';
 import { useLogger } from '@/components/providers/LoggerProvider/composables/useLogger';
 import type { Logger } from '@/components/providers/LoggerProvider/LoggerProvider.types';
-import {
-    appendQueryParams,
-    getMediaType,
-    Headers,
-    isRefreshCookieEndpoint,
-    MediaType,
-} from '@/services/requests.lib';
+import { getMediaType, Headers, isRefreshCookieEndpoint, MediaType } from '@/services/requests.lib';
 import { useAuth } from '@/components/providers/AuthProvider';
 
 type ErrorBody = Partial<Record<'message' | 'field' | 'resource_type' | 'resource_id', string>>;
@@ -128,7 +123,7 @@ export function createRequestService({
         let parseError: unknown;
 
         const fullUrl = new URL(url);
-        appendQueryParams(fullUrl, query);
+        appendQueryParams(fullUrl, query ?? {});
         const credentials: RequestCredentials =
             includeRefreshCookie && isRefreshCookieEndpoint(fullUrl) ? 'include' : 'omit';
 

@@ -1,10 +1,10 @@
 import { mount } from '@vue/test-utils';
 import { defineComponent, h, onErrorCaptured, type PropType } from 'vue';
+import type { PortalUrl } from '@solvimon/solvimon-types';
 import PortalProvider from './PortalProvider.vue';
 import { usePortal } from './composables/usePortal';
 import { LOGGER_PROVIDER_INJECTION_KEY } from '@/components/providers/LoggerProvider/LoggerProvider.lib';
 import type { Logger } from '@/components/providers/LoggerProvider/LoggerProvider.types';
-import type { PortalUrl } from '@/services/portals.types';
 import { createTestPortalObject } from '@/test-utils/portalObjectFixture';
 import { CodedError } from '@/utils/error';
 

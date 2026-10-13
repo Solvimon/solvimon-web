@@ -1,4 +1,4 @@
-import type { PortalUrl } from '@/services/portals.types';
+import type { PortalUrl } from '@solvimon/solvimon-types';
 
 export type PortalProviderProps = {
     /**

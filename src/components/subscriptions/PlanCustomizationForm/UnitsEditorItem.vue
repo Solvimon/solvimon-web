@@ -4,7 +4,7 @@ import type { ConfiguredMeterValue } from '@solvimon/solvimon-types';
 import { computed } from 'vue';
 import type { UnitsEditorItemProps } from './UnitsEditorItem.types';
 import { useSeatBasedPricing } from '@/composables/useSeatBasedPricing';
-import { FALLBACK_UNITS_NUMBER } from '@/utils/unitsValues';
+import { FALLBACK_METER_NUMBER } from '@/utils/meterValues';
 
 const props = defineProps<UnitsEditorItemProps>();
 const model = defineModel<ConfiguredMeterValue>('modelValue', { required: true });
@@ -12,7 +12,7 @@ const model = defineModel<ConfiguredMeterValue>('modelValue', { required: true }
 const { $t } = useIntl();
 
 const unitsNumber = computed<number>({
-    get: () => +(model.value.number || FALLBACK_UNITS_NUMBER),
+    get: () => +(model.value.number || FALLBACK_METER_NUMBER),
     set(number: number) {
         model.value = {
             ...model.value,

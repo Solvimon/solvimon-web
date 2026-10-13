@@ -3,11 +3,6 @@ import type { ApiMock, MockResponse } from '../support/api-mock';
 import { checkout, mountCheckout, type MountOptions } from '../support/checkout';
 import { anInvoicePreview, aSubscription, aSuccessfulAuthorization } from '../support/fixtures';
 
-/**
- * DD-3542 tester, round 2: the legal name, the address fields named without Input's label row, and
- * the race between a price change and the pay button.
- */
-
 async function loaded(page: Page) {
     await expect(checkout(page).paymentForm).toBeVisible();
     await expect(checkout(page).stripeElement).toBeVisible();
@@ -44,7 +39,7 @@ async function forceLocale(page: Page, locale: string) {
 const amountOf = (body: unknown): unknown =>
     typeof body === 'object' && body !== null ? Reflect.get(body, 'amount') : undefined;
 
-test.describe('DD-3542 tester r2', () => {
+test.describe('Checkout form fields', () => {
     let api: ApiMock;
 
     test.afterEach(() => {

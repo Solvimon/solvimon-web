@@ -4,7 +4,7 @@ import { checkout, mountCheckout, type MountOptions } from '../support/checkout'
 import { anInvoicePreview, aSubscription, aSuccessfulAuthorization } from '../support/fixtures';
 
 /**
- * DD-3540 pay race tester: a payment must carry the price of the form as it is when it is sent,
+ * A payment must carry the price of the form as it is when it is sent,
  * whichever way it is set off and whatever the preview does meanwhile.
  */
 
@@ -65,7 +65,7 @@ const paidAmount = async (api: ApiMock) => {
     };
 };
 
-test.describe('DD-3540 pay race tester', () => {
+test.describe('Pay waiting for the price of the form', () => {
     let api: ApiMock;
 
     test.afterEach(() => {

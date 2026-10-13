@@ -57,6 +57,28 @@ describe('ErrorBoundary', () => {
         expect(wrapper.emitted('error')).toEqual([[failure]]);
     });
 
+    it('keeps the context a coded error carries on its log entry', () => {
+        const failure = new CodedError('PORTAL_TYPE_NOT_ALLOWED', 'Wrong portal', {
+            portalUrlId: 'pu_1',
+        });
+        const { logger } = mountBoundary(
+            defineComponent({
+                setup() {
+                    throw failure;
+                },
+            }),
+        );
+
+        expect(logger.capture).toHaveBeenCalledWith(
+            failure,
+            expect.objectContaining({
+                code: 'PORTAL_TYPE_NOT_ALLOWED',
+                message: 'Wrong portal',
+                portalUrlId: 'pu_1',
+            }),
+        );
+    });
+
     it('captures an error thrown while rendering', () => {
         const { wrapper, logger } = mountBoundary(
             defineComponent({

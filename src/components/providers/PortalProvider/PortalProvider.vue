@@ -6,6 +6,7 @@ import {
     PORTAL_INJECTION_KEY,
 } from '@/components/providers/PortalProvider/PortalProvider.lib';
 import { useLogger } from '@/components/providers/LoggerProvider/composables/useLogger';
+import { CodedError } from '@/utils/error';
 
 const props = defineProps<PortalProviderProps>();
 const logger = useLogger();
@@ -17,8 +18,10 @@ const unavailableReason = computed(() =>
 watch(
     unavailableReason,
     (reason) => {
+        // The element cannot carry on with another element's portal object, so the boundary
+        // reports it once and tells the host through the `error` event.
         if (reason === 'type-not-allowed') {
-            logger.error(
+            throw new CodedError(
                 'PORTAL_TYPE_NOT_ALLOWED',
                 `This element does not accept a portal object of type ${props.portalObject.type}`,
                 {
@@ -26,7 +29,8 @@ watch(
                     allowedPortalTypes: props.allowedPortalTypes,
                 },
             );
-        } else if (reason === 'not-published') {
+        }
+        if (reason === 'not-published') {
             logger.error('RESOURCE_REVOKED', 'The portal object is not published', {
                 portalUrlId: props.portalObject.id,
                 status: props.portalObject.status,

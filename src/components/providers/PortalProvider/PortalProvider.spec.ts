@@ -1,11 +1,12 @@
 import { mount } from '@vue/test-utils';
-import { defineComponent, h } from 'vue';
+import { defineComponent, h, onErrorCaptured, type PropType } from 'vue';
 import PortalProvider from './PortalProvider.vue';
 import { usePortal } from './composables/usePortal';
 import { LOGGER_PROVIDER_INJECTION_KEY } from '@/components/providers/LoggerProvider/LoggerProvider.lib';
 import type { Logger } from '@/components/providers/LoggerProvider/LoggerProvider.types';
 import type { PortalUrl } from '@/services/portals.types';
 import { createTestPortalObject } from '@/test-utils/portalObjectFixture';
+import { CodedError } from '@/utils/error';
 
 const PortalId = defineComponent({
     setup() {
@@ -25,17 +26,40 @@ const mountPortalProvider = (
         error: vi.fn(),
         capture: vi.fn(),
     };
+    const errorHandler = vi.fn();
 
-    const wrapper = mount(PortalProvider, {
-        props: { portalObject, allowedPortalTypes },
-        slots: {
-            default: () => h(PortalId),
-            unavailable: () => h('p', { class: 'unavailable' }, 'unavailable'),
+    // Stands in for the error boundary above PortalProvider in every element.
+    const Host = defineComponent({
+        props: {
+            portalObject: { type: Object as PropType<PortalUrl>, required: true },
+            allowedPortalTypes: { type: Array as PropType<PortalUrl['type'][]>, required: true },
         },
+        setup(hostProps) {
+            onErrorCaptured((err) => {
+                errorHandler(err);
+                return false;
+            });
+            return () =>
+                h(
+                    PortalProvider,
+                    {
+                        portalObject: hostProps.portalObject,
+                        allowedPortalTypes: hostProps.allowedPortalTypes,
+                    },
+                    {
+                        default: () => h(PortalId),
+                        unavailable: () => h('p', { class: 'unavailable' }, 'unavailable'),
+                    },
+                );
+        },
+    });
+
+    const wrapper = mount(Host, {
+        props: { portalObject, allowedPortalTypes },
         global: { provide: { [LOGGER_PROVIDER_INJECTION_KEY]: logger } },
     });
 
-    return { wrapper, logger };
+    return { wrapper, logger, errorHandler };
 };
 
 describe('PortalProvider', () => {
@@ -46,18 +70,23 @@ describe('PortalProvider', () => {
         expect(logger.error).not.toHaveBeenCalled();
     });
 
-    it('renders nothing for a portal type the element does not accept, and says why', () => {
-        const { wrapper, logger } = mountPortalProvider(createTestPortalObject(), [
+    it('renders nothing for a portal type the element does not accept, and fails the element', () => {
+        const { wrapper, errorHandler } = mountPortalProvider(createTestPortalObject(), [
             'INIT_PRICING_PLAN_SUBSCRIPTION',
         ]);
 
         expect(wrapper.find('.content').exists()).toBe(false);
         expect(wrapper.find('.unavailable').exists()).toBe(false);
-        expect(logger.error).toHaveBeenCalledWith(
-            'PORTAL_TYPE_NOT_ALLOWED',
-            expect.stringContaining('CUSTOMER'),
-            expect.objectContaining({ allowedPortalTypes: ['INIT_PRICING_PLAN_SUBSCRIPTION'] }),
-        );
+        expect(errorHandler).toHaveBeenCalledOnce();
+        const [error] = errorHandler.mock.calls[0];
+        expect(error).toBeInstanceOf(CodedError);
+        expect(error).toMatchObject({
+            code: 'PORTAL_TYPE_NOT_ALLOWED',
+            message: expect.stringContaining('CUSTOMER'),
+            context: expect.objectContaining({
+                allowedPortalTypes: ['INIT_PRICING_PLAN_SUBSCRIPTION'],
+            }),
+        });
     });
 
     it('renders what the entry shows for an unavailable portal when it was revoked', () => {

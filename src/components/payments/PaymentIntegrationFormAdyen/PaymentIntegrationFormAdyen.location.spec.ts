@@ -173,9 +173,9 @@ vi.mock('@solvimon/solvimon-ui', async () => {
 });
 
 /*
- * DD-3538, from the tester. Unlike the implementer's spec, the address is real here: the
- * redirect return is read from `window.location` and cleared with `history.replaceState`, so what
- * a reload would see is what the next mount sees.
+ * Kept apart from PaymentIntegrationFormAdyen.spec.ts, which mocks `@/utils/url`: here the redirect
+ * return is read from the real `window.location` and cleared with `history.replaceState`, so what a
+ * reload would see is what the next mount sees.
  */
 
 const entry = (id: string) =>
@@ -246,7 +246,7 @@ const retry = async (wrapper: Awaited<ReturnType<typeof mountComponent>>) => {
 const failedCodes = (wrapper: Awaited<ReturnType<typeof mountComponent>>) =>
     (wrapper.emitted('payment-failed') ?? []).map(([e]) => (e as { code: string }).code);
 
-describe('PaymentIntegrationFormAdyen (DD-3538 tester)', () => {
+describe('PaymentIntegrationFormAdyen against the real page address', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         mockGetAdyenDropInPaymentMethods.mockReturnValue([{ type: 'scheme', name: 'Card' }]);
@@ -404,8 +404,8 @@ describe('PaymentIntegrationFormAdyen (DD-3538 tester)', () => {
             );
         });
 
-        // The brief: hostile values such as `%` never reach the API. A lone `%` survives
-        // URLSearchParams as itself, so only the shape check can stop it, as it does markup.
+        // A lone `%` survives URLSearchParams as itself, so only the shape check can stop it, as it
+        // does markup.
         it.each([
             ['a lone percent sign', 'redirectResult=%'],
             ['markup', `redirectResult=${encodeURIComponent('<script>alert(1)</script>')}`],
@@ -445,8 +445,6 @@ describe('PaymentIntegrationFormAdyen (DD-3538 tester)', () => {
             expect(window.location.search).toBe('');
         });
 
-        // onMounted promises the drop-in waits for the returned payment; an options change while
-        // it is being confirmed used to build the drop-in anyway.
         it('offers no drop-in while the returned payment is still being confirmed', async () => {
             mockGetPaymentDetails.mockReturnValue(new Promise(() => {}));
             visit('?payment_acceptor_id=paya_123&redirectResult=res_1');
@@ -465,7 +463,7 @@ describe('PaymentIntegrationFormAdyen (DD-3538 tester)', () => {
         });
     });
 
-    describe('round 2: building the drop-in after a returned payment is answered', () => {
+    describe('building the drop-in after a returned payment is answered', () => {
         const lastEntry = () =>
             (
                 mockGetAdyenDropInPaymentMethods.mock.calls.at(-1) as unknown as

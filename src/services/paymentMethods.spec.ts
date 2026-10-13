@@ -100,7 +100,7 @@ describe('paymentMethods service', () => {
         });
 
         // Without it the answer carries every acceptor the customer has, including ones this
-        // invoice refuses, and paying through one of those fails with a 400 (DD-3533).
+        // invoice refuses, and paying through one of those fails with a 400.
         it('names the invoice being paid, so the API answers for that invoice', async () => {
             const { getPaymentMethodOptions } = createPaymentMethodsService();
             await getPaymentMethodOptions({

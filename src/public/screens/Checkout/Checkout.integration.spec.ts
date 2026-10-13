@@ -469,7 +469,7 @@ describe('Checkout', () => {
         });
 
         // The Apple Pay button could charge a customer with nothing happening on screen, so it is
-        // only offered where the merchant has opted into express checkout (DD-3535).
+        // only offered where the merchant has opted into express checkout.
         it('offers none while express checkout is off', async () => {
             const wrapper = await mountCheckout();
 
@@ -547,7 +547,7 @@ describe('Checkout', () => {
         });
     });
 
-    describe('after an unconfirmed payment, tested independently', () => {
+    describe('after an unconfirmed payment', () => {
         afterEach(() => {
             mockExperimentalFeatures.value = { 'express-checkout': false };
         });

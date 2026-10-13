@@ -174,24 +174,56 @@ async function submitThroughDropIn() {
     await flushPromises();
 }
 
+const mountComponent = (props: Record<string, unknown> = {}) =>
+    mount(PayInvoice, {
+        props: {
+            isLoading: false,
+            invoice: mockInvoice,
+            amount,
+            countryCode: 'NL',
+            paymentMethodOptions: mockPaymentMethodOptions,
+            configuration: { invoiceId: 'inv_123' },
+            handleSuccessRedirect: vi.fn(),
+            ...props,
+        },
+        global: { stubs: { teleport: true } },
+    });
+
+const challenge = {
+    status: 'ACTION_REQUIRED',
+    action: {
+        payment_gateway_variant: 'ADYEN',
+        method: 'GET',
+        url: 'https://adyen.test/3ds',
+        data: {},
+        adyen: {
+            result_code: 'ChallengeShopper',
+            action_type: 'threeDS2',
+            payment_method_type: 'scheme',
+        },
+    },
+};
+
+type Handlers = {
+    onSubmit: (state: unknown, component: unknown, actions: unknown) => Promise<void> | void;
+    onPaymentFailed: (data: unknown) => void;
+    onError: (data: unknown) => void;
+};
+
+const handlersOf = (index: number) => mockAdyenCheckout.mock.calls[index]![0] as Handlers;
+
+async function submitThrough(index: number) {
+    await handlersOf(index).onSubmit(
+        { data: { paymentMethod: { type: 'scheme' }, riskData: {}, browserInfo: {} } },
+        {},
+        { resolve: vi.fn(), reject: vi.fn() },
+    );
+    await flushPromises();
+}
+
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
 describe('PayInvoice', () => {
-    const mountComponent = (props: Record<string, unknown> = {}) =>
-        mount(PayInvoice, {
-            props: {
-                isLoading: false,
-                invoice: mockInvoice,
-                amount,
-                countryCode: 'NL',
-                paymentMethodOptions: mockPaymentMethodOptions,
-                configuration: { invoiceId: 'inv_123' },
-                handleSuccessRedirect: vi.fn(),
-                ...props,
-            },
-            global: { stubs: { teleport: true } },
-        });
-
     beforeEach(async () => {
         await waitForAdyenMount();
 
@@ -451,7 +483,7 @@ describe('PayInvoice', () => {
         ).toBeDefined();
     });
 
-    describe('returning from an Adyen redirect, tested independently', () => {
+    describe('returning from an Adyen redirect', () => {
         beforeEach(() => {
             window.history.replaceState(
                 {},
@@ -548,5 +580,111 @@ describe('PayInvoice', () => {
         expect(
             wrapper.findComponent({ name: 'PayButton' }).find('button').attributes('disabled'),
         ).toBeDefined();
+    });
+});
+
+describe('PayInvoice around a 3DS challenge', () => {
+    const isHeld = (wrapper: ReturnType<typeof mountComponent>) =>
+        wrapper.find('.pointer-events-none').exists();
+    const payButton = (wrapper: ReturnType<typeof mountComponent>) =>
+        wrapper.findComponent({ name: 'PayButton' }).find('button');
+
+    async function intoChallenge() {
+        mockAuthorizePayment.mockResolvedValueOnce(challenge);
+        const wrapper = mountComponent();
+        await waitForAdyenMount();
+        const [, dropInConfig] = MockDropIn.mock.calls[0];
+        dropInConfig.onSelect({ props: { type: 'scheme' } });
+        await payButton(wrapper).trigger('click');
+        await submitThrough(0);
+        expect(isHeld(wrapper)).toBe(false);
+        expect(payButton(wrapper).attributes('disabled')).toBeDefined();
+        return wrapper;
+    }
+
+    beforeEach(async () => {
+        await waitForAdyenMount();
+        vi.clearAllMocks();
+        // A form per acceptor builds its own drop-in, which an arrow implementation cannot be.
+        // `setStatus` is what a submit turned down by another form calls.
+        MockDropIn.mockImplementation(function Dropin() {
+            const dropIn = { unmount: vi.fn(), submit: vi.fn(), setStatus: vi.fn() };
+            return { mount: vi.fn().mockReturnValue(dropIn) };
+        });
+    });
+
+    it.each([
+        ['a refused challenge', () => handlersOf(0).onPaymentFailed({ resultCode: 'Refused' })],
+        ['a closed wallet sheet', () => handlersOf(0).onError({ name: 'CANCEL' })],
+    ])('holds the form again for the next payment after %s', async (_, end) => {
+        const wrapper = await intoChallenge();
+
+        end();
+        await flushPromises();
+        expect(isHeld(wrapper)).toBe(false);
+        expect(payButton(wrapper).attributes('disabled')).toBeUndefined();
+
+        mockAuthorizePayment.mockReturnValueOnce(new Promise(() => {}));
+        await payButton(wrapper).trigger('click');
+        await submitThrough(0);
+
+        expect(isHeld(wrapper)).toBe(true);
+    });
+
+    it('holds nothing open after an unconfirmed challenge, and leaves pay off', async () => {
+        mockGetPaymentDetails.mockRejectedValueOnce(new TypeError('Failed to fetch'));
+        const wrapper = await intoChallenge();
+        const { onAdditionalDetails } = handlersOf(0) as unknown as {
+            onAdditionalDetails: (s: unknown, c: unknown, a: unknown) => void;
+        };
+
+        onAdditionalDetails(
+            { data: { details: { threeDSResult: 'x' } } },
+            {},
+            { resolve: vi.fn() },
+        );
+        await flushPromises();
+
+        expect(isHeld(wrapper)).toBe(false);
+        expect(payButton(wrapper).attributes('disabled')).toBeDefined();
+    });
+
+    it('takes no second payment from Enter in the same drop-in during the challenge', async () => {
+        await intoChallenge();
+
+        await submitThrough(0);
+
+        expect(mockAuthorizePayment).toHaveBeenCalledTimes(1);
+    });
+
+    // Released for the challenge, the wrapper also releases every other gateway form inside it.
+    // A second Adyen acceptor's own submit (Enter in its card fields, its PayPal button) passes its
+    // own in-flight guard, and the screen's validation does not look at pending.
+    it('takes no payment from another acceptor while a challenge is up', async () => {
+        mockAuthorizePayment.mockResolvedValueOnce(challenge);
+        mockAuthorizePayment.mockReturnValueOnce(new Promise(() => {}));
+        const acceptor = (id: string) =>
+            createPaymentMethodOptionEntry({ paymentAcceptorId: id, integrationId: `int_${id}` });
+        const wrapper = mountComponent({ paymentMethodOptions: [acceptor('pa_1')] });
+        await waitForAdyenMount();
+        // Added once the first is built: two forms importing the mocked SDK at once never settle.
+        await wrapper.setProps({ paymentMethodOptions: [acceptor('pa_1'), acceptor('pa_2')] });
+        await waitForAdyenMount();
+        expect(mockAdyenCheckout).toHaveBeenCalledTimes(2);
+        const [, dropInConfig] = MockDropIn.mock.calls[0];
+        dropInConfig.onSelect({ props: { type: 'scheme' } });
+        await payButton(wrapper).trigger('click');
+        const [first] = mockAdyenCheckout.mock.calls.map(([config]) => config as Handlers);
+        await first!.onSubmit(
+            { data: { paymentMethod: { type: 'scheme' }, riskData: {}, browserInfo: {} } },
+            {},
+            { resolve: vi.fn(), reject: vi.fn() },
+        );
+        await flushPromises();
+        expect(isHeld(wrapper)).toBe(false);
+
+        await submitThrough(1);
+
+        expect(mockAuthorizePayment).toHaveBeenCalledTimes(1);
     });
 });

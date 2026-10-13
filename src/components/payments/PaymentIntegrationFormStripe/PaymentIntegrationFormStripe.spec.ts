@@ -592,7 +592,7 @@ describe('PaymentIntegrationFormStripe', () => {
         });
     });
 
-    describe('confirming a redirect return, tested independently', () => {
+    describe('confirming a redirect return', () => {
         const returnedWith = (redirectStatus: string) =>
             mockGetQueryParam.mockImplementation(
                 (key: string) =>
@@ -719,7 +719,7 @@ describe('PaymentIntegrationFormStripe', () => {
         });
     });
 
-    describe('authorize outcomes, tested independently', () => {
+    describe('authorize outcomes', () => {
         const submitToken = async (wrapper: ReturnType<typeof mountComponent>) => {
             await wrapper
                 .findComponent({ name: 'PaymentIntegrationFormStripeFrame' })

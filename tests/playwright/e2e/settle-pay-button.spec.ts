@@ -13,10 +13,6 @@ import {
     paymentMethodOptions,
 } from '../support/fixtures';
 
-/**
- * DD-3537: every way a submit can end must hand the pay button back, on every screen that has one.
- */
-
 const INCOMPLETE_CARD = {
     message: 'Your card number is incomplete.',
     type: 'validation_error',
@@ -39,7 +35,7 @@ async function selectCountry(page: Page, country: string) {
     await page.getByRole('option', { name: country, exact: true }).first().click();
 }
 
-test.describe('DD-3537 pay button settles', () => {
+test.describe('Pay button settles after every way a submit can end', () => {
     let api: ApiMock;
 
     test.afterEach(() => {

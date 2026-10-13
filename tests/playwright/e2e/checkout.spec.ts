@@ -964,9 +964,9 @@ test.describe('Checkout', () => {
         });
     });
 
-    // ─── Unconfirmed outcomes, tested independently ───────────────────────────
+    // ─── Unconfirmed outcomes ─────────────────────────────────────────────────
 
-    test.describe('payment outcomes, tested independently', () => {
+    test.describe('payment outcomes', () => {
         const CRAFTED_QUERY = {
             redirect_status: 'succeeded',
             payment_acceptor_id: PAYMENT_ACCEPTOR_ID,

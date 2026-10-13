@@ -56,7 +56,7 @@ test.describe('Pay invoice', () => {
             });
 
             // What is left to pay, not what the invoice was for — and asked of the invoice, so
-            // the answer only carries acceptors it can be paid through (DD-3533).
+            // the answer only carries acceptors it can be paid through.
             expect(api.lastCall('paymentMethodOptions')?.body).toEqual({
                 customer_id: CUSTOMER_ID,
                 invoice_id: INVOICE_ID,
@@ -247,7 +247,7 @@ test.describe('Pay invoice', () => {
      * Payment methods are looked up per invoice, so the API answers with the acceptors that
      * invoice can be paid through. Asked for the customer alone the answer carries every acceptor
      * that customer has, and paying through one the invoice refuses fails with a 400 the customer
-     * can do nothing about (DD-3533).
+     * can do nothing about.
      */
     test.describe('acceptors the invoice allows', () => {
         test('asks the API for the acceptors this invoice can be paid through', async ({

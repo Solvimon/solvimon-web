@@ -32,8 +32,7 @@ import {
 } from '@/utils/pricingPlanSchedule';
 import { withPreselectedEnabledPricings } from '@/utils/enabledPricings';
 import { splitInvoiceByRecurrence } from '@/utils/invoice';
-import { getInitialSeatsValues } from '@/utils/seatsValues';
-import { getInitialUnitsValues } from '@/utils/unitsValues';
+import { getInitialMeterValues } from '@/utils/meterValues';
 import { hasPaymentRedirectReturn } from '@/utils/paymentRedirect';
 
 /** Unscoped and without a timestamp; only read to be removed. */
@@ -238,8 +237,8 @@ export function useCheckoutView({
             billing_period: defaultBillingPeriod ?? response.billing_period,
         };
 
-        const seatsValues = getInitialSeatsValues(subscriptionSchedule);
-        const unitsValues = getInitialUnitsValues(subscriptionSchedule);
+        const seatsValues = getInitialMeterValues('seats', subscriptionSchedule);
+        const unitsValues = getInitialMeterValues('units', subscriptionSchedule);
 
         checkoutForm.updateInitialState({
             ...checkoutForm.form.value,

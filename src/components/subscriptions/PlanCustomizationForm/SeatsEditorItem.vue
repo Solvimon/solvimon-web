@@ -13,7 +13,7 @@ import { computed, ref } from 'vue';
 import type { SeatsEditorItemProps } from './SeatsEditorItem.types';
 import TieredTable from './TieredTable.vue';
 import { useSeatBasedPricing } from '@/composables/useSeatBasedPricing';
-import { FALLBACK_SEATS_NUMBER } from '@/utils/seatsValues';
+import { FALLBACK_METER_NUMBER } from '@/utils/meterValues';
 
 const props = defineProps<SeatsEditorItemProps>();
 const model = defineModel<ConfiguredMeterValue>('modelValue', { required: true });
@@ -24,7 +24,7 @@ const { formatTimePeriod } = useTimePeriod();
 const isExpanded = ref(false);
 
 const seatsNumber = computed<number>({
-    get: () => +(model.value.number || FALLBACK_SEATS_NUMBER),
+    get: () => +(model.value.number || FALLBACK_METER_NUMBER),
     set(number: number) {
         model.value = {
             ...model.value,

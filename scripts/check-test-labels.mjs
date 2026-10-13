@@ -38,12 +38,17 @@ const titleOf = (argument) => {
 
 const lineOf = (source, position) => source.getLineAndCharacterOfPosition(position).line + 1;
 
+/** @typedef {{ line: number, kind: 'file name' | 'title' | 'comment', text: string }} Label */
+
+/** @param {string} file @returns {Label[]} */
 export function findLabelsInFileName(file) {
     return FILE_NAME.test(path.basename(file)) ? [{ line: 0, kind: 'file name', text: file }] : [];
 }
 
+/** @param {string} file @param {string} content @returns {Label[]} */
 export function findLabelsInSpec(file, content) {
     const source = ts.createSourceFile(file, content, ts.ScriptTarget.Latest, true);
+    /** @type {Label[]} */
     const found = [];
 
     const visit = (node) => {
@@ -84,6 +89,11 @@ export function findLabelsInSpec(file, content) {
     return found.sort((a, b) => a.line - b.line);
 }
 
+/**
+ * @param {string[]} files
+ * @param {(file: string) => string} readFile
+ * @returns {(Label & { file: string })[]}
+ */
 export function checkFiles(files, readFile) {
     return files.flatMap((file) => [
         ...findLabelsInFileName(file).map((label) => ({ file, ...label })),

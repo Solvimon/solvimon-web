@@ -77,7 +77,7 @@ describe('checkFiles', () => {
         };
 
         expect(
-            checkFiles(Object.keys(files), (file: keyof typeof files) => files[file]).map(
+            checkFiles(Object.keys(files), (file) => files[file as keyof typeof files]).map(
                 ({ file, kind }) => `${file} ${kind}`,
             ),
         ).toEqual(['src/a/Form.tester.spec.ts file name', 'src/a/Form.tester.spec.ts title']);

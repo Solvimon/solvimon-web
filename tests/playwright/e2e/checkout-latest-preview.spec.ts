@@ -11,10 +11,6 @@ import {
     SUBSCRIPTION_ID,
 } from '../support/fixtures';
 
-/**
- * DD-3540 tester: the latest preview, the saved form and the promotion code, tried from outside.
- */
-
 function customizationsOf(body: unknown): Record<string, unknown>[] {
     if (typeof body !== 'object' || body === null) return [];
     const customizations = Reflect.get(body, 'pricing_plan_schedule_customizations');
@@ -51,7 +47,7 @@ async function loaded(page: Page) {
     await expect(checkout(page).stripeElement).toBeVisible();
 }
 
-test.describe('DD-3540 tester', () => {
+test.describe('Checkout following the latest preview, promotion code and saved form', () => {
     let api: ApiMock;
 
     test.afterEach(() => {
@@ -237,7 +233,7 @@ test.describe('DD-3540 tester', () => {
             if (message.type() === 'error') errors.push(message.text());
         });
         // Only sessionStorage: `@solvimon/solvimon-ui` reads localStorage unguarded to format
-        // amounts, so blocking that takes the whole screen down (outside this ticket).
+        // amounts, so blocking that takes the whole screen down.
         await page.addInitScript(() => {
             for (const method of ['getItem', 'setItem', 'removeItem'] as const) {
                 const original = Storage.prototype[method];

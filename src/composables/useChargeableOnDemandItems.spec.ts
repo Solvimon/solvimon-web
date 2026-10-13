@@ -164,3 +164,36 @@ describe('useChargeableOnDemandItems', () => {
         );
     });
 });
+
+describe('useChargeableOnDemandItems when the schedule changes mid-load', () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+    });
+
+    it('logs the error of a schedule the subscription moved on from', async () => {
+        let rejectFirst: (error: Error) => void = () => {};
+        mockGetOnDemandPricingItems
+            .mockImplementationOnce(() => new Promise((_, reject) => (rejectFirst = reject)))
+            .mockImplementationOnce(() => new Promise(() => {}));
+
+        const subscription = ref(createSubscription());
+        useChargeableOnDemandItems({ subscription });
+        await flushPromises();
+
+        subscription.value = JSON.parse(
+            JSON.stringify(createSubscription()).replaceAll('ppsc_active', 'ppsc_next'),
+        );
+        await flushPromises();
+        expect(mockGetOnDemandPricingItems).toHaveBeenCalledTimes(2);
+
+        rejectFirst(new Error('boom'));
+        await flushPromises();
+
+        expect(mockError).toHaveBeenCalledWith(
+            'ON_DEMAND_ITEMS_LOAD_FAILED',
+            expect.any(String),
+            { scheduleId: 'ppsc_active' },
+            expect.any(Error),
+        );
+    });
+});

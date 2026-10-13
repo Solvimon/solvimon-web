@@ -4,12 +4,6 @@ import type { CheckoutFormState } from '@/components/customer/CheckoutForm/Check
 import { useInvoicePreview } from './useInvoicePreview';
 import { usePromotionCode } from './usePromotionCode';
 
-/**
- * DD-3540 tester: a promotion code whose own preview is taken over by a later one (a seat change,
- * or the checkout's first preview on mount for a host coupon) must still learn whether the code
- * was accepted.
- */
-
 const { mockGetInvoicePreview } = vi.hoisted(() => ({ mockGetInvoicePreview: vi.fn() }));
 
 vi.mock('@/services/invoices', () => ({
@@ -29,6 +23,7 @@ const preview = (id: string) =>
     }) as unknown as InvoicePreview;
 
 const invalidCode = { message: 'Unknown promotion code', field: 'promotion_codes' };
+const serverError = { message: 'Server error' };
 
 function setup() {
     const pending: { resolve: (p: InvoicePreview) => void; reject: (e: unknown) => void }[] = [];
@@ -60,7 +55,7 @@ function setup() {
     return { pending, form, invoicePreview, load, promo };
 }
 
-describe('DD-3540 tester: promotion code against a superseding preview', () => {
+describe('usePromotionCode against a superseding preview', () => {
     beforeEach(() => {
         mockGetInvoicePreview.mockReset();
     });
@@ -113,5 +108,83 @@ describe('DD-3540 tester: promotion code against a superseding preview', () => {
 
         expect(promo.promotionCodeErrorMessage.value).not.toBeNull();
         expect(form.value.promotionCode).toBeUndefined();
+    });
+});
+
+describe('usePromotionCode settled by a later preview without its code', () => {
+    beforeEach(() => {
+        mockGetInvoicePreview.mockReset();
+    });
+
+    it('says nothing about a code the customer removed while it was applying', async () => {
+        const { pending, form, promo } = setup();
+
+        const apply = promo.applyPromotionCode('SUMMER');
+        const remove = promo.removePromotionCode();
+
+        pending[1]!.reject(serverError);
+        pending[0]!.resolve(preview('inv_summer'));
+        await apply;
+        await remove;
+
+        expect(promo.promotionCodeErrorMessage.value).toBe(
+            'Promotion code could not be removed. Please try again.',
+        );
+        expect(form.value.promotionCode).toBeUndefined();
+        // The apply's failure starts no removal of its own on top of the customer's.
+        expect(mockGetInvoicePreview).toHaveBeenCalledTimes(2);
+    });
+
+    it('settles quietly when the customer removed the code and changed seats', async () => {
+        const { pending, form, load, promo } = setup();
+
+        const apply = promo.applyPromotionCode('SUMMER');
+        const remove = promo.removePromotionCode();
+        form.value.seatsValues = [{ pricing_item_config_id: 'pic_1', number: '4' }];
+        const seats = load(form.value);
+
+        pending[2]!.resolve(preview('inv_seats_4'));
+        pending[1]!.resolve(preview('inv_removed'));
+        pending[0]!.resolve(preview('inv_summer'));
+        await Promise.all([apply, remove, seats]);
+
+        expect(promo.promotionCodeErrorMessage.value).toBeNull();
+        expect(form.value.promotionCode).toBeUndefined();
+        expect(promo.isPromotionCodePending.value).toBe(false);
+    });
+
+    it('ends on the code after a rapid apply, remove, apply', async () => {
+        const { pending, form, promo, invoicePreview } = setup();
+
+        const first = promo.applyPromotionCode('SUMMER');
+        const remove = promo.removePromotionCode();
+        const second = promo.applyPromotionCode('SUMMER');
+
+        pending[2]!.resolve(preview('inv_summer_2'));
+        pending[1]!.resolve(preview('inv_removed'));
+        pending[0]!.resolve(preview('inv_summer_1'));
+        await Promise.all([first, remove, second]);
+
+        expect(form.value.promotionCode).toBe('SUMMER');
+        expect(promo.promotionCodeErrorMessage.value).toBeNull();
+        expect(promo.isPromotionCodePending.value).toBe(false);
+        expect(invoicePreview.invoicePreview.value).toEqual({ id: 'inv_summer_2' });
+    });
+
+    it('keeps pending on while the removal after a refused code is out', async () => {
+        const { pending, promo, invoicePreview } = setup();
+
+        const apply = promo.applyPromotionCode('NOPE');
+        pending[0]!.reject(invalidCode);
+        await apply;
+
+        expect(mockGetInvoicePreview).toHaveBeenCalledTimes(2);
+        expect(promo.isPromotionCodePending.value).toBe(true);
+        expect(invoicePreview.isPending.value).toBe(true);
+
+        pending[1]!.resolve(preview('inv_without'));
+        await vi.waitFor(() => expect(promo.isPromotionCodePending.value).toBe(false));
+        expect(invoicePreview.invoicePreview.value).toEqual({ id: 'inv_without' });
+        expect(promo.promotionCodeErrorMessage.value).not.toBeNull();
     });
 });

@@ -1,5 +1,10 @@
-import type { CountryCode, Invoice, Pricing, TimePeriod } from '@solvimon/solvimon-types';
-import type { PricingPlanSubscriptionExpanded } from '@/types/subscription';
+import type {
+    CountryCode,
+    Invoice,
+    Pricing,
+    TimePeriod,
+    PricingPlanSubscriptionExpanded,
+} from '@solvimon/solvimon-types';
 
 export interface OrderSummaryProps {
     /**

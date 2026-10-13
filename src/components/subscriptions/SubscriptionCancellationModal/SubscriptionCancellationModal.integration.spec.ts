@@ -1,43 +1,17 @@
-import { flushPromises, mount } from '@vue/test-utils';
+import { mount } from '@vue/test-utils';
 import { defineComponent, h } from 'vue';
-import type { Customer, PaymentMethod } from '@solvimon/solvimon-types';
+import type {
+    Customer,
+    PaymentMethod,
+    PricingPlanSubscriptionExpanded,
+} from '@solvimon/solvimon-types';
 import SubscriptionCancellationModal from './SubscriptionCancellationModal.vue';
 import SubscriptionsListItem from '@/components/subscriptions/SubscriptionsList/SubscriptionsListItem.vue';
-import type { PricingPlanSubscriptionExpanded } from '@/types/subscription';
 
-const { mockSetSubscriptionCancellation, mockLogError, mockGetPaymentMethod, storedPaymentMethod } =
-    vi.hoisted(() => ({
-        mockSetSubscriptionCancellation: vi.fn(),
-        mockLogError: vi.fn(),
-        mockGetPaymentMethod: vi.fn(),
-        // What the API would return for the id the modal asks for. Tests set this before mounting.
-        storedPaymentMethod: { value: undefined as unknown },
-    }));
-
-vi.mock('@/composables/usePaymentMethod', async () => {
-    const { ref } = await import('vue');
-
-    return {
-        usePaymentMethod: () => {
-            const paymentMethod = ref<unknown>();
-
-            return {
-                paymentMethod,
-                get: (args: { customerId: string; paymentMethodId: string }) => {
-                    mockGetPaymentMethod(args);
-
-                    if (!storedPaymentMethod.value) {
-                        return Promise.reject(new Error('not found'));
-                    }
-
-                    paymentMethod.value = storedPaymentMethod.value;
-
-                    return Promise.resolve(storedPaymentMethod.value);
-                },
-            };
-        },
-    };
-});
+const { mockSetSubscriptionCancellation, mockLogError } = vi.hoisted(() => ({
+    mockSetSubscriptionCancellation: vi.fn(),
+    mockLogError: vi.fn(),
+}));
 
 vi.mock('@solvimon/solvimon-ui', async () => {
     const { createSolvimonUiMock } = await import('@/test-utils/solvimonUiMock');
@@ -204,7 +178,6 @@ describe('SubscriptionCancellationModal', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         mockSetSubscriptionCancellation.mockResolvedValue({ id: 'ppsu_1' });
-        storedPaymentMethod.value = undefined;
     });
 
     describe('cancelling', () => {
@@ -239,11 +212,11 @@ describe('SubscriptionCancellationModal', () => {
             ).toContain('01/09/2026');
         });
 
-        it('summarises the subscription being given up', async () => {
-            storedPaymentMethod.value = mockPaymentMethod;
-
-            const wrapper = mountComponent({ subscription: subscriptionWithPaymentMethod });
-            await flushPromises();
+        it('summarises the subscription being given up', () => {
+            const wrapper = mountComponent({
+                subscription: subscriptionWithPaymentMethod,
+                paymentMethod: mockPaymentMethod,
+            });
 
             const summary = wrapper.find('.sv-subscription-cancellation-modal__subscription');
 
@@ -258,36 +231,9 @@ describe('SubscriptionCancellationModal', () => {
             );
         });
 
-        it("picks the subscription's own method out of the customer's list", async () => {
-            storedPaymentMethod.value = mockPaymentMethod;
-
-            mountComponent({ subscription: subscriptionWithPaymentMethod });
-            await flushPromises();
-
-            expect(mockGetPaymentMethod).toHaveBeenCalledWith({
-                customerId: 'cust_1',
-                paymentMethodId: 'pmet_1',
-            });
-        });
-
-        it('does not fetch a payment method while the modal is closed', () => {
-            storedPaymentMethod.value = mockPaymentMethod;
-
-            mountComponent({ subscription: subscriptionWithPaymentMethod, showModal: false });
-
-            expect(mockGetPaymentMethod).not.toHaveBeenCalled();
-        });
-
-        it('still lets the customer cancel when the payment method cannot be loaded', async () => {
-            storedPaymentMethod.value = undefined; // the fetch rejects
-
+        it('still lets the customer cancel without a payment method to show', () => {
             const wrapper = mountComponent({ subscription: subscriptionWithPaymentMethod });
-            await flushPromises();
 
-            expect(mockGetPaymentMethod).toHaveBeenCalledWith({
-                customerId: 'cust_1',
-                paymentMethodId: 'pmet_1',
-            });
             expect(
                 wrapper.find('.sv-subscription-cancellation-modal__payment-method').exists(),
             ).toBe(false);

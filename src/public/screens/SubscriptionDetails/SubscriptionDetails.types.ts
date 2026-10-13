@@ -5,9 +5,9 @@ import type {
     PaymentMethod,
     PricingPlanSchedule,
     PricingPlanScheduleWithPlanData,
+    PricingPlanSubscriptionExpanded,
 } from '@solvimon/solvimon-types';
 import type { ChargeOnDemandItem } from '@solvimon/solvimon-ui';
-import type { PricingPlanSubscriptionExpanded } from '@/types/subscription';
 import type { BaseScreenProps } from '@/public/screens/types';
 
 export interface SubscriptionDetailsProps extends BaseScreenProps {

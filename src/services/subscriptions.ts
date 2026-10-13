@@ -1,13 +1,13 @@
 import type {
     ApiSuccessCollectionResponse,
     PricingPlanSubscription,
+    PricingPlanSubscriptionExpanded,
 } from '@solvimon/solvimon-types';
 import { withExpand, withPagination, type WithPagination } from '@solvimon/solvimon-ui';
 import { createRequestService } from './requests';
 import { buildUrl } from './requests.lib';
 import { useConfig } from '@/components/providers/ConfigProvider/composables/useConfig';
 import { EXPAND_ALL } from '@/constants';
-import type { PricingPlanSubscriptionExpanded } from '@/types/subscription';
 
 const ENDPOINT = ['portal', 'pricing-plan-subscriptions'];
 

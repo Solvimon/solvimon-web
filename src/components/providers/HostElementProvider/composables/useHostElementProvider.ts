@@ -1,12 +1,5 @@
-import { inject } from 'vue';
 import { HOST_ELEMENT_PROVIDER_INJECTION_KEY } from '@/components/providers/HostElementProvider/HostElementProvider.lib';
+import { injectOrThrow } from '@/utils/component';
 
-export const useHostElementProvider = () => {
-    const context = inject(HOST_ELEMENT_PROVIDER_INJECTION_KEY);
-
-    if (!context) {
-        throw new Error('HostElementProvider is not provided');
-    }
-
-    return context;
-};
+export const useHostElementProvider = () =>
+    injectOrThrow(HOST_ELEMENT_PROVIDER_INJECTION_KEY, 'HostElementProvider');

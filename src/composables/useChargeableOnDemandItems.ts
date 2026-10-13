@@ -1,5 +1,5 @@
 import { computed, watch, type Ref } from 'vue';
-import type { PricingPlanSubscriptionExpanded } from '@/types/subscription';
+import type { PricingPlanSubscriptionExpanded } from '@solvimon/solvimon-types';
 import { createPricingPlanSchedulesService } from '@/services/pricingPlanSchedules';
 import { useService } from '@/composables/useService';
 import { useLogger } from '@/components/providers/LoggerProvider/composables/useLogger';

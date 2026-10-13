@@ -1,6 +1,5 @@
 import { computed, ref, type ComputedRef, type Ref } from 'vue';
-import type { Pricing } from '@solvimon/solvimon-types';
-import type { PricingPlanSubscriptionExpanded } from '@/types/subscription';
+import type { Pricing, PricingPlanSubscriptionExpanded } from '@solvimon/solvimon-types';
 import { useActionDispatchProvider } from '@/components/providers';
 import type { SubscriptionCancellationVariant } from '@/services/subscriptions';
 import {

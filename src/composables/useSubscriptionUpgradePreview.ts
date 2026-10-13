@@ -1,6 +1,10 @@
-import type { Invoice, Pricing, PricingPlanScheduleInfoExpanded } from '@solvimon/solvimon-types';
+import type {
+    Invoice,
+    Pricing,
+    PricingPlanScheduleInfoExpanded,
+    PricingPlanSubscriptionExpanded,
+} from '@solvimon/solvimon-types';
 import { ref, type Ref } from 'vue';
-import type { PricingPlanSubscriptionExpanded } from '@/types/subscription';
 import { createInvoicesService } from '@/services/invoices';
 import { useLogger } from '@/components/providers';
 import { getScheduleCustomizations } from '@/utils/pricingPlanSchedule';

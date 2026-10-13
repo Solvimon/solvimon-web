@@ -11,8 +11,8 @@ import type {
     PricingPlanSchedule,
     PricingPlanScheduleWithPlanData,
     PricingPlanVersionExtended,
+    PricingPlanSubscriptionExpanded,
 } from '@solvimon/solvimon-types';
-import type { PricingPlanSubscriptionExpanded } from '@/types/subscription';
 
 /**
  * Desk reads price customizations off `combined_pricing_plan_version`: a version the API returns

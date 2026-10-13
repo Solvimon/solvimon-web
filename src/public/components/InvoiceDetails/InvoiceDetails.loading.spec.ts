@@ -6,7 +6,7 @@ import type { SolvimonInvoiceDetailsEntryProps } from './InvoiceDetails.entry.ty
 import PaymentHistoryEntry from '@/public/components/PaymentHistory/PaymentHistory.entry.vue';
 import { createTestPortalObject } from '@/test-utils/portalObjectFixture';
 
-// Only the services are replaced: useInvoiceData, useData and the entry views run for real.
+// Only the services are replaced: useInvoiceData and the entry views run for real.
 const { mockGetInvoice, mockGetPayments } = vi.hoisted(() => ({
     mockGetInvoice: vi.fn(),
     mockGetPayments: vi.fn(),

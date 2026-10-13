@@ -1,6 +1,12 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
-import { Button, ErrorNotification, Typography, useIntl } from '@solvimon/solvimon-ui';
+import {
+    Button,
+    ErrorNotification,
+    Typography,
+    getEnabledPricingIds,
+    useIntl,
+} from '@solvimon/solvimon-ui';
 import type {
     PaymentMethod,
     Pricing,
@@ -25,11 +31,7 @@ import {
     getActiveDefaultScheduleInfo,
     getPricingGroupByPricingId,
 } from '@/utils/pricingPlanSchedule';
-import {
-    combinePricingPlanVersionWithOverrides,
-    getEnabledPricingIdsWithOverrides,
-    hasCustomizedPricings,
-} from '@/utils/pricingPlanScheduleOverrides';
+import { hasCustomizedPricings, withScheduleOverrides } from '@/utils/pricingPlanScheduleOverrides';
 
 const props = defineProps<SubscriptionManagementProps>();
 
@@ -109,15 +111,12 @@ const billedScheduleInfo = computed(() => {
 
     return {
         ...scheduleInfo,
-        pricing_plan_version: combinePricingPlanVersionWithOverrides({
-            pricingPlanVersion: scheduleInfo.pricing_plan_version,
-            overridePricings: scheduleInfo.pricing_plan_schedule?.override_pricings,
-        }),
+        pricing_plan_version: withScheduleOverrides(scheduleInfo),
     };
 });
 
 const scheduledPricingIds = computed(() =>
-    getEnabledPricingIdsWithOverrides(activeScheduleInfo.value?.pricing_plan_schedule),
+    getEnabledPricingIds(activeScheduleInfo.value?.pricing_plan_schedule ?? {}),
 );
 
 /**

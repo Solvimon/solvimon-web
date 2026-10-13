@@ -9,6 +9,7 @@ import type {
     PricingItemConfigExtended,
     PricingItemExtended,
     PricingPlanSchedule,
+    PricingPlanScheduleInfoExpanded,
     PricingPlanScheduleWithPlanData,
     PricingPlanVersionExtended,
     PricingPlanSubscriptionExpanded,
@@ -368,6 +369,14 @@ export function combinePricingPlanVersionWithOverrides({
     };
 }
 
+export const withScheduleOverrides = (
+    info: PricingPlanScheduleInfoExpanded,
+): PricingPlanVersionExtended =>
+    combinePricingPlanVersionWithOverrides({
+        pricingPlanVersion: info.pricing_plan_version,
+        overridePricings: info.pricing_plan_schedule?.override_pricings,
+    });
+
 /**
  * Turn an expanded subscription into what `PricingPlanSchedules` renders, with each schedule's
  * price customizations merged into the plan version it shows.
@@ -378,36 +387,8 @@ export function getSchedulesWithPlanData(
     return subscription.pricing_plan_schedule_infos.map((scheduleInfo) => ({
         schedule: scheduleInfo.pricing_plan_schedule,
         selectedPricingPlan: scheduleInfo.pricing_plan_version.pricing_plan,
-        selectedPricingPlanVersion: combinePricingPlanVersionWithOverrides({
-            pricingPlanVersion: scheduleInfo.pricing_plan_version,
-            overridePricings: scheduleInfo.pricing_plan_schedule?.override_pricings,
-        }),
+        selectedPricingPlanVersion: withScheduleOverrides(scheduleInfo),
     }));
-}
-
-/**
- * The ids of the customized pricings on a schedule. A customized pricing is billed by being there,
- * under its own id, and the API refuses it in `enabled_pricings`.
- */
-export function getOverridePricingIds(
-    schedule: Pick<PricingPlanSchedule, 'override_pricings'> | undefined,
-): Pricing['id'][] {
-    return (schedule?.override_pricings ?? []).flatMap((pricing) =>
-        'id' in pricing && pricing.id ? [pricing.id] : [],
-    );
-}
-
-/**
- * Every pricing a schedule bills, by the ids `combinePricingPlanVersionWithOverrides` carries them
- * under: the enabled ones plus the customized ones.
- */
-export function getEnabledPricingIdsWithOverrides(
-    schedule: Pick<PricingPlanSchedule, 'enabled_pricings' | 'override_pricings'> | undefined,
-): Pricing['id'][] {
-    return [
-        ...(schedule?.enabled_pricings ?? []).map(({ pricing_id }) => pricing_id),
-        ...getOverridePricingIds(schedule),
-    ];
 }
 
 /** Whether a schedule bills any pricing customized for it, saved or not. */

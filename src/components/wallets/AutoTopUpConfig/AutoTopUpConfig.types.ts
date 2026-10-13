@@ -50,10 +50,6 @@ export interface AutoTopUpConfigProps {
     disabled?: boolean;
 }
 
-export interface AutoTopUpConfigEmits {
-    (e: 'save', rule: AutoTopUpRule): void;
-}
-
 /** Bundled so the two hosts offering the editor cannot drift on what they pass it. */
 export type AutoTopUpEditorConfig = Pick<
     AutoTopUpConfigProps,

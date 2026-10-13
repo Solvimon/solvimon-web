@@ -282,7 +282,6 @@ watch(
         :customer="customer"
         :payment-method-options="paymentMethodOptions"
         :is-payment-method-options-pending="isPaymentMethodOptionsPending"
-        :is-adding-payment-method="isAddingPaymentMethod"
         @confirm="handleConfirm"
         @cancel="handleCancel"
         @payment-success="handlePaymentSuccess"

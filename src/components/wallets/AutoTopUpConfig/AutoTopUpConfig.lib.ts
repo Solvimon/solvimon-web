@@ -84,12 +84,6 @@ export const normalizeAutoTopUpRule = (
 export const isSameAutoTopUpRule = (a: AutoTopUpRule, b: AutoTopUpRule): boolean =>
     JSON.stringify(a) === JSON.stringify(b);
 
-export const toQuantity = (value: AmountInputModelValue | undefined): number | undefined => {
-    const quantity = Number(value?.quantity);
-
-    return value?.quantity && Number.isFinite(quantity) ? quantity : undefined;
-};
-
 /** An empty field passes: the required rule owns emptiness, and so does an unbounded pricing. */
 export const isAtLeastMinimum = (value: number | null, minimum?: Amount): boolean => {
     const bound = Number(minimum?.quantity);

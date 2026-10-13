@@ -91,11 +91,11 @@ describe('AutoTopUpConfig', () => {
         await wrapper.find('input[type="checkbox"]').setValue(true);
         await setAmount(wrapper, 0, '1000');
         await setAmount(wrapper, 1, '250');
-        wrapper.vm.submit();
+        const rule = wrapper.vm.validate();
 
         expect(unitAfter(wrapper, 'threshold')).toBe('coins');
         expect(unitAfter(wrapper, 'amount')).toBe('coins');
-        expect(wrapper.emitted('save')?.[0]?.[0]).toEqual({
+        expect(rule).toEqual({
             status: 'ACTIVE',
             threshold: { credits: { quantity: '1000', credit_type_id: 'ctyp_1' } },
             topup_amount: { quantity: '25.00', currency: 'EUR' },
@@ -115,18 +115,18 @@ describe('AutoTopUpConfig', () => {
 
             await setAmount(wrapper, 0, '5.00');
             await setAmount(wrapper, 1, '10.00');
-            wrapper.vm.submit();
+            const rule = wrapper.vm.validate();
 
-            expect(wrapper.emitted('save')?.[0]?.[0]).toMatchObject({ status: 'ACTIVE' });
+            expect(rule).toMatchObject({ status: 'ACTIVE' });
         });
 
         it('still refuses a rule with nothing filled in', async () => {
             const wrapper = mountEditor({ alwaysEnabled: true });
 
-            wrapper.vm.submit();
+            const rule = wrapper.vm.validate();
             await nextTick();
 
-            expect(wrapper.emitted('save')).toBeUndefined();
+            expect(rule).toBeUndefined();
         });
     });
 
@@ -225,10 +225,10 @@ describe('AutoTopUpConfig', () => {
             await wrapper.find('input[type="checkbox"]').setValue(true);
             await setAmount(wrapper, 0, '5.00');
             await setAmount(wrapper, 1, '2.50');
-            wrapper.vm.submit();
+            const rule = wrapper.vm.validate();
             await nextTick();
 
-            expect(wrapper.emitted('save')).toBeUndefined();
+            expect(rule).toBeUndefined();
             expect(errorMessages(wrapper, 1)).toContain('Top up with at least 5.00 EUR.');
         });
 
@@ -238,10 +238,10 @@ describe('AutoTopUpConfig', () => {
             await wrapper.find('input[type="checkbox"]').setValue(true);
             await setAmount(wrapper, 0, '5.00');
             await setAmount(wrapper, 1, '750.00');
-            wrapper.vm.submit();
+            const rule = wrapper.vm.validate();
             await nextTick();
 
-            expect(wrapper.emitted('save')).toBeUndefined();
+            expect(rule).toBeUndefined();
             expect(errorMessages(wrapper, 1)).toContain('Top up with at most 500.00 EUR.');
         });
 
@@ -256,13 +256,13 @@ describe('AutoTopUpConfig', () => {
             await wrapper.find('input[type="checkbox"]').setValue(true);
             await setAmount(wrapper, 0, '1000');
             await setAmount(wrapper, 1, '25');
-            wrapper.vm.submit();
+            const rule = wrapper.vm.validate();
             await nextTick();
 
             expect(wrapper.find('[data-testid="auto-top-up-amount-bounds"]').text()).toBe(
                 'Between 50 and 5000 coins',
             );
-            expect(wrapper.emitted('save')).toBeUndefined();
+            expect(rule).toBeUndefined();
             expect(errorMessages(wrapper, 1)).toContain('Top up with at least 50 coins.');
         });
 
@@ -272,9 +272,9 @@ describe('AutoTopUpConfig', () => {
             await wrapper.find('input[type="checkbox"]').setValue(true);
             await setAmount(wrapper, 0, '5.00');
             await setAmount(wrapper, 1, '10.00');
-            wrapper.vm.submit();
+            const rule = wrapper.vm.validate();
 
-            expect(wrapper.emitted('save')?.[0]?.[0]).toMatchObject({
+            expect(rule).toMatchObject({
                 topup_amount: { quantity: '10.00', currency: 'EUR' },
             });
         });
@@ -285,19 +285,19 @@ describe('AutoTopUpConfig', () => {
             await wrapper.find('input[type="checkbox"]').setValue(true);
             await setAmount(wrapper, 0, '5.00');
             await setAmount(wrapper, 1, '750.00');
-            wrapper.vm.submit();
+            const rule = wrapper.vm.validate();
 
-            expect(wrapper.emitted('save')).toHaveLength(1);
+            expect(rule).toBeDefined();
         });
     });
 
-    it('hands the edited rule over on submit', async () => {
+    it('hands the edited rule over once it validates', async () => {
         const wrapper = mountEditor({ config: SAVED_RULE });
 
         await setAmount(wrapper, 0, '25.00');
-        wrapper.vm.submit();
+        const rule = wrapper.vm.validate();
 
-        expect(wrapper.emitted('save')?.[0]?.[0]).toEqual({
+        expect(rule).toEqual({
             status: 'ACTIVE',
             threshold: { amount: { quantity: '25.00', currency: 'EUR' } },
             topup_amount: { quantity: '10.00', currency: 'EUR' },
@@ -308,10 +308,10 @@ describe('AutoTopUpConfig', () => {
         const wrapper = mountEditor({ config: SAVED_RULE });
 
         await setAmount(wrapper, 1, '');
-        wrapper.vm.submit();
+        const rule = wrapper.vm.validate();
         await nextTick();
 
-        expect(wrapper.emitted('save')).toBeUndefined();
+        expect(rule).toBeUndefined();
         expect(amountInputs(wrapper)[1].props('error')).not.toHaveLength(0);
     });
 
@@ -360,10 +360,10 @@ describe('AutoTopUpConfig', () => {
         const wrapper = mountEditor({ config: SAVED_RULE });
 
         await setAmount(wrapper, 1, '0');
-        wrapper.vm.submit();
+        const rule = wrapper.vm.validate();
         await nextTick();
 
-        expect(wrapper.emitted('save')).toBeUndefined();
+        expect(rule).toBeUndefined();
         expect(amountInputs(wrapper)[1].props('error')).not.toHaveLength(0);
     });
 
@@ -379,9 +379,9 @@ describe('AutoTopUpConfig', () => {
         });
 
         await setAmount(wrapper, 0, '750');
-        wrapper.vm.submit();
+        const rule = wrapper.vm.validate();
 
-        expect(wrapper.emitted('save')?.[0]?.[0]).toEqual({
+        expect(rule).toEqual({
             status: 'ACTIVE',
             threshold: { credits: { quantity: '750', credit_type_id: 'ctyp_1' } },
             topup_amount: { quantity: '10.00', currency: 'EUR' },
@@ -392,10 +392,10 @@ describe('AutoTopUpConfig', () => {
         const wrapper = mountEditor();
 
         await wrapper.find('input[type="checkbox"]').setValue(true);
-        wrapper.vm.submit();
+        const rule = wrapper.vm.validate();
         await nextTick();
 
-        expect(wrapper.emitted('save')).toBeUndefined();
+        expect(rule).toBeUndefined();
         expect(amountInputs(wrapper)[0].props('error')).not.toHaveLength(0);
     });
 
@@ -403,9 +403,9 @@ describe('AutoTopUpConfig', () => {
         const wrapper = mountEditor({ config: SAVED_RULE });
 
         await wrapper.find('input[type="checkbox"]').setValue(false);
-        wrapper.vm.submit();
+        const rule = wrapper.vm.validate();
 
-        expect(wrapper.emitted('save')?.[0]?.[0]).toMatchObject({ status: 'INACTIVE' });
+        expect(rule).toMatchObject({ status: 'INACTIVE' });
     });
 
     it('lets a rule with out-of-range amounts through once it is switched off', async () => {
@@ -417,10 +417,10 @@ describe('AutoTopUpConfig', () => {
         await setAmount(wrapper, 1, '2.50');
 
         await wrapper.find('input[type="checkbox"]').setValue(false);
-        wrapper.vm.submit();
+        const rule = wrapper.vm.validate();
 
         expect(wrapper.vm.isInvalid).toBe(false);
-        expect(wrapper.emitted('save')?.[0]?.[0]).toMatchObject({ status: 'INACTIVE' });
+        expect(rule).toMatchObject({ status: 'INACTIVE' });
     });
 
     it('holds the out-of-range amounts against it again once it is switched back on', async () => {
@@ -440,10 +440,10 @@ describe('AutoTopUpConfig', () => {
         const wrapper = mountEditor({ config: SAVED_RULE });
 
         await setAmount(wrapper, 0, '-5.00');
-        wrapper.vm.submit();
+        const rule = wrapper.vm.validate();
         await nextTick();
 
-        expect(wrapper.emitted('save')).toBeUndefined();
+        expect(rule).toBeUndefined();
         expect(amountInputs(wrapper)[0].props('error')).not.toHaveLength(0);
     });
 

@@ -15,7 +15,6 @@ export interface OnDemandPaymentModalShellProps {
     customer?: Customer;
     paymentMethodOptions?: PaymentMethodOptionsResponse;
     isPaymentMethodOptionsPending?: boolean;
-    isAddingPaymentMethod?: boolean;
 }
 
 export interface OnDemandPaymentModalShellEmits {

@@ -11,7 +11,6 @@ import {
     useValidation,
 } from '@solvimon/solvimon-ui';
 import type {
-    AutoTopUpConfigEmits,
     AutoTopUpConfigFormState,
     AutoTopUpConfigProps,
     AutoTopUpRule,
@@ -23,18 +22,19 @@ import {
     normalizeAutoTopUpRule,
     toAutoTopUpRule,
     toFormState,
-    toQuantity,
     isWithinMaximum,
 } from './AutoTopUpConfig.lib';
 import ConvertedAmountInput from '@/components/wallets/ConvertedAmountInput/ConvertedAmountInput.vue';
 import type { ConversionBase } from '@/components/wallets/ConvertedAmountInput/ConvertedAmountInput.types';
-import { toBoundQuantity } from '@/components/wallets/ConvertedAmountInput/ConvertedAmountInput.lib';
+import {
+    toBoundQuantity,
+    toNumber,
+} from '@/components/wallets/ConvertedAmountInput/ConvertedAmountInput.lib';
 import Section from '@/components/shared/Section/Section.vue';
 
 const props = withDefaults(defineProps<AutoTopUpConfigProps>(), {
     showThresholdConversion: true,
 });
-const emit = defineEmits<AutoTopUpConfigEmits>();
 
 const { $t, formatNumber } = useIntl();
 
@@ -105,8 +105,8 @@ const rule = computed(() =>
 const currentRule = () => rule.value;
 
 const validationState = reactive({
-    threshold: computed(() => toQuantity(model.value.threshold) ?? null),
-    topUpAmount: computed(() => toQuantity(model.value.topUpAmount) ?? null),
+    threshold: computed(() => toNumber(model.value.threshold?.quantity) ?? null),
+    topUpAmount: computed(() => toNumber(model.value.topUpAmount?.quantity) ?? null),
 });
 
 const formatBound = (bound?: Amount) => {
@@ -217,16 +217,7 @@ function validate(): AutoTopUpRule | undefined {
     return validation.value.$invalid ? undefined : currentRule();
 }
 
-function submit() {
-    const rule = validate();
-
-    if (rule) {
-        emit('save', rule);
-    }
-}
-
 defineExpose({
-    submit,
     validate,
     rule,
     hasChanges,

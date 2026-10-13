@@ -194,13 +194,13 @@ const flexibleAmountQuantity = computed<string>({
     },
 });
 
-const entryBaseFor = (pricing: Omit<FlexibleTopUpPricing, 'pricingItemId'>) =>
+const entryBaseFor = (pricing: FlexibleTopUpPricing) =>
     pricing.creditsConfiguration ? ('CREDITS' as const) : ('AMOUNT' as const);
 
 /** Read off the wallet: the name lives on the credit type, not on the pricing's conversion config. */
 const creditUnitName = computed(() => getAutoTopUpCreditUnitName(props.topUpPricingItems));
 
-const entryUnitFor = (pricing: Omit<FlexibleTopUpPricing, 'pricingItemId'>) =>
+const entryUnitFor = (pricing: FlexibleTopUpPricing) =>
     pricing.creditsConfiguration
         ? (creditUnitName.value ??
           pricing.creditsConfiguration.unitNamePlural ??
@@ -209,7 +209,7 @@ const entryUnitFor = (pricing: Omit<FlexibleTopUpPricing, 'pricingItemId'>) =>
         : pricing.currency;
 
 /** The money bounds the pricing sets, which the input restates in the unit it is typed in. */
-const boundsFor = ({ config }: Omit<FlexibleTopUpPricing, 'pricingItemId'>) => ({
+const boundsFor = ({ config }: FlexibleTopUpPricing) => ({
     ...(config?.minimum_amount && { minimum: config.minimum_amount }),
     ...(config?.maximum_amount && { maximum: config.maximum_amount }),
 });
@@ -548,26 +548,24 @@ const { sortedPaymentMethods } = useDefaultPaymentMethod({
 
             <!-- payment methods -->
             <div>
-                <slot name="payment-method">
-                    <PaymentMethodSelector
-                        v-model="selectedPaymentMethodId"
-                        class="sv-top-up-form__payment-methods"
-                        :payment-methods="sortedPaymentMethods"
-                        required
-                        :error="validation.paymentMethodId.$errors"
-                        :payment-method-options="paymentMethodOptions"
-                        :disabled="isCharging"
-                        :label="
-                            $t({
-                                defaultMessage: 'Payment method',
-                                description:
-                                    'Label above the payment method that pays for the top-up, in the top-up modal',
-                                id: 'topup_modal.payment_method_selector.label',
-                            })
-                        "
-                        @add-payment-method="emit('add-payment-method')"
-                    />
-                </slot>
+                <PaymentMethodSelector
+                    v-model="selectedPaymentMethodId"
+                    class="sv-top-up-form__payment-methods"
+                    :payment-methods="sortedPaymentMethods"
+                    required
+                    :error="validation.paymentMethodId.$errors"
+                    :payment-method-options="paymentMethodOptions"
+                    :disabled="isCharging"
+                    :label="
+                        $t({
+                            defaultMessage: 'Payment method',
+                            description:
+                                'Label above the payment method that pays for the top-up, in the top-up modal',
+                            id: 'topup_modal.payment_method_selector.label',
+                        })
+                    "
+                    @add-payment-method="emit('add-payment-method')"
+                />
             </div>
         </div>
     </form>

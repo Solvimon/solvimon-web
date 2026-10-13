@@ -46,7 +46,7 @@ defineExpose({
                             :customer="customer"
                             :payment-method-options="paymentMethodOptions"
                             :is-loading="isPaymentMethodOptionsPending"
-                            :is-active="isAddingPaymentMethod"
+                            :is-active="step === addPaymentMethodPane"
                             @success="$emit('payment-success')"
                             @failure="(error) => $emit('payment-failed', error)"
                         />

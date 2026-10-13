@@ -17,11 +17,6 @@ import {
     paymentMethodOptions,
 } from '../support/fixtures';
 
-/**
- * Independent checks of DD-3549: what a host can do to an element after it has mounted, set from
- * plain JavaScript the way a host does it.
- */
-
 const OTHER_SUBSCRIPTION_ID = 'ppsu_other_subscription';
 const OTHER_CUSTOMER_ID = 'cus_other_customer';
 const OTHER_TOKEN_USER = 'other-portal-user';
@@ -65,7 +60,7 @@ const promotionCodesOf = (body: unknown): unknown => {
         : undefined;
 };
 
-test.describe('DD-3549 tester: properties changed after mount', () => {
+test.describe('Properties a host changes after mount', () => {
     test('a late response for the previous subscription id does not replace the new one', async ({
         page,
     }) => {
@@ -217,7 +212,7 @@ test.describe('DD-3549 tester: properties changed after mount', () => {
     });
 });
 
-test.describe('DD-3549 tester: how a host puts the element on the page', () => {
+test.describe('How a host puts the element on the page', () => {
     /** The URL the test app loaded the SDK's core from, so an entry can be imported beside it. */
     const sdkDistUrl = (page: Page) =>
         page.evaluate(() => {
@@ -314,7 +309,7 @@ test.describe('DD-3549 tester: how a host puts the element on the page', () => {
     });
 });
 
-test.describe('DD-3549 tester: portal checks', () => {
+test.describe('Portal checks before the token exchange', () => {
     /**
      * The portal check runs above `AuthProvider`, so a revoked portal's token is never exchanged,
      * and identity refusing it cannot keep the checkout from its "not available" notice.

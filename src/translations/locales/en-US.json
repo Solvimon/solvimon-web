@@ -268,6 +268,8 @@
   "payments.sepa_mandate.recurrence_unnamed": "This bank account will be used automatically to pay subsequent invoices until you cancel this mandate.",
   "payments.sepa_mandate.refund_rights": "As part of your rights, you're entitled to a refund from your bank under the terms and conditions of your agreement with your bank. You must claim a refund within 8 weeks from the date your account was debited. You can request a statement from your bank explaining your rights.",
   "payments.sepa_mandate.title": "SEPA Direct Debit mandate — recurring payments",
+  "portal.not_available.description": "Contact customer support if you think this is a mistake.",
+  "portal.not_available.title": "This is no longer available.",
   "pricing_item_pricing.unsupported_pricing_error": "Unsupported pricing",
   "screens.payment_method_management.add_button": "Add payment method",
   "screens.payment_method_management.cancel_button": "Cancel",

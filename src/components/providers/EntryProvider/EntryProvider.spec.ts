@@ -152,6 +152,53 @@ describe('EntryProvider', () => {
         });
     });
 
+    describe('revoked portal', () => {
+        const revoked = { portalObject: { ...createTestPortalObject(), status: 'REVOKED' } };
+
+        it('says the element is no longer available instead of rendering it', async () => {
+            const { wrapper, onLog } = mountEntryProvider(
+                revoked as Partial<EntryProviderProps['entry']>,
+            );
+            await settle();
+
+            expect(wrapper.find('.content').exists()).toBe(false);
+            expect(wrapper.find('.sv-portal-unavailable').text()).toContain(
+                'This is no longer available.',
+            );
+            expect(codesLogged(onLog)).toContain('RESOURCE_REVOKED');
+        });
+
+        it('shows the notice an entry gives in its place', async () => {
+            const wrapper = mount(EntryProvider, {
+                props: {
+                    entry: { environment: 'TEST', ...revoked } as EntryProviderProps['entry'],
+                    componentName: 'solvimon-test',
+                    allowedPortalTypes: ['CUSTOMER'],
+                },
+                slots: {
+                    default: () => h(Content),
+                    'portal-unavailable': () => h('p', { class: 'own-notice' }),
+                },
+            });
+            await settle();
+
+            expect(wrapper.find('.own-notice').exists()).toBe(true);
+            expect(wrapper.find('.sv-portal-unavailable').exists()).toBe(false);
+        });
+
+        it('shows no notice for a portal of a type the element does not accept', async () => {
+            const { wrapper } = mountEntryProvider({
+                portalObject: {
+                    ...createTestPortalObject(),
+                    type: 'INIT_PRICING_PLAN_SUBSCRIPTION',
+                } as unknown as CustomerPortalUrl,
+            });
+            await settle();
+
+            expect(wrapper.find('.sv-portal-unavailable').exists()).toBe(false);
+        });
+    });
+
     describe('errors', () => {
         it('logs an error thrown below it and emits it as the public error event', async () => {
             const { wrapper, onLog } = mountEntryProvider({}, { slot: Throwing });

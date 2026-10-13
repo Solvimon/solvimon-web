@@ -121,14 +121,15 @@ test.describe('Element properties', () => {
             expect(api.calls('customer')).toEqual([]);
         });
 
-        test('an element given a revoked portal renders nothing and loads nothing', async ({
-            page,
-        }) => {
+        test('an element given a revoked portal says so and loads nothing', async ({ page }) => {
             api = await mountSubscriptionDetails(page, {
                 portalObject: aCustomerPortalObject({ status: 'REVOKED' }),
             });
 
             await expect.poll(() => codesLogged(page)).toContain('RESOURCE_REVOKED');
+            await expect(page.locator('.sv-portal-unavailable')).toContainText(
+                'This is no longer available.',
+            );
             await expect(subscriptionDetails(page).screen).toHaveCount(0);
             expect(api.calls('subscription')).toEqual([]);
         });

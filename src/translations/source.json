@@ -1075,6 +1075,14 @@
     "defaultMessage": "SEPA Direct Debit mandate — recurring payments",
     "description": "Title of the SEPA direct debit mandate shown inside the SEPA payment form"
   },
+  "portal.not_available.description": {
+    "defaultMessage": "Contact customer support if you think this is a mistake.",
+    "description": "Shown below the notice that an element is no longer available"
+  },
+  "portal.not_available.title": {
+    "defaultMessage": "This is no longer available.",
+    "description": "Shown in place of an element whose portal link has been revoked by the merchant"
+  },
   "pricing_item_pricing.unsupported_pricing_error": {
     "defaultMessage": "Unsupported pricing",
     "description": "Text displayed when the pricing item pricing is unsupported"

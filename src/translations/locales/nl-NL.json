@@ -268,6 +268,8 @@
     "payments.sepa_mandate.recurrence_unnamed": "Deze bankrekening wordt automatisch gebruikt om volgende facturen te betalen totdat je deze machtiging intrekt.",
     "payments.sepa_mandate.refund_rights": "Als onderdeel van je rechten heb je recht op terugbetaling door je bank volgens de voorwaarden van je overeenkomst met je bank. Je moet de terugbetaling binnen 8 weken na de datum waarop je rekening werd gedebiteerd aanvragen. Je kunt bij je bank een verklaring van je rechten opvragen.",
     "payments.sepa_mandate.title": "SEPA-incassomachtiging — terugkerende betalingen",
+    "portal.not_available.description": "Neem contact op met de klantenservice als je denkt dat dit niet klopt.",
+    "portal.not_available.title": "Dit is niet meer beschikbaar.",
     "pricing_item_pricing.unsupported_pricing_error": "Niet-ondersteunde prijsstelling",
     "screens.payment_method_management.add_button": "Betaalmethode toevoegen",
     "screens.payment_method_management.cancel_button": "Annuleren",

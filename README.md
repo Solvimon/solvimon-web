@@ -23,7 +23,8 @@ carries the portal token the element signs in with; there is no separate `token`
 An element renders only for a published portal of the type it accepts: `checkout` takes an
 `INIT_PRICING_PLAN_SUBSCRIPTION` portal, every other element a `CUSTOMER` one. Any other type logs
 `PORTAL_TYPE_NOT_ALLOWED`, dispatches an `error` event and renders nothing. A revoked portal logs `RESOURCE_REVOKED`; the
-checkout shows its "Checkout not available" notice, and the other elements render nothing.
+checkout shows its "Checkout not available" notice, and the other elements say that they are no longer
+available (`sv-portal-unavailable`).
 
 ## Usage
 

@@ -1,8 +1,11 @@
 import { flushPromises, mount } from '@vue/test-utils';
 import { defineComponent, h } from 'vue';
-import type { CustomerWalletBalanceItem, PaymentMethod } from '@solvimon/solvimon-types';
+import type {
+    CustomerWalletBalanceItem,
+    PaymentMethod,
+    PricingPlanSubscriptionExpanded,
+} from '@solvimon/solvimon-types';
 import SubscriptionDetails from './SubscriptionDetails.vue';
-import type { PricingPlanSubscriptionExpanded } from '@/types/subscription';
 
 const { mockDispatchAction } = vi.hoisted(() => ({
     mockDispatchAction: vi.fn(),

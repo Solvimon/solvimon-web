@@ -1,15 +1,8 @@
 import type { PaymentMethod } from '@solvimon/solvimon-types';
-import type { RadioGroupExtendedProps } from '@solvimon/solvimon-ui';
+import { formatEnum, type RadioGroupExtendedProps } from '@solvimon/solvimon-ui';
 import { computed, type ComputedRef, type Ref } from 'vue';
 
 type PaymentMethodOption = RadioGroupExtendedProps['options'][number];
-
-/** Turns an API constant like `SEPA_DIRECT_DEBIT` into `Sepa direct debit`. */
-const humanise = (value: string) =>
-    value
-        .replaceAll('_', ' ')
-        .toLowerCase()
-        .replace(/^./, (character) => character.toUpperCase());
 
 /**
  * A short, readable name for a payment method.
@@ -25,33 +18,34 @@ function getAccessibleName(paymentMethod: PaymentMethod): string {
     switch (paymentMethod.type) {
         case 'CARD':
             parts.push(
-                paymentMethod.card.brand && humanise(paymentMethod.card.brand),
+                paymentMethod.card.brand && formatEnum(paymentMethod.card.brand),
                 paymentMethod.card.last_four_digits,
             );
             break;
         case 'ONLINE_BANKING':
             parts.push(
                 paymentMethod.online_banking?.variant &&
-                    humanise(paymentMethod.online_banking.variant),
+                    formatEnum(paymentMethod.online_banking.variant),
                 paymentMethod.online_banking?.owner_name,
             );
             break;
         case 'DIRECT_DEBIT':
             parts.push(
-                paymentMethod.direct_debit?.variant && humanise(paymentMethod.direct_debit.variant),
+                paymentMethod.direct_debit?.variant &&
+                    formatEnum(paymentMethod.direct_debit.variant),
                 paymentMethod.direct_debit?.owner_name,
             );
             break;
         case 'BUY_NOW_PAY_LATER':
             parts.push(
                 paymentMethod.buy_now_pay_later?.variant &&
-                    humanise(paymentMethod.buy_now_pay_later.variant),
+                    formatEnum(paymentMethod.buy_now_pay_later.variant),
             );
             break;
         case 'DIGITAL_WALLET':
             parts.push(
                 paymentMethod.digital_wallet?.variant &&
-                    humanise(paymentMethod.digital_wallet.variant),
+                    formatEnum(paymentMethod.digital_wallet.variant),
             );
             break;
     }
@@ -59,7 +53,7 @@ function getAccessibleName(paymentMethod: PaymentMethod): string {
     const name = parts.filter(Boolean).join(' ');
 
     // A sparsely populated method would otherwise leave the option with no accessible name at all.
-    return name || humanise(paymentMethod.type);
+    return name || formatEnum(paymentMethod.type);
 }
 
 /**

@@ -1,8 +1,10 @@
 import { flushPromises } from '@vue/test-utils';
-import type { OnDemandPricingItemsResponse } from '@solvimon/solvimon-types';
+import type {
+    OnDemandPricingItemsResponse,
+    PricingPlanSubscriptionExpanded,
+} from '@solvimon/solvimon-types';
 import { ref } from 'vue';
 import { useChargeableOnDemandItems } from './useChargeableOnDemandItems';
-import type { PricingPlanSubscriptionExpanded } from '@/types/subscription';
 
 const { mockGetOnDemandPricingItems, mockError } = vi.hoisted(() => ({
     mockGetOnDemandPricingItems: vi.fn(),

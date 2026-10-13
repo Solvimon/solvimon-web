@@ -1,5 +1,8 @@
-import type { Customer, PaymentMethod } from '@solvimon/solvimon-types';
-import type { PricingPlanSubscriptionExpanded } from '@/types/subscription';
+import type {
+    Customer,
+    PaymentMethod,
+    PricingPlanSubscriptionExpanded,
+} from '@solvimon/solvimon-types';
 
 export interface SubscriptionsListItemProps {
     subscription: PricingPlanSubscriptionExpanded;

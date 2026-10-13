@@ -1,10 +1,10 @@
 import type {
     PricingPlanScheduleWithPlanData,
     PricingPlanSubscription,
+    PricingPlanSubscriptionExpanded,
 } from '@solvimon/solvimon-types';
 import { useService } from '@/composables/useService';
 import { createSubscriptionsService } from '@/services/subscriptions';
-import type { PricingPlanSubscriptionExpanded } from '@/types/subscription';
 import { getSchedulesWithPlanData } from '@/utils/pricingPlanScheduleOverrides';
 
 export function useSubscription({

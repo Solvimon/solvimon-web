@@ -1,6 +1,6 @@
 import { ref } from 'vue';
+import type { PricingPlanSubscriptionExpanded } from '@solvimon/solvimon-types';
 import { useSubscriptionActions } from './useSubscriptionActions';
-import type { PricingPlanSubscriptionExpanded } from '@/types/subscription';
 import { SUBSCRIPTION_CANCELLATION_TYPES } from '@/services/subscriptions';
 
 const { mockDispatchAction } = vi.hoisted(() => ({

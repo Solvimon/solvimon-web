@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { Button, ErrorNotification, Typography, useIntl } from '@solvimon/solvimon-ui';
-import type { PaymentMethod, Pricing } from '@solvimon/solvimon-types';
+import type {
+    PaymentMethod,
+    Pricing,
+    PricingPlanSubscriptionExpanded,
+} from '@solvimon/solvimon-types';
 import type { SubscriptionManagementProps } from './SubscriptionManagement.types';
-import type { PricingPlanSubscriptionExpanded } from '@/types/subscription';
 import { ContentWithAsideLayout } from '@/layouts';
 import { useActionDispatchProvider, useLogger, usePortal } from '@/components/providers';
 import { useSubscription } from '@/composables/useSubscription';

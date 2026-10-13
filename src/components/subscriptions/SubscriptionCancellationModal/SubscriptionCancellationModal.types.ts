@@ -1,6 +1,9 @@
-import type { Customer } from '@solvimon/solvimon-types';
+import type {
+    Customer,
+    PaymentMethod,
+    PricingPlanSubscriptionExpanded,
+} from '@solvimon/solvimon-types';
 import type { SubscriptionCancellationVariant } from '@/services/subscriptions';
-import type { PricingPlanSubscriptionExpanded } from '@/types/subscription';
 
 export interface SubscriptionCancellationModalProps {
     showModal: boolean;
@@ -8,6 +11,8 @@ export interface SubscriptionCancellationModalProps {
     subscription?: PricingPlanSubscriptionExpanded;
     /** Whose timezone the dates are shown in. */
     customer?: Customer;
+    /** The subscription's own payment method, shown in the summary. */
+    paymentMethod?: PaymentMethod;
     avatar?: string;
 }
 

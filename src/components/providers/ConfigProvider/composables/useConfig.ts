@@ -1,12 +1,4 @@
-import { inject } from 'vue';
 import { CONFIG_INJECTION_KEY } from '@/components/providers/ConfigProvider/ConfigProvider.lib';
+import { injectOrThrow } from '@/utils/component';
 
-export const useConfig = () => {
-    const config = inject(CONFIG_INJECTION_KEY);
-
-    if (!config) {
-        throw new Error('ConfigProvider is not provided');
-    }
-
-    return config;
-};
+export const useConfig = () => injectOrThrow(CONFIG_INJECTION_KEY, 'ConfigProvider');

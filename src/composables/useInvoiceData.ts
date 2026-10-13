@@ -1,8 +1,7 @@
 import type { ApiSuccessCollectionResponse, Invoice, Payment } from '@solvimon/solvimon-types';
-import type { Ref } from 'vue';
+import { onMounted, ref, type Ref } from 'vue';
 import { createInvoicesService } from '@/services/invoices';
 import { createPaymentsService } from '@/services/payments';
-import { useData } from '@/composables/useData';
 
 type InvoiceData = { invoice: Invoice; paymentAttempts?: ApiSuccessCollectionResponse<Payment> };
 
@@ -21,13 +20,22 @@ export function useInvoiceData(
     const { getInvoice } = createInvoicesService();
     const { getPayments } = createPaymentsService();
 
-    return useData<InvoiceData, undefined>({
-        getData: async () => {
+    const data = ref<InvoiceData>();
+    const isPending = ref(true);
+
+    onMounted(async () => {
+        try {
             const [invoice, paymentAttempts] = await Promise.all([
                 getInvoice(invoiceId),
                 includePayments ? getPayments(invoiceId) : undefined,
             ]);
-            return { invoice, paymentAttempts };
-        },
+            data.value = { invoice, paymentAttempts };
+        } catch {
+            // Logged by the request service; `data` stays empty.
+        } finally {
+            isPending.value = false;
+        }
     });
+
+    return { data, isPending };
 }

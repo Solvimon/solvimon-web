@@ -1,12 +1,4 @@
-import { inject } from 'vue';
 import { AUTH_INJECTION_KEY } from '@/components/providers/AuthProvider/AuthProvider.lib';
+import { injectOrThrow } from '@/utils/component';
 
-export const useAuth = () => {
-    const auth = inject(AUTH_INJECTION_KEY);
-
-    if (!auth) {
-        throw new Error('AuthProvider is not provided');
-    }
-
-    return auth;
-};
+export const useAuth = () => injectOrThrow(AUTH_INJECTION_KEY, 'AuthProvider');

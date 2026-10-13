@@ -161,10 +161,7 @@ export function getPricingItemConfigMetaById({
     return metaById;
 }
 
-/**
- * `PricingPlanScheduleCustomization` is a type alias upstream, so MD-5439's `units` can't be
- * declaration-merged onto it like the interfaces in `@/types/units.d.ts`.
- */
+/** Upstream `PricingPlanScheduleCustomization` does not carry `units` yet. */
 export type PricingPlanScheduleCustomizationWithUnits = PricingPlanScheduleCustomization & {
     units?: ConfiguredMeterValue[];
 };

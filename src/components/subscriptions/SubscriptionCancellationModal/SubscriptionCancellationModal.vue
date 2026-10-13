@@ -21,7 +21,6 @@ import {
 import SubscriptionSummary from '@/components/subscriptions/SubscriptionSummary.vue';
 import { getActiveDefaultScheduleInfo } from '@/utils/pricingPlanSchedule';
 import { getUndoableCancellation } from '@/utils/subscription';
-import { usePaymentMethod } from '@/composables/usePaymentMethod';
 import { useLogger } from '@/components/providers';
 
 const props = defineProps<SubscriptionCancellationModalProps>();
@@ -77,23 +76,6 @@ const enabledPricingIds = computed(() =>
 
 const { title, explanation, confirmButtonText, cancelButtonText, errorMessage } =
     useSubscriptionCancellationModalLabels({ variant, renewableUntil, billingPeriodEndsAt });
-
-const { paymentMethod, get: fetchPaymentMethod } = usePaymentMethod();
-
-watch(
-    [
-        () => props.showModal,
-        () => props.subscription?.payment_method_id,
-        () => props.subscription?.customer_id,
-    ],
-    ([showModal, paymentMethodId, customerId]) => {
-        if (!showModal || !paymentMethodId || !customerId) return;
-        if (paymentMethodId === paymentMethod.value?.id) return;
-
-        void fetchPaymentMethod({ customerId, paymentMethodId }).catch(() => undefined);
-    },
-    { immediate: true },
-);
 
 const isSubmitting = ref(false);
 const hasFailed = ref(false);

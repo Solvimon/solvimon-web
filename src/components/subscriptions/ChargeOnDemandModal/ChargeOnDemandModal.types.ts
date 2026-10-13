@@ -3,9 +3,9 @@ import type {
     Invoice,
     PaymentMethod,
     PricingPlanSchedule,
+    PricingPlanSubscriptionExpanded,
 } from '@solvimon/solvimon-types';
 import type { ChargeOnDemandItem } from '@solvimon/solvimon-ui';
-import type { PricingPlanSubscriptionExpanded } from '@/types/subscription';
 
 export const CHARGE_ON_DEMAND_MODAL_STEPS = [
     'ORDER',

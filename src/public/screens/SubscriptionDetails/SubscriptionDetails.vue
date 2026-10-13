@@ -293,6 +293,7 @@ const title = computed<string>(() =>
                 :variant="pendingVariant"
                 :subscription="subscription"
                 :customer="customer"
+                :payment-method="subscriptionPaymentMethod"
                 :avatar="avatar"
                 @confirmed="handleCancellationConfirmed"
                 @close="handleDismissCancellation"

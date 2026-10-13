@@ -1,13 +1,8 @@
-import { inject, type Ref } from 'vue';
+import type { Ref } from 'vue';
 import { PORTAL_INJECTION_KEY } from '@/components/providers/PortalProvider/PortalProvider.lib';
 import type { PortalUrl } from '@/services/portals.types';
+import { injectOrThrow } from '@/utils/component';
 
 export function usePortal(): Readonly<Ref<PortalUrl>> {
-    const portal = inject(PORTAL_INJECTION_KEY);
-
-    if (!portal) {
-        throw new Error('PortalProvider is not provided');
-    }
-
-    return portal;
+    return injectOrThrow(PORTAL_INJECTION_KEY, 'PortalProvider');
 }

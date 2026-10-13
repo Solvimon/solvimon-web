@@ -1,10 +1,14 @@
 import { enableAutoUnmount, flushPromises, mount } from '@vue/test-utils';
 import { defineComponent, nextTick } from 'vue';
-import type { Customer, Invoice, PaymentMethod } from '@solvimon/solvimon-types';
+import type {
+    Customer,
+    Invoice,
+    PaymentMethod,
+    PricingPlanSubscriptionExpanded,
+} from '@solvimon/solvimon-types';
 import type { ChargeOnDemandItem } from '@solvimon/solvimon-ui';
 import ChargeOnDemandModal from './ChargeOnDemandModal.vue';
 import OnDemandPaymentModalShell from '@/components/payments/OnDemandPaymentModalShell/OnDemandPaymentModalShell.vue';
-import type { PricingPlanSubscriptionExpanded } from '@/types/subscription';
 import { ApiError } from '@/services/apiError';
 
 enableAutoUnmount(afterEach);

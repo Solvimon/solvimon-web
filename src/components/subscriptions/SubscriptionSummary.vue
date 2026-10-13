@@ -7,6 +7,7 @@ import {
     getMostRecentPricingPlan,
     getSubscriptionName,
 } from '@/utils/subscription';
+import { getNameFromPricing } from '@/utils/pricing';
 
 const props = defineProps<SubscriptionSummaryProps>();
 
@@ -36,11 +37,7 @@ const selectedPricings = computed(() => {
 
     const pricings = findPricingsByIds(props.subscription, props.enabledPricingIds);
 
-    const names = pricings
-        ?.map((pricing) => pricing.name ?? pricing.products?.[0]?.name)
-        .join(' - ');
-
-    return names;
+    return pricings?.map(getNameFromPricing).join(' - ');
 });
 </script>
 

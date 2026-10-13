@@ -2,7 +2,6 @@ import type {
     CountryCode,
     Invoice,
     Pricing,
-    TimePeriod,
     PricingPlanSubscriptionExpanded,
 } from '@solvimon/solvimon-types';
 
@@ -28,10 +27,6 @@ export interface OrderSummaryProps {
      */
     enabledPricingIds?: Pricing['id'][];
     /**
-     * The trial period to display.
-     */
-    trialPeriod?: TimePeriod;
-    /**
      * The avatar to display.
      */
     avatar?: string;
@@ -43,10 +38,6 @@ export interface OrderSummaryProps {
      * Whether the invoice is usage based.
      */
     isUsageBased?: boolean;
-    /**
-     * Whether the preview and payment methods are pending.
-     */
-    isPreviewAndPaymentMethodsPending?: boolean;
     /**
      * Whether the subscription is collapsible, if not provided,
      * the subscription will be displayed in the expanded state.

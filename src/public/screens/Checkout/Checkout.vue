@@ -372,55 +372,41 @@ const configIdsForSelection = computed(() => {
     return ids;
 });
 
-// Only expose seat values that match the active currency + billing period, but keep all values in state.
-const seatsValuesModel = computed({
-    get: () => {
-        const all = checkoutForm.form.value.seatsValues ?? [];
-        const ids = configIdsForSelection.value;
-        if (!ids.size) {
-            return all;
-        }
-        return all.filter(({ pricing_item_config_id }) => ids.has(pricing_item_config_id));
-    },
-    set: (value) => {
-        const current = checkoutForm.form.value.seatsValues ?? [];
-        const ids = configIdsForSelection.value;
-        if (!ids.size) {
-            checkoutForm.form.value.seatsValues = value;
-            return;
-        }
+// Only expose values that match the active currency + billing period, but keep all values in state.
+const meterValuesModel = (key: 'seatsValues' | 'unitsValues') =>
+    computed({
+        get: () => {
+            const all = checkoutForm.form.value[key] ?? [];
+            const ids = configIdsForSelection.value;
+            if (!ids.size) {
+                return all;
+            }
+            return all.filter(({ pricing_item_config_id }) => ids.has(pricing_item_config_id));
+        },
+        set: (value) => {
+            const current = checkoutForm.form.value[key] ?? [];
+            const ids = configIdsForSelection.value;
+            if (!ids.size) {
+                checkoutForm.form.value[key] = value;
+                return;
+            }
 
-        const filtered = current.filter(
-            ({ pricing_item_config_id }) => !ids.has(pricing_item_config_id),
-        );
-        checkoutForm.form.value.seatsValues = filtered.concat(value);
-    },
-});
+            const filtered = current.filter(
+                ({ pricing_item_config_id }) => !ids.has(pricing_item_config_id),
+            );
+            checkoutForm.form.value[key] = filtered.concat(value);
+        },
+    });
+const seatsValuesModel = meterValuesModel('seatsValues');
+const unitsValuesModel = meterValuesModel('unitsValues');
 
-// Only expose unit values that match the active currency + billing period, but keep all values in state.
-const unitsValuesModel = computed({
-    get: () => {
-        const all = checkoutForm.form.value.unitsValues ?? [];
-        const ids = configIdsForSelection.value;
-        if (!ids.size) {
-            return all;
-        }
-        return all.filter(({ pricing_item_config_id }) => ids.has(pricing_item_config_id));
-    },
-    set: (value) => {
-        const current = checkoutForm.form.value.unitsValues ?? [];
-        const ids = configIdsForSelection.value;
-        if (!ids.size) {
-            checkoutForm.form.value.unitsValues = value;
-            return;
-        }
-
-        const filtered = current.filter(
-            ({ pricing_item_config_id }) => !ids.has(pricing_item_config_id),
-        );
-        checkoutForm.form.value.unitsValues = filtered.concat(value);
-    },
-});
+const agreementBillingPeriod = computed(() =>
+    formatTimePeriod(invoicePreview.value?.billing_period ?? { type: 'MONTH', value: 1 }, {
+        short: true,
+        singular: true,
+        hideValueForExactPeriods: true,
+    }),
+);
 
 const agreement = computed(() => {
     if (trialInvoicePreview.value) {
@@ -447,10 +433,7 @@ const agreement = computed(() => {
                         currency: trialInvoicePreview.value.tax_summary.total_amount.currency,
                     },
                 ),
-                billing_period: formatTimePeriod(
-                    invoicePreview.value?.billing_period ?? { type: 'MONTH', value: 1 },
-                    { short: true, singular: true, hideValueForExactPeriods: true },
-                ),
+                billing_period: agreementBillingPeriod.value,
                 // @ts-expect-error formatjs does not support this type yet
                 start_date: new Date(subscriptionStartDate.value),
             },
@@ -488,10 +471,7 @@ const agreement = computed(() => {
                 },
                 {
                     due_today: dueToday,
-                    billing_period: formatTimePeriod(
-                        invoicePreview.value?.billing_period ?? { type: 'MONTH', value: 1 },
-                        { short: true, singular: true, hideValueForExactPeriods: true },
-                    ),
+                    billing_period: agreementBillingPeriod.value,
                 },
             );
         }
@@ -507,10 +487,7 @@ const agreement = computed(() => {
             {
                 due_today: dueToday,
                 subscription_amount: formatAmount(recurringAmount.value),
-                billing_period: formatTimePeriod(
-                    invoicePreview.value?.billing_period ?? { type: 'MONTH', value: 1 },
-                    { short: true, singular: true, hideValueForExactPeriods: true },
-                ),
+                billing_period: agreementBillingPeriod.value,
                 // @ts-expect-error formatjs does not support this type yet
                 start_date: new Date(subscriptionStartDate.value),
             },
@@ -528,15 +505,22 @@ const agreement = computed(() => {
             subscription_amount: mandateRecurringAmount.value
                 ? formatAmount(mandateRecurringAmount.value)
                 : '',
-            billing_period: formatTimePeriod(
-                invoicePreview.value?.billing_period ?? { type: 'MONTH', value: 1 },
-                { short: true, singular: true, hideValueForExactPeriods: true },
-            ),
+            billing_period: agreementBillingPeriod.value,
             // @ts-expect-error formatjs does not support this type yet
             start_date: new Date(subscriptionStartDate.value),
         },
     );
 });
+
+const orderSummaryProps = computed(() => ({
+    invoicePreviewByBillingPeriod: invoicePreviewByBillingPeriod.value,
+    trialInvoice: trialInvoicePreview.value,
+    enabledPricingIds: enabledPricingIdsModel.value,
+    countryCode: checkoutForm.form.value.country,
+    avatar: configuration.value?.avatar,
+    isPaid: isPaid.value,
+    isUsageBased: isUsageBased.value,
+}));
 
 const expressPaymentMethodBillingInformation = computed(() => {
     if (!invoicePreview.value) {
@@ -785,19 +769,9 @@ onMounted(() => {
                 <OrderSummary
                     v-if="subscription && isMobileViewport"
                     class="sv-checkout__mobile-order-summary"
+                    v-bind="orderSummaryProps"
                     :subscription="subscription"
                     :invoice="invoicePreview"
-                    :invoice-preview-by-billing-period="invoicePreviewByBillingPeriod"
-                    :trial-invoice="trialInvoicePreview"
-                    :enabled-pricing-ids="enabledPricingIdsModel"
-                    :trial-period="trialPeriod"
-                    :avatar="configuration?.avatar"
-                    :is-paid="isPaid"
-                    :is-usage-based="isUsageBased"
-                    :is-preview-and-payment-methods-pending="
-                        isPaymentMethodsPending || isInvoicePreviewPending
-                    "
-                    :country-code="checkoutForm.form.value.country"
                     collapsible="collapsed"
                     variant="products-inline"
                     @billing-period-change="handleBillingPeriodChange"
@@ -1008,19 +982,9 @@ onMounted(() => {
                 <Skeleton variant="section" class="min-h-[220px]">
                     <OrderSummary
                         v-if="subscription && invoicePreview"
+                        v-bind="orderSummaryProps"
                         :subscription="subscription"
                         :invoice="invoicePreview"
-                        :invoice-preview-by-billing-period="invoicePreviewByBillingPeriod"
-                        :trial-invoice="trialInvoicePreview"
-                        :enabled-pricing-ids="enabledPricingIdsModel"
-                        :trial-period="trialPeriod"
-                        :country-code="checkoutForm.form.value.country"
-                        :avatar="configuration?.avatar"
-                        :is-paid="isPaid"
-                        :is-usage-based="isUsageBased"
-                        :is-preview-and-payment-methods-pending="
-                            isPaymentMethodsPending || isInvoicePreviewPending
-                        "
                         @billing-period-change="handleBillingPeriodChange"
                     />
                 </Skeleton>

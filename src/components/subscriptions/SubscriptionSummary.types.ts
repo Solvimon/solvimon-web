@@ -1,23 +1,10 @@
-import type {
-    Invoice,
-    Pricing,
-    TimePeriod,
-    PricingPlanSubscriptionExpanded,
-} from '@solvimon/solvimon-types';
+import type { Pricing, PricingPlanSubscriptionExpanded } from '@solvimon/solvimon-types';
 
 export interface SubscriptionSummaryProps {
     /**
      * The subscription to display.
      */
     subscription: PricingPlanSubscriptionExpanded;
-    /**
-     * The invoice to display.
-     */
-    invoice?: Invoice;
-    /**
-     * Whether the subscription is loading.
-     */
-    loading?: boolean;
     /**
      * The pricing ids to display.
      */
@@ -31,8 +18,4 @@ export interface SubscriptionSummaryProps {
      * for instance, which would otherwise pad it twice over.
      */
     noSpacing?: boolean;
-    /**
-     * The trial period to display.
-     */
-    trialPeriod?: TimePeriod;
 }

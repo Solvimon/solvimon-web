@@ -3,11 +3,6 @@ import type { ApiMock, MockResponse } from '../support/api-mock';
 import { checkout, hostEvents, mountCheckout, type MountOptions } from '../support/checkout';
 import { aSuccessfulAuthorization } from '../support/fixtures';
 
-/**
- * DD-3542 tester: the checkout form's validation (hidden VAT, postal code, VAT check, host email,
- * address labels), tried from outside.
- */
-
 const VALID_NL_VAT = 'NL000099998B57';
 
 const aTaxCheck = (valid: 'VALID' | 'NOT_VALID' | 'UNKNOWN'): MockResponse => ({
@@ -58,7 +53,7 @@ async function companyWithVat(page: Page, vat = VALID_NL_VAT) {
     await checkout(page).vatNumber.fill(vat);
 }
 
-test.describe('DD-3542 tester', () => {
+test.describe('Checkout form validation', () => {
     let api: ApiMock;
     let consoleErrors: string[];
     let pageErrors: string[];

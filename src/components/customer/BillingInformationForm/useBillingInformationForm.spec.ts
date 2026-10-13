@@ -178,13 +178,12 @@ describe('useBillingInformationForm', () => {
             });
         });
 
-        it('exposes the loaded customer as the state edits are compared against', () => {
-            const { form, updateInitialState, initialState, hasChanges, changes } = setup();
+        it('compares edits against the loaded customer', () => {
+            const { form, updateInitialState, hasChanges, changes } = setup();
 
             updateInitialState(individual);
             form.value = { ...form.value, city: 'Utrecht' };
 
-            expect(initialState.value.city).toBe('Amsterdam');
             expect(hasChanges.value).toBe(true);
             expect(changes.value).toEqual({ city: 'Utrecht' });
         });

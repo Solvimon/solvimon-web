@@ -1059,6 +1059,18 @@
     "defaultMessage": "This is no longer available.",
     "description": "Shown in place of an element whose portal link has been revoked by the merchant"
   },
+  "pricing_description.named_item": {
+    "defaultMessage": "{name}: {description}",
+    "description": "One item of a pricing with several, e.g. \"GPU hours: $10.00 per unit\""
+  },
+  "pricing_description.usage_per_named_unit": {
+    "defaultMessage": "{amount} per {unit_name}",
+    "description": "The price of a usage-based item per unit used, e.g. \"$50.44 per hour\""
+  },
+  "pricing_description.usage_per_unit": {
+    "defaultMessage": "{amount} per unit",
+    "description": "The price of a usage-based item per unit used, for an item with no unit name"
+  },
   "pricing_item_pricing.unsupported_pricing_error": {
     "defaultMessage": "Unsupported pricing",
     "description": "Text displayed when the pricing item pricing is unsupported"

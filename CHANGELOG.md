@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Installing the package no longer installs `vite-bundle-visualizer` and the 29 packages it depends on. It was declared as an optional dependency, which npm installs for every consumer, although only this repository's `analyze` script uses it.
 - Moved to `@solvimon/solvimon-ui` 1.14.1. It no longer bundles its own copy of Vuelidate, so the forms use the `@vuelidate/core` the SDK already depends on.
 - `STRIPE_REDIRECT_RETURN_FAILED` is now also logged when the payment a Stripe redirect returned from cannot be retrieved from Stripe.
 - The SDK takes the payment redirect parameters out of the page address once it has handled a return, with `history.replaceState`: `payment_acceptor_id`, `redirectResult`, `redirect_status`, `payment_intent`, `payment_intent_client_secret`, `setup_intent` and `setup_intent_client_secret`. An Adyen return is cleared right away, a Stripe one once Stripe has answered. A host that reads these parameters must do so before the SDK's screen or component mounts.

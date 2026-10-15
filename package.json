@@ -64,112 +64,91 @@
     "files": [
         "dist"
     ],
-    "main": "./dist/index.cjs",
     "module": "./dist/index.mjs",
     "types": "./dist/index.d.ts",
     "exports": {
         ".": {
             "types": "./dist/index.d.ts",
-            "import": "./dist/index.mjs",
-            "require": "./dist/index.cjs"
+            "default": "./dist/index.mjs"
         },
         "./core": {
             "types": "./dist/core/index.d.ts",
-            "import": "./dist/core/index.mjs",
-            "require": "./dist/core/index.cjs"
+            "default": "./dist/core/index.mjs"
         },
         "./core/action-request-types": {
             "types": "./dist/core/action-request.types.d.ts"
         },
         "./screens/checkout": {
             "types": "./dist/screens/Checkout/Checkout.ce.d.ts",
-            "import": "./dist/screens/Checkout/Checkout.mjs",
-            "require": "./dist/screens/Checkout/Checkout.cjs"
+            "default": "./dist/screens/Checkout/Checkout.mjs"
         },
         "./screens/customer-overview": {
             "types": "./dist/screens/CustomerOverview/CustomerOverview.ce.d.ts",
-            "import": "./dist/screens/CustomerOverview/CustomerOverview.mjs",
-            "require": "./dist/screens/CustomerOverview/CustomerOverview.cjs"
+            "default": "./dist/screens/CustomerOverview/CustomerOverview.mjs"
         },
         "./screens/subscription-management": {
             "types": "./dist/screens/SubscriptionManagement/SubscriptionManagement.ce.d.ts",
-            "import": "./dist/screens/SubscriptionManagement/SubscriptionManagement.mjs",
-            "require": "./dist/screens/SubscriptionManagement/SubscriptionManagement.cjs"
+            "default": "./dist/screens/SubscriptionManagement/SubscriptionManagement.mjs"
         },
         "./screens/subscription-details": {
             "types": "./dist/screens/SubscriptionDetails/SubscriptionDetails.ce.d.ts",
-            "import": "./dist/screens/SubscriptionDetails/SubscriptionDetails.mjs",
-            "require": "./dist/screens/SubscriptionDetails/SubscriptionDetails.cjs"
+            "default": "./dist/screens/SubscriptionDetails/SubscriptionDetails.mjs"
         },
         "./screens/pay-invoice": {
             "types": "./dist/screens/PayInvoice/PayInvoice.ce.d.ts",
-            "import": "./dist/screens/PayInvoice/PayInvoice.mjs",
-            "require": "./dist/screens/PayInvoice/PayInvoice.cjs"
+            "default": "./dist/screens/PayInvoice/PayInvoice.mjs"
         },
         "./screens/payment-methods-management": {
             "types": "./dist/screens/PaymentMethodsManagement/PaymentMethodsManagement.ce.d.ts",
-            "import": "./dist/screens/PaymentMethodsManagement/PaymentMethodsManagement.mjs",
-            "require": "./dist/screens/PaymentMethodsManagement/PaymentMethodsManagement.cjs"
+            "default": "./dist/screens/PaymentMethodsManagement/PaymentMethodsManagement.mjs"
         },
         "./components/subscriptions-list": {
             "types": "./dist/components/SubscriptionsList/SubscriptionsList.ce.d.ts",
-            "import": "./dist/components/SubscriptionsList/SubscriptionsList.mjs",
-            "require": "./dist/components/SubscriptionsList/SubscriptionsList.cjs"
+            "default": "./dist/components/SubscriptionsList/SubscriptionsList.mjs"
         },
         "./components/customer-payment-methods": {
             "types": "./dist/components/CustomerPaymentMethods/CustomerPaymentMethods.ce.d.ts",
-            "import": "./dist/components/CustomerPaymentMethods/CustomerPaymentMethods.mjs",
-            "require": "./dist/components/CustomerPaymentMethods/CustomerPaymentMethods.cjs"
+            "default": "./dist/components/CustomerPaymentMethods/CustomerPaymentMethods.mjs"
         },
         "./components/wallet-balances": {
             "types": "./dist/components/WalletBalances/WalletBalances.ce.d.ts",
-            "import": "./dist/components/WalletBalances/WalletBalances.mjs",
-            "require": "./dist/components/WalletBalances/WalletBalances.cjs"
+            "default": "./dist/components/WalletBalances/WalletBalances.mjs"
         },
         "./components/billing-information": {
             "types": "./dist/components/BillingInformation/BillingInformation.ce.d.ts",
-            "import": "./dist/components/BillingInformation/BillingInformation.mjs",
-            "require": "./dist/components/BillingInformation/BillingInformation.cjs"
+            "default": "./dist/components/BillingInformation/BillingInformation.mjs"
         },
         "./components/billing-information-form": {
             "types": "./dist/components/BillingInformationForm/BillingInformationForm.ce.d.ts",
-            "import": "./dist/components/BillingInformationForm/BillingInformationForm.mjs",
-            "require": "./dist/components/BillingInformationForm/BillingInformationForm.cjs"
+            "default": "./dist/components/BillingInformationForm/BillingInformationForm.mjs"
         },
         "./components/invoice": {
             "types": "./dist/components/Invoice/Invoice.ce.d.ts",
-            "import": "./dist/components/Invoice/Invoice.mjs",
-            "require": "./dist/components/Invoice/Invoice.cjs"
+            "default": "./dist/components/Invoice/Invoice.mjs"
         },
         "./components/invoice-header": {
             "types": "./dist/components/InvoiceHeader/InvoiceHeader.ce.d.ts",
-            "import": "./dist/components/InvoiceHeader/InvoiceHeader.mjs",
-            "require": "./dist/components/InvoiceHeader/InvoiceHeader.cjs"
+            "default": "./dist/components/InvoiceHeader/InvoiceHeader.mjs"
         },
         "./components/invoice-details": {
             "types": "./dist/components/InvoiceDetails/InvoiceDetails.ce.d.ts",
-            "import": "./dist/components/InvoiceDetails/InvoiceDetails.mjs",
-            "require": "./dist/components/InvoiceDetails/InvoiceDetails.cjs"
+            "default": "./dist/components/InvoiceDetails/InvoiceDetails.mjs"
         },
         "./components/invoices-list": {
             "types": "./dist/components/InvoicesList/InvoicesList.ce.d.ts",
-            "import": "./dist/components/InvoicesList/InvoicesList.mjs",
-            "require": "./dist/components/InvoicesList/InvoicesList.cjs"
+            "default": "./dist/components/InvoicesList/InvoicesList.mjs"
         },
         "./components/payment-history": {
             "types": "./dist/components/PaymentHistory/PaymentHistory.ce.d.ts",
-            "import": "./dist/components/PaymentHistory/PaymentHistory.mjs",
-            "require": "./dist/components/PaymentHistory/PaymentHistory.cjs"
+            "default": "./dist/components/PaymentHistory/PaymentHistory.mjs"
         },
         "./components/subscription-schedules": {
             "types": "./dist/components/SubscriptionSchedules/SubscriptionSchedules.ce.d.ts",
-            "import": "./dist/components/SubscriptionSchedules/SubscriptionSchedules.mjs",
-            "require": "./dist/components/SubscriptionSchedules/SubscriptionSchedules.cjs"
+            "default": "./dist/components/SubscriptionSchedules/SubscriptionSchedules.mjs"
         },
         "./components/payment-method-form": {
             "types": "./dist/components/PaymentMethodForm/PaymentMethodForm.ce.d.ts",
-            "import": "./dist/components/PaymentMethodForm/PaymentMethodForm.mjs",
-            "require": "./dist/components/PaymentMethodForm/PaymentMethodForm.cjs"
+            "default": "./dist/components/PaymentMethodForm/PaymentMethodForm.mjs"
         }
     },
     "sideEffects": false,

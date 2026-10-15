@@ -48,6 +48,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `@import` rules are removed from `cssOverrides`. Browsers that adopt stylesheets ignored them and the others loaded them; load fonts and other stylesheets from the host page.
 - Fewer API requests: the pay invoice screen no longer loads payment methods it does not show, and the subscription cancellation modal shows the payment method `SubscriptionDetails` already loaded instead of listing them all again. A pricing with an empty name is now labelled by its product's name in subscription summaries.
 
+### Removed
+
+- The CommonJS build. The package is published as ES modules only. On Node 20.19 or later, `require()` still works, because Node loads the ES modules directly. A Jest setup that does not transform ES modules needs `@solvimon/solvimon-web` added to its `transformIgnorePatterns` exceptions. Bundlers that loaded the CommonJS build bundled every screen and component up front; the ES build loads each one only when it is used.
+
 ### Fixed
 
 - A return from a Stripe redirect counts as paid only once Stripe says the payment succeeded. It was read from the address alone, so typing the redirect parameters into it showed the payment as paid and fired `payment-success`. The payment form stays away while the payment is checked, so the customer cannot pay again meanwhile.

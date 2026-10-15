@@ -38,6 +38,8 @@ export interface MountOptions extends ScreenOptions {
     /** Answers the preview with a usage-based invoice. */
     usageBased?: boolean;
     gateways?: ('STRIPE' | 'ADYEN')[];
+    /** Mounts the checkout for a shipped order, as the portal setting does. */
+    useShippingAddresses?: boolean;
 }
 
 /** The billing period a preview request is asking about, which decides what it is answered with. */
@@ -85,7 +87,12 @@ export function mountCheckout(page: Page, options: MountOptions = {}): Promise<A
     return mountScreen(
         page,
         'checkout',
-        { ...options, portalObject: options.portalObject ?? aPortalObject() },
+        {
+            ...options,
+            portalObject:
+                options.portalObject ??
+                aPortalObject({ useShippingAddresses: options.useShippingAddresses }),
+        },
         defaultMocks(options),
     );
 }
@@ -112,6 +119,13 @@ export function checkout(page: Page) {
         postalCode: page.locator('input[name="postal_code"]'),
         city: page.locator('input[name="city"]'),
         state: page.locator('input[name="state"]'),
+        shippingAddress: page.locator('.sv-checkout__shipping-address'),
+        shippingAddressLine1: page.locator('input[name="shipping_address_line_1"]'),
+        shippingPostalCode: page.locator('input[name="shipping_postal_code"]'),
+        shippingCity: page.locator('input[name="shipping_city"]'),
+        billingAddress: page.locator('.sv-checkout__billing-address'),
+        /** The checkbox's own input is visually hidden, so the label is what a customer clicks. */
+        billingSameAsShipping: page.getByText('Billing address is the same as shipping address'),
         paymentMethods: page.locator('.sv-checkout__payment-methods'),
         paymentForm: page.locator('.sv-checkout__payment-form'),
         paymentMethodsEmpty: page.locator('.sv-checkout__payment-methods-empty'),

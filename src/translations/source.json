@@ -315,6 +315,10 @@
     "defaultMessage": "{due_today} today, then usage billed every {billing_period} until canceled.",
     "description": "The agreement for a usage-based subscription whose first invoice also charges something only once"
   },
+  "checkout.billing_address_same_as_shipping.label": {
+    "defaultMessage": "Billing address is the same as shipping address",
+    "description": "Label of the checkbox that bills the order to the address it ships to"
+  },
   "checkout.billing_details.add_billing_details_button.label": {
     "defaultMessage": "More billing details",
     "description": "Label of the button in the checkout that lets you fill out all billing details"
@@ -574,6 +578,18 @@
   "checkout.promotion_code.removed_status": {
     "defaultMessage": "Promotion code removed",
     "description": "Aria live message when a promotion code is removed in checkout"
+  },
+  "checkout.shipping_address.title": {
+    "defaultMessage": "Shipping address",
+    "description": "Label above the address an order is shipped to in the checkout form"
+  },
+  "checkout.shipping_country.label": {
+    "defaultMessage": "Shipping country",
+    "description": "Label of the country an order is shipped to in the checkout form"
+  },
+  "checkout.shipping_information_block.title": {
+    "defaultMessage": "Shipping information",
+    "description": "The title of the shipping information block in the checkout form"
   },
   "checkout.subscription_description": {
     "defaultMessage": "You will be billed <strong>{price}</strong> per {period_name}, starting today.",

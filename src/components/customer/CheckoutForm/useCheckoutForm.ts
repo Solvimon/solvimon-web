@@ -1,21 +1,39 @@
 import { isValidCountryCode, objectDiff, useValidation } from '@solvimon/solvimon-ui';
 import { taxId } from '@solvimon/solvimon-ui/validators';
 import { email, required, requiredIf } from '@vuelidate/validators';
-import { computed, onMounted, ref, toRaw, watch } from 'vue';
+import { computed, onMounted, ref, toRaw, watch, type MaybeRefOrGetter, toValue } from 'vue';
 import type { CheckoutFormState } from './CheckoutForm.types';
-import { getRequiredFieldsForCountry, isVatNumberShown } from './CheckoutForm.lib';
+import {
+    getRequiredFieldsForCountry,
+    getRequiredShippingFieldsForCountry,
+    billingAddressFromShipping,
+    isVatNumberShown,
+    type ShippingField,
+} from './CheckoutForm.lib';
 import { useWatchDebounced } from '@/composables/useWatchDebounced';
 import { createGeoLocationService } from '@/services/geolocation';
 
 export function useCheckoutForm({
     initialState,
     onRequiredFieldChange,
+    isShippingAddressRequired,
 }: {
     initialState: Partial<CheckoutFormState>;
     onRequiredFieldChange: (form: CheckoutFormState) => void;
+    /** Whether the order is shipped, which the portal decides. */
+    isShippingAddressRequired?: MaybeRefOrGetter<boolean>;
 }) {
+    const isShipped = computed<boolean>(() => toValue(isShippingAddressRequired) ?? false);
+
     const form = ref<CheckoutFormState>(getInitialState(initialState));
     const initialFormState = ref<CheckoutFormState>(getInitialState(initialState));
+
+    // A shipped order opens on the country the host configured, so the billing address that
+    // follows the shipping one is not blanked before the customer has filled anything in.
+    if (isShipped.value && !form.value.shippingCountry) {
+        form.value.shippingCountry = form.value.country;
+        initialFormState.value.shippingCountry = form.value.country;
+    }
 
     const updateInitialState = (state: Partial<CheckoutFormState>) => {
         const newState = getInitialState({ ...toRaw(form.value), ...state });
@@ -31,6 +49,14 @@ export function useCheckoutForm({
     const getIsFieldRequired = (field: keyof CheckoutFormState): boolean =>
         requiredFields.value.includes(field);
 
+    /** The destination country answers for the shipping address, not the billing one. */
+    const requiredShippingFields = computed<ShippingField[]>(() =>
+        isShipped.value ? getRequiredShippingFieldsForCountry(form.value.shippingCountry) : [],
+    );
+
+    const getIsShippingFieldRequired = (field: ShippingField): boolean =>
+        requiredShippingFields.value.includes(field);
+
     // A hidden VAT number is not checked: the customer could not see or correct it.
     const validation = useValidation(
         computed(() => ({
@@ -43,6 +69,21 @@ export function useCheckoutForm({
                 required: requiredIf(() => form.value.type === 'ORGANIZATION'),
             },
             companyVatNumber: isVatNumberShown(form.value) ? { taxId } : {},
+            shippingAddressLine1: {
+                required: requiredIf(() => getIsShippingFieldRequired('shippingAddressLine1')),
+            },
+            shippingPostalCode: {
+                required: requiredIf(() => getIsShippingFieldRequired('shippingPostalCode')),
+            },
+            shippingCity: {
+                required: requiredIf(() => getIsShippingFieldRequired('shippingCity')),
+            },
+            shippingState: {
+                required: requiredIf(() => getIsShippingFieldRequired('shippingState')),
+            },
+            shippingCountry: {
+                required: requiredIf(() => getIsShippingFieldRequired('shippingCountry')),
+            },
         })),
         form,
     );
@@ -53,8 +94,16 @@ export function useCheckoutForm({
     const fillCountryFromGeoLocation = async () => {
         try {
             const { country } = await geoLocation.getGeoLocation();
-            if (typeof country === 'string' && isValidCountryCode(country) && !form.value.country) {
+            if (typeof country !== 'string' || !isValidCountryCode(country)) {
+                return;
+            }
+            if (!form.value.country) {
                 form.value.country = country;
+            }
+            // A shipped order opens on the same guess, which the billing address then follows
+            // while it is billed to where it ships.
+            if (isShipped.value && !form.value.shippingCountry) {
+                form.value.shippingCountry = country;
             }
         } catch {
             // The customer picks the country instead.
@@ -84,6 +133,34 @@ export function useCheckoutForm({
         Object.keys(objectDiff({ from: handledForm, to: value }))
             .filter(isCheckoutFormStateKey)
             .some(changesPreview);
+
+    /**
+     * Keep the billing address on the shipping one while the customer asks to be billed there.
+     * Everything downstream — the invoice preview, the customer the order is placed against — reads
+     * the billing fields, so the copy happens here rather than in each of them.
+     */
+    watch(
+        () => [
+            isShipped.value,
+            form.value.billingAddressSameAsShipping,
+            form.value.shippingAddressLine1,
+            form.value.shippingAddressLine2,
+            form.value.shippingPostalCode,
+            form.value.shippingCity,
+            form.value.shippingState,
+            form.value.shippingCountry,
+        ],
+        () => {
+            if (!isShipped.value || !form.value.billingAddressSameAsShipping) {
+                return;
+            }
+
+            // Assigned field by field: replacing the state would retrigger this watcher on its
+            // own dependency and loop.
+            Object.assign(form.value, billingAddressFromShipping(form.value));
+        },
+        { immediate: true },
+    );
 
     /**
      * A change to the price the preview has not been asked for yet: the debounce holds it back,
@@ -128,6 +205,7 @@ export function useCheckoutForm({
         form,
         validation,
         getIsFieldRequired,
+        getIsShippingFieldRequired,
         updateInitialState,
         initialState: initialFormState,
         isPreviewStale,
@@ -150,6 +228,14 @@ const getInitialState = (initialState: Partial<CheckoutFormState> = {}): Checkou
         city: undefined,
         state: undefined,
         companyVatNumber: undefined,
+        shippingAddressLine1: undefined,
+        shippingAddressLine2: undefined,
+        shippingPostalCode: undefined,
+        shippingCity: undefined,
+        shippingState: undefined,
+        shippingCountry: undefined,
+        // Most customers are billed where they are shipped, so that is what the form opens on.
+        billingAddressSameAsShipping: true,
         seatsValues: undefined,
         unitsValues: undefined,
         enabledPricingIds: undefined,

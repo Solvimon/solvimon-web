@@ -232,6 +232,18 @@ function publishDeclarations(): Plugin {
     /** Where declarations copied from a package a consumer cannot install go, inside that tree. */
     const VENDOR_DIR = 'vendor';
     const PRIVATE_TYPES_PACKAGE = '@solvimon/solvimon-types';
+    const UI_PACKAGE = '@solvimon/solvimon-ui';
+    /** The `@solvimon/solvimon-ui` declarations the public types reach, under its `dist/src`. */
+    const UI_DECLARATIONS = [
+        'components/providers/BrandProvider/BrandProvider.types.d.ts',
+        'components/providers/IntlProvider/IntlProvider.types.d.ts',
+    ];
+
+    /** The relative specifier `file` imports `target` by, `target` given without extension. */
+    const specifierFrom = (file: string, target: string) => {
+        const path = relative(dirname(file), target).replace(/\\/g, '/');
+        return path.startsWith('.') ? path : `./${path}`;
+    };
 
     /** `dist/a/b/c.d.ts` re-exporting `dist/types/x/y.d.ts` needs `../../types/x/y`. */
     const writeShim = (outPath: string, treeModule: string) => {
@@ -350,16 +362,86 @@ function publishDeclarations(): Plugin {
             rmSync(sourceDir, { recursive: true, force: true });
         }
 
-        rewriteDeclarations(treeRoot, (source, file) => {
-            const toVendor = relative(dirname(file), resolve(vendorDir, 'index'));
-            const specifier = (toVendor.startsWith('.') ? toVendor : `./${toVendor}`).replace(
-                /\\/g,
-                '/',
-            );
+        // `WithOnlyOptionalProperties` passes `Optional` one type argument where it takes two, an
+        // error every consumer that type-checks libraries sees. Nothing uses it; this gives it
+        // the meaning its name states.
+        const utilsPath = resolve(vendorDir, 'utils.d.ts');
+        writeFileSync(
+            utilsPath,
+            readFileSync(utilsPath, 'utf8').replace(
+                '[P in keyof T]: Optional<T[P]>;',
+                '[P in keyof T]?: T[P];',
+            ),
+        );
+
+        rewriteDeclarations(treeRoot, (source, file) =>
             // Two files inside the package import it by name rather than relatively, so this also
             // resolves the vendored copy's references to itself.
-            return source.replaceAll(`'${PRIVATE_TYPES_PACKAGE}'`, `'${specifier}'`);
-        });
+            source.replaceAll(
+                `'${PRIVATE_TYPES_PACKAGE}'`,
+                `'${specifierFrom(file, resolve(vendorDir, 'index'))}'`,
+            ),
+        );
+    };
+
+    /**
+     * `@solvimon/solvimon-ui` cannot be vendored whole: its declarations reach eight packages this
+     * one does not depend on. The public types reach only the provider props below, which import
+     * nothing, so those files are copied and every import naming only their types points at the
+     * copy. Imports of anything else stay as they are; `types:check-published` fails if a consumer
+     * can reach one.
+     */
+    const vendorUiTypes = (treeRoot: string) => {
+        const vendorDir = resolve(treeRoot, VENDOR_DIR, UI_PACKAGE);
+        const sourceDir = resolve(
+            realpathSync(resolve(__dirname, 'node_modules', UI_PACKAGE)),
+            'dist/src',
+        );
+        const vendored = new Set<string>();
+
+        for (const declaration of UI_DECLARATIONS) {
+            const source = readFileSync(resolve(sourceDir, declaration), 'utf8');
+            if (/^\s*import\s/m.test(source)) {
+                throw new Error(
+                    `${UI_PACKAGE}'s ${declaration} now imports other modules, so copying it alone would leave those unresolved.`,
+                );
+            }
+            mkdirSync(dirname(resolve(vendorDir, declaration)), { recursive: true });
+            writeFileSync(resolve(vendorDir, declaration), source);
+            for (const [, name] of source.matchAll(
+                /^export (?:declare )?(?:interface|type) (\w+)/gm,
+            )) {
+                vendored.add(name);
+            }
+        }
+
+        writeFileSync(
+            resolve(vendorDir, 'index.d.ts'),
+            UI_DECLARATIONS.map(
+                (file) => `export * from './${file.replace(/\.d\.ts$/, '')}';\n`,
+            ).join(''),
+        );
+
+        rewriteDeclarations(treeRoot, (source, file) =>
+            source.replace(
+                /(import\s+(?:type\s+)?\{([^}]*)\}\s+from\s+)'@solvimon\/solvimon-ui'/g,
+                (statement, head: string, names: string) => {
+                    const imported = names
+                        .split(',')
+                        .map(
+                            (name) =>
+                                name
+                                    .trim()
+                                    .replace(/^type\s+/, '')
+                                    .split(/\s+as\s+/)[0],
+                        )
+                        .filter(Boolean);
+                    return imported.every((name) => vendored.has(name))
+                        ? `${head}'${specifierFrom(file, resolve(vendorDir, 'index'))}'`
+                        : statement;
+                },
+            ),
+        );
     };
 
     return {
@@ -380,6 +462,7 @@ function publishDeclarations(): Plugin {
             // feeds local development, where the private types package resolves on its own.
             if (!this.meta.watchMode) {
                 vendorPrivateTypes(publishedTreeDir);
+                vendorUiTypes(publishedTreeDir);
             }
 
             // Screen and component entries: dist/screens/X/X.ce.d.ts, dist/components/X/X.ce.d.ts

@@ -11,6 +11,10 @@ import {
     resolvablePackages,
 } from './check-published-types.mjs';
 
+const UI_ALLOWLIST = {
+    '@solvimon/solvimon-ui': ['BrandProviderProps', 'IntlMessages', 'IntlProviderProps'],
+};
+
 /** Stands in for this package's own manifest in the assertions below. */
 const PACKAGE_JSON = {
     dependencies: { '@adyen/adyen-web': '^6.14.0' },
@@ -189,14 +193,14 @@ describe('checkPublishedTypes', () => {
         const dist = tmpDist();
         write(dist, 'index.d.ts', "import { IntlMessages } from '@solvimon/solvimon-ui';\n");
 
-        expect(checkPublishedTypes(dist, PACKAGE_JSON).ok).toBe(true);
+        expect(checkPublishedTypes(dist, PACKAGE_JSON, UI_ALLOWLIST).ok).toBe(true);
     });
 
     it('fails on a type from that package the allowlist does not cover', () => {
         const dist = tmpDist();
         write(dist, 'index.d.ts', "import { ButtonProps } from '@solvimon/solvimon-ui';\n");
 
-        const { ok, unexpected } = checkPublishedTypes(dist, PACKAGE_JSON);
+        const { ok, unexpected } = checkPublishedTypes(dist, PACKAGE_JSON, UI_ALLOWLIST);
 
         expect(ok).toBe(false);
         expect(unexpected['@solvimon/solvimon-ui']).toEqual(['ButtonProps']);
@@ -206,10 +210,20 @@ describe('checkPublishedTypes', () => {
         const dist = tmpDist();
         write(dist, 'index.d.ts', "import { IntlMessages } from '@solvimon/solvimon-ui';\n");
 
-        const { ok, stale } = checkPublishedTypes(dist, PACKAGE_JSON);
+        const { ok, stale } = checkPublishedTypes(dist, PACKAGE_JSON, UI_ALLOWLIST);
 
         expect(ok).toBe(true);
         expect(stale['@solvimon/solvimon-ui']).toEqual(['BrandProviderProps', 'IntlProviderProps']);
+    });
+
+    it('fails on a provider prop type that is no longer vendored', () => {
+        const dist = tmpDist();
+        write(dist, 'index.d.ts', "import { IntlMessages } from '@solvimon/solvimon-ui';\n");
+
+        const { ok, unexpected } = checkPublishedTypes(dist, PACKAGE_JSON);
+
+        expect(ok).toBe(false);
+        expect(unexpected['@solvimon/solvimon-ui']).toEqual(['IntlMessages']);
     });
 
     it('fails on an import the package does not contain', () => {
@@ -223,9 +237,8 @@ describe('checkPublishedTypes', () => {
         expect(dangling).toEqual(['index.d.ts -> ./types/vendor/index']);
     });
 
-    it('allowlists nothing a host writes', () => {
-        // Those have to resolve, so they are vendored or declared — never waved through here.
-        expect(Object.keys(ALLOWED_UNRESOLVABLE_TYPES)).toEqual(['@solvimon/solvimon-ui']);
-        expect(ALLOWED_UNRESOLVABLE_TYPES['@solvimon/solvimon-ui']).not.toContain('ButtonProps');
+    it('allowlists nothing', () => {
+        // Whatever a consumer can reach has to resolve, so it is vendored or declared.
+        expect(ALLOWED_UNRESOLVABLE_TYPES).toEqual({});
     });
 });

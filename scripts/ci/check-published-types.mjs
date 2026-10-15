@@ -4,21 +4,15 @@ import { fileURLToPath } from 'url';
 import { resolveSafePath } from '../safe-path.mjs';
 
 /**
- * Types the published declarations may still reach in a package a consumer cannot install.
- *
- * `@solvimon/solvimon-ui` lives in a private registry, and unlike `@solvimon/solvimon-types` it
- * cannot be vendored into the package: its declarations reach `@vuelidate/core`, `vue-router`,
- * `@tiptap/core` and five more packages this one does not depend on, so bringing them along would
- * trade one unresolvable import for eight. The three names below are reachable only through the
- * internal provider props, which no host writes, so they resolve to `any` without consequence.
+ * Types the published declarations may still reach in a package a consumer cannot install, keyed by
+ * package. Empty: `@solvimon/solvimon-types` and the provider props from `@solvimon/solvimon-ui`
+ * are vendored into the package by `vite.config.ts`.
  *
  * Adding a name here is a decision, not a formality. Anything a host does write — a `configuration`
  * option, a portal object, a mount config — must resolve, because an option typed `any` is what let
- * DD-3333 ship.
+ * DD-3333 ship. A consumer that type-checks libraries also gets an error for every such import.
  */
-export const ALLOWED_UNRESOLVABLE_TYPES = {
-    '@solvimon/solvimon-ui': ['BrandProviderProps', 'IntlMessages', 'IntlProviderProps'],
-};
+export const ALLOWED_UNRESOLVABLE_TYPES = {};
 
 /** Any specifier a declaration file names, relative or bare. */
 const SPECIFIER = /(?:from|import)\s*\(?\s*['"]([^'"]+)['"]/g;
@@ -125,7 +119,11 @@ export function collectExternalTypes(distDir) {
  *   `dangling` lists imports inside the package that lead nowhere — both failures. `stale` is what
  *   the allowlist covers but nothing reaches any more.
  */
-export function checkPublishedTypes(distDir = 'dist', packageJson = {}) {
+export function checkPublishedTypes(
+    distDir = 'dist',
+    packageJson = {},
+    allowlist = ALLOWED_UNRESOLVABLE_TYPES,
+) {
     const resolvable = resolvablePackages(packageJson);
     const { imported, dangling } = collectExternalTypes(distDir);
     const unexpected = {};
@@ -133,12 +131,12 @@ export function checkPublishedTypes(distDir = 'dist', packageJson = {}) {
 
     for (const [pkg, names] of Object.entries(imported)) {
         if (resolvable.has(pkg)) continue;
-        const allowed = ALLOWED_UNRESOLVABLE_TYPES[pkg] ?? [];
+        const allowed = allowlist[pkg] ?? [];
         const beyond = names.filter((name) => !allowed.includes(name));
         if (beyond.length) unexpected[pkg] = beyond;
     }
 
-    for (const [pkg, allowed] of Object.entries(ALLOWED_UNRESOLVABLE_TYPES)) {
+    for (const [pkg, allowed] of Object.entries(allowlist)) {
         const unused = allowed.filter((name) => !(imported[pkg] ?? []).includes(name));
         if (unused.length) stale[pkg] = unused;
     }

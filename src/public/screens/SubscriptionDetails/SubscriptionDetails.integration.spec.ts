@@ -60,6 +60,7 @@ vi.mock('@/components/providers', () => ({
 
 // The real modal builds its own request services, which need providers this mount does not have.
 vi.mock('@/components/wallets/TopUpModal/TopUpModal.vue', () => ({
+    __esModule: true,
     default: defineComponent({
         name: 'TopUpModalStub',
         props: { showModal: Boolean, selectedBalanceItem: Object },
@@ -76,6 +77,7 @@ vi.mock('@/components/wallets/TopUpModal/TopUpModal.vue', () => ({
 
 // Builds its own auto top-up and payment method services, which need providers this mount lacks.
 vi.mock('@/components/wallets/AutoTopUpModal/AutoTopUpModal.vue', () => ({
+    __esModule: true,
     default: defineComponent({
         name: 'AutoTopUpModalStub',
         props: { showModal: Boolean, walletBalanceItem: Object, topUpItem: Object },
@@ -92,6 +94,7 @@ vi.mock('@/components/wallets/AutoTopUpModal/AutoTopUpModal.vue', () => ({
 
 // Builds an auto top-up service of its own, which needs providers this mount does not have.
 vi.mock('@/components/wallets/AutoTopUpCancellationModal/AutoTopUpCancellationModal.vue', () => ({
+    __esModule: true,
     default: defineComponent({
         name: 'AutoTopUpCancellationModalStub',
         props: { showModal: Boolean, config: Object },
@@ -597,6 +600,13 @@ describe('SubscriptionDetails', () => {
     });
 
     describe('wallets', () => {
+        const openTopUp = async (wrapper: ReturnType<typeof mountComponent>) => {
+            wrapper
+                .findComponent({ name: 'WalletBalancesStub' })
+                .vm.$emit('top-up', mockWalletBalance.charge_on_demand_pricing_items?.[0]);
+            await flushPromises();
+        };
+
         it('renders the wallet balances in the aside', () => {
             const wrapper = mountComponent({ walletBalances: [mockWalletBalance] });
 
@@ -614,19 +624,17 @@ describe('SubscriptionDetails', () => {
             expect(wrapper.find('.sv-wallet-balances.sv-error').exists()).toBe(true);
         });
 
-        it('keeps the top-up modal closed until a wallet is picked', () => {
+        it('keeps the top-up modal out until a wallet is picked', async () => {
             const wrapper = mountComponent({ walletBalances: [mockWalletBalance] });
+            await flushPromises();
 
-            expect(wrapper.find('.sv-top-up-modal-stub').attributes('data-open')).toBe('false');
+            expect(wrapper.find('.sv-top-up-modal-stub').exists()).toBe(false);
         });
 
         it('opens the top-up modal for the wallet that asked for it', async () => {
             const wrapper = mountComponent({ walletBalances: [mockWalletBalance] });
 
-            wrapper
-                .findComponent({ name: 'WalletBalancesStub' })
-                .vm.$emit('top-up', mockWalletBalance.charge_on_demand_pricing_items?.[0]);
-            await wrapper.vm.$nextTick();
+            await openTopUp(wrapper);
 
             const modal = wrapper.findComponent({ name: 'TopUpModalStub' });
 
@@ -657,8 +665,9 @@ describe('SubscriptionDetails', () => {
             ).toEqual([]);
         });
 
-        it('reports a charged top-up so the balance can be reloaded', () => {
+        it('reports a charged top-up so the balance can be reloaded', async () => {
             const wrapper = mountComponent({ walletBalances: [mockWalletBalance] });
+            await openTopUp(wrapper);
 
             wrapper.findComponent({ name: 'TopUpModalStub' }).vm.$emit('confirm');
 
@@ -676,8 +685,9 @@ describe('SubscriptionDetails', () => {
             },
         );
 
-        it('reports a stored payment method so the list can be reloaded', () => {
+        it('reports a stored payment method so the list can be reloaded', async () => {
             const wrapper = mountComponent({ walletBalances: [mockWalletBalance] });
+            await openTopUp(wrapper);
 
             wrapper.findComponent({ name: 'TopUpModalStub' }).vm.$emit('payment-success');
 

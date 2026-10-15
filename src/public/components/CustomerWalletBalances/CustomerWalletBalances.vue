@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ErrorNotification, useIntl, WalletBalances } from '@solvimon/solvimon-ui';
 import type { ChargeOnDemandPricingItem, WalletAutoTopUpConfig } from '@solvimon/solvimon-types';
-import { computed, ref } from 'vue';
+import { computed, defineAsyncComponent, ref, watch, type Ref } from 'vue';
 import type {
     CustomerWalletBalancesEmits,
     CustomerWalletBalancesProps,
@@ -11,9 +11,16 @@ import {
     getWalletBalancesForSubscriptions,
 } from './CustomerWalletBalances.lib';
 import Skeleton from '@/components/shared/Skeleton.vue';
-import TopUpModal from '@/components/wallets/TopUpModal/TopUpModal.vue';
-import AutoTopUpModal from '@/components/wallets/AutoTopUpModal/AutoTopUpModal.vue';
-import AutoTopUpCancellationModal from '@/components/wallets/AutoTopUpCancellationModal/AutoTopUpCancellationModal.vue';
+
+const TopUpModal = defineAsyncComponent(
+    () => import('@/components/wallets/TopUpModal/TopUpModal.vue'),
+);
+const AutoTopUpModal = defineAsyncComponent(
+    () => import('@/components/wallets/AutoTopUpModal/AutoTopUpModal.vue'),
+);
+const AutoTopUpCancellationModal = defineAsyncComponent(
+    () => import('@/components/wallets/AutoTopUpCancellationModal/AutoTopUpCancellationModal.vue'),
+);
 
 defineOptions({ inheritAttrs: false });
 
@@ -21,6 +28,17 @@ const props = defineProps<CustomerWalletBalancesProps>();
 const emit = defineEmits<CustomerWalletBalancesEmits>();
 
 const { $t } = useIntl();
+
+// Kept mounted after the first open so closing still plays the modal's transition.
+const openedOnce = (isOpen: Ref<boolean>): Ref<boolean> => {
+    const opened = ref(isOpen.value);
+    watch(isOpen, (open) => {
+        if (open) {
+            opened.value = true;
+        }
+    });
+    return opened;
+};
 
 const shownWalletBalances = computed(() =>
     getWalletBalancesForSubscriptions(props.walletBalances, props.subscriptions),
@@ -33,10 +51,12 @@ const selectedBalanceItem = computed(() =>
 );
 
 const showTopUpModal = computed(() => !!selectedBalanceItem.value);
+const hasOpenedTopUp = openedOnce(showTopUpModal);
 
 const selectedAutoTopUpItem = ref<ChargeOnDemandPricingItem | undefined>();
 
 const showAutoTopUpModal = computed(() => !!selectedAutoTopUpItem.value);
+const hasOpenedAutoTopUp = openedOnce(showAutoTopUpModal);
 
 const autoTopUpWallet = computed(() =>
     getWalletBalanceForTopUpItem(shownWalletBalances.value, selectedAutoTopUpItem.value),
@@ -45,6 +65,7 @@ const autoTopUpWallet = computed(() =>
 const cancellingAutoTopUpConfig = ref<WalletAutoTopUpConfig | undefined>();
 
 const showAutoTopUpCancellation = computed(() => !!cancellingAutoTopUpConfig.value);
+const hasOpenedAutoTopUpCancellation = openedOnce(showAutoTopUpCancellation);
 </script>
 
 <template>
@@ -90,7 +111,7 @@ const showAutoTopUpCancellation = computed(() => !!cancellingAutoTopUpConfig.val
     />
 
     <TopUpModal
-        v-if="showTopUpButton"
+        v-if="showTopUpButton && hasOpenedTopUp"
         :show-modal="showTopUpModal"
         :selected-balance-item="selectedBalanceItem"
         :payment-methods="paymentMethods"
@@ -104,7 +125,7 @@ const showAutoTopUpCancellation = computed(() => !!cancellingAutoTopUpConfig.val
     />
 
     <AutoTopUpModal
-        v-if="showTopUpButton"
+        v-if="showTopUpButton && hasOpenedAutoTopUp"
         :show-modal="showAutoTopUpModal"
         :wallet-balance-item="autoTopUpWallet"
         :top-up-item="selectedAutoTopUpItem"
@@ -117,7 +138,7 @@ const showAutoTopUpCancellation = computed(() => !!cancellingAutoTopUpConfig.val
     />
 
     <AutoTopUpCancellationModal
-        v-if="showTopUpButton"
+        v-if="showTopUpButton && hasOpenedAutoTopUpCancellation"
         :show-modal="showAutoTopUpCancellation"
         :config="cancellingAutoTopUpConfig"
         @close="cancellingAutoTopUpConfig = undefined"

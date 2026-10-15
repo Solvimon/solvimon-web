@@ -1,16 +1,56 @@
 import { execFileSync } from 'child_process';
-import { cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync } from 'fs';
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync } from 'fs';
 import { tmpdir } from 'os';
-import { join, resolve } from 'path';
+import { dirname, join, resolve } from 'path';
 import { fileURLToPath } from 'url';
 
-const ROOT = resolve(fileURLToPath(new URL('../..', import.meta.url)));
+const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 
 /**
- * What the fixture needs to compile, beyond the SDK itself. `vue` is a peer dependency every
- * consumer already has; the rest is what `vue`'s own declarations reach for.
+ * What a consumer installs besides the SDK: its peer dependency `vue`, its dependency
+ * `@adyen/adyen-web`, and a compiler. The fixture gets these with everything they depend on, as an
+ * install would, since type-checking their declarations reaches into those too.
  */
-const CONSUMER_DEPENDENCIES = ['vue', '@vue', 'csstype', 'typescript'];
+const CONSUMER_DEPENDENCIES = ['vue', '@adyen/adyen-web', 'typescript'];
+
+/** `names` and every package they depend on, transitively, as installed in this repository. */
+export function dependencyClosure(names, nodeModules = join(ROOT, 'node_modules')) {
+    const found = new Set();
+    const queue = [...names];
+
+    while (queue.length) {
+        const name = queue.shift();
+        const manifest = join(nodeModules, name, 'package.json');
+        if (found.has(name) || !existsSync(manifest)) continue;
+        found.add(name);
+        queue.push(...Object.keys(JSON.parse(readFileSync(manifest, 'utf-8')).dependencies ?? {}));
+    }
+
+    return [...found].sort();
+}
+
+/**
+ * One per kind of consumer: a bundler, and Node's own resolution with the package's declarations
+ * type-checked as well, which is what a consumer without `skipLibCheck` gets.
+ */
+const CONSUMER_CONFIGS = ['tsconfig.json', 'tsconfig.nodenext.json'];
+
+/**
+ * The diagnostics in `output` that are this package's to fix: those in the fixture or in the SDK's
+ * declarations. Checking libraries also reports errors inside third-party declarations, such as
+ * `@adyen/adyen-web` importing `@paypal/paypal-js` without depending on it, which a consumer gets
+ * with or without this SDK.
+ */
+export function ownDiagnostics(output) {
+    const diagnostics = output.split(/\n(?=\S)/).filter(Boolean);
+    return diagnostics
+        .filter(
+            (diagnostic) =>
+                !diagnostic.startsWith('node_modules/') ||
+                diagnostic.startsWith('node_modules/@solvimon/solvimon-web/'),
+        )
+        .join('\n');
+}
 
 /**
  * Type-checks a fixture consumer against the packed tarball.
@@ -39,31 +79,32 @@ export function checkConsumerTypes({ keep = false } = {}) {
 
         execFileSync('tar', ['-xzf', join(dir, tarball), '-C', packageDir, '--strip-components=1']);
 
-        for (const dependency of CONSUMER_DEPENDENCIES) {
-            const from = join(ROOT, 'node_modules', dependency);
-            if (existsSync(from)) {
-                cpSync(from, join(dir, 'node_modules', dependency), {
-                    recursive: true,
-                    dereference: true,
-                });
-            }
+        for (const dependency of dependencyClosure(CONSUMER_DEPENDENCIES)) {
+            cpSync(join(ROOT, 'node_modules', dependency), join(dir, 'node_modules', dependency), {
+                recursive: true,
+                dereference: true,
+            });
         }
 
         for (const file of readdirSync(join(ROOT, 'tests/consumer-types'))) {
             cpSync(join(ROOT, 'tests/consumer-types', file), join(dir, file));
         }
 
-        try {
-            execFileSync(join(dir, 'node_modules/typescript/bin/tsc'), ['-p', 'tsconfig.json'], {
-                cwd: dir,
-                encoding: 'utf-8',
-                stdio: 'pipe',
-            });
-        } catch (error) {
-            return { ok: false, output: `${error.stdout ?? ''}${error.stderr ?? ''}`.trim(), dir };
+        const failures = [];
+        for (const config of CONSUMER_CONFIGS) {
+            try {
+                execFileSync(join(dir, 'node_modules/typescript/bin/tsc'), ['-p', config], {
+                    cwd: dir,
+                    encoding: 'utf-8',
+                    stdio: 'pipe',
+                });
+            } catch (error) {
+                const output = ownDiagnostics(`${error.stdout ?? ''}${error.stderr ?? ''}`.trim());
+                if (output) failures.push(`${config}:\n${output}`);
+            }
         }
 
-        return { ok: true, output: '', dir };
+        return { ok: failures.length === 0, output: failures.join('\n\n'), dir };
     } finally {
         if (!keep) rmSync(dir, { recursive: true, force: true });
     }

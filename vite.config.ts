@@ -51,12 +51,6 @@ const componentEntries = getLibEntries(
     'components/',
 );
 
-/**
- * Extensions that state the format outright, so node reads each entry as what it is without the
- * package declaring a `type`. Rollup already names shared chunks this way; the entries did not.
- */
-const MODULE_EXTENSIONS: Record<string, string> = { es: 'mjs', cjs: 'cjs' };
-
 /** Dropped from the published bundle only: a test run that cannot log is a test run debugged blind. */
 const PRODUCTION_DROPS: ('console' | 'debugger')[] = ['console', 'debugger'];
 
@@ -132,7 +126,6 @@ export default defineConfig(({ mode }) => {
     const isProduction = mode === 'production';
 
     return {
-        // Applies to both output formats, unlike terser, which Vite only ran over the cjs build.
         esbuild: { drop: isProduction ? PRODUCTION_DROPS : [] },
         build: {
             minify: 'esbuild',
@@ -145,23 +138,17 @@ export default defineConfig(({ mode }) => {
                     ...componentEntries,
                     core: coreEntry,
                 },
-                formats: ['es', 'cjs'],
-                fileName: (format, name) => {
-                    const extension = MODULE_EXTENSIONS[format] ?? `${format}.js`;
-
-                    return name === 'core'
-                        ? `core/index.${extension}`
-                        : `${name.replace(/^[/\\]+/, '').replace('.ce', '')}.${extension}`;
-                },
+                formats: ['es'],
+                // `.mjs` tells node these are ES modules without the package declaring a `type`.
+                fileName: (_format, name) =>
+                    name === 'core'
+                        ? 'core/index.mjs'
+                        : `${name.replace(/^[/\\]+/, '').replace('.ce', '')}.mjs`,
             },
             rollupOptions: {
                 external: ['vue'],
                 output: {
                     preserveModules: false,
-                    strict: false, // Setting to make sure cjs exports work (for next.js/webpack outputs)
-                    globals: {
-                        vue: 'Vue',
-                    },
                     // No manual vendor chunk: forcing all of solvimon-ui into one chunk made
                     // every entry import the union of what all entries use. Rollup already
                     // hoists shared modules on its own, per set of entries that use them.

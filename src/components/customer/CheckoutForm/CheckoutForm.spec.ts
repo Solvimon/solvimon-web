@@ -15,13 +15,20 @@ vi.mock('@/services/geolocation', () => ({
     createGeoLocationService: () => ({ getGeoLocation: () => new Promise(() => {}) }),
 }));
 
-const mountForm = (initialState: Partial<CheckoutFormState>) => {
+const mountForm = (
+    initialState: Partial<CheckoutFormState>,
+    { isShippingAddressRequired = false, isBillingInformationMandatory = true } = {},
+) => {
     let checkoutForm!: ReturnType<typeof useCheckoutForm>;
 
     const wrapper = mount(
         defineComponent({
             setup() {
-                checkoutForm = useCheckoutForm({ initialState, onRequiredFieldChange: vi.fn() });
+                checkoutForm = useCheckoutForm({
+                    initialState,
+                    onRequiredFieldChange: vi.fn(),
+                    isShippingAddressRequired,
+                });
                 return () =>
                     h(CheckoutForm, {
                         modelValue: checkoutForm.form.value,
@@ -29,7 +36,9 @@ const mountForm = (initialState: Partial<CheckoutFormState>) => {
                             (checkoutForm.form.value = value),
                         validation: checkoutForm.validation,
                         getIsFieldRequired: checkoutForm.getIsFieldRequired,
-                        isBillingInformationMandatory: true,
+                        getIsShippingFieldRequired: checkoutForm.getIsShippingFieldRequired,
+                        isShippingAddressRequired,
+                        isBillingInformationMandatory,
                     });
             },
         }),
@@ -39,7 +48,7 @@ const mountForm = (initialState: Partial<CheckoutFormState>) => {
     return { wrapper, checkoutForm };
 };
 
-const fieldRoot = (wrapper: ReturnType<typeof mount>, name: string) =>
+const fieldRoot = (wrapper: Pick<ReturnType<typeof mount>, 'find'>, name: string) =>
     wrapper.find(`[data-testid="input-${name}"]`);
 
 describe('CheckoutForm', () => {
@@ -139,5 +148,106 @@ describe('CheckoutForm', () => {
 
         expect(wrapper.text()).toContain('The VAT number could not be checked right now.');
         expect(wrapper.text()).not.toContain('VAT number is invalid.');
+    });
+    describe('without a shipping address', () => {
+        const customer = { email: 'jane@example.com', country: 'NL' as CountryCode };
+
+        it('asks for the billing country alongside the email, as it always has', () => {
+            const { wrapper } = mountForm(customer, { isBillingInformationMandatory: false });
+
+            expect(wrapper.text()).toContain('Customer information');
+            expect(wrapper.find('[name="country"]').exists()).toBe(true);
+        });
+
+        it('offers no shipping address at all', () => {
+            const { wrapper } = mountForm(customer);
+
+            expect(wrapper.find('.sv-checkout__shipping-address').exists()).toBe(false);
+            expect(wrapper.find('.sv-checkout__billing-same-as-shipping').exists()).toBe(false);
+        });
+
+        it('keeps the billing address hidden until it is asked for', () => {
+            const { wrapper } = mountForm(customer, { isBillingInformationMandatory: false });
+
+            expect(fieldRoot(wrapper, 'address_line_1').exists()).toBe(false);
+        });
+    });
+
+    describe('with a shipping address', () => {
+        const customer = { email: 'jane@example.com', country: 'NL' as CountryCode };
+        const shipped = { isShippingAddressRequired: true };
+
+        it('names the block after what it collects', () => {
+            const { wrapper } = mountForm(customer, shipped);
+
+            expect(wrapper.text()).toContain('Shipping information');
+        });
+
+        it('asks where the order ships, country and all', () => {
+            const { wrapper } = mountForm(customer, shipped);
+            const shippingBlock = wrapper.find('.sv-checkout__shipping-address');
+
+            expect(shippingBlock.exists()).toBe(true);
+            expect(fieldRoot(shippingBlock, 'shipping_address_line_1').exists()).toBe(true);
+            expect(fieldRoot(shippingBlock, 'shipping_postal_code').exists()).toBe(true);
+            expect(fieldRoot(shippingBlock, 'shipping_city').exists()).toBe(true);
+            expect(shippingBlock.find('[name="shipping_country"]').exists()).toBe(true);
+            expect(wrapper.text()).toContain('Shipping address');
+        });
+
+        it('does not ask for the billing country beside the email', () => {
+            const { wrapper } = mountForm(customer, shipped);
+
+            expect(wrapper.find('[name="country"]').exists()).toBe(false);
+        });
+
+        it('offers to bill the order where it ships', () => {
+            const { wrapper } = mountForm(customer, shipped);
+
+            expect(wrapper.text()).toContain('Billing address is the same as shipping address');
+        });
+
+        it('asks for no billing address while it is billed where it ships', () => {
+            const { wrapper } = mountForm(customer, shipped);
+
+            expect(wrapper.find('.sv-checkout__billing-address').exists()).toBe(false);
+        });
+
+        it('asks for one once the customer says it differs', () => {
+            const { wrapper } = mountForm(
+                { ...customer, billingAddressSameAsShipping: false },
+                shipped,
+            );
+            const billingBlock = wrapper.find('.sv-checkout__billing-address');
+
+            expect(billingBlock.exists()).toBe(true);
+            expect(fieldRoot(billingBlock, 'address_line_1').exists()).toBe(true);
+        });
+
+        it('names every shipping address field for assistive technology', () => {
+            const { wrapper } = mountForm(customer, shipped);
+
+            for (const [name, label] of [
+                ['shipping_address_line_2', 'Address line 2'],
+                ['shipping_postal_code', 'Postal code'],
+                ['shipping_city', 'City'],
+                ['shipping_state', 'State'],
+            ]) {
+                const input = fieldRoot(wrapper, name).find('input');
+                const labelElement = wrapper.find(`label[for="${input.attributes('id')}"]`);
+                expect(labelElement.text()).toBe(label);
+            }
+        });
+
+        it('shows a missing shipping postal code on that field', async () => {
+            const { wrapper, checkoutForm } = mountForm(customer, shipped);
+
+            await checkoutForm.validation.value.$validate();
+            await flushPromises();
+
+            expect(fieldRoot(wrapper, 'shipping_postal_code').text()).toContain(
+                'The value is required',
+            );
+        });
     });
 });

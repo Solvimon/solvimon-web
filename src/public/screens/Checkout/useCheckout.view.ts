@@ -81,11 +81,14 @@ export function useCheckoutView({
     initialEmail,
     subscriptionId,
     enabledPricingIds,
+    isShippingAddressRequired,
 }: {
     initialCountry: CountryCode | undefined;
     initialEmail: string | undefined;
     subscriptionId: PricingPlanSubscription['id'];
     enabledPricingIds?: Pricing['id'][];
+    /** Whether the portal says the order is shipped, which adds a shipping address to the form. */
+    isShippingAddressRequired?: boolean;
 }) {
     const logger = useLogger();
 
@@ -202,6 +205,7 @@ export function useCheckoutView({
     };
 
     const checkoutForm = useCheckoutForm({
+        isShippingAddressRequired,
         initialState: {
             country: validatedCountry,
             email: validatedEmail,

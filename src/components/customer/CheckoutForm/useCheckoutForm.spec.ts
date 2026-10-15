@@ -295,6 +295,7 @@ describe('useCheckoutForm', () => {
             expect(isRequired('shippingPostalCode')).toBe(true);
             expect(isRequired('shippingCity')).toBe(true);
             expect(isRequired('shippingCountry')).toBe(true);
+            expect(isRequired('shippingPhoneNumber')).toBe(true);
             expect(isRequired('shippingAddressLine2')).toBe(false);
         });
 

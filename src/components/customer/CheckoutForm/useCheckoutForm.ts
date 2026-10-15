@@ -84,6 +84,9 @@ export function useCheckoutForm({
             shippingCountry: {
                 required: requiredIf(() => getIsShippingFieldRequired('shippingCountry')),
             },
+            shippingPhoneNumber: {
+                required: requiredIf(() => getIsShippingFieldRequired('shippingPhoneNumber')),
+            },
         })),
         form,
     );
@@ -234,6 +237,7 @@ const getInitialState = (initialState: Partial<CheckoutFormState> = {}): Checkou
         shippingCity: undefined,
         shippingState: undefined,
         shippingCountry: undefined,
+        shippingPhoneNumber: undefined,
         // Most customers are billed where they are shipped, so that is what the form opens on.
         billingAddressSameAsShipping: true,
         seatsValues: undefined,

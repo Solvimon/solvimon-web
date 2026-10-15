@@ -591,6 +591,14 @@
     "defaultMessage": "Shipping information",
     "description": "The title of the shipping information block in the checkout form"
   },
+  "checkout.shipping_phone_number.label": {
+    "defaultMessage": "Phone number",
+    "description": "Label of the phone number the carrier can reach the recipient of a shipped order on"
+  },
+  "checkout.shipping_phone_number.placeholder": {
+    "defaultMessage": "Phone number...",
+    "description": "Placeholder of the phone number of the recipient of a shipped order"
+  },
   "checkout.subscription_description": {
     "defaultMessage": "You will be billed <strong>{price}</strong> per {period_name}, starting today.",
     "description": "The description of the subscription"

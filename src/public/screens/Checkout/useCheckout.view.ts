@@ -4,7 +4,6 @@ import type {
     PricingPlanSubscription,
     CountryCode,
     Address,
-    AuthorizePaymentPayload,
     Name,
     Amount,
     Invoice,
@@ -23,7 +22,9 @@ import {
     DEFAULT_TAX_IDENTIFIER_TYPE,
     isVatNumberShown,
     toCustomer,
+    toShippingAddressDetails,
 } from '@/components/customer/CheckoutForm/CheckoutForm.lib';
+import type { CheckoutAuthorizationContext } from '@/components/payments/PaymentIntegrationForm/PaymentIntegrationForm.types';
 import { usePaymentMethodOptions } from '@/composables/usePaymentMethodOptions';
 import type { CheckoutFormState } from '@/components/customer/CheckoutForm/CheckoutForm.types';
 import {
@@ -270,7 +271,11 @@ export function useCheckoutView({
         });
     };
 
-    const authorizationContext = computed<AuthorizePaymentPayload['context']>(() => {
+    // The customer the checkout creates is new every time, so a fresh reference cannot collide
+    // with an address of someone else's.
+    const shippingAddressReference = crypto.randomUUID();
+
+    const authorizationContext = computed<CheckoutAuthorizationContext>(() => {
         const name: Name =
             checkoutForm.form.value.firstName ||
             checkoutForm.form.value.infix ||
@@ -386,6 +391,12 @@ export function useCheckoutView({
                 template_pricing_plan_subscription_id: subscriptionId,
                 ...(scheduleCustomizationsWithPromotion && {
                     pricing_plan_schedule_customizations: scheduleCustomizationsWithPromotion,
+                }),
+                ...(isShippingAddressRequired && {
+                    shipping_address_details: toShippingAddressDetails(
+                        checkoutForm.form.value,
+                        shippingAddressReference,
+                    ),
                 }),
                 customer_details: {
                     email: checkoutForm.form.value.email ?? '',

@@ -1,5 +1,6 @@
 import type { Address, CountryCode, Customer } from '@solvimon/solvimon-types';
 import type { CheckoutFormState } from './CheckoutForm.types';
+import type { ShippingAddressDetails } from '@/components/payments/PaymentIntegrationForm/PaymentIntegrationForm.types';
 
 const DEFAULT_REQUIRED_FIELDS: (keyof CheckoutFormState)[] = ['email', 'country'];
 
@@ -51,7 +52,8 @@ export type ShippingField =
     | 'shippingPostalCode'
     | 'shippingCity'
     | 'shippingState'
-    | 'shippingCountry';
+    | 'shippingCountry'
+    | 'shippingPhoneNumber';
 
 /** Whether a field belongs to the shipping address rather than the billing one. */
 export const isShippingField = (field: keyof CheckoutFormState): field is ShippingField =>
@@ -63,6 +65,7 @@ const ALWAYS_REQUIRED_SHIPPING_FIELDS: ShippingField[] = [
     'shippingPostalCode',
     'shippingCity',
     'shippingCountry',
+    'shippingPhoneNumber',
 ];
 
 /**
@@ -97,6 +100,41 @@ export const billingAddressFromShipping = (state: CheckoutFormState): BillingAdd
     city: state.shippingCity,
     state: state.shippingState,
     country: state.shippingCountry,
+});
+
+/**
+ * The shipping address as the authorize call takes it. The recipient is the customer: a company
+ * by its legal name, a person by whatever name the form holds, as the API asks for no more.
+ */
+export const toShippingAddressDetails = (
+    state: CheckoutFormState,
+    reference: string,
+): ShippingAddressDetails => ({
+    reference,
+    recipient: {
+        type: state.type,
+        ...(state.type === 'ORGANIZATION'
+            ? { organization: { company_name: state.companyLegalName ?? '' } }
+            : {
+                  individual: {
+                      name: {
+                          ...(state.firstName && { first_name: state.firstName }),
+                          ...(state.infix && { infix: state.infix }),
+                          ...(state.lastName && { last_name: state.lastName }),
+                      },
+                  },
+              }),
+        phone_number: state.shippingPhoneNumber ?? '',
+        email: state.email ?? '',
+    },
+    address: {
+        ...(state.shippingAddressLine1 && { line1: state.shippingAddressLine1 }),
+        ...(state.shippingAddressLine2 && { line2: state.shippingAddressLine2 }),
+        ...(state.shippingCity && { city: state.shippingCity }),
+        ...(state.shippingState && { state: state.shippingState }),
+        ...(state.shippingPostalCode && { postal_code: state.shippingPostalCode }),
+        country: state.shippingCountry ?? '',
+    },
 });
 
 /**

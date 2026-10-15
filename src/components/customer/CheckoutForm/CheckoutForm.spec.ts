@@ -239,6 +239,18 @@ describe('CheckoutForm', () => {
             }
         });
 
+        it('asks for a phone number the carrier can reach the recipient on', async () => {
+            const { wrapper, checkoutForm } = mountForm(customer, shipped);
+            const phoneNumber = fieldRoot(wrapper, 'shipping_phone_number');
+
+            expect(phoneNumber.text()).toContain('Phone number');
+
+            await checkoutForm.validation.value.$validate();
+            await flushPromises();
+
+            expect(phoneNumber.text()).toContain('The value is required');
+        });
+
         it('shows a missing shipping postal code on that field', async () => {
             const { wrapper, checkoutForm } = mountForm(customer, shipped);
 

@@ -37,6 +37,7 @@ const createForm = (overrides: Partial<CheckoutFormState> = {}) =>
         shippingCity: undefined,
         shippingState: undefined,
         shippingCountry: undefined,
+        shippingPhoneNumber: undefined,
         billingAddressSameAsShipping: true,
         postalCode: undefined,
         city: undefined,

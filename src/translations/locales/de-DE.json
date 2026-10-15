@@ -147,6 +147,8 @@
     "checkout.shipping_address.title": "Lieferadresse",
     "checkout.shipping_country.label": "Lieferland",
     "checkout.shipping_information_block.title": "Lieferdaten",
+    "checkout.shipping_phone_number.label": "Telefonnummer",
+    "checkout.shipping_phone_number.placeholder": "Telefonnummer...",
     "checkout.subscription_description": "Ihnen werden <strong>{price}</strong> pro {period_name} berechnet, ab heute.",
     "checkout.subscription_description_with_one_off": "Ihnen werden heute <strong>{due_today}</strong> berechnet, danach <strong>{price}</strong> pro {period_name}.",
     "checkout.subscription_description_without_price": "pro {period_name}, ab heute",

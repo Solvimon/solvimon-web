@@ -147,6 +147,8 @@
   "checkout.shipping_address.title": "Shipping address",
   "checkout.shipping_country.label": "Shipping country",
   "checkout.shipping_information_block.title": "Shipping information",
+  "checkout.shipping_phone_number.label": "Phone number",
+  "checkout.shipping_phone_number.placeholder": "Phone number...",
   "checkout.subscription_description": "You will be billed <strong>{price}</strong> per {period_name}, starting today.",
   "checkout.subscription_description_with_one_off": "You will be billed <strong>{due_today}</strong> today, then <strong>{price}</strong> per {period_name}.",
   "checkout.subscription_description_without_price": "per {period_name}, starting today",

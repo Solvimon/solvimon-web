@@ -1115,6 +1115,78 @@ describe('useCheckoutView', () => {
         expect(mockLoadInvoicePreview).not.toHaveBeenCalled();
     });
 
+    describe('shipping address in the authorization context', () => {
+        const shippedForm = {
+            email: 'jane@example.com',
+            country: 'NL' as CountryCode,
+            type: 'INDIVIDUAL' as const,
+            shippingAddressLine1: 'Main street 1',
+            shippingPostalCode: '1000AA',
+            shippingCity: 'Amsterdam',
+            shippingCountry: 'NL' as CountryCode,
+            shippingPhoneNumber: '+31 6 12345678',
+        };
+
+        const contextFor = (isShippingAddressRequired: boolean) => {
+            mockUseCheckoutForm.mockReturnValue(createMockCheckoutForm(shippedForm));
+
+            const result = useCheckoutView({
+                initialCountry: undefined,
+                initialEmail: undefined,
+                subscriptionId: 'sub_123' as PricingPlanSubscription['id'],
+                isShippingAddressRequired,
+            });
+
+            return result.authorizationContext;
+        };
+
+        it('sends where a shipped order goes', () => {
+            const details =
+                contextFor(true).value.init_pricing_plan_subscription.shipping_address_details;
+
+            expect(details?.address).toEqual({
+                line1: 'Main street 1',
+                postal_code: '1000AA',
+                city: 'Amsterdam',
+                country: 'NL',
+            });
+            expect(details?.recipient).toMatchObject({
+                type: 'INDIVIDUAL',
+                phone_number: '+31 6 12345678',
+                email: 'jane@example.com',
+            });
+            expect(details?.reference).toMatch(/^[0-9a-f-]{36}$/);
+        });
+
+        it('sends no shipping address for an order that is not shipped', () => {
+            expect(contextFor(false).value.init_pricing_plan_subscription).not.toHaveProperty(
+                'shipping_address_details',
+            );
+        });
+
+        // A retried payment names the same address rather than making the customer a second one.
+        it('keeps one reference for the whole checkout', () => {
+            const checkoutForm = createMockCheckoutForm(shippedForm);
+            checkoutForm.form = ref(checkoutForm.form.value);
+            mockUseCheckoutForm.mockReturnValue(checkoutForm);
+            const result = useCheckoutView({
+                initialCountry: undefined,
+                initialEmail: undefined,
+                subscriptionId: 'sub_123' as PricingPlanSubscription['id'],
+                isShippingAddressRequired: true,
+            });
+            const details = () =>
+                result.authorizationContext.value.init_pricing_plan_subscription
+                    .shipping_address_details;
+
+            const first = details()?.reference;
+            checkoutForm.form.value.shippingCity = 'Rotterdam';
+
+            expect(details()?.address.city).toBe('Rotterdam');
+            expect(details()?.reference).toBe(first);
+        });
+    });
+
     it('handles missing name fields in authorization context', () => {
         const subscriptionId = 'sub_123' as PricingPlanSubscription['id'];
 

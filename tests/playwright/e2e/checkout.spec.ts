@@ -624,6 +624,55 @@ test.describe('Checkout', () => {
             await expect(checkout(page).addressLine1).toBeVisible();
         });
 
+        test('sends where the order ships with the payment', async ({ page }) => {
+            api = await mountLoaded(page, {
+                useShippingAddresses: true,
+                mocks: { authorizePayment: { body: aSuccessfulAuthorization() } },
+            });
+
+            await checkout(page).shippingAddressLine1.fill('Main street 1');
+            await checkout(page).shippingPostalCode.fill('1000AA');
+            await checkout(page).shippingCity.fill('Amsterdam');
+            await checkout(page).shippingPhoneNumber.fill('+31 6 12345678');
+            await checkout(page).submit.click();
+
+            const authorization = await api.waitForCall('authorizePayment');
+            expect(authorization.body).toMatchObject({
+                context: {
+                    init_pricing_plan_subscription: {
+                        shipping_address_details: {
+                            recipient: {
+                                type: 'INDIVIDUAL',
+                                phone_number: '+31 6 12345678',
+                                email: 'customer@example.com',
+                            },
+                            address: {
+                                line1: 'Main street 1',
+                                postal_code: '1000AA',
+                                city: 'Amsterdam',
+                                country: 'NL',
+                            },
+                        },
+                        customer_details: {
+                            individual: { residential_address: { line1: 'Main street 1' } },
+                        },
+                    },
+                },
+            });
+        });
+
+        test('refuses to pay for a shipped order with no phone number', async ({ page }) => {
+            api = await mountLoaded(page, { useShippingAddresses: true });
+
+            await checkout(page).shippingAddressLine1.fill('Main street 1');
+            await checkout(page).shippingPostalCode.fill('1000AA');
+            await checkout(page).shippingCity.fill('Amsterdam');
+            await checkout(page).submit.click();
+
+            await expect(checkout(page).form).toContainText(/required/i);
+            expect(api.calls('authorizePayment')).toEqual([]);
+        });
+
         test('refuses to pay for a shipped order with nowhere to ship it', async ({ page }) => {
             api = await mountLoaded(page, { useShippingAddresses: true });
 

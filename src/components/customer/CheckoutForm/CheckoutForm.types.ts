@@ -49,6 +49,8 @@ export interface CheckoutFormState {
     shippingCity: string | undefined;
     shippingState: string | undefined;
     shippingCountry: CountryCode | undefined;
+    /** How the carrier reaches the recipient; the API requires one on every shipping address. */
+    shippingPhoneNumber: string | undefined;
     /**
      * Whether the invoice goes to the shipping address. While it does, the billing fields follow
      * the shipping ones, so everything downstream reads the billing address as it always has.

@@ -1,7 +1,10 @@
 import type {
+    Address,
     Amount,
+    AuthorizePaymentInitPricingPlanSubscriptionContext,
     AuthorizePaymentPayload,
     Customer,
+    Name,
     Invoice,
     PaymentGatewayVariant,
     PaymentMethodOptionResponseEntry,
@@ -17,8 +20,31 @@ export interface ChargeOnDemandAuthorizationContext {
     };
 }
 
+/**
+ * Where a checkout order ships. The API upserts it by `reference` for the customer the checkout
+ * creates and links it to the new subscription. Not in `@solvimon/solvimon-types` yet.
+ */
+export interface ShippingAddressDetails {
+    reference: string;
+    recipient: {
+        type: Customer['type'];
+        individual?: { name: Name };
+        organization?: { company_name: string };
+        phone_number: string;
+        email: string;
+    };
+    address: Address;
+}
+
+export interface CheckoutAuthorizationContext extends AuthorizePaymentInitPricingPlanSubscriptionContext {
+    init_pricing_plan_subscription: AuthorizePaymentInitPricingPlanSubscriptionContext['init_pricing_plan_subscription'] & {
+        shipping_address_details?: ShippingAddressDetails;
+    };
+}
+
 export type PaymentAuthorizationContext =
     | AuthorizePaymentPayload['context']
+    | CheckoutAuthorizationContext
     | ChargeOnDemandAuthorizationContext;
 
 interface BasePaymentIntegrationFormProps {

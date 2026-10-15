@@ -8,6 +8,10 @@ Solvimon's front-end SDK. Provides framework-agnostic web components and a set o
 npm install @solvimon/solvimon-web
 ```
 
+The package is published as ES modules only. Bundlers load it as is, and so does `require()` on
+Node 20.19 or later. A Jest setup that does not transform ES modules needs
+`@solvimon/solvimon-web` added to its `transformIgnorePatterns` exceptions.
+
 ## Requirements
 
 Every component requires at minimum:

@@ -13,6 +13,12 @@ describe('toRestorableForm', () => {
             seatsValues: [{ pricing_item_config_id: 'pic_1', number: '3' }],
             unitsValues: [{ pricing_item_config_id: 'pic_2', number: '0' }],
             enabledPricingIds: ['pri_1'],
+            shippingAddressLine1: 'Main street 1',
+            shippingPostalCode: '1000AA',
+            shippingCity: 'Amsterdam',
+            shippingCountry: 'DE',
+            shippingPhoneNumber: '+31 6 12345678',
+            billingAddressSameAsShipping: false,
         };
 
         expect(toRestorableForm(saved)).toEqual(saved);
@@ -38,6 +44,8 @@ describe('toRestorableForm', () => {
         ],
         ['seats that are not a list', { seatsValues: { pic_1: '3' } }],
         ['pricing ids that are not text', { enabledPricingIds: ['pri_1', 2] }],
+        ['an unknown shipping country', { shippingCountry: 'XX' }],
+        ['a same-address choice that is not a boolean', { billingAddressSameAsShipping: 'yes' }],
     ])('drops %s', (_, saved) => {
         expect(toRestorableForm(saved)).toEqual({});
     });

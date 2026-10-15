@@ -15,6 +15,12 @@ const TEXT_FIELDS = [
     'state',
     'companyVatNumber',
     'promotionCode',
+    'shippingAddressLine1',
+    'shippingAddressLine2',
+    'shippingPostalCode',
+    'shippingCity',
+    'shippingState',
+    'shippingPhoneNumber',
 ] as const satisfies (keyof CheckoutFormState)[];
 
 /** The API takes a count as a string, and the seats editor reads it back with `+number`. */
@@ -60,6 +66,14 @@ export function toRestorableForm(saved: unknown): Partial<CheckoutFormState> {
 
     if (typeof saved.country === 'string' && isCountryCode(saved.country)) {
         form.country = saved.country;
+    }
+
+    if (typeof saved.shippingCountry === 'string' && isCountryCode(saved.shippingCountry)) {
+        form.shippingCountry = saved.shippingCountry;
+    }
+
+    if (typeof saved.billingAddressSameAsShipping === 'boolean') {
+        form.billingAddressSameAsShipping = saved.billingAddressSameAsShipping;
     }
 
     if (saved.type === 'INDIVIDUAL' || saved.type === 'ORGANIZATION') {

@@ -269,6 +269,57 @@ describe('CustomerWalletBalances', () => {
         expect(offered).toEqual([[flexibleTopUp], []]);
     });
 
+    describe('downloading the modals ahead of time', () => {
+        const requestIdleCallback = vi.fn((_callback: IdleRequestCallback) => 7);
+        const cancelIdleCallback = vi.fn();
+
+        beforeEach(() => {
+            vi.stubGlobal('requestIdleCallback', requestIdleCallback);
+            vi.stubGlobal('cancelIdleCallback', cancelIdleCallback);
+        });
+
+        afterEach(() => {
+            vi.unstubAllGlobals();
+            requestIdleCallback.mockClear();
+            cancelIdleCallback.mockClear();
+        });
+
+        it('starts once the page is idle where topping up is offered', () => {
+            mountBlock();
+
+            expect(requestIdleCallback).toHaveBeenCalledTimes(1);
+        });
+
+        it('does not start where topping up is not offered', () => {
+            mountBlock({ showTopUpButton: false });
+
+            expect(requestIdleCallback).not.toHaveBeenCalled();
+        });
+
+        it('starts once topping up is offered after mounting', async () => {
+            const wrapper = mountBlock({ showTopUpButton: false });
+
+            await wrapper.setProps({ showTopUpButton: true });
+
+            expect(requestIdleCallback).toHaveBeenCalledTimes(1);
+        });
+
+        it('is called off when the block goes before the page is idle', () => {
+            mountBlock().unmount();
+
+            expect(cancelIdleCallback).toHaveBeenCalledWith(7);
+        });
+
+        it('leaves the modals closed once downloaded', async () => {
+            const wrapper = mountBlock();
+
+            requestIdleCallback.mock.calls[0][0]({} as IdleDeadline);
+            await flushPromises();
+
+            expect(topUpModal(wrapper).exists()).toBe(false);
+        });
+    });
+
     it('builds no modal where topping up is not offered', async () => {
         const wrapper = mountBlock({ showTopUpButton: false });
         await openWith(wrapper, 'top-up', flexibleTopUp);

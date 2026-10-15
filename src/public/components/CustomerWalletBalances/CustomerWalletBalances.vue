@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ErrorNotification, useIntl, WalletBalances } from '@solvimon/solvimon-ui';
 import type { ChargeOnDemandPricingItem, WalletAutoTopUpConfig } from '@solvimon/solvimon-types';
-import { computed, defineAsyncComponent, ref, watch, type Ref } from 'vue';
+import { computed, defineAsyncComponent, onBeforeUnmount, ref, watch, type Ref } from 'vue';
 import type {
     CustomerWalletBalancesEmits,
     CustomerWalletBalancesProps,
@@ -12,15 +12,14 @@ import {
 } from './CustomerWalletBalances.lib';
 import Skeleton from '@/components/shared/Skeleton.vue';
 
-const TopUpModal = defineAsyncComponent(
-    () => import('@/components/wallets/TopUpModal/TopUpModal.vue'),
-);
-const AutoTopUpModal = defineAsyncComponent(
-    () => import('@/components/wallets/AutoTopUpModal/AutoTopUpModal.vue'),
-);
-const AutoTopUpCancellationModal = defineAsyncComponent(
-    () => import('@/components/wallets/AutoTopUpCancellationModal/AutoTopUpCancellationModal.vue'),
-);
+const loadTopUpModal = () => import('@/components/wallets/TopUpModal/TopUpModal.vue');
+const loadAutoTopUpModal = () => import('@/components/wallets/AutoTopUpModal/AutoTopUpModal.vue');
+const loadAutoTopUpCancellationModal = () =>
+    import('@/components/wallets/AutoTopUpCancellationModal/AutoTopUpCancellationModal.vue');
+
+const TopUpModal = defineAsyncComponent(loadTopUpModal);
+const AutoTopUpModal = defineAsyncComponent(loadAutoTopUpModal);
+const AutoTopUpCancellationModal = defineAsyncComponent(loadAutoTopUpCancellationModal);
 
 defineOptions({ inheritAttrs: false });
 
@@ -39,6 +38,40 @@ const openedOnce = (isOpen: Ref<boolean>): Ref<boolean> => {
     });
     return opened;
 };
+
+// Fetched once the page is idle, so opening a modal does not wait on its download.
+let cancelPrefetch: (() => void) | undefined;
+
+watch(
+    () => props.showTopUpButton,
+    (show) => {
+        if (!show || cancelPrefetch) {
+            return;
+        }
+
+        const prefetch = () => {
+            for (const load of [
+                loadTopUpModal,
+                loadAutoTopUpModal,
+                loadAutoTopUpCancellationModal,
+            ]) {
+                // Opening the modal loads it again and reports a failure there.
+                load().catch(() => undefined);
+            }
+        };
+
+        if (typeof requestIdleCallback === 'function') {
+            const id = requestIdleCallback(prefetch, { timeout: 2000 });
+            cancelPrefetch = () => cancelIdleCallback(id);
+        } else {
+            const id = setTimeout(prefetch, 1000);
+            cancelPrefetch = () => clearTimeout(id);
+        }
+    },
+    { immediate: true },
+);
+
+onBeforeUnmount(() => cancelPrefetch?.());
 
 const shownWalletBalances = computed(() =>
     getWalletBalancesForSubscriptions(props.walletBalances, props.subscriptions),

@@ -17,7 +17,6 @@ const UI_ALLOWLIST = {
 
 /** Stands in for this package's own manifest in the assertions below. */
 const PACKAGE_JSON = {
-    dependencies: { '@adyen/adyen-web': '^6.14.0' },
     peerDependencies: { vue: '>=3.5.0' },
 };
 
@@ -51,7 +50,13 @@ describe('packageNameOf', () => {
 
 describe('resolvablePackages', () => {
     it('is what the manifest promises a consumer will have', () => {
-        expect(resolvablePackages(PACKAGE_JSON)).toEqual(new Set(['@adyen/adyen-web', 'vue']));
+        expect(
+            resolvablePackages({
+                dependencies: { 'some-dependency': '^1.0.0' },
+                peerDependencies: { vue: '>=3.5.0' },
+                devDependencies: { vitest: '^4.0.0' },
+            }),
+        ).toEqual(new Set(['some-dependency', 'vue']));
     });
 
     it('is empty for a manifest that promises nothing', () => {
@@ -166,9 +171,19 @@ describe('collectExternalTypes', () => {
 describe('checkPublishedTypes', () => {
     it('passes on a package the consumer installs alongside this one', () => {
         const dist = tmpDist();
-        write(dist, 'index.d.ts', "import { ResultCode } from '@adyen/adyen-web';\n");
+        write(dist, 'index.d.ts', "import { Ref } from 'vue';\n");
 
         expect(checkPublishedTypes(dist, PACKAGE_JSON).ok).toBe(true);
+    });
+
+    it('fails on a package that is bundled rather than installed alongside this one', () => {
+        const dist = tmpDist();
+        write(dist, 'index.d.ts', "import { ResultCode } from '@adyen/adyen-web';\n");
+
+        const { ok, unexpected } = checkPublishedTypes(dist, PACKAGE_JSON);
+
+        expect(ok).toBe(false);
+        expect(unexpected['@adyen/adyen-web']).toEqual(['ResultCode']);
     });
 
     it('passes on a vendored type, which is reached relatively', () => {

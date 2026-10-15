@@ -7,11 +7,11 @@ import { fileURLToPath } from 'url';
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 
 /**
- * What a consumer installs besides the SDK: its peer dependency `vue`, its dependency
- * `@adyen/adyen-web`, and a compiler. The fixture gets these with everything they depend on, as an
- * install would, since type-checking their declarations reaches into those too.
+ * What a consumer installs besides the SDK: its peer dependency `vue`, and a compiler. The fixture
+ * gets these with everything they depend on, as an install would, since type-checking their
+ * declarations reaches into those too.
  */
-const CONSUMER_DEPENDENCIES = ['vue', '@adyen/adyen-web', 'typescript'];
+const CONSUMER_DEPENDENCIES = ['vue', 'typescript'];
 
 /** `names` and every package they depend on, transitively, as installed in this repository. */
 export function dependencyClosure(names, nodeModules = join(ROOT, 'node_modules')) {
@@ -37,9 +37,8 @@ const CONSUMER_CONFIGS = ['tsconfig.json', 'tsconfig.nodenext.json'];
 
 /**
  * The diagnostics in `output` that are this package's to fix: those in the fixture or in the SDK's
- * declarations. Checking libraries also reports errors inside third-party declarations, such as
- * `@adyen/adyen-web` importing `@paypal/paypal-js` without depending on it, which a consumer gets
- * with or without this SDK.
+ * declarations. Checking libraries also reports errors inside third-party declarations, which a
+ * consumer gets with or without this SDK.
  */
 export function ownDiagnostics(output) {
     const diagnostics = output.split(/\n(?=\S)/).filter(Boolean);

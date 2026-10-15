@@ -7,6 +7,7 @@ import {
     readInternalConfigs,
     findInBundle,
     walk,
+    commonJsLeftovers,
 } from './check-bundle-contents.mjs';
 
 const dirs: string[] = [];
@@ -107,5 +108,40 @@ describe('walk', () => {
         write(dir, 'deep/deeper/c.mjs', '');
 
         expect(walk(dir)).toHaveLength(3);
+    });
+});
+
+describe('commonJsLeftovers', () => {
+    it('finds nothing in an ES-only package', () => {
+        const dir = tmpDir();
+        write(dir, 'core/index.mjs', 'export {};');
+        write(dir, 'core/index.d.ts', 'export {};');
+
+        expect(
+            commonJsLeftovers(dir, {
+                module: './dist/index.mjs',
+                exports: {
+                    './core': { types: './dist/core/index.d.ts', default: './dist/core/index.mjs' },
+                },
+            }),
+        ).toEqual([]);
+    });
+
+    it('reports CommonJS modules, a main field and require conditions', () => {
+        const dir = tmpDir();
+        write(dir, 'core/index.cjs', 'module.exports = {};');
+        write(dir, 'chunk-abc.js', 'exports.a = 1;');
+
+        expect(
+            commonJsLeftovers(dir, {
+                main: './dist/index.cjs',
+                exports: { './core': { require: './dist/core/index.cjs' } },
+            }).sort(),
+        ).toEqual([
+            'dist/chunk-abc.js',
+            'dist/core/index.cjs',
+            'package.json: exports["./core"] has a require condition',
+            'package.json: main',
+        ]);
     });
 });

@@ -89,6 +89,33 @@ export function findInBundle(distDir, needles) {
         .map(([needle, files]) => ({ needle, files }));
 }
 
+/**
+ * Whatever would still serve CommonJS: a `.cjs` or `.js` module under `distDir`, a `main` field, or
+ * a `require` condition in `exports`. The package is ES modules only, because a CommonJS build turns
+ * every screen `core` loads lazily into a static `require` that bundles it up front.
+ *
+ * @returns {string[]}
+ */
+export function commonJsLeftovers(distDir, packageJson) {
+    const found = walk(distDir)
+        .filter((file) => /\.c?js$/.test(file))
+        .map((file) => `dist/${relative(distDir, file)}`);
+
+    if ('main' in packageJson) found.push('package.json: main');
+
+    const visit = (conditions, path) => {
+        if (!conditions || typeof conditions !== 'object') return;
+        for (const [key, value] of Object.entries(conditions)) {
+            if (key === 'require')
+                found.push(`package.json: exports${path} has a require condition`);
+            else visit(value, `${path}[${JSON.stringify(key)}]`);
+        }
+    };
+    visit(packageJson.exports, '');
+
+    return found;
+}
+
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
     const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
     const distDir = join(repoRoot, 'dist');
@@ -125,7 +152,12 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     });
     const missing = publicHosts.filter((host) => !findInBundle(distDir, [host]).length);
 
-    if (!found.length && !missing.length) {
+    const commonJs = commonJsLeftovers(
+        distDir,
+        JSON.parse(readFileSync(join(repoRoot, 'package.json'), 'utf-8')),
+    );
+
+    if (!found.length && !missing.length && !commonJs.length) {
         console.log(
             `Bundle names no internal infrastructure (checked ${forbidden.length} hosts across dist/).`,
         );
@@ -156,6 +188,11 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
                 'That usually means the internalEnvironments alias is matching more than it should.',
             ].join('\n'),
         );
+    }
+
+    if (commonJs.length) {
+        console.error('\nThe package is ES modules only, but these would still serve CommonJS:\n');
+        for (const leftover of commonJs) console.error(`  ${leftover}`);
     }
 
     process.exit(1);

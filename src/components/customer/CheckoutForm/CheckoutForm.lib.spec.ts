@@ -5,6 +5,7 @@ import {
     getRequiredShippingFieldsForCountry,
     isShippingField,
     toCustomer,
+    toShippingAddressDetails,
 } from './CheckoutForm.lib';
 import type { CheckoutFormState } from './CheckoutForm.types';
 
@@ -102,6 +103,7 @@ describe('CheckoutForm.lib', () => {
                 'shippingPostalCode',
                 'shippingCity',
                 'shippingCountry',
+                'shippingPhoneNumber',
             ]);
         });
 
@@ -115,6 +117,7 @@ describe('CheckoutForm.lib', () => {
                 'shippingPostalCode',
                 'shippingCity',
                 'shippingCountry',
+                'shippingPhoneNumber',
             ]);
         });
 
@@ -130,6 +133,71 @@ describe('CheckoutForm.lib', () => {
         it('tells the two addresses apart', () => {
             expect(isShippingField('shippingAddressLine1')).toBe(true);
             expect(isShippingField('addressLine1')).toBe(false);
+        });
+    });
+
+    describe('toShippingAddressDetails', () => {
+        const shipped = {
+            email: 'jane@example.com',
+            shippingAddressLine1: 'Main street 1',
+            shippingAddressLine2: undefined,
+            shippingPostalCode: '1000AA',
+            shippingCity: 'Amsterdam',
+            shippingState: undefined,
+            shippingCountry: 'NL',
+            shippingPhoneNumber: '+31 6 12345678',
+        } as const;
+
+        it('ships to a person, with the address the customer gave', () => {
+            expect(
+                toShippingAddressDetails(
+                    {
+                        ...shipped,
+                        type: 'INDIVIDUAL',
+                        firstName: 'Jane',
+                        lastName: 'Doe',
+                    } as CheckoutFormState,
+                    'ref_1',
+                ),
+            ).toEqual({
+                reference: 'ref_1',
+                recipient: {
+                    type: 'INDIVIDUAL',
+                    individual: { name: { first_name: 'Jane', last_name: 'Doe' } },
+                    phone_number: '+31 6 12345678',
+                    email: 'jane@example.com',
+                },
+                address: {
+                    line1: 'Main street 1',
+                    postal_code: '1000AA',
+                    city: 'Amsterdam',
+                    country: 'NL',
+                },
+            });
+        });
+
+        it('ships to a company by its legal name', () => {
+            const details = toShippingAddressDetails(
+                {
+                    ...shipped,
+                    type: 'ORGANIZATION',
+                    companyLegalName: 'Acme B.V.',
+                } as CheckoutFormState,
+                'ref_1',
+            );
+
+            expect(details.recipient.organization).toEqual({ company_name: 'Acme B.V.' });
+            expect(details.recipient.individual).toBeUndefined();
+        });
+
+        // The API asks for a name object on a person, but nothing inside it.
+        it('sends an empty name for a person the form has no name for', () => {
+            const details = toShippingAddressDetails(
+                { ...shipped, type: 'INDIVIDUAL' } as CheckoutFormState,
+                'ref_1',
+            );
+
+            expect(details.recipient.individual).toEqual({ name: {} });
         });
     });
 

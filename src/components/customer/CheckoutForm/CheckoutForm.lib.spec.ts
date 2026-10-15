@@ -1,8 +1,12 @@
 import {
+    billingAddressFromShipping,
     countrySpecificRequiredFieldsMap,
     getRequiredFieldsForCountry,
+    getRequiredShippingFieldsForCountry,
+    isShippingField,
     toCustomer,
 } from './CheckoutForm.lib';
+import type { CheckoutFormState } from './CheckoutForm.types';
 
 describe('CheckoutForm.lib', () => {
     it('returns the configured required fields for countries with specific rules', () => {
@@ -87,6 +91,66 @@ describe('CheckoutForm.lib', () => {
                         country: '',
                     },
                 },
+            });
+        });
+    });
+
+    describe('getRequiredShippingFieldsForCountry', () => {
+        it('asks for everything a parcel needs to arrive', () => {
+            expect(getRequiredShippingFieldsForCountry('NL')).toEqual([
+                'shippingAddressLine1',
+                'shippingPostalCode',
+                'shippingCity',
+                'shippingCountry',
+            ]);
+        });
+
+        it('adds what the destination country asks of an address of its own', () => {
+            expect(getRequiredShippingFieldsForCountry('CA')).toContain('shippingState');
+        });
+
+        it('asks the same of an unknown destination as of any other', () => {
+            expect(getRequiredShippingFieldsForCountry(undefined)).toEqual([
+                'shippingAddressLine1',
+                'shippingPostalCode',
+                'shippingCity',
+                'shippingCountry',
+            ]);
+        });
+
+        // US adds line 1 and a postal code, which a parcel needs anyway.
+        it('names a field once where both rules ask for it', () => {
+            const fields = getRequiredShippingFieldsForCountry('US');
+
+            expect(fields).toEqual([...new Set(fields)]);
+        });
+    });
+
+    describe('isShippingField', () => {
+        it('tells the two addresses apart', () => {
+            expect(isShippingField('shippingAddressLine1')).toBe(true);
+            expect(isShippingField('addressLine1')).toBe(false);
+        });
+    });
+
+    describe('billingAddressFromShipping', () => {
+        it('reads the billing address off the shipping one', () => {
+            expect(
+                billingAddressFromShipping({
+                    shippingAddressLine1: 'Main street 1',
+                    shippingAddressLine2: 'Second floor',
+                    shippingPostalCode: '1000AA',
+                    shippingCity: 'Amsterdam',
+                    shippingState: undefined,
+                    shippingCountry: 'NL',
+                } as CheckoutFormState),
+            ).toEqual({
+                addressLine1: 'Main street 1',
+                addressLine2: 'Second floor',
+                postalCode: '1000AA',
+                city: 'Amsterdam',
+                state: undefined,
+                country: 'NL',
             });
         });
     });

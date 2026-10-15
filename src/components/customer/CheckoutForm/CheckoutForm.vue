@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import {
     Button,
+    Checkbox,
     CountrySelect,
     Expand,
     getCountryNameByCode,
@@ -15,7 +16,8 @@ import { computed, reactive, ref } from 'vue';
 import type { CountryCode } from '@solvimon/solvimon-types';
 import type { CheckoutFormState, CheckoutFormProps, CheckoutFormEmits } from './CheckoutForm.types';
 import TaxIDCheckNotice from './TaxIDCheckNotice.vue';
-import { isVatNumberShown } from './CheckoutForm.lib';
+import CheckoutAddressFields from './CheckoutAddressFields.vue';
+import { isShippingField, isVatNumberShown } from './CheckoutForm.lib';
 import CompanyPurchaseToggle from '@/components/customer/CompanyPurchaseToggle.vue';
 import HiddenLabelInput from '@/components/customer/HiddenLabelInput.vue';
 import { useCustomerFormLabels } from '@/components/customer/useCustomerFormLabels';
@@ -69,8 +71,8 @@ const { isTaxIDCheckEnabled, isTaxIDCheckPending, taxIdCheckStatus, runTaxIDChec
 const { $t } = useIntl();
 const labels = useCustomerFormLabels();
 
-const getOptionalSuffix = (field: keyof CheckoutFormState): string => {
-    if (props.getIsFieldRequired(field)) {
+const optionalSuffixFor = (isRequired: boolean): string => {
+    if (isRequired) {
         return '';
     }
 
@@ -84,15 +86,61 @@ const getOptionalSuffix = (field: keyof CheckoutFormState): string => {
     );
 };
 
+const getOptionalSuffix = (field: keyof CheckoutFormState): string =>
+    optionalSuffixFor(props.getIsFieldRequired(field));
+
+/** A shipping field answers to the destination country, not to the one the customer is billed in. */
+const getShippingOptionalSuffix = (field: keyof CheckoutFormState): string =>
+    optionalSuffixFor(
+        isShippingField(field)
+            ? (props.getIsShippingFieldRequired?.(field) ?? false)
+            : props.getIsFieldRequired(field),
+    );
+
 const readableCountryName = computed(() =>
     model.value.country ? getCountryNameByCode(model.value.country) : undefined,
+);
+
+/** The invoice goes to the shipping address, so there is no billing address to ask for. */
+const billingAddressSameAsShipping = computed({
+    get: () => model.value.billingAddressSameAsShipping,
+    set: (value: boolean) => {
+        model.value.billingAddressSameAsShipping = value;
+    },
+});
+
+/** The shipping flow names the block after what it is for, rather than after the customer. */
+const sectionTitle = computed(() =>
+    props.isShippingAddressRequired
+        ? $t({
+              defaultMessage: 'Shipping information',
+              id: 'checkout.shipping_information_block.title',
+              description: 'The title of the shipping information block in the checkout form',
+          })
+        : labels.contactInformationTitle,
+);
+
+const shippingAddressLabel = computed(() =>
+    $t({
+        defaultMessage: 'Shipping address',
+        id: 'checkout.shipping_address.title',
+        description: 'Label above the address an order is shipped to in the checkout form',
+    }),
+);
+
+const shippingCountryLabel = computed(() =>
+    $t({
+        defaultMessage: 'Shipping country',
+        id: 'checkout.shipping_country.label',
+        description: 'Label of the country an order is shipped to in the checkout form',
+    }),
 );
 </script>
 
 <template>
     <form :id="FORM_ID" @submit.prevent="$emit('submit', model)">
         <div class="grid grid-cols-1 gap-1">
-            <Section :title="labels.contactInformationTitle">
+            <Section :title="sectionTitle">
                 <div class="grid grid-cols-1 gap-2">
                     <template v-if="readOnly">
                         <Typography variant="body" tag="span" weight="semibold" no-spacing>
@@ -115,6 +163,7 @@ const readableCountryName = computed(() =>
                         />
 
                         <CountrySelect
+                            v-if="!isShippingAddressRequired"
                             v-model:single-model-value="country"
                             required
                             name="country"
@@ -160,7 +209,63 @@ const readableCountryName = computed(() =>
                     </template>
                 </div>
 
-                <Expand :is-open="showBillingDetails || !!isBillingInformationMandatory">
+                <!-- shipped orders ask where to, and bill there unless told otherwise -->
+                <div v-if="isShippingAddressRequired && !readOnly" class="mt-2 flex flex-col gap-3">
+                    <CheckoutAddressFields
+                        v-model="model"
+                        variant="SHIPPING"
+                        class="sv-checkout__shipping-address"
+                        with-country
+                        :label="shippingAddressLabel"
+                        :country-label="shippingCountryLabel"
+                        :get-optional-suffix="getShippingOptionalSuffix"
+                        :errors="{
+                            addressLine1: validation.value.shippingAddressLine1.$errors,
+                            postalCode: validation.value.shippingPostalCode.$errors,
+                            city: validation.value.shippingCity.$errors,
+                            state: validation.value.shippingState.$errors,
+                            country: validation.value.shippingCountry.$errors,
+                        }"
+                    />
+
+                    <Checkbox
+                        v-model="billingAddressSameAsShipping"
+                        name="billing_address_same_as_shipping"
+                        class="sv-checkout__billing-same-as-shipping"
+                        :label="
+                            $t({
+                                defaultMessage: 'Billing address is the same as shipping address',
+                                id: 'checkout.billing_address_same_as_shipping.label',
+                                description:
+                                    'Label of the checkbox that bills the order to the address it ships to',
+                            })
+                        "
+                    />
+
+                    <Expand :is-open="!billingAddressSameAsShipping">
+                        <CheckoutAddressFields
+                            v-if="!billingAddressSameAsShipping"
+                            v-model="model"
+                            variant="BILLING"
+                            class="sv-checkout__billing-address"
+                            with-country
+                            :label="labels.addressTitle"
+                            :country-label="labels.countryLabel"
+                            :get-optional-suffix="getOptionalSuffix"
+                            :errors="{
+                                addressLine1: validation.value.addressLine1.$errors,
+                                postalCode: validation.value.postalCode.$errors,
+                                state: validation.value.state.$errors,
+                                country: validation.value.country.$errors,
+                            }"
+                        />
+                    </Expand>
+                </div>
+
+                <Expand
+                    v-if="!isShippingAddressRequired"
+                    :is-open="showBillingDetails || !!isBillingInformationMandatory"
+                >
                     <div v-if="showBillingDetails || isBillingInformationMandatory">
                         <div class="mt-2 flex flex-col gap-3">
                             <Input

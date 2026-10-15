@@ -95,6 +95,12 @@ const subscriptionId = portal.value?.init_pricing_plan_subscription?.pricing_pla
 const successRedirectUrl = portal.value?.init_pricing_plan_subscription?.success_url;
 // Trimmed so a note of only whitespace renders nothing rather than an empty gap in the column.
 const termsAndConditions = portal.value?.init_pricing_plan_subscription?.note?.trim() || undefined;
+/** Whether the order is shipped, which the portal says. Not in `@solvimon/solvimon-types` yet. */
+const checkoutPortal = portal.value?.init_pricing_plan_subscription;
+const isShippingAddressRequired =
+    !!checkoutPortal &&
+    'use_shipping_addresses' in checkoutPortal &&
+    checkoutPortal.use_shipping_addresses === true;
 
 const {
     validatedEmail,
@@ -127,6 +133,7 @@ const {
     initialEmail: props.configuration?.email,
     subscriptionId,
     enabledPricingIds: props.configuration?.enabledPricingIds,
+    isShippingAddressRequired,
 });
 
 const experimentalFeatures = useExperimentalFeature();
@@ -824,7 +831,9 @@ onMounted(() => {
                     :read-only-email="validatedEmail"
                     :show-customer-info-on-top="showCustomerInfoOnTop || isPaid"
                     :is-billing-information-mandatory="isBillingInformationMandatory"
+                    :is-shipping-address-required="isShippingAddressRequired"
                     :get-is-field-required="checkoutForm.getIsFieldRequired"
+                    :get-is-shipping-field-required="checkoutForm.getIsShippingFieldRequired"
                     :read-only="isPaid"
                     v-bind="orderLockAttrs"
                 />

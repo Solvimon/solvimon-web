@@ -34,7 +34,10 @@ vi.mock('@solvimon/solvimon-ui/validators', () => ({
     taxId: { $validator: vi.fn(() => true) },
 }));
 
-const mountForm = (onRequiredFieldChange: (form: CheckoutFormState) => void) => {
+const mountForm = (
+    onRequiredFieldChange: (form: CheckoutFormState) => void,
+    { isShippingAddressRequired = false }: { isShippingAddressRequired?: boolean } = {},
+) => {
     let result: ReturnType<typeof useCheckoutForm> | undefined;
 
     const Wrapper = defineComponent({
@@ -42,6 +45,7 @@ const mountForm = (onRequiredFieldChange: (form: CheckoutFormState) => void) => 
             result = useCheckoutForm({
                 initialState: { country: 'NL' as CountryCode },
                 onRequiredFieldChange,
+                isShippingAddressRequired,
             });
         },
         render: () => h('div'),
@@ -157,7 +161,7 @@ describe('useCheckoutForm', () => {
     });
 
     describe('country from the geolocation lookup', () => {
-        const mountWithoutCountry = () => {
+        const mountWithoutCountry = ({ isShippingAddressRequired = false } = {}) => {
             let result: ReturnType<typeof useCheckoutForm> | undefined;
             mount(
                 defineComponent({
@@ -165,6 +169,7 @@ describe('useCheckoutForm', () => {
                         result = useCheckoutForm({
                             initialState: {},
                             onRequiredFieldChange: vi.fn(),
+                            isShippingAddressRequired,
                         });
                     },
                     render: () => h('div'),
@@ -179,6 +184,14 @@ describe('useCheckoutForm', () => {
             await flushPromises();
 
             expect(getResult().form.value.country).toBe('DE');
+        });
+
+        it('fills in the shipping country too for a shipped order', async () => {
+            mockGetGeoLocation.mockResolvedValueOnce({ country: 'DE' });
+            const getResult = mountWithoutCountry({ isShippingAddressRequired: true });
+            await flushPromises();
+
+            expect(getResult().form.value.shippingCountry).toBe('DE');
         });
 
         it('keeps a country the customer picked while it was out', async () => {
@@ -263,6 +276,107 @@ describe('useCheckoutForm', () => {
             getResult().flushPreviewChange();
 
             expect(onRequiredFieldChange).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('shipping address', () => {
+        it('asks nothing of the shipping fields for an order that is not shipped', () => {
+            const getResult = mountForm(vi.fn());
+
+            expect(getResult().getIsShippingFieldRequired('shippingAddressLine1')).toBe(false);
+            expect(getResult().validation.value.shippingAddressLine1.$invalid).toBe(false);
+        });
+
+        it('insists on what a parcel needs once the order is shipped', () => {
+            const getResult = mountForm(vi.fn(), { isShippingAddressRequired: true });
+            const isRequired = getResult().getIsShippingFieldRequired;
+
+            expect(isRequired('shippingAddressLine1')).toBe(true);
+            expect(isRequired('shippingPostalCode')).toBe(true);
+            expect(isRequired('shippingCity')).toBe(true);
+            expect(isRequired('shippingCountry')).toBe(true);
+            expect(isRequired('shippingAddressLine2')).toBe(false);
+        });
+
+        it('asks for a state where the destination country wants one', async () => {
+            const getResult = mountForm(vi.fn(), { isShippingAddressRequired: true });
+
+            expect(getResult().getIsShippingFieldRequired('shippingState')).toBe(false);
+
+            getResult().form.value.shippingCountry = 'CA' as CountryCode;
+            await nextTick();
+
+            expect(getResult().getIsShippingFieldRequired('shippingState')).toBe(true);
+        });
+
+        it('reports a shipped order with no address as invalid', async () => {
+            const getResult = mountForm(vi.fn(), { isShippingAddressRequired: true });
+
+            await getResult().validation.value.$validate();
+
+            expect(getResult().validation.value.shippingAddressLine1.$invalid).toBe(true);
+        });
+
+        describe('billing to the shipping address', () => {
+            it('bills where the order ships by default', () => {
+                const getResult = mountForm(vi.fn(), { isShippingAddressRequired: true });
+
+                expect(getResult().form.value.billingAddressSameAsShipping).toBe(true);
+            });
+
+            it('follows the shipping address while it does', async () => {
+                const getResult = mountForm(vi.fn(), { isShippingAddressRequired: true });
+
+                getResult().form.value.shippingAddressLine1 = 'Main street 1';
+                getResult().form.value.shippingPostalCode = '1000AA';
+                getResult().form.value.shippingCity = 'Amsterdam';
+                getResult().form.value.shippingCountry = 'DE' as CountryCode;
+                await nextTick();
+
+                expect(getResult().form.value.addressLine1).toBe('Main street 1');
+                expect(getResult().form.value.postalCode).toBe('1000AA');
+                expect(getResult().form.value.city).toBe('Amsterdam');
+                expect(getResult().form.value.country).toBe('DE');
+            });
+
+            it('leaves the billing address alone once the customer takes it apart', async () => {
+                const getResult = mountForm(vi.fn(), { isShippingAddressRequired: true });
+
+                getResult().form.value.shippingAddressLine1 = 'Main street 1';
+                await nextTick();
+
+                getResult().form.value.billingAddressSameAsShipping = false;
+                getResult().form.value.addressLine1 = 'Invoice street 2';
+                await nextTick();
+
+                getResult().form.value.shippingAddressLine1 = 'Main street 3';
+                await nextTick();
+
+                expect(getResult().form.value.addressLine1).toBe('Invoice street 2');
+            });
+
+            // The billing country drives the tax on the preview, so a copy has to re-price.
+            it('re-prices the order when the billing address follows a new shipping country', async () => {
+                const onRequiredFieldChange = vi.fn();
+                const getResult = mountForm(onRequiredFieldChange, {
+                    isShippingAddressRequired: true,
+                });
+
+                getResult().form.value.shippingCountry = 'DE' as CountryCode;
+                await nextTick();
+                vi.advanceTimersByTime(200);
+
+                expect(onRequiredFieldChange).toHaveBeenCalled();
+            });
+        });
+
+        it('leaves the billing address alone for an order that is not shipped', async () => {
+            const getResult = mountForm(vi.fn());
+
+            getResult().form.value.shippingAddressLine1 = 'Main street 1';
+            await nextTick();
+
+            expect(getResult().form.value.addressLine1).toBeUndefined();
         });
     });
 });

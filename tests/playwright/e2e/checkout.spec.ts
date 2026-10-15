@@ -574,6 +574,66 @@ test.describe('Checkout', () => {
 
     // ─── Promotion code ───────────────────────────────────────────────────────
 
+    // ─── Shipping address ─────────────────────────────────────────────────────
+
+    test.describe('shipping address', () => {
+        test('asks only for billing details when the order is not shipped', async ({ page }) => {
+            api = await mountLoaded(page);
+
+            await expect(checkout(page).shippingAddress).toHaveCount(0);
+            await expect(checkout(page).billingSameAsShipping).toHaveCount(0);
+            await expect(checkout(page).country).toBeVisible();
+        });
+
+        test('asks where a shipped order goes', async ({ page }) => {
+            api = await mountLoaded(page, { useShippingAddresses: true });
+
+            await expect(checkout(page).screen).toContainText('Shipping information');
+            await expect(checkout(page).shippingAddress).toBeVisible();
+            await expect(checkout(page).shippingAddressLine1).toBeVisible();
+        });
+
+        test('bills a shipped order where it ships, asking for no second address', async ({
+            page,
+        }) => {
+            api = await mountLoaded(page, { useShippingAddresses: true });
+
+            await expect(checkout(page).billingSameAsShipping).toBeVisible();
+            await expect(checkout(page).billingAddress).toHaveCount(0);
+        });
+
+        test('prices a shipped order at the address it ships to', async ({ page }) => {
+            api = await mountLoaded(page, { useShippingAddresses: true });
+
+            await selectShippingCountry(page, 'United States');
+
+            // The billing address follows the shipping one, and the preview is priced off it.
+            await expect
+                .poll(() => api.lastCall('invoicePreview')?.body)
+                .toMatchObject({
+                    customer_details: { individual: { residential_address: { country: 'US' } } },
+                });
+        });
+
+        test('asks for a billing address once the customer says it differs', async ({ page }) => {
+            api = await mountLoaded(page, { useShippingAddresses: true });
+
+            await checkout(page).billingSameAsShipping.click();
+
+            await expect(checkout(page).billingAddress).toBeVisible();
+            await expect(checkout(page).addressLine1).toBeVisible();
+        });
+
+        test('refuses to pay for a shipped order with nowhere to ship it', async ({ page }) => {
+            api = await mountLoaded(page, { useShippingAddresses: true });
+
+            await checkout(page).submit.click();
+
+            await expect(checkout(page).form).toContainText(/required/i);
+            expect(api.calls('authorizePayment')).toEqual([]);
+        });
+    });
+
     test.describe('promotion code', () => {
         test('applies a code and shows it as applied', async ({ page }) => {
             api = await mountLoaded(page, { periodTotals: { 'MONTH:1': '20.00' } });
@@ -1221,6 +1281,14 @@ function contextCustomizationsOf(body: unknown): Record<string, unknown>[] {
 }
 
 /** Picks a country in the combobox the checkout renders for it. */
+async function selectShippingCountry(page: Page, country: string) {
+    const field = page.locator('input[name="shipping_country"]');
+
+    await field.click();
+    await field.fill(country);
+    await page.getByRole('option', { name: country, exact: true }).first().click();
+}
+
 async function selectCountry(page: Page, country: string) {
     await checkout(page).country.click();
     await checkout(page).country.fill(country);

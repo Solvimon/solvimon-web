@@ -76,11 +76,14 @@ export function aPortalObject({
     successUrl = SUCCESS_URL,
     status = 'PUBLISHED',
     type = 'INIT_PRICING_PLAN_SUBSCRIPTION',
+    useShippingAddresses = false,
 }: {
     subscriptionId?: string;
     successUrl?: string;
     status?: string;
     type?: string;
+    /** Whether the order is shipped, which adds a shipping address to the checkout. */
+    useShippingAddresses?: boolean;
 } = {}): Json {
     return {
         object_type: 'PORTAL_URL',
@@ -91,6 +94,7 @@ export function aPortalObject({
         init_pricing_plan_subscription: {
             pricing_plan_subscription_id: subscriptionId,
             success_url: successUrl,
+            ...(useShippingAddresses ? { use_shipping_addresses: true } : {}),
         },
     };
 }

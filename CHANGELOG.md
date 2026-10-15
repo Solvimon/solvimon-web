@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Moved to `@solvimon/solvimon-ui` 1.14.1. It no longer bundles its own copy of Vuelidate, so the forms use the `@vuelidate/core` the SDK already depends on.
 - `STRIPE_REDIRECT_RETURN_FAILED` is now also logged when the payment a Stripe redirect returned from cannot be retrieved from Stripe.
 - The SDK takes the payment redirect parameters out of the page address once it has handled a return, with `history.replaceState`: `payment_acceptor_id`, `redirectResult`, `redirect_status`, `payment_intent`, `payment_intent_client_secret`, `setup_intent` and `setup_intent_client_secret`. An Adyen return is cleared right away, a Stripe one once Stripe has answered. A host that reads these parameters must do so before the SDK's screen or component mounts.
 - A Stripe error passed to `onLog`, written to the console or carried by `payment-failed` now holds only its `code`, `type` and `message`. It used to be passed on whole, and could carry the payment or setup intent with its client secret.

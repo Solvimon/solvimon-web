@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- `@adyen/adyen-web` is no longer a dependency, so installing the package no longer installs it, `preact` and Adyen's type packages, about 19 MB. The SDK has always used its own bundled copy of Adyen; the installed one only supplied two type names to the published declarations, which now carry them. A host that uses Adyen itself has to depend on it directly.
 - Installing the package no longer installs `vite-bundle-visualizer` and the 29 packages it depends on. It was declared as an optional dependency, which npm installs for every consumer, although only this repository's `analyze` script uses it.
 - Moved to `@solvimon/solvimon-ui` 1.14.1. It no longer bundles its own copy of Vuelidate, so the forms use the `@vuelidate/core` the SDK already depends on.
 - `STRIPE_REDIRECT_RETURN_FAILED` is now also logged when the payment a Stripe redirect returned from cannot be retrieved from Stripe.

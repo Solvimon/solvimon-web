@@ -62,7 +62,7 @@ describe('ownDiagnostics', () => {
 
     it('drops errors inside third-party declarations', () => {
         const output = [
-            "node_modules/@adyen/adyen-web/dist/cjs/index.d.cts(5,108): error TS2307: Cannot find module '@paypal/paypal-js'.",
+            "node_modules/some-library/index.d.ts(5,108): error TS2307: Cannot find module 'its-undeclared-dependency'.",
             "consumer.ts(3,5): error TS2322: Type 'number' is not assignable to type 'string'.",
         ].join('\n');
 

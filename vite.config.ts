@@ -233,6 +233,7 @@ function publishDeclarations(): Plugin {
     const VENDOR_DIR = 'vendor';
     const PRIVATE_TYPES_PACKAGE = '@solvimon/solvimon-types';
     const UI_PACKAGE = '@solvimon/solvimon-ui';
+    const ADYEN_PACKAGE = '@adyen/adyen-web';
     /** The `@solvimon/solvimon-ui` declarations the public types reach, under its `dist/src`. */
     const UI_DECLARATIONS = [
         'components/providers/BrandProvider/BrandProvider.types.d.ts',
@@ -388,8 +389,7 @@ function publishDeclarations(): Plugin {
      * `@solvimon/solvimon-ui` cannot be vendored whole: its declarations reach eight packages this
      * one does not depend on. The public types reach only the provider props below, which import
      * nothing, so those files are copied and every import naming only their types points at the
-     * copy. Imports of anything else stay as they are; `types:check-published` fails if a consumer
-     * can reach one.
+     * copy.
      */
     const vendorUiTypes = (treeRoot: string) => {
         const vendorDir = resolve(treeRoot, VENDOR_DIR, UI_PACKAGE);
@@ -422,25 +422,76 @@ function publishDeclarations(): Plugin {
             ).join(''),
         );
 
+        pointImportsAtVendored(treeRoot, UI_PACKAGE, vendored, vendorDir);
+    };
+
+    /**
+     * `@adyen/adyen-web` is bundled, so a consumer never runs an installed copy; the published
+     * types only name two of its string unions. They are generated from the installed package's
+     * declarations, so they match the bundled version, and Adyen need not be a dependency.
+     */
+    const vendorAdyenTypes = (treeRoot: string) => {
+        const vendorDir = resolve(treeRoot, VENDOR_DIR, ADYEN_PACKAGE);
+        const source = readFileSync(
+            resolve(__dirname, 'node_modules', ADYEN_PACKAGE, 'dist/es/index.d.ts'),
+            'utf8',
+        );
+        const resultCode = /^type ResultCode = ([^;]+);$/m.exec(source)?.[1];
+        const actionTypes = /^declare const actionTypes: \{\n([\s\S]*?)\n\};$/m.exec(source)?.[1];
+        const actionNames = [...(actionTypes ?? '').matchAll(/^\s+readonly (\w+):/gm)].map(
+            ([, name]) => `'${name}'`,
+        );
+        if (!resultCode || !actionNames.length) {
+            throw new Error(
+                `Could not find ResultCode and the action types in ${ADYEN_PACKAGE}'s declarations.`,
+            );
+        }
+
+        mkdirSync(vendorDir, { recursive: true });
+        writeFileSync(
+            resolve(vendorDir, 'index.d.ts'),
+            `export type ResultCode = ${resultCode};\nexport type PaymentActionsType = ${actionNames.join(' | ')};\n`,
+        );
+
+        pointImportsAtVendored(
+            treeRoot,
+            ADYEN_PACKAGE,
+            new Set(['ResultCode', 'PaymentActionsType']),
+            vendorDir,
+        );
+    };
+
+    /**
+     * Points every import from `pkg` that names only `vendored` types at the copy in `vendorDir`.
+     * Imports of anything else stay as they are; `types:check-published` fails if a consumer can
+     * reach one.
+     */
+    const pointImportsAtVendored = (
+        treeRoot: string,
+        pkg: string,
+        vendored: Set<string>,
+        vendorDir: string,
+    ) => {
+        const statement = new RegExp(
+            `(import\\s+(?:type\\s+)?\\{([^}]*)\\}\\s+from\\s+)'${pkg.replace(/[/.-]/g, '\\$&')}'`,
+            'g',
+        );
         rewriteDeclarations(treeRoot, (source, file) =>
-            source.replace(
-                /(import\s+(?:type\s+)?\{([^}]*)\}\s+from\s+)'@solvimon\/solvimon-ui'/g,
-                (statement, head: string, names: string) => {
-                    const imported = names
-                        .split(',')
-                        .map(
-                            (name) =>
-                                name
-                                    .trim()
-                                    .replace(/^type\s+/, '')
-                                    .split(/\s+as\s+/)[0],
-                        )
-                        .filter(Boolean);
-                    return imported.every((name) => vendored.has(name))
-                        ? `${head}'${specifierFrom(file, resolve(vendorDir, 'index'))}'`
-                        : statement;
-                },
-            ),
+            source.replace(statement, (match, head: string, names: string) => {
+                const imported = names
+                    .split(',')
+                    .map(
+                        (name) =>
+                            name
+                                .trim()
+                                .replace(/^type\s+/, '')
+                                .split(/\s+as\s+/)[0],
+                    )
+                    .filter(Boolean);
+                return imported.every((name) => vendored.has(name))
+                    ? `${head}'${specifierFrom(file, resolve(vendorDir, 'index'))}'`
+                    : match;
+            }),
         );
     };
 
@@ -463,6 +514,7 @@ function publishDeclarations(): Plugin {
             if (!this.meta.watchMode) {
                 vendorPrivateTypes(publishedTreeDir);
                 vendorUiTypes(publishedTreeDir);
+                vendorAdyenTypes(publishedTreeDir);
             }
 
             // Screen and component entries: dist/screens/X/X.ce.d.ts, dist/components/X/X.ce.d.ts

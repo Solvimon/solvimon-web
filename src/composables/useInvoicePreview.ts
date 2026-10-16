@@ -91,7 +91,6 @@ export const useInvoicePreview = () => {
 
         const billingPeriods =
             scheduleInfo?.pricing_plan_version?.billing_period_settings?.billing_periods ?? [];
-        const hasMultipleBillingPeriods = billingPeriods.length > 1;
 
         const periodsForPreview =
             billingPeriods.length > 0
@@ -132,7 +131,8 @@ export const useInvoicePreview = () => {
                     unitsValues,
                     pricingPlanScheduleInfos: subscription.pricing_plan_schedule_infos,
                     pricingCurrency: hasMultiplePricingCurrencies ? pricingCurrency : undefined,
-                    billingPeriod: hasMultipleBillingPeriods ? period : undefined,
+                    // Required by the API whenever the version has billing period settings.
+                    billingPeriod: billingPeriods.length > 0 ? period : undefined,
                 }) ?? [];
 
             if (promotionCode) {

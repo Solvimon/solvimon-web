@@ -292,9 +292,11 @@ export function useCheckoutView({
         const hasMultiplePricingCurrencies =
             (pricingCurrencySettings?.pricing_currencies?.length ?? 0) > 1;
 
-        const billingPeriods =
-            scheduleInfo?.pricing_plan_version?.billing_period_settings?.billing_periods ?? [];
-        const hasMultipleBillingPeriods = billingPeriods.length > 1;
+        // The API rejects a schedule without a billing period when the version has billing period
+        // settings, even when they offer only one.
+        const hasBillingPeriodSettings = Boolean(
+            scheduleInfo?.pricing_plan_version?.billing_period_settings?.billing_periods?.length,
+        );
 
         const scheduleCustomizations = getScheduleCustomizations({
             enabledPricings: checkoutForm.form.value.enabledPricingIds?.map((enabledPricingId) => ({
@@ -306,7 +308,7 @@ export function useCheckoutView({
             pricingCurrency: hasMultiplePricingCurrencies
                 ? subscription.value?.billing_currency
                 : undefined,
-            billingPeriod: hasMultipleBillingPeriods
+            billingPeriod: hasBillingPeriodSettings
                 ? subscription.value?.billing_period
                 : undefined,
         });

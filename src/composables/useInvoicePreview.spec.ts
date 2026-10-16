@@ -245,7 +245,7 @@ describe('useInvoicePreview', () => {
         });
     });
 
-    it('includes pricing_currency and billing_period in customizations only for multi settings', async () => {
+    it('includes pricing_currency and billing_period in customizations for multi settings', async () => {
         const subscription = {
             id: 'sub_789',
             billing_currency: 'AUD',
@@ -336,7 +336,7 @@ describe('useInvoicePreview', () => {
         expect(customization).not.toHaveProperty('pricing_currency');
     });
 
-    it('includes only pricing_currency when only multi pricing currency settings exist', async () => {
+    it('sends the only configured billing period alongside a multi pricing currency', async () => {
         const subscription = {
             id: 'sub_791',
             billing_currency: 'AUD',
@@ -374,6 +374,38 @@ describe('useInvoicePreview', () => {
         const customization = payload.customizations?.[0];
 
         expect(customization?.pricing_currency).toBe('AUD');
+        expect(customization?.billing_period).toEqual({ type: 'MONTH', value: 1 });
+    });
+
+    it('omits billing_period when the version has no billing period settings', async () => {
+        const subscription = {
+            id: 'sub_792',
+            billing_currency: 'EUR',
+            billing_period: { type: 'MONTH', value: 1 },
+            pricing_plan_schedule_infos: [
+                {
+                    id: 'default_schedule_id',
+                    pricing_plan_schedule: { type: 'DEFAULT' },
+                    pricing_plan_version: {},
+                },
+            ],
+        } as unknown as PricingPlanSubscriptionExpanded;
+
+        mockGetInvoicePreview.mockResolvedValue({
+            first_invoice: { id: 'first' },
+            invoice_infos: [],
+        } as unknown as InvoicePreview);
+
+        const { loadInvoicePreview } = useInvoicePreview();
+        await loadInvoicePreview({
+            subscription,
+            customer: individualCustomer('NL'),
+            enabledPricingIds: ['pricing_1' as Pricing['id']],
+        });
+
+        const customization = mockGetInvoicePreview.mock.calls[0][0].customizations?.[0];
+
+        expect(customization).toBeDefined();
         expect(customization).not.toHaveProperty('billing_period');
     });
 

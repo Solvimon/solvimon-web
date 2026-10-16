@@ -57,6 +57,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Checkout on a plan that offers a single billing period no longer fails at Pay with `billing_period is required when the pricing plan version has billing period settings configured`. The billing period was only sent when the plan offered more than one, but the API needs it whenever the plan has billing period settings. The invoice preview now sends it too, so it prices what is charged.
 - The published type declarations type-check in a project that does not set `skipLibCheck`. Two of them imported `@solvimon/solvimon-ui`, which a consumer cannot install, and reported `Cannot find module`; the provider props they need now ship with the package. A helper type copied from the Solvimon types reported `Generic type 'Optional' requires 2 type argument(s)`.
 - A return from a Stripe redirect counts as paid only once Stripe says the payment succeeded. It was read from the address alone, so typing the redirect parameters into it showed the payment as paid and fired `payment-success`. The payment form stays away while the payment is checked, so the customer cannot pay again meanwhile.
 - Checkout handles a return from a payment redirect like any other payment: `onPaymentSuccess` is called and `success_url` is followed. It marked itself paid from the address before the payment form could confirm the payment, so neither happened and the customer had no way on.

@@ -678,7 +678,7 @@ describe('useCheckoutView', () => {
         );
     });
 
-    it('omits pricingCurrency and billingPeriod in authorization customizations for single settings', () => {
+    it('omits a single pricingCurrency but sends the only billingPeriod in authorization customizations', () => {
         const subscriptionId = 'sub_123' as PricingPlanSubscription['id'];
 
         mockUseCheckoutForm.mockReturnValue(
@@ -718,7 +718,7 @@ describe('useCheckoutView', () => {
         expect(mockGetScheduleCustomizations).toHaveBeenCalledWith(
             expect.objectContaining({
                 pricingCurrency: undefined,
-                billingPeriod: undefined,
+                billingPeriod: { type: 'MONTH', value: 1 },
             }),
         );
     });
@@ -815,7 +815,7 @@ describe('useCheckoutView', () => {
         );
     });
 
-    it('includes only pricingCurrency in authorization customizations when only multi pricing currencies exist', () => {
+    it('sends the only billingPeriod alongside a multi pricingCurrency in authorization customizations', () => {
         const subscriptionId = 'sub_123' as PricingPlanSubscription['id'];
 
         mockUseCheckoutForm.mockReturnValue(
@@ -855,8 +855,42 @@ describe('useCheckoutView', () => {
         expect(mockGetScheduleCustomizations).toHaveBeenCalledWith(
             expect.objectContaining({
                 pricingCurrency: 'AUD',
-                billingPeriod: undefined,
+                billingPeriod: { type: 'MONTH', value: 1 },
             }),
+        );
+    });
+
+    it('omits billingPeriod in authorization customizations when the version has no billing period settings', () => {
+        const subscriptionId = 'sub_123' as PricingPlanSubscription['id'];
+
+        mockUseCheckoutForm.mockReturnValue(
+            createMockCheckoutForm({
+                type: 'INDIVIDUAL' as const,
+                country: 'NL' as CountryCode,
+            }),
+        );
+        mockGetFirstPricingPlanScheduleOfType.mockReturnValue({
+            id: 'schedule_1',
+            pricing_plan_schedule: { type: 'DEFAULT' },
+            pricing_plan_version: {},
+        });
+        mockGetScheduleCustomizations.mockReturnValue(undefined);
+
+        const result = useCheckoutView({
+            initialCountry: undefined,
+            initialEmail: undefined,
+            subscriptionId,
+        });
+        result.subscription.value = {
+            ...mockSubscription,
+            billing_currency: 'EUR',
+            billing_period: { type: 'MONTH', value: 1 },
+        } as unknown as PricingPlanSubscriptionExpanded;
+
+        void result.authorizationContext.value;
+
+        expect(mockGetScheduleCustomizations).toHaveBeenCalledWith(
+            expect.objectContaining({ billingPeriod: undefined }),
         );
     });
 

@@ -12,6 +12,14 @@ vi.mock('@solvimon/solvimon-ui/translations/en-US', () => ({
     default: { greeting: 'Hello', farewell: 'Goodbye' },
 }));
 
+vi.mock('@solvimon/solvimon-ui/translations/nl-NL', () => ({
+    default: { greeting: 'Hallo', farewell: 'Tot ziens' },
+}));
+
+vi.mock('@/translations/locales/nl-NL.json', () => ({
+    default: { farewell: 'Doei', appName: 'Solvimon' },
+}));
+
 vi.mock('@/translations/locales/en-US.json', () => ({
     default: { farewell: 'Bye', appName: 'Solvimon' },
 }));
@@ -66,12 +74,18 @@ describe('loadLocaleMessages', () => {
     });
 
     it('merges ui and sdk messages with sdk keys taking precedence', async () => {
-        const messages = await loadLocaleMessages('en-US', logger);
+        const messages = await loadLocaleMessages('nl-NL', logger);
         expect(messages).toEqual({
-            greeting: 'Hello',
-            farewell: 'Bye',
+            greeting: 'Hallo',
+            farewell: 'Doei',
             appName: 'Solvimon',
         });
+    });
+
+    // The UI's own en-US defaults already hold that catalogue, so fetching it is a wasted request.
+    it('leaves the ui catalogue out for en-US', async () => {
+        const messages = await loadLocaleMessages('en-US', logger);
+        expect(messages).toEqual({ farewell: 'Bye', appName: 'Solvimon' });
     });
 
     it('does not log a warning on success', async () => {

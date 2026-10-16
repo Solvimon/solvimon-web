@@ -40,7 +40,8 @@ const APP_LOCALE_IMPORTS: Record<SupportedLocale, LocaleLoader> = {
 };
 
 const UI_LOCALE_IMPORTS: Record<SupportedLocale, LocaleLoader> = {
-    'en-US': () => import('@solvimon/solvimon-ui/translations/en-US'),
+    // The UI bundles its en-US catalogue as the defaults it falls back to.
+    'en-US': () => Promise.resolve({ default: {} }),
     'nl-NL': () => import('@solvimon/solvimon-ui/translations/nl-NL'),
     'de-DE': () => import('@solvimon/solvimon-ui/translations/de-DE'),
     'it-IT': () => import('@solvimon/solvimon-ui/translations/it-IT'),

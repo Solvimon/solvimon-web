@@ -21,6 +21,9 @@ const TEXT_FIELDS = [
     'shippingCity',
     'shippingState',
     'shippingPhoneNumber',
+    'shippingFirstName',
+    'shippingLastName',
+    'shippingAttentionName',
 ] as const satisfies (keyof CheckoutFormState)[];
 
 /** The API takes a count as a string, and the seats editor reads it back with `+number`. */

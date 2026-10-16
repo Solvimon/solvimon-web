@@ -71,6 +71,7 @@ vi.mock('./useCheckout.view', async () => {
                 })),
                 validation: r({ $validate: vi.fn(), $invalid: false }),
                 getIsFieldRequired: () => false,
+                shippingAddressFormat: r(undefined),
                 updateInitialState,
             },
             invoicePreview: c(() => invoicePreview.value),

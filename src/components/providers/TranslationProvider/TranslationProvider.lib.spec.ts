@@ -82,10 +82,10 @@ describe('loadLocaleMessages', () => {
         });
     });
 
-    // The UI's own en-US defaults already hold that catalogue, so fetching it is a wasted request.
-    it('leaves the ui catalogue out for en-US', async () => {
+    // Every element waits for its catalogue before it renders, so en-US must not need a download.
+    it('loads no catalogue for en-US', async () => {
         const messages = await loadLocaleMessages('en-US', logger);
-        expect(messages).toEqual({ farewell: 'Bye', appName: 'Solvimon' });
+        expect(messages).toEqual({});
     });
 
     it('does not log a warning on success', async () => {

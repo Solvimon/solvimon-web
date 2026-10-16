@@ -8,7 +8,7 @@ import type {
 import type { Logger } from '@/components/providers/LoggerProvider/LoggerProvider.types';
 import { SUPPORTED_LOCALES } from '@/translations/supported';
 
-export const DEFAULT_LOCALE: SupportedLocale = 'en-US';
+export const DEFAULT_LOCALE = 'en-US' satisfies SupportedLocale;
 
 export const TRANSLATION_SETTINGS_KEY: InjectionKey<TranslationSettings> =
     Symbol('translation-settings');
@@ -32,16 +32,15 @@ export function warnIfUnsupportedLocale(locale: string | undefined, logger: Logg
     });
 }
 
-const APP_LOCALE_IMPORTS: Record<SupportedLocale, LocaleLoader> = {
-    'en-US': () => import('@/translations/locales/en-US.json'),
+type TranslatedLocale = Exclude<SupportedLocale, typeof DEFAULT_LOCALE>;
+
+const APP_LOCALE_IMPORTS: Record<TranslatedLocale, LocaleLoader> = {
     'nl-NL': () => import('@/translations/locales/nl-NL.json'),
     'de-DE': () => import('@/translations/locales/de-DE.json'),
     'it-IT': () => import('@/translations/locales/it-IT.json'),
 };
 
-const UI_LOCALE_IMPORTS: Record<SupportedLocale, LocaleLoader> = {
-    // The UI bundles its en-US catalogue as the defaults it falls back to.
-    'en-US': () => Promise.resolve({ default: {} }),
+const UI_LOCALE_IMPORTS: Record<TranslatedLocale, LocaleLoader> = {
     'nl-NL': () => import('@solvimon/solvimon-ui/translations/nl-NL'),
     'de-DE': () => import('@solvimon/solvimon-ui/translations/de-DE'),
     'it-IT': () => import('@solvimon/solvimon-ui/translations/it-IT'),
@@ -56,6 +55,11 @@ export async function loadLocaleMessages(locale: string, logger: Logger): Promis
             {},
             err,
         );
+        return {};
+    }
+
+    // en-US is what every SDK `defaultMessage` says, and the UI bundles its own en-US messages.
+    if (locale === DEFAULT_LOCALE) {
         return {};
     }
 

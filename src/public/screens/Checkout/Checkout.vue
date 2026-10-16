@@ -833,6 +833,7 @@ onMounted(() => {
                     :is-shipping-address-required="isShippingAddressRequired"
                     :get-is-field-required="checkoutForm.getIsFieldRequired"
                     :get-is-shipping-field-required="checkoutForm.getIsShippingFieldRequired"
+                    :shipping-address-format="checkoutForm.shippingAddressFormat.value"
                     :read-only="isPaid"
                     v-bind="orderLockAttrs"
                 />

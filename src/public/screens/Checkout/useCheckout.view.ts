@@ -380,6 +380,7 @@ export function useCheckoutView({
                     shipping_address_details: toShippingAddressDetails(
                         checkoutForm.form.value,
                         shippingAddressReference,
+                        checkoutForm.shippingAddressFormat.value,
                     ),
                 }),
                 customer_details: {

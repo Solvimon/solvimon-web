@@ -1,8 +1,25 @@
 import { isValidCountryCode, objectDiff, useValidation } from '@solvimon/solvimon-ui';
 import { taxId } from '@solvimon/solvimon-ui/validators';
 import { email, required, requiredIf } from '@vuelidate/validators';
-import { computed, onMounted, ref, toRaw, watch, type MaybeRefOrGetter, toValue } from 'vue';
+import {
+    computed,
+    onMounted,
+    ref,
+    shallowRef,
+    toRaw,
+    watch,
+    type MaybeRefOrGetter,
+    toValue,
+} from 'vue';
 import type { CheckoutFormState } from './CheckoutForm.types';
+import {
+    getAddressFormat,
+    isPhoneNumberPlausible,
+    isPostalCodeValid,
+    loadAddressFormats,
+    type AddressFormat,
+    type AddressFormatTable,
+} from './addressFormat';
 import {
     getRequiredFieldsForCountry,
     getRequiredShippingFieldsForCountry,
@@ -49,9 +66,39 @@ export function useCheckoutForm({
     const getIsFieldRequired = (field: keyof CheckoutFormState): boolean =>
         requiredFields.value.includes(field);
 
+    const addressFormats = shallowRef<AddressFormatTable>();
+
+    // Only a shipped order needs every country's address format, so only it downloads them.
+    watch(
+        isShipped,
+        (shipped) => {
+            if (!shipped || addressFormats.value) return;
+            loadAddressFormats()
+                .then((formats) => {
+                    addressFormats.value = formats;
+                })
+                .catch(() => {
+                    // The form keeps to its fallback rules for every country.
+                });
+        },
+        { immediate: true },
+    );
+
+    /** How the destination country writes an address, once the formats have loaded. */
+    const shippingAddressFormat = computed<AddressFormat | undefined>(() =>
+        addressFormats.value
+            ? getAddressFormat(addressFormats.value, form.value.shippingCountry)
+            : undefined,
+    );
+
     /** The destination country answers for the shipping address, not the billing one. */
     const requiredShippingFields = computed<ShippingField[]>(() =>
-        isShipped.value ? getRequiredShippingFieldsForCountry(form.value.shippingCountry) : [],
+        isShipped.value
+            ? getRequiredShippingFieldsForCountry(form.value.shippingCountry, {
+                  format: shippingAddressFormat.value,
+                  type: form.value.type,
+              })
+            : [],
     );
 
     const getIsShippingFieldRequired = (field: ShippingField): boolean =>
@@ -74,6 +121,14 @@ export function useCheckoutForm({
             },
             shippingPostalCode: {
                 required: requiredIf(() => getIsShippingFieldRequired('shippingPostalCode')),
+                postalCodeFormat: {
+                    $validator: (value: unknown) =>
+                        typeof value !== 'string' ||
+                        !value.trim() ||
+                        !shippingAddressFormat.value ||
+                        isPostalCodeValid(shippingAddressFormat.value, value),
+                    $message: 'The postal code does not match the country',
+                },
             },
             shippingCity: {
                 required: requiredIf(() => getIsShippingFieldRequired('shippingCity')),
@@ -86,6 +141,14 @@ export function useCheckoutForm({
             },
             shippingPhoneNumber: {
                 required: requiredIf(() => getIsShippingFieldRequired('shippingPhoneNumber')),
+                phoneNumberFormat: {
+                    $validator: (value: unknown) =>
+                        typeof value !== 'string' || !value.trim() || isPhoneNumberPlausible(value),
+                    $message: 'The phone number is not valid',
+                },
+            },
+            shippingLastName: {
+                required: requiredIf(() => getIsShippingFieldRequired('shippingLastName')),
             },
         })),
         form,
@@ -152,6 +215,7 @@ export function useCheckoutForm({
             form.value.shippingCity,
             form.value.shippingState,
             form.value.shippingCountry,
+            shippingAddressFormat.value,
         ],
         () => {
             if (!isShipped.value || !form.value.billingAddressSameAsShipping) {
@@ -160,7 +224,10 @@ export function useCheckoutForm({
 
             // Assigned field by field: replacing the state would retrigger this watcher on its
             // own dependency and loop.
-            Object.assign(form.value, billingAddressFromShipping(form.value));
+            Object.assign(
+                form.value,
+                billingAddressFromShipping(form.value, shippingAddressFormat.value),
+            );
         },
         { immediate: true },
     );
@@ -209,6 +276,7 @@ export function useCheckoutForm({
         validation,
         getIsFieldRequired,
         getIsShippingFieldRequired,
+        shippingAddressFormat,
         updateInitialState,
         initialState: initialFormState,
         isPreviewStale,
@@ -238,6 +306,9 @@ const getInitialState = (initialState: Partial<CheckoutFormState> = {}): Checkou
         shippingState: undefined,
         shippingCountry: undefined,
         shippingPhoneNumber: undefined,
+        shippingFirstName: undefined,
+        shippingLastName: undefined,
+        shippingAttentionName: undefined,
         // Most customers are billed where they are shipped, so that is what the form opens on.
         billingAddressSameAsShipping: true,
         seatsValues: undefined,

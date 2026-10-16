@@ -71,6 +71,7 @@ vi.mock('./useCheckout.view', async () => {
                 initialState: r({ seatsValues: SEATS_VALUES }),
                 validation: r({ $validate: vi.fn(), $invalid: false }),
                 getIsFieldRequired: () => false,
+                shippingAddressFormat: r(undefined),
                 updateInitialState,
             },
             invoicePreview: c(() => invoicePreview.value),

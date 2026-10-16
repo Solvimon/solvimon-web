@@ -104,7 +104,36 @@ describe('CheckoutForm.lib', () => {
                 'shippingCity',
                 'shippingCountry',
                 'shippingPhoneNumber',
+                'shippingLastName',
             ]);
+        });
+
+        it('asks for no last name when the parcel goes to a company', () => {
+            expect(
+                getRequiredShippingFieldsForCountry('NL', { type: 'ORGANIZATION' }),
+            ).not.toContain('shippingLastName');
+        });
+
+        it('asks for what the destination country requires once its format is known', () => {
+            const unitedStates = { fields: 'ACSZ', required: 'ACSZ' };
+
+            expect(getRequiredShippingFieldsForCountry('US', { format: unitedStates })).toEqual([
+                'shippingAddressLine1',
+                'shippingCity',
+                'shippingState',
+                'shippingPostalCode',
+                'shippingCountry',
+                'shippingPhoneNumber',
+                'shippingLastName',
+            ]);
+        });
+
+        it('asks for no postal code where the country has none', () => {
+            const hongKong = { fields: 'ACS', required: 'AS' };
+
+            expect(getRequiredShippingFieldsForCountry('HK', { format: hongKong })).not.toContain(
+                'shippingPostalCode',
+            );
         });
 
         it('adds what the destination country asks of an address of its own', () => {
@@ -112,13 +141,9 @@ describe('CheckoutForm.lib', () => {
         });
 
         it('asks the same of an unknown destination as of any other', () => {
-            expect(getRequiredShippingFieldsForCountry(undefined)).toEqual([
-                'shippingAddressLine1',
-                'shippingPostalCode',
-                'shippingCity',
-                'shippingCountry',
-                'shippingPhoneNumber',
-            ]);
+            expect(getRequiredShippingFieldsForCountry(undefined)).toEqual(
+                getRequiredShippingFieldsForCountry('NL'),
+            );
         });
 
         // US adds line 1 and a postal code, which a parcel needs anyway.
@@ -154,8 +179,8 @@ describe('CheckoutForm.lib', () => {
                     {
                         ...shipped,
                         type: 'INDIVIDUAL',
-                        firstName: 'Jane',
-                        lastName: 'Doe',
+                        shippingFirstName: 'Jane',
+                        shippingLastName: 'Doe',
                     } as CheckoutFormState,
                     'ref_1',
                 ),
@@ -188,6 +213,44 @@ describe('CheckoutForm.lib', () => {
 
             expect(details.recipient.organization).toEqual({ company_name: 'Acme B.V.' });
             expect(details.recipient.individual).toBeUndefined();
+        });
+
+        it('ships to a company for the attention of the person the customer names', () => {
+            const details = toShippingAddressDetails(
+                {
+                    ...shipped,
+                    type: 'ORGANIZATION',
+                    companyLegalName: 'Acme B.V.',
+                    shippingAttentionName: ' Jane Doe ',
+                } as CheckoutFormState,
+                'ref_1',
+            );
+
+            expect(details.recipient.organization).toEqual({
+                company_name: 'Acme B.V.',
+                attention_name: 'Jane Doe',
+            });
+        });
+
+        it('leaves out what the destination country does not use', () => {
+            const hongKong = { fields: 'ACS', required: 'AS' };
+            const details = toShippingAddressDetails(
+                { ...shipped, shippingCountry: 'HK' } as CheckoutFormState,
+                'ref_1',
+                hongKong,
+            );
+
+            expect(details.address).not.toHaveProperty('postal_code');
+            expect(details.address.city).toBe('Amsterdam');
+        });
+
+        it('sends a postal code trimmed and in capitals', () => {
+            const details = toShippingAddressDetails(
+                { ...shipped, shippingPostalCode: ' 1000aa ' } as CheckoutFormState,
+                'ref_1',
+            );
+
+            expect(details.address.postal_code).toBe('1000AA');
         });
 
         // The API asks for a name object on a person, but nothing inside it.

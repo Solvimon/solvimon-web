@@ -219,6 +219,7 @@ const shippingCountryLabel = computed(() =>
                         :label="shippingAddressLabel"
                         :country-label="shippingCountryLabel"
                         :get-optional-suffix="getShippingOptionalSuffix"
+                        :format="shippingAddressFormat"
                         :errors="{
                             addressLine1: validation.value.shippingAddressLine1.$errors,
                             postalCode: validation.value.shippingPostalCode.$errors,
@@ -226,6 +227,7 @@ const shippingCountryLabel = computed(() =>
                             state: validation.value.shippingState.$errors,
                             country: validation.value.shippingCountry.$errors,
                             phoneNumber: validation.value.shippingPhoneNumber.$errors,
+                            lastName: validation.value.shippingLastName.$errors,
                         }"
                     />
 

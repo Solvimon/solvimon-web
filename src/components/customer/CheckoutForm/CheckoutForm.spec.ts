@@ -37,6 +37,7 @@ const mountForm = (
                         validation: checkoutForm.validation,
                         getIsFieldRequired: checkoutForm.getIsFieldRequired,
                         getIsShippingFieldRequired: checkoutForm.getIsShippingFieldRequired,
+                        shippingAddressFormat: checkoutForm.shippingAddressFormat.value,
                         isShippingAddressRequired,
                         isBillingInformationMandatory,
                     });
@@ -50,6 +51,12 @@ const mountForm = (
 
 const fieldRoot = (wrapper: Pick<ReturnType<typeof mount>, 'find'>, name: string) =>
     wrapper.find(`[data-testid="input-${name}"]`);
+
+/** The address formats arrive with a dynamic import, which a shipped form starts on mount. */
+const formatsLoaded = async () => {
+    await vi.dynamicImportSettled();
+    await flushPromises();
+};
 
 describe('CheckoutForm', () => {
     beforeEach(() => {
@@ -261,6 +268,83 @@ describe('CheckoutForm', () => {
 
             expect(billingBlock.exists()).toBe(true);
             expect(billingBlock.find('[name="shipping_phone_number"]').exists()).toBe(false);
+        });
+
+        it('asks who receives the parcel, by last name at least', async () => {
+            const { wrapper, checkoutForm } = mountForm(customer, shipped);
+
+            expect(
+                fieldRoot(wrapper, 'shipping_first_name').find('input').attributes('placeholder'),
+            ).toContain('(optional)');
+
+            await checkoutForm.validation.value.$validate();
+            await flushPromises();
+
+            expect(fieldRoot(wrapper, 'shipping_last_name').text()).toContain(
+                'The value is required',
+            );
+        });
+
+        it('asks a company for a contact person instead of a name', () => {
+            const { wrapper } = mountForm({ ...customer, type: 'ORGANIZATION' }, shipped);
+
+            expect(fieldRoot(wrapper, 'shipping_attention_name').exists()).toBe(true);
+            expect(fieldRoot(wrapper, 'shipping_last_name').exists()).toBe(false);
+        });
+
+        it('leaves out the postal code where the destination has none', async () => {
+            const { wrapper } = mountForm(
+                { ...customer, shippingCountry: 'HK' as CountryCode },
+                shipped,
+            );
+            await formatsLoaded();
+
+            expect(fieldRoot(wrapper, 'shipping_postal_code').exists()).toBe(false);
+            expect(fieldRoot(wrapper, 'shipping_address_line_1').exists()).toBe(true);
+        });
+
+        it('says so when a postal code does not fit the destination', async () => {
+            const { wrapper, checkoutForm } = mountForm(
+                { ...customer, shippingCountry: 'NL' as CountryCode, shippingPostalCode: '10000' },
+                shipped,
+            );
+            await formatsLoaded();
+
+            await checkoutForm.validation.value.$validate();
+            await flushPromises();
+
+            expect(fieldRoot(wrapper, 'shipping_postal_code').text()).toContain(
+                'Enter a postal code in the format of this country',
+            );
+        });
+
+        it('says so when a phone number cannot be dialled', async () => {
+            const { wrapper, checkoutForm } = mountForm(
+                { ...customer, shippingPhoneNumber: '-' },
+                shipped,
+            );
+
+            await checkoutForm.validation.value.$validate();
+            await flushPromises();
+
+            expect(fieldRoot(wrapper, 'shipping_phone_number').text()).toContain(
+                'Enter a phone number of 7 to 15 digits',
+            );
+        });
+
+        it('names each field for browser autofill, apart from the billing address', () => {
+            const { wrapper } = mountForm(
+                { ...customer, billingAddressSameAsShipping: false },
+                shipped,
+            );
+            const autocomplete = (name: string) =>
+                fieldRoot(wrapper, name).find('input').attributes('autocomplete');
+
+            expect(autocomplete('shipping_last_name')).toBe('shipping family-name');
+            expect(autocomplete('shipping_address_line_1')).toBe('shipping address-line1');
+            expect(autocomplete('shipping_postal_code')).toBe('shipping postal-code');
+            expect(autocomplete('shipping_phone_number')).toBe('shipping tel');
+            expect(autocomplete('address_line_1')).toBe('billing address-line1');
         });
 
         it('shows a missing shipping postal code on that field', async () => {

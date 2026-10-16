@@ -583,13 +583,41 @@
     "defaultMessage": "Shipping address",
     "description": "Label above the address an order is shipped to in the checkout form"
   },
+  "checkout.shipping_attention_name.label": {
+    "defaultMessage": "Contact person",
+    "description": "Label of the person at the company a shipped order is for the attention of"
+  },
+  "checkout.shipping_attention_name.placeholder": {
+    "defaultMessage": "Contact person...",
+    "description": "Placeholder of the person at the company a shipped order is for the attention of"
+  },
   "checkout.shipping_country.label": {
     "defaultMessage": "Shipping country",
     "description": "Label of the country an order is shipped to in the checkout form"
   },
+  "checkout.shipping_first_name.label": {
+    "defaultMessage": "First name",
+    "description": "Label of the first name of the recipient of a shipped order"
+  },
+  "checkout.shipping_first_name.placeholder": {
+    "defaultMessage": "First name...",
+    "description": "Placeholder of the first name of the recipient of a shipped order"
+  },
   "checkout.shipping_information_block.title": {
     "defaultMessage": "Shipping information",
     "description": "The title of the shipping information block in the checkout form"
+  },
+  "checkout.shipping_last_name.label": {
+    "defaultMessage": "Last name",
+    "description": "Label of the last name of the recipient of a shipped order"
+  },
+  "checkout.shipping_last_name.placeholder": {
+    "defaultMessage": "Last name...",
+    "description": "Placeholder of the last name of the recipient of a shipped order"
+  },
+  "checkout.shipping_phone_number.invalid": {
+    "defaultMessage": "Enter a phone number of 7 to 15 digits",
+    "description": "Error under a shipping phone number with characters other than digits and separators, or too few or many digits"
   },
   "checkout.shipping_phone_number.label": {
     "defaultMessage": "Phone number",
@@ -598,6 +626,10 @@
   "checkout.shipping_phone_number.placeholder": {
     "defaultMessage": "Phone number...",
     "description": "Placeholder of the phone number of the recipient of a shipped order"
+  },
+  "checkout.shipping_postal_code.invalid": {
+    "defaultMessage": "Enter a postal code in the format of this country",
+    "description": "Error under a shipping postal code that does not match the destination country's format"
   },
   "checkout.subscription_description": {
     "defaultMessage": "You will be billed <strong>{price}</strong> per {period_name}, starting today.",

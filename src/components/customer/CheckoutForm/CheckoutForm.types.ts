@@ -1,6 +1,7 @@
 import type { ConfiguredMeterValue, CountryCode, Pricing } from '@solvimon/solvimon-types';
 import type { useCheckoutForm } from './useCheckoutForm';
 import type { ShippingField } from './CheckoutForm.lib';
+import type { AddressFormat } from './addressFormat';
 
 export interface CheckoutFormProps {
     validation: ReturnType<typeof useCheckoutForm>['validation'];
@@ -17,6 +18,8 @@ export interface CheckoutFormProps {
     getIsFieldRequired: (field: keyof CheckoutFormState) => boolean;
     /** The same, for the shipping address, which the destination country answers for. */
     getIsShippingFieldRequired?: (field: ShippingField) => boolean;
+    /** How the destination country writes an address, which decides the fields it shows. */
+    shippingAddressFormat?: AddressFormat;
     readOnly?: boolean;
 }
 
@@ -51,6 +54,11 @@ export interface CheckoutFormState {
     shippingCountry: CountryCode | undefined;
     /** How the carrier reaches the recipient; the API requires one on every shipping address. */
     shippingPhoneNumber: string | undefined;
+    /** Who receives a parcel sent to a person. A carrier needs at least the last name. */
+    shippingFirstName: string | undefined;
+    shippingLastName: string | undefined;
+    /** Who to hand a parcel sent to a company to, when the customer names someone. */
+    shippingAttentionName: string | undefined;
     /**
      * Whether the invoice goes to the shipping address. While it does, the billing fields follow
      * the shipping ones, so everything downstream reads the billing address as it always has.

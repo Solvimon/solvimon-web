@@ -29,7 +29,7 @@ export interface ShippingAddressDetails {
     recipient: {
         type: Customer['type'];
         individual?: { name: Name };
-        organization?: { company_name: string };
+        organization?: { company_name: string; attention_name?: string };
         phone_number: string;
         email: string;
     };

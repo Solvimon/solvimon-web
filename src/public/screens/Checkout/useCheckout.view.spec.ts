@@ -83,6 +83,7 @@ const createMockCheckoutForm = (overrides?: Partial<CheckoutFormState>) => ({
     },
     validation: { value: {} },
     getIsFieldRequired: vi.fn(),
+    shippingAddressFormat: { value: undefined },
     updateInitialState: vi.fn(),
 });
 

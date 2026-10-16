@@ -13,6 +13,7 @@ const props = defineProps<{
     name: string;
     placeholder?: string;
     error?: string | ErrorObject[];
+    autocomplete?: string;
 }>();
 
 const model = defineModel<TextControlValue>();
@@ -27,7 +28,14 @@ const hasError = computed(() =>
 <template>
     <div>
         <label :for="id" class="sr-only">{{ label }}</label>
-        <Input :id="id" v-model="model" :name="name" :placeholder="placeholder" :error="error">
+        <Input
+            :id="id"
+            v-model="model"
+            :name="name"
+            :placeholder="placeholder"
+            :error="error"
+            :autocomplete="autocomplete"
+        >
             <template v-if="hasError" #helper>
                 <FormMessage :message="error" />
             </template>

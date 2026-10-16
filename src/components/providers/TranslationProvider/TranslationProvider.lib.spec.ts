@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import uiCatalogue from '@solvimon/solvimon-ui/translations/en-US';
 import {
     DEFAULT_LOCALE,
     isSupportedLocale,
@@ -7,10 +8,9 @@ import {
     warnIfUnsupportedLocale,
 } from './TranslationProvider.lib';
 import type { Logger } from '@/components/providers/LoggerProvider/LoggerProvider.types';
+import sdkSource from '@/translations/source.json';
 
-vi.mock('@solvimon/solvimon-ui/translations/en-US', () => ({
-    default: { greeting: 'Hello', farewell: 'Goodbye' },
-}));
+const uiMessages: Record<string, string> = uiCatalogue;
 
 vi.mock('@solvimon/solvimon-ui/translations/nl-NL', () => ({
     default: { greeting: 'Hallo', farewell: 'Tot ziens' },
@@ -18,10 +18,6 @@ vi.mock('@solvimon/solvimon-ui/translations/nl-NL', () => ({
 
 vi.mock('@/translations/locales/nl-NL.json', () => ({
     default: { farewell: 'Doei', appName: 'Solvimon' },
-}));
-
-vi.mock('@/translations/locales/en-US.json', () => ({
-    default: { farewell: 'Bye', appName: 'Solvimon' },
 }));
 
 const makeLogger = (): Logger => ({
@@ -88,8 +84,19 @@ describe('loadLocaleMessages', () => {
         expect(messages).toEqual({});
     });
 
+    // Without an en-US catalogue, the UI's en-US text shows for an id both define, where the SDK's
+    // catalogue wins in every other locale.
+    it('words every id the ui also defines as the ui does in en-US', () => {
+        const shared = Object.entries(sdkSource).filter(([id]) => id in uiMessages);
+
+        expect(shared.length).toBeGreaterThan(0);
+        for (const [id, { defaultMessage }] of shared) {
+            expect({ id, defaultMessage }).toEqual({ id, defaultMessage: uiMessages[id] });
+        }
+    });
+
     it('does not log a warning on success', async () => {
-        await loadLocaleMessages('en-US', logger);
+        await loadLocaleMessages('nl-NL', logger);
         expect(logger.warn).not.toHaveBeenCalled();
     });
 

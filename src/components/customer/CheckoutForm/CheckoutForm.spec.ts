@@ -239,9 +239,10 @@ describe('CheckoutForm', () => {
             }
         });
 
-        it('asks for a phone number the carrier can reach the recipient on', async () => {
+        it('asks for a phone number the carrier can reach the recipient on, with the shipping address', async () => {
             const { wrapper, checkoutForm } = mountForm(customer, shipped);
-            const phoneNumber = fieldRoot(wrapper, 'shipping_phone_number');
+            const shippingBlock = wrapper.find('.sv-checkout__shipping-address');
+            const phoneNumber = fieldRoot(shippingBlock, 'shipping_phone_number');
 
             expect(phoneNumber.text()).toContain('Phone number');
 
@@ -249,6 +250,17 @@ describe('CheckoutForm', () => {
             await flushPromises();
 
             expect(phoneNumber.text()).toContain('The value is required');
+        });
+
+        it('asks for no phone number with a separate billing address', () => {
+            const { wrapper } = mountForm(
+                { ...customer, billingAddressSameAsShipping: false },
+                shipped,
+            );
+            const billingBlock = wrapper.find('.sv-checkout__billing-address');
+
+            expect(billingBlock.exists()).toBe(true);
+            expect(billingBlock.find('[name="shipping_phone_number"]').exists()).toBe(false);
         });
 
         it('shows a missing shipping postal code on that field', async () => {

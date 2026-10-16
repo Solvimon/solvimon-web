@@ -53,6 +53,8 @@ const fields = reactive({
     postalCode: formControlModel(model, keys.postalCode, asOptionalText),
     city: formControlModel(model, keys.city, asOptionalText),
     state: formControlModel(model, keys.state, asOptionalText),
+    // Only a shipping address has a recipient for the carrier to call; a billing address has none.
+    phoneNumber: formControlModel(model, 'shippingPhoneNumber', asOptionalText),
 });
 
 const country = computed<SelectControlValue>({
@@ -125,6 +127,30 @@ const suffix = (field: 'addressLine1' | 'addressLine2' | 'postalCode' | 'city' |
             :label="countryLabel ?? labels.countryLabel"
             :name="`${namePrefix}country`"
             :error="errors?.country"
+        />
+        <Input
+            v-if="variant === 'SHIPPING'"
+            v-model="fields.phoneNumber"
+            required
+            name="shipping_phone_number"
+            class="sv-checkout__shipping-phone-number"
+            :label="
+                $t({
+                    defaultMessage: 'Phone number',
+                    id: 'checkout.shipping_phone_number.label',
+                    description:
+                        'Label of the phone number the carrier can reach the recipient of a shipped order on',
+                })
+            "
+            :placeholder="
+                $t({
+                    defaultMessage: 'Phone number...',
+                    id: 'checkout.shipping_phone_number.placeholder',
+                    description:
+                        'Placeholder of the phone number of the recipient of a shipped order',
+                }) + getOptionalSuffix('shippingPhoneNumber')
+            "
+            :error="errors?.phoneNumber"
         />
     </div>
 </template>

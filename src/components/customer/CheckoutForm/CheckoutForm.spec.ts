@@ -180,6 +180,17 @@ describe('CheckoutForm', () => {
         });
     });
 
+    it('names the email and billing address for browser autofill', () => {
+        const { wrapper } = mountForm({ email: 'jane@example.com', country: 'NL' as CountryCode });
+        const autocomplete = (name: string) =>
+            fieldRoot(wrapper, name).find('input').attributes('autocomplete');
+
+        expect(autocomplete('email')).toBe('email');
+        expect(autocomplete('address_line_1')).toBe('billing address-line1');
+        expect(autocomplete('postal_code')).toBe('billing postal-code');
+        expect(autocomplete('city')).toBe('billing address-level2');
+    });
+
     describe('with a shipping address', () => {
         const customer = { email: 'jane@example.com', country: 'NL' as CountryCode };
         const shipped = { isShippingAddressRequired: true };

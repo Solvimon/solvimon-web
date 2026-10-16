@@ -119,6 +119,8 @@ watch(
                 v-model="fields.email"
                 required
                 type="email"
+                name="email"
+                autocomplete="email"
                 :label="labels.emailLabel"
                 :placeholder="labels.emailPlaceholder"
                 :error="getError('email')"
@@ -134,6 +136,7 @@ watch(
                 <Input
                     v-model="fields.companyVatNumber"
                     name="vat_number"
+                    autocomplete="off"
                     :label="labels.vatNumberLabel"
                     :placeholder="labels.vatNumberPlaceholder"
                     :error="getError('companyVatNumber')"
@@ -143,6 +146,7 @@ watch(
                     v-model="fields.companyLegalName"
                     required
                     name="legal_name"
+                    autocomplete="billing organization"
                     :label="labels.legalNameLabel"
                     :placeholder="labels.legalNamePlaceholder"
                     :error="getError('companyLegalName')"
@@ -165,6 +169,7 @@ watch(
                 <Input
                     v-model="fields.firstName"
                     name="first_name"
+                    autocomplete="billing given-name"
                     :label="
                         $t({
                             defaultMessage: 'First name',
@@ -184,6 +189,7 @@ watch(
                 <Input
                     v-model="fields.lastName"
                     name="last_name"
+                    autocomplete="billing family-name"
                     :label="
                         $t({
                             defaultMessage: 'Last name',
@@ -205,6 +211,7 @@ watch(
             <Input
                 v-model="fields.addressLine1"
                 name="address_line_1"
+                autocomplete="billing address-line1"
                 :label="labels.addressTitle"
                 :placeholder="
                     $t({
@@ -218,6 +225,7 @@ watch(
             <HiddenLabelInput
                 v-model="fields.addressLine2"
                 name="address_line_2"
+                autocomplete="billing address-line2"
                 :label="labels.addressLine2Label"
                 :placeholder="
                     $t({
@@ -232,6 +240,7 @@ watch(
                 <HiddenLabelInput
                     v-model="fields.postalCode"
                     name="postal_code"
+                    autocomplete="billing postal-code"
                     :label="labels.postalCodeLabel"
                     :placeholder="labels.postalCodePlaceholder"
                     :error="getError('postalCode')"
@@ -239,6 +248,7 @@ watch(
                 <HiddenLabelInput
                     v-model="fields.city"
                     name="city"
+                    autocomplete="billing address-level2"
                     :label="labels.cityLabel"
                     :placeholder="labels.cityPlaceholder"
                     :error="apiErrors.fields.city"
@@ -246,6 +256,7 @@ watch(
                 <HiddenLabelInput
                     v-model="fields.state"
                     name="state"
+                    autocomplete="billing address-level1"
                     :label="labels.stateLabel"
                     :placeholder="labels.statePlaceholder"
                     :error="getError('state')"

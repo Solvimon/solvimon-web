@@ -311,3 +311,20 @@ describe('BillingInformationForm address labels', () => {
         }
     });
 });
+
+describe('BillingInformationForm autofill', () => {
+    it('names each field for browser autofill as a billing address', () => {
+        const wrapper = mount(BillingInformationForm, {
+            props: { isLoading: false, updateCustomer: vi.fn() },
+            global: { stubs: { CountrySelect: true } },
+        });
+        const autocomplete = (name: string) =>
+            wrapper.find(`[data-testid="input-${name}"] input`).attributes('autocomplete');
+
+        expect(wrapper.find('input[type="email"]').attributes('autocomplete')).toBe('email');
+        expect(autocomplete('address_line_1')).toBe('billing address-line1');
+        expect(autocomplete('postal_code')).toBe('billing postal-code');
+        expect(autocomplete('city')).toBe('billing address-level2');
+        expect(autocomplete('state')).toBe('billing address-level1');
+    });
+});

@@ -53,7 +53,6 @@ const fields = reactive({
     state: formControlModel(model, 'state', asOptionalText),
     companyLegalName: formControlModel(model, 'companyLegalName', asOptionalText),
     companyVatNumber: formControlModel(model, 'companyVatNumber', asOptionalText),
-    shippingPhoneNumber: formControlModel(model, 'shippingPhoneNumber', asOptionalText),
 });
 
 const country = computed<SelectControlValue>({
@@ -226,31 +225,8 @@ const shippingCountryLabel = computed(() =>
                             city: validation.value.shippingCity.$errors,
                             state: validation.value.shippingState.$errors,
                             country: validation.value.shippingCountry.$errors,
+                            phoneNumber: validation.value.shippingPhoneNumber.$errors,
                         }"
-                    />
-
-                    <Input
-                        v-model="fields.shippingPhoneNumber"
-                        required
-                        name="shipping_phone_number"
-                        class="sv-checkout__shipping-phone-number"
-                        :label="
-                            $t({
-                                defaultMessage: 'Phone number',
-                                id: 'checkout.shipping_phone_number.label',
-                                description:
-                                    'Label of the phone number the carrier can reach the recipient of a shipped order on',
-                            })
-                        "
-                        :placeholder="
-                            $t({
-                                defaultMessage: 'Phone number...',
-                                id: 'checkout.shipping_phone_number.placeholder',
-                                description:
-                                    'Placeholder of the phone number of the recipient of a shipped order',
-                            }) + getShippingOptionalSuffix('shippingPhoneNumber')
-                        "
-                        :error="validation.value.shippingPhoneNumber.$errors"
                     />
 
                     <Checkbox

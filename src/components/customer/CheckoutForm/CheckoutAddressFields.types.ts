@@ -21,5 +21,7 @@ export interface CheckoutAddressFieldsProps {
         city?: ErrorObject[];
         state?: ErrorObject[];
         country?: ErrorObject[];
+        /** The recipient's phone number, which only the shipping variant asks for. */
+        phoneNumber?: ErrorObject[];
     };
 }

@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Browsers can autofill the checkout form and the billing information form. Their fields used to be marked `autocomplete="off"`, the default of the UI's inputs; the email, name, company name and address fields now carry the matching `autocomplete` hint, with `billing` and `shipping` keeping the two addresses apart. The VAT number stays off. The country still has to be picked by hand, because the country select does not take a hint yet.
 - An element shown in `en-US` no longer downloads any translations before it renders. Its messages are the defaults already in the bundle, so it renders, and starts its requests, one network round-trip sooner, and downloads about 11 KB (gzip) less. Other locales load as before.
 - `@adyen/adyen-web` is no longer a dependency, so installing the package no longer installs it, `preact` and Adyen's type packages, about 19 MB. The SDK has always used its own bundled copy of Adyen; the installed one only supplied two type names to the published declarations, which now carry them. A host that uses Adyen itself has to depend on it directly.
 - Installing the package no longer installs `vite-bundle-visualizer` and the 29 packages it depends on. It was declared as an optional dependency, which npm installs for every consumer, although only this repository's `analyze` script uses it.

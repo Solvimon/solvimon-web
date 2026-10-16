@@ -156,6 +156,7 @@ const shippingCountryLabel = computed(() =>
                             required
                             type="email"
                             name="email"
+                            autocomplete="email"
                             :disabled="!!readOnlyEmail"
                             :label="labels.emailLabel"
                             :placeholder="labels.emailPlaceholder + getOptionalSuffix('email')"
@@ -274,6 +275,7 @@ const shippingCountryLabel = computed(() =>
                             <Input
                                 v-model="fields.addressLine1"
                                 name="address_line_1"
+                                autocomplete="billing address-line1"
                                 :label="
                                     $t({
                                         defaultMessage: 'Billing address',
@@ -296,6 +298,7 @@ const shippingCountryLabel = computed(() =>
                             <HiddenLabelInput
                                 v-model="fields.addressLine2"
                                 name="address_line_2"
+                                autocomplete="billing address-line2"
                                 :label="labels.addressLine2Label"
                                 :placeholder="
                                     $t({
@@ -310,6 +313,7 @@ const shippingCountryLabel = computed(() =>
                                 <HiddenLabelInput
                                     v-model="fields.postalCode"
                                     name="postal_code"
+                                    autocomplete="billing postal-code"
                                     :label="labels.postalCodeLabel"
                                     :placeholder="
                                         labels.postalCodePlaceholder +
@@ -320,6 +324,7 @@ const shippingCountryLabel = computed(() =>
                                 <HiddenLabelInput
                                     v-model="fields.city"
                                     name="city"
+                                    autocomplete="billing address-level2"
                                     :label="labels.cityLabel"
                                     :placeholder="
                                         labels.cityPlaceholder + getOptionalSuffix('city')
@@ -328,6 +333,7 @@ const shippingCountryLabel = computed(() =>
                                 <HiddenLabelInput
                                     v-model="fields.state"
                                     name="state"
+                                    autocomplete="billing address-level1"
                                     :label="labels.stateLabel"
                                     :placeholder="
                                         labels.statePlaceholder + getOptionalSuffix('state')
@@ -350,6 +356,7 @@ const shippingCountryLabel = computed(() =>
                                 v-model="fields.companyLegalName"
                                 required
                                 name="legal_name"
+                                autocomplete="billing organization"
                                 :label="labels.legalNameLabel"
                                 :placeholder="labels.legalNamePlaceholder"
                                 :error="validation.value.companyLegalName.$errors"
@@ -359,6 +366,7 @@ const shippingCountryLabel = computed(() =>
                                 v-if="showVatIdInput"
                                 v-model="fields.companyVatNumber"
                                 name="vat_number"
+                                autocomplete="off"
                                 input-class="focus:outline-none focus:ring-0"
                                 :label="labels.vatNumberLabel"
                                 :placeholder="labels.vatNumberPlaceholder"

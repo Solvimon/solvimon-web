@@ -478,6 +478,59 @@ describe('useCheckoutView', () => {
         );
     });
 
+    it('sends the only billing period with a promotion code in the authorization payload', async () => {
+        const actual = await vi.importActual<typeof import('@/utils/pricingPlanSchedule')>(
+            '@/utils/pricingPlanSchedule',
+        );
+        mockGetFirstPricingPlanScheduleOfType.mockImplementation(
+            actual.getFirstPricingPlanScheduleOfType,
+        );
+        mockGetScheduleCustomizations.mockImplementation(actual.getScheduleCustomizations);
+
+        mockUseCheckoutForm.mockReturnValue(
+            createMockCheckoutForm({
+                type: 'INDIVIDUAL' as const,
+                country: 'NL' as CountryCode,
+                enabledPricingIds: ['pricing_1' as Pricing['id']],
+                promotionCode: 'WELCOME',
+            }),
+        );
+
+        const result = useCheckoutView({
+            initialCountry: undefined,
+            initialEmail: undefined,
+            subscriptionId: 'sub_123' as PricingPlanSubscription['id'],
+        });
+        result.subscription.value = {
+            ...mockSubscription,
+            billing_period: { type: 'MONTH', value: 1 },
+            pricing_plan_schedule_infos: [
+                {
+                    ...mockSubscription.pricing_plan_schedule_infos[0],
+                    pricing_plan_version: {
+                        billing_period_settings: {
+                            billing_periods: [{ period: { type: 'MONTH', value: 1 } }],
+                        },
+                    },
+                },
+            ],
+        } as unknown as PricingPlanSubscriptionExpanded;
+
+        const context = result.authorizationContext
+            .value as AuthorizePaymentInitPricingPlanSubscriptionContext;
+
+        expect(context.init_pricing_plan_subscription.pricing_plan_schedule_customizations).toEqual(
+            [
+                {
+                    pricing_plan_schedule_id: 'schedule_1',
+                    enabled_pricings: [{ pricing_id: 'pricing_1' }],
+                    billing_period: { type: 'MONTH', value: 1 },
+                    promotion_codes: ['WELCOME'],
+                },
+            ],
+        );
+    });
+
     it('loads invoice preview and payment method options when subscription is loaded', async () => {
         const subscriptionId = 'sub_123' as PricingPlanSubscription['id'];
         const initialCountry = 'NL' as CountryCode;

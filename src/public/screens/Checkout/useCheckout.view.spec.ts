@@ -1781,6 +1781,49 @@ describe('useCheckoutView', () => {
             wrapper.unmount();
         });
 
+        it.each([
+            [
+                'keeps a seat config the saved form lacks, in the order of the order',
+                [{ pricing_item_config_id: 'pic_2', number: '8' }],
+                [
+                    { pricing_item_config_id: 'pic_1', number: '2' },
+                    { pricing_item_config_id: 'pic_2', number: '8' },
+                ],
+            ],
+            [
+                'raises a saved seat count below the order quantity to it',
+                [
+                    { pricing_item_config_id: 'pic_2', number: '5' },
+                    { pricing_item_config_id: 'pic_1', number: '0' },
+                ],
+                [
+                    { pricing_item_config_id: 'pic_1', number: '2' },
+                    { pricing_item_config_id: 'pic_2', number: '5' },
+                ],
+            ],
+        ])('%s', async (_, saved, restored) => {
+            mockGetFirstPricingPlanScheduleOfType.mockReturnValue({
+                ...mockSubscription.pricing_plan_schedule_infos[0],
+                pricing_plan_schedule: {
+                    type: 'DEFAULT',
+                    seats_values: [
+                        { pricing_item_config_id: 'pic_1', number: '2' },
+                        { pricing_item_config_id: 'pic_2', number: '3' },
+                    ],
+                },
+            });
+            setupRedirectParams();
+            saveForm({ firstName: 'Hans', seatsValues: saved });
+            const checkoutFormMock = createMockCheckoutForm();
+            mockUseCheckoutForm.mockReturnValue(checkoutFormMock);
+
+            const [, wrapper] = mountView();
+            await flushPromises();
+
+            expect(restoredStates(checkoutFormMock).at(-1)?.seatsValues).toEqual(restored);
+            wrapper.unmount();
+        });
+
         it('starts normally when storage cannot be read', async () => {
             setupRedirectParams();
             const getItem = vi.spyOn(sessionStorage, 'getItem').mockImplementation(() => {

@@ -103,6 +103,7 @@ const {
     hasPaymentMethodOptionsError,
     retryPaymentMethodOptions,
     subscription,
+    orderMeterValues,
     isPaymentMethodsPending,
     isInvoicePreviewPending,
     isInvoicePreviewStale,
@@ -786,8 +787,8 @@ onMounted(() => {
                     v-model:enabled-pricing-ids="enabledPricingIdsModel"
                     class="sv-checkout__plan-customization"
                     :subscription="subscription"
-                    :initial-seats-values="checkoutForm.initialState?.value.seatsValues"
-                    :initial-units-values="checkoutForm.initialState?.value.unitsValues"
+                    :initial-seats-values="orderMeterValues.seatsValues"
+                    :initial-units-values="orderMeterValues.unitsValues"
                     :billing-period="subscription.billing_period"
                     :currency="activePricingCurrency"
                 />

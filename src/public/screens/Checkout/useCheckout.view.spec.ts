@@ -1748,6 +1748,39 @@ describe('useCheckoutView', () => {
             wrapper.unmount();
         });
 
+        // The editor's steppers go no lower than the order's quantities; a restored choice that
+        // raised them must not become the new floor.
+        it('keeps the order quantities apart from a restored, higher choice', async () => {
+            mockGetFirstPricingPlanScheduleOfType.mockReturnValue({
+                ...mockSubscription.pricing_plan_schedule_infos[0],
+                pricing_plan_schedule: {
+                    type: 'DEFAULT',
+                    seats_values: [{ pricing_item_config_id: 'pic_1', number: '2' }],
+                    units: [{ pricing_item_config_id: 'pic_unit', number: '3' }],
+                },
+            });
+            setupRedirectParams();
+            saveForm({
+                firstName: 'Hans',
+                seatsValues: [{ pricing_item_config_id: 'pic_1', number: '7' }],
+                unitsValues: [{ pricing_item_config_id: 'pic_unit', number: '9' }],
+            });
+            const checkoutFormMock = createMockCheckoutForm();
+            mockUseCheckoutForm.mockReturnValue(checkoutFormMock);
+
+            const [result, wrapper] = mountView();
+            await flushPromises();
+
+            expect(restoredStates(checkoutFormMock).at(-1)?.seatsValues).toEqual([
+                { pricing_item_config_id: 'pic_1', number: '7' },
+            ]);
+            expect(result.orderMeterValues.value).toEqual({
+                seatsValues: [{ pricing_item_config_id: 'pic_1', number: '2' }],
+                unitsValues: [{ pricing_item_config_id: 'pic_unit', number: '3' }],
+            });
+            wrapper.unmount();
+        });
+
         it('starts normally when storage cannot be read', async () => {
             setupRedirectParams();
             const getItem = vi.spyOn(sessionStorage, 'getItem').mockImplementation(() => {

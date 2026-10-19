@@ -10,7 +10,7 @@ import type {
     Invoice,
     ConfiguredMeterValue,
 } from '@solvimon/solvimon-types';
-import { computed, nextTick, onMounted, ref, watch } from 'vue';
+import { computed, nextTick, onMounted, ref, shallowRef, watch } from 'vue';
 import { taxId } from '@solvimon/solvimon-ui/validators';
 import { email } from '@vuelidate/validators';
 import { isValidCountryCode } from '@solvimon/solvimon-ui';
@@ -113,6 +113,12 @@ export function useCheckoutView({
 
     const isPaid = ref<boolean>(false);
     const subscription = ref<PricingPlanSubscriptionExpanded>();
+    // Kept apart from the form's initial state, which a restored form overwrites with the
+    // customer's own choice: the editor's steppers may not go below the order's quantities.
+    const orderMeterValues = shallowRef<{
+        seatsValues?: ConfiguredMeterValue[];
+        unitsValues?: ConfiguredMeterValue[];
+    }>({});
 
     const { getSubscription } = createSubscriptionsService();
 
@@ -239,6 +245,7 @@ export function useCheckoutView({
 
         const seatsValues = getInitialMeterValues('seats', subscriptionSchedule);
         const unitsValues = getInitialMeterValues('units', subscriptionSchedule);
+        orderMeterValues.value = { seatsValues, unitsValues };
 
         checkoutForm.updateInitialState({
             ...checkoutForm.form.value,
@@ -624,6 +631,7 @@ export function useCheckoutView({
         isInvoicePreviewStale: checkoutForm.isPreviewStale,
         settleInvoicePreview,
         subscription,
+        orderMeterValues,
         checkoutForm,
         authorizationContext,
         isPaid,

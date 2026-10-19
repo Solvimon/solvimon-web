@@ -53,21 +53,32 @@ function isSavedFormState(value: unknown): value is SavedFormState {
 }
 
 /**
- * Saved seats or units stand only if every one is a config the plan starts the form with;
- * otherwise the plan's own values stay, as the editor shows nothing for a config it does not know.
+ * Saved seats or units stand only if every one is a config the order starts the form with;
+ * otherwise the order's own values stay, as the editor shows nothing for a config it does not know.
+ * They are laid over the order's list, so a config the saved list lacks keeps its row, and none
+ * goes below the order's quantity, which is as low as the editor lets the customer go.
  */
-function onlyPlanConfigs(
+function restoreOnOrder(
     saved: ConfiguredMeterValue[] | undefined,
-    planValues: ConfiguredMeterValue[] | undefined,
+    orderValues: ConfiguredMeterValue[] | undefined,
 ): ConfiguredMeterValue[] | undefined {
-    if (!saved || !planValues) return undefined;
+    if (!saved || !orderValues) return undefined;
 
-    const planConfigIds = new Set(
-        planValues.map(({ pricing_item_config_id }) => pricing_item_config_id),
+    const savedNumbers = new Map(
+        saved.map(({ pricing_item_config_id, number }) => [pricing_item_config_id, number]),
     );
-    return saved.every(({ pricing_item_config_id }) => planConfigIds.has(pricing_item_config_id))
-        ? saved
-        : undefined;
+    const orderConfigIds = new Set(
+        orderValues.map(({ pricing_item_config_id }) => pricing_item_config_id),
+    );
+    if ([...savedNumbers.keys()].some((id) => !orderConfigIds.has(id))) return undefined;
+
+    return orderValues.map((orderValue) => {
+        const savedNumber = Number(savedNumbers.get(orderValue.pricing_item_config_id));
+        const orderNumber = Number(orderValue.number);
+        return savedNumber > orderNumber
+            ? { ...orderValue, number: String(savedNumber) }
+            : orderValue;
+    });
 }
 
 /** How long a payment waits for the price before it is held back instead. */
@@ -253,8 +264,6 @@ export function useCheckoutView({
             ...(seatsValues ? { seatsValues } : {}),
             ...(unitsValues ? { unitsValues } : {}),
         });
-
-        return { seatsValues, unitsValues };
     };
 
     const authorizationContext = computed<AuthorizePaymentPayload['context']>(() => {
@@ -529,9 +538,8 @@ export function useCheckoutView({
         // method options need the amount that preview returns. So a failure here reads as "nothing
         // is loading" rather than as itself, and has to be reported where it happens. Reported, it
         // is handled: rethrowing would report it again as unhandled.
-        let plan: Awaited<ReturnType<typeof loadSubscription>>;
         try {
-            plan = await loadSubscription();
+            await loadSubscription();
         } catch (error) {
             logger.error(
                 'SUBSCRIPTION_LOAD_FAILED',
@@ -553,12 +561,12 @@ export function useCheckoutView({
         // defaults, so the user's saved plan selections are preserved.
         if (savedFormState) {
             const { seatsValues, unitsValues, ...rest } = savedFormState;
-            const planSeats = onlyPlanConfigs(seatsValues, plan.seatsValues);
-            const planUnits = onlyPlanConfigs(unitsValues, plan.unitsValues);
+            const restoredSeats = restoreOnOrder(seatsValues, orderMeterValues.value.seatsValues);
+            const restoredUnits = restoreOnOrder(unitsValues, orderMeterValues.value.unitsValues);
             checkoutForm.updateInitialState({
                 ...rest,
-                ...(planSeats ? { seatsValues: planSeats } : {}),
-                ...(planUnits ? { unitsValues: planUnits } : {}),
+                ...(restoredSeats ? { seatsValues: restoredSeats } : {}),
+                ...(restoredUnits ? { unitsValues: restoredUnits } : {}),
             });
         }
     });

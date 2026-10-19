@@ -6,7 +6,7 @@ import type { UnitsEditorProps } from './UnitsEditor.types';
 import UnitsEditorItem from './UnitsEditorItem.vue';
 import PricingGroupTitle from './PricingGroupTitle.vue';
 
-defineProps<UnitsEditorProps>();
+const props = defineProps<UnitsEditorProps>();
 
 const { $t } = useIntl();
 const model = defineModel<ConfiguredMeterValue[]>('modelValue', { required: true });
@@ -20,6 +20,12 @@ const itemModel = (index: number) =>
             model.value = next;
         },
     });
+
+// By config rather than position: the model and the order list it is bounded by may not line up.
+const defaultValueFor = (item: ConfiguredMeterValue) =>
+    props.initialUnitsValues?.find(
+        (value) => value.pricing_item_config_id === item.pricing_item_config_id,
+    );
 </script>
 
 <template>
@@ -52,7 +58,7 @@ const itemModel = (index: number) =>
                         v-if="item.pricing_item_config_id"
                         :key="item.pricing_item_config_id"
                         v-model="itemModel(index).value"
-                        :default-value="initialUnitsValues?.[index]"
+                        :default-value="defaultValueFor(item)"
                         :pricings="pricings"
                     />
                 </Section>

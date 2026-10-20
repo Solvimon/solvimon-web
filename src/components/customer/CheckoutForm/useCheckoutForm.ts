@@ -70,17 +70,25 @@ export function useCheckoutForm({
 
     const addressFormats = shallowRef<AddressFormatTable>();
 
-    // Only a shipped order needs every country's address format, so only it downloads them.
+    let isLoadingAddressFormats = false;
+
+    // Only a shipped order needs every country's address format, so only it downloads them. A
+    // failed download keeps the fallback rules and is tried again when a country changes.
     watch(
-        isShipped,
-        (shipped) => {
-            if (!shipped || addressFormats.value) return;
+        [isShipped, () => form.value.shippingCountry, () => form.value.country],
+        ([shipped]) => {
+            if (!shipped || addressFormats.value || isLoadingAddressFormats) return;
+
+            isLoadingAddressFormats = true;
             loadAddressFormats()
                 .then((formats) => {
                     addressFormats.value = formats;
                 })
                 .catch(() => {
-                    // The form keeps to its fallback rules for every country.
+                    // The form keeps to its fallback rules until the next attempt.
+                })
+                .finally(() => {
+                    isLoadingAddressFormats = false;
                 });
         },
         { immediate: true },

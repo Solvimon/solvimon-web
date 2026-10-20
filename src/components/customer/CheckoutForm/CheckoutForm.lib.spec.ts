@@ -5,6 +5,7 @@ import {
     getRequiredShippingFieldsForCountry,
     isShippingField,
     toCustomer,
+    toPreviewCustomer,
     toShippingAddressDetails,
 } from './CheckoutForm.lib';
 import type { CheckoutFormState } from './CheckoutForm.types';
@@ -158,6 +159,29 @@ describe('CheckoutForm.lib', () => {
         it('tells the two addresses apart', () => {
             expect(isShippingField('shippingAddressLine1')).toBe(true);
             expect(isShippingField('addressLine1')).toBe(false);
+        });
+    });
+
+    describe('toPreviewCustomer', () => {
+        const state = {
+            type: 'INDIVIDUAL',
+            country: 'NL',
+            postalCode: '1000AA',
+            billingAddressSameAsShipping: false,
+            shippingCountry: 'DE',
+            shippingPostalCode: '10115',
+        } as CheckoutFormState;
+
+        it('prices a shipped order where it ships', () => {
+            expect(toPreviewCustomer(state, { isShipped: true })).toMatchObject({
+                individual: { residential_address: { country: 'DE', postal_code: '10115' } },
+            });
+        });
+
+        it('prices any other order at the billing address', () => {
+            expect(toPreviewCustomer(state, { isShipped: false })).toMatchObject({
+                individual: { residential_address: { country: 'NL', postal_code: '1000AA' } },
+            });
         });
     });
 

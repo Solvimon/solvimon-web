@@ -356,8 +356,8 @@ describe('useCheckoutForm', () => {
                 expect(getResult().form.value.addressLine1).toBe('Invoice street 2');
             });
 
-            // The billing country drives the tax on the preview, so a copy has to re-price.
-            it('re-prices the order when the billing address follows a new shipping country', async () => {
+            // A shipped order is taxed where it ships.
+            it('re-prices the order when the shipping country changes', async () => {
                 const onRequiredFieldChange = vi.fn();
                 const getResult = mountForm(onRequiredFieldChange, {
                     isShippingAddressRequired: true,
@@ -368,6 +368,42 @@ describe('useCheckoutForm', () => {
                 vi.advanceTimersByTime(200);
 
                 expect(onRequiredFieldChange).toHaveBeenCalled();
+            });
+        });
+
+        describe('billing to another address', () => {
+            it('re-prices the order when the shipping country changes', async () => {
+                const onRequiredFieldChange = vi.fn();
+                const getResult = mountForm(onRequiredFieldChange, {
+                    isShippingAddressRequired: true,
+                });
+                getResult().form.value.billingAddressSameAsShipping = false;
+                await nextTick();
+                vi.advanceTimersByTime(200);
+                onRequiredFieldChange.mockClear();
+
+                getResult().form.value.shippingCountry = 'DE' as CountryCode;
+                await nextTick();
+                vi.advanceTimersByTime(200);
+
+                expect(onRequiredFieldChange).toHaveBeenCalledTimes(1);
+            });
+
+            it('leaves the price alone when only the billing country changes', async () => {
+                const onRequiredFieldChange = vi.fn();
+                const getResult = mountForm(onRequiredFieldChange, {
+                    isShippingAddressRequired: true,
+                });
+                getResult().form.value.billingAddressSameAsShipping = false;
+                await nextTick();
+                vi.advanceTimersByTime(200);
+                onRequiredFieldChange.mockClear();
+
+                getResult().form.value.country = 'DE' as CountryCode;
+                await nextTick();
+                vi.advanceTimersByTime(200);
+
+                expect(onRequiredFieldChange).not.toHaveBeenCalled();
             });
         });
 

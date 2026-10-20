@@ -607,7 +607,21 @@ test.describe('Checkout', () => {
 
             await selectShippingCountry(page, 'United States');
 
-            // The billing address follows the shipping one, and the preview is priced off it.
+            await expect
+                .poll(() => api.lastCall('invoicePreview')?.body)
+                .toMatchObject({
+                    customer_details: { individual: { residential_address: { country: 'US' } } },
+                });
+        });
+
+        test('keeps pricing a shipped order where it ships when billed elsewhere', async ({
+            page,
+        }) => {
+            api = await mountLoaded(page, { useShippingAddresses: true });
+
+            await checkout(page).billingSameAsShipping.click();
+            await selectShippingCountry(page, 'United States');
+
             await expect
                 .poll(() => api.lastCall('invoicePreview')?.body)
                 .toMatchObject({

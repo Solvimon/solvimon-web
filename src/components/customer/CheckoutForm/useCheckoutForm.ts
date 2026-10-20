@@ -24,6 +24,7 @@ import {
     getRequiredFieldsForCountry,
     getRequiredShippingFieldsForCountry,
     billingAddressFromShipping,
+    getShippingPreviewFields,
     isVatNumberShown,
     type ShippingField,
 } from './CheckoutForm.lib';
@@ -185,9 +186,14 @@ export function useCheckoutForm({
         'enabledPricingIds',
     ];
 
+    // A shipped order is priced where it ships, so its billing address does not move the price.
     const changesPreview = (fieldName: keyof CheckoutFormState) =>
         previewFields.includes(fieldName) ||
-        (fieldName !== 'email' && getIsFieldRequired(fieldName));
+        (isShipped.value
+            ? getShippingPreviewFields(form.value.shippingCountry).some(
+                  (field) => field === fieldName,
+              )
+            : fieldName !== 'email' && getIsFieldRequired(fieldName));
 
     const snapshot = (): CheckoutFormState => JSON.parse(JSON.stringify(form.value));
 

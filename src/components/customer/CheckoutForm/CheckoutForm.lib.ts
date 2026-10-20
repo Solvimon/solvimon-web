@@ -212,6 +212,27 @@ export const toShippingAddressDetails = (
 };
 
 /**
+ * The shipping fields that change the price of a shipped order, which is taxed where it ships:
+ * the country, and whatever else that country requires of an address for its taxes.
+ */
+export const getShippingPreviewFields = (country: CountryCode | undefined): ShippingField[] => [
+    'shippingCountry',
+    ...getRequiredFieldsForCountry(country)
+        .map((billingField) => BILLING_TO_SHIPPING_FIELDS[billingField])
+        .filter((field) => field !== undefined),
+];
+
+/**
+ * The customer the invoice preview is priced for. A shipped order is taxed where it ships, so its
+ * preview reads the shipping address; any other order reads the billing address.
+ */
+export const toPreviewCustomer = (
+    state: CheckoutFormState,
+    { isShipped, format }: { isShipped: boolean; format?: AddressFormat },
+): Partial<Customer> =>
+    toCustomer(isShipped ? { ...state, ...billingAddressFromShipping(state, format) } : state);
+
+/**
  * Map the checkout form state onto the customer it describes, so consumers that work with
  * customers (the invoice preview for instance) do not have to know about this form.
  */

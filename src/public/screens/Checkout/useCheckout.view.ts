@@ -19,6 +19,7 @@ import { createSubscriptionsService } from '@/services/subscriptions';
 import { useInvoicePreview } from '@/composables/useInvoicePreview';
 import { useCheckoutForm } from '@/components/customer/CheckoutForm/useCheckoutForm';
 import {
+    cleanBillingAddress,
     DEFAULT_TAX_IDENTIFIER_TYPE,
     isVatNumberShown,
     toPreviewCustomer,
@@ -301,19 +302,17 @@ export function useCheckoutView({
                   }
                 : {};
 
+        // A shipped order's billing address is cleaned up like the address it ships to.
+        const billing = isShippingAddressRequired
+            ? cleanBillingAddress(checkoutForm.form.value)
+            : checkoutForm.form.value;
         const address: Address = {
-            ...(checkoutForm.form.value.addressLine1 && {
-                line1: checkoutForm.form.value.addressLine1,
-            }),
-            ...(checkoutForm.form.value.addressLine2 && {
-                line2: checkoutForm.form.value.addressLine2,
-            }),
-            ...(checkoutForm.form.value.city && { city: checkoutForm.form.value.city }),
-            ...(checkoutForm.form.value.postalCode && {
-                postal_code: checkoutForm.form.value.postalCode,
-            }),
-            ...(checkoutForm.form.value.state && { state: checkoutForm.form.value.state }),
-            ...{ country: checkoutForm.form.value.country ?? '' },
+            ...(billing.addressLine1 && { line1: billing.addressLine1 }),
+            ...(billing.addressLine2 && { line2: billing.addressLine2 }),
+            ...(billing.city && { city: billing.city }),
+            ...(billing.postalCode && { postal_code: billing.postalCode }),
+            ...(billing.state && { state: billing.state }),
+            ...{ country: billing.country ?? '' },
         };
 
         const scheduleInfo = getFirstPricingPlanScheduleOfType({

@@ -220,6 +220,39 @@ describe('CheckoutForm.lib', () => {
             });
         });
 
+        // The VAT field and the order itself follow the billing country, so the preview does too.
+        it('keeps the VAT number of a company billed in the EU that ships to the US', () => {
+            const company = {
+                ...state,
+                type: 'ORGANIZATION',
+                companyLegalName: 'Acme',
+                companyVatNumber: 'NL123456789B01',
+                shippingCountry: 'US',
+            } as CheckoutFormState;
+
+            expect(toPreviewCustomer(company, { isShipped: true })).toMatchObject({
+                organization: {
+                    registered_address: { country: 'US' },
+                    tax_ids: [{ id: 'NL123456789B01' }],
+                },
+            });
+        });
+
+        it('leaves out the VAT number of a company billed in the US that ships to the EU', () => {
+            const company = {
+                ...state,
+                type: 'ORGANIZATION',
+                country: 'US',
+                companyLegalName: 'Acme',
+                companyVatNumber: 'NL123456789B01',
+                shippingCountry: 'NL',
+            } as CheckoutFormState;
+
+            expect(toPreviewCustomer(company, { isShipped: true })).not.toHaveProperty(
+                'organization.tax_ids',
+            );
+        });
+
         it('prices any other order at the billing address', () => {
             expect(toPreviewCustomer(state, { isShipped: false })).toMatchObject({
                 individual: { residential_address: { country: 'NL', postal_code: '1000AA' } },
@@ -345,6 +378,25 @@ describe('CheckoutForm.lib', () => {
                 addressLine1: 'Main street 1',
                 addressLine2: 'Second floor',
                 postalCode: '1000AA',
+                city: 'Amsterdam',
+                state: undefined,
+                country: 'NL',
+            });
+        });
+
+        it('copies the shipping address cleaned up, as it is sent', () => {
+            expect(
+                billingAddressFromShipping({
+                    shippingAddressLine1: ' Main street 1 ',
+                    shippingAddressLine2: '  ',
+                    shippingPostalCode: '1012ab',
+                    shippingCity: 'Amsterdam',
+                    shippingCountry: 'NL',
+                } as CheckoutFormState),
+            ).toEqual({
+                addressLine1: 'Main street 1',
+                addressLine2: undefined,
+                postalCode: '1012AB',
                 city: 'Amsterdam',
                 state: undefined,
                 country: 'NL',

@@ -166,6 +166,18 @@ export type BillingAddressFields = Pick<
     'addressLine1' | 'addressLine2' | 'postalCode' | 'city' | 'state' | 'country'
 >;
 
+const cleaned = (value: string | undefined): string | undefined => value?.trim() || undefined;
+
+/** A billing address as it is sent: trimmed, empty fields left out, the postal code in capitals. */
+export const cleanBillingAddress = (address: BillingAddressFields): BillingAddressFields => ({
+    addressLine1: cleaned(address.addressLine1),
+    addressLine2: cleaned(address.addressLine2),
+    postalCode: cleaned(address.postalCode)?.toUpperCase(),
+    city: cleaned(address.city),
+    state: cleaned(address.state),
+    country: address.country,
+});
+
 /**
  * The billing address as the shipping one, for while the customer asks to be billed where the
  * order ships. Everything downstream reads the billing fields, so the copy happens once here
@@ -179,14 +191,14 @@ export const billingAddressFromShipping = (
     const used = new Set(getShippingAddressFields(format));
     const value = (field: ShippingAddressField) => (used.has(field) ? state[field] : undefined);
 
-    return {
+    return cleanBillingAddress({
         addressLine1: value('shippingAddressLine1'),
         addressLine2: value('shippingAddressLine2'),
         postalCode: value('shippingPostalCode'),
         city: value('shippingCity'),
         state: value('shippingState'),
         country: state.shippingCountry,
-    };
+    });
 };
 
 /**
@@ -257,19 +269,26 @@ export const getShippingPreviewFields = (country: CountryCode | undefined): Ship
 
 /**
  * The customer the invoice preview is priced for. A shipped order is taxed where it ships, so its
- * preview reads the shipping address; any other order reads the billing address.
+ * preview reads the shipping address; any other order reads the billing address. The VAT number
+ * belongs to the customer billed, so the billing country decides whether it counts, as it does
+ * for the order itself.
  */
 export const toPreviewCustomer = (
     state: CheckoutFormState,
     { isShipped, format }: { isShipped: boolean; format?: AddressFormat },
 ): Partial<Customer> =>
-    toCustomer(isShipped ? { ...state, ...billingAddressFromShipping(state, format) } : state);
+    toCustomer(isShipped ? { ...state, ...billingAddressFromShipping(state, format) } : state, {
+        withVatNumber: isVatNumberShown(state),
+    });
 
 /**
  * Map the checkout form state onto the customer it describes, so consumers that work with
  * customers (the invoice preview for instance) do not have to know about this form.
  */
-export const toCustomer = (state: Partial<CheckoutFormState>): Partial<Customer> => {
+export const toCustomer = (
+    state: Partial<CheckoutFormState>,
+    { withVatNumber = isVatNumberShown(state) }: { withVatNumber?: boolean } = {},
+): Partial<Customer> => {
     const address: Address = {
         ...(state.addressLine1 && { line1: state.addressLine1 }),
         ...(state.addressLine2 && { line2: state.addressLine2 }),
@@ -286,7 +305,7 @@ export const toCustomer = (state: Partial<CheckoutFormState>): Partial<Customer>
                 legal_name: state.companyLegalName ?? '',
                 registered_address: address,
                 ...(state.companyVatNumber &&
-                    isVatNumberShown(state) && {
+                    withVatNumber && {
                         tax_ids: [
                             { id: state.companyVatNumber, type: DEFAULT_TAX_IDENTIFIER_TYPE },
                         ],

@@ -1179,6 +1179,41 @@ describe('useCheckoutView', () => {
             }
         });
 
+        it('cleans up a billing address entered apart from the shipping one', () => {
+            mockUseCheckoutForm.mockReturnValue(
+                createMockCheckoutForm({
+                    ...shippedForm,
+                    billingAddressSameAsShipping: false,
+                    addressLine1: ' Invoice street 2 ',
+                    addressLine2: '  ',
+                    postalCode: '1012ab',
+                    city: 'Amsterdam',
+                }),
+            );
+            const result = useCheckoutView({
+                initialCountry: undefined,
+                initialEmail: undefined,
+                subscriptionId: 'sub_123' as PricingPlanSubscription['id'],
+                isShippingAddressRequired: true,
+            });
+
+            expect(
+                result.authorizationContext.value.init_pricing_plan_subscription.customer_details,
+            ).toMatchObject({
+                individual: {
+                    residential_address: {
+                        line1: 'Invoice street 2',
+                        postal_code: '1012AB',
+                        city: 'Amsterdam',
+                        country: 'NL',
+                    },
+                },
+            });
+            expect(
+                result.authorizationContext.value.init_pricing_plan_subscription.customer_details,
+            ).not.toHaveProperty('individual.residential_address.line2');
+        });
+
         // A retried payment names the same address rather than making the customer a second one.
         it('keeps one reference for the whole checkout', () => {
             const checkoutForm = createMockCheckoutForm(shippedForm);

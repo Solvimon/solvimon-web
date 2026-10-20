@@ -278,7 +278,7 @@ const shippingCountryPlaceholder = computed(() =>
                                         defaultMessage: 'Billing address',
                                         id: 'checkout.address.title',
                                         description:
-                                            'Address line 1 of the customer address in the checkout form',
+                                            'Label of the billing address, above its first line, in the checkout and billing information forms',
                                     })
                                 "
                                 :placeholder="

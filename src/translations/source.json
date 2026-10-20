@@ -293,7 +293,7 @@
   },
   "checkout.address.title": {
     "defaultMessage": "Billing address",
-    "description": "Address line 1 of the customer address in the checkout form"
+    "description": "Label of the billing address, above its first line, in the checkout and billing information forms"
   },
   "checkout.agreement.one_off": {
     "defaultMessage": "{due_today} today. One-time purchase.",

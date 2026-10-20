@@ -1,6 +1,7 @@
 import { defineComponent, h, nextTick } from 'vue';
 import { flushPromises, mount } from '@vue/test-utils';
 import type { CountryCode } from '@solvimon/solvimon-types';
+import * as addressFormat from './addressFormat';
 import { useCheckoutForm } from './useCheckoutForm';
 import type { CheckoutFormState } from './CheckoutForm.types';
 
@@ -308,6 +309,24 @@ describe('useCheckoutForm', () => {
             await nextTick();
 
             expect(getResult().getIsShippingFieldRequired('shippingState')).toBe(true);
+        });
+
+        it('tries the address formats again after a failed download', async () => {
+            const formats = await import('./addressFormats.data');
+            const load = vi
+                .spyOn(addressFormat, 'loadAddressFormats')
+                .mockRejectedValueOnce(new Error('chunk failed'))
+                .mockResolvedValueOnce(formats);
+            const getResult = mountForm(vi.fn(), { isShippingAddressRequired: true });
+            await flushPromises();
+
+            getResult().form.value.shippingCountry = 'HK' as CountryCode;
+            await nextTick();
+            await flushPromises();
+
+            expect(load).toHaveBeenCalledTimes(2);
+            expect(getResult().getIsShippingFieldRequired('shippingPostalCode')).toBe(false);
+            load.mockRestore();
         });
 
         it('reports a shipped order with no address as invalid', async () => {

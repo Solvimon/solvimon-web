@@ -120,6 +120,7 @@ export function checkout(page: Page) {
         city: page.locator('input[name="city"]'),
         state: page.locator('input[name="state"]'),
         shippingAddress: page.locator('.sv-checkout__shipping-address'),
+        shippingLastName: page.locator('input[name="shipping_last_name"]'),
         shippingAddressLine1: page.locator('input[name="shipping_address_line_1"]'),
         shippingPostalCode: page.locator('input[name="shipping_postal_code"]'),
         shippingCity: page.locator('input[name="shipping_city"]'),

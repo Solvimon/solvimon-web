@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, reactive } from 'vue';
-import { CountrySelect, Input, isValidCountryCode, useIntl } from '@solvimon/solvimon-ui';
+import { CountrySelect, isValidCountryCode, PhoneInput, useIntl } from '@solvimon/solvimon-ui';
 import type { CountryCode } from '@solvimon/solvimon-types';
 import type { ErrorObject } from '@vuelidate/core';
 import type { CheckoutAddressFieldsProps } from './CheckoutAddressFields.types';
@@ -67,7 +67,6 @@ const fields = reactive({
     city: formControlModel(model, keys.city, asOptionalText),
     state: formControlModel(model, keys.state, asOptionalText),
     // Only a shipping address has a recipient; a billing address is the customer's own.
-    phoneNumber: formControlModel(model, 'shippingPhoneNumber', asOptionalText),
     firstName: formControlModel(model, 'shippingFirstName', asOptionalText),
     lastName: formControlModel(model, 'shippingLastName', asOptionalText),
     attentionName: formControlModel(model, 'shippingAttentionName', asOptionalText),
@@ -78,6 +77,14 @@ const country = computed<SelectControlValue>({
     set: (value) => {
         const code = asOptionalText(value);
         model.value[keys.country] = code !== undefined && isCountryCode(code) ? code : undefined;
+    },
+});
+
+/** PhoneInput models a missing number as `null`; the form state as `undefined`. */
+const phoneNumber = computed<string | null>({
+    get: () => model.value.shippingPhoneNumber ?? null,
+    set: (value) => {
+        model.value.shippingPhoneNumber = value ?? undefined;
     },
 });
 
@@ -115,9 +122,9 @@ const localize = (errors?: ErrorObject[]): ErrorObject[] | undefined =>
                 ...error,
                 $message: $t({
                     defaultMessage: 'Enter a postal code in the format of this country',
-                    id: 'checkout.shipping_postal_code.invalid',
+                    id: 'checkout.postal_code.invalid',
                     description:
-                        "Error under a shipping postal code that does not match the destination country's format",
+                        "Error under a shipping or billing postal code that does not match its country's format",
                 }),
             };
         }
@@ -137,7 +144,7 @@ const localize = (errors?: ErrorObject[]): ErrorObject[] | undefined =>
 </script>
 
 <template>
-    <div class="sv-checkout-address-fields flex flex-col gap-3">
+    <div class="sv-checkout-address-fields flex flex-col gap-2">
         <template v-if="isShipping">
             <HiddenLabelInput
                 v-if="isCompany"
@@ -155,7 +162,7 @@ const localize = (errors?: ErrorObject[]): ErrorObject[] | undefined =>
                 "
                 :placeholder="
                     $t({
-                        defaultMessage: 'Contact person...',
+                        defaultMessage: 'Contact person',
                         id: 'checkout.shipping_attention_name.placeholder',
                         description:
                             'Placeholder of the person at the company a shipped order is for the attention of',
@@ -177,7 +184,7 @@ const localize = (errors?: ErrorObject[]): ErrorObject[] | undefined =>
                     "
                     :placeholder="
                         $t({
-                            defaultMessage: 'First name...',
+                            defaultMessage: 'First name',
                             id: 'checkout.shipping_first_name.placeholder',
                             description:
                                 'Placeholder of the first name of the recipient of a shipped order',
@@ -198,7 +205,7 @@ const localize = (errors?: ErrorObject[]): ErrorObject[] | undefined =>
                     "
                     :placeholder="
                         $t({
-                            defaultMessage: 'Last name...',
+                            defaultMessage: 'Last name',
                             id: 'checkout.shipping_last_name.placeholder',
                             description:
                                 'Placeholder of the last name of the recipient of a shipped order',
@@ -208,20 +215,19 @@ const localize = (errors?: ErrorObject[]): ErrorObject[] | undefined =>
                 />
             </div>
         </template>
-        <Input
+        <HiddenLabelInput
             v-if="shownFields.addressLine1"
             v-model="fields.addressLine1"
             :name="`${namePrefix}address_line_1`"
             :autocomplete="`${section} address-line1`"
-            :label="label"
+            :label="labels.addressLine1Label"
             :placeholder="
                 $t({
-                    defaultMessage: 'Address line 1...',
+                    defaultMessage: 'Address line 1',
                     id: 'checkout.address.line1.placeholder',
                     description: 'Address line 1 of the customer address in the checkout form',
                 }) + suffix('addressLine1')
             "
-            required
             :error="errors?.addressLine1"
         />
         <HiddenLabelInput
@@ -232,7 +238,7 @@ const localize = (errors?: ErrorObject[]): ErrorObject[] | undefined =>
             :label="labels.addressLine2Label"
             :placeholder="
                 $t({
-                    defaultMessage: 'Address line 2...',
+                    defaultMessage: 'Address line 2',
                     id: 'checkout.address.line2.placeholder',
                     description: 'Address line 2 of the customer address in the checkout form',
                 }) + suffix('addressLine2')
@@ -270,18 +276,21 @@ const localize = (errors?: ErrorObject[]): ErrorObject[] | undefined =>
         <CountrySelect
             v-if="withCountry"
             v-model:single-model-value="country"
+            label-screen-reader-only
+            :i18n="{ placeholderDefault: labels.countryPlaceholder }"
             required
             :label="countryLabel ?? labels.countryLabel"
             :name="`${namePrefix}country`"
             :error="errors?.country"
         />
-        <Input
+        <PhoneInput
             v-if="isShipping"
-            v-model="fields.phoneNumber"
+            v-model="phoneNumber"
+            label-screen-reader-only
             required
             name="shipping_phone_number"
             class="sv-checkout__shipping-phone-number"
-            autocomplete="shipping tel"
+            :default-country="model[keys.country]"
             :label="
                 $t({
                     defaultMessage: 'Phone number',
@@ -292,11 +301,11 @@ const localize = (errors?: ErrorObject[]): ErrorObject[] | undefined =>
             "
             :placeholder="
                 $t({
-                    defaultMessage: 'Phone number...',
+                    defaultMessage: 'Phone number',
                     id: 'checkout.shipping_phone_number.placeholder',
                     description:
-                        'Placeholder of the phone number of the recipient of a shipped order',
-                }) + getOptionalSuffix('shippingPhoneNumber')
+                        'Placeholder of the phone number the carrier can reach the recipient of a shipped order on',
+                })
             "
             :error="localize(errors?.phoneNumber)"
         />

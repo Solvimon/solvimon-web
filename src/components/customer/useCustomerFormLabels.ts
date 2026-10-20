@@ -20,7 +20,7 @@ export function useCustomerFormLabels() {
             description: 'The email address of the customer in the checkout form',
         }),
         emailPlaceholder: $t({
-            defaultMessage: 'Email address...',
+            defaultMessage: 'Email address',
             id: 'checkout.email_address.placeholder',
             description: 'The email address of the customer in the checkout form',
         }),
@@ -29,13 +29,18 @@ export function useCustomerFormLabels() {
             id: 'checkout.country.label',
             description: 'The country of the customer in the checkout form',
         }),
+        countryPlaceholder: $t({
+            defaultMessage: 'Billing country',
+            id: 'checkout.country.placeholder',
+            description: 'Placeholder of the billing country select while no country is chosen',
+        }),
         vatNumberLabel: $t({
             defaultMessage: 'VAT number',
             id: 'checkout.vat_number.label',
             description: 'The label for the vat number in the checkout form',
         }),
         vatNumberPlaceholder: $t({
-            defaultMessage: 'VAT number...',
+            defaultMessage: 'VAT number',
             id: 'checkout.vat_number.placeholder',
             description: 'The label for the vat number in the checkout form',
         }),
@@ -45,13 +50,18 @@ export function useCustomerFormLabels() {
             description: 'The legal name of the organization customer in the checkout form',
         }),
         legalNamePlaceholder: $t({
-            defaultMessage: 'Legal entity name...',
+            defaultMessage: 'Legal entity name',
             id: 'checkout.legal_name.placeholder',
             description: 'The legal name of the organization customer in the checkout form',
         }),
         addressTitle: $t({
             defaultMessage: 'Billing address',
             id: 'checkout.address.title',
+            description: 'Address line 1 of the customer address in the checkout form',
+        }),
+        addressLine1Label: $t({
+            defaultMessage: 'Address line 1',
+            id: 'checkout.address.line1.label',
             description: 'Address line 1 of the customer address in the checkout form',
         }),
         addressLine2Label: $t({
@@ -75,17 +85,17 @@ export function useCustomerFormLabels() {
             description: 'State of the customer address in the checkout form',
         }),
         postalCodePlaceholder: $t({
-            defaultMessage: 'Postal code...',
+            defaultMessage: 'Postal code',
             id: 'checkout.address.portal_code.placeholder',
             description: 'Postal code of the customer address in the checkout form',
         }),
         cityPlaceholder: $t({
-            defaultMessage: 'City...',
+            defaultMessage: 'City',
             id: 'checkout.address.city.placeholder',
             description: 'City of the customer address in the checkout form',
         }),
         statePlaceholder: $t({
-            defaultMessage: 'State...',
+            defaultMessage: 'State',
             id: 'checkout.address.state.placeholder',
             description: 'State of the customer address in the checkout form',
         }),

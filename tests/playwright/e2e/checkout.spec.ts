@@ -588,7 +588,7 @@ test.describe('Checkout', () => {
         test('asks where a shipped order goes', async ({ page }) => {
             api = await mountLoaded(page, { useShippingAddresses: true });
 
-            await expect(checkout(page).screen).toContainText('Shipping information');
+            await expect(checkout(page).screen).toContainText('Shipping address');
             await expect(checkout(page).shippingAddress).toBeVisible();
             await expect(checkout(page).shippingAddressLine1).toBeVisible();
         });
@@ -644,6 +644,7 @@ test.describe('Checkout', () => {
                 mocks: { authorizePayment: { body: aSuccessfulAuthorization() } },
             });
 
+            await checkout(page).shippingLastName.fill('Jansen');
             await checkout(page).shippingAddressLine1.fill('Main street 1');
             await checkout(page).shippingPostalCode.fill('1000AA');
             await checkout(page).shippingCity.fill('Amsterdam');
@@ -657,7 +658,8 @@ test.describe('Checkout', () => {
                         shipping_address_details: {
                             recipient: {
                                 type: 'INDIVIDUAL',
-                                phone_number: '+31 6 12345678',
+                                individual: { name: { last_name: 'Jansen' } },
+                                phone_number: '+31612345678',
                                 email: 'customer@example.com',
                             },
                             address: {

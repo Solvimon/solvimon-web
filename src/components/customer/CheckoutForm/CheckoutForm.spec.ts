@@ -1,6 +1,7 @@
 import { defineComponent, h } from 'vue';
 import { flushPromises, mount } from '@vue/test-utils';
 import type { CountryCode } from '@solvimon/solvimon-types';
+import { ErrorHandlingProvider, IntlProvider } from '@solvimon/solvimon-ui';
 import CheckoutForm from './CheckoutForm.vue';
 import type { CheckoutFormState } from './CheckoutForm.types';
 import { useCheckoutForm } from './useCheckoutForm';
@@ -29,18 +30,24 @@ const mountForm = (
                     onRequiredFieldChange: vi.fn(),
                     isShippingAddressRequired,
                 });
+                // The phone input reads the ui's own intl, which the SDK's providers set up.
                 return () =>
-                    h(CheckoutForm, {
-                        modelValue: checkoutForm.form.value,
-                        'onUpdate:modelValue': (value: CheckoutFormState) =>
-                            (checkoutForm.form.value = value),
-                        validation: checkoutForm.validation,
-                        getIsFieldRequired: checkoutForm.getIsFieldRequired,
-                        getIsShippingFieldRequired: checkoutForm.getIsShippingFieldRequired,
-                        shippingAddressFormat: checkoutForm.shippingAddressFormat.value,
-                        isShippingAddressRequired,
-                        isBillingInformationMandatory,
-                    });
+                    h(ErrorHandlingProvider, null, () =>
+                        h(IntlProvider, { locale: 'en-US' }, () =>
+                            h(CheckoutForm, {
+                                modelValue: checkoutForm.form.value,
+                                'onUpdate:modelValue': (value: CheckoutFormState) =>
+                                    (checkoutForm.form.value = value),
+                                validation: checkoutForm.validation,
+                                getIsFieldRequired: checkoutForm.getIsFieldRequired,
+                                getIsShippingFieldRequired: checkoutForm.getIsShippingFieldRequired,
+                                getIsBillingFieldRequired: checkoutForm.getIsBillingFieldRequired,
+                                shippingAddressFormat: checkoutForm.shippingAddressFormat.value,
+                                isShippingAddressRequired,
+                                isBillingInformationMandatory,
+                            }),
+                        ),
+                    );
             },
         }),
         { global: { stubs: { CountrySelect: true } } },
@@ -195,13 +202,47 @@ describe('CheckoutForm', () => {
         const customer = { email: 'jane@example.com', country: 'NL' as CountryCode };
         const shipped = { isShippingAddressRequired: true };
 
-        it('names the block after what it collects', () => {
+        it('asks for the shipping country at the top of the shipping address', () => {
             const { wrapper } = mountForm(customer, shipped);
+            const email = fieldRoot(wrapper, 'email');
+            const shippingCountry = wrapper.find('[name="shipping_country"]');
+            const shippingAddress = wrapper.find('.sv-checkout__shipping-address');
 
             expect(wrapper.text()).toContain('Shipping information');
+            expect(wrapper.text()).not.toContain('Customer information');
+            expect(email.element.compareDocumentPosition(shippingCountry.element)).toBe(
+                Node.DOCUMENT_POSITION_FOLLOWING,
+            );
+            expect(shippingCountry.element.compareDocumentPosition(shippingAddress.element)).toBe(
+                Node.DOCUMENT_POSITION_FOLLOWING,
+            );
         });
 
-        it('asks where the order ships, country and all', () => {
+        it('offers to bill to the shipping address from the shipping address block', () => {
+            const { wrapper } = mountForm(customer, shipped);
+            const checkbox = wrapper.find('.sv-checkout__billing-same-as-shipping');
+
+            expect(checkbox.exists()).toBe(true);
+            expect(
+                checkbox.element.compareDocumentPosition(
+                    wrapper.find('.sv-checkout__shipping-address').element,
+                ),
+            ).toBe(Node.DOCUMENT_POSITION_PRECEDING);
+            expect(wrapper.find('.sv-checkout__billing-section').exists()).toBe(false);
+        });
+
+        it('gives a separate billing address a section of its own', () => {
+            const { wrapper } = mountForm(
+                { ...customer, billingAddressSameAsShipping: false },
+                shipped,
+            );
+            const billingSection = wrapper.find('.sv-checkout__billing-section');
+
+            expect(billingSection.text()).toContain('Billing address');
+            expect(billingSection.find('.sv-checkout__billing-address').exists()).toBe(true);
+        });
+
+        it('asks where the order ships', () => {
             const { wrapper } = mountForm(customer, shipped);
             const shippingBlock = wrapper.find('.sv-checkout__shipping-address');
 
@@ -209,8 +250,6 @@ describe('CheckoutForm', () => {
             expect(fieldRoot(shippingBlock, 'shipping_address_line_1').exists()).toBe(true);
             expect(fieldRoot(shippingBlock, 'shipping_postal_code').exists()).toBe(true);
             expect(fieldRoot(shippingBlock, 'shipping_city').exists()).toBe(true);
-            expect(shippingBlock.find('[name="shipping_country"]').exists()).toBe(true);
-            expect(wrapper.text()).toContain('Shipping address');
         });
 
         it('does not ask for the billing country beside the email', () => {
@@ -246,6 +285,7 @@ describe('CheckoutForm', () => {
             const { wrapper } = mountForm(customer, shipped);
 
             for (const [name, label] of [
+                ['shipping_address_line_1', 'Address line 1'],
                 ['shipping_address_line_2', 'Address line 2'],
                 ['shipping_postal_code', 'Postal code'],
                 ['shipping_city', 'City'],
@@ -260,7 +300,7 @@ describe('CheckoutForm', () => {
         it('asks for a phone number the carrier can reach the recipient on, with the shipping address', async () => {
             const { wrapper, checkoutForm } = mountForm(customer, shipped);
             const shippingBlock = wrapper.find('.sv-checkout__shipping-address');
-            const phoneNumber = fieldRoot(shippingBlock, 'shipping_phone_number');
+            const phoneNumber = shippingBlock.find('.sv-checkout__shipping-phone-number');
 
             expect(phoneNumber.text()).toContain('Phone number');
 
@@ -268,6 +308,19 @@ describe('CheckoutForm', () => {
             await flushPromises();
 
             expect(phoneNumber.text()).toContain('The value is required');
+        });
+
+        it('dials a national phone number from the shipping country', async () => {
+            const { wrapper, checkoutForm } = mountForm(
+                { ...customer, shippingCountry: 'NL' as CountryCode },
+                shipped,
+            );
+
+            await wrapper
+                .find('.sv-checkout__shipping-phone-number input[name="shipping_phone_number"]')
+                .setValue('06 12345678');
+
+            expect(checkoutForm.form.value.shippingPhoneNumber).toBe('+31612345678');
         });
 
         it('asks for no phone number with a separate billing address', () => {
@@ -338,7 +391,7 @@ describe('CheckoutForm', () => {
             await checkoutForm.validation.value.$validate();
             await flushPromises();
 
-            expect(fieldRoot(wrapper, 'shipping_phone_number').text()).toContain(
+            expect(wrapper.find('.sv-checkout__shipping-phone-number').text()).toContain(
                 'Enter a phone number of 7 to 15 digits',
             );
         });
@@ -354,7 +407,6 @@ describe('CheckoutForm', () => {
             expect(autocomplete('shipping_last_name')).toBe('shipping family-name');
             expect(autocomplete('shipping_address_line_1')).toBe('shipping address-line1');
             expect(autocomplete('shipping_postal_code')).toBe('shipping postal-code');
-            expect(autocomplete('shipping_phone_number')).toBe('shipping tel');
             expect(autocomplete('address_line_1')).toBe('billing address-line1');
         });
 

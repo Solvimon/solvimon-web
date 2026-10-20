@@ -127,6 +127,39 @@ export const getRequiredShippingFieldsForCountry = (
     ];
 };
 
+/** The billing field each libaddressinput code stands for; line 2 is never required. */
+const BILLING_ADDRESS_FIELD_BY_CODE: Record<AddressFieldCode, keyof CheckoutFormState> = {
+    A: 'addressLine1',
+    C: 'city',
+    S: 'state',
+    Z: 'postalCode',
+};
+
+/** Used for a separate billing address until the billing country's format has loaded. */
+const FALLBACK_REQUIRED_BILLING_ADDRESS_FIELDS: (keyof CheckoutFormState)[] = [
+    'addressLine1',
+    'postalCode',
+    'city',
+];
+
+/**
+ * The fields a billing address apart from the shipping one has to fill in: the address fields
+ * the billing country requires, on top of what that country asks of a billing address anyway.
+ * Until the country's format has loaded, a street, postal code and city stand in.
+ */
+export const getRequiredBillingAddressFieldsForCountry = (
+    country: CountryCode | undefined,
+    format?: AddressFormat,
+): (keyof CheckoutFormState)[] => {
+    const addressFields = format
+        ? ADDRESS_FIELD_CODES.filter((code) => format.required.includes(code)).map(
+              (code) => BILLING_ADDRESS_FIELD_BY_CODE[code],
+          )
+        : FALLBACK_REQUIRED_BILLING_ADDRESS_FIELDS;
+
+    return [...new Set([...addressFields, ...getRequiredFieldsForCountry(country)])];
+};
+
 /** The billing half of the form state — what an address the customer is invoiced at fills in. */
 export type BillingAddressFields = Pick<
     CheckoutFormState,

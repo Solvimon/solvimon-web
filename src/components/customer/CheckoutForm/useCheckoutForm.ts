@@ -21,6 +21,7 @@ import {
     type AddressFormatTable,
 } from './addressFormat';
 import {
+    getRequiredBillingAddressFieldsForCountry,
     getRequiredFieldsForCountry,
     getRequiredShippingFieldsForCountry,
     billingAddressFromShipping,
@@ -105,14 +106,60 @@ export function useCheckoutForm({
     const getIsShippingFieldRequired = (field: ShippingField): boolean =>
         requiredShippingFields.value.includes(field);
 
+    /** A shipped order billed elsewhere asks the billing address what a parcel's address is asked. */
+    const isBillingAddressSeparate = computed<boolean>(
+        () => isShipped.value && !form.value.billingAddressSameAsShipping,
+    );
+
+    const billingAddressFormat = computed<AddressFormat | undefined>(() =>
+        isBillingAddressSeparate.value && addressFormats.value
+            ? getAddressFormat(addressFormats.value, form.value.country)
+            : undefined,
+    );
+
+    const requiredBillingAddressFields = computed<(keyof CheckoutFormState)[]>(() =>
+        isBillingAddressSeparate.value
+            ? getRequiredBillingAddressFieldsForCountry(
+                  form.value.country,
+                  billingAddressFormat.value,
+              )
+            : [],
+    );
+
+    /**
+     * Whether the customer has to fill in a billing field. Kept apart from `getIsFieldRequired`,
+     * which also decides which changes ask for a new invoice preview.
+     */
+    const getIsBillingFieldRequired = (field: keyof CheckoutFormState): boolean =>
+        getIsFieldRequired(field) || requiredBillingAddressFields.value.includes(field);
+
+    const isPostalCodeValidFor =
+        (format: () => AddressFormat | undefined) =>
+        (value: unknown): boolean => {
+            const addressFormat = format();
+            return (
+                typeof value !== 'string' ||
+                !value.trim() ||
+                !addressFormat ||
+                isPostalCodeValid(addressFormat, value)
+            );
+        };
+
     // A hidden VAT number is not checked: the customer could not see or correct it.
     const validation = useValidation(
         computed(() => ({
             email: { required, email },
             country: { required },
-            state: { required: requiredIf(() => getIsFieldRequired('state')) },
-            addressLine1: { required: requiredIf(() => getIsFieldRequired('addressLine1')) },
-            postalCode: { required: requiredIf(() => getIsFieldRequired('postalCode')) },
+            state: { required: requiredIf(() => getIsBillingFieldRequired('state')) },
+            addressLine1: { required: requiredIf(() => getIsBillingFieldRequired('addressLine1')) },
+            postalCode: {
+                required: requiredIf(() => getIsBillingFieldRequired('postalCode')),
+                postalCodeFormat: {
+                    $validator: isPostalCodeValidFor(() => billingAddressFormat.value),
+                    $message: 'The postal code does not match the country',
+                },
+            },
+            city: { required: requiredIf(() => getIsBillingFieldRequired('city')) },
             companyLegalName: {
                 required: requiredIf(() => form.value.type === 'ORGANIZATION'),
             },
@@ -123,11 +170,7 @@ export function useCheckoutForm({
             shippingPostalCode: {
                 required: requiredIf(() => getIsShippingFieldRequired('shippingPostalCode')),
                 postalCodeFormat: {
-                    $validator: (value: unknown) =>
-                        typeof value !== 'string' ||
-                        !value.trim() ||
-                        !shippingAddressFormat.value ||
-                        isPostalCodeValid(shippingAddressFormat.value, value),
+                    $validator: isPostalCodeValidFor(() => shippingAddressFormat.value),
                     $message: 'The postal code does not match the country',
                 },
             },
@@ -282,6 +325,7 @@ export function useCheckoutForm({
         validation,
         getIsFieldRequired,
         getIsShippingFieldRequired,
+        getIsBillingFieldRequired,
         shippingAddressFormat,
         updateInitialState,
         initialState: initialFormState,

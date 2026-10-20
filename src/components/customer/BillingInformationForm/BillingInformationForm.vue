@@ -128,6 +128,7 @@ watch(
 
             <CountrySelect
                 v-model:single-model-value="country"
+                :i18n="{ placeholderDefault: labels.countryPlaceholder }"
                 :label="labels.countryLabel"
                 :error="getError('country')"
             />
@@ -179,7 +180,7 @@ watch(
                     "
                     :placeholder="
                         $t({
-                            defaultMessage: 'First name...',
+                            defaultMessage: 'First name',
                             id: 'checkout.first_name.placeholder',
                             description: 'The first name of the customer in the checkout form',
                         })
@@ -199,7 +200,7 @@ watch(
                     "
                     :placeholder="
                         $t({
-                            defaultMessage: 'Last name...',
+                            defaultMessage: 'Last name',
                             id: 'checkout.last_name.placeholder',
                             description: 'The last name of the customer in the checkout form',
                         })
@@ -215,7 +216,7 @@ watch(
                 :label="labels.addressTitle"
                 :placeholder="
                     $t({
-                        defaultMessage: 'Address line 1...',
+                        defaultMessage: 'Address line 1',
                         id: 'checkout.address.line1.placeholder',
                         description: 'Address line 1 of the customer address in the checkout form',
                     })
@@ -229,7 +230,7 @@ watch(
                 :label="labels.addressLine2Label"
                 :placeholder="
                     $t({
-                        defaultMessage: 'Address line 2...',
+                        defaultMessage: 'Address line 2',
                         id: 'checkout.address.line2.placeholder',
                         description: 'Address line 2 of the customer address in the checkout form',
                     })

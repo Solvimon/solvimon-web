@@ -7,8 +7,6 @@ export type CheckoutAddressVariant = 'BILLING' | 'SHIPPING';
 
 export interface CheckoutAddressFieldsProps {
     variant: CheckoutAddressVariant;
-    /** Shown above the first line, naming the address — "Shipping address". */
-    label?: string;
     /** Whether the fields carry a country of their own, below the rest of the address. */
     withCountry?: boolean;
     /** Names that country — "Shipping country". Falls back to the shared billing country label. */

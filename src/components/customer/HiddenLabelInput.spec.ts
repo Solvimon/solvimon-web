@@ -16,12 +16,12 @@ describe('HiddenLabelInput', () => {
 
     it('passes the field on to the input', async () => {
         const wrapper = mount(HiddenLabelInput, {
-            props: { label: 'City', name: 'city', placeholder: 'City...', modelValue: 'Delft' },
+            props: { label: 'City', name: 'city', placeholder: 'City', modelValue: 'Delft' },
         });
 
         const input = wrapper.find('input');
         expect(input.attributes('name')).toBe('city');
-        expect(input.attributes('placeholder')).toBe('City...');
+        expect(input.attributes('placeholder')).toBe('City');
         expect(input.element.value).toBe('Delft');
 
         await input.setValue('Leiden');

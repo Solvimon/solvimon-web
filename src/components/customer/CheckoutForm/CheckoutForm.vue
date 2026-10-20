@@ -8,6 +8,7 @@ import {
     Input,
     isEUCountry,
     isValidCountryCode,
+    Label,
     Section,
     Typography,
     useIntl,
@@ -63,6 +64,14 @@ const country = computed<SelectControlValue>({
     },
 });
 
+const shippingCountry = computed<SelectControlValue>({
+    get: () => model.value.shippingCountry,
+    set: (value) => {
+        const code = asOptionalText(value);
+        model.value.shippingCountry = code !== undefined && isCountryCode(code) ? code : undefined;
+    },
+});
+
 const showVatIdInput = computed(() => isVatNumberShown(model.value));
 
 const { isTaxIDCheckEnabled, isTaxIDCheckPending, taxIdCheckStatus, runTaxIDCheck } =
@@ -89,6 +98,9 @@ const optionalSuffixFor = (isRequired: boolean): string => {
 const getOptionalSuffix = (field: keyof CheckoutFormState): string =>
     optionalSuffixFor(props.getIsFieldRequired(field));
 
+const getBillingOptionalSuffix = (field: keyof CheckoutFormState): string =>
+    optionalSuffixFor(props.getIsBillingFieldRequired?.(field) ?? props.getIsFieldRequired(field));
+
 /** A shipping field answers to the destination country, not to the one the customer is billed in. */
 const getShippingOptionalSuffix = (field: keyof CheckoutFormState): string =>
     optionalSuffixFor(
@@ -109,8 +121,8 @@ const billingAddressSameAsShipping = computed({
     },
 });
 
-/** The shipping flow names the block after what it is for, rather than after the customer. */
-const sectionTitle = computed(() =>
+/** A shipped order's first section holds where it goes, so it is named after that. */
+const customerSectionTitle = computed(() =>
     props.isShippingAddressRequired
         ? $t({
               defaultMessage: 'Shipping information',
@@ -135,135 +147,87 @@ const shippingCountryLabel = computed(() =>
         description: 'Label of the country an order is shipped to in the checkout form',
     }),
 );
+
+const shippingCountryPlaceholder = computed(() =>
+    $t({
+        defaultMessage: 'Shipping country',
+        id: 'checkout.shipping_country.placeholder',
+        description: 'Placeholder of the shipping country select while no country is chosen',
+    }),
+);
 </script>
 
 <template>
     <form :id="FORM_ID" @submit.prevent="$emit('submit', model)">
-        <div class="grid grid-cols-1 gap-1">
-            <Section :title="sectionTitle">
-                <div class="grid grid-cols-1 gap-2">
-                    <template v-if="readOnly">
-                        <Typography variant="body" tag="span" weight="semibold" no-spacing>
-                            {{ model.email }}
-                        </Typography>
-                        <Typography variant="body-sm" tag="span" color="subtle" no-spacing>
-                            {{ readableCountryName }}
-                        </Typography>
-                    </template>
-                    <template v-else>
-                        <Input
-                            v-model="fields.email"
-                            required
-                            type="email"
-                            name="email"
-                            autocomplete="email"
-                            :disabled="!!readOnlyEmail"
-                            :label="labels.emailLabel"
-                            :placeholder="labels.emailPlaceholder + getOptionalSuffix('email')"
-                            :error="validation.value.email.$errors"
-                        />
-
-                        <CountrySelect
-                            v-if="!isShippingAddressRequired"
-                            v-model:single-model-value="country"
-                            required
-                            name="country"
-                            :label="labels.countryLabel + getOptionalSuffix('country')"
-                            :error="validation.value.country.$errors"
-                        >
-                            <template #label-suffix>
-                                <Button
-                                    v-if="!showBillingDetails && !isBillingInformationMandatory"
-                                    size="xs"
-                                    intent="subtle"
-                                    icon-prefix="add"
-                                    class="py-0.5"
-                                    @click="showBillingDetails = true"
-                                >
-                                    {{
-                                        $t({
-                                            defaultMessage: 'More billing details',
-                                            description:
-                                                'Label of the button in the checkout that lets you fill out all billing details',
-                                            id: 'checkout.billing_details.add_billing_details_button.label',
-                                        })
-                                    }}
-                                </Button>
-                                <Button
-                                    v-if="showBillingDetails && !isBillingInformationMandatory"
-                                    size="sm"
-                                    intent="subtle"
-                                    icon-prefix="close"
-                                    class="py-0.5"
-                                    @click="showBillingDetails = false"
-                                    >{{
-                                        $t({
-                                            defaultMessage: 'Remove billing details',
-                                            id: 'checkout.billing_details.remove_billing_details_button.label',
-                                            description:
-                                                'Label of the button in the checkout that lets you remove the billing details',
-                                        })
-                                    }}</Button
-                                >
-                            </template>
-                        </CountrySelect>
-                    </template>
+        <!-- gap-4: the same space as between the checkout's other sections -->
+        <div class="grid grid-cols-1 gap-4">
+            <Section :title="customerSectionTitle">
+                <div v-if="readOnly" class="grid grid-cols-1 gap-2">
+                    <Typography variant="body" tag="span" weight="semibold" no-spacing>
+                        {{ model.email }}
+                    </Typography>
+                    <Typography variant="body-sm" tag="span" color="subtle" no-spacing>
+                        {{ readableCountryName }}
+                    </Typography>
                 </div>
-
-                <!-- shipped orders ask where to, and bill there unless told otherwise -->
-                <div v-if="isShippingAddressRequired && !readOnly" class="mt-2 flex flex-col gap-3">
-                    <CheckoutAddressFields
-                        v-model="model"
-                        variant="SHIPPING"
-                        class="sv-checkout__shipping-address"
-                        with-country
-                        :label="shippingAddressLabel"
-                        :country-label="shippingCountryLabel"
-                        :get-optional-suffix="getShippingOptionalSuffix"
-                        :format="shippingAddressFormat"
-                        :errors="{
-                            addressLine1: validation.value.shippingAddressLine1.$errors,
-                            postalCode: validation.value.shippingPostalCode.$errors,
-                            city: validation.value.shippingCity.$errors,
-                            state: validation.value.shippingState.$errors,
-                            country: validation.value.shippingCountry.$errors,
-                            phoneNumber: validation.value.shippingPhoneNumber.$errors,
-                            lastName: validation.value.shippingLastName.$errors,
-                        }"
+                <div v-else class="flex flex-col gap-2">
+                    <Input
+                        v-model="fields.email"
+                        required
+                        type="email"
+                        name="email"
+                        autocomplete="email"
+                        :disabled="!!readOnlyEmail"
+                        :label="labels.emailLabel"
+                        :placeholder="labels.emailPlaceholder + getOptionalSuffix('email')"
+                        :error="validation.value.email.$errors"
                     />
 
-                    <Checkbox
-                        v-model="billingAddressSameAsShipping"
-                        name="billing_address_same_as_shipping"
-                        class="sv-checkout__billing-same-as-shipping"
-                        :label="
-                            $t({
-                                defaultMessage: 'Billing address is the same as shipping address',
-                                id: 'checkout.billing_address_same_as_shipping.label',
-                                description:
-                                    'Label of the checkbox that bills the order to the address it ships to',
-                            })
-                        "
-                    />
-
-                    <Expand :is-open="!billingAddressSameAsShipping">
-                        <CheckoutAddressFields
-                            v-if="!billingAddressSameAsShipping"
-                            v-model="model"
-                            variant="BILLING"
-                            class="sv-checkout__billing-address"
-                            with-country
-                            :label="labels.addressTitle"
-                            :country-label="labels.countryLabel"
-                            :get-optional-suffix="getOptionalSuffix"
-                            :errors="{
-                                addressLine1: validation.value.addressLine1.$errors,
-                                postalCode: validation.value.postalCode.$errors,
-                                state: validation.value.state.$errors,
-                                country: validation.value.country.$errors,
-                            }"
-                        />
-                    </Expand>
+                    <CountrySelect
+                        v-if="!isShippingAddressRequired"
+                        v-model:single-model-value="country"
+                        :i18n="{ placeholderDefault: labels.countryPlaceholder }"
+                        required
+                        name="country"
+                        :label="labels.countryLabel + getOptionalSuffix('country')"
+                        :error="validation.value.country.$errors"
+                    >
+                        <template #label-suffix>
+                            <Button
+                                v-if="!showBillingDetails && !isBillingInformationMandatory"
+                                size="xs"
+                                intent="subtle"
+                                icon-prefix="add"
+                                class="py-0.5"
+                                @click="showBillingDetails = true"
+                            >
+                                {{
+                                    $t({
+                                        defaultMessage: 'More billing details',
+                                        description:
+                                            'Label of the button in the checkout that lets you fill out all billing details',
+                                        id: 'checkout.billing_details.add_billing_details_button.label',
+                                    })
+                                }}
+                            </Button>
+                            <Button
+                                v-if="showBillingDetails && !isBillingInformationMandatory"
+                                size="sm"
+                                intent="subtle"
+                                icon-prefix="close"
+                                class="py-0.5"
+                                @click="showBillingDetails = false"
+                                >{{
+                                    $t({
+                                        defaultMessage: 'Remove billing details',
+                                        id: 'checkout.billing_details.remove_billing_details_button.label',
+                                        description:
+                                            'Label of the button in the checkout that lets you remove the billing details',
+                                    })
+                                }}</Button
+                            >
+                        </template>
+                    </CountrySelect>
                 </div>
 
                 <Expand
@@ -271,7 +235,7 @@ const shippingCountryLabel = computed(() =>
                     :is-open="showBillingDetails || !!isBillingInformationMandatory"
                 >
                     <div v-if="showBillingDetails || isBillingInformationMandatory">
-                        <div class="mt-2 flex flex-col gap-3">
+                        <div class="mt-2 flex flex-col gap-2">
                             <Input
                                 v-model="fields.addressLine1"
                                 name="address_line_1"
@@ -286,7 +250,7 @@ const shippingCountryLabel = computed(() =>
                                 "
                                 :placeholder="
                                     $t({
-                                        defaultMessage: 'Address line 1...',
+                                        defaultMessage: 'Address line 1',
                                         id: 'checkout.address.line1.placeholder',
                                         description:
                                             'Address line 1 of the customer address in the checkout form',
@@ -302,7 +266,7 @@ const shippingCountryLabel = computed(() =>
                                 :label="labels.addressLine2Label"
                                 :placeholder="
                                     $t({
-                                        defaultMessage: 'Address line 2...',
+                                        defaultMessage: 'Address line 2',
                                         id: 'checkout.address.line2.placeholder',
                                         description:
                                             'Address line 2 of the customer address in the checkout form',
@@ -344,14 +308,83 @@ const shippingCountryLabel = computed(() =>
                         </div>
                     </div>
                 </Expand>
+
+                <div v-if="isShippingAddressRequired && !readOnly" class="mt-2">
+                    <Label tag="span" required>{{ shippingAddressLabel }}</Label>
+                    <div class="flex flex-col gap-2">
+                        <CountrySelect
+                            v-model:single-model-value="shippingCountry"
+                            :i18n="{ placeholderDefault: shippingCountryPlaceholder }"
+                            required
+                            label-screen-reader-only
+                            name="shipping_country"
+                            :label="shippingCountryLabel"
+                            :error="validation.value.shippingCountry.$errors"
+                        />
+                        <CheckoutAddressFields
+                            v-model="model"
+                            variant="SHIPPING"
+                            class="sv-checkout__shipping-address"
+                            :get-optional-suffix="getShippingOptionalSuffix"
+                            :format="shippingAddressFormat"
+                            :errors="{
+                                addressLine1: validation.value.shippingAddressLine1.$errors,
+                                postalCode: validation.value.shippingPostalCode.$errors,
+                                city: validation.value.shippingCity.$errors,
+                                state: validation.value.shippingState.$errors,
+                                phoneNumber: validation.value.shippingPhoneNumber.$errors,
+                                lastName: validation.value.shippingLastName.$errors,
+                            }"
+                        />
+                    </div>
+
+                    <!-- wrapped: Checkbox passes its attributes, margin included, on to its input -->
+                    <div class="mt-2">
+                        <Checkbox
+                            v-model="billingAddressSameAsShipping"
+                            name="billing_address_same_as_shipping"
+                            class="sv-checkout__billing-same-as-shipping"
+                            :label="
+                                $t({
+                                    defaultMessage:
+                                        'Billing address is the same as shipping address',
+                                    id: 'checkout.billing_address_same_as_shipping.label',
+                                    description:
+                                        'Label of the checkbox that bills the order to the address it ships to',
+                                })
+                            "
+                        />
+                    </div>
+                </div>
             </Section>
+
+            <template v-if="isShippingAddressRequired && !readOnly">
+                <Section v-if="!billingAddressSameAsShipping" class="sv-checkout__billing-section">
+                    <Label tag="span" required>{{ labels.addressTitle }}</Label>
+                    <CheckoutAddressFields
+                        v-model="model"
+                        variant="BILLING"
+                        class="sv-checkout__billing-address"
+                        with-country
+                        :country-label="labels.countryLabel"
+                        :get-optional-suffix="getBillingOptionalSuffix"
+                        :errors="{
+                            addressLine1: validation.value.addressLine1.$errors,
+                            postalCode: validation.value.postalCode.$errors,
+                            city: validation.value.city.$errors,
+                            state: validation.value.state.$errors,
+                            country: validation.value.country.$errors,
+                        }"
+                    />
+                </Section>
+            </template>
 
             <Section v-if="!readOnly">
                 <CompanyPurchaseToggle v-model="companyPurchaseModel" no-spacing class="!flex" />
 
                 <Expand :is-open="isCompanyPurchase">
                     <div v-if="isCompanyPurchase">
-                        <div class="mt-4 grid grid-cols-1 gap-3">
+                        <div class="mt-2 flex flex-col gap-2">
                             <Input
                                 v-model="fields.companyLegalName"
                                 required

@@ -256,11 +256,15 @@
     "description": "City of the customer address in the checkout form"
   },
   "checkout.address.city.placeholder": {
-    "defaultMessage": "City...",
+    "defaultMessage": "City",
     "description": "City of the customer address in the checkout form"
   },
+  "checkout.address.line1.label": {
+    "defaultMessage": "Address line 1",
+    "description": "Address line 1 of the customer address in the checkout form"
+  },
   "checkout.address.line1.placeholder": {
-    "defaultMessage": "Address line 1...",
+    "defaultMessage": "Address line 1",
     "description": "Address line 1 of the customer address in the checkout form"
   },
   "checkout.address.line2.label": {
@@ -268,11 +272,11 @@
     "description": "Address line 2 of the customer address in the checkout form"
   },
   "checkout.address.line2.placeholder": {
-    "defaultMessage": "Address line 2...",
+    "defaultMessage": "Address line 2",
     "description": "Address line 2 of the customer address in the checkout form"
   },
   "checkout.address.portal_code.placeholder": {
-    "defaultMessage": "Postal code...",
+    "defaultMessage": "Postal code",
     "description": "Postal code of the customer address in the checkout form"
   },
   "checkout.address.postal_code.label": {
@@ -284,7 +288,7 @@
     "description": "State of the customer address in the checkout form"
   },
   "checkout.address.state.placeholder": {
-    "defaultMessage": "State...",
+    "defaultMessage": "State",
     "description": "State of the customer address in the checkout form"
   },
   "checkout.address.title": {
@@ -347,6 +351,10 @@
     "defaultMessage": "Billing country",
     "description": "The country of the customer in the checkout form"
   },
+  "checkout.country.placeholder": {
+    "defaultMessage": "Billing country",
+    "description": "Placeholder of the billing country select while no country is chosen"
+  },
   "checkout.customize_plan_block.title": {
     "defaultMessage": "Customize plan",
     "description": "The title of the customize plan block in the checkout form"
@@ -356,7 +364,7 @@
     "description": "The email address of the customer in the checkout form"
   },
   "checkout.email_address.placeholder": {
-    "defaultMessage": "Email address...",
+    "defaultMessage": "Email address",
     "description": "The email address of the customer in the checkout form"
   },
   "checkout.express_payment_methods.divider_text": {
@@ -372,7 +380,7 @@
     "description": "The first name of the customer in the checkout form"
   },
   "checkout.first_name.placeholder": {
-    "defaultMessage": "First name...",
+    "defaultMessage": "First name",
     "description": "The first name of the customer in the checkout form"
   },
   "checkout.invoice_preview.no_country_selected_message": {
@@ -388,7 +396,7 @@
     "description": "The last name of the customer in the checkout form"
   },
   "checkout.last_name.placeholder": {
-    "defaultMessage": "Last name...",
+    "defaultMessage": "Last name",
     "description": "The last name of the customer in the checkout form"
   },
   "checkout.legal_name.label": {
@@ -396,7 +404,7 @@
     "description": "The legal name of the organization customer in the checkout form"
   },
   "checkout.legal_name.placeholder": {
-    "defaultMessage": "Legal entity name...",
+    "defaultMessage": "Legal entity name",
     "description": "The legal name of the organization customer in the checkout form"
   },
   "checkout.not_available.contact_support_message": {
@@ -519,6 +527,10 @@
     "defaultMessage": "Your payment could not be confirmed yet and may still go through, so please do not pay again.",
     "description": "Shown when it is not yet known whether an express payment the customer made went through"
   },
+  "checkout.postal_code.invalid": {
+    "defaultMessage": "Enter a postal code in the format of this country",
+    "description": "Error under a shipping or billing postal code that does not match its country's format"
+  },
   "checkout.price_changed": {
     "defaultMessage": "The price changed with your last edit. Check it and pay again.",
     "description": "Shown when a payment is held back because the customer changed the order while it waited for the price"
@@ -588,19 +600,23 @@
     "description": "Label of the person at the company a shipped order is for the attention of"
   },
   "checkout.shipping_attention_name.placeholder": {
-    "defaultMessage": "Contact person...",
+    "defaultMessage": "Contact person",
     "description": "Placeholder of the person at the company a shipped order is for the attention of"
   },
   "checkout.shipping_country.label": {
     "defaultMessage": "Shipping country",
     "description": "Label of the country an order is shipped to in the checkout form"
   },
+  "checkout.shipping_country.placeholder": {
+    "defaultMessage": "Shipping country",
+    "description": "Placeholder of the shipping country select while no country is chosen"
+  },
   "checkout.shipping_first_name.label": {
     "defaultMessage": "First name",
     "description": "Label of the first name of the recipient of a shipped order"
   },
   "checkout.shipping_first_name.placeholder": {
-    "defaultMessage": "First name...",
+    "defaultMessage": "First name",
     "description": "Placeholder of the first name of the recipient of a shipped order"
   },
   "checkout.shipping_information_block.title": {
@@ -612,7 +628,7 @@
     "description": "Label of the last name of the recipient of a shipped order"
   },
   "checkout.shipping_last_name.placeholder": {
-    "defaultMessage": "Last name...",
+    "defaultMessage": "Last name",
     "description": "Placeholder of the last name of the recipient of a shipped order"
   },
   "checkout.shipping_phone_number.invalid": {
@@ -624,12 +640,8 @@
     "description": "Label of the phone number the carrier can reach the recipient of a shipped order on"
   },
   "checkout.shipping_phone_number.placeholder": {
-    "defaultMessage": "Phone number...",
-    "description": "Placeholder of the phone number of the recipient of a shipped order"
-  },
-  "checkout.shipping_postal_code.invalid": {
-    "defaultMessage": "Enter a postal code in the format of this country",
-    "description": "Error under a shipping postal code that does not match the destination country's format"
+    "defaultMessage": "Phone number",
+    "description": "Placeholder of the phone number the carrier can reach the recipient of a shipped order on"
   },
   "checkout.subscription_description": {
     "defaultMessage": "You will be billed <strong>{price}</strong> per {period_name}, starting today.",
@@ -672,7 +684,7 @@
     "description": "The label for the vat number in the checkout form"
   },
   "checkout.vat_number.placeholder": {
-    "defaultMessage": "VAT number...",
+    "defaultMessage": "VAT number",
     "description": "The label for the vat number in the checkout form"
   },
   "components.payment_method_form.continue_button.label": {

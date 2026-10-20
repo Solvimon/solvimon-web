@@ -18,7 +18,7 @@ import type { CountryCode } from '@solvimon/solvimon-types';
 import type { CheckoutFormState, CheckoutFormProps, CheckoutFormEmits } from './CheckoutForm.types';
 import TaxIDCheckNotice from './TaxIDCheckNotice.vue';
 import CheckoutAddressFields from './CheckoutAddressFields.vue';
-import { isShippingField, isVatNumberShown } from './CheckoutForm.lib';
+import { isShippingField, isVatNumberShown, toShippingAddressDetails } from './CheckoutForm.lib';
 import CompanyPurchaseToggle from '@/components/customer/CompanyPurchaseToggle.vue';
 import HiddenLabelInput from '@/components/customer/HiddenLabelInput.vue';
 import { useCustomerFormLabels } from '@/components/customer/useCustomerFormLabels';
@@ -113,6 +113,26 @@ const readableCountryName = computed(() =>
     model.value.country ? getCountryNameByCode(model.value.country) : undefined,
 );
 
+/** Where a paid order ships, one line each, as it was sent with the payment. */
+const shippingAddressLines = computed<string[]>(() => {
+    const { recipient, address } = toShippingAddressDetails(
+        model.value,
+        '',
+        props.shippingAddressFormat,
+    );
+    const name = recipient.individual?.name;
+
+    return [
+        recipient.organization?.attention_name ??
+            [name?.first_name, name?.last_name].filter(Boolean).join(' '),
+        address.line1,
+        address.line2,
+        [address.postal_code, address.city].filter(Boolean).join(' '),
+        address.state,
+        address.country && getCountryNameByCode(address.country),
+    ].filter((line): line is string => !!line);
+});
+
 /** The invoice goes to the shipping address, so there is no billing address to ask for. */
 const billingAddressSameAsShipping = computed({
     get: () => model.value.billingAddressSameAsShipping,
@@ -166,7 +186,20 @@ const shippingCountryPlaceholder = computed(() =>
                     <Typography variant="body" tag="span" weight="semibold" no-spacing>
                         {{ model.email }}
                     </Typography>
-                    <Typography variant="body-sm" tag="span" color="subtle" no-spacing>
+                    <template v-if="isShippingAddressRequired">
+                        <Typography
+                            v-for="(line, index) in shippingAddressLines"
+                            :key="index"
+                            variant="body-sm"
+                            tag="span"
+                            color="subtle"
+                            no-spacing
+                            class="sv-checkout__shipping-address-summary"
+                        >
+                            {{ line }}
+                        </Typography>
+                    </template>
+                    <Typography v-else variant="body-sm" tag="span" color="subtle" no-spacing>
                         {{ readableCountryName }}
                     </Typography>
                 </div>

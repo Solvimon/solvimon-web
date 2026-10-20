@@ -18,7 +18,11 @@ vi.mock('@/services/geolocation', () => ({
 
 const mountForm = (
     initialState: Partial<CheckoutFormState>,
-    { isShippingAddressRequired = false, isBillingInformationMandatory = true } = {},
+    {
+        isShippingAddressRequired = false,
+        isBillingInformationMandatory = true,
+        readOnly = false,
+    } = {},
 ) => {
     let checkoutForm!: ReturnType<typeof useCheckoutForm>;
 
@@ -45,6 +49,7 @@ const mountForm = (
                                 shippingAddressFormat: checkoutForm.shippingAddressFormat.value,
                                 isShippingAddressRequired,
                                 isBillingInformationMandatory,
+                                readOnly,
                             }),
                         ),
                     );
@@ -216,6 +221,28 @@ describe('CheckoutForm', () => {
             expect(shippingCountry.element.compareDocumentPosition(shippingAddress.element)).toBe(
                 Node.DOCUMENT_POSITION_FOLLOWING,
             );
+        });
+
+        it('shows where a paid order ships, not the billing country', () => {
+            const { wrapper } = mountForm(
+                {
+                    ...customer,
+                    country: 'US' as CountryCode,
+                    shippingFirstName: 'Jane',
+                    shippingLastName: 'Doe',
+                    shippingAddressLine1: 'Main street 1',
+                    shippingPostalCode: '1000AA',
+                    shippingCity: 'Amsterdam',
+                    shippingCountry: 'NL' as CountryCode,
+                },
+                { ...shipped, readOnly: true },
+            );
+            const lines = wrapper
+                .findAll('.sv-checkout__shipping-address-summary')
+                .map((line) => line.text());
+
+            expect(lines).toEqual(['Jane Doe', 'Main street 1', '1000AA Amsterdam', 'Netherlands']);
+            expect(wrapper.text()).not.toContain('United States');
         });
 
         it('offers to bill to the shipping address from the shipping address block', () => {

@@ -145,6 +145,16 @@ const localize = (errors?: ErrorObject[]): ErrorObject[] | undefined =>
 
 <template>
     <div class="sv-checkout-address-fields flex flex-col gap-2">
+        <CountrySelect
+            v-if="withCountry"
+            v-model:single-model-value="country"
+            label-screen-reader-only
+            :i18n="{ placeholderDefault: labels.countryPlaceholder }"
+            required
+            :label="countryLabel ?? labels.countryLabel"
+            :name="`${namePrefix}country`"
+            :error="errors?.country"
+        />
         <template v-if="isShipping">
             <HiddenLabelInput
                 v-if="isCompany"
@@ -273,16 +283,6 @@ const localize = (errors?: ErrorObject[]): ErrorObject[] | undefined =>
                 :error="errors?.state"
             />
         </div>
-        <CountrySelect
-            v-if="withCountry"
-            v-model:single-model-value="country"
-            label-screen-reader-only
-            :i18n="{ placeholderDefault: labels.countryPlaceholder }"
-            required
-            :label="countryLabel ?? labels.countryLabel"
-            :name="`${namePrefix}country`"
-            :error="errors?.country"
-        />
         <PhoneInput
             v-if="isShipping"
             v-model="phoneNumber"

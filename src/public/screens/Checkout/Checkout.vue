@@ -1026,11 +1026,11 @@ onMounted(() => {
 
                 <!-- pay button-->
                 <div class="flex flex-col gap-2">
-                    <Skeleton class="sv-checkout__submit-skeleton min-h-[44px]">
+                    <Skeleton class="sv-checkout__submit-skeleton min-h-10">
                         <Button
                             v-if="invoicePreview"
                             type="button"
-                            size="lg"
+                            size="md"
                             class="sv-action sv-action--primary sv-action--full-width sv-checkout__submit w-full"
                             :disabled="
                                 isPromotionCodePending ||

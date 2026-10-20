@@ -75,7 +75,9 @@ export function createRequestService({
         parseError?: unknown,
     ) {
         const statusCode = error instanceof ApiError ? error.statusCode : undefined;
-        const isExpected = !!statusCode && !!options.expectedStatusCodes?.includes(statusCode);
+        const isExpected =
+            (!!statusCode && !!options.expectedStatusCodes?.includes(statusCode)) ||
+            (error instanceof ApiError && !!options.isExpectedError?.(error));
 
         const context = {
             // Path only: a query string carries customer data.

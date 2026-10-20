@@ -41,3 +41,14 @@ export class ApiError extends Error {
 export function isApiError(error: unknown): error is ApiError {
     return error instanceof ApiError;
 }
+
+/**
+ * The API turned down the promotion code the customer typed: one it does not know, or one it knows
+ * but will not apply. A customer's mistake, not a failure of the SDK.
+ */
+export function isRejectedPromotionCode(error: unknown): boolean {
+    if (typeof error !== 'object' || error === null) return false;
+    if ('field' in error && error.field === 'promotion_codes') return true;
+
+    return isApiError(error) && error.statusCode === 404 && error.resourceType === 'PROMOTION_CODE';
+}

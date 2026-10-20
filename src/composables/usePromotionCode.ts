@@ -1,6 +1,7 @@
 import { ref } from 'vue';
 import type { CheckoutFormState } from '@/components/customer/CheckoutForm/CheckoutForm.types';
 import { useLogger } from '@/components/providers/LoggerProvider/composables/useLogger';
+import { isRejectedPromotionCode } from '@/services/apiError';
 
 type PromotionCodeAction = 'apply' | 'remove';
 
@@ -12,10 +13,6 @@ type UsePromotionCodeArgs = {
     formatErrorMessage?: (args: { action: PromotionCodeAction; error: unknown }) => string;
     onInvalidPromotionCode?: () => void;
     onApplyError?: () => void;
-};
-
-type FieldError = {
-    field?: unknown;
 };
 
 export function usePromotionCode({
@@ -35,10 +32,6 @@ export function usePromotionCode({
             : action === 'apply'
               ? 'Promotion code could not be applied. Please try again.'
               : 'Promotion code could not be removed. Please try again.';
-    };
-
-    const isInvalidPromotionCodeError = (error: unknown) => {
-        return isFieldError(error) && error.field === 'promotion_codes';
     };
 
     // An apply or removal settles as the latest preview does, which a later apply or removal may
@@ -63,13 +56,23 @@ export function usePromotionCode({
         } catch (error) {
             if (action !== latestAction) return;
 
-            logger.capture(error, {
-                code: 'PROMOTION_CODE_APPLY_FAILED',
-                message: 'Failed to apply promotion code',
-            });
+            const isRejected = isRejectedPromotionCode(error);
+            if (isRejected) {
+                logger.warn(
+                    'PROMOTION_CODE_REJECTED',
+                    'The promotion code was not accepted',
+                    {},
+                    error,
+                );
+            } else {
+                logger.capture(error, {
+                    code: 'PROMOTION_CODE_APPLY_FAILED',
+                    message: 'Failed to apply promotion code',
+                });
+            }
             setErrorMessage('apply', error);
             onApplyError?.();
-            if (isInvalidPromotionCodeError(error)) {
+            if (isRejected) {
                 onInvalidPromotionCode?.();
             }
             isPromotionCodePending.value = false;
@@ -121,8 +124,4 @@ export function usePromotionCode({
         isPromotionCodePending,
         promotionCodeErrorMessage,
     };
-}
-
-function isFieldError(error: unknown): error is FieldError {
-    return typeof error === 'object' && error !== null && 'field' in error;
 }

@@ -1,6 +1,7 @@
 import {
     billingAddressFromShipping,
     countrySpecificRequiredFieldsMap,
+    getRequiredBillingAddressFieldsForCountry,
     getRequiredFieldsForCountry,
     getRequiredShippingFieldsForCountry,
     isShippingField,
@@ -152,6 +153,47 @@ describe('CheckoutForm.lib', () => {
             const fields = getRequiredShippingFieldsForCountry('US');
 
             expect(fields).toEqual([...new Set(fields)]);
+        });
+    });
+
+    describe('getRequiredBillingAddressFieldsForCountry', () => {
+        it('asks for a street, postal code and city until the country format is known', () => {
+            expect(getRequiredBillingAddressFieldsForCountry('NL')).toEqual([
+                'addressLine1',
+                'postalCode',
+                'city',
+                'email',
+                'country',
+            ]);
+        });
+
+        it('asks for what the billing country requires once its format is known', () => {
+            const unitedStates = { fields: 'ACSZ', required: 'ACSZ' };
+
+            expect(getRequiredBillingAddressFieldsForCountry('US', unitedStates)).toEqual([
+                'addressLine1',
+                'city',
+                'state',
+                'postalCode',
+                'email',
+                'country',
+            ]);
+        });
+
+        it('asks for no postal code where the country has none', () => {
+            const hongKong = { fields: 'ACS', required: 'AS' };
+
+            expect(getRequiredBillingAddressFieldsForCountry('HK', hongKong)).not.toContain(
+                'postalCode',
+            );
+        });
+
+        it('keeps what the country asks of a billing address anyway', () => {
+            const canadaWithoutState = { fields: 'ACZ', required: 'ACZ' };
+
+            expect(getRequiredBillingAddressFieldsForCountry('CA', canadaWithoutState)).toContain(
+                'state',
+            );
         });
     });
 

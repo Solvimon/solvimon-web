@@ -405,6 +405,67 @@ describe('useCheckoutForm', () => {
 
                 expect(onRequiredFieldChange).not.toHaveBeenCalled();
             });
+
+            const mountBilledElsewhere = async () => {
+                const getResult = mountForm(vi.fn(), { isShippingAddressRequired: true });
+                getResult().form.value.billingAddressSameAsShipping = false;
+                await flushPromises();
+                return getResult;
+            };
+
+            it('asks the billing address for a street, postal code and city', async () => {
+                const getResult = await mountBilledElsewhere();
+                const isRequired = getResult().getIsBillingFieldRequired;
+
+                expect(isRequired('addressLine1')).toBe(true);
+                expect(isRequired('postalCode')).toBe(true);
+                expect(isRequired('city')).toBe(true);
+                expect(isRequired('addressLine2')).toBe(false);
+                expect(isRequired('state')).toBe(false);
+            });
+
+            it('asks for a state where the billing country wants one', async () => {
+                const getResult = await mountBilledElsewhere();
+
+                getResult().form.value.country = 'US' as CountryCode;
+                await flushPromises();
+
+                expect(getResult().getIsBillingFieldRequired('state')).toBe(true);
+            });
+
+            it('reports a billing address without a city as invalid', async () => {
+                const getResult = await mountBilledElsewhere();
+
+                await getResult().validation.value.$validate();
+
+                expect(getResult().validation.value.city.$invalid).toBe(true);
+            });
+
+            it("rejects a postal code that does not fit the billing country's format", async () => {
+                const getResult = await mountBilledElsewhere();
+
+                getResult().form.value.postalCode = '12345';
+                await flushPromises();
+                await getResult().validation.value.$validate();
+
+                expect(getResult().validation.value.postalCode.$errors[0]?.$validator).toBe(
+                    'postalCodeFormat',
+                );
+            });
+
+            it('keeps the billing rules of an order billed where it ships', async () => {
+                const getResult = mountForm(vi.fn(), { isShippingAddressRequired: true });
+                await flushPromises();
+
+                expect(getResult().getIsBillingFieldRequired('city')).toBe(false);
+            });
+
+            it('keeps the billing rules of an order that is not shipped', () => {
+                const getResult = mountForm(vi.fn());
+
+                expect(getResult().getIsBillingFieldRequired('city')).toBe(false);
+                expect(getResult().getIsBillingFieldRequired('addressLine1')).toBe(false);
+            });
         });
 
         it('leaves the billing address alone for an order that is not shipped', async () => {

@@ -18,6 +18,11 @@ export interface CheckoutFormProps {
     getIsFieldRequired: (field: keyof CheckoutFormState) => boolean;
     /** The same, for the shipping address, which the destination country answers for. */
     getIsShippingFieldRequired?: (field: ShippingField) => boolean;
+    /**
+     * Whether a billing field has to be filled in. A shipped order billed to another address asks
+     * that address what its country requires; left off, the billing rules decide alone.
+     */
+    getIsBillingFieldRequired?: (field: keyof CheckoutFormState) => boolean;
     /** How the destination country writes an address, which decides the fields it shows. */
     shippingAddressFormat?: AddressFormat;
     readOnly?: boolean;

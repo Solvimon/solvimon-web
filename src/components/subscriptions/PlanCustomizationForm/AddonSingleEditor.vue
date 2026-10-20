@@ -61,6 +61,7 @@ const handleToggle = (pricingId: Pricing['id']) => {
                             <template #default>
                                 <Toggle
                                     :model-value="isSelected(pricing.id)"
+                                    size="sm"
                                     @update:model-value="handleToggle(pricing.id)"
                                 />
                             </template>

@@ -9,7 +9,7 @@ const { $t } = useIntl();
 </script>
 
 <template>
-    <Toggle v-model="model" :no-spacing="noSpacing" label-position="before">
+    <Toggle v-model="model" :no-spacing="noSpacing" size="sm" label-position="before">
         <template #inline-label>
             <div class="flex grow flex-col">
                 <Typography tag="span">{{

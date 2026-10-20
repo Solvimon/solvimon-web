@@ -8,6 +8,7 @@ import type {
 } from '@solvimon/solvimon-types';
 import { downloadFile, withPagination } from '@solvimon/solvimon-ui';
 import { createRequestService } from './requests';
+import { isRejectedPromotionCode } from './apiError';
 import { buildUrl } from './requests.lib';
 import type { GetInvoicePreviewPayload } from './invoices.types';
 import type { CustomerCollectionPayload } from './requests.types';
@@ -109,7 +110,7 @@ export function createInvoicesService(): InvoicesService {
     }: GetInvoicePreviewPayload) {
         return request<InvoicePreview>({
             url: buildUrl(config.apiUrls.transaction, 'portal', 'invoices', 'preview'),
-            options: { method: 'POST' },
+            options: { method: 'POST', isExpectedError: isRejectedPromotionCode },
             data: {
                 // A subscription that is already running is priced as itself, and its customer is
                 // known. One that does not exist yet is priced off the template it would be created

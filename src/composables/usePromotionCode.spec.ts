@@ -6,6 +6,7 @@ import { usePromotionCode } from './usePromotionCode';
 import type { CheckoutFormState } from '@/components/customer/CheckoutForm/CheckoutForm.types';
 import { LOGGER_PROVIDER_INJECTION_KEY } from '@/components/providers/LoggerProvider/LoggerProvider.lib';
 import { providerMockLogger } from '@/test-utils/providerMock';
+import { ApiError } from '@/services/apiError';
 
 type Args = Parameters<typeof usePromotionCode>[0];
 
@@ -309,6 +310,47 @@ describe('usePromotionCode', () => {
             expect(promotionCodeErrorMessage.value).toBe(
                 'Promotion code could not be applied. Please try again.',
             );
+            expect(providerMockLogger.capture).toHaveBeenCalledExactlyOnceWith(error, {
+                code: 'PROMOTION_CODE_APPLY_FAILED',
+                message: 'Failed to apply promotion code',
+            });
+        });
+
+        it('warns rather than reports an error for a code the API does not know', async () => {
+            const error = new ApiError({
+                statusCode: 404,
+                message: 'PROMOTION_CODE was not found using resource id promo',
+                resourceType: 'PROMOTION_CODE',
+                resourceId: 'promo',
+            });
+            const onInvalidPromotionCode = vi.fn();
+            const { applyPromotionCode, updateInvoicePreview } = mountPromotionCode({
+                onInvalidPromotionCode,
+            });
+            updateInvoicePreview.mockRejectedValueOnce(error);
+
+            await applyPromotionCode('promo');
+
+            expect(providerMockLogger.capture).not.toHaveBeenCalled();
+            expect(providerMockLogger.warn).toHaveBeenCalledExactlyOnceWith(
+                'PROMOTION_CODE_REJECTED',
+                'The promotion code was not accepted',
+                {},
+                error,
+            );
+            expect(onInvalidPromotionCode).toHaveBeenCalledTimes(1);
+        });
+
+        it('reports an error for a resource other than the code going missing', async () => {
+            const error = new ApiError({
+                statusCode: 404,
+                resourceType: 'PRICING_PLAN_SUBSCRIPTION',
+            });
+            const { applyPromotionCode, updateInvoicePreview } = mountPromotionCode();
+            updateInvoicePreview.mockRejectedValueOnce(error);
+
+            await applyPromotionCode('promo');
+
             expect(providerMockLogger.capture).toHaveBeenCalledExactlyOnceWith(error, {
                 code: 'PROMOTION_CODE_APPLY_FAILED',
                 message: 'Failed to apply promotion code',

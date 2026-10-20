@@ -368,6 +368,48 @@ describe('createRequestService', () => {
             );
         });
 
+        it('drops to a warning for an error the caller said it expects', async () => {
+            const request = createRequestService();
+            mockFetch.mockResolvedValueOnce(
+                jsonErrorResponse(404, { resource_type: 'PROMOTION_CODE', resource_id: 'promo' }),
+            );
+
+            await expect(
+                request({
+                    url: CALLED_URL,
+                    options: {
+                        isExpectedError: (error) => error.resourceType === 'PROMOTION_CODE',
+                    },
+                }),
+            ).rejects.toThrow();
+
+            expect(loggerError).not.toHaveBeenCalled();
+            expect(loggerWarn).toHaveBeenCalledWith(
+                'REQUEST_FAILED',
+                'Request failed with an expected status',
+                expect.objectContaining({ statusCode: 404 }),
+                expect.any(ApiError),
+            );
+        });
+
+        it('still reports an error the caller does not expect', async () => {
+            const request = createRequestService();
+            mockFetch.mockResolvedValueOnce(
+                jsonErrorResponse(404, { resource_type: 'CUSTOMER', resource_id: 'cust_1' }),
+            );
+
+            await expect(
+                request({
+                    url: CALLED_URL,
+                    options: {
+                        isExpectedError: (error) => error.resourceType === 'PROMOTION_CODE',
+                    },
+                }),
+            ).rejects.toThrow();
+
+            expect(loggerError).toHaveBeenCalled();
+        });
+
         it('still reports a status the caller did not expect', async () => {
             const request = createRequestService();
             mockFetch.mockResolvedValueOnce(jsonErrorResponse(500, {}));

@@ -1,9 +1,6 @@
 import { randomBytes } from '@/utils/sessionReference';
 
-/**
- * A version 4 UUID. `crypto.randomUUID` exists only in secure contexts and recent browsers, and
- * the SDK also runs on plain-http host pages, so it is built from random bytes instead.
- */
+/** A v4 UUID. `crypto.randomUUID` needs a secure context, and hosts may serve plain http. */
 export function randomUuid(): string {
     const bytes = randomBytes(16);
     bytes[6] = (bytes[6]! & 0x0f) | 0x40;

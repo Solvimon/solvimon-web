@@ -19,9 +19,9 @@ import { createSubscriptionsService } from '@/services/subscriptions';
 import { useInvoicePreview } from '@/composables/useInvoicePreview';
 import { useCheckoutForm } from '@/components/customer/CheckoutForm/useCheckoutForm';
 import {
-    cleanBillingAddress,
     DEFAULT_TAX_IDENTIFIER_TYPE,
     isVatNumberShown,
+    readAddress,
     toPreviewCustomer,
     toShippingAddressDetails,
 } from '@/components/customer/CheckoutForm/CheckoutForm.lib';
@@ -101,7 +101,6 @@ export function useCheckoutView({
     initialEmail: string | undefined;
     subscriptionId: PricingPlanSubscription['id'];
     enabledPricingIds?: Pricing['id'][];
-    /** Whether the portal says the order is shipped, which adds a shipping address to the form. */
     isShippingAddressRequired?: boolean;
 }) {
     const logger = useLogger();
@@ -278,9 +277,7 @@ export function useCheckoutView({
         });
     };
 
-    // The customer the checkout creates is new every time, so a fresh reference cannot collide
-    // with an address of someone else's. Made on first use, so an order that is not shipped never
-    // needs one.
+    // The checkout always creates a new customer, so a fresh reference cannot collide.
     let shippingAddressReference: string | undefined;
     const getShippingAddressReference = (): string => (shippingAddressReference ??= randomUuid());
 
@@ -302,18 +299,23 @@ export function useCheckoutView({
                   }
                 : {};
 
-        // A shipped order's billing address is cleaned up like the address it ships to.
-        const billing = isShippingAddressRequired
-            ? cleanBillingAddress(checkoutForm.form.value)
-            : checkoutForm.form.value;
         const address: Address = {
-            ...(billing.addressLine1 && { line1: billing.addressLine1 }),
-            ...(billing.addressLine2 && { line2: billing.addressLine2 }),
-            ...(billing.city && { city: billing.city }),
-            ...(billing.postalCode && { postal_code: billing.postalCode }),
-            ...(billing.state && { state: billing.state }),
-            ...{ country: billing.country ?? '' },
+            ...(checkoutForm.form.value.addressLine1 && {
+                line1: checkoutForm.form.value.addressLine1,
+            }),
+            ...(checkoutForm.form.value.addressLine2 && {
+                line2: checkoutForm.form.value.addressLine2,
+            }),
+            ...(checkoutForm.form.value.city && { city: checkoutForm.form.value.city }),
+            ...(checkoutForm.form.value.postalCode && {
+                postal_code: checkoutForm.form.value.postalCode,
+            }),
+            ...(checkoutForm.form.value.state && { state: checkoutForm.form.value.state }),
+            ...{ country: checkoutForm.form.value.country ?? '' },
         };
+        const billingAddress = isShippingAddressRequired
+            ? readAddress(checkoutForm.form.value, 'BILLING')
+            : address;
 
         const scheduleInfo = getFirstPricingPlanScheduleOfType({
             pricingPlanScheduleInfos: subscription.value?.pricing_plan_schedule_infos ?? [],
@@ -412,13 +414,13 @@ export function useCheckoutView({
                     ...(checkoutForm.form.value.type === 'INDIVIDUAL'
                         ? {
                               individual: {
-                                  residential_address: address,
+                                  residential_address: billingAddress,
                                   ...(name ? { name } : {}),
                               },
                           }
                         : {
                               organization: {
-                                  registered_address: address,
+                                  registered_address: billingAddress,
                                   ...{ legal_name: checkoutForm.form.value.companyLegalName ?? '' },
                                   ...(checkoutForm.form.value.companyVatNumber &&
                                   isVatNumberShown(checkoutForm.form.value) &&

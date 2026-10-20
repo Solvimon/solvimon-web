@@ -37,185 +37,128 @@ export const isVatNumberShown = (
     state: Partial<Pick<CheckoutFormState, 'type' | 'country'>>,
 ): boolean => state.type === 'ORGANIZATION' && state.country !== 'US';
 
-/** The shipping counterpart of each billing field, for rules written against billing ones. */
-const BILLING_TO_SHIPPING_FIELDS: Partial<Record<keyof CheckoutFormState, ShippingField>> = {
-    addressLine1: 'shippingAddressLine1',
-    addressLine2: 'shippingAddressLine2',
-    postalCode: 'shippingPostalCode',
-    city: 'shippingCity',
-    state: 'shippingState',
-    country: 'shippingCountry',
-};
+export type AddressVariant = 'BILLING' | 'SHIPPING';
 
-export type ShippingField =
-    | 'shippingAddressLine1'
-    | 'shippingAddressLine2'
-    | 'shippingPostalCode'
-    | 'shippingCity'
-    | 'shippingState'
-    | 'shippingCountry'
-    | 'shippingPhoneNumber'
-    | 'shippingFirstName'
-    | 'shippingLastName'
-    | 'shippingAttentionName';
+export type AddressPart = 'line1' | 'line2' | 'postalCode' | 'city' | 'state';
 
-/** The shipping address fields that a country may or may not use. */
-export type ShippingAddressField =
-    | 'shippingAddressLine1'
-    | 'shippingAddressLine2'
-    | 'shippingPostalCode'
-    | 'shippingCity'
-    | 'shippingState';
+export const ADDRESS_KEYS = {
+    BILLING: {
+        line1: 'addressLine1',
+        line2: 'addressLine2',
+        postalCode: 'postalCode',
+        city: 'city',
+        state: 'state',
+        country: 'country',
+    },
+    SHIPPING: {
+        line1: 'shippingAddressLine1',
+        line2: 'shippingAddressLine2',
+        postalCode: 'shippingPostalCode',
+        city: 'shippingCity',
+        state: 'shippingState',
+        country: 'shippingCountry',
+    },
+} as const satisfies Record<
+    AddressVariant,
+    Record<AddressPart | 'country', keyof CheckoutFormState>
+>;
 
-/** Whether a field belongs to the shipping address rather than the billing one. */
-export const isShippingField = (field: keyof CheckoutFormState): field is ShippingField =>
-    field.startsWith('shipping');
-
-/** Used until the destination country's format has loaded. */
-const FALLBACK_REQUIRED_SHIPPING_FIELDS: ShippingField[] = [
-    'shippingAddressLine1',
-    'shippingPostalCode',
-    'shippingCity',
-];
-
-const FIELDS_BY_CODE: Record<AddressFieldCode, ShippingAddressField[]> = {
-    A: ['shippingAddressLine1', 'shippingAddressLine2'],
-    C: ['shippingCity'],
-    S: ['shippingState'],
-    Z: ['shippingPostalCode'],
-};
+const ADDRESS_KEY_PARTS = ['line1', 'line2', 'postalCode', 'city', 'state', 'country'] as const;
 
 const ADDRESS_FIELD_CODES: AddressFieldCode[] = ['A', 'C', 'S', 'Z'];
 
-const fieldsForCodes = (codes: string): ShippingAddressField[] =>
+const PARTS_BY_CODE: Record<AddressFieldCode, AddressPart[]> = {
+    A: ['line1', 'line2'],
+    C: ['city'],
+    S: ['state'],
+    Z: ['postalCode'],
+};
+
+const partsFor = (codes: string): AddressPart[] =>
     ADDRESS_FIELD_CODES.filter((code) => codes.includes(code)).flatMap(
-        (code) => FIELDS_BY_CODE[code],
+        (code) => PARTS_BY_CODE[code],
     );
 
-/** The address fields the destination country uses; every one until its format has loaded. */
-export const getShippingAddressFields = (format?: AddressFormat): ShippingAddressField[] =>
-    fieldsForCodes(format?.fields ?? 'ACSZ');
+export const getAddressParts = (format?: AddressFormat): AddressPart[] =>
+    partsFor(format?.fields ?? 'ACSZ');
 
-/**
- * The shipping fields a customer has to fill in: the address fields the destination country
- * requires, the country, a phone number the API requires, and a last name when the parcel goes
- * to a person. Until the country's format has loaded, the rules the billing address uses for
- * that country stand in, on top of a street, postal code and city.
- */
-export const getRequiredShippingFieldsForCountry = (
+export const getTaxedAddressFields = (
+    variant: AddressVariant,
     country: CountryCode | undefined,
-    { format, type }: { format?: AddressFormat; type?: CheckoutFormState['type'] } = {},
-): ShippingField[] => {
-    const addressFields: ShippingField[] = format
-        ? fieldsForCodes(format.required).filter((field) => field !== 'shippingAddressLine2')
-        : [
-              ...FALLBACK_REQUIRED_SHIPPING_FIELDS,
-              ...getRequiredFieldsForCountry(country)
-                  .map((billingField) => BILLING_TO_SHIPPING_FIELDS[billingField])
-                  .filter((field) => field !== undefined),
-          ];
+): (keyof CheckoutFormState)[] => {
+    const required = getRequiredFieldsForCountry(country);
+    return ADDRESS_KEY_PARTS.filter((part) => required.includes(ADDRESS_KEYS.BILLING[part])).map(
+        (part) => ADDRESS_KEYS[variant][part],
+    );
+};
 
-    const recipientFields: ShippingField[] = type === 'ORGANIZATION' ? [] : ['shippingLastName'];
+export const getRequiredAddressFields = (
+    variant: AddressVariant,
+    country: CountryCode | undefined,
+    format?: AddressFormat,
+): (keyof CheckoutFormState)[] => {
+    const parts: AddressPart[] = format
+        ? partsFor(format.required).filter((part) => part !== 'line2')
+        : ['line1', 'postalCode', 'city'];
 
     return [
-        ...new Set<ShippingField>([
-            ...addressFields,
-            'shippingCountry',
-            'shippingPhoneNumber',
-            ...recipientFields,
+        ...new Set([
+            ...parts.map((part) => ADDRESS_KEYS[variant][part]),
+            ...getTaxedAddressFields(variant, country),
         ]),
     ];
 };
 
-/** The billing field each libaddressinput code stands for; line 2 is never required. */
-const BILLING_ADDRESS_FIELD_BY_CODE: Record<AddressFieldCode, keyof CheckoutFormState> = {
-    A: 'addressLine1',
-    C: 'city',
-    S: 'state',
-    Z: 'postalCode',
-};
-
-/** Used for a separate billing address until the billing country's format has loaded. */
-const FALLBACK_REQUIRED_BILLING_ADDRESS_FIELDS: (keyof CheckoutFormState)[] = [
-    'addressLine1',
-    'postalCode',
-    'city',
-];
-
-/**
- * The fields a billing address apart from the shipping one has to fill in: the address fields
- * the billing country requires, on top of what that country asks of a billing address anyway.
- * Until the country's format has loaded, a street, postal code and city stand in.
- */
-export const getRequiredBillingAddressFieldsForCountry = (
-    country: CountryCode | undefined,
-    format?: AddressFormat,
-): (keyof CheckoutFormState)[] => {
-    const addressFields = format
-        ? ADDRESS_FIELD_CODES.filter((code) => format.required.includes(code)).map(
-              (code) => BILLING_ADDRESS_FIELD_BY_CODE[code],
-          )
-        : FALLBACK_REQUIRED_BILLING_ADDRESS_FIELDS;
-
-    return [...new Set([...addressFields, ...getRequiredFieldsForCountry(country)])];
-};
-
-/** The billing half of the form state — what an address the customer is invoiced at fills in. */
-export type BillingAddressFields = Pick<
-    CheckoutFormState,
-    'addressLine1' | 'addressLine2' | 'postalCode' | 'city' | 'state' | 'country'
->;
-
 const cleaned = (value: string | undefined): string | undefined => value?.trim() || undefined;
 
-/** A billing address as it is sent: trimmed, empty fields left out, the postal code in capitals. */
-export const cleanBillingAddress = (address: BillingAddressFields): BillingAddressFields => ({
-    addressLine1: cleaned(address.addressLine1),
-    addressLine2: cleaned(address.addressLine2),
-    postalCode: cleaned(address.postalCode)?.toUpperCase(),
-    city: cleaned(address.city),
-    state: cleaned(address.state),
-    country: address.country,
-});
+// Only the parts the country uses: the others may still hold what was typed for another country.
+export const readAddress = (
+    state: Partial<CheckoutFormState>,
+    variant: AddressVariant,
+    format?: AddressFormat,
+): Address => {
+    const keys = ADDRESS_KEYS[variant];
+    const used = new Set(getAddressParts(format));
+    const value = (part: AddressPart) => (used.has(part) ? cleaned(state[keys[part]]) : undefined);
+    const postalCode = value('postalCode')?.toUpperCase();
 
-/**
- * The billing address as the shipping one, for while the customer asks to be billed where the
- * order ships. Everything downstream reads the billing fields, so the copy happens once here
- * rather than teaching each consumer about shipping.
- */
+    return {
+        ...(value('line1') && { line1: value('line1') }),
+        ...(value('line2') && { line2: value('line2') }),
+        ...(value('city') && { city: value('city') }),
+        ...(value('state') && { state: value('state') }),
+        ...(postalCode && { postal_code: postalCode }),
+        country: state[keys.country] ?? '',
+    };
+};
+
 export const billingAddressFromShipping = (
     state: CheckoutFormState,
     format?: AddressFormat,
-): BillingAddressFields => {
-    // A field the destination country does not use may still hold what was typed for another.
-    const used = new Set(getShippingAddressFields(format));
-    const value = (field: ShippingAddressField) => (used.has(field) ? state[field] : undefined);
+): Pick<
+    CheckoutFormState,
+    'addressLine1' | 'addressLine2' | 'postalCode' | 'city' | 'state' | 'country'
+> => {
+    const address = readAddress(state, 'SHIPPING', format);
 
-    return cleanBillingAddress({
-        addressLine1: value('shippingAddressLine1'),
-        addressLine2: value('shippingAddressLine2'),
-        postalCode: value('shippingPostalCode'),
-        city: value('shippingCity'),
-        state: value('shippingState'),
+    return {
+        addressLine1: address.line1,
+        addressLine2: address.line2,
+        postalCode: address.postal_code,
+        city: address.city,
+        state: address.state,
         country: state.shippingCountry,
-    });
+    };
 };
 
-/**
- * The shipping address as the authorize call takes it. A company receives the parcel by its legal
- * name, to the attention of whoever the customer names; a person by the name given for shipping.
- * Fields the destination country does not use are left out, even if the customer filled them in
- * for a country they picked before.
- */
 export const toShippingAddressDetails = (
     state: CheckoutFormState,
     reference: string,
     format?: AddressFormat,
 ): ShippingAddressDetails => {
-    const used = new Set(getShippingAddressFields(format));
-    const value = (field: ShippingAddressField) =>
-        used.has(field) ? state[field]?.trim() || undefined : undefined;
-    const postalCode = value('shippingPostalCode')?.toUpperCase();
+    const attentionName = cleaned(state.shippingAttentionName);
+    const firstName = cleaned(state.shippingFirstName);
+    const lastName = cleaned(state.shippingLastName);
 
     return {
         reference,
@@ -225,54 +168,25 @@ export const toShippingAddressDetails = (
                 ? {
                       organization: {
                           company_name: state.companyLegalName ?? '',
-                          ...(state.shippingAttentionName?.trim() && {
-                              attention_name: state.shippingAttentionName.trim(),
-                          }),
+                          ...(attentionName && { attention_name: attentionName }),
                       },
                   }
                 : {
                       individual: {
                           name: {
-                              ...(state.shippingFirstName?.trim() && {
-                                  first_name: state.shippingFirstName.trim(),
-                              }),
-                              ...(state.shippingLastName?.trim() && {
-                                  last_name: state.shippingLastName.trim(),
-                              }),
+                              ...(firstName && { first_name: firstName }),
+                              ...(lastName && { last_name: lastName }),
                           },
                       },
                   }),
             phone_number: state.shippingPhoneNumber?.trim() ?? '',
             email: state.email ?? '',
         },
-        address: {
-            ...(value('shippingAddressLine1') && { line1: value('shippingAddressLine1') }),
-            ...(value('shippingAddressLine2') && { line2: value('shippingAddressLine2') }),
-            ...(value('shippingCity') && { city: value('shippingCity') }),
-            ...(value('shippingState') && { state: value('shippingState') }),
-            ...(postalCode && { postal_code: postalCode }),
-            country: state.shippingCountry ?? '',
-        },
+        address: readAddress(state, 'SHIPPING', format),
     };
 };
 
-/**
- * The shipping fields that change the price of a shipped order, which is taxed where it ships:
- * the country, and whatever else that country requires of an address for its taxes.
- */
-export const getShippingPreviewFields = (country: CountryCode | undefined): ShippingField[] => [
-    'shippingCountry',
-    ...getRequiredFieldsForCountry(country)
-        .map((billingField) => BILLING_TO_SHIPPING_FIELDS[billingField])
-        .filter((field) => field !== undefined),
-];
-
-/**
- * The customer the invoice preview is priced for. A shipped order is taxed where it ships, so its
- * preview reads the shipping address; any other order reads the billing address. The VAT number
- * belongs to the customer billed, so the billing country decides whether it counts, as it does
- * for the order itself.
- */
+// A shipped order is taxed where it ships, but its VAT number belongs to the customer billed.
 export const toPreviewCustomer = (
     state: CheckoutFormState,
     { isShipped, format }: { isShipped: boolean; format?: AddressFormat },

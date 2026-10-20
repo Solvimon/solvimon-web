@@ -18,7 +18,7 @@ import type { CountryCode } from '@solvimon/solvimon-types';
 import type { CheckoutFormState, CheckoutFormProps, CheckoutFormEmits } from './CheckoutForm.types';
 import TaxIDCheckNotice from './TaxIDCheckNotice.vue';
 import CheckoutAddressFields from './CheckoutAddressFields.vue';
-import { isShippingField, isVatNumberShown, toShippingAddressDetails } from './CheckoutForm.lib';
+import { isVatNumberShown, toShippingAddressDetails } from './CheckoutForm.lib';
 import CompanyPurchaseToggle from '@/components/customer/CompanyPurchaseToggle.vue';
 import HiddenLabelInput from '@/components/customer/HiddenLabelInput.vue';
 import { useCustomerFormLabels } from '@/components/customer/useCustomerFormLabels';
@@ -80,8 +80,8 @@ const { isTaxIDCheckEnabled, isTaxIDCheckPending, taxIdCheckStatus, runTaxIDChec
 const { $t } = useIntl();
 const labels = useCustomerFormLabels();
 
-const optionalSuffixFor = (isRequired: boolean): string => {
-    if (isRequired) {
+const getOptionalSuffix = (field: keyof CheckoutFormState): string => {
+    if (props.getIsFieldRequired(field)) {
         return '';
     }
 
@@ -95,25 +95,10 @@ const optionalSuffixFor = (isRequired: boolean): string => {
     );
 };
 
-const getOptionalSuffix = (field: keyof CheckoutFormState): string =>
-    optionalSuffixFor(props.getIsFieldRequired(field));
-
-const getBillingOptionalSuffix = (field: keyof CheckoutFormState): string =>
-    optionalSuffixFor(props.getIsBillingFieldRequired?.(field) ?? props.getIsFieldRequired(field));
-
-/** A shipping field answers to the destination country, not to the one the customer is billed in. */
-const getShippingOptionalSuffix = (field: keyof CheckoutFormState): string =>
-    optionalSuffixFor(
-        isShippingField(field)
-            ? (props.getIsShippingFieldRequired?.(field) ?? false)
-            : props.getIsFieldRequired(field),
-    );
-
 const readableCountryName = computed(() =>
     model.value.country ? getCountryNameByCode(model.value.country) : undefined,
 );
 
-/** Where a paid order ships, one line each, as it was sent with the payment. */
 const shippingAddressLines = computed<string[]>(() => {
     const { recipient, address } = toShippingAddressDetails(
         model.value,
@@ -133,7 +118,6 @@ const shippingAddressLines = computed<string[]>(() => {
     ].filter((line): line is string => !!line);
 });
 
-/** The invoice goes to the shipping address, so there is no billing address to ask for. */
 const billingAddressSameAsShipping = computed({
     get: () => model.value.billingAddressSameAsShipping,
     set: (value: boolean) => {
@@ -141,7 +125,6 @@ const billingAddressSameAsShipping = computed({
     },
 });
 
-/** A shipped order's first section holds where it goes, so it is named after that. */
 const customerSectionTitle = computed(() =>
     props.isShippingAddressRequired
         ? $t({
@@ -179,7 +162,6 @@ const shippingCountryPlaceholder = computed(() =>
 
 <template>
     <form :id="FORM_ID" @submit.prevent="$emit('submit', model)">
-        <!-- gap-4: the same space as between the checkout's other sections -->
         <div class="grid grid-cols-1 gap-4">
             <Section :title="customerSectionTitle">
                 <div v-if="readOnly" class="grid grid-cols-1 gap-2">
@@ -360,7 +342,7 @@ const shippingCountryPlaceholder = computed(() =>
                             v-model="model"
                             variant="SHIPPING"
                             class="sv-checkout__shipping-address"
-                            :get-optional-suffix="getShippingOptionalSuffix"
+                            :get-optional-suffix="getOptionalSuffix"
                             :format="shippingAddressFormat"
                             :errors="{
                                 addressLine1: validation.value.shippingAddressLine1.$errors,
@@ -405,7 +387,7 @@ const shippingCountryPlaceholder = computed(() =>
                             class="sv-checkout__billing-address"
                             with-country
                             :country-label="labels.countryLabel"
-                            :get-optional-suffix="getBillingOptionalSuffix"
+                            :get-optional-suffix="getOptionalSuffix"
                             :errors="{
                                 addressLine1: validation.value.addressLine1.$errors,
                                 postalCode: validation.value.postalCode.$errors,

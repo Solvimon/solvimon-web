@@ -1,11 +1,6 @@
-/** One letter per address field, as libaddressinput names them. */
+/** libaddressinput's letters for street, city, state and postal code. */
 export type AddressFieldCode = 'A' | 'C' | 'S' | 'Z';
 
-/**
- * How a country writes an address, as far as the checkout's fields go: which of street (A), city
- * (C), state (S) and postal code (Z) it uses, which of those it requires, and the pattern a
- * postal code follows.
- */
 export interface AddressFormat {
     fields: string;
     required: string;
@@ -19,10 +14,9 @@ export type AddressFormatTable = Pick<
 
 let table: Promise<AddressFormatTable> | undefined;
 
-/** The table is only needed on a checkout that ships, so it is downloaded on first use. */
 export const loadAddressFormats = (): Promise<AddressFormatTable> => {
     table ??= import('./addressFormats.data').catch((error: unknown) => {
-        // A failed download is tried again next time rather than remembered.
+        // Not remembered, so a failed download is tried again.
         table = undefined;
         throw error;
     });
@@ -34,14 +28,10 @@ export const getAddressFormat = (
     country: string | undefined,
 ): AddressFormat => (country && formats.ADDRESS_FORMATS[country]) || formats.DEFAULT_ADDRESS_FORMAT;
 
-/** Whether a postal code fits the country's pattern. A country without one takes anything. */
 export const isPostalCodeValid = (format: AddressFormat, postalCode: string): boolean =>
     !format.postalCode || new RegExp(`^(?:${format.postalCode})$`, 'i').test(postalCode.trim());
 
-/**
- * Whether a phone number could be dialled: digits with the usual separators and an optional
- * leading `+`, and between 7 and 15 digits, the range E.164 allows.
- */
+/** 7 to 15 digits, the range E.164 allows, with the usual separators. */
 export const isPhoneNumberPlausible = (phoneNumber: string): boolean => {
     const trimmed = phoneNumber.trim();
     if (!/^\+?[\d\s\-().]+$/.test(trimmed)) return false;

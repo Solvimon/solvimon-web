@@ -1,4 +1,5 @@
 import type { Customer } from '@solvimon/solvimon-types';
+import type { ApiError } from './apiError';
 
 export type GetDefaultHeaders = (params: {
     headers?: Record<string, string | null>;
@@ -10,6 +11,8 @@ export type RequestOptions = {
     method?: 'GET' | 'POST' | 'PATCH';
     /** Statuses the caller handles itself. Still rejected; only the log entry drops to `warn`. */
     expectedStatusCodes?: number[];
+    /** Like `expectedStatusCodes`, for failures the status alone does not tell apart. */
+    isExpectedError?: (error: ApiError) => boolean;
 };
 
 export type QueryParamValue = string | number | boolean | null | undefined | (string | number)[];

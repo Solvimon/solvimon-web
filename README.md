@@ -391,7 +391,7 @@ The SDK emits structured log entries via the [`onLog`](#error-logging) callback.
 | `PAYMENT_DETAILS_REJECTED`                  | Payment details returned a failed payment                          |
 | `PAYMENT_INTEGRATION_INITIALIZATION_FAILED` | Failed to mount Adyen web drop-in                                  |
 | `PAYMENT_METHOD_OPTIONS_LOAD_FAILED`        | Failed to load the payment methods that can be offered             |
-| `PORTAL_TYPE_NOT_ALLOWED`                   | This element does not accept a portal object of type…              |
+| `PORTAL_TYPE_NOT_ALLOWED`                   | Reserved — not currently emitted                                   |
 | `PROMOTION_CODE_APPLY_FAILED`               | Failed to apply promotion code                                     |
 | `PROMOTION_CODE_REMOVE_FAILED`              | Failed to remove promotion code                                    |
 | `REQUEST_FAILED`                            | Request failed                                                     |
@@ -423,6 +423,7 @@ The SDK emits structured log entries via the [`onLog`](#error-logging) callback.
 | `ON_DEMAND_CHARGE_REFUSED`           | The on-demand order was refused or its payment did not go through                                            |
 | `PAYMENT_INTEGRATION_NOT_RENDERABLE` | No Adyen payment methods to offer                                                                            |
 | `PAYMENT_OUTCOME_UNCONFIRMED`        | The payment outcome could not be confirmed yet                                                               |
+| `PROMOTION_CODE_REJECTED`            | The promotion code was not accepted                                                                          |
 | `RECURRING_AMOUNT_UNRESOLVED`        | Could not tell the recurring part of the invoice from the one-off part; the mandate states the invoice total |
 | `REQUEST_FAILED`                     | Request failed with an expected status                                                                       |
 | `TRANSLATION_LOAD_FAILED`            | Failed to load translations for locale…                                                                      |

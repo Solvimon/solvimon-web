@@ -1165,6 +1165,20 @@ describe('useCheckoutView', () => {
             );
         });
 
+        it('works where crypto.randomUUID does not exist, as on a plain-http host page', () => {
+            vi.stubGlobal('crypto', { getRandomValues: crypto.getRandomValues.bind(crypto) });
+
+            try {
+                expect(
+                    contextFor(true).value.init_pricing_plan_subscription.shipping_address_details
+                        ?.reference,
+                ).toMatch(/^[0-9a-f-]{36}$/);
+                expect(() => contextFor(false).value).not.toThrow();
+            } finally {
+                vi.unstubAllGlobals();
+            }
+        });
+
         // A retried payment names the same address rather than making the customer a second one.
         it('keeps one reference for the whole checkout', () => {
             const checkoutForm = createMockCheckoutForm(shippedForm);

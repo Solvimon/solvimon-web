@@ -125,6 +125,8 @@ export function checkout(page: Page) {
         shippingPostalCode: page.locator('input[name="shipping_postal_code"]'),
         shippingCity: page.locator('input[name="shipping_city"]'),
         shippingPhoneNumber: page.locator('input[name="shipping_phone_number"]'),
+        /** The phone field as a whole, which shows its error below the inputs. */
+        shippingPhoneField: page.locator('.sv-checkout__shipping-phone-number'),
         billingAddress: page.locator('.sv-checkout__billing-address'),
         /** The checkbox's own input is visually hidden, so the label is what a customer clicks. */
         billingSameAsShipping: page.getByText('Billing address is the same as shipping address'),

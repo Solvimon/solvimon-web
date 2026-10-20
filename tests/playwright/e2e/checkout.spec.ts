@@ -680,12 +680,13 @@ test.describe('Checkout', () => {
         test('refuses to pay for a shipped order with no phone number', async ({ page }) => {
             api = await mountLoaded(page, { useShippingAddresses: true });
 
+            await checkout(page).shippingLastName.fill('Jansen');
             await checkout(page).shippingAddressLine1.fill('Main street 1');
             await checkout(page).shippingPostalCode.fill('1000AA');
             await checkout(page).shippingCity.fill('Amsterdam');
             await checkout(page).submit.click();
 
-            await expect(checkout(page).form).toContainText(/required/i);
+            await expect(checkout(page).shippingPhoneField).toContainText(/required/i);
             expect(api.calls('authorizePayment')).toEqual([]);
         });
 

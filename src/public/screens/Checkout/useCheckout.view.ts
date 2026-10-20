@@ -21,7 +21,7 @@ import { useCheckoutForm } from '@/components/customer/CheckoutForm/useCheckoutF
 import {
     DEFAULT_TAX_IDENTIFIER_TYPE,
     isVatNumberShown,
-    toCustomer,
+    toPreviewCustomer,
     toShippingAddressDetails,
 } from '@/components/customer/CheckoutForm/CheckoutForm.lib';
 import type { CheckoutAuthorizationContext } from '@/components/payments/PaymentIntegrationForm/PaymentIntegrationForm.types';
@@ -179,12 +179,17 @@ export function useCheckoutView({
         void loadPaymentMethodOptionsFor(country, amount.value);
     };
 
+    const previewAddress = () => ({
+        isShipped: !!isShippingAddressRequired,
+        format: checkoutForm.shippingAddressFormat.value,
+    });
+
     const loadInvoicePreview = () => {
         const formState = checkoutForm.form.value;
 
         return invoicePreview.loadInvoicePreview({
             subscription: subscription.value!,
-            customer: toCustomer(formState),
+            customer: toPreviewCustomer(formState, previewAddress()),
             seatsValues: formState.seatsValues,
             unitsValues: formState.unitsValues,
             enabledPricingIds: formState.enabledPricingIds ?? enabledPricingIds,
@@ -209,7 +214,7 @@ export function useCheckoutView({
 
         await invoicePreview.loadInvoicePreview({
             subscription: subscription.value!,
-            customer: toCustomer(mergedState),
+            customer: toPreviewCustomer(mergedState, previewAddress()),
             seatsValues: mergedState.seatsValues,
             unitsValues: mergedState.unitsValues,
             enabledPricingIds,

@@ -23,7 +23,7 @@ const REFERENCE_PATTERN = new RegExp(`^${PREFIX}-[${ALPHABET}]{${LENGTH}}$`);
 /** Within one page, every caller gets the same reference even when storage is unavailable. */
 let cached: string | undefined;
 
-function randomBytes(length: number): Uint8Array {
+export function randomBytes(length: number): Uint8Array {
     const bytes = new Uint8Array(length);
 
     if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {

@@ -35,6 +35,7 @@ import { withPreselectedEnabledPricings } from '@/utils/enabledPricings';
 import { splitInvoiceByRecurrence } from '@/utils/invoice';
 import { getInitialMeterValues } from '@/utils/meterValues';
 import { hasPaymentRedirectReturn } from '@/utils/paymentRedirect';
+import { randomUuid } from '@/utils/randomUuid';
 
 /** Unscoped and without a timestamp; only read to be removed. */
 const LEGACY_REDIRECT_FORM_STATE_KEY = 'solvimon_checkout_redirect_state';
@@ -277,8 +278,10 @@ export function useCheckoutView({
     };
 
     // The customer the checkout creates is new every time, so a fresh reference cannot collide
-    // with an address of someone else's.
-    const shippingAddressReference = crypto.randomUUID();
+    // with an address of someone else's. Made on first use, so an order that is not shipped never
+    // needs one.
+    let shippingAddressReference: string | undefined;
+    const getShippingAddressReference = (): string => (shippingAddressReference ??= randomUuid());
 
     const authorizationContext = computed<CheckoutAuthorizationContext>(() => {
         const name: Name =
@@ -400,7 +403,7 @@ export function useCheckoutView({
                 ...(isShippingAddressRequired && {
                     shipping_address_details: toShippingAddressDetails(
                         checkoutForm.form.value,
-                        shippingAddressReference,
+                        getShippingAddressReference(),
                         checkoutForm.shippingAddressFormat.value,
                     ),
                 }),

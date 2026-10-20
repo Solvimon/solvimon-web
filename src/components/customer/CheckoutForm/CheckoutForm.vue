@@ -342,8 +342,10 @@ const shippingCountryPlaceholder = computed(() =>
                     </div>
                 </Expand>
 
-                <div v-if="isShippingAddressRequired && !readOnly" class="mt-2">
-                    <Label tag="span" required>{{ shippingAddressLabel }}</Label>
+                <fieldset v-if="isShippingAddressRequired && !readOnly" class="mt-2">
+                    <legend>
+                        <Label tag="span" required>{{ shippingAddressLabel }}</Label>
+                    </legend>
                     <div class="flex flex-col gap-2">
                         <CountrySelect
                             v-model:single-model-value="shippingCountry"
@@ -388,27 +390,31 @@ const shippingCountryPlaceholder = computed(() =>
                             "
                         />
                     </div>
-                </div>
+                </fieldset>
             </Section>
 
             <template v-if="isShippingAddressRequired && !readOnly">
                 <Section v-if="!billingAddressSameAsShipping" class="sv-checkout__billing-section">
-                    <Label tag="span" required>{{ labels.addressTitle }}</Label>
-                    <CheckoutAddressFields
-                        v-model="model"
-                        variant="BILLING"
-                        class="sv-checkout__billing-address"
-                        with-country
-                        :country-label="labels.countryLabel"
-                        :get-optional-suffix="getBillingOptionalSuffix"
-                        :errors="{
-                            addressLine1: validation.value.addressLine1.$errors,
-                            postalCode: validation.value.postalCode.$errors,
-                            city: validation.value.city.$errors,
-                            state: validation.value.state.$errors,
-                            country: validation.value.country.$errors,
-                        }"
-                    />
+                    <fieldset>
+                        <legend>
+                            <Label tag="span" required>{{ labels.addressTitle }}</Label>
+                        </legend>
+                        <CheckoutAddressFields
+                            v-model="model"
+                            variant="BILLING"
+                            class="sv-checkout__billing-address"
+                            with-country
+                            :country-label="labels.countryLabel"
+                            :get-optional-suffix="getBillingOptionalSuffix"
+                            :errors="{
+                                addressLine1: validation.value.addressLine1.$errors,
+                                postalCode: validation.value.postalCode.$errors,
+                                city: validation.value.city.$errors,
+                                state: validation.value.state.$errors,
+                                country: validation.value.country.$errors,
+                            }"
+                        />
+                    </fieldset>
                 </Section>
             </template>
 

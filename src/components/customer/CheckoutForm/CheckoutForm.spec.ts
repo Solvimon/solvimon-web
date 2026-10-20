@@ -269,6 +269,21 @@ describe('CheckoutForm', () => {
             expect(billingSection.find('.sv-checkout__billing-address').exists()).toBe(true);
         });
 
+        // Both addresses ask for a "Postal code" and a "City"; the group name tells them apart.
+        it('names each address group for assistive technology', () => {
+            const { wrapper } = mountForm(
+                { ...customer, billingAddressSameAsShipping: false },
+                shipped,
+            );
+            const groups = wrapper.findAll('fieldset');
+            const groupOf = (name: string) =>
+                groups.find((group) => group.find('legend').text().includes(name));
+
+            expect(groupOf('Shipping address')?.find('[name="shipping_city"]').exists()).toBe(true);
+            expect(groupOf('Billing address')?.find('[name="city"]').exists()).toBe(true);
+            expect(groupOf('Billing address')?.find('[name="shipping_city"]').exists()).toBe(false);
+        });
+
         it('asks where the order ships', () => {
             const { wrapper } = mountForm(customer, shipped);
             const shippingBlock = wrapper.find('.sv-checkout__shipping-address');

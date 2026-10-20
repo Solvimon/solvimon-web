@@ -1,6 +1,5 @@
 import type { ConfiguredMeterValue, CountryCode, Pricing } from '@solvimon/solvimon-types';
 import type { useCheckoutForm } from './useCheckoutForm';
-import type { ShippingField } from './CheckoutForm.lib';
 import type { AddressFormat } from './addressFormat';
 
 export interface CheckoutFormProps {
@@ -9,21 +8,8 @@ export interface CheckoutFormProps {
     readOnlyEmail?: string;
     showCustomerInfoOnTop?: boolean;
     isBillingInformationMandatory?: boolean;
-    /**
-     * Whether the order is shipped, which the portal decides. The form then asks for a shipping
-     * address first and offers to bill to the same one; left off, it asks only for billing details
-     * exactly as it always has.
-     */
     isShippingAddressRequired?: boolean;
     getIsFieldRequired: (field: keyof CheckoutFormState) => boolean;
-    /** The same, for the shipping address, which the destination country answers for. */
-    getIsShippingFieldRequired?: (field: ShippingField) => boolean;
-    /**
-     * Whether a billing field has to be filled in. A shipped order billed to another address asks
-     * that address what its country requires; left off, the billing rules decide alone.
-     */
-    getIsBillingFieldRequired?: (field: keyof CheckoutFormState) => boolean;
-    /** How the destination country writes an address, which decides the fields it shows. */
     shippingAddressFormat?: AddressFormat;
     readOnly?: boolean;
 }
@@ -34,7 +20,6 @@ export interface CheckoutFormEmits {
 
 export interface CheckoutFormState {
     email: string | undefined;
-    /** The billing country. Where the order ships, `shippingCountry` is the one goods go to. */
     country: CountryCode | undefined;
     type: 'INDIVIDUAL' | 'ORGANIZATION';
     companyLegalName: string | undefined;
@@ -47,27 +32,17 @@ export interface CheckoutFormState {
     city: string | undefined;
     state: string | undefined;
     companyVatNumber: string | undefined;
-    /**
-     * Where the order ships to. Only asked for when the portal says the order is shipped, and kept
-     * apart from the billing address above, which is what the customer is invoiced against.
-     */
     shippingAddressLine1: string | undefined;
     shippingAddressLine2: string | undefined;
     shippingPostalCode: string | undefined;
     shippingCity: string | undefined;
     shippingState: string | undefined;
     shippingCountry: CountryCode | undefined;
-    /** How the carrier reaches the recipient; the API requires one on every shipping address. */
     shippingPhoneNumber: string | undefined;
-    /** Who receives a parcel sent to a person. A carrier needs at least the last name. */
     shippingFirstName: string | undefined;
     shippingLastName: string | undefined;
-    /** Who to hand a parcel sent to a company to, when the customer names someone. */
     shippingAttentionName: string | undefined;
-    /**
-     * Whether the invoice goes to the shipping address. While it does, the billing fields follow
-     * the shipping ones, so everything downstream reads the billing address as it always has.
-     */
+    /** While true, the billing fields follow the shipping ones. */
     billingAddressSameAsShipping: boolean;
     seatsValues: ConfiguredMeterValue[] | undefined;
     unitsValues: ConfiguredMeterValue[] | undefined;

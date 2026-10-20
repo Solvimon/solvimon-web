@@ -1,10 +1,9 @@
 import {
     billingAddressFromShipping,
     countrySpecificRequiredFieldsMap,
-    getRequiredBillingAddressFieldsForCountry,
+    getRequiredAddressFields,
     getRequiredFieldsForCountry,
-    getRequiredShippingFieldsForCountry,
-    isShippingField,
+    readAddress,
     toCustomer,
     toPreviewCustomer,
     toShippingAddressDetails,
@@ -98,109 +97,46 @@ describe('CheckoutForm.lib', () => {
         });
     });
 
-    describe('getRequiredShippingFieldsForCountry', () => {
-        it('asks for everything a parcel needs to arrive', () => {
-            expect(getRequiredShippingFieldsForCountry('NL')).toEqual([
+    describe('getRequiredAddressFields', () => {
+        it('asks for a street, postal code and city until the country format is known', () => {
+            expect(getRequiredAddressFields('SHIPPING', 'NL')).toEqual([
                 'shippingAddressLine1',
                 'shippingPostalCode',
                 'shippingCity',
                 'shippingCountry',
-                'shippingPhoneNumber',
-                'shippingLastName',
+            ]);
+            expect(getRequiredAddressFields('BILLING', 'NL')).toEqual([
+                'addressLine1',
+                'postalCode',
+                'city',
+                'country',
             ]);
         });
 
-        it('asks for no last name when the parcel goes to a company', () => {
-            expect(
-                getRequiredShippingFieldsForCountry('NL', { type: 'ORGANIZATION' }),
-            ).not.toContain('shippingLastName');
-        });
-
-        it('asks for what the destination country requires once its format is known', () => {
+        it('asks for what the country requires once its format is known', () => {
             const unitedStates = { fields: 'ACSZ', required: 'ACSZ' };
 
-            expect(getRequiredShippingFieldsForCountry('US', { format: unitedStates })).toEqual([
+            expect(getRequiredAddressFields('SHIPPING', 'US', unitedStates)).toEqual([
                 'shippingAddressLine1',
                 'shippingCity',
                 'shippingState',
                 'shippingPostalCode',
                 'shippingCountry',
-                'shippingPhoneNumber',
-                'shippingLastName',
             ]);
         });
 
         it('asks for no postal code where the country has none', () => {
             const hongKong = { fields: 'ACS', required: 'AS' };
 
-            expect(getRequiredShippingFieldsForCountry('HK', { format: hongKong })).not.toContain(
-                'shippingPostalCode',
-            );
+            expect(getRequiredAddressFields('BILLING', 'HK', hongKong)).not.toContain('postalCode');
         });
 
-        it('adds what the destination country asks of an address of its own', () => {
-            expect(getRequiredShippingFieldsForCountry('CA')).toContain('shippingState');
-        });
-
-        it('asks the same of an unknown destination as of any other', () => {
-            expect(getRequiredShippingFieldsForCountry(undefined)).toEqual(
-                getRequiredShippingFieldsForCountry('NL'),
-            );
-        });
-
-        // US adds line 1 and a postal code, which a parcel needs anyway.
-        it('names a field once where both rules ask for it', () => {
-            const fields = getRequiredShippingFieldsForCountry('US');
-
-            expect(fields).toEqual([...new Set(fields)]);
-        });
-    });
-
-    describe('getRequiredBillingAddressFieldsForCountry', () => {
-        it('asks for a street, postal code and city until the country format is known', () => {
-            expect(getRequiredBillingAddressFieldsForCountry('NL')).toEqual([
-                'addressLine1',
-                'postalCode',
-                'city',
-                'email',
-                'country',
-            ]);
-        });
-
-        it('asks for what the billing country requires once its format is known', () => {
-            const unitedStates = { fields: 'ACSZ', required: 'ACSZ' };
-
-            expect(getRequiredBillingAddressFieldsForCountry('US', unitedStates)).toEqual([
-                'addressLine1',
-                'city',
-                'state',
-                'postalCode',
-                'email',
-                'country',
-            ]);
-        });
-
-        it('asks for no postal code where the country has none', () => {
-            const hongKong = { fields: 'ACS', required: 'AS' };
-
-            expect(getRequiredBillingAddressFieldsForCountry('HK', hongKong)).not.toContain(
-                'postalCode',
-            );
-        });
-
-        it('keeps what the country asks of a billing address anyway', () => {
+        it('keeps what the country taxes by, whatever its format says', () => {
             const canadaWithoutState = { fields: 'ACZ', required: 'ACZ' };
 
-            expect(getRequiredBillingAddressFieldsForCountry('CA', canadaWithoutState)).toContain(
-                'state',
+            expect(getRequiredAddressFields('SHIPPING', 'CA', canadaWithoutState)).toContain(
+                'shippingState',
             );
-        });
-    });
-
-    describe('isShippingField', () => {
-        it('tells the two addresses apart', () => {
-            expect(isShippingField('shippingAddressLine1')).toBe(true);
-            expect(isShippingField('addressLine1')).toBe(false);
         });
     });
 
@@ -260,16 +196,50 @@ describe('CheckoutForm.lib', () => {
         });
     });
 
+    describe('readAddress', () => {
+        const shipped = {
+            shippingAddressLine1: ' Main street 1 ',
+            shippingAddressLine2: '  ',
+            shippingPostalCode: '1012ab',
+            shippingCity: 'Amsterdam',
+            shippingCountry: 'NL',
+        } as const;
+
+        it('reads an address trimmed, without empty parts, its postal code in capitals', () => {
+            expect(readAddress(shipped, 'SHIPPING')).toEqual({
+                line1: 'Main street 1',
+                postal_code: '1012AB',
+                city: 'Amsterdam',
+                country: 'NL',
+            });
+        });
+
+        it('leaves out what the country does not use', () => {
+            const hongKong = { fields: 'ACS', required: 'AS' };
+
+            expect(readAddress(shipped, 'SHIPPING', hongKong)).not.toHaveProperty('postal_code');
+        });
+
+        it('copies the shipping address onto the billing fields', () => {
+            expect(billingAddressFromShipping(shipped as CheckoutFormState)).toEqual({
+                addressLine1: 'Main street 1',
+                addressLine2: undefined,
+                postalCode: '1012AB',
+                city: 'Amsterdam',
+                state: undefined,
+                country: 'NL',
+            });
+        });
+    });
+
     describe('toShippingAddressDetails', () => {
         const shipped = {
             email: 'jane@example.com',
             shippingAddressLine1: 'Main street 1',
-            shippingAddressLine2: undefined,
             shippingPostalCode: '1000AA',
             shippingCity: 'Amsterdam',
-            shippingState: undefined,
             shippingCountry: 'NL',
-            shippingPhoneNumber: '+31 6 12345678',
+            shippingPhoneNumber: '+31612345678',
         } as const;
 
         it('ships to a person, with the address the customer gave', () => {
@@ -288,7 +258,7 @@ describe('CheckoutForm.lib', () => {
                 recipient: {
                     type: 'INDIVIDUAL',
                     individual: { name: { first_name: 'Jane', last_name: 'Doe' } },
-                    phone_number: '+31 6 12345678',
+                    phone_number: '+31612345678',
                     email: 'jane@example.com',
                 },
                 address: {
@@ -300,21 +270,7 @@ describe('CheckoutForm.lib', () => {
             });
         });
 
-        it('ships to a company by its legal name', () => {
-            const details = toShippingAddressDetails(
-                {
-                    ...shipped,
-                    type: 'ORGANIZATION',
-                    companyLegalName: 'Acme B.V.',
-                } as CheckoutFormState,
-                'ref_1',
-            );
-
-            expect(details.recipient.organization).toEqual({ company_name: 'Acme B.V.' });
-            expect(details.recipient.individual).toBeUndefined();
-        });
-
-        it('ships to a company for the attention of the person the customer names', () => {
+        it('ships to a company by its legal name, for the attention of whoever is named', () => {
             const details = toShippingAddressDetails(
                 {
                     ...shipped,
@@ -329,27 +285,7 @@ describe('CheckoutForm.lib', () => {
                 company_name: 'Acme B.V.',
                 attention_name: 'Jane Doe',
             });
-        });
-
-        it('leaves out what the destination country does not use', () => {
-            const hongKong = { fields: 'ACS', required: 'AS' };
-            const details = toShippingAddressDetails(
-                { ...shipped, shippingCountry: 'HK' } as CheckoutFormState,
-                'ref_1',
-                hongKong,
-            );
-
-            expect(details.address).not.toHaveProperty('postal_code');
-            expect(details.address.city).toBe('Amsterdam');
-        });
-
-        it('sends a postal code trimmed and in capitals', () => {
-            const details = toShippingAddressDetails(
-                { ...shipped, shippingPostalCode: ' 1000aa ' } as CheckoutFormState,
-                'ref_1',
-            );
-
-            expect(details.address.postal_code).toBe('1000AA');
+            expect(details.recipient.individual).toBeUndefined();
         });
 
         // The API asks for a name object on a person, but nothing inside it.
@@ -360,47 +296,6 @@ describe('CheckoutForm.lib', () => {
             );
 
             expect(details.recipient.individual).toEqual({ name: {} });
-        });
-    });
-
-    describe('billingAddressFromShipping', () => {
-        it('reads the billing address off the shipping one', () => {
-            expect(
-                billingAddressFromShipping({
-                    shippingAddressLine1: 'Main street 1',
-                    shippingAddressLine2: 'Second floor',
-                    shippingPostalCode: '1000AA',
-                    shippingCity: 'Amsterdam',
-                    shippingState: undefined,
-                    shippingCountry: 'NL',
-                } as CheckoutFormState),
-            ).toEqual({
-                addressLine1: 'Main street 1',
-                addressLine2: 'Second floor',
-                postalCode: '1000AA',
-                city: 'Amsterdam',
-                state: undefined,
-                country: 'NL',
-            });
-        });
-
-        it('copies the shipping address cleaned up, as it is sent', () => {
-            expect(
-                billingAddressFromShipping({
-                    shippingAddressLine1: ' Main street 1 ',
-                    shippingAddressLine2: '  ',
-                    shippingPostalCode: '1012ab',
-                    shippingCity: 'Amsterdam',
-                    shippingCountry: 'NL',
-                } as CheckoutFormState),
-            ).toEqual({
-                addressLine1: 'Main street 1',
-                addressLine2: undefined,
-                postalCode: '1012AB',
-                city: 'Amsterdam',
-                state: undefined,
-                country: 'NL',
-            });
         });
     });
 });

@@ -5,42 +5,13 @@ import type { CountryCode } from '@solvimon/solvimon-types';
 import type { ErrorObject } from '@vuelidate/core';
 import type { CheckoutAddressFieldsProps } from './CheckoutAddressFields.types';
 import type { CheckoutFormState } from './CheckoutForm.types';
-import { getShippingAddressFields } from './CheckoutForm.lib';
+import { ADDRESS_KEYS, getAddressParts, type AddressPart } from './CheckoutForm.lib';
 import HiddenLabelInput from '@/components/customer/HiddenLabelInput.vue';
 import { useCustomerFormLabels } from '@/components/customer/useCustomerFormLabels';
 import { asOptionalText, formControlModel, type SelectControlValue } from '@/utils/formControl';
 
 // `isValidCountryCode` answers with a plain boolean, so the narrowing is ours to state.
 const isCountryCode = (value: string): value is CountryCode => isValidCountryCode(value);
-
-/**
- * Which state each field reads, per address. An instance keeps the variant it was mounted with —
- * the two addresses are separate branches of the form — so the keys are resolved once.
- */
-const FIELDS_BY_VARIANT = {
-    BILLING: {
-        addressLine1: 'addressLine1',
-        addressLine2: 'addressLine2',
-        postalCode: 'postalCode',
-        city: 'city',
-        state: 'state',
-        country: 'country',
-    },
-    SHIPPING: {
-        addressLine1: 'shippingAddressLine1',
-        addressLine2: 'shippingAddressLine2',
-        postalCode: 'shippingPostalCode',
-        city: 'shippingCity',
-        state: 'shippingState',
-        country: 'shippingCountry',
-    },
-} as const satisfies Record<string, Record<string, keyof CheckoutFormState>>;
-
-/** The name each input is submitted under, so a browser can fill the right address. */
-const NAME_PREFIX_BY_VARIANT = { BILLING: '', SHIPPING: 'shipping_' } as const;
-
-/** The `autocomplete` section, so browser autofill keeps the two addresses apart. */
-const AUTOCOMPLETE_SECTION_BY_VARIANT = { BILLING: 'billing', SHIPPING: 'shipping' } as const;
 
 const GRID_COLUMNS: Record<number, string> = {
     1: 'grid-cols-1',
@@ -55,18 +26,18 @@ const model = defineModel<CheckoutFormState>({ required: true });
 const { $t } = useIntl();
 const labels = useCustomerFormLabels();
 
-const keys = FIELDS_BY_VARIANT[props.variant];
-const namePrefix = NAME_PREFIX_BY_VARIANT[props.variant];
-const section = AUTOCOMPLETE_SECTION_BY_VARIANT[props.variant];
+const keys = ADDRESS_KEYS[props.variant];
 const isShipping = props.variant === 'SHIPPING';
+// The input names and `autocomplete` sections keep the two addresses apart for browser autofill.
+const namePrefix = isShipping ? 'shipping_' : '';
+const section = props.variant.toLowerCase();
 
 const fields = reactive({
-    addressLine1: formControlModel(model, keys.addressLine1, asOptionalText),
-    addressLine2: formControlModel(model, keys.addressLine2, asOptionalText),
+    addressLine1: formControlModel(model, keys.line1, asOptionalText),
+    addressLine2: formControlModel(model, keys.line2, asOptionalText),
     postalCode: formControlModel(model, keys.postalCode, asOptionalText),
     city: formControlModel(model, keys.city, asOptionalText),
     state: formControlModel(model, keys.state, asOptionalText),
-    // Only a shipping address has a recipient; a billing address is the customer's own.
     firstName: formControlModel(model, 'shippingFirstName', asOptionalText),
     lastName: formControlModel(model, 'shippingLastName', asOptionalText),
     attentionName: formControlModel(model, 'shippingAttentionName', asOptionalText),
@@ -88,33 +59,20 @@ const phoneNumber = computed<string | null>({
     },
 });
 
-/** A shipping address shows the fields its country uses; a billing address shows them all. */
-const shownFields = computed(() => {
-    const used = new Set<string>(getShippingAddressFields(isShipping ? props.format : undefined));
-    return {
-        addressLine1: used.has('shippingAddressLine1'),
-        addressLine2: used.has('shippingAddressLine2'),
-        postalCode: used.has('shippingPostalCode'),
-        city: used.has('shippingCity'),
-        state: used.has('shippingState'),
-    };
-});
+const shownParts = computed(() => new Set(getAddressParts(isShipping ? props.format : undefined)));
 
 const localityColumns = computed(
     () =>
         GRID_COLUMNS[
-            [shownFields.value.postalCode, shownFields.value.city, shownFields.value.state].filter(
-                Boolean,
-            ).length
+            (['postalCode', 'city', 'state'] as const).filter((part) => shownParts.value.has(part))
+                .length
         ],
 );
 
 const isCompany = computed(() => model.value.type === 'ORGANIZATION');
 
-const suffix = (field: 'addressLine1' | 'addressLine2' | 'postalCode' | 'city' | 'state') =>
-    props.getOptionalSuffix(keys[field]);
+const suffix = (part: AddressPart) => props.getOptionalSuffix(keys[part]);
 
-/** The format checks name their failure by validator; the message is ours to translate. */
 const localize = (errors?: ErrorObject[]): ErrorObject[] | undefined =>
     errors?.map((error) => {
         if (error.$validator === 'postalCodeFormat') {
@@ -226,7 +184,7 @@ const localize = (errors?: ErrorObject[]): ErrorObject[] | undefined =>
             </div>
         </template>
         <HiddenLabelInput
-            v-if="shownFields.addressLine1"
+            v-if="shownParts.has('line1')"
             v-model="fields.addressLine1"
             :name="`${namePrefix}address_line_1`"
             :autocomplete="`${section} address-line1`"
@@ -236,12 +194,12 @@ const localize = (errors?: ErrorObject[]): ErrorObject[] | undefined =>
                     defaultMessage: 'Address line 1',
                     id: 'checkout.address.line1.placeholder',
                     description: 'Address line 1 of the customer address in the checkout form',
-                }) + suffix('addressLine1')
+                }) + suffix('line1')
             "
             :error="errors?.addressLine1"
         />
         <HiddenLabelInput
-            v-if="shownFields.addressLine2"
+            v-if="shownParts.has('line2')"
             v-model="fields.addressLine2"
             :name="`${namePrefix}address_line_2`"
             :autocomplete="`${section} address-line2`"
@@ -251,12 +209,12 @@ const localize = (errors?: ErrorObject[]): ErrorObject[] | undefined =>
                     defaultMessage: 'Address line 2',
                     id: 'checkout.address.line2.placeholder',
                     description: 'Address line 2 of the customer address in the checkout form',
-                }) + suffix('addressLine2')
+                }) + suffix('line2')
             "
         />
         <div v-if="localityColumns" class="grid gap-2" :class="localityColumns">
             <HiddenLabelInput
-                v-if="shownFields.postalCode"
+                v-if="shownParts.has('postalCode')"
                 v-model="fields.postalCode"
                 :name="`${namePrefix}postal_code`"
                 :autocomplete="`${section} postal-code`"
@@ -265,7 +223,7 @@ const localize = (errors?: ErrorObject[]): ErrorObject[] | undefined =>
                 :error="localize(errors?.postalCode)"
             />
             <HiddenLabelInput
-                v-if="shownFields.city"
+                v-if="shownParts.has('city')"
                 v-model="fields.city"
                 :name="`${namePrefix}city`"
                 :autocomplete="`${section} address-level2`"
@@ -274,7 +232,7 @@ const localize = (errors?: ErrorObject[]): ErrorObject[] | undefined =>
                 :error="errors?.city"
             />
             <HiddenLabelInput
-                v-if="shownFields.state"
+                v-if="shownParts.has('state')"
                 v-model="fields.state"
                 :name="`${namePrefix}state`"
                 :autocomplete="`${section} address-level1`"

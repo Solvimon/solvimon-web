@@ -20,10 +20,7 @@ export interface ChargeOnDemandAuthorizationContext {
     };
 }
 
-/**
- * Where a checkout order ships. The API upserts it by `reference` for the customer the checkout
- * creates and links it to the new subscription. Not in `@solvimon/solvimon-types` yet.
- */
+/** Not in `@solvimon/solvimon-types` yet. */
 export interface ShippingAddressDetails {
     reference: string;
     recipient: {

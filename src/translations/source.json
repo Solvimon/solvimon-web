@@ -1515,9 +1515,21 @@
     "defaultMessage": "subscription",
     "description": "Stands in for the pricing group name in the manage subscription title when no group is known, e.g. \"Manage subscription\""
   },
+  "subscription_management.update_button.current_plan_label": {
+    "defaultMessage": "Your current plan",
+    "description": "Label of the disabled button while the customer has their current plan selected and nothing changed"
+  },
+  "subscription_management.update_button.downgrade_label": {
+    "defaultMessage": "Downgrade plan",
+    "description": "Label of the button that moves the subscription to a lower plan in its group"
+  },
   "subscription_management.update_button.label": {
     "defaultMessage": "Update subscription",
     "description": "Label of the button that commits the subscription change"
+  },
+  "subscription_management.update_button.upgrade_label": {
+    "defaultMessage": "Upgrade plan",
+    "description": "Label of the button that moves the subscription to a higher plan in its group"
   },
   "subscription_management.update_error": {
     "defaultMessage": "Something went wrong. Please try again.",

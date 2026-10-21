@@ -57,6 +57,7 @@ export const ENDPOINTS = {
     invoice: { method: 'GET', path: /^\/v1\/portal\/invoices\/[^/]+$/ },
     invoicePdf: { method: 'GET', path: /^\/v1\/portal\/invoices\/[^/]+\/pdf$/ },
     invoicePreview: { method: 'POST', path: '/v1/portal/invoices/preview' },
+    changePlanInvoicePreview: { method: 'POST', path: '/v1/portal/invoices/change-plan/preview' },
     paymentMethods: { method: 'GET', path: '/v1/portal/payment-methods' },
     updatePaymentMethod: { method: 'PATCH', path: /^\/v1\/portal\/payment-methods\/[^/]+$/ },
     tokenizePaymentMethod: { method: 'POST', path: '/v1/portal/payment-methods/tokenize' },

@@ -21,6 +21,7 @@ import { usePaymentMethods } from '@/composables/usePaymentMethods';
 import { usePaymentMethodOptions } from '@/composables/usePaymentMethodOptions';
 import { useLoadInitialData } from '@/composables/useLoadInitialData';
 import { useSubscriptionUpgradePreview } from '@/composables/useSubscriptionUpgradePreview';
+import { useSubscriptionPlanChangePreview } from '@/composables/useSubscriptionPlanChangePreview';
 import {
     useSubscriptionPlanGroup,
     type SubscriptionPlanOption,
@@ -270,8 +271,8 @@ const {
 watch(
     [enabledPricingIds, subscription, activeScheduleInfo, isCustomized, isChangingPlan],
     ([pricingIds, loadedSubscription, scheduleInfo, customized, isPlanChange]) => {
-        // Nothing is priced that cannot be committed. A plan change is not priced here either: it
-        // moves the subscription off the very schedule this preview is calculated on.
+        // Nothing is priced that cannot be committed. A plan change has a preview of its own: it
+        // moves the subscription off the very schedule this one is calculated on.
         if (!loadedSubscription || pricingIds.length === 0 || customized || isPlanChange) {
             return;
         }
@@ -283,6 +284,42 @@ watch(
         });
     },
     { immediate: true },
+);
+
+const {
+    invoice: planChangeInvoice,
+    isPending: isPlanChangePreviewPending,
+    error: planChangePreviewError,
+    load: loadPlanChangePreview,
+    reset: resetPlanChangePreview,
+} = useSubscriptionPlanChangePreview();
+
+/** Prices the plan picked, and drops that price once the customer is back on their own plan. */
+watch(
+    [subscription, pricingPlanId, isChangingPlan, isCustomized],
+    ([loadedSubscription, planId, isPlanChange, customized]) => {
+        if (!loadedSubscription || !planId || !isPlanChange || customized) {
+            resetPlanChangePreview();
+            return;
+        }
+
+        void loadPlanChangePreview({
+            subscriptionId: loadedSubscription.id,
+            pricingPlanId: planId,
+        });
+    },
+    { immediate: true },
+);
+
+/** The price of what is selected now: the move to another plan, or the pricings on this one. */
+const summaryInvoice = computed(() =>
+    isChangingPlan.value ? planChangeInvoice.value : previewInvoice.value,
+);
+const isSummaryPending = computed(() =>
+    isChangingPlan.value ? isPlanChangePreviewPending.value : isPreviewPending.value,
+);
+const summaryError = computed(() =>
+    isChangingPlan.value ? planChangePreviewError.value : previewError.value,
 );
 
 /** One plan is no choice; the screen only offers the move when the group holds more than one. */
@@ -305,8 +342,8 @@ const isUpdated = ref(false);
 
 /**
  * Only a change whose price the customer has seen can be committed, and only once there is a
- * payment method to charge it to. A plan change is not priced up front, so it only needs a plan to
- * move to.
+ * payment method to charge it to. A plan change only needs a plan to move to; a change on the
+ * current plan needs pricings to enable that differ from what it bills.
  */
 const canUpdate = computed(
     () =>
@@ -318,10 +355,10 @@ const canUpdate = computed(
         (isChangingPlan.value ||
             (Boolean(pricingGroup.value) &&
                 enabledPricingIds.value.length > 0 &&
-                hasChange.value &&
-                !isPreviewPending.value &&
-                !previewError.value &&
-                Boolean(previewInvoice.value))),
+                hasChange.value)) &&
+        !isSummaryPending.value &&
+        !summaryError.value &&
+        Boolean(summaryInvoice.value),
 );
 
 const handleUpdate = async () => {
@@ -550,11 +587,11 @@ const submitButtonAttrs = computed(() => {
                 />
 
                 <SubscriptionManagementSummary
-                    v-else-if="!isCustomized"
+                    v-if="!isCustomized"
                     class="sv-subscription-management__summary"
-                    :invoice="previewInvoice"
-                    :is-pending="isLoading || isPreviewPending"
-                    :has-error="Boolean(previewError)"
+                    :invoice="summaryInvoice"
+                    :is-pending="isLoading || isSummaryPending"
+                    :has-error="Boolean(summaryError)"
                 />
 
                 <ErrorNotification

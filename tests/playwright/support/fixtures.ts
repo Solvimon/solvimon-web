@@ -393,7 +393,7 @@ interface InvoiceOptions {
     description?: string;
 }
 
-function anInvoice({
+export function anInvoice({
     total = '20.00',
     tax = '0.00',
     currency = 'EUR',

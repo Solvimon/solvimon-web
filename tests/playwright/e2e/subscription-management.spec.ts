@@ -417,15 +417,45 @@ test.describe('Subscription management', () => {
             await expect(subscriptionManagement(page).planSelector).toHaveCount(0);
         });
 
-        test('explains when the move lands instead of pricing it', async ({ page }) => {
-            api = await mountLoaded(page, { planGroup: aPricingPlanGroup() });
+        test('explains when the move lands and what it comes to', async ({ page }) => {
+            api = await mountLoaded(page, {
+                planGroup: aPricingPlanGroup(),
+                planChangeTotal: '72.50',
+            });
             const ui = subscriptionManagement(page);
 
             await ui.planSelector.getByText('Scale plan').click();
 
             await expect(ui.planChangeSummary).toContainText('Moving to Scale plan');
             await expect(ui.planChangeSummary).toContainText('takes effect right away');
-            await expect(ui.summary).toHaveCount(0);
+            await expect(ui.summary).toContainText('€72.50');
+        });
+
+        test('prices the move with what change-plan would be sent', async ({ page }) => {
+            api = await mountLoaded(page, { planGroup: aPricingPlanGroup() });
+
+            await subscriptionManagement(page).planSelector.getByText('Scale plan').click();
+
+            const preview = await api.waitForCall('changePlanInvoicePreview');
+            expect(preview.body).toEqual({
+                pricing_plan_subscription_id: SUBSCRIPTION_ID,
+                pricing_plan_id: UPGRADE_PRICING_PLAN_ID,
+            });
+        });
+
+        test('does not move the subscription while its price cannot be loaded', async ({
+            page,
+        }) => {
+            api = await mountLoaded(page, {
+                planGroup: aPricingPlanGroup(),
+                mocks: { changePlanInvoicePreview: { status: 500, body: { message: 'boom' } } },
+            });
+            const ui = subscriptionManagement(page);
+
+            await ui.planSelector.getByText('Scale plan').click();
+
+            await expect(ui.summary).toContainText('Unable to calculate the total');
+            await expect(ui.updateButton).toBeDisabled();
         });
 
         test('promises the next billing period when the group times the move that way', async ({

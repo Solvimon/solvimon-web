@@ -44,7 +44,7 @@ const seatsOf = (pricingId: Pricing['id']) => {
                 <template #title>{{ groupName }}</template>
                 <template #description>{{
                     $t({
-                        defaultMessage: 'Select one',
+                        defaultMessage: 'Select one product',
                         id: 'pricing_group_seats_editor.description.exactly_one',
                         description:
                             'The description of a pricing group of seat-based products of which exactly one is picked',
@@ -52,7 +52,7 @@ const seatsOf = (pricingId: Pricing['id']) => {
                 }}</template>
             </PricingGroupTitle>
 
-            <div role="radiogroup" :aria-label="groupName" class="grid grid-cols-1 gap-1 pt-1">
+            <div class="grid grid-cols-1 gap-1 pt-1">
                 <PricingGroupSeatsOption
                     v-for="pricing in pricings"
                     :key="pricing.id"

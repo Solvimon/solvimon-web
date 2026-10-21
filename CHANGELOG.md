@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- A pricing group that takes exactly one and has seat-based members lists each member as an option with its price per seat and its own seat stepper, under "Select one" (`pricing_group_seats_editor.description.exactly_one`). The picked option is outlined and counts its seats; the others are dimmed, with a disabled stepper at 0, and clicking one, or pressing Enter or Space on it, picks it. A group without seat-based members keeps its radio, select or range picker.
+- A pricing group that takes exactly one and has seat-based members lists each member as an option with a toggle, under "Select one product" (`pricing_group_seats_editor.description.exactly_one`). An option that is not picked shows its price per seat; switching it on picks it in place of the other. The picked option is outlined and shows its "Included seats" (`pricing_group_seats_option.included_seats`) with the price per seat and a stepper; switching it off does nothing, since the group cannot be left empty. A group without seat-based members keeps its radio, select or range picker.
 
 ## [0.1.0-alpha.28] - 2026-10-21
 

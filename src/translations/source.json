@@ -1128,8 +1128,12 @@
     "description": "Shown in place of an element whose portal link has been revoked by the merchant"
   },
   "pricing_group_seats_editor.description.exactly_one": {
-    "defaultMessage": "Select one",
+    "defaultMessage": "Select one product",
     "description": "The description of a pricing group of seat-based products of which exactly one is picked"
+  },
+  "pricing_group_seats_option.included_seats": {
+    "defaultMessage": "Included seats",
+    "description": "The label of the seat count of the picked option in a pricing group of seat-based products"
   },
   "pricing_item_pricing.unsupported_pricing_error": {
     "defaultMessage": "Unsupported pricing",

@@ -1,5 +1,5 @@
 import { mount } from '@vue/test-utils';
-import { StepInput } from '@solvimon/solvimon-ui';
+import { StepInput, Toggle } from '@solvimon/solvimon-ui';
 import type { ConfiguredMeterValue, PricingExtended } from '@solvimon/solvimon-types';
 import PricingGroupSeatsEditor from './PricingGroupSeatsEditor.vue';
 
@@ -70,7 +70,7 @@ const mountEditor = ({
     });
 
 describe('PricingGroupSeatsEditor', () => {
-    it('counts the seats of the picked option and none of the others', () => {
+    it('counts seats on the picked option only', () => {
         const wrapper = mountEditor({
             enabledPricingIds: ['b100'],
             seatsValues: [{ pricing_item_config_id: 'b100-config', number: '3' }],
@@ -78,40 +78,42 @@ describe('PricingGroupSeatsEditor', () => {
 
         const steppers = wrapper.findAllComponents(StepInput);
 
-        expect(steppers.map((stepper) => stepper.props('modelValue'))).toEqual([3, 0]);
-        expect(steppers.map((stepper) => stepper.props('disabled'))).toEqual([false, true]);
+        expect(steppers).toHaveLength(1);
+        expect(steppers[0].props('modelValue')).toBe(3);
         expect(
-            wrapper.findAll('[role="radio"]').map((radio) => radio.attributes('aria-checked')),
-        ).toEqual(['true', 'false']);
+            wrapper.findAllComponents(Toggle).map((toggle) => toggle.props('modelValue')),
+        ).toEqual([true, false]);
     });
 
     it('shows each option at its price per seat', () => {
-        const wrapper = mountEditor({ enabledPricingIds: ['b100'], seatsValues: [] });
+        const wrapper = mountEditor({
+            enabledPricingIds: ['b100'],
+            seatsValues: [{ pricing_item_config_id: 'b100-config', number: '3' }],
+        });
 
         const text = wrapper.text();
-        expect(text).toContain('b100 server');
-        expect(text).toContain('per seat/month');
-        expect(text).toMatch(/45,000\.00/);
-        expect(text).toMatch(/50,000\.00/);
+        expect(text).toContain('Included seats');
+        expect(text).toMatch(/\(.*45,000\.00 per seat\/month\)/);
+        expect(text).toMatch(/50,000\.00 per seat\/month/);
     });
 
-    it('picks an option when it is clicked, in place of the one picked before', async () => {
+    it('picks an option when it is switched on, in place of the one picked before', () => {
         const wrapper = mountEditor({
             enabledPricingIds: ['other-group-pricing', 'b100'],
             seatsValues: [{ pricing_item_config_id: 'b100-config', number: '3' }],
         });
 
-        await wrapper.findAll('[role="radio"]')[1].trigger('click');
+        wrapper.findAllComponents(Toggle)[1].vm.$emit('update:modelValue', true);
 
         expect(wrapper.emitted('update:modelValue')).toEqual([[['other-group-pricing', 'h200']]]);
     });
 
-    it('picks an option from the keyboard', async () => {
+    it('keeps the picked option when it is switched off, since the group takes exactly one', () => {
         const wrapper = mountEditor({ enabledPricingIds: ['b100'], seatsValues: [] });
 
-        await wrapper.findAll('[role="radio"]')[1].trigger('keydown', { key: 'Enter' });
+        wrapper.findAllComponents(Toggle)[0].vm.$emit('update:modelValue', false);
 
-        expect(wrapper.emitted('update:modelValue')).toEqual([[['h200']]]);
+        expect(wrapper.emitted('update:modelValue')).toBeUndefined();
     });
 
     it('changes the seats of the picked option only', () => {
@@ -123,7 +125,7 @@ describe('PricingGroupSeatsEditor', () => {
             ],
         });
 
-        wrapper.findAllComponents(StepInput)[0].vm.$emit('update:modelValue', 4);
+        wrapper.findComponent(StepInput).vm.$emit('update:modelValue', 4);
 
         expect(wrapper.emitted('update:seatsValues')).toEqual([
             [

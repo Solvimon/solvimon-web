@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0-alpha.28] - 2026-10-21
+
 ### Added
 
 - A payment whose outcome is not known yet is no longer reported as failed. A bank debit such as SEPA that is still processing, an authorization answered with a pending payment, and a payment call that got no answer or failed with a 5xx used to show "Payment failed" with a "Try again" button, so a customer whose payment was on its way could pay a second time. The customer is now told the payment may still go through and not to pay again, with no retry, and checkout and the pay invoice screen keep the pay button and the express payment methods off. It is logged as `PAYMENT_OUTCOME_UNCONFIRMED` (warning), and a `payment-failed` event for it carries that code instead of `AUTHORIZATION_FAILED`. Only a call the API turned down (a 4xx) still counts as a failed payment.

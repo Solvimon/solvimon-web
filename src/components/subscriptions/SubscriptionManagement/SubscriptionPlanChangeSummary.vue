@@ -18,11 +18,7 @@ const headline = computed(() =>
     ),
 );
 
-/**
- * When the move lands, in the group's own terms. What it costs is left out on purpose: a plan
- * change is not priced up front the way an added pricing is, so the amounts come with the invoice
- * the move is billed on.
- */
+/** When the move lands, in the group's own terms. What it costs is in the order summary below. */
 const timing = computed(() =>
     props.changeType === 'NEXT_BILLING_PERIOD'
         ? $t({

@@ -97,6 +97,23 @@ export type PricingItemConfigMeta = {
     billingPeriod?: BillingPeriod;
 };
 
+/** Whether a config prices the currency and billing period on offer. */
+export function isConfigOnOffer(
+    configMeta: PricingItemConfigMeta,
+    { currency, billingPeriod }: { currency?: string; billingPeriod?: BillingPeriod },
+): boolean {
+    if (currency && configMeta.currency !== currency) {
+        return false;
+    }
+
+    return (
+        !billingPeriod ||
+        !configMeta.billingPeriod ||
+        (configMeta.billingPeriod.type === billingPeriod.type &&
+            configMeta.billingPeriod.value === billingPeriod.value)
+    );
+}
+
 export function getPricingItemConfigMetaById({
     pricingPlanScheduleInfo,
 }: {

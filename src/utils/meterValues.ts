@@ -1,13 +1,20 @@
 import type {
+    BillingPeriod,
     ConfiguredMeterValue,
     Pricing,
+    PricingExtended,
+    PricingItemExtended,
     PricingPlanScheduleInfoExpanded,
 } from '@solvimon/solvimon-types';
 import { getPricingsWithGroupsFromScheduleInfo, isOptionalPricing } from './pricing';
 import { getPricingItemConfigs } from './pricingItem';
+import { getPricingItemConfigMetaById, isConfigOnOffer } from './pricingPlanSchedule';
 
 /** What a seat count or a one-off flat item's quantity falls back to when nothing names one. */
 export const FALLBACK_METER_NUMBER = '1';
+
+const isPerSeatItem = (item: PricingItemExtended): boolean =>
+    !!item.product_items?.some(({ model_type }) => model_type === 'PER_SEAT');
 
 const METER_KEYS = {
     seats: { schedule: 'seats_values', planDefault: 'default_seats_value' },
@@ -59,9 +66,7 @@ export function getInitialMeterValues(
             ? pricings
                   .filter(isOptionalPricing)
                   .flatMap((pricing) => pricing.items ?? [])
-                  .filter((item) =>
-                      item.product_items?.some(({ model_type }) => model_type === 'PER_SEAT'),
-                  )
+                  .filter(isPerSeatItem)
                   .flatMap(getPricingItemConfigs)
                   .map(({ id }) => id)
                   .filter((id) => !listedIds.has(id))
@@ -107,4 +112,33 @@ export function getMeterValuesOfEnabledPricings(
 
     // An empty list asks the API to reset every count, which it refuses outside a draft.
     return billed.length ? billed : undefined;
+}
+
+/** The seat config each pricing is billed on for the currency and billing period on offer. */
+export function getSeatConfigIdByPricingId({
+    scheduleInfo,
+    pricings,
+    currency,
+    billingPeriod,
+}: {
+    scheduleInfo: PricingPlanScheduleInfoExpanded;
+    pricings: PricingExtended[];
+    currency?: string;
+    billingPeriod?: BillingPeriod;
+}): Map<Pricing['id'], string> {
+    const metaById = getPricingItemConfigMetaById({ pricingPlanScheduleInfo: scheduleInfo });
+
+    return new Map(
+        pricings.flatMap((pricing) => {
+            const config = (pricing.items ?? [])
+                .filter(isPerSeatItem)
+                .flatMap(getPricingItemConfigs)
+                .find(({ id }) => {
+                    const meta = metaById.get(id);
+                    return meta && isConfigOnOffer(meta, { currency, billingPeriod });
+                });
+
+            return config ? [[pricing.id, config.id] as const] : [];
+        }),
+    );
 }

@@ -9,8 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- The checkout shows a seat stepper for a seat-based addon or pricing group member once it is picked. The template lists no seats for those until then, so no stepper showed and the customer was billed one seat. The stepper starts at the plan's default seats, follows the pick, and keeps its count when the customer switches back. Only the picked pricings' seats go into the invoice preview and the payment. A seat's label and price are also found when they sit in a pricing group, or in a config per currency or billing period.
+- The checkout shows a seat stepper for a seat-based addon or pricing group member once it is picked. The template lists no seats for those until then, so no stepper showed and the customer was billed one seat. The stepper starts at the plan's default seats, and a count is kept when the customer switches away and back. Only the picked pricings' seats go into the invoice preview and the payment. A seat's label and price are also found when they sit in a pricing group, or in a config per currency or billing period.
 - The checkout lets the customer pick from a pricing group of addons that takes exactly one. Before, only a group of default products that takes exactly one showed a picker, so for an addon group the first member was always used.
+
+### Changed
+
+- A pricing group that takes exactly one and has seat-based members lists each member as an option with its price per seat and its own seat stepper, under "Select one" (`pricing_group_seats_editor.description.exactly_one`). The picked option is outlined and counts its seats; the others are dimmed, with a disabled stepper at 0, and clicking one, or pressing Enter or Space on it, picks it. A group without seat-based members keeps its radio, select or range picker.
 
 ## [0.1.0-alpha.28] - 2026-10-21
 

@@ -39,6 +39,7 @@ import {
 import {
     getFirstPricingPlanScheduleOfType,
     getPricingItemConfigMetaById,
+    isConfigOnOffer,
 } from '@/utils/pricingPlanSchedule';
 import { getPricingCurrencyForCountry } from '@/utils/countryCurrency';
 import { getModelTypesFromScheduleInfo } from '@/utils/pricing';
@@ -359,23 +360,16 @@ const configIdsForSelection = computed(() => {
     const pricingItemConfigById = getPricingItemConfigMetaById({
         pricingPlanScheduleInfo: scheduleInfo.value,
     });
-    const targetCurrency = activePricingCurrency.value;
-    const targetPeriod = subscription.value.billing_period;
+    const offer = {
+        currency: activePricingCurrency.value,
+        billingPeriod: subscription.value.billing_period,
+    };
     const ids = new Set<string>();
 
     pricingItemConfigById.forEach((configMeta, id) => {
-        if (targetCurrency && configMeta.currency !== targetCurrency) {
-            return;
+        if (isConfigOnOffer(configMeta, offer)) {
+            ids.add(id);
         }
-        if (
-            targetPeriod &&
-            configMeta.billingPeriod &&
-            (configMeta.billingPeriod.type !== targetPeriod.type ||
-                configMeta.billingPeriod.value !== targetPeriod.value)
-        ) {
-            return;
-        }
-        ids.add(id);
     });
 
     return ids;

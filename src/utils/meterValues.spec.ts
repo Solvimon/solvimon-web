@@ -12,6 +12,7 @@ import {
     FALLBACK_METER_NUMBER,
     getInitialMeterValues,
     getMeterValuesOfEnabledPricings,
+    getSeatConfigIdByPricingId,
 } from './meterValues';
 
 describe.each([
@@ -399,5 +400,37 @@ describe('seats of addons and pricing group members', () => {
                 [],
             ),
         ).toBeUndefined();
+    });
+
+    it('should bill each seat-based pricing on its config for the currency on offer', () => {
+        const seatPricing = createSeatPricing({
+            id: 'h200',
+            configId: 'h200-config',
+            groupId: 'server-type',
+        });
+        const [item] = seatPricing.items;
+        const config = item.configs[0];
+        const perCurrency = {
+            ...seatPricing,
+            items: [
+                {
+                    ...item,
+                    configs: undefined,
+                    pricing_currency_configs: [
+                        { currency: 'USD', configs: [{ ...config, id: 'h200-usd' }] },
+                        { currency: 'EUR', configs: [{ ...config, id: 'h200-eur' }] },
+                    ],
+                },
+            ],
+        } satisfies PricingExtended;
+        const scheduleInfo = createScheduleInfo({ groupPricings: [perCurrency] });
+
+        expect(
+            getSeatConfigIdByPricingId({
+                scheduleInfo,
+                pricings: [perCurrency],
+                currency: 'EUR',
+            }),
+        ).toEqual(new Map([['h200', 'h200-eur']]));
     });
 });

@@ -281,6 +281,7 @@
     "payments.sepa_mandate.title": "SEPA-incassomachtiging — terugkerende betalingen",
     "portal.not_available.description": "Neem contact op met de klantenservice als je denkt dat dit niet klopt.",
     "portal.not_available.title": "Dit is niet meer beschikbaar.",
+    "pricing_group_seats_editor.description.exactly_one": "Kies er één",
     "pricing_item_pricing.unsupported_pricing_error": "Niet-ondersteunde prijsstelling",
     "screens.payment_method_management.add_button": "Betaalmethode toevoegen",
     "screens.payment_method_management.cancel_button": "Annuleren",

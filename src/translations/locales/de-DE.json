@@ -281,6 +281,7 @@
     "payments.sepa_mandate.title": "SEPA-Lastschriftmandat — wiederkehrende Zahlungen",
     "portal.not_available.description": "Wenden Sie sich an den Kundenservice, wenn Sie glauben, dass es sich um einen Fehler handelt.",
     "portal.not_available.title": "Dies ist nicht mehr verfügbar.",
+    "pricing_group_seats_editor.description.exactly_one": "Wählen Sie eins aus",
     "pricing_item_pricing.unsupported_pricing_error": "Nicht unterstützte Preisgestaltung",
     "screens.payment_method_management.add_button": "Zahlungsmethode hinzufügen",
     "screens.payment_method_management.cancel_button": "Abbrechen",

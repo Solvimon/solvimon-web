@@ -281,6 +281,7 @@
   "payments.sepa_mandate.title": "SEPA Direct Debit mandate — recurring payments",
   "portal.not_available.description": "Contact customer support if you think this is a mistake.",
   "portal.not_available.title": "This is no longer available.",
+  "pricing_group_seats_editor.description.exactly_one": "Select one",
   "pricing_item_pricing.unsupported_pricing_error": "Unsupported pricing",
   "screens.payment_method_management.add_button": "Add payment method",
   "screens.payment_method_management.cancel_button": "Cancel",

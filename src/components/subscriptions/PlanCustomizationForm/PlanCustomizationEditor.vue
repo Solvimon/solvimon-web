@@ -8,12 +8,14 @@ import type { PlanCustomizationEditorProps } from './PlanCustomizationEditor.typ
 import AddonSingleEditor from './AddonSingleEditor.vue';
 import AddonMultipleEditor from './AddonMultipleEditor.vue';
 import PricingGroupSingleEditor from './PricingGroupSingleEditor.vue';
+import PricingGroupSeatsEditor from './PricingGroupSeatsEditor.vue';
 import { getFirstPricingPlanScheduleOfType } from '@/utils/pricingPlanSchedule';
 import { getPricingGroupsFromExtendedPricingPlanSubscription } from '@/utils/subscription';
 import {
     getPricingsFromScheduleInfo,
     getPricingsWithGroupsFromScheduleInfo,
 } from '@/utils/pricing';
+import { getSeatConfigIdByPricingId } from '@/utils/meterValues';
 
 const props = defineProps<PlanCustomizationEditorProps>();
 
@@ -50,6 +52,43 @@ const addonPricings = computed(() =>
 const pricingGroups = computed(() =>
     getPricingGroupsFromExtendedPricingPlanSubscription(props.subscription),
 );
+
+// A group of seat-based products that takes exactly one puts each product's stepper on its own option.
+const seatConfigIdsByGroupId = computed(
+    () =>
+        new Map(
+            pricingGroups.value.flatMap((pricingGroup) => {
+                if (pricingGroup.selection_constraint !== 'EXACTLY_ONE' || !scheduleInfo.value) {
+                    return [];
+                }
+                const seatConfigIds = getSeatConfigIdByPricingId({
+                    scheduleInfo: scheduleInfo.value,
+                    pricings: pricingGroup.pricings,
+                    currency: props.currency,
+                    billingPeriod: props.billingPeriod,
+                });
+                return seatConfigIds.size ? [[pricingGroup.id, seatConfigIds] as const] : [];
+            }),
+        ),
+);
+
+const groupSeatConfigIds = computed(
+    () => new Set([...seatConfigIdsByGroupId.value.values()].flatMap((ids) => [...ids.values()])),
+);
+
+const standaloneSeatsModel = computed({
+    get: () =>
+        seatsModel.value.filter(
+            ({ pricing_item_config_id }) => !groupSeatConfigIds.value.has(pricing_item_config_id),
+        ),
+    set: (value) => {
+        seatsModel.value = seatsModel.value
+            .filter(({ pricing_item_config_id }) =>
+                groupSeatConfigIds.value.has(pricing_item_config_id),
+            )
+            .concat(value);
+    },
+});
 </script>
 
 <template>
@@ -69,7 +108,7 @@ const pricingGroups = computed(() =>
         <div class="sv-plan-customization__body grid grid-cols-1 gap-1">
             <!-- seats-->
             <SeatsEditor
-                v-model="seatsModel"
+                v-model="standaloneSeatsModel"
                 class="sv-plan-customization__seats"
                 :initial-seats-values="initialSeatsValues"
                 :pricings="meterPricings"
@@ -85,8 +124,21 @@ const pricingGroups = computed(() =>
 
             <!-- pricing group level addons-->
             <template v-for="pricingGroup in pricingGroups" :key="pricingGroup.id">
+                <PricingGroupSeatsEditor
+                    v-if="seatConfigIdsByGroupId.has(pricingGroup.id)"
+                    v-model="enabledPricingIdsModel"
+                    v-model:seats-values="seatsModel"
+                    class="sv-plan-customization__group"
+                    :group-name="pricingGroup.name"
+                    :pricings="pricingGroup.pricings"
+                    :seat-config-id-by-pricing-id="seatConfigIdsByGroupId.get(pricingGroup.id)!"
+                    :initial-seats-values="initialSeatsValues"
+                    :billing-period="billingPeriod"
+                    :currency="currency"
+                />
+
                 <PricingGroupSingleEditor
-                    v-if="pricingGroup.selection_constraint === 'EXACTLY_ONE'"
+                    v-else-if="pricingGroup.selection_constraint === 'EXACTLY_ONE'"
                     v-model="enabledPricingIdsModel"
                     class="sv-plan-customization__group"
                     :group-name="pricingGroup.name"

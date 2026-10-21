@@ -1,11 +1,13 @@
 import { mount } from '@vue/test-utils';
 import type {
+    ConfiguredMeterValue,
     PricingExtended,
     PricingGroupExtended,
     PricingPlanSubscriptionExpanded,
 } from '@solvimon/solvimon-types';
 import PlanCustomizationEditor from './PlanCustomizationEditor.vue';
 import PricingGroupSingleEditor from './PricingGroupSingleEditor.vue';
+import PricingGroupSeatsEditor from './PricingGroupSeatsEditor.vue';
 import SeatsEditor from './SeatsEditor.vue';
 
 vi.mock('@solvimon/solvimon-ui', async () => {
@@ -20,6 +22,28 @@ const pricing = (id: string): PricingExtended =>
         pricing_group_id: 'server-type',
         product_type: 'ADDON',
         product_ids: [],
+    }) as PricingExtended;
+
+const seatPricing = (id: string): PricingExtended =>
+    ({
+        ...pricing(id),
+        items: [
+            {
+                id: `${id}-item`,
+                product_item_ids: [`${id}-product-item`],
+                product_items: [{ id: `${id}-product-item`, model_type: 'PER_SEAT' }],
+                configs: [
+                    {
+                        object_type: 'PRICING_ITEM_CONFIG',
+                        id: `${id}-config`,
+                        details: {
+                            pricing_type: 'FLAT',
+                            bands: [{ amount: { quantity: '1', currency: 'EUR' } }],
+                        },
+                    },
+                ],
+            },
+        ],
     }) as PricingExtended;
 
 const serverGroup = (
@@ -53,20 +77,22 @@ const subscriptionWith = (group: PricingGroupExtended): PricingPlanSubscriptionE
         ],
     }) as unknown as PricingPlanSubscriptionExpanded;
 
-const mountEditor = (group: PricingGroupExtended) =>
+const mountEditor = (group: PricingGroupExtended, seatsValues: ConfiguredMeterValue[] = []) =>
     mount(PlanCustomizationEditor, {
         props: {
             subscription: subscriptionWith(group),
-            seatsValues: [],
+            seatsValues,
             unitsValues: [],
             enabledPricingIds: [],
             billingPeriod: { type: 'MONTH', value: 1 },
+            currency: 'EUR',
         },
         global: {
             stubs: {
                 SeatsEditor: true,
                 UnitsEditor: true,
                 PricingGroupSingleEditor: true,
+                PricingGroupSeatsEditor: true,
                 AddonSingleEditor: true,
                 AddonMultipleEditor: true,
             },
@@ -91,5 +117,25 @@ describe('PlanCustomizationEditor', () => {
         const wrapper = mountEditor(serverGroup('ADDON', pricings));
 
         expect(wrapper.findComponent(SeatsEditor).props('pricings')).toEqual(pricings);
+    });
+
+    it('puts the seats of a seat-based group that takes exactly one on its options', () => {
+        const pricings = [seatPricing('b100'), seatPricing('h200')];
+        const wrapper = mountEditor(serverGroup('ADDON', pricings), [
+            { pricing_item_config_id: 'base-config', number: '2' },
+            { pricing_item_config_id: 'b100-config', number: '3' },
+        ]);
+
+        const groupEditor = wrapper.findComponent(PricingGroupSeatsEditor);
+        expect(groupEditor.props('seatConfigIdByPricingId')).toEqual(
+            new Map([
+                ['b100', 'b100-config'],
+                ['h200', 'h200-config'],
+            ]),
+        );
+        expect(wrapper.findComponent(PricingGroupSingleEditor).exists()).toBe(false);
+        expect(wrapper.findComponent(SeatsEditor).props('modelValue')).toEqual([
+            { pricing_item_config_id: 'base-config', number: '2' },
+        ]);
     });
 });

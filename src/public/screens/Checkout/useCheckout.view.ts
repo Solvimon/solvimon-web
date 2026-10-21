@@ -34,7 +34,7 @@ import {
 } from '@/utils/pricingPlanSchedule';
 import { withPreselectedEnabledPricings } from '@/utils/enabledPricings';
 import { splitInvoiceByRecurrence } from '@/utils/invoice';
-import { getInitialMeterValues } from '@/utils/meterValues';
+import { getInitialMeterValues, getMeterValuesOfEnabledPricings } from '@/utils/meterValues';
 import { hasPaymentRedirectReturn } from '@/utils/paymentRedirect';
 import { randomUuid } from '@/utils/randomUuid';
 
@@ -185,15 +185,39 @@ export function useCheckoutView({
         format: checkoutForm.shippingAddressFormat.value,
     });
 
+    /** Only what is billed goes out: an addon or group member the customer left alone is not. */
+    const billedMeterValues = (
+        formState: Pick<CheckoutFormState, 'seatsValues' | 'unitsValues'>,
+        billedPricingIds: Pricing['id'][] | undefined,
+    ) => {
+        const scheduleInfo = getFirstPricingPlanScheduleOfType({
+            pricingPlanScheduleInfos: subscription.value?.pricing_plan_schedule_infos ?? [],
+            type: 'DEFAULT',
+        });
+
+        return {
+            seatsValues: getMeterValuesOfEnabledPricings(
+                formState.seatsValues,
+                scheduleInfo,
+                billedPricingIds,
+            ),
+            unitsValues: getMeterValuesOfEnabledPricings(
+                formState.unitsValues,
+                scheduleInfo,
+                billedPricingIds,
+            ),
+        };
+    };
+
     const loadInvoicePreview = () => {
         const formState = checkoutForm.form.value;
+        const billedPricingIds = formState.enabledPricingIds ?? enabledPricingIds;
 
         return invoicePreview.loadInvoicePreview({
             subscription: subscription.value!,
             customer: toPreviewCustomer(formState, previewAddress()),
-            seatsValues: formState.seatsValues,
-            unitsValues: formState.unitsValues,
-            enabledPricingIds: formState.enabledPricingIds ?? enabledPricingIds,
+            ...billedMeterValues(formState, billedPricingIds),
+            enabledPricingIds: billedPricingIds,
             promotionCode: formState.promotionCode,
         });
     };
@@ -216,8 +240,7 @@ export function useCheckoutView({
         await invoicePreview.loadInvoicePreview({
             subscription: subscription.value!,
             customer: toPreviewCustomer(mergedState, previewAddress()),
-            seatsValues: mergedState.seatsValues,
-            unitsValues: mergedState.unitsValues,
+            ...billedMeterValues(mergedState, enabledPricingIds),
             enabledPricingIds,
             promotionCode,
         });
@@ -336,8 +359,10 @@ export function useCheckoutView({
             enabledPricings: checkoutForm.form.value.enabledPricingIds?.map((enabledPricingId) => ({
                 pricing_id: enabledPricingId,
             })),
-            seatsValues: checkoutForm.form.value.seatsValues,
-            unitsValues: checkoutForm.form.value.unitsValues,
+            ...billedMeterValues(
+                checkoutForm.form.value,
+                checkoutForm.form.value.enabledPricingIds,
+            ),
             pricingPlanScheduleInfos: subscription.value?.pricing_plan_schedule_infos ?? [],
             pricingCurrency: hasMultiplePricingCurrencies
                 ? subscription.value?.billing_currency

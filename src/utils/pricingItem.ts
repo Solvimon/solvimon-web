@@ -35,9 +35,13 @@ export function getPricingItemByPricingConfigId({
 }) {
     const pricingItem: PricingItemExtended | undefined = pricings
         .flatMap((pricing) => pricing.items ?? [])
-        .find((item) => item.configs?.some((config) => config.id === pricingItemConfigId));
+        .find((item) =>
+            getPricingItemConfigs(item).some((config) => config.id === pricingItemConfigId),
+        );
 
-    const config = pricingItem?.configs?.find((config) => config.id === pricingItemConfigId);
+    const config = pricingItem
+        ? getPricingItemConfigs(pricingItem).find((config) => config.id === pricingItemConfigId)
+        : undefined;
     const productItem = pricingItem?.product_items?.[0];
 
     return {

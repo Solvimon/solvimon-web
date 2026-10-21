@@ -4,6 +4,7 @@ import type {
     EnabledPricing,
     PricingCategoryExtended,
     PricingExtended,
+    PricingGroupExtended,
     PricingItemConfigExtended,
     PricingItemExtended,
     PricingPlanSchedule,
@@ -62,7 +63,13 @@ describe('pricingPlanSchedule utils', () => {
                 configs,
             }) satisfies PricingItemExtended;
 
-        const createPricingPlanScheduleInfo = ({ items }: { items: PricingItemExtended[] }) => {
+        const createPricingPlanScheduleInfo = ({
+            items,
+            pricingGroups,
+        }: {
+            items: PricingItemExtended[];
+            pricingGroups?: PricingGroupExtended[];
+        }) => {
             const pricing = {
                 object_type: 'PRICING',
                 id: 'pricing-1',
@@ -73,6 +80,7 @@ describe('pricingPlanSchedule utils', () => {
             const pricingCategory = {
                 product_category_id: 'category-1',
                 pricings: [pricing],
+                pricing_groups: pricingGroups,
             } satisfies PricingCategoryExtended;
 
             const pricingPlanVersion = {
@@ -158,6 +166,41 @@ describe('pricingPlanSchedule utils', () => {
                 currency: 'USD',
             });
             expect(result.get('item-config-without-currency')).toEqual({});
+        });
+
+        it('should return config meta of pricings inside a pricing group', () => {
+            const pricingPlanScheduleInfo = createPricingPlanScheduleInfo({
+                items: [],
+                pricingGroups: [
+                    {
+                        object_type: 'PRICING_GROUP',
+                        id: 'group-1',
+                        pricing_plan_version_id: 'version-1',
+                        name: 'Server type',
+                        product_type: 'ADDON',
+                        selection_constraint: 'EXACTLY_ONE',
+                        pricings: [
+                            {
+                                object_type: 'PRICING',
+                                id: 'group-pricing-1',
+                                pricing_group_id: 'group-1',
+                                product_ids: [],
+                                items: [
+                                    createItem({
+                                        configs: [
+                                            createConfig({ id: 'group-config', currency: 'EUR' }),
+                                        ],
+                                    }),
+                                ],
+                            },
+                        ],
+                    },
+                ],
+            });
+
+            const result = getPricingItemConfigMetaById({ pricingPlanScheduleInfo });
+
+            expect(result.get('group-config')).toEqual({ currency: 'EUR' });
         });
     });
 

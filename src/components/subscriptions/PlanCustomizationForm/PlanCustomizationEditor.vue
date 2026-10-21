@@ -10,7 +10,10 @@ import AddonMultipleEditor from './AddonMultipleEditor.vue';
 import PricingGroupSingleEditor from './PricingGroupSingleEditor.vue';
 import { getFirstPricingPlanScheduleOfType } from '@/utils/pricingPlanSchedule';
 import { getPricingGroupsFromExtendedPricingPlanSubscription } from '@/utils/subscription';
-import { getPricingsFromScheduleInfo } from '@/utils/pricing';
+import {
+    getPricingsFromScheduleInfo,
+    getPricingsWithGroupsFromScheduleInfo,
+} from '@/utils/pricing';
 
 const props = defineProps<PlanCustomizationEditorProps>();
 
@@ -22,14 +25,23 @@ const enabledPricingIdsModel = defineModel<Pricing['id'][]>('enabledPricingIds',
 
 const { $t } = useIntl();
 
-const pricings = computed(() => {
-    const scheduleInfo = getFirstPricingPlanScheduleOfType({
+const scheduleInfo = computed(() =>
+    getFirstPricingPlanScheduleOfType({
         pricingPlanScheduleInfos: props.subscription.pricing_plan_schedule_infos,
         type: 'DEFAULT',
-    });
+    }),
+);
 
-    return scheduleInfo?.pricing_plan_version ? getPricingsFromScheduleInfo(scheduleInfo) : [];
-});
+const pricings = computed(() =>
+    scheduleInfo.value?.pricing_plan_version ? getPricingsFromScheduleInfo(scheduleInfo.value) : [],
+);
+
+// Seats and units can belong to a group member, so their labels and prices are looked up in those too.
+const meterPricings = computed(() =>
+    scheduleInfo.value?.pricing_plan_version
+        ? getPricingsWithGroupsFromScheduleInfo(scheduleInfo.value)
+        : [],
+);
 
 const addonPricings = computed(() =>
     pricings.value.filter((pricing) => pricing.product_type === 'ADDON'),
@@ -60,7 +72,7 @@ const pricingGroups = computed(() =>
                 v-model="seatsModel"
                 class="sv-plan-customization__seats"
                 :initial-seats-values="initialSeatsValues"
-                :pricings="pricings"
+                :pricings="meterPricings"
             />
 
             <!-- one-off flat item units -->
@@ -68,16 +80,13 @@ const pricingGroups = computed(() =>
                 v-model="unitsModel"
                 class="sv-plan-customization__units"
                 :initial-units-values="initialUnitsValues"
-                :pricings="pricings"
+                :pricings="meterPricings"
             />
 
             <!-- pricing group level addons-->
             <template v-for="pricingGroup in pricingGroups" :key="pricingGroup.id">
                 <PricingGroupSingleEditor
-                    v-if="
-                        pricingGroup.product_type === 'DEFAULT' &&
-                        pricingGroup.selection_constraint === 'EXACTLY_ONE'
-                    "
+                    v-if="pricingGroup.selection_constraint === 'EXACTLY_ONE'"
                     v-model="enabledPricingIdsModel"
                     class="sv-plan-customization__group"
                     :group-name="pricingGroup.name"

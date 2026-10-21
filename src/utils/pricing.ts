@@ -14,6 +14,23 @@ export function getPricingsFromScheduleInfo(
     return categories.flatMap((category) => category.pricings ?? []);
 }
 
+/** Every pricing of the version, the ones inside a pricing group included. */
+export function getPricingsWithGroupsFromScheduleInfo(
+    scheduleInfo: PricingPlanScheduleInfoExpanded,
+): PricingExtended[] {
+    const categories = scheduleInfo.pricing_plan_version.pricing_categories ?? [];
+
+    return categories.flatMap((category) => [
+        ...(category.pricings ?? []),
+        ...(category.pricing_groups ?? []).flatMap((group) => group.pricings ?? []),
+    ]);
+}
+
+/** An addon or group member is billed only once the customer picks it. */
+export function isOptionalPricing(pricing: PricingExtended): boolean {
+    return !!pricing.pricing_group_id || pricing.product_type === 'ADDON';
+}
+
 export function getAllPricingsFromScheduleInfos(
     scheduleInfos: PricingPlanScheduleInfoExpanded[],
 ): PricingExtended[] {

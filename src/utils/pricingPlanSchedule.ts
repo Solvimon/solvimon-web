@@ -9,6 +9,7 @@ import type {
     PricingPlanScheduleInfoExpanded,
     PricingPlanSubscriptionExpanded,
 } from '@solvimon/solvimon-types';
+import { getPricingsWithGroupsFromScheduleInfo } from './pricing';
 
 /**
  * Get the first pricing plan schedule of a given type.
@@ -102,27 +103,10 @@ export function getPricingItemConfigMetaById({
     pricingPlanScheduleInfo: PricingPlanScheduleInfoExpanded;
 }): Map<string, PricingItemConfigMeta> {
     const metaById = new Map<string, PricingItemConfigMeta>();
-    const categories = pricingPlanScheduleInfo.pricing_plan_version.pricing_categories ?? [];
-
-    categories.forEach((category) => {
-        category.pricings?.forEach((pricing) => {
-            pricing.items?.forEach((item) => {
-                item.billing_period_configs?.forEach((billingConfig) => {
-                    billingConfig.configs?.forEach((config) => {
-                        if (config.id) {
-                            const currency = config.details?.bands?.find(
-                                (band) => band.amount?.currency,
-                            )?.amount?.currency;
-
-                            metaById.set(config.id, {
-                                ...(currency && { currency }),
-                                billingPeriod: billingConfig.billing_period,
-                            });
-                        }
-                    });
-                });
-
-                item.configs?.forEach((config) => {
+    getPricingsWithGroupsFromScheduleInfo(pricingPlanScheduleInfo).forEach((pricing) => {
+        pricing.items?.forEach((item) => {
+            item.billing_period_configs?.forEach((billingConfig) => {
+                billingConfig.configs?.forEach((config) => {
                     if (config.id) {
                         const currency = config.details?.bands?.find(
                             (band) => band.amount?.currency,
@@ -130,29 +114,41 @@ export function getPricingItemConfigMetaById({
 
                         metaById.set(config.id, {
                             ...(currency && { currency }),
+                            billingPeriod: billingConfig.billing_period,
                         });
                     }
                 });
+            });
 
-                item.pricing_currency_configs?.forEach((currencyConfig) => {
-                    const currency = currencyConfig.currency;
+            item.configs?.forEach((config) => {
+                if (config.id) {
+                    const currency = config.details?.bands?.find((band) => band.amount?.currency)
+                        ?.amount?.currency;
 
-                    currencyConfig.billing_period_configs?.forEach((billingConfig) => {
-                        billingConfig.configs?.forEach((config) => {
-                            if (config.id) {
-                                metaById.set(config.id, {
-                                    currency,
-                                    billingPeriod: billingConfig.billing_period,
-                                });
-                            }
-                        });
+                    metaById.set(config.id, {
+                        ...(currency && { currency }),
                     });
+                }
+            });
 
-                    currencyConfig.configs?.forEach((config) => {
+            item.pricing_currency_configs?.forEach((currencyConfig) => {
+                const currency = currencyConfig.currency;
+
+                currencyConfig.billing_period_configs?.forEach((billingConfig) => {
+                    billingConfig.configs?.forEach((config) => {
                         if (config.id) {
-                            metaById.set(config.id, { currency });
+                            metaById.set(config.id, {
+                                currency,
+                                billingPeriod: billingConfig.billing_period,
+                            });
                         }
                     });
+                });
+
+                currencyConfig.configs?.forEach((config) => {
+                    if (config.id) {
+                        metaById.set(config.id, { currency });
+                    }
                 });
             });
         });

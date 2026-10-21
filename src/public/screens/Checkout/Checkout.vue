@@ -42,6 +42,7 @@ import {
 } from '@/utils/pricingPlanSchedule';
 import { getPricingCurrencyForCountry } from '@/utils/countryCurrency';
 import { getModelTypesFromScheduleInfo } from '@/utils/pricing';
+import { getMeterValuesOfEnabledPricings } from '@/utils/meterValues';
 import { ContentWithAsideLayout } from '@/layouts';
 import { useViewport } from '@/composables/useViewport';
 import { usePaymentFormHold } from '@/composables/usePaymentFormHold';
@@ -380,31 +381,36 @@ const configIdsForSelection = computed(() => {
     return ids;
 });
 
-// Only expose values that match the active currency + billing period, but keep all values in state.
-const meterValuesModel = (key: 'seatsValues' | 'unitsValues') =>
-    computed({
-        get: () => {
-            const all = checkoutForm.form.value[key] ?? [];
-            const ids = configIdsForSelection.value;
-            if (!ids.size) {
-                return all;
-            }
-            return all.filter(({ pricing_item_config_id }) => ids.has(pricing_item_config_id));
-        },
-        set: (value) => {
-            const current = checkoutForm.form.value[key] ?? [];
-            const ids = configIdsForSelection.value;
-            if (!ids.size) {
-                checkoutForm.form.value[key] = value;
-                return;
-            }
+// Only expose values that match the active currency + billing period and a picked pricing, but keep
+// all values in state so a count survives switching back.
+const meterValuesModel = (key: 'seatsValues' | 'unitsValues') => {
+    const visible = computed(() => {
+        const all =
+            getMeterValuesOfEnabledPricings(
+                checkoutForm.form.value[key],
+                scheduleInfo.value,
+                checkoutForm.form.value.enabledPricingIds,
+            ) ?? [];
+        const ids = configIdsForSelection.value;
+        if (!ids.size) {
+            return all;
+        }
+        return all.filter(({ pricing_item_config_id }) => ids.has(pricing_item_config_id));
+    });
 
-            const filtered = current.filter(
-                ({ pricing_item_config_id }) => !ids.has(pricing_item_config_id),
+    return computed({
+        get: () => visible.value,
+        set: (value) => {
+            const visibleIds = new Set(
+                visible.value.map(({ pricing_item_config_id }) => pricing_item_config_id),
             );
-            checkoutForm.form.value[key] = filtered.concat(value);
+            const hidden = (checkoutForm.form.value[key] ?? []).filter(
+                ({ pricing_item_config_id }) => !visibleIds.has(pricing_item_config_id),
+            );
+            checkoutForm.form.value[key] = hidden.concat(value);
         },
     });
+};
 const seatsValuesModel = meterValuesModel('seatsValues');
 const unitsValuesModel = meterValuesModel('unitsValues');
 

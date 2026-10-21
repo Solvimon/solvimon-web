@@ -232,5 +232,36 @@ describe('pricingItem utils', () => {
             expect(result.config).toBeUndefined();
             expect(result.productItem).toBeUndefined();
         });
+
+        it('should find a config nested per currency and billing period', () => {
+            const config = createMockConfig('eur-monthly-config');
+            const productItem = createMockProductItem('product-item-1');
+            const pricings = [
+                createMockPricing('pricing-1', [
+                    {
+                        ...createMockPricingItem('item-1', undefined, [productItem]),
+                        pricing_currency_configs: [
+                            {
+                                currency: 'EUR',
+                                billing_period_configs: [
+                                    {
+                                        billing_period: { type: 'MONTH', value: 1 },
+                                        configs: [config],
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                ]),
+            ];
+
+            const result = getPricingItemByPricingConfigId({
+                pricings,
+                pricingItemConfigId: 'eur-monthly-config',
+            });
+
+            expect(result.config).toEqual(config);
+            expect(result.productItem).toEqual(productItem);
+        });
     });
 });

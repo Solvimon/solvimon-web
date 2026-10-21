@@ -8,7 +8,11 @@ import type {
     PricingPlanScheduleInfoExpanded,
     PricingPlanVersionExtended,
 } from '@solvimon/solvimon-types';
-import { FALLBACK_METER_NUMBER, getInitialMeterValues } from './meterValues';
+import {
+    FALLBACK_METER_NUMBER,
+    getInitialMeterValues,
+    getMeterValuesOfEnabledPricings,
+} from './meterValues';
 
 describe.each([
     { kind: 'seats', scheduleKey: 'seats_values', planDefaultKey: 'default_seats_value' },
@@ -208,6 +212,191 @@ describe.each([
                     items: [createItem([createConfig({ id: 'config-1' })])],
                     meterValues: [],
                 }),
+            ),
+        ).toBeUndefined();
+    });
+});
+
+describe('seats of addons and pricing group members', () => {
+    const createSeatPricing = ({
+        id,
+        configId,
+        defaultNumber,
+        groupId,
+        productType = 'DEFAULT',
+    }: {
+        id: string;
+        configId: string;
+        defaultNumber?: string;
+        groupId?: string;
+        productType?: PricingExtended['product_type'];
+    }) =>
+        ({
+            object_type: 'PRICING',
+            id,
+            product_ids: [],
+            product_type: productType,
+            ...(groupId && { pricing_group_id: groupId }),
+            items: [
+                {
+                    id: `${id}-item`,
+                    product_item_ids: [`${id}-product-item`],
+                    product_items: [
+                        {
+                            object_type: 'PRODUCT_ITEM',
+                            id: `${id}-product-item`,
+                            product_id: `${id}-product`,
+                            name: `${id} seats`,
+                            reference: `${id}-seats`,
+                            status: 'ACTIVE',
+                            type: 'REVENUE',
+                            model_type: 'PER_SEAT',
+                        },
+                    ],
+                    configs: [
+                        {
+                            object_type: 'PRICING_ITEM_CONFIG',
+                            id: configId,
+                            order: 1,
+                            billing_in_advance: true,
+                            details: { pricing_type: 'FLAT' },
+                            ...(defaultNumber && {
+                                default_seats_value: { number: defaultNumber },
+                            }),
+                        },
+                    ],
+                },
+            ],
+        }) satisfies PricingExtended;
+
+    const serverGroupPricings = [
+        createSeatPricing({
+            id: 'h200',
+            configId: 'h200-config',
+            defaultNumber: '2',
+            groupId: 'server-type',
+            productType: 'ADDON',
+        }),
+        createSeatPricing({
+            id: 'b300',
+            configId: 'b300-config',
+            groupId: 'server-type',
+            productType: 'ADDON',
+        }),
+    ];
+
+    const createScheduleInfo = ({
+        pricings = [],
+        groupPricings = [],
+        seatsValues,
+    }: {
+        pricings?: PricingExtended[];
+        groupPricings?: PricingExtended[];
+        seatsValues?: ConfiguredMeterValue[];
+    }) =>
+        ({
+            id: 'schedule-1',
+            type: 'DEFAULT',
+            start_at: '2024-01-01T00:00:00Z',
+            pricing_plan_version_id: 'version-1',
+            pricing_plan_version: {
+                object_type: 'PRICING_PLAN_VERSION',
+                id: 'version-1',
+                pricing_plan_id: 'plan-1',
+                version: 1,
+                status: 'ACTIVE',
+                pricing_categories: [
+                    {
+                        product_category_id: 'category-1',
+                        pricings,
+                        pricing_groups: [
+                            {
+                                object_type: 'PRICING_GROUP',
+                                id: 'server-type',
+                                pricing_plan_version_id: 'version-1',
+                                name: 'Server type',
+                                product_type: 'ADDON',
+                                selection_constraint: 'EXACTLY_ONE',
+                                pricings: groupPricings,
+                            },
+                        ],
+                    },
+                ],
+                pricing_plan: {
+                    object_type: 'PRICING_PLAN',
+                    id: 'plan-1',
+                    reference: 'plan-reference',
+                    name: 'Plan',
+                    type: 'STANDARD',
+                    variant: 'DEFAULT',
+                },
+            },
+            pricing_plan_schedule: {
+                id: 'schedule-1',
+                type: 'DEFAULT',
+                start_at: '2024-01-01T00:00:00Z',
+                pricing_plan_version_id: 'version-1',
+                pricing_plan_subscription_id: 'subscription-1',
+                seats_values: seatsValues,
+            },
+        }) satisfies PricingPlanScheduleInfoExpanded;
+
+    it('should start every seat-based group member on its plan default when the schedule lists none', () => {
+        const scheduleInfo = createScheduleInfo({ groupPricings: serverGroupPricings });
+
+        expect(getInitialMeterValues('seats', scheduleInfo)).toEqual([
+            { pricing_item_config_id: 'h200-config', number: '2' },
+            { pricing_item_config_id: 'b300-config', number: FALLBACK_METER_NUMBER },
+        ]);
+    });
+
+    it('should not list a group member twice when the schedule already carries its seats', () => {
+        const scheduleInfo = createScheduleInfo({
+            groupPricings: serverGroupPricings,
+            seatsValues: [{ pricing_item_config_id: 'h200-config', number: '5' }],
+        });
+
+        expect(getInitialMeterValues('seats', scheduleInfo)).toEqual([
+            { pricing_item_config_id: 'h200-config', number: '5' },
+            { pricing_item_config_id: 'b300-config', number: FALLBACK_METER_NUMBER },
+        ]);
+    });
+
+    it('should add no units for group members', () => {
+        const scheduleInfo = createScheduleInfo({ groupPricings: serverGroupPricings });
+
+        expect(getInitialMeterValues('units', scheduleInfo)).toBeUndefined();
+    });
+
+    it('should keep only the seats of regular pricings and of the picked addons', () => {
+        const scheduleInfo = createScheduleInfo({
+            pricings: [
+                createSeatPricing({ id: 'base', configId: 'base-config' }),
+                createSeatPricing({
+                    id: 'support',
+                    configId: 'support-config',
+                    productType: 'ADDON',
+                }),
+            ],
+            groupPricings: serverGroupPricings,
+            seatsValues: [{ pricing_item_config_id: 'base-config' }],
+        });
+        const seatsValues = getInitialMeterValues('seats', scheduleInfo);
+
+        expect(getMeterValuesOfEnabledPricings(seatsValues, scheduleInfo, ['b300'])).toEqual([
+            { pricing_item_config_id: 'base-config', number: FALLBACK_METER_NUMBER },
+            { pricing_item_config_id: 'b300-config', number: FALLBACK_METER_NUMBER },
+        ]);
+    });
+
+    it('should leave nothing to send when only unpicked addons have seats', () => {
+        const scheduleInfo = createScheduleInfo({ groupPricings: serverGroupPricings });
+
+        expect(
+            getMeterValuesOfEnabledPricings(
+                getInitialMeterValues('seats', scheduleInfo),
+                scheduleInfo,
+                [],
             ),
         ).toBeUndefined();
     });

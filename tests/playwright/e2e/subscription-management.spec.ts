@@ -16,6 +16,7 @@ import {
     DEFAULT_SCHEDULE_ID,
     SUBSCRIPTION_ID,
     type Json,
+    PRICING_PLAN_ID,
     UPGRADE_PRICING_PLAN_ID,
 } from '../support/fixtures';
 
@@ -469,6 +470,36 @@ test.describe('Subscription management', () => {
             await ui.planSelector.getByText('Scale plan').click();
 
             await expect(ui.planChangeSummary).toContainText('next billing period');
+        });
+
+        test('offers to upgrade the plan when the plan picked is higher in the group', async ({
+            page,
+        }) => {
+            api = await mountLoaded(page, { planGroup: aPricingPlanGroup() });
+            const ui = subscriptionManagement(page);
+
+            await expect(ui.updateButton).toHaveText('Your current plan');
+            await ui.planSelector.getByText('Scale plan').click();
+
+            await expect(ui.updateButton).toHaveText('Upgrade plan');
+        });
+
+        test('offers to downgrade the plan when the plan picked is lower in the group', async ({
+            page,
+        }) => {
+            api = await mountLoaded(page, {
+                planGroup: aPricingPlanGroup({
+                    members: [
+                        { pricing_plan_id: UPGRADE_PRICING_PLAN_ID, order: 1 },
+                        { pricing_plan_id: PRICING_PLAN_ID, order: 2 },
+                    ],
+                }),
+            });
+            const ui = subscriptionManagement(page);
+
+            await ui.planSelector.getByText('Scale plan').click();
+
+            await expect(ui.updateButton).toHaveText('Downgrade plan');
         });
 
         test('moves the subscription to the plan the customer picked', async ({ page }) => {

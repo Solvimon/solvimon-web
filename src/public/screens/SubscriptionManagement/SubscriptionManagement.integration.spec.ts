@@ -977,6 +977,65 @@ describe('SubscriptionManagement', () => {
             expect(mockLoadPreview).not.toHaveBeenCalled();
         });
 
+        it('offers to upgrade the plan when the plan picked is higher in the group', async () => {
+            const wrapper = await pickPlan(
+                mountComponent({ planGroupOptions: planOptions }),
+                'ppla_pro',
+            );
+
+            expect(wrapper.find('.sv-subscription-management__update').text()).toBe('Upgrade plan');
+        });
+
+        it('offers to downgrade the plan when the plan picked is lower in the group', async () => {
+            const wrapper = await pickPlan(
+                mountComponent({
+                    planGroupOptions: [
+                        {
+                            pricingPlanId: 'ppla_free',
+                            name: 'Free',
+                            order: 0,
+                            isCurrent: false,
+                            direction: 'DOWNGRADE',
+                            changeType: 'NEXT_BILLING_PERIOD',
+                        },
+                        ...planOptions,
+                    ],
+                }),
+                'ppla_free',
+            );
+
+            expect(wrapper.find('.sv-subscription-management__update').text()).toBe(
+                'Downgrade plan',
+            );
+        });
+
+        it('says the plan selected is the current one while nothing is changed', () => {
+            const wrapper = mountComponent({ planGroupOptions: planOptions });
+
+            expect(wrapper.find('.sv-subscription-management__update').text()).toBe(
+                'Your current plan',
+            );
+        });
+
+        it('offers to update the subscription once a pricing on the current plan is changed', () => {
+            const wrapper = mountComponent({
+                enabledPricingId: 'pri_5000',
+                planGroupOptions: planOptions,
+            });
+
+            expect(wrapper.find('.sv-subscription-management__update').text()).toBe(
+                'Update subscription',
+            );
+        });
+
+        it('offers to update the subscription for a plan with no others to move to', () => {
+            const wrapper = mountComponent();
+
+            expect(wrapper.find('.sv-subscription-management__update').text()).toBe(
+                'Update subscription',
+            );
+        });
+
         it('moves the subscription to the plan that was picked', async () => {
             const wrapper = await pickPlan(
                 mountComponent({ enabledPricingId: 'pri_1000', planGroupOptions: planOptions }),

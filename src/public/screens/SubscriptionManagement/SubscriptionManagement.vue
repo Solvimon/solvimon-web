@@ -325,6 +325,45 @@ const summaryError = computed(() =>
 /** One plan is no choice; the screen only offers the move when the group holds more than one. */
 const canChangePlan = computed(() => planOptions.value.length > 1);
 
+/**
+ * Names the move by the plan's place in the group. Staying on the current plan with nothing changed
+ * says so; a change to its pricings is an update.
+ */
+const submitLabel = computed<string>(() => {
+    if (isChangingPlan.value && selectedPlanOption.value?.direction === 'UPGRADE') {
+        return $t({
+            defaultMessage: 'Upgrade plan',
+            id: 'subscription_management.update_button.upgrade_label',
+            description:
+                'Label of the button that moves the subscription to a higher plan in its group',
+        });
+    }
+
+    if (isChangingPlan.value && selectedPlanOption.value?.direction === 'DOWNGRADE') {
+        return $t({
+            defaultMessage: 'Downgrade plan',
+            id: 'subscription_management.update_button.downgrade_label',
+            description:
+                'Label of the button that moves the subscription to a lower plan in its group',
+        });
+    }
+
+    if (canChangePlan.value && !isChangingPlan.value && !hasChange.value) {
+        return $t({
+            defaultMessage: 'Your current plan',
+            id: 'subscription_management.update_button.current_plan_label',
+            description:
+                'Label of the disabled button while the customer has their current plan selected and nothing changed',
+        });
+    }
+
+    return $t({
+        defaultMessage: 'Update subscription',
+        id: 'subscription_management.update_button.label',
+        description: 'Label of the button that commits the subscription change',
+    });
+});
+
 const isUpdating = ref(false);
 const updateError = ref<string | undefined>();
 
@@ -609,14 +648,7 @@ const submitButtonAttrs = computed(() => {
                         :disabled="!canUpdate"
                         :loading="isUpdating"
                     >
-                        {{
-                            $t({
-                                defaultMessage: 'Update subscription',
-                                id: 'subscription_management.update_button.label',
-                                description:
-                                    'Label of the button that commits the subscription change',
-                            })
-                        }}
+                        {{ submitLabel }}
                     </Button>
 
                     <SecurePaymentsKPI

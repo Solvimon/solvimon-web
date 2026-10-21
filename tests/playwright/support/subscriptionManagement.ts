@@ -4,6 +4,7 @@ import { mountScreen, sharedMocks, type ScreenOptions } from './screen';
 import {
     aCustomer,
     aCustomerPortalObject,
+    anInvoice,
     anInvoicePreview,
     aPaymentMethod,
     aPricingPlan,
@@ -34,6 +35,8 @@ export interface MountOptions extends ScreenOptions {
      * endpoint 404s — the plan belongs to no group and no move is offered.
      */
     planGroup?: Json;
+    /** What a move to another plan in the group is priced at. */
+    planChangeTotal?: string;
 }
 
 function defaultMocks(options: MountOptions): Partial<Record<EndpointName, Responder>> {
@@ -51,6 +54,9 @@ function defaultMocks(options: MountOptions): Partial<Record<EndpointName, Respo
                       body: aPricingPlan({ id: UPGRADE_PRICING_PLAN_ID, name: 'Scale plan' }),
                   },
                   changeSubscriptionPlan: { status: 201, body: { id: 'ppsc_plan_change' } },
+                  changePlanInvoicePreview: {
+                      body: anInvoice({ total: options.planChangeTotal ?? '45.00' }),
+                  },
               }
             : {}),
         customer: { body: aCustomer() },

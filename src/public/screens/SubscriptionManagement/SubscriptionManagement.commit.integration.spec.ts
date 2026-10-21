@@ -52,6 +52,21 @@ vi.mock('@/composables/useSubscriptionPlanGroup', async () => {
     };
 });
 
+// Only reached by a move to another plan, which a plan in no group never makes.
+vi.mock('@/composables/useSubscriptionPlanChangePreview', async () => {
+    const { ref } = await import('vue');
+
+    return {
+        useSubscriptionPlanChangePreview: () => ({
+            invoice: ref(undefined),
+            isPending: ref(false),
+            error: ref(undefined),
+            load: vi.fn(),
+            reset: vi.fn(),
+        }),
+    };
+});
+
 vi.mock('@/composables/usePaymentMethodOptions', () => ({
     usePaymentMethodOptions: () => ({ paymentMethodOptions: ref([]), get: vi.fn() }),
 }));

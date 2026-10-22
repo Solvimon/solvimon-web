@@ -13,6 +13,7 @@ import RequiredPropertiesGuard from '@/components/providers/RequiredPropertiesGu
 import HostElementProvider from '@/components/providers/HostElementProvider/HostElementProvider.vue';
 import PortalProvider from '@/components/providers/PortalProvider/PortalProvider.vue';
 import TranslationProvider from '@/components/providers/TranslationProvider/TranslationProvider.vue';
+import { getPortalAuthentication } from '@/utils/token';
 
 const props = defineProps<
     ProviderProps & {
@@ -60,10 +61,18 @@ const emit = defineEmits<ProviderEmits>();
                                                     :portal-object="portalObject"
                                                 >
                                                     <AuthProvider
-                                                        :key="portalObject.token"
+                                                        :key="`${getPortalAuthentication(portalObject)}:${portalObject.token}`"
                                                         :token="portalObject.token"
+                                                        :authentication="
+                                                            getPortalAuthentication(portalObject)
+                                                        "
                                                     >
                                                         <slot />
+                                                        <!-- The exchange found the link expired,
+                                                        revoked or closed. -->
+                                                        <template #ended>
+                                                            <slot name="portal-unavailable" />
+                                                        </template>
                                                     </AuthProvider>
                                                     <template #unavailable>
                                                         <slot name="portal-unavailable" />

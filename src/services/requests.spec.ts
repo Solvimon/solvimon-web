@@ -471,6 +471,28 @@ describe('createRequestService', () => {
             );
         });
 
+        it('rejects with the error code and the outcome of a closed checkout session', async () => {
+            const request = createRequestService();
+            mockFetch.mockResolvedValueOnce(
+                jsonErrorResponse(410, {
+                    type: 'INVALID_REQUEST',
+                    code: 'CHECKOUT_SESSION_CLOSED',
+                    message: 'checkout session is closed',
+                    checkout_session: { status: 'COMPLETED' },
+                }),
+            );
+
+            const error = await request({ url: CALLED_URL }).catch((e: unknown) => e);
+
+            expect(error).toMatchObject({
+                statusCode: 410,
+                errorCode: 'CHECKOUT_SESSION_CLOSED',
+                checkoutSessionStatus: 'COMPLETED',
+            });
+            // `code` is what payment handlers branch on; an API code must not land there.
+            expect(error).not.toHaveProperty('code');
+        });
+
         it('reads only string fields from an error body', async () => {
             const request = createRequestService();
             mockFetch.mockResolvedValueOnce(

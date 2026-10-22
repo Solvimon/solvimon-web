@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- An element accepts a portal object whose `authentication` is `SIGNED_TOKEN`, which carries a handle in `token` instead of a portal token. The element exchanges the handle at `POST /v1/portal/token` for a token that lasts as long as the link, with no refresh, and exchanges it again once when the API rejects that token. The handle is returned only when the portal URL is created, so pass on the `token` from the create response. Portal objects that sign in through identity work as before.
+- A link that has expired, was revoked or whose checkout session has closed shows the element's "no longer available" notice, and logs `PORTAL_URL_EXPIRED` or `PORTAL_URL_REVOKED` (error), or `CHECKOUT_SESSION_CLOSED` (warning, with the session's `status` in `context`). When the API cannot verify the link, the exchange is retried a few times before the element logs `PORTAL_TOKEN_UNAVAILABLE` (error) and offers a "Try again" button (`sv-portal-unverified`). These are new members of the exported `ErrorCode` and `WarnCode` unions.
+- A failed API call's `ApiError` carries the API's own error code as `errorCode`, and for a closed checkout session link its status as `checkoutSessionStatus`.
+
 ## [0.1.0-alpha.28] - 2026-10-21
 
 ### Added

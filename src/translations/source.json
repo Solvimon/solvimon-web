@@ -1127,6 +1127,18 @@
     "defaultMessage": "This is no longer available.",
     "description": "Shown in place of an element whose portal link has been revoked by the merchant"
   },
+  "portal.unverified.message": {
+    "defaultMessage": "Check your connection and try again.",
+    "description": "Shown below the notice that the portal link could not be checked"
+  },
+  "portal.unverified.retry_button.label": {
+    "defaultMessage": "Try again",
+    "description": "The label of the button that checks the portal link again"
+  },
+  "portal.unverified.title": {
+    "defaultMessage": "We could not open this page",
+    "description": "Shown in place of an element when its portal link could not be checked for now"
+  },
   "pricing_item_pricing.unsupported_pricing_error": {
     "defaultMessage": "Unsupported pricing",
     "description": "Text displayed when the pricing item pricing is unsupported"

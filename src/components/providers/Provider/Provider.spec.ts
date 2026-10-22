@@ -77,8 +77,57 @@ describe('Provider', () => {
         );
         await settle();
 
-        expect(mockGetAuth).toHaveBeenLastCalledWith('other-token');
+        expect(mockGetAuth).toHaveBeenLastCalledWith('other-token', 'IDENTITY_TOKEN');
         expect(wrapper.find('.probe').text()).toBe('TEST|cus_2|false');
+    });
+
+    it('signs in with the handle of a portal object that authenticates with a signed token', async () => {
+        await mountProvider({
+            portalObject: {
+                ...createTestPortalObject('cus_1'),
+                token: 'cHVybF8x.handle',
+                authentication: 'SIGNED_TOKEN',
+            } as ProviderProps['portalObject'],
+        });
+
+        expect(mockGetAuth).toHaveBeenLastCalledWith('cHVybF8x.handle', 'SIGNED_TOKEN');
+    });
+
+    it('signs in again when the host says the same token is a handle', async () => {
+        const wrapper = await mountProvider({
+            portalObject: { ...createTestPortalObject('cus_1'), token: 'cHVybF8x.handle' },
+        });
+
+        await wrapper.setProps(
+            props({
+                portalObject: {
+                    ...createTestPortalObject('cus_1'),
+                    token: 'cHVybF8x.handle',
+                    authentication: 'SIGNED_TOKEN',
+                } as ProviderProps['portalObject'],
+            }),
+        );
+        await settle();
+
+        expect(mockGetAuth).toHaveBeenLastCalledWith('cHVybF8x.handle', 'SIGNED_TOKEN');
+    });
+
+    it('shows the unavailable notice in place of the tree once the link has ended', async () => {
+        mockGetAuth.mockImplementation(() => ({
+            accessToken: ref(undefined),
+            status: ref({ state: 'ended', reason: 'expired' }),
+        }));
+        const wrapper = mount(Provider, {
+            props: props(),
+            slots: {
+                default: () => h(Probe),
+                'portal-unavailable': () => h('p', { class: 'ended' }, 'ended'),
+            },
+        });
+        await settle();
+
+        expect(wrapper.find('.probe').exists()).toBe(false);
+        expect(wrapper.find('.ended').exists()).toBe(true);
     });
 
     it('follows an environment the host changes after mount', async () => {

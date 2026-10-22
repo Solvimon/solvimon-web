@@ -1,14 +1,24 @@
 <script setup lang="ts">
-import { provide } from 'vue';
+import { defineAsyncComponent, provide } from 'vue';
 import { getAuth, AUTH_INJECTION_KEY } from './AuthProvider.lib';
 import type { AuthProviderProps } from './AuthProvider.types';
 
+// Every element loads AuthProvider, and only a link the API could not verify needs it.
+const PortalLinkUnverified = defineAsyncComponent(
+    () => import('@/components/shared/PortalLinkUnverified.vue'),
+);
+
 const props = defineProps<AuthProviderProps>();
-const auth = getAuth(props.token);
+const auth = getAuth(props.token, props.authentication);
 
 provide(AUTH_INJECTION_KEY, auth);
 </script>
 
 <template>
     <slot v-if="auth.accessToken.value" />
+    <slot v-else-if="auth.status.value.state === 'ended'" name="ended" />
+    <PortalLinkUnverified
+        v-else-if="auth.status.value.state === 'unavailable'"
+        @retry="auth.retry"
+    />
 </template>

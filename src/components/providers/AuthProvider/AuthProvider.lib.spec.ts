@@ -41,7 +41,10 @@ vi.mock('@/services/tokens', () => ({
 }));
 
 vi.mock('@/utils/token', () => ({
-    parseToken: mockParseToken,
+    parsePortalCredential: (token: string) => ({
+        kind: 'identity',
+        tokenUserName: mockParseToken(token).tokenUserName,
+    }),
 }));
 
 let tokenCounter = 0;
@@ -68,6 +71,7 @@ describe('getAuth', () => {
         vi.mocked(createTokensService).mockImplementation(() => ({
             getAccessToken: mockGetAccessToken as () => Promise<Token>,
             refreshAccessToken: mockRefreshAccessToken,
+            exchangeHandle: vi.fn(),
         }));
         // No expiry, so the timer treats the token as due on every tick.
         mockGetAccessToken.mockResolvedValue({ access_token: 'access-token-123' });

@@ -10,7 +10,9 @@ vi.mock('./requests', () => ({
 }));
 
 vi.mock('@/components/providers/ConfigProvider/composables/useConfig', () => ({
-    useConfig: () => ({ apiUrls: { identity: 'https://identity.test' } }),
+    useConfig: () => ({
+        apiUrls: { identity: 'https://identity.test', transaction: 'https://api.test/v1' },
+    }),
 }));
 
 describe('tokens service', () => {
@@ -63,6 +65,63 @@ describe('tokens service', () => {
             await refreshAccessToken();
 
             expect(mockRequest.mock.calls[0][0].options.expectedStatusCodes).toEqual([401]);
+        });
+    });
+
+    describe('exchangeHandle', () => {
+        beforeEach(() => {
+            mockRequest.mockResolvedValue({
+                issued_at: '2026-10-22T10:00:00.000Z',
+                access_token: 'portal-token',
+                access_token_expires_in: 2712,
+                access_token_expires_at: '2026-10-22T10:45:12.000Z',
+                token_type: 'bearer',
+            });
+        });
+
+        it('posts the handle as it is to the transaction API', async () => {
+            const { exchangeHandle } = createTokensService();
+            await exchangeHandle('cHVybF8x.random');
+
+            expect(mockRequest).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    url: 'https://api.test/v1/portal/token',
+                    data: { handle: 'cHVybF8x.random' },
+                }),
+            );
+            expect(mockRequest.mock.calls[0][0].options).toMatchObject({ method: 'POST' });
+        });
+
+        // The handle is the credential: a bearer or a cookie would only leak something.
+        it('sends neither a bearer nor credentials', async () => {
+            const { exchangeHandle } = createTokensService();
+            await exchangeHandle('cHVybF8x.random');
+
+            expect(mockCreateRequestService).toHaveBeenCalledWith(
+                expect.not.objectContaining({ includeRefreshCookie: true }),
+            );
+            expect(mockCreateRequestService).toHaveBeenCalledWith(
+                expect.objectContaining({ enableAccessCheck: false }),
+            );
+        });
+
+        it('treats a dead link, an unknown handle and an unverified link as expected', async () => {
+            const { exchangeHandle } = createTokensService();
+            await exchangeHandle('cHVybF8x.random');
+
+            expect(mockRequest.mock.calls[0][0].options.expectedStatusCodes).toEqual([
+                401, 410, 503,
+            ]);
+        });
+
+        it('answers with the token and the seconds the link has left', async () => {
+            const { exchangeHandle } = createTokensService();
+
+            await expect(exchangeHandle('cHVybF8x.random')).resolves.toEqual({
+                access_token: 'portal-token',
+                expires_in: 2712,
+                token_type: 'bearer',
+            });
         });
     });
 });

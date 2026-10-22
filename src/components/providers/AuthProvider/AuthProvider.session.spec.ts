@@ -1,11 +1,12 @@
 import type { Mock } from 'vitest';
 import { defineComponent, h, provide } from 'vue';
 import { mount, type VueWrapper } from '@vue/test-utils';
-import { AUTH_INJECTION_KEY, getAuth } from './AuthProvider.lib';
+import { AUTH_INJECTION_KEY, getAuth, type Auth } from './AuthProvider.lib';
 import { CONFIG_INJECTION_KEY } from '@/components/providers/ConfigProvider/ConfigProvider.lib';
 import { LOGGER_PROVIDER_INJECTION_KEY } from '@/components/providers/LoggerProvider/LoggerProvider.lib';
 import type { Logger } from '@/components/providers/LoggerProvider/LoggerProvider.types';
 import { createRequestService } from '@/services/requests';
+import type { PortalAuthentication } from '@/types/portalAuthentication';
 
 /**
  * The session end to end through the real request service and token service: only `fetch` is
@@ -13,6 +14,7 @@ import { createRequestService } from '@/services/requests';
  */
 
 const IDENTITY = 'https://identity.test/v1';
+const TRANSACTION = 'https://api.test/v1';
 const API = 'https://api.test/v1/portal/thing';
 
 type Body = Record<string, unknown>;
@@ -42,6 +44,38 @@ const tokenReply = (access_token: string, expires_in: unknown = 3600): Reply => 
             : { access_token, expires_in, token_type: 'Bearer' },
 });
 
+const exchangeReply = (access_token: string, expiresIn = 3600): Reply => ({
+    status: 201,
+    body: {
+        issued_at: '2026-10-22T10:00:00.000Z',
+        access_token,
+        access_token_expires_in: expiresIn,
+        access_token_expires_at: '2026-10-22T11:00:00.000Z',
+        token_type: 'bearer',
+    },
+});
+
+const linkGone = (code: string, checkoutSessionStatus?: string): Reply => ({
+    status: 410,
+    body: {
+        type: 'INVALID_REQUEST',
+        code,
+        message: 'portal url is no longer usable',
+        ...(checkoutSessionStatus ? { checkout_session: { status: checkoutSessionStatus } } : {}),
+    },
+});
+
+let handleCounter = 0;
+// The shape the backend issues: base64url(link id) + "." + 43 random characters.
+const portalHandle = () => {
+    const handle = `${btoa(`purl_${++handleCounter}`).replace(/=+$/, '')}.${'a'.repeat(43)}`;
+    seenTokens.add(handle);
+    return handle;
+};
+
+const warnsLogged = (logger: Logger, code: string) =>
+    (logger.warn as Mock).mock.calls.filter(([c]) => c === code).length;
+
 const flush = async () => {
     for (let i = 0; i < 50; i++) await Promise.resolve();
 };
@@ -52,14 +86,17 @@ const portalToken = () => btoa(`portal-user-${++portalCounter}.purl_test`);
 const bearerOf = (init: RequestInit) =>
     (init.headers as Record<string, string>)['Authorization']?.replace('Bearer ', '');
 
-let routes: { token: Route; refresh: Route; api: Route };
+type Kind = 'token' | 'refresh' | 'exchange' | 'api';
+
+let routes: Record<Kind, Route>;
 let fetchMock: Mock;
-const callsTo = (kind: 'token' | 'refresh' | 'api') =>
+const callsTo = (kind: Kind) =>
     fetchMock.mock.calls.filter(([url]) => kindOf(url as string) === kind);
 
-function kindOf(url: string): 'token' | 'refresh' | 'api' {
+function kindOf(url: string): Kind {
     if (url.endsWith('/oauth/token')) return 'token';
     if (url.endsWith('/oauth/refresh-token')) return 'refresh';
+    if (url === `${TRANSACTION}/portal/token`) return 'exchange';
     return 'api';
 }
 
@@ -85,13 +122,15 @@ interface Element {
     wrapper: VueWrapper;
     logger: Logger;
     request: ReturnType<typeof createRequestService>;
+    auth: Auth;
 }
 
 const mounted: VueWrapper[] = [];
 
-function mountElement(token: string): Element {
+function mountElement(token: string, authentication?: PortalAuthentication): Element {
     const logger = createLogger();
     let request!: ReturnType<typeof createRequestService>;
+    let auth!: Auth;
 
     const Leaf = defineComponent({
         setup() {
@@ -101,13 +140,16 @@ function mountElement(token: string): Element {
     });
     const Auth = defineComponent({
         setup() {
-            provide(AUTH_INJECTION_KEY, getAuth(token));
+            auth = getAuth(token, authentication);
+            provide(AUTH_INJECTION_KEY, auth);
             return () => h(Leaf);
         },
     });
     const Host = defineComponent({
         setup() {
-            provide(CONFIG_INJECTION_KEY, { apiUrls: { identity: IDENTITY } } as never);
+            provide(CONFIG_INJECTION_KEY, {
+                apiUrls: { identity: IDENTITY, transaction: TRANSACTION },
+            } as never);
             provide(LOGGER_PROVIDER_INJECTION_KEY, logger);
             return () => h(Auth);
         },
@@ -115,7 +157,7 @@ function mountElement(token: string): Element {
 
     const wrapper = mount(Host);
     mounted.push(wrapper);
-    return { wrapper, logger, request };
+    return { wrapper, logger, request, auth };
 }
 
 const get = (element: Element) => element.request<Body>({ url: API });
@@ -131,6 +173,7 @@ describe('auth session through the request service', () => {
         routes = {
             token: () => tokenReply('T1'),
             refresh: () => tokenReply('T2'),
+            exchange: () => exchangeReply('P1'),
             api: () => ({ body: { ok: true } }),
         };
         fetchMock = vi.fn(async (url: string, init: RequestInit) => {
@@ -517,6 +560,220 @@ describe('auth session through the request service', () => {
             const { byRequests } = await countOver5Minutes(1, 3);
             // One refresh per request rather than a loop, but every request pays for a round trip.
             expect(byRequests).toBe(3);
+        });
+    });
+
+    describe('a link that carries a handle', () => {
+        const mountHandle = (handle = portalHandle()) => mountElement(handle, 'SIGNED_TOKEN');
+
+        // The exchange is loaded on demand, so the first one waits for its module too.
+        const settle = async () => {
+            await flush();
+            await vi.dynamicImportSettled();
+            await flush();
+        };
+
+        it('exchanges the handle once, without a bearer or credentials, and never calls identity', async () => {
+            const handle = portalHandle();
+            const element = mountHandle(handle);
+            await settle();
+
+            const [[url, init]] = callsTo('exchange');
+            expect(url).toBe(`${TRANSACTION}/portal/token`);
+            expect(JSON.parse(String(init.body))).toEqual({ handle });
+            expect(init.credentials).toBe('omit');
+            expect(bearerOf(init)).toBeUndefined();
+            expect(element.auth.status.value).toEqual({ state: 'ready' });
+            expect(callsTo('token')).toHaveLength(0);
+            expect(callsTo('refresh')).toHaveLength(0);
+        });
+
+        it('sends the exchanged token and never refreshes it, also close to its expiry', async () => {
+            routes.exchange = () => exchangeReply('P1', 30);
+            const element = mountHandle();
+            await settle();
+
+            await vi.advanceTimersByTimeAsync(10 * 60_000);
+            setVisible();
+            await get(element);
+
+            expect(callsTo('api').map(([, init]) => bearerOf(init))).toEqual(['P1']);
+            expect(callsTo('exchange')).toHaveLength(1);
+            expect(callsTo('refresh')).toHaveLength(0);
+        });
+
+        it('shares one exchange between two elements with the same handle', async () => {
+            const handle = portalHandle();
+            const a = mountHandle(handle);
+            const b = mountHandle(handle);
+            await settle();
+
+            expect(callsTo('exchange')).toHaveLength(1);
+            expect(a.auth.accessToken.value).toBe('P1');
+            expect(b.auth.accessToken.value).toBe('P1');
+        });
+
+        it('exchanges again once when the API rejects the token, and retries with the new one', async () => {
+            let exchanges = 0;
+            routes.exchange = () => exchangeReply(++exchanges === 1 ? 'P1' : 'P2');
+            routes.api = (init) => (bearerOf(init) === 'P1' ? { status: 401 } : { body: {} });
+            const element = mountHandle();
+            await settle();
+
+            await expect(
+                Promise.all(Array.from({ length: 4 }, () => get(element))),
+            ).resolves.toHaveLength(4);
+
+            expect(callsTo('exchange')).toHaveLength(2);
+            expect(callsTo('api').map(([, init]) => bearerOf(init))).toEqual([
+                ...Array(4).fill('P1'),
+                ...Array(4).fill('P2'),
+            ]);
+        });
+
+        it.each([
+            ['PORTAL_URL_EXPIRED', 'expired'],
+            ['PORTAL_URL_REVOKED', 'revoked'],
+        ])('ends the session on a 410 with %s, without asking again', async (code, reason) => {
+            const element = mountHandle();
+            await settle();
+            routes.exchange = () => linkGone(code);
+            routes.api = () => ({ status: 401 });
+
+            await expect(get(element)).rejects.toMatchObject({ statusCode: 401 });
+
+            expect(element.auth.status.value).toEqual({ state: 'ended', reason });
+            expect(element.auth.accessToken.value).toBeUndefined();
+            expect(codesLogged(element.logger, code)).toBe(1);
+
+            await Promise.allSettled([get(element), get(element)]);
+            await vi.advanceTimersByTimeAsync(10 * 60_000);
+            expect(callsTo('exchange')).toHaveLength(2);
+            expect(codesLogged(element.logger, code)).toBe(1);
+        });
+
+        it('ends the session with the outcome of a closed checkout session', async () => {
+            routes.exchange = () => linkGone('CHECKOUT_SESSION_CLOSED', 'COMPLETED');
+            const element = mountHandle();
+            await settle();
+
+            expect(element.auth.status.value).toEqual({
+                state: 'ended',
+                reason: 'closed',
+                checkoutSessionStatus: 'COMPLETED',
+            });
+            expect(warnsLogged(element.logger, 'CHECKOUT_SESSION_CLOSED')).toBe(1);
+            expect(element.logger.error).not.toHaveBeenCalled();
+            expect(callsTo('exchange')).toHaveLength(1);
+        });
+
+        it('retries a 503 with backoff, then offers a retry that can recover', async () => {
+            routes.exchange = () => ({ status: 503, body: { message: 'unable to verify' } });
+            const element = mountHandle();
+            await settle();
+            expect(callsTo('exchange')).toHaveLength(1);
+
+            await vi.advanceTimersByTimeAsync(1000);
+            await vi.advanceTimersByTimeAsync(2000);
+            await vi.advanceTimersByTimeAsync(4000);
+            expect(callsTo('exchange')).toHaveLength(4);
+            expect(element.auth.status.value).toEqual({ state: 'unavailable' });
+            expect(codesLogged(element.logger, 'PORTAL_TOKEN_UNAVAILABLE')).toBe(1);
+            expect(codesLogged(element.logger, 'PORTAL_URL_EXPIRED')).toBe(0);
+
+            await vi.advanceTimersByTimeAsync(10 * 60_000);
+            expect(callsTo('exchange')).toHaveLength(4);
+
+            routes.exchange = () => exchangeReply('P1');
+            element.auth.retry();
+            await settle();
+            expect(callsTo('exchange')).toHaveLength(5);
+            expect(element.auth.status.value).toEqual({ state: 'ready' });
+        });
+
+        it('keeps the element when the link cannot be verified again in the middle of a session', async () => {
+            const element = mountHandle();
+            await settle();
+            routes.exchange = () => ({ status: 503 });
+            routes.api = () => ({ status: 401 });
+
+            // Caught as it starts: it rejects while the timers run, before anything awaits it.
+            const result = get(element).catch((error: unknown) => error);
+            await vi.advanceTimersByTimeAsync(7000);
+
+            expect(await result).toMatchObject({ statusCode: 401 });
+            expect(callsTo('exchange')).toHaveLength(5);
+            expect(element.auth.accessToken.value).toBe('P1');
+            expect(element.auth.status.value).toEqual({ state: 'ready' });
+            expect(codesLogged(element.logger, 'PORTAL_TOKEN_UNAVAILABLE')).toBe(1);
+        });
+
+        it.each([500, 502, 504, 429])(
+            'retries a %i like a link that could not be verified',
+            async (status) => {
+                routes.exchange = () => ({ status });
+                const element = mountHandle();
+                await settle();
+                await vi.advanceTimersByTimeAsync(7000);
+
+                expect(callsTo('exchange')).toHaveLength(4);
+                expect(element.auth.status.value).toEqual({ state: 'unavailable' });
+            },
+        );
+
+        it('keeps the element when the handle is refused in the middle of a session', async () => {
+            const element = mountHandle();
+            await settle();
+            routes.exchange = () => ({ status: 401 });
+            routes.api = () => ({ status: 401 });
+
+            await expect(get(element)).rejects.toMatchObject({ statusCode: 401 });
+
+            expect(element.auth.accessToken.value).toBe('P1');
+            expect(element.auth.status.value).toEqual({ state: 'ready' });
+            expect(codesLogged(element.logger, 'INVALID_TOKEN')).toBe(1);
+        });
+
+        it('exchanges once for a rejected token, not again on every request after it failed', async () => {
+            const element = mountHandle();
+            await settle();
+            routes.exchange = () => ({ status: 401 });
+            routes.api = () => ({ status: 401 });
+
+            await Promise.allSettled([get(element), get(element)]);
+            await Promise.allSettled([get(element), get(element), get(element)]);
+
+            expect(callsTo('exchange')).toHaveLength(2);
+        });
+
+        it('recovers from a 503 within the retries without reporting it', async () => {
+            let exchanges = 0;
+            routes.exchange = () => (++exchanges === 1 ? { status: 503 } : exchangeReply('P1'));
+            const element = mountHandle();
+            await settle();
+
+            await vi.advanceTimersByTimeAsync(1000);
+            expect(element.auth.status.value).toEqual({ state: 'ready' });
+            expect(element.logger.error).not.toHaveBeenCalled();
+        });
+
+        it('refuses an unknown handle without retrying', async () => {
+            routes.exchange = () => ({ status: 401, body: { message: 'invalid credentials' } });
+            const element = mountHandle();
+            await settle();
+            await vi.advanceTimersByTimeAsync(10 * 60_000);
+
+            expect(callsTo('exchange')).toHaveLength(1);
+            expect(element.auth.status.value).toEqual({ state: 'invalid' });
+            expect(codesLogged(element.logger, 'INVALID_TOKEN')).toBe(1);
+        });
+
+        it('sends nothing for a handle that is not one', async () => {
+            const element = mountElement('not a handle', 'SIGNED_TOKEN');
+            await settle();
+
+            expect(fetchMock).not.toHaveBeenCalled();
+            expect(codesLogged(element.logger, 'INVALID_TOKEN')).toBe(1);
         });
     });
 });

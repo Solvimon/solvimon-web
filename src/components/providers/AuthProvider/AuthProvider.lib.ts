@@ -3,12 +3,24 @@ import type { Token } from '@solvimon/solvimon-types';
 import { useLogger } from '@/components/providers/LoggerProvider/composables/useLogger';
 import type { Logger } from '@/components/providers/LoggerProvider/LoggerProvider.types';
 import { createTokensService } from '@/services/tokens';
-import { parseToken } from '@/utils/token';
+import type { PortalAuthentication } from '@/types/portalAuthentication';
+import { parsePortalCredential, type PortalCredential } from '@/utils/token';
 
 export const AUTH_INJECTION_KEY: InjectionKey<Auth> = Symbol('auth');
 
 const REFRESH_INTERVAL_MS = 30 * 1000;
 const REFRESH_MARGIN_MS = 60 * 1000;
+
+/** Why a portal link can no longer be used, from the exchange's 410. */
+export type PortalLinkEnding = 'expired' | 'revoked' | 'closed';
+
+export type AuthStatus =
+    | { state: 'pending' }
+    | { state: 'ready' }
+    | { state: 'ended'; reason: PortalLinkEnding; checkoutSessionStatus?: string }
+    /** The API could not verify the link for now; `retry` tries again. */
+    | { state: 'unavailable' }
+    | { state: 'invalid' };
 
 export interface Auth {
     accessToken: Ref<string | undefined>;
@@ -16,10 +28,14 @@ export interface Auth {
     getFreshAccessToken: () => Promise<string | undefined>;
     /** A replacement for a token the API rejected, or `undefined` when there is none to be had. */
     renewAccessToken: (rejected: string | undefined) => Promise<string | undefined>;
+    status: Readonly<Ref<AuthStatus>>;
+    /** Exchanges the handle again after the API could not verify the link. */
+    retry: () => void;
 }
 
 interface SharedTokenState {
     accessToken: Ref<string | undefined>;
+    status: Ref<AuthStatus>;
     expiresAt: number | undefined;
     // One per mounted element, so failures reach the hosts still on the page. Wrapped, since two
     // elements may share a logger and the first leaving must not remove the second.
@@ -27,6 +43,8 @@ interface SharedTokenState {
     tokens: ReturnType<typeof createTokensService>;
     refreshInterval: ReturnType<typeof setInterval> | undefined;
     refreshing: Promise<string | undefined> | undefined;
+    /** The token a re-exchange was already started for: each rejected token gets one. */
+    exchangedFor: string | undefined;
     lastRefreshFailed: boolean;
     consecutiveRefresh401s: number;
     isSessionExpired: boolean;
@@ -66,6 +84,7 @@ function applyToken(state: SharedTokenState, { access_token, expires_in }: Token
     state.accessToken.value = access_token;
     // Relative to now rather than the JWT's `exp`, so a skewed client clock cannot misjudge it.
     state.expiresAt = expires_in > 0 ? Date.now() + expires_in * 1000 : undefined;
+    state.status.value = { state: 'ready' };
 }
 
 const isDue = (state: SharedTokenState) =>
@@ -128,15 +147,61 @@ function refreshForRequest(state: SharedTokenState): Promise<string | undefined>
     return Promise.resolve(undefined);
 }
 
+/**
+ * The token lives as long as the link and there is no refresh token, so the handle is exchanged
+ * only to start and after the API rejects the token. Every caller shares an exchange in flight.
+ */
+function exchange(state: SharedTokenState, handle: string): Promise<string | undefined> {
+    // Loaded on demand: only a link that carries a handle needs it, and every element loads this.
+    state.refreshing ??= import('./AuthProvider.handle')
+        .then(({ runExchange }) =>
+            runExchange(handle, {
+                exchangeHandle: (value) => state.tokens.exchangeHandle(value),
+                applyToken: (token) => applyToken(state, token),
+                clearToken: () => {
+                    state.accessToken.value = undefined;
+                    state.expiresAt = undefined;
+                },
+                hasToken: () => state.accessToken.value !== undefined,
+                setStatus: (status) => {
+                    state.status.value = status;
+                },
+                isAbandoned: () => state.subscribers.size === 0,
+                forEachLogger: (log) => forEachLogger(state, log),
+            }),
+        )
+        .catch((err: unknown) => {
+            if (state.accessToken.value === undefined) {
+                state.status.value = { state: 'unavailable' };
+            }
+            forEachLogger(state, (logger) =>
+                logger.error(
+                    'PORTAL_TOKEN_UNAVAILABLE',
+                    'Could not exchange the portal link handle for a token',
+                    {},
+                    err,
+                ),
+            );
+            return undefined;
+        })
+        .finally(() => {
+            state.refreshing = undefined;
+        });
+
+    return state.refreshing;
+}
+
 function createSharedState(): SharedTokenState {
     const subscribers = new Set<Subscriber>();
     const state: SharedTokenState = {
         accessToken: ref<string | undefined>(),
+        status: ref<AuthStatus>({ state: 'pending' }),
         expiresAt: undefined,
         subscribers,
         tokens: createTokensService({ logger: createRoutedLogger(subscribers) }),
         refreshInterval: undefined,
         refreshing: undefined,
+        exchangedFor: undefined,
         lastRefreshFailed: false,
         consecutiveRefresh401s: 0,
         isSessionExpired: false,
@@ -149,11 +214,18 @@ function createSharedState(): SharedTokenState {
     return state;
 }
 
-function startSession(state: SharedTokenState, tokenUserName: string) {
+function startSession(state: SharedTokenState, credential: PortalCredential) {
+    if (credential.kind === 'handle') {
+        void exchange(state, credential.handle);
+        return;
+    }
+
+    const { tokenUserName } = credential;
     const fetchToken = async () => {
         try {
             applyToken(state, await state.tokens.getAccessToken(tokenUserName));
         } catch (err) {
+            state.status.value = { state: 'invalid' };
             forEachLogger(state, (logger) =>
                 logger.error('INVALID_TOKEN', 'Failed to fetch access token', {}, err),
             );
@@ -179,14 +251,16 @@ const inertAuth = (): Auth => ({
     accessToken: ref<string | undefined>(),
     getFreshAccessToken: () => Promise.resolve(undefined),
     renewAccessToken: () => Promise.resolve(undefined),
+    status: ref<AuthStatus>({ state: 'invalid' }),
+    retry: () => {},
 });
 
-export const getAuth = (token: string): Auth => {
+export const getAuth = (token: string, authentication?: PortalAuthentication): Auth => {
     const subscriber: Subscriber = { logger: useLogger() };
 
-    let tokenUserName: string;
+    let credential: PortalCredential;
     try {
-        ({ tokenUserName } = parseToken(token));
+        credential = parsePortalCredential(token, authentication);
     } catch (err) {
         // Before the shared map is touched, so a bad token leaves nothing behind.
         subscriber.logger.error('INVALID_TOKEN', 'Failed to parse the portal token', {}, err);
@@ -198,7 +272,7 @@ export const getAuth = (token: string): Auth => {
     if (!state) {
         const created = createSharedState();
         sharedTokenStates.set(token, created);
-        onMounted(() => startSession(created, tokenUserName));
+        onMounted(() => startSession(created, credential));
         state = created;
     }
 
@@ -216,7 +290,7 @@ export const getAuth = (token: string): Auth => {
     return {
         accessToken: shared.accessToken,
         getFreshAccessToken: async () => {
-            if (shared.expiresAt !== undefined && isDue(shared)) {
+            if (credential.kind === 'identity' && shared.expiresAt !== undefined && isDue(shared)) {
                 await refreshForRequest(shared);
             }
             return shared.accessToken.value;
@@ -224,7 +298,23 @@ export const getAuth = (token: string): Auth => {
         renewAccessToken: async (rejected) => {
             // Another request already replaced it.
             if (shared.accessToken.value !== rejected) return shared.accessToken.value;
+            if (credential.kind === 'handle') {
+                if (shared.refreshing) return shared.refreshing;
+                // The API rejects a token whose link is gone; the exchange says why, with a 410.
+                // Once per rejected token, so a failed exchange is not repeated on every request.
+                if (shared.status.value.state !== 'ready' || shared.exchangedFor === rejected) {
+                    return undefined;
+                }
+                shared.exchangedFor = rejected;
+                return exchange(shared, credential.handle);
+            }
             return refreshForRequest(shared);
+        },
+        status: shared.status,
+        retry: () => {
+            if (credential.kind !== 'handle' || shared.status.value.state !== 'unavailable') return;
+            shared.status.value = { state: 'pending' };
+            void exchange(shared, credential.handle);
         },
     };
 };

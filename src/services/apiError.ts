@@ -11,6 +11,13 @@ export class ApiError extends Error {
     /** The kind of resource the error is about, such as `PAYMENT` on a refused payment. */
     readonly resourceType?: string;
     readonly resourceId?: string;
+    /**
+     * The API's own error code, such as `PORTAL_URL_EXPIRED`. Not `code`: payment handlers read
+     * that as the SDK's code for a failed payment.
+     */
+    readonly errorCode?: string;
+    /** The status of the checkout session a closed portal link belongs to. */
+    readonly checkoutSessionStatus?: string;
 
     constructor({
         statusCode,
@@ -19,6 +26,8 @@ export class ApiError extends Error {
         field,
         resourceType,
         resourceId,
+        errorCode,
+        checkoutSessionStatus,
     }: {
         statusCode: number;
         message?: string;
@@ -26,6 +35,8 @@ export class ApiError extends Error {
         field?: string;
         resourceType?: string;
         resourceId?: string;
+        errorCode?: string;
+        checkoutSessionStatus?: string;
     }) {
         super(message || `Request failed with status ${statusCode}`);
 
@@ -35,6 +46,8 @@ export class ApiError extends Error {
         if (field) this.field = field;
         if (resourceType) this.resourceType = resourceType;
         if (resourceId) this.resourceId = resourceId;
+        if (errorCode) this.errorCode = errorCode;
+        if (checkoutSessionStatus) this.checkoutSessionStatus = checkoutSessionStatus;
     }
 }
 

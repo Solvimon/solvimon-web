@@ -747,16 +747,32 @@ describe('auth session through the request service', () => {
             expect(codesLogged(element.logger, 'INVALID_TOKEN')).toBe(1);
         });
 
-        it('exchanges once for a rejected token, not again on every request after it failed', async () => {
+        it('waits a while after a failed re-exchange before it exchanges again, then recovers', async () => {
             const element = mountHandle();
             await settle();
             routes.exchange = () => ({ status: 401 });
-            routes.api = () => ({ status: 401 });
+            routes.api = (init) => (bearerOf(init) === 'P2' ? { body: {} } : { status: 401 });
 
             await Promise.allSettled([get(element), get(element)]);
             await Promise.allSettled([get(element), get(element), get(element)]);
-
             expect(callsTo('exchange')).toHaveLength(2);
+
+            routes.exchange = () => exchangeReply('P2');
+            await vi.advanceTimersByTimeAsync(30_000);
+
+            await expect(get(element)).resolves.toEqual({});
+            expect(callsTo('exchange')).toHaveLength(3);
+        });
+
+        it('retries an exchange that answers without a token', async () => {
+            routes.exchange = () => ({ status: 201, body: { token_type: 'bearer' } });
+            const element = mountHandle();
+            await settle();
+            await vi.advanceTimersByTimeAsync(7000);
+
+            expect(callsTo('exchange')).toHaveLength(4);
+            expect(element.auth.status.value).toEqual({ state: 'unavailable' });
+            expect(element.auth.accessToken.value).toBeUndefined();
         });
 
         describe('with a token the host already exchanged the handle for', () => {

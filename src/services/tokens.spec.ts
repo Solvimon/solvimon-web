@@ -110,8 +110,15 @@ describe('tokens service', () => {
             await exchangeHandle('cHVybF8x.random');
 
             expect(mockRequest.mock.calls[0][0].options.expectedStatusCodes).toEqual([
-                401, 410, 503,
+                401, 410, 429, 500, 502, 503, 504,
             ]);
+        });
+
+        it('refuses a success that carries no token', async () => {
+            mockRequest.mockResolvedValue({ token_type: 'bearer' });
+            const { exchangeHandle } = createTokensService();
+
+            await expect(exchangeHandle('cHVybF8x.random')).rejects.toThrow();
         });
 
         it('answers with the token and the seconds the link has left', async () => {

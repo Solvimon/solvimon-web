@@ -37,11 +37,19 @@ export function createTokensService({ logger }: { logger?: Logger } = {}) {
         async exchangeHandle(handle: string): Promise<Token> {
             const response = await exchangeRequest<PortalToken>({
                 url: buildUrl(config.apiUrls.transaction, 'portal', 'token'),
-                // `AuthProvider` handles each of these: a dead link (410), an unknown handle (401)
-                // and a link the API could not verify for now (503).
-                options: { method: 'POST', expectedStatusCodes: [401, 410, 503] },
+                // `AuthProvider` handles each of these: a dead link (410), an unknown handle (401),
+                // and a link the API could not verify for now, which it retries.
+                options: {
+                    method: 'POST',
+                    expectedStatusCodes: [401, 410, 429, 500, 502, 503, 504],
+                },
                 data: { handle },
             });
+
+            // A success without a token is no sign-in; failing here lets the exchange retry it.
+            if (typeof response?.access_token !== 'string' || !response.access_token) {
+                throw new Error('The portal token exchange answered without a token');
+            }
 
             return {
                 access_token: response.access_token,

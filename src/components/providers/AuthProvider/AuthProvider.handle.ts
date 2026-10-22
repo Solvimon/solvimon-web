@@ -12,6 +12,8 @@ export interface ExchangeSession {
     setStatus: (status: AuthStatus) => void;
     /** Every element using the session has left the page. */
     isAbandoned: () => boolean;
+    /** The API could not verify the link for now. */
+    markUnverified: (err: unknown) => void;
     forEachLogger: (log: (logger: Logger) => void) => void;
 }
 
@@ -58,15 +60,7 @@ function failExchange(session: ExchangeSession, err: unknown) {
 
     if (isTransient(err)) {
         // Mid-session the element stays as it is: the request the API rejected fails on its own.
-        if (!session.hasToken()) session.setStatus({ state: 'unavailable' });
-        session.forEachLogger((logger) =>
-            logger.error(
-                'PORTAL_TOKEN_UNAVAILABLE',
-                'Could not exchange the portal link handle for a token',
-                {},
-                err,
-            ),
-        );
+        session.markUnverified(err);
         return;
     }
 

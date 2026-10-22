@@ -28,6 +28,14 @@ const Probe = defineComponent({
     },
 });
 
+const HOST_TOKEN = {
+    issued_at: '2026-10-22T10:00:00.000Z',
+    access_token: 'host-token',
+    access_token_expires_in: 3600,
+    access_token_expires_at: '2026-10-22T11:00:00.000Z',
+    token_type: 'bearer',
+} as const;
+
 const props = (overrides: Partial<ProviderProps> = {}): ProviderProps => ({
     customElementName: 'solvimon-test',
     environment: 'TEST',
@@ -77,7 +85,7 @@ describe('Provider', () => {
         );
         await settle();
 
-        expect(mockGetAuth).toHaveBeenLastCalledWith('other-token', 'IDENTITY_TOKEN');
+        expect(mockGetAuth).toHaveBeenLastCalledWith('other-token', 'IDENTITY_TOKEN', undefined);
         expect(wrapper.find('.probe').text()).toBe('TEST|cus_2|false');
     });
 
@@ -90,7 +98,7 @@ describe('Provider', () => {
             } as ProviderProps['portalObject'],
         });
 
-        expect(mockGetAuth).toHaveBeenLastCalledWith('cHVybF8x.handle', 'SIGNED_TOKEN');
+        expect(mockGetAuth).toHaveBeenLastCalledWith('cHVybF8x.handle', 'SIGNED_TOKEN', undefined);
     });
 
     it('signs in again when the host says the same token is a handle', async () => {
@@ -109,7 +117,20 @@ describe('Provider', () => {
         );
         await settle();
 
-        expect(mockGetAuth).toHaveBeenLastCalledWith('cHVybF8x.handle', 'SIGNED_TOKEN');
+        expect(mockGetAuth).toHaveBeenLastCalledWith('cHVybF8x.handle', 'SIGNED_TOKEN', undefined);
+    });
+
+    it('hands the session a token the host already exchanged the handle for', async () => {
+        await mountProvider({
+            portalObject: {
+                ...createTestPortalObject('cus_1'),
+                token: 'cHVybF8x.handle',
+                authentication: 'SIGNED_TOKEN',
+            } as ProviderProps['portalObject'],
+            portalToken: HOST_TOKEN,
+        });
+
+        expect(mockGetAuth).toHaveBeenLastCalledWith('cHVybF8x.handle', 'SIGNED_TOKEN', HOST_TOKEN);
     });
 
     it('shows the unavailable notice in place of the tree once the link has ended', async () => {

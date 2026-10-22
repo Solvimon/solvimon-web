@@ -3,16 +3,7 @@ import { createRequestService } from './requests';
 import { buildUrl } from './requests.lib';
 import type { Logger } from '@/components/providers/LoggerProvider/LoggerProvider.types';
 import { useConfig } from '@/components/providers/ConfigProvider/composables/useConfig';
-
-/** What `POST /portal/token` answers with; not in `@solvimon/solvimon-types` yet. */
-interface PortalTokenResponse {
-    issued_at: string;
-    access_token: string;
-    /** Seconds until the link expires: the token lives as long as the link. */
-    access_token_expires_in: number;
-    access_token_expires_at: string;
-    token_type: 'bearer';
-}
+import type { PortalToken } from '@/types/portalToken';
 
 export function createTokensService({ logger }: { logger?: Logger } = {}) {
     const config = useConfig();
@@ -44,7 +35,7 @@ export function createTokensService({ logger }: { logger?: Logger } = {}) {
             });
         },
         async exchangeHandle(handle: string): Promise<Token> {
-            const response = await exchangeRequest<PortalTokenResponse>({
+            const response = await exchangeRequest<PortalToken>({
                 url: buildUrl(config.apiUrls.transaction, 'portal', 'token'),
                 // `AuthProvider` handles each of these: a dead link (410), an unknown handle (401)
                 // and a link the API could not verify for now (503).

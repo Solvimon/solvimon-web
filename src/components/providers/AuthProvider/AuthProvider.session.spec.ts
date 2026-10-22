@@ -7,6 +7,7 @@ import { LOGGER_PROVIDER_INJECTION_KEY } from '@/components/providers/LoggerProv
 import type { Logger } from '@/components/providers/LoggerProvider/LoggerProvider.types';
 import { createRequestService } from '@/services/requests';
 import type { PortalAuthentication } from '@/types/portalAuthentication';
+import type { PortalToken } from '@/types/portalToken';
 
 /**
  * The session end to end through the real request service and token service: only `fetch` is
@@ -63,6 +64,14 @@ const linkGone = (code: string, checkoutSessionStatus?: string): Reply => ({
         message: 'portal url is no longer usable',
         ...(checkoutSessionStatus ? { checkout_session: { status: checkoutSessionStatus } } : {}),
     },
+});
+
+const hostToken = (access_token: string): PortalToken => ({
+    issued_at: '2026-10-22T10:00:00.000Z',
+    access_token,
+    access_token_expires_in: 3600,
+    access_token_expires_at: '2026-10-22T11:00:00.000Z',
+    token_type: 'bearer',
 });
 
 let handleCounter = 0;
@@ -127,7 +136,11 @@ interface Element {
 
 const mounted: VueWrapper[] = [];
 
-function mountElement(token: string, authentication?: PortalAuthentication): Element {
+function mountElement(
+    token: string,
+    authentication?: PortalAuthentication,
+    portalToken?: PortalToken,
+): Element {
     const logger = createLogger();
     let request!: ReturnType<typeof createRequestService>;
     let auth!: Auth;
@@ -140,7 +153,7 @@ function mountElement(token: string, authentication?: PortalAuthentication): Ele
     });
     const Auth = defineComponent({
         setup() {
-            auth = getAuth(token, authentication);
+            auth = getAuth(token, authentication, portalToken);
             provide(AUTH_INJECTION_KEY, auth);
             return () => h(Leaf);
         },
@@ -744,6 +757,41 @@ describe('auth session through the request service', () => {
             await Promise.allSettled([get(element), get(element), get(element)]);
 
             expect(callsTo('exchange')).toHaveLength(2);
+        });
+
+        describe('with a token the host already exchanged the handle for', () => {
+            beforeEach(() => seenTokens.add('HOST1'));
+
+            it('signs in with it, without exchanging the handle', async () => {
+                const element = mountElement(portalHandle(), 'SIGNED_TOKEN', hostToken('HOST1'));
+                await settle();
+                await get(element);
+
+                expect(callsTo('exchange')).toHaveLength(0);
+                expect(element.auth.status.value).toEqual({ state: 'ready' });
+                expect(callsTo('api').map(([, init]) => bearerOf(init))).toEqual(['HOST1']);
+            });
+
+            it('exchanges the handle once the API rejects it', async () => {
+                routes.api = (init) =>
+                    bearerOf(init) === 'HOST1' ? { status: 401 } : { body: {} };
+                const element = mountElement(portalHandle(), 'SIGNED_TOKEN', hostToken('HOST1'));
+                await settle();
+
+                await expect(get(element)).resolves.toEqual({});
+
+                expect(callsTo('exchange')).toHaveLength(1);
+                expect(callsTo('api').map(([, init]) => bearerOf(init))).toEqual(['HOST1', 'P1']);
+            });
+
+            it('is not used for an identity token, which signs in through identity', async () => {
+                const element = mountElement(portalToken(), undefined, hostToken('HOST1'));
+                await flush();
+                await get(element);
+
+                expect(callsTo('token')).toHaveLength(1);
+                expect(callsTo('api').map(([, init]) => bearerOf(init))).toEqual(['T1']);
+            });
         });
 
         it('recovers from a 503 within the retries without reporting it', async () => {

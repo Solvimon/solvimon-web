@@ -9,7 +9,7 @@ const PortalLinkUnverified = defineAsyncComponent(
 );
 
 const props = defineProps<AuthProviderProps>();
-const auth = getAuth(props.token, props.authentication);
+const auth = getAuth(props.token, props.authentication, props.portalToken);
 
 provide(AUTH_INJECTION_KEY, auth);
 </script>

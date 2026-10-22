@@ -40,6 +40,13 @@ session's `status` in `context`) and shows the same notice as a revoked portal. 
 verify the link for a while, the element logs `PORTAL_TOKEN_UNAVAILABLE` and offers to try again
 (`sv-portal-unverified`).
 
+A host that already exchanged the handle itself can pass the response it got, as it is, as
+`portalToken` next to `portalObject`, so the element signs in without a second exchange. The element
+still needs the handle: when the API rejects the token, it exchanges the handle again. `portalToken`
+is read only when the element signs in, and only for a `SIGNED_TOKEN` portal object. Set it as a
+JavaScript property, like `portalObject`: it is an object so that the token never becomes an HTML
+attribute, which a string property of a custom element does.
+
 ## Usage
 
 The SDK ships web components (Custom Elements), and there are two ways to put one on a page.

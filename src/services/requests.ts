@@ -14,16 +14,27 @@ import type { Logger } from '@/components/providers/LoggerProvider/LoggerProvide
 import { getMediaType, Headers, isRefreshCookieEndpoint, MediaType } from '@/services/requests.lib';
 import { useAuth } from '@/components/providers/AuthProvider';
 
-type ErrorBody = Partial<Record<'message' | 'field' | 'resource_type' | 'resource_id', string>>;
+const ERROR_BODY_KEYS = ['message', 'field', 'resource_type', 'resource_id', 'code'] as const;
+
+type ErrorBody = Partial<
+    Record<(typeof ERROR_BODY_KEYS)[number] | 'checkout_session_status', string>
+>;
 
 /** The fields an API error body carries, each only when it is a string. */
 function readErrorBody(json: unknown): ErrorBody {
     if (typeof json !== 'object' || json === null) return {};
 
     const body: ErrorBody = {};
-    for (const key of ['message', 'field', 'resource_type', 'resource_id'] as const) {
+    for (const key of ERROR_BODY_KEYS) {
         const value: unknown = Reflect.get(json, key);
         if (typeof value === 'string') body[key] = value;
+    }
+
+    // A 410 for a closed portal link says how its checkout session ended.
+    const checkoutSession: unknown = Reflect.get(json, 'checkout_session');
+    if (typeof checkoutSession === 'object' && checkoutSession !== null) {
+        const status: unknown = Reflect.get(checkoutSession, 'status');
+        if (typeof status === 'string') body.checkout_session_status = status;
     }
 
     return body;
@@ -181,6 +192,8 @@ export function createRequestService({
                     field: body.field,
                     resourceType: body.resource_type,
                     resourceId: body.resource_id,
+                    errorCode: body.code,
+                    checkoutSessionStatus: body.checkout_session_status,
                 });
             }
 

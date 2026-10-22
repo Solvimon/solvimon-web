@@ -30,6 +30,16 @@ An element renders only for a published portal of the type it accepts: `checkout
 checkout shows its "Checkout not available" notice, and the other elements say that they are no longer
 available (`sv-portal-unavailable`).
 
+A portal object whose `authentication` is `SIGNED_TOKEN` carries a handle in `token` rather than a
+portal token. The API returns that handle only in the response that creates the portal URL; a later
+read of the portal URL has no `token`, so keep the one from the create response and pass it on. The
+element exchanges the handle for a token that lasts as long as the link, and exchanges it again when
+the API rejects that token. A link that has expired, was revoked or whose checkout session has
+closed logs `PORTAL_URL_EXPIRED`, `PORTAL_URL_REVOKED` or `CHECKOUT_SESSION_CLOSED` (with the
+session's `status` in `context`) and shows the same notice as a revoked portal. When the API cannot
+verify the link for a while, the element logs `PORTAL_TOKEN_UNAVAILABLE` and offers to try again
+(`sv-portal-unverified`).
+
 ## Usage
 
 The SDK ships web components (Custom Elements), and there are two ways to put one on a page.
@@ -391,7 +401,10 @@ The SDK emits structured log entries via the [`onLog`](#error-logging) callback.
 | `PAYMENT_DETAILS_REJECTED`                  | Payment details returned a failed payment                          |
 | `PAYMENT_INTEGRATION_INITIALIZATION_FAILED` | Failed to mount Adyen web drop-in                                  |
 | `PAYMENT_METHOD_OPTIONS_LOAD_FAILED`        | Failed to load the payment methods that can be offered             |
+| `PORTAL_TOKEN_UNAVAILABLE`                  | Could not exchange the portal link handle for a token              |
 | `PORTAL_TYPE_NOT_ALLOWED`                   | Reserved — not currently emitted                                   |
+| `PORTAL_URL_EXPIRED`                        | The portal link has expired                                        |
+| `PORTAL_URL_REVOKED`                        | The portal link is revoked                                         |
 | `PROMOTION_CODE_APPLY_FAILED`               | Failed to apply promotion code                                     |
 | `PROMOTION_CODE_REMOVE_FAILED`              | Failed to remove promotion code                                    |
 | `REQUEST_FAILED`                            | Request failed                                                     |
@@ -418,6 +431,7 @@ The SDK emits structured log entries via the [`onLog`](#error-logging) callback.
 | `APPLE_PAY_ACTION_REQUIRED`          | Reserved — not currently emitted                                                                             |
 | `APPLE_PAY_FORM_INCOMPLETE`          | Apple Pay authorization stopped: the checkout form is incomplete                                             |
 | `CHECKOUT_FORM_STATE_NOT_SAVED`      | Could not keep the checkout form for a redirect return                                                       |
+| `CHECKOUT_SESSION_CLOSED`            | The checkout session of the portal link is closed                                                            |
 | `INVOICE_PREVIEW_SKIPPED`            | Skipped the on-demand charge invoice preview: no schedule to charge it on                                    |
 | `MISSING_REQUIRED_PROPERTIES`        | Not rendering until these properties are set:…                                                               |
 | `ON_DEMAND_CHARGE_REFUSED`           | The on-demand order was refused or its payment did not go through                                            |

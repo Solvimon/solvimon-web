@@ -10,7 +10,7 @@ import type { CssOverridesProviderProps } from '@/components/providers/CssOverri
 
 export interface RequiredProviderProps
     extends
-        Omit<AuthProviderProps, 'token'>,
+        Omit<AuthProviderProps, 'token' | 'authentication'>,
         ConfigProviderProps,
         TranslationProviderProps,
         BrandProviderProps,

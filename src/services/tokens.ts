@@ -4,6 +4,16 @@ import { buildUrl } from './requests.lib';
 import type { Logger } from '@/components/providers/LoggerProvider/LoggerProvider.types';
 import { useConfig } from '@/components/providers/ConfigProvider/composables/useConfig';
 
+/** What `POST /portal/token` answers with; not in `@solvimon/solvimon-types` yet. */
+interface PortalTokenResponse {
+    issued_at: string;
+    access_token: string;
+    /** Seconds until the link expires: the token lives as long as the link. */
+    access_token_expires_in: number;
+    access_token_expires_at: string;
+    token_type: 'bearer';
+}
+
 export function createTokensService({ logger }: { logger?: Logger } = {}) {
     const config = useConfig();
     const request = createRequestService({
@@ -11,6 +21,8 @@ export function createTokensService({ logger }: { logger?: Logger } = {}) {
         includeRefreshCookie: true,
         logger,
     });
+    // The handle is the only credential the exchange takes: no bearer and no cookie.
+    const exchangeRequest = createRequestService({ enableAccessCheck: false, logger });
 
     return {
         getAccessToken(tokenUserName: string) {
@@ -30,6 +42,21 @@ export function createTokensService({ logger }: { logger?: Logger } = {}) {
                 // `AuthProvider` raises SESSION_EXPIRED.
                 options: { method: 'POST', expectedStatusCodes: [401] },
             });
+        },
+        async exchangeHandle(handle: string): Promise<Token> {
+            const response = await exchangeRequest<PortalTokenResponse>({
+                url: buildUrl(config.apiUrls.transaction, 'portal', 'token'),
+                // `AuthProvider` handles each of these: a dead link (410), an unknown handle (401)
+                // and a link the API could not verify for now (503).
+                options: { method: 'POST', expectedStatusCodes: [401, 410, 503] },
+                data: { handle },
+            });
+
+            return {
+                access_token: response.access_token,
+                expires_in: response.access_token_expires_in,
+                token_type: response.token_type,
+            };
         },
     };
 }

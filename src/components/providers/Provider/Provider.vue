@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed } from 'vue';
 import { BrandProvider, IconSpriteProvider } from '@solvimon/solvimon-ui';
 import type { ProviderEmits, ProviderProps } from './Provider.types';
 import CssOverridesProvider from '@/components/providers/CssOverridesProvider/CssOverridesProvider.vue';
@@ -21,6 +22,7 @@ const props = defineProps<
         missingProperties?: string[];
     }
 >();
+const authentication = computed(() => getPortalAuthentication(props.portalObject));
 const emit = defineEmits<ProviderEmits>();
 </script>
 
@@ -61,11 +63,9 @@ const emit = defineEmits<ProviderEmits>();
                                                     :portal-object="portalObject"
                                                 >
                                                     <AuthProvider
-                                                        :key="`${getPortalAuthentication(portalObject)}:${portalObject.token}`"
+                                                        :key="`${authentication}:${portalObject.token}`"
                                                         :token="portalObject.token"
-                                                        :authentication="
-                                                            getPortalAuthentication(portalObject)
-                                                        "
+                                                        :authentication="authentication"
                                                         :portal-token="portalToken"
                                                     >
                                                         <slot />

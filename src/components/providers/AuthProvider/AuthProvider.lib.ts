@@ -11,6 +11,8 @@ export const AUTH_INJECTION_KEY: InjectionKey<Auth> = Symbol('auth');
 
 const REFRESH_INTERVAL_MS = 30 * 1000;
 const REFRESH_MARGIN_MS = 60 * 1000;
+// After a failed re-exchange the API is given as long as the identity path waits between refreshes.
+const EXCHANGE_COOLDOWN_MS = REFRESH_INTERVAL_MS;
 
 /** Why a portal link can no longer be used, from the exchange's 410. */
 export type PortalLinkEnding = 'expired' | 'revoked' | 'closed';
@@ -44,8 +46,8 @@ interface SharedTokenState {
     tokens: ReturnType<typeof createTokensService>;
     refreshInterval: ReturnType<typeof setInterval> | undefined;
     refreshing: Promise<string | undefined> | undefined;
-    /** The token a re-exchange was already started for: each rejected token gets one. */
-    exchangedFor: string | undefined;
+    /** Until when a re-exchange may not start, after one failed in the middle of the session. */
+    exchangeBlockedUntil: number | undefined;
     lastRefreshFailed: boolean;
     consecutiveRefresh401s: number;
     isSessionExpired: boolean;
@@ -152,6 +154,21 @@ function refreshForRequest(state: SharedTokenState): Promise<string | undefined>
  * The token lives as long as the link and there is no refresh token, so the handle is exchanged
  * only to start and after the API rejects the token. Every caller shares an exchange in flight.
  */
+/** The API could not verify the link: on the first load the element offers to try again. */
+function markUnverified(state: SharedTokenState, err: unknown) {
+    if (state.accessToken.value === undefined) {
+        state.status.value = { state: 'unavailable' };
+    }
+    forEachLogger(state, (logger) =>
+        logger.error(
+            'PORTAL_TOKEN_UNAVAILABLE',
+            'Could not exchange the portal link handle for a token',
+            {},
+            err,
+        ),
+    );
+}
+
 function exchange(state: SharedTokenState, handle: string): Promise<string | undefined> {
     // Loaded on demand: only a link that carries a handle needs it, and every element loads this.
     state.refreshing ??= import('./AuthProvider.handle')
@@ -168,21 +185,12 @@ function exchange(state: SharedTokenState, handle: string): Promise<string | und
                     state.status.value = status;
                 },
                 isAbandoned: () => state.subscribers.size === 0,
+                markUnverified: (err) => markUnverified(state, err),
                 forEachLogger: (log) => forEachLogger(state, log),
             }),
         )
         .catch((err: unknown) => {
-            if (state.accessToken.value === undefined) {
-                state.status.value = { state: 'unavailable' };
-            }
-            forEachLogger(state, (logger) =>
-                logger.error(
-                    'PORTAL_TOKEN_UNAVAILABLE',
-                    'Could not exchange the portal link handle for a token',
-                    {},
-                    err,
-                ),
-            );
+            markUnverified(state, err);
             return undefined;
         })
         .finally(() => {
@@ -202,7 +210,7 @@ function createSharedState(): SharedTokenState {
         tokens: createTokensService({ logger: createRoutedLogger(subscribers) }),
         refreshInterval: undefined,
         refreshing: undefined,
-        exchangedFor: undefined,
+        exchangeBlockedUntil: undefined,
         lastRefreshFailed: false,
         consecutiveRefresh401s: 0,
         isSessionExpired: false,
@@ -319,12 +327,16 @@ export const getAuth = (
             if (credential.kind === 'handle') {
                 if (shared.refreshing) return shared.refreshing;
                 // The API rejects a token whose link is gone; the exchange says why, with a 410.
-                // Once per rejected token, so a failed exchange is not repeated on every request.
-                if (shared.status.value.state !== 'ready' || shared.exchangedFor === rejected) {
+                // After a failed one the next waits a while, so it is not repeated on every request.
+                const blockedUntil = shared.exchangeBlockedUntil ?? 0;
+                if (shared.status.value.state !== 'ready' || Date.now() < blockedUntil) {
                     return undefined;
                 }
-                shared.exchangedFor = rejected;
-                return exchange(shared, credential.handle);
+                const renewed = await exchange(shared, credential.handle);
+                shared.exchangeBlockedUntil = renewed
+                    ? undefined
+                    : Date.now() + EXCHANGE_COOLDOWN_MS;
+                return renewed;
             }
             return refreshForRequest(shared);
         },

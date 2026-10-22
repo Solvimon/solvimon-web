@@ -11,13 +11,18 @@ import { createTestPortalObject } from '@/test-utils/portalObjectFixture';
  * `onLog`, with properties set the way a plain HTML integration sets them.
  */
 
+const { getAuthCalls } = vi.hoisted(() => ({ getAuthCalls: [] as unknown[][] }));
+
 vi.mock('@/components/providers/AuthProvider/AuthProvider.lib', async (importOriginal) => ({
     ...(await importOriginal<object>()),
-    getAuth: () => ({
-        accessToken: ref('access-token'),
-        getFreshAccessToken: async () => 'access-token',
-        renewAccessToken: async () => undefined,
-    }),
+    getAuth: (...args: unknown[]) => {
+        getAuthCalls.push(args);
+        return {
+            accessToken: ref('access-token'),
+            getFreshAccessToken: async () => 'access-token',
+            renewAccessToken: async () => undefined,
+        };
+    },
 }));
 
 let tagCount = 0;
@@ -25,6 +30,7 @@ let tagCount = 0;
 const ENTRY_PROPS: string[] = [
     'environment',
     'portalObject',
+    'portalToken',
     'onLog',
     'logLevel',
     'locale',
@@ -515,5 +521,33 @@ describe('EntryProvider inside a custom element', () => {
             expect(recorded.element.shadowRoot?.querySelector('.entry-content')).toBeTruthy();
             expect(setups).toBe(2);
         });
+    });
+
+    // A custom element copies a string property into an HTML attribute, where a bearer token would
+    // sit in the page for session replay and anything else that reads the DOM.
+    it('keeps a portal token the host passes out of the page, and hands it to the session', async () => {
+        const tag = defineEntryElement(defineComponent({ render: () => h('p', 'content') }));
+        const { element } = createElement(tag);
+        const portalToken = {
+            issued_at: '2026-10-22T10:00:00.000Z',
+            access_token: 'host-portal-token',
+            access_token_expires_in: 3600,
+            access_token_expires_at: '2026-10-22T11:00:00.000Z',
+            token_type: 'bearer',
+        };
+        Object.assign(element, {
+            environment: 'TEST',
+            portalObject: {
+                ...createTestPortalObject(),
+                token: 'cHVybF8x.handle',
+                authentication: 'SIGNED_TOKEN',
+            },
+            portalToken,
+        });
+        document.body.append(element);
+        await settle();
+
+        expect(element.outerHTML).not.toContain('host-portal-token');
+        expect(getAuthCalls.at(-1)).toEqual(['cHVybF8x.handle', 'SIGNED_TOKEN', portalToken]);
     });
 });

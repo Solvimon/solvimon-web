@@ -1,4 +1,5 @@
 import type { PlatformBranding } from '@solvimon/solvimon-types';
+import type { PortalToken } from '@/types/portalToken';
 import type { Environment } from '@/public/types';
 import type { IntlMessages } from '@/public/types';
 import type { LogLevel, LogSink } from '@/components/providers/LoggerProvider/LoggerProvider.types';
@@ -119,11 +120,15 @@ type ConfigurationProp<TConfiguration> = [TConfiguration] extends [undefined]
 export type ComponentMountConfiguration<TId extends RegisteredComponentId> = {
     container: Element | string;
     portalObject: InferPortalObject<RegisteredComponentEntryPropsById[TId]>;
+    /** See `portalToken` on the element: the response of an exchange of the handle, as it is. */
+    portalToken?: PortalToken;
 } & ConfigurationProp<ComponentConfigurationById[TId]>;
 
 export type ScreenMountConfiguration<TId extends RegisteredScreenId> = {
     container: Element | string;
     portalObject: InferPortalObject<RegisteredScreenEntryPropsById[TId]>;
+    /** See `portalToken` on the element: the response of an exchange of the handle, as it is. */
+    portalToken?: PortalToken;
 } & ConfigurationProp<ScreenConfigurationById[TId]>;
 
 export interface CoreConfiguration<TConfig extends SolvimonMountConfig = SolvimonMountConfig> {

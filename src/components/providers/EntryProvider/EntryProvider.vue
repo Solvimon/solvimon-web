@@ -27,6 +27,7 @@ const missingProperties = computed(() =>
         :date-locale="entry.dateLocale"
         :messages="entry.messages"
         :portal-object="entry.portalObject"
+        :portal-token="entry.portalToken"
         :primary-color="entry.branding?.colors?.primary"
         :secondary-color="entry.branding?.colors?.secondary"
         :experimental-features="entry.experimentalFeatures"

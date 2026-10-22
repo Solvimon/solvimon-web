@@ -4,6 +4,7 @@ import { useLogger } from '@/components/providers/LoggerProvider/composables/use
 import type { Logger } from '@/components/providers/LoggerProvider/LoggerProvider.types';
 import { createTokensService } from '@/services/tokens';
 import type { PortalAuthentication } from '@/types/portalAuthentication';
+import type { PortalToken } from '@/types/portalToken';
 import { parsePortalCredential, type PortalCredential } from '@/utils/token';
 
 export const AUTH_INJECTION_KEY: InjectionKey<Auth> = Symbol('auth');
@@ -214,8 +215,21 @@ function createSharedState(): SharedTokenState {
     return state;
 }
 
-function startSession(state: SharedTokenState, credential: PortalCredential) {
+function startSession(
+    state: SharedTokenState,
+    credential: PortalCredential,
+    portalToken: PortalToken | undefined,
+) {
     if (credential.kind === 'handle') {
+        // The host already exchanged the handle; a token the API rejects is exchanged again then.
+        if (typeof portalToken?.access_token === 'string' && portalToken.access_token) {
+            applyToken(state, {
+                access_token: portalToken.access_token,
+                expires_in: portalToken.access_token_expires_in,
+                token_type: 'bearer',
+            });
+            return;
+        }
         void exchange(state, credential.handle);
         return;
     }
@@ -255,7 +269,11 @@ const inertAuth = (): Auth => ({
     retry: () => {},
 });
 
-export const getAuth = (token: string, authentication?: PortalAuthentication): Auth => {
+export const getAuth = (
+    token: string,
+    authentication?: PortalAuthentication,
+    portalToken?: PortalToken,
+): Auth => {
     const subscriber: Subscriber = { logger: useLogger() };
 
     let credential: PortalCredential;
@@ -272,7 +290,7 @@ export const getAuth = (token: string, authentication?: PortalAuthentication): A
     if (!state) {
         const created = createSharedState();
         sharedTokenStates.set(token, created);
-        onMounted(() => startSession(created, credential));
+        onMounted(() => startSession(created, credential, portalToken));
         state = created;
     }
 

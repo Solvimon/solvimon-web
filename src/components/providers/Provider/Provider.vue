@@ -66,6 +66,7 @@ const emit = defineEmits<ProviderEmits>();
                                                         :authentication="
                                                             getPortalAuthentication(portalObject)
                                                         "
+                                                        :portal-token="portalToken"
                                                     >
                                                         <slot />
                                                         <!-- The exchange found the link expired,

@@ -6,6 +6,7 @@ import {
     aCustomerPortalObject,
     anInvoiceRecord,
     aPaymentMethod,
+    aShippingAddress,
     aSubscription,
     collection,
     walletBalances,
@@ -18,6 +19,7 @@ export interface MountOptions extends ScreenOptions {
     subscriptions?: Json[];
     paymentMethods?: Json[];
     wallets?: Json;
+    shippingAddresses?: Json[];
 }
 
 function defaultMocks(options: MountOptions): Partial<Record<EndpointName, Responder>> {
@@ -30,6 +32,9 @@ function defaultMocks(options: MountOptions): Partial<Record<EndpointName, Respo
             body: collection(options.paymentMethods ?? [aPaymentMethod({ isDefault: true })]),
         },
         walletBalances: { body: options.wallets ?? walletBalances([]) },
+        shippingAddresses: {
+            body: collection(options.shippingAddresses ?? [aShippingAddress({ isDefault: true })]),
+        },
     };
 }
 
@@ -50,6 +55,11 @@ export function customerOverview(page: Page) {
         walletBalances: page.locator('.sv-customer-overview__wallet-balances'),
         paymentMethods: page.locator('.sv-customer-overview__payment-methods'),
         billingInformation: page.locator('.sv-customer-overview__billing-information'),
+        shippingInformation: page.locator('.sv-customer-overview__shipping-information'),
+        shippingAddressesModal: page.locator('.sv-shipping-addresses-modal'),
+        /** The per-address menu, which is an icon button with no text of its own. */
+        shippingAddressMenuFor: (index: number) =>
+            page.locator('.sv-shipping-addresses-modal__item').nth(index).getByRole('button'),
     };
 }
 

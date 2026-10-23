@@ -310,7 +310,10 @@ export function useCheckoutForm({
     };
 }
 
-const getInitialState = (initialState: Partial<CheckoutFormState> = {}): CheckoutFormState => {
+/** A complete form state, every field unset unless given. */
+export const getInitialState = (
+    initialState: Partial<CheckoutFormState> = {},
+): CheckoutFormState => {
     return {
         email: undefined,
         country: undefined,

@@ -122,6 +122,14 @@ vi.mock('@/public/components/BillingInformation/BillingInformation.vue', () => (
     }),
 }));
 
+vi.mock('@/public/components/ShippingInformation/ShippingInformation.vue', () => ({
+    default: defineComponent({
+        name: 'ShippingInformation',
+        props: { customer: Object, isLoading: Boolean },
+        setup: () => () => h('div', { class: 'shipping-information-stub' }),
+    }),
+}));
+
 vi.mock('@solvimon/solvimon-ui', async () => {
     const { createSolvimonUiMock } = await import('@/test-utils/solvimonUiMock');
     return createSolvimonUiMock();
@@ -240,5 +248,22 @@ describe('CustomerOverview — payment methods', () => {
         const wrapper = await mountOverview({ maxItems: 1 });
 
         expect(shownPaymentMethods(wrapper).map(({ id }) => id)).toEqual(['pm_1']);
+    });
+});
+
+describe('CustomerOverview — shipping information', () => {
+    it('shows the shipping information below the billing information, for its customer', async () => {
+        const wrapper = await mountOverview();
+
+        const aside = wrapper.html();
+        const shipping = wrapper.findComponent({ name: 'ShippingInformation' });
+
+        expect(shipping.exists()).toBe(true);
+        expect(shipping.props('customer')).toEqual(
+            wrapper.findComponent({ name: 'BillingInformationStub' }).props('customer'),
+        );
+        expect(aside.indexOf('shipping-information-stub')).toBeGreaterThan(
+            aside.indexOf('sv-customer-overview__billing-information'),
+        );
     });
 });

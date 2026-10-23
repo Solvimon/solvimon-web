@@ -49,6 +49,16 @@ export const ENDPOINTS = {
     invoicePdf: { method: 'GET', path: /^\/v1\/portal\/invoices\/[^/]+\/pdf$/ },
     invoicePreview: { method: 'POST', path: '/v1/portal/invoices/preview' },
     paymentMethods: { method: 'GET', path: '/v1/portal/payment-methods' },
+    shippingAddresses: { method: 'GET', path: '/v1/portal/shipping-addresses' },
+    createShippingAddress: { method: 'POST', path: '/v1/portal/shipping-addresses' },
+    deleteShippingAddress: {
+        method: 'POST',
+        path: /^\/v1\/portal\/shipping-addresses\/[^/]+\/deprecate$/,
+    },
+    setDefaultShippingAddress: {
+        method: 'POST',
+        path: /^\/v1\/portal\/shipping-addresses\/[^/]+\/set-as-default$/,
+    },
     updatePaymentMethod: { method: 'PATCH', path: /^\/v1\/portal\/payment-methods\/[^/]+$/ },
     tokenizePaymentMethod: { method: 'POST', path: '/v1/portal/payment-methods/tokenize' },
     paymentMethodOptions: { method: 'POST', path: '/v1/portal/payment-method-options' },

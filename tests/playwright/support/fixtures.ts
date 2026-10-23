@@ -604,6 +604,38 @@ export function aCustomer({
     };
 }
 
+/** `GET /portal/shipping-addresses` entry: a person in Amsterdam unless told otherwise. */
+export function aShippingAddress({
+    id = 'shad_home',
+    isDefault = false,
+    lastName = 'Lovelace',
+    line1 = 'Damrak 1',
+    city = 'Amsterdam',
+}: {
+    id?: string;
+    isDefault?: boolean;
+    lastName?: string;
+    line1?: string;
+    city?: string;
+} = {}): Json {
+    return {
+        object_type: 'SHIPPING_ADDRESS',
+        id,
+        reference: id,
+        customer_id: CUSTOMER_ID,
+        status: 'ACTIVE',
+        is_default: isDefault,
+        recipient: {
+            type: 'INDIVIDUAL',
+            individual: { name: { first_name: 'Ada', last_name: lastName } },
+            phone_number: '+31612345678',
+            email: 'ada@example.com',
+        },
+        address: { line1, postal_code: '1012 LG', city, country: 'NL' },
+        created_at: '2026-10-01T00:00:00Z',
+    };
+}
+
 export function aPaymentMethod({
     id = PAYMENT_METHOD_ID,
     isDefault = false,

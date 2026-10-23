@@ -11,6 +11,7 @@ import {
     aCustomerPortalObject,
     anInvoiceRecord,
     aPaymentMethod,
+    aShippingAddress,
     aSubscription,
     aWalletBalance,
     collection,
@@ -347,6 +348,140 @@ test.describe('Customer overview', () => {
 
             await expect(customerOverview(page).screen).toHaveCount(0);
             expect(api.calls('customer')).toEqual([]);
+        });
+    });
+
+    // ─── Shipping information ─────────────────────────────────────────────────
+
+    test.describe('shipping information', () => {
+        const HOME = aShippingAddress({ id: 'shad_home', isDefault: true });
+        const OFFICE = aShippingAddress({ id: 'shad_office', line1: 'Herengracht 10' });
+
+        const openManage = async (page: Page) => {
+            await customerOverview(page)
+                .shippingInformation.getByRole('button', { name: /^manage$/i })
+                .click();
+            await expect(customerOverview(page).shippingAddressesModal).toBeVisible();
+        };
+
+        test("shows the customer's default shipping address", async ({ page }) => {
+            api = await mountLoaded(page, { shippingAddresses: [OFFICE, HOME] });
+            const block = customerOverview(page).shippingInformation;
+
+            await expect(block).toContainText('Shipping information');
+            await expect(block).toContainText('Damrak 1');
+            await expect(block).not.toContainText('Herengracht 10');
+
+            const list = new URL((await api.waitForCall('shippingAddresses')).url).searchParams;
+            expect(list.get('customer_id')).toBe(CUSTOMER_ID);
+            expect(list.getAll('statuses[]')).toEqual(['ACTIVE']);
+        });
+
+        test('says so when there is no default address', async ({ page }) => {
+            api = await mountLoaded(page, { shippingAddresses: [] });
+
+            await expect(customerOverview(page).shippingInformation).toContainText(
+                'No default shipping address yet.',
+            );
+        });
+
+        test('lists every address in the manage modal, the default first', async ({ page }) => {
+            api = await mountLoaded(page, { shippingAddresses: [OFFICE, HOME] });
+
+            await openManage(page);
+
+            const items = page.locator('.sv-shipping-addresses-modal__item');
+            await expect(items).toHaveCount(2);
+            await expect(items.first()).toContainText('Damrak 1');
+            await expect(items.first()).toContainText('Default');
+        });
+
+        test('adds an address and goes back to the list, which now has it', async ({ page }) => {
+            api = await mountLoaded(page, {
+                shippingAddresses: [HOME],
+                mocks: {
+                    shippingAddresses: [
+                        { body: collection([HOME]) },
+                        {
+                            body: collection([
+                                HOME,
+                                aShippingAddress({ id: 'shad_new', line1: 'Keizersgracht 5' }),
+                            ]),
+                        },
+                    ],
+                    createShippingAddress: {
+                        status: 201,
+                        body: aShippingAddress({ id: 'shad_new', line1: 'Keizersgracht 5' }),
+                    },
+                },
+            });
+            await openManage(page);
+
+            await page.getByRole('button', { name: /add shipping address/i }).click();
+            await page.locator('input[name="shipping_address_line_1"]').fill('Keizersgracht 5');
+            await page.locator('input[name="shipping_postal_code"]').fill('1015 CJ');
+            await page.locator('input[name="shipping_city"]').fill('Amsterdam');
+            await page.locator('input[name="shipping_phone_number"]').fill('+31 6 12345678');
+            await page.getByRole('button', { name: /save address/i }).click();
+
+            const created = await api.waitForCall('createShippingAddress');
+            expect(created.body).toMatchObject({
+                customer_id: CUSTOMER_ID,
+                address: { line1: 'Keizersgracht 5', city: 'Amsterdam', country: 'NL' },
+            });
+            await expect(page.locator('.sv-shipping-addresses-modal__item')).toHaveCount(2);
+            await expect(customerOverview(page).shippingAddressesModal).toContainText(
+                'Keizersgracht 5',
+            );
+        });
+
+        test('stores nothing while the form says something is missing', async ({ page }) => {
+            api = await mountLoaded(page);
+            await openManage(page);
+
+            await page.getByRole('button', { name: /add shipping address/i }).click();
+            await page.getByRole('button', { name: /save address/i }).click();
+
+            await expect(page.locator('input[name="shipping_address_line_1"]')).toBeVisible();
+            expect(api.calls('createShippingAddress')).toEqual([]);
+        });
+
+        test('sets another address as the default from its menu', async ({ page }) => {
+            api = await mountLoaded(page, {
+                shippingAddresses: [HOME, OFFICE],
+                mocks: { setDefaultShippingAddress: { body: OFFICE } },
+            });
+            await openManage(page);
+
+            await customerOverview(page).shippingAddressMenuFor(1).click();
+            await page.getByText('Set as default').click();
+
+            const call = await api.waitForCall('setDefaultShippingAddress');
+            expect(new URL(call.url).pathname).toBe(
+                '/v1/portal/shipping-addresses/shad_office/set-as-default',
+            );
+            await expect.poll(() => api.calls('shippingAddresses').length).toBeGreaterThan(1);
+        });
+
+        test('deletes an address once the customer confirms', async ({ page }) => {
+            api = await mountLoaded(page, {
+                shippingAddresses: [HOME, OFFICE],
+                mocks: { deleteShippingAddress: { body: OFFICE } },
+            });
+            await openManage(page);
+
+            await customerOverview(page).shippingAddressMenuFor(1).click();
+            await page.getByText(/^delete$/i).click();
+            expect(api.calls('deleteShippingAddress')).toEqual([]);
+            await page
+                .getByRole('button', { name: /^delete$/i })
+                .last()
+                .click();
+
+            const call = await api.waitForCall('deleteShippingAddress');
+            expect(new URL(call.url).pathname).toBe(
+                '/v1/portal/shipping-addresses/shad_office/deprecate',
+            );
         });
     });
 });

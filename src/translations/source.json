@@ -755,6 +755,22 @@
     "defaultMessage": "View all",
     "description": "The link text that links to the overview page of the customer invoices"
   },
+  "customer_overview.shipping_information_block.empty": {
+    "defaultMessage": "No default shipping address yet.",
+    "description": "Shown in the shipping information block when the customer has no default shipping address"
+  },
+  "customer_overview.shipping_information_block.load_error": {
+    "defaultMessage": "We could not load your shipping addresses.",
+    "description": "Shown in the shipping information block when the addresses cannot be loaded"
+  },
+  "customer_overview.shipping_information_block.manage_button_label": {
+    "defaultMessage": "Manage",
+    "description": "Label of the button that opens the list of the customer shipping addresses"
+  },
+  "customer_overview.shipping_information_block.title": {
+    "defaultMessage": "Shipping information",
+    "description": "Title of the block that shows the customer default shipping address"
+  },
   "customer_overview.subscriptions_block.fallback_subscription_name": {
     "defaultMessage": "Subscription",
     "description": "The fallback name for when no subscription name can be determined"
@@ -1226,6 +1242,66 @@
   "secure_payments_kpi.specific_vendor": {
     "defaultMessage": "Secure and encrypted payments by",
     "description": "Secure encrypted payments KPI for a specific vendor, followed by a vendor logo"
+  },
+  "shipping_address.context_menu.delete.label": {
+    "defaultMessage": "Delete",
+    "description": "Menu option that deletes a shipping address"
+  },
+  "shipping_address.context_menu.set_as_default.label": {
+    "defaultMessage": "Set as default",
+    "description": "Menu option that makes a shipping address the default"
+  },
+  "shipping_address.default_chip.label": {
+    "defaultMessage": "Default",
+    "description": "Marks the shipping address the customer uses by default"
+  },
+  "shipping_address_form.country.label": {
+    "defaultMessage": "Country",
+    "description": "Label of the country of a shipping address"
+  },
+  "shipping_addresses_modal.add.title": {
+    "defaultMessage": "Add shipping address",
+    "description": "Title of the shipping addresses modal while a new address is added"
+  },
+  "shipping_addresses_modal.add_button.label": {
+    "defaultMessage": "Add shipping address",
+    "description": "Label of the button that moves to the form for a new shipping address"
+  },
+  "shipping_addresses_modal.back_button.label": {
+    "defaultMessage": "Back",
+    "description": "Label of the button that goes back to the list of shipping addresses"
+  },
+  "shipping_addresses_modal.close_button.label": {
+    "defaultMessage": "Close",
+    "description": "Label of the button that closes the shipping addresses modal"
+  },
+  "shipping_addresses_modal.delete.message": {
+    "defaultMessage": "This address will no longer be offered for shipping.",
+    "description": "Explains what deleting a shipping address does, above the address"
+  },
+  "shipping_addresses_modal.delete.title": {
+    "defaultMessage": "Delete shipping address",
+    "description": "Title of the shipping addresses modal while a delete is confirmed"
+  },
+  "shipping_addresses_modal.delete_button.label": {
+    "defaultMessage": "Delete",
+    "description": "Label of the button that confirms deleting a shipping address"
+  },
+  "shipping_addresses_modal.empty.title": {
+    "defaultMessage": "No shipping addresses yet",
+    "description": "Shown in the shipping addresses modal when the customer has none"
+  },
+  "shipping_addresses_modal.error": {
+    "defaultMessage": "Something went wrong. Please try again.",
+    "description": "Error shown in the shipping addresses modal when a change cannot be made"
+  },
+  "shipping_addresses_modal.save_button.label": {
+    "defaultMessage": "Save address",
+    "description": "Label of the button that stores the new shipping address"
+  },
+  "shipping_addresses_modal.title": {
+    "defaultMessage": "Shipping addresses",
+    "description": "Title of the modal that lists the customer shipping addresses"
   },
   "subscription_cancellation_modal.cancel.confirm_button.label": {
     "defaultMessage": "Cancel subscription",

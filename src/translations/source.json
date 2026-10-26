@@ -755,21 +755,29 @@
     "defaultMessage": "View all",
     "description": "The link text that links to the overview page of the customer invoices"
   },
-  "customer_overview.shipping_information_block.empty": {
-    "defaultMessage": "No default shipping address yet.",
-    "description": "Shown in the shipping information block when the customer has no default shipping address"
+  "customer_overview.shipping_addresses_block.add_button_label": {
+    "defaultMessage": "Add shipping address",
+    "description": "Label of the button that opens the form for a first shipping address"
   },
-  "customer_overview.shipping_information_block.load_error": {
+  "customer_overview.shipping_addresses_block.empty": {
+    "defaultMessage": "Add an address to have your orders shipped to.",
+    "description": "Shown in the shipping addresses block when the customer has no shipping addresses"
+  },
+  "customer_overview.shipping_addresses_block.load_error": {
     "defaultMessage": "We could not load your shipping addresses.",
-    "description": "Shown in the shipping information block when the addresses cannot be loaded"
+    "description": "Shown in the shipping addresses block when the addresses cannot be loaded"
   },
-  "customer_overview.shipping_information_block.manage_button_label": {
+  "customer_overview.shipping_addresses_block.manage_button_label": {
     "defaultMessage": "Manage",
-    "description": "Label of the button that opens the list of the customer shipping addresses"
+    "description": "Label of the button that opens the modal to manage the customer shipping addresses"
   },
-  "customer_overview.shipping_information_block.title": {
-    "defaultMessage": "Shipping information",
-    "description": "Title of the block that shows the customer default shipping address"
+  "customer_overview.shipping_addresses_block.set_default_error": {
+    "defaultMessage": "We could not make this your default shipping address. Please try again.",
+    "description": "Shown in the shipping addresses block when an address cannot be made the default"
+  },
+  "customer_overview.shipping_addresses_block.title": {
+    "defaultMessage": "{count,plural,one{Shipping address} other{Shipping addresses}}",
+    "description": "Title of the block that lists the customer shipping addresses"
   },
   "customer_overview.subscriptions_block.fallback_subscription_name": {
     "defaultMessage": "Subscription",
@@ -1247,6 +1255,10 @@
     "defaultMessage": "Delete",
     "description": "Menu option that deletes a shipping address"
   },
+  "shipping_address.context_menu.edit.label": {
+    "defaultMessage": "Edit",
+    "description": "Menu option that opens the form to change a shipping address"
+  },
   "shipping_address.context_menu.set_as_default.label": {
     "defaultMessage": "Set as default",
     "description": "Menu option that makes a shipping address the default"
@@ -1271,6 +1283,10 @@
     "defaultMessage": "Back",
     "description": "Label of the button that goes back to the list of shipping addresses"
   },
+  "shipping_addresses_modal.cancel_button.label": {
+    "defaultMessage": "Cancel",
+    "description": "Label of the button that closes the shipping addresses modal without saving or deleting"
+  },
   "shipping_addresses_modal.close_button.label": {
     "defaultMessage": "Close",
     "description": "Label of the button that closes the shipping addresses modal"
@@ -1287,6 +1303,10 @@
     "defaultMessage": "Delete",
     "description": "Label of the button that confirms deleting a shipping address"
   },
+  "shipping_addresses_modal.edit.title": {
+    "defaultMessage": "Edit shipping address",
+    "description": "Title of the shipping addresses modal while an address is changed"
+  },
   "shipping_addresses_modal.empty.title": {
     "defaultMessage": "No shipping addresses yet",
     "description": "Shown in the shipping addresses modal when the customer has none"
@@ -1297,7 +1317,7 @@
   },
   "shipping_addresses_modal.save_button.label": {
     "defaultMessage": "Save address",
-    "description": "Label of the button that stores the new shipping address"
+    "description": "Label of the button that stores a new or changed shipping address"
   },
   "shipping_addresses_modal.title": {
     "defaultMessage": "Shipping addresses",

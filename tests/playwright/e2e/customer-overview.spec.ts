@@ -351,38 +351,49 @@ test.describe('Customer overview', () => {
         });
     });
 
-    // ─── Shipping information ─────────────────────────────────────────────────
+    // ─── Shipping addresses ───────────────────────────────────────────────────
 
-    test.describe('shipping information', () => {
+    test.describe('shipping addresses', () => {
         const HOME = aShippingAddress({ id: 'shad_home', isDefault: true });
         const OFFICE = aShippingAddress({ id: 'shad_office', line1: 'Herengracht 10' });
 
         const openManage = async (page: Page) => {
             await customerOverview(page)
-                .shippingInformation.getByRole('button', { name: /^manage$/i })
+                .shippingAddresses.getByRole('button', { name: /^manage$/i })
                 .click();
             await expect(customerOverview(page).shippingAddressesModal).toBeVisible();
         };
 
-        test("shows the customer's default shipping address", async ({ page }) => {
-            api = await mountLoaded(page, { shippingAddresses: [OFFICE, HOME] });
-            const block = customerOverview(page).shippingInformation;
+        const modalItems = (page: Page) =>
+            page.locator('.sv-shipping-addresses-modal .sv-shipping-address-list__item');
 
-            await expect(block).toContainText('Shipping information');
-            await expect(block).toContainText('Damrak 1');
-            await expect(block).not.toContainText('Herengracht 10');
+        test("lists the customer's shipping addresses, the default first", async ({ page }) => {
+            api = await mountLoaded(page, { shippingAddresses: [OFFICE, HOME] });
+            const items = customerOverview(page).shippingAddresses.locator(
+                '.sv-shipping-address-list__item',
+            );
+
+            await expect(customerOverview(page).shippingAddresses).toContainText(
+                'Shipping addresses',
+            );
+            await expect(items).toHaveCount(2);
+            await expect(items.first()).toContainText('Damrak 1');
+            await expect(items.first()).toContainText('Default');
+            await expect(items.last()).toContainText('Herengracht 10');
 
             const list = new URL((await api.waitForCall('shippingAddresses')).url).searchParams;
             expect(list.get('customer_id')).toBe(CUSTOMER_ID);
             expect(list.getAll('statuses[]')).toEqual(['ACTIVE']);
         });
 
-        test('says so when there is no default address', async ({ page }) => {
+        test('offers to add a first address when there are none', async ({ page }) => {
             api = await mountLoaded(page, { shippingAddresses: [] });
 
-            await expect(customerOverview(page).shippingInformation).toContainText(
-                'No default shipping address yet.',
-            );
+            await customerOverview(page)
+                .shippingAddresses.getByRole('button', { name: /add shipping address/i })
+                .click();
+
+            await expect(page.locator('input[name="shipping_address_line_1"]')).toBeVisible();
         });
 
         test('lists every address in the manage modal, the default first', async ({ page }) => {
@@ -390,7 +401,7 @@ test.describe('Customer overview', () => {
 
             await openManage(page);
 
-            const items = page.locator('.sv-shipping-addresses-modal__item');
+            const items = modalItems(page);
             await expect(items).toHaveCount(2);
             await expect(items.first()).toContainText('Damrak 1');
             await expect(items.first()).toContainText('Default');
@@ -429,7 +440,7 @@ test.describe('Customer overview', () => {
                 customer_id: CUSTOMER_ID,
                 address: { line1: 'Keizersgracht 5', city: 'Amsterdam', country: 'NL' },
             });
-            await expect(page.locator('.sv-shipping-addresses-modal__item')).toHaveCount(2);
+            await expect(modalItems(page)).toHaveCount(2);
             await expect(customerOverview(page).shippingAddressesModal).toContainText(
                 'Keizersgracht 5',
             );
@@ -482,6 +493,52 @@ test.describe('Customer overview', () => {
             expect(new URL(call.url).pathname).toBe(
                 '/v1/portal/shipping-addresses/shad_office/deprecate',
             );
+        });
+
+        test('edits an address from the modal, keeping its reference', async ({ page }) => {
+            api = await mountLoaded(page, {
+                shippingAddresses: [HOME, OFFICE],
+                mocks: { updateShippingAddress: { body: OFFICE } },
+            });
+            await openManage(page);
+
+            await customerOverview(page).shippingAddressMenuFor(1).click();
+            // The billing information has an Edit button of its own.
+            await page
+                .getByRole('list')
+                .getByRole('button', { name: /^edit$/i })
+                .click();
+            const line1 = page.locator('input[name="shipping_address_line_1"]');
+            await expect(line1).toHaveValue('Herengracht 10');
+            await line1.fill('Herengracht 12');
+            await page.getByRole('button', { name: /save address/i }).click();
+
+            const call = await api.waitForCall('updateShippingAddress');
+            expect(new URL(call.url).pathname).toBe('/v1/portal/shipping-addresses/shad_office');
+            expect(call.body).toMatchObject({
+                reference: 'shad_office',
+                address: { line1: 'Herengracht 12', city: 'Amsterdam', country: 'NL' },
+            });
+            await expect(modalItems(page)).toHaveCount(2);
+        });
+
+        test("edits an address from the block's menu and closes once saved", async ({ page }) => {
+            api = await mountLoaded(page, {
+                shippingAddresses: [HOME, OFFICE],
+                mocks: { updateShippingAddress: { body: OFFICE } },
+            });
+
+            await customerOverview(page).shippingAddressBlockMenuFor(1).click();
+            // The billing information has an Edit button of its own.
+            await page
+                .getByRole('list')
+                .getByRole('button', { name: /^edit$/i })
+                .click();
+            await expect(page.getByText('Edit shipping address')).toBeVisible();
+            await page.getByRole('button', { name: /save address/i }).click();
+
+            await api.waitForCall('updateShippingAddress');
+            await expect(customerOverview(page).shippingAddressesModal).toBeHidden();
         });
     });
 });

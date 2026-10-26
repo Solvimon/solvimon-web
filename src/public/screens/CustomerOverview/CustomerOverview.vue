@@ -11,7 +11,7 @@ import { useCustomer } from '@/composables/useCustomer';
 import SubscriptionsList from '@/public/components/SubscriptionsList/SubscriptionsList.vue';
 import { usePaymentMethods } from '@/composables/usePaymentMethods';
 import BillingInformation from '@/public/components/BillingInformation/BillingInformation.vue';
-import ShippingInformation from '@/public/components/ShippingInformation/ShippingInformation.vue';
+import CustomerShippingAddresses from '@/public/components/CustomerShippingAddresses/CustomerShippingAddresses.vue';
 import { useLoadInitialData } from '@/composables/useLoadInitialData';
 import CustomerPaymentMethods from '@/public/components/CustomerPaymentMethods/CustomerPaymentMethods.vue';
 import { DEFAULT_MAX_ITEMS } from '@/public/components/CustomerPaymentMethods/CustomerPaymentMethods.lib';
@@ -120,8 +120,8 @@ useActiveScheduleWarning(subscriptions.items);
                 :customer="customer.customer.value"
             />
 
-            <ShippingInformation
-                class="sv-customer-overview__shipping-information"
+            <CustomerShippingAddresses
+                class="sv-customer-overview__shipping-addresses"
                 :is-loading="isLoading"
                 :customer="customer.customer.value"
             />

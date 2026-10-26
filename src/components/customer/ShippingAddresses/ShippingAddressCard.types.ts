@@ -7,4 +7,6 @@ export interface ShippingAddressCardProps {
     menuItems?: ContextMenuOption[];
     /** Marks the customer's default, which only matters where there is more than one to tell apart. */
     showDefault?: boolean;
+    /** Only the address itself, for a summary where who it is for and how to reach them can wait. */
+    compact?: boolean;
 }

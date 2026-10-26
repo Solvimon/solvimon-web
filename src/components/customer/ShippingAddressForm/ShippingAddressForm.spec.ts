@@ -3,6 +3,7 @@ import { defineComponent, h } from 'vue';
 import type { Customer } from '@solvimon/solvimon-types';
 import ShippingAddressForm from './ShippingAddressForm.vue';
 import type { CheckoutFormState } from '@/components/customer/CheckoutForm/CheckoutForm.types';
+import type { ShippingAddress } from '@/types/shippingAddress';
 
 const { fieldsModel } = vi.hoisted(() => ({
     fieldsModel: { current: undefined as CheckoutFormState | undefined },
@@ -51,8 +52,27 @@ const organization = {
 
 type FormInstance = { submit: () => Promise<unknown> };
 
-const mountForm = async (customer: Customer = person) => {
-    const wrapper = mount(ShippingAddressForm, { props: { customer } });
+const storedAddress = {
+    id: 'shad_office',
+    reference: 'ref_office',
+    is_default: false,
+    recipient: {
+        type: 'ORGANIZATION',
+        organization: { company_name: 'Acme Logistics', attention_name: 'Front desk' },
+        phone_number: '+390612345678',
+        email: 'desk@acme.com',
+    },
+    address: {
+        line1: 'Via Roma 1',
+        postal_code: '00184',
+        city: 'Roma',
+        state: 'RM',
+        country: 'IT',
+    },
+} as unknown as ShippingAddress;
+
+const mountForm = async (customer: Customer = person, address?: ShippingAddress) => {
+    const wrapper = mount(ShippingAddressForm, { props: { customer, address } });
     await flushPromises();
     return wrapper;
 };
@@ -147,5 +167,34 @@ describe('ShippingAddressForm', () => {
         const second = (await form.submit()) as { reference: string };
 
         expect(first.reference).not.toBe(second.reference);
+    });
+
+    it('starts an edit on the stored address rather than on the customer', async () => {
+        await mountForm(person, storedAddress);
+
+        expect(fieldsModel.current).toMatchObject({
+            type: 'ORGANIZATION',
+            email: 'desk@acme.com',
+            companyLegalName: 'Acme Logistics',
+            shippingAttentionName: 'Front desk',
+            shippingAddressLine1: 'Via Roma 1',
+            shippingPostalCode: '00184',
+            shippingCity: 'Roma',
+            shippingCountry: 'IT',
+            shippingPhoneNumber: '+390612345678',
+        });
+    });
+
+    it('keeps the reference of the address it edits', async () => {
+        const wrapper = await mountForm(person, storedAddress);
+        fillIn({ shippingAddressLine1: 'Via Roma 2' });
+
+        const result = await (wrapper.vm as unknown as FormInstance).submit();
+
+        expect(result).toMatchObject({
+            reference: 'ref_office',
+            recipient: { organization: { company_name: 'Acme Logistics' } },
+            address: { line1: 'Via Roma 2', country: 'IT' },
+        });
     });
 });

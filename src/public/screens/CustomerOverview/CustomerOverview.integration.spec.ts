@@ -122,11 +122,11 @@ vi.mock('@/public/components/BillingInformation/BillingInformation.vue', () => (
     }),
 }));
 
-vi.mock('@/public/components/ShippingInformation/ShippingInformation.vue', () => ({
+vi.mock('@/public/components/CustomerShippingAddresses/CustomerShippingAddresses.vue', () => ({
     default: defineComponent({
-        name: 'ShippingInformation',
+        name: 'CustomerShippingAddresses',
         props: { customer: Object, isLoading: Boolean },
-        setup: () => () => h('div', { class: 'shipping-information-stub' }),
+        setup: () => () => h('div', { class: 'shipping-addresses-stub' }),
     }),
 }));
 
@@ -251,18 +251,18 @@ describe('CustomerOverview — payment methods', () => {
     });
 });
 
-describe('CustomerOverview — shipping information', () => {
-    it('shows the shipping information below the billing information, for its customer', async () => {
+describe('CustomerOverview — shipping addresses', () => {
+    it('shows the shipping addresses below the billing information, for its customer', async () => {
         const wrapper = await mountOverview();
 
         const aside = wrapper.html();
-        const shipping = wrapper.findComponent({ name: 'ShippingInformation' });
+        const shipping = wrapper.findComponent({ name: 'CustomerShippingAddresses' });
 
         expect(shipping.exists()).toBe(true);
         expect(shipping.props('customer')).toEqual(
             wrapper.findComponent({ name: 'BillingInformationStub' }).props('customer'),
         );
-        expect(aside.indexOf('shipping-information-stub')).toBeGreaterThan(
+        expect(aside.indexOf('shipping-addresses-stub')).toBeGreaterThan(
             aside.indexOf('sv-customer-overview__billing-information'),
         );
     });

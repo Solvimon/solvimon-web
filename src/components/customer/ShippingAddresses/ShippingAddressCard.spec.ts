@@ -38,6 +38,7 @@ describe('ShippingAddressCard', () => {
         expect(wrapper.find('.sv-shipping-address__recipient').text()).toBe('Ada Lovelace');
         expect(wrapper.text()).toContain('Damrak 1');
         expect(wrapper.text()).toContain('Amsterdam');
+        expect(wrapper.text()).toContain('Netherlands');
         expect(wrapper.find('.sv-shipping-address__phone').text()).toBe('+31612345678');
     });
 
@@ -77,5 +78,15 @@ describe('ShippingAddressCard', () => {
         await wrapper.setProps({ menuItems: [{ label: 'Delete', onClick: vi.fn() }] });
 
         expect(wrapper.find('.context-menu-stub').text()).toBe('Delete');
+    });
+
+    it('shows only the address lines when compact', () => {
+        const wrapper = mount(ShippingAddressCard, {
+            props: { address: individualAddress, compact: true },
+        });
+
+        expect(wrapper.find('.sv-shipping-address__recipient').exists()).toBe(false);
+        expect(wrapper.find('.sv-shipping-address__phone').exists()).toBe(false);
+        expect(wrapper.text()).toContain('Damrak 1');
     });
 });

@@ -1,5 +1,8 @@
 import { createShippingAddressesService } from './shippingAddresses';
-import type { CreateShippingAddressPayload } from '@/types/shippingAddress';
+import type {
+    CreateShippingAddressPayload,
+    UpdateShippingAddressPayload,
+} from '@/types/shippingAddress';
 
 const { mockRequest } = vi.hoisted(() => ({ mockRequest: vi.fn() }));
 
@@ -40,6 +43,18 @@ describe('shipping addresses service', () => {
             url: 'https://api.test/portal/shipping-addresses',
             data: payload,
             options: { method: 'POST' },
+        });
+    });
+
+    it('edits an address in place', async () => {
+        const payload = { reference: 'ref_1' } as unknown as UpdateShippingAddressPayload;
+        const { updateShippingAddress } = createShippingAddressesService();
+        await updateShippingAddress({ shippingAddressId: 'shad_1', payload });
+
+        expect(mockRequest).toHaveBeenCalledWith({
+            url: 'https://api.test/portal/shipping-addresses/shad_1',
+            data: payload,
+            options: { method: 'PATCH' },
         });
     });
 

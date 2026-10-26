@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ApiStatus } from '@solvimon/solvimon-types';
-import { computed } from 'vue';
+import { computed, defineAsyncComponent } from 'vue';
 import type { CustomerOverviewProps } from './CustomerOverview.types';
 import { ContentWithAsideLayout } from '@/layouts';
 import InvoicesList from '@/public/components/InvoicesList/InvoicesList.vue';
@@ -11,13 +11,17 @@ import { useCustomer } from '@/composables/useCustomer';
 import SubscriptionsList from '@/public/components/SubscriptionsList/SubscriptionsList.vue';
 import { usePaymentMethods } from '@/composables/usePaymentMethods';
 import BillingInformation from '@/public/components/BillingInformation/BillingInformation.vue';
-import CustomerShippingAddresses from '@/public/components/CustomerShippingAddresses/CustomerShippingAddresses.vue';
 import { useLoadInitialData } from '@/composables/useLoadInitialData';
 import CustomerPaymentMethods from '@/public/components/CustomerPaymentMethods/CustomerPaymentMethods.vue';
 import { DEFAULT_MAX_ITEMS } from '@/public/components/CustomerPaymentMethods/CustomerPaymentMethods.lib';
 import { useCustomerWalletBalances } from '@/composables/useCustomerWalletBalances';
 import CustomerWalletBalances from '@/public/components/CustomerWalletBalances/CustomerWalletBalances.vue';
 import { useActiveScheduleWarning } from '@/composables/useActiveScheduleWarning';
+
+/** Only merchants that ship turn it on, so the rest never download it. */
+const CustomerShippingAddresses = defineAsyncComponent(
+    () => import('@/public/components/CustomerShippingAddresses/CustomerShippingAddresses.vue'),
+);
 
 const props = defineProps<CustomerOverviewProps>();
 
@@ -121,6 +125,7 @@ useActiveScheduleWarning(subscriptions.items);
             />
 
             <CustomerShippingAddresses
+                v-if="configuration?.showShippingAddresses"
                 class="sv-customer-overview__shipping-addresses"
                 :is-loading="isLoading"
                 :customer="customer.customer.value"

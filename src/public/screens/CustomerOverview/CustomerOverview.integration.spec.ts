@@ -2,7 +2,7 @@ import { flushPromises, mount } from '@vue/test-utils';
 import { defineComponent, h, ref } from 'vue';
 import type { PaymentMethod, PricingPlanSubscriptionExpanded } from '@solvimon/solvimon-types';
 import CustomerOverview from './CustomerOverview.vue';
-import type { CustomerPaymentMethodsConfiguration } from '@/public/components/CustomerPaymentMethods/CustomerPaymentMethods.types';
+import type { CustomerOverviewConfiguration } from './CustomerOverview.types';
 
 const {
     subscriptionsState,
@@ -122,7 +122,9 @@ vi.mock('@/public/components/BillingInformation/BillingInformation.vue', () => (
     }),
 }));
 
+// Loaded with `import()`, which only unwraps `default` from a module that says it is one.
 vi.mock('@/public/components/CustomerShippingAddresses/CustomerShippingAddresses.vue', () => ({
+    __esModule: true,
     default: defineComponent({
         name: 'CustomerShippingAddresses',
         props: { customer: Object, isLoading: Boolean },
@@ -152,7 +154,7 @@ const paymentMethodsOf = (count: number) =>
         (_, index) => ({ id: `pm_${index + 1}` }) as unknown as PaymentMethod,
     );
 
-const mountOverview = async (configuration?: CustomerPaymentMethodsConfiguration) => {
+const mountOverview = async (configuration?: CustomerOverviewConfiguration) => {
     const wrapper = mount(CustomerOverview, { props: { configuration } });
     await flushPromises();
 
@@ -252,8 +254,14 @@ describe('CustomerOverview — payment methods', () => {
 });
 
 describe('CustomerOverview — shipping addresses', () => {
-    it('shows the shipping addresses below the billing information, for its customer', async () => {
+    it('leaves the shipping addresses out unless the host asks for them', async () => {
         const wrapper = await mountOverview();
+
+        expect(wrapper.findComponent({ name: 'CustomerShippingAddresses' }).exists()).toBe(false);
+    });
+
+    it('shows the shipping addresses below the billing information, for its customer', async () => {
+        const wrapper = await mountOverview({ showShippingAddresses: true });
 
         const aside = wrapper.html();
         const shipping = wrapper.findComponent({ name: 'CustomerShippingAddresses' });

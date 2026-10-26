@@ -1,3 +1,13 @@
-import type { CustomerPaymentMethodsProps } from '@/public/components/CustomerPaymentMethods/CustomerPaymentMethods.types';
+import type { CustomerPaymentMethodsConfiguration } from '@/public/components/CustomerPaymentMethods/CustomerPaymentMethods.types';
 
-export type CustomerOverviewProps = Pick<CustomerPaymentMethodsProps, 'configuration'>;
+export interface CustomerOverviewConfiguration extends CustomerPaymentMethodsConfiguration {
+    /**
+     * Whether to show the customer's shipping addresses, for merchants that ship physical goods.
+     * @default false
+     */
+    showShippingAddresses?: boolean;
+}
+
+export interface CustomerOverviewProps {
+    configuration?: CustomerOverviewConfiguration;
+}

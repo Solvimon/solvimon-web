@@ -354,6 +354,16 @@ test.describe('Customer overview', () => {
     // ─── Shipping addresses ───────────────────────────────────────────────────
 
     test.describe('shipping addresses', () => {
+        const withShipping = { configuration: { showShippingAddresses: true } };
+
+        test('leaves them out, and does not load them, unless the host asks', async ({ page }) => {
+            api = await mountLoaded(page);
+
+            await expect(customerOverview(page).paymentMethods).toBeVisible();
+            await expect(customerOverview(page).shippingAddresses).toHaveCount(0);
+            expect(api.calls('shippingAddresses')).toEqual([]);
+        });
+
         const HOME = aShippingAddress({ id: 'shad_home', isDefault: true });
         const OFFICE = aShippingAddress({ id: 'shad_office', line1: 'Herengracht 10' });
 
@@ -368,7 +378,10 @@ test.describe('Customer overview', () => {
             page.locator('.sv-shipping-addresses-modal .sv-shipping-address-list__item');
 
         test("lists the customer's shipping addresses, the default first", async ({ page }) => {
-            api = await mountLoaded(page, { shippingAddresses: [OFFICE, HOME] });
+            api = await mountLoaded(page, {
+                ...withShipping,
+                shippingAddresses: [OFFICE, HOME],
+            });
             const items = customerOverview(page).shippingAddresses.locator(
                 '.sv-shipping-address-list__item',
             );
@@ -387,7 +400,10 @@ test.describe('Customer overview', () => {
         });
 
         test('offers to add a first address when there are none', async ({ page }) => {
-            api = await mountLoaded(page, { shippingAddresses: [] });
+            api = await mountLoaded(page, {
+                ...withShipping,
+                shippingAddresses: [],
+            });
 
             await customerOverview(page)
                 .shippingAddresses.getByRole('button', { name: /add shipping address/i })
@@ -397,7 +413,10 @@ test.describe('Customer overview', () => {
         });
 
         test('lists every address in the manage modal, the default first', async ({ page }) => {
-            api = await mountLoaded(page, { shippingAddresses: [OFFICE, HOME] });
+            api = await mountLoaded(page, {
+                ...withShipping,
+                shippingAddresses: [OFFICE, HOME],
+            });
 
             await openManage(page);
 
@@ -409,6 +428,7 @@ test.describe('Customer overview', () => {
 
         test('adds an address and goes back to the list, which now has it', async ({ page }) => {
             api = await mountLoaded(page, {
+                ...withShipping,
                 shippingAddresses: [HOME],
                 mocks: {
                     shippingAddresses: [
@@ -447,7 +467,7 @@ test.describe('Customer overview', () => {
         });
 
         test('stores nothing while the form says something is missing', async ({ page }) => {
-            api = await mountLoaded(page);
+            api = await mountLoaded(page, withShipping);
             await openManage(page);
 
             await page.getByRole('button', { name: /add shipping address/i }).click();
@@ -459,6 +479,7 @@ test.describe('Customer overview', () => {
 
         test('sets another address as the default from its menu', async ({ page }) => {
             api = await mountLoaded(page, {
+                ...withShipping,
                 shippingAddresses: [HOME, OFFICE],
                 mocks: { setDefaultShippingAddress: { body: OFFICE } },
             });
@@ -476,6 +497,7 @@ test.describe('Customer overview', () => {
 
         test('deletes an address once the customer confirms', async ({ page }) => {
             api = await mountLoaded(page, {
+                ...withShipping,
                 shippingAddresses: [HOME, OFFICE],
                 mocks: { deleteShippingAddress: { body: OFFICE } },
             });
@@ -497,6 +519,7 @@ test.describe('Customer overview', () => {
 
         test('edits an address from the modal, keeping its reference', async ({ page }) => {
             api = await mountLoaded(page, {
+                ...withShipping,
                 shippingAddresses: [HOME, OFFICE],
                 mocks: { updateShippingAddress: { body: OFFICE } },
             });
@@ -524,6 +547,7 @@ test.describe('Customer overview', () => {
 
         test("edits an address from the block's menu and closes once saved", async ({ page }) => {
             api = await mountLoaded(page, {
+                ...withShipping,
                 shippingAddresses: [HOME, OFFICE],
                 mocks: { updateShippingAddress: { body: OFFICE } },
             });

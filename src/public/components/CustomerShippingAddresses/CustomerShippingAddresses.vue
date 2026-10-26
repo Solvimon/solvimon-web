@@ -6,7 +6,6 @@ import EmptyStatePlaceholder from '@/components/checkout/EmptyStatePlaceholder.v
 import ShippingAddressList from '@/components/customer/ShippingAddresses/ShippingAddressList.vue';
 import type { ShippingAddressesModalStart } from '@/components/customer/ShippingAddresses/ShippingAddressesModal.types';
 import Skeleton from '@/components/shared/Skeleton.vue';
-import { useLogger } from '@/components/providers';
 import { useShippingAddresses } from '@/composables/useShippingAddresses';
 import { useShippingAddressMenuItems } from '@/composables/useShippingAddressMenuItems';
 
@@ -21,7 +20,6 @@ const ADDRESSES_SHOWN = 3;
 const props = defineProps<CustomerShippingAddressesProps>();
 
 const { $t } = useIntl();
-const logger = useLogger();
 
 const shippingAddresses = useShippingAddresses({ customerId: () => props.customer?.id });
 const { items, isPending, error } = shippingAddresses;
@@ -47,26 +45,7 @@ const openModal = (start: ShippingAddressesModalStart) => {
     isModalShown.value = true;
 };
 
-const hasSetDefaultFailed = ref(false);
-
-const setDefault = async (...args: Parameters<typeof shippingAddresses.setDefault>) => {
-    hasSetDefaultFailed.value = false;
-
-    try {
-        await shippingAddresses.setDefault(...args);
-    } catch (setDefaultError) {
-        logger.error(
-            'SHIPPING_ADDRESS_SET_DEFAULT_FAILED',
-            'Failed to set the default shipping address',
-            {},
-            setDefaultError,
-        );
-        hasSetDefaultFailed.value = true;
-    }
-};
-
 const { getMenuItems } = useShippingAddressMenuItems({
-    onSetDefault: (address) => void setDefault(address),
     onEdit: (address) => openModal({ step: 'EDIT', address }),
     onDelete: (address) => openModal({ step: 'DELETE', address }),
 });
@@ -133,28 +112,13 @@ const { getMenuItems } = useShippingAddressMenuItems({
                 class="min-h-[60px]"
             />
 
-            <template v-else-if="items.length">
-                <ErrorNotification
-                    v-if="hasSetDefaultFailed"
-                    class="sv-shipping-addresses__error sv-error"
-                    :title="
-                        $t({
-                            defaultMessage:
-                                'We could not make this your default shipping address. Please try again.',
-                            id: 'customer_overview.shipping_addresses_block.set_default_error',
-                            description:
-                                'Shown in the shipping addresses block when an address cannot be made the default',
-                        })
-                    "
-                />
-
-                <ShippingAddressList
-                    class="sv-shipping-addresses__list"
-                    :addresses="shownAddresses"
-                    :get-menu-items="getMenuItems"
-                    compact
-                />
-            </template>
+            <ShippingAddressList
+                v-else-if="items.length"
+                class="sv-shipping-addresses__list"
+                :addresses="shownAddresses"
+                :get-menu-items="getMenuItems"
+                compact
+            />
 
             <EmptyStatePlaceholder v-else class="sv-shipping-addresses__empty" icon="home">
                 <template #title>

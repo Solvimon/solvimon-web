@@ -15,7 +15,7 @@ export interface UseShippingAddresses {
     create: (payload: CreateShippingAddressPayload) => Promise<ShippingAddress>;
     /**
      * Edits an address. An ACTIVE address cannot be changed, so the edit is stored as a new active
-     * address, which takes over as the default if the old one was, and the old one is retired.
+     * address and the old one is retired.
      * `progress` records how far it got, so calling it again after a failure carries on from there.
      */
     replace: (
@@ -24,15 +24,12 @@ export interface UseShippingAddresses {
         progress: ShippingAddressReplacement,
     ) => Promise<ShippingAddress>;
     remove: (address: ShippingAddress) => Promise<void>;
-    setDefault: (address: ShippingAddress) => Promise<void>;
 }
 
 /** How far replacing an address got. Start with an empty object and keep it for a retry. */
 export interface ShippingAddressReplacement {
     /** The new address, stored and active. */
     replacement?: ShippingAddress;
-    /** Whether the default has moved over to the new address. */
-    isDefaultMoved?: boolean;
 }
 
 /** Newest first, with the default leading: the order the customer picks between them in. */
@@ -42,7 +39,7 @@ const byDefaultThenNewest = (a: ShippingAddress, b: ShippingAddress) =>
 
 /**
  * The shipping addresses stored for a customer. A change is followed by a reload rather than patched
- * into the list, since setting a default also clears the previous one.
+ * into the list, which is what the API holds afterwards.
  */
 export function useShippingAddresses({
     customerId,
@@ -110,14 +107,6 @@ export function useShippingAddresses({
         try {
             progress.replacement ??= await storeActive(payload);
 
-            // Before the old address is retired, which clears its default flag.
-            if (address.is_default && !progress.isDefaultMoved) {
-                await service.setDefaultShippingAddress({
-                    shippingAddressId: progress.replacement.id,
-                });
-                progress.isDefaultMoved = true;
-            }
-
             await service.deleteShippingAddress({ shippingAddressId: address.id });
 
             return progress.replacement;
@@ -131,11 +120,6 @@ export function useShippingAddresses({
         await fetchAll();
     };
 
-    const setDefault = async (address: ShippingAddress) => {
-        await service.setDefaultShippingAddress({ shippingAddressId: address.id });
-        await fetchAll();
-    };
-
     return {
         items,
         defaultAddress,
@@ -145,6 +129,5 @@ export function useShippingAddresses({
         create,
         replace,
         remove,
-        setDefault,
     };
 }

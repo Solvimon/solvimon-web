@@ -118,7 +118,6 @@ const mountComponent = (actions = {}, start?: ShippingAddressesModalStart) =>
                 create: vi.fn().mockResolvedValue(address('new')),
                 replace: vi.fn().mockResolvedValue(address('new')),
                 remove: vi.fn().mockResolvedValue(undefined),
-                setDefault: vi.fn().mockResolvedValue(undefined),
                 ...actions,
             },
         },
@@ -148,24 +147,14 @@ describe('ShippingAddressesModal', () => {
         );
     });
 
-    it('offers to set an address as the default only when it is not already', () => {
+    it('offers to edit or delete each address', () => {
         const wrapper = mountComponent();
-        const [home, office] = wrapper.findAll('.sv-shipping-address-list__item');
+        const [home] = wrapper.findAll('.sv-shipping-address-list__item');
 
-        expect(home.text()).not.toContain('Set as default');
-        expect(office.text()).toContain('Set as default');
-        expect(home.text()).toContain('Edit');
-        expect(home.text()).toContain('Delete');
-    });
-
-    it('sets the address as the default from its menu', async () => {
-        const setDefault = vi.fn().mockResolvedValue(undefined);
-        const wrapper = mountComponent({ setDefault });
-
-        await menuItem(wrapper, 1, 'Set as default').trigger('click');
-        await flushPromises();
-
-        expect(setDefault).toHaveBeenCalledWith(expect.objectContaining({ id: 'office' }));
+        expect(home.findAll('.context-menu-stub__item').map((item) => item.text())).toEqual([
+            'Edit',
+            'Delete',
+        ]);
     });
 
     it('asks before deleting, and deletes once confirmed', async () => {
@@ -281,7 +270,6 @@ describe('ShippingAddressesModal', () => {
                     create: vi.fn(),
                     replace: vi.fn(),
                     remove: vi.fn(),
-                    setDefault: vi.fn(),
                 },
             },
         });
@@ -408,128 +396,5 @@ describe('ShippingAddressesModal', () => {
 
         expect(title(wrapper)).toBe('Shipping addresses');
         expect(wrapper.find('.sv-shipping-addresses-modal__close').text()).toBe('Close');
-    });
-
-    describe('making a new address the default', () => {
-        const toggle = (wrapper: ReturnType<typeof mountComponent>) =>
-            wrapper.find<HTMLInputElement>(
-                '.sv-shipping-addresses-modal__make-default input[type="checkbox"]',
-            );
-
-        it('is offered when adding, not when editing', async () => {
-            const wrapper = mountComponent();
-
-            await wrapper.find('.sv-shipping-addresses-modal__add').trigger('click');
-            expect(toggle(wrapper).exists()).toBe(true);
-
-            await wrapper.find('.modal__cancel').trigger('click');
-            await menuItem(wrapper, 1, 'Edit').trigger('click');
-            expect(toggle(wrapper).exists()).toBe(false);
-        });
-
-        it('starts off while the customer has addresses', async () => {
-            const wrapper = mountComponent();
-
-            await wrapper.find('.sv-shipping-addresses-modal__add').trigger('click');
-
-            expect(toggle(wrapper).element.checked).toBe(false);
-        });
-
-        it('starts off even when none of them is the default', async () => {
-            const wrapper = mount(ShippingAddressesModal, {
-                props: {
-                    showModal: true,
-                    customer,
-                    addresses: [address('office')],
-                    start: { step: 'ADD' },
-                    actions: {
-                        create: vi.fn(),
-                        replace: vi.fn(),
-                        remove: vi.fn(),
-                        setDefault: vi.fn(),
-                    },
-                },
-            });
-
-            expect(toggle(wrapper).element.checked).toBe(false);
-        });
-
-        it("starts on for the customer's first address", async () => {
-            const wrapper = mount(ShippingAddressesModal, {
-                props: {
-                    showModal: true,
-                    customer,
-                    addresses: [],
-                    start: { step: 'ADD' },
-                    actions: {
-                        create: vi.fn(),
-                        replace: vi.fn(),
-                        remove: vi.fn(),
-                        setDefault: vi.fn(),
-                    },
-                },
-            });
-
-            expect(toggle(wrapper).element.checked).toBe(true);
-        });
-
-        it('stores the address, then makes it the default when on', async () => {
-            mockSubmit.mockResolvedValue({ customer_id: 'cust_1' });
-            const created = address('new');
-            const create = vi.fn().mockResolvedValue(created);
-            const setDefault = vi.fn().mockResolvedValue(undefined);
-            const wrapper = mountComponent({ create, setDefault });
-
-            await wrapper.find('.sv-shipping-addresses-modal__add').trigger('click');
-            await toggle(wrapper).setValue(true);
-            await wrapper.find('.modal__confirm').trigger('click');
-            await flushPromises();
-
-            expect(create).toHaveBeenCalled();
-            expect(setDefault).toHaveBeenCalledWith(created);
-            expect(create.mock.invocationCallOrder[0]).toBeLessThan(
-                setDefault.mock.invocationCallOrder[0],
-            );
-            expect(title(wrapper)).toBe('Shipping addresses');
-        });
-
-        it('leaves the default alone when off', async () => {
-            mockSubmit.mockResolvedValue({ customer_id: 'cust_1' });
-            const setDefault = vi.fn();
-            const wrapper = mountComponent({ setDefault });
-
-            await wrapper.find('.sv-shipping-addresses-modal__add').trigger('click');
-            await wrapper.find('.modal__confirm').trigger('click');
-            await flushPromises();
-
-            expect(setDefault).not.toHaveBeenCalled();
-        });
-
-        it('says the address is saved but not the default when that part fails', async () => {
-            mockSubmit.mockResolvedValue({ customer_id: 'cust_1' });
-            const failure = new Error('nope');
-            const create = vi.fn().mockResolvedValue(address('new'));
-            const wrapper = mountComponent({
-                create,
-                setDefault: vi.fn().mockRejectedValue(failure),
-            });
-
-            await wrapper.find('.sv-shipping-addresses-modal__add').trigger('click');
-            await toggle(wrapper).setValue(true);
-            await wrapper.find('.modal__confirm').trigger('click');
-            await flushPromises();
-
-            expect(create).toHaveBeenCalledTimes(1);
-            expect(title(wrapper)).toBe('Shipping addresses');
-            expect(wrapper.find('.error-notification-stub').text()).toContain(
-                'Your address is saved, but we could not make it your default.',
-            );
-            expect(mockLoggerError).toHaveBeenCalledWith(
-                'SHIPPING_ADDRESS_SET_DEFAULT_FAILED',
-                'Failed to set the default shipping address',
-                {},
-                failure,
-            );
-        });
     });
 });

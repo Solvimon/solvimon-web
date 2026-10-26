@@ -4,18 +4,13 @@ import type { Customer } from '@solvimon/solvimon-types';
 import CustomerShippingAddresses from './CustomerShippingAddresses.vue';
 import type { ShippingAddress } from '@/types/shippingAddress';
 
-const { mockUseShippingAddresses, mockFetchAll, mockLoggerError } = vi.hoisted(() => ({
+const { mockUseShippingAddresses, mockFetchAll } = vi.hoisted(() => ({
     mockUseShippingAddresses: vi.fn(),
     mockFetchAll: vi.fn(),
-    mockLoggerError: vi.fn(),
 }));
 
 vi.mock('@/composables/useShippingAddresses', () => ({
     useShippingAddresses: mockUseShippingAddresses,
-}));
-
-vi.mock('@/components/providers', () => ({
-    useLogger: () => ({ error: mockLoggerError }),
 }));
 
 // Loaded with `import()`, which only unwraps `default` from a module that says it is one.
@@ -84,13 +79,11 @@ const mountComponent = ({
     error,
     isLoading = false,
     withCustomer = true,
-    setDefault = vi.fn().mockResolvedValue(undefined),
 }: {
     addresses?: ShippingAddress[];
     error?: unknown;
     isLoading?: boolean;
     withCustomer?: boolean;
-    setDefault?: ReturnType<typeof vi.fn>;
 } = {}) => {
     const items = ref(addresses);
     mockUseShippingAddresses.mockReturnValue({
@@ -100,9 +93,8 @@ const mountComponent = ({
         error: ref(error),
         fetchAll: mockFetchAll,
         create: vi.fn(),
-        update: vi.fn(),
+        replace: vi.fn(),
         remove: vi.fn(),
-        setDefault,
     });
 
     return mount(CustomerShippingAddresses, {
@@ -215,33 +207,6 @@ describe('CustomerShippingAddresses', () => {
 
         expect(modal(wrapper).props('showModal')).toBe(true);
         expect(modal(wrapper).props('start')).toEqual({ step, address: OFFICE });
-    });
-
-    it('sets an address as the default from its menu, without opening the modal', async () => {
-        const setDefault = vi.fn().mockResolvedValue(undefined);
-        const wrapper = mountComponent({ setDefault });
-
-        await menuItem(wrapper, 1, 'Set as default').trigger('click');
-        await flushPromises();
-
-        expect(setDefault).toHaveBeenCalledWith(OFFICE);
-        expect(modal(wrapper).exists()).toBe(false);
-    });
-
-    it('says so and logs it when an address cannot be made the default', async () => {
-        const failure = new Error('nope');
-        const wrapper = mountComponent({ setDefault: vi.fn().mockRejectedValue(failure) });
-
-        await menuItem(wrapper, 1, 'Set as default').trigger('click');
-        await flushPromises();
-
-        expect(wrapper.find('.error-notification-stub').exists()).toBe(true);
-        expect(mockLoggerError).toHaveBeenCalledWith(
-            'SHIPPING_ADDRESS_SET_DEFAULT_FAILED',
-            'Failed to set the default shipping address',
-            {},
-            failure,
-        );
     });
 
     it('closes the modal again', async () => {

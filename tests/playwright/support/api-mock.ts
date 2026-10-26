@@ -55,10 +55,6 @@ export const ENDPOINTS = {
         method: 'POST',
         path: /^\/v1\/portal\/shipping-addresses\/[^/]+\/deprecate$/,
     },
-    setDefaultShippingAddress: {
-        method: 'POST',
-        path: /^\/v1\/portal\/shipping-addresses\/[^/]+\/set-as-default$/,
-    },
     updatePaymentMethod: { method: 'PATCH', path: /^\/v1\/portal\/payment-methods\/[^/]+$/ },
     tokenizePaymentMethod: { method: 'POST', path: '/v1/portal/payment-methods/tokenize' },
     paymentMethodOptions: { method: 'POST', path: '/v1/portal/payment-method-options' },

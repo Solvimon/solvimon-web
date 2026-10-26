@@ -421,7 +421,6 @@ The SDK emits structured log entries via the [`onLog`](#error-logging) callback.
 | `SHIPPING_ADDRESSES_LOAD_FAILED`            | Failed to load the shipping addresses                              |
 | `SHIPPING_ADDRESS_DELETE_FAILED`            | Failed to delete the shipping address                              |
 | `SHIPPING_ADDRESS_SAVE_FAILED`              | Failed to save the shipping address                                |
-| `SHIPPING_ADDRESS_SET_DEFAULT_FAILED`       | Failed to set the default shipping address                         |
 | `STRIPE_ACTION_FAILED`                      | Missing client_secret in Stripe ACTION_REQUIRED response           |
 | `STRIPE_CONFIRMATION_TOKEN_FAILED`          | Stripe submission failed                                           |
 | `STRIPE_REDIRECT_RETURN_FAILED`             | Could not retrieve the payment the Stripe redirect returned from   |

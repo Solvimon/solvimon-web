@@ -771,10 +771,6 @@
     "defaultMessage": "Manage",
     "description": "Label of the button that opens the modal to manage the customer shipping addresses"
   },
-  "customer_overview.shipping_addresses_block.set_default_error": {
-    "defaultMessage": "We could not make this your default shipping address. Please try again.",
-    "description": "Shown in the shipping addresses block when an address cannot be made the default"
-  },
   "customer_overview.shipping_addresses_block.title": {
     "defaultMessage": "{count,plural,one{Shipping address} other{Shipping addresses}}",
     "description": "Title of the block that lists the customer shipping addresses"
@@ -1259,10 +1255,6 @@
     "defaultMessage": "Edit",
     "description": "Menu option that opens the form to change a shipping address"
   },
-  "shipping_address.context_menu.set_as_default.label": {
-    "defaultMessage": "Set as default",
-    "description": "Menu option that makes a shipping address the default"
-  },
   "shipping_address.default_chip.label": {
     "defaultMessage": "Default",
     "description": "Marks the shipping address the customer uses by default"
@@ -1314,14 +1306,6 @@
   "shipping_addresses_modal.error": {
     "defaultMessage": "Something went wrong. Please try again.",
     "description": "Error shown in the shipping addresses modal when a change cannot be made"
-  },
-  "shipping_addresses_modal.make_default.label": {
-    "defaultMessage": "Make this my default shipping address",
-    "description": "Label of the toggle that makes a new shipping address the default"
-  },
-  "shipping_addresses_modal.make_default_error": {
-    "defaultMessage": "Your address is saved, but we could not make it your default. Please try again from its menu.",
-    "description": "Shown when a new shipping address is stored but cannot be made the default"
   },
   "shipping_addresses_modal.save_button.label": {
     "defaultMessage": "Save address",

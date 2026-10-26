@@ -18,7 +18,7 @@ export interface ShippingAddressesModalProps {
     /** @default { step: 'LIST' } */
     start?: ShippingAddressesModalStart;
     /** What the modal changes the addresses with; each reloads them once it is done. */
-    actions: Pick<UseShippingAddresses, 'create' | 'replace' | 'remove' | 'setDefault'>;
+    actions: Pick<UseShippingAddresses, 'create' | 'replace' | 'remove'>;
 }
 
 export interface ShippingAddressesModalEmits {

@@ -11,15 +11,8 @@ export interface UseShippingAddresses {
     isPending: Ref<boolean>;
     error: Ref<unknown>;
     fetchAll: () => Promise<void>;
-    /**
-     * Stores an address, puts it into use, and reloads the list, so it shows up where the customer
-     * expects it. Given the draft a failed activation left behind, it saves onto that one instead
-     * of storing another.
-     */
-    create: (
-        payload: CreateShippingAddressPayload,
-        draft?: ShippingAddress,
-    ) => Promise<ShippingAddress>;
+    /** Stores an address, ready for use, and reloads the list so it shows up there. */
+    create: (payload: CreateShippingAddressPayload) => Promise<ShippingAddress>;
     /**
      * Edits an address. An ACTIVE address cannot be changed, so the edit is stored as a new active
      * address, which takes over as the default if the old one was, and the old one is retired.
@@ -34,21 +27,8 @@ export interface UseShippingAddresses {
     setDefault: (address: ShippingAddress) => Promise<void>;
 }
 
-/** The address was stored, but stayed a DRAFT: not listed, and not usable until activated. */
-export class ShippingAddressNotActivatedError extends Error {
-    constructor(
-        readonly address: ShippingAddress,
-        options?: ErrorOptions,
-    ) {
-        super('The shipping address was stored but not activated', options);
-        this.name = 'ShippingAddressNotActivatedError';
-    }
-}
-
 /** How far replacing an address got. Start with an empty object and keep it for a retry. */
 export interface ShippingAddressReplacement {
-    /** The new address, stored but not activated yet. */
-    draft?: ShippingAddress;
     /** The new address, stored and active. */
     replacement?: ShippingAddress;
     /** Whether the default has moved over to the new address. */
@@ -107,26 +87,16 @@ export function useShippingAddresses({
     };
 
     /**
-     * A customer adding an address means to use it. The API creates it as a DRAFT, which the list
-     * leaves out and cannot be the default, so it is activated straight away.
+     * A customer adding an address means to use it, so it is stored ACTIVE. Left to the API, it
+     * would be a DRAFT, which the list leaves out and cannot be the default, and the portal cannot
+     * activate it afterwards.
      */
-    const storeActive = async (payload: CreateShippingAddressPayload, draft?: ShippingAddress) => {
-        const stored = draft
-            ? await service.updateShippingAddress({ shippingAddressId: draft.id, payload })
-            : await service.createShippingAddress(payload);
+    const storeActive = (payload: CreateShippingAddressPayload) =>
+        service.createShippingAddress({ ...payload, status: 'ACTIVE' });
 
-        if (stored.status !== 'DRAFT') return stored;
-
+    const create = async (payload: CreateShippingAddressPayload) => {
         try {
-            return await service.activateShippingAddress({ shippingAddressId: stored.id });
-        } catch (cause) {
-            throw new ShippingAddressNotActivatedError(stored, { cause });
-        }
-    };
-
-    const create = async (payload: CreateShippingAddressPayload, draft?: ShippingAddress) => {
-        try {
-            return await storeActive(payload, draft);
+            return await storeActive(payload);
         } finally {
             await fetchAll();
         }
@@ -138,17 +108,7 @@ export function useShippingAddresses({
         progress: ShippingAddressReplacement,
     ) => {
         try {
-            if (!progress.replacement) {
-                try {
-                    progress.replacement = await storeActive(payload, progress.draft);
-                    progress.draft = undefined;
-                } catch (storeError) {
-                    if (storeError instanceof ShippingAddressNotActivatedError) {
-                        progress.draft = storeError.address;
-                    }
-                    throw storeError;
-                }
-            }
+            progress.replacement ??= await storeActive(payload);
 
             // Before the old address is retired, which clears its default flag.
             if (address.is_default && !progress.isDefaultMoved) {

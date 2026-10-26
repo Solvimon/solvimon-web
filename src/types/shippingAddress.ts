@@ -19,7 +19,6 @@ export interface ShippingAddress extends ShippingAddressDetails {
 
 export type CreateShippingAddressPayload = ShippingAddressDetails & {
     customer_id: Customer['id'];
+    /** Left out, the address is stored as a DRAFT, which is not listed and cannot be the default. */
+    status?: ShippingAddressStatus;
 };
-
-/** What an edit sends: the whole recipient and address, under the reference the address keeps. */
-export type UpdateShippingAddressPayload = ShippingAddressDetails;

@@ -35,7 +35,7 @@ const hasPaymentMethods = computed<boolean>(() => props.paymentMethods.length > 
     >
         <template v-if="showViewAllButton" #right>
             <Button
-                size="sm"
+                size="xs"
                 intent="subtle"
                 icon-suffix="arrow_right_alt"
                 class="sv-action sv-action--ghost sv-payment-methods__view-all"

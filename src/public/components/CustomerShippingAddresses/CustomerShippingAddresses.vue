@@ -77,7 +77,7 @@ const { getMenuItems } = useShippingAddressMenuItems({
     >
         <template #right>
             <Button
-                size="sm"
+                size="xs"
                 intent="subtle"
                 class="sv-action sv-action--ghost sv-shipping-addresses__manage"
                 @click="openModal({ step: 'LIST' })"

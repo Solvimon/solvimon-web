@@ -48,7 +48,7 @@ const isViewAllButtonVisible = computed<boolean>(() => props.showViewAllButton);
     >
         <template v-if="isViewAllButtonVisible" #right>
             <Button
-                size="sm"
+                size="xs"
                 intent="subtle"
                 icon-suffix="arrow_right_alt"
                 class="sv-action sv-action--ghost sv-subscriptions-list__view-all"

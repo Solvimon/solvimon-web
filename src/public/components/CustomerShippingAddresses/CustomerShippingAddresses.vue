@@ -83,6 +83,7 @@ const { getMenuItems } = useShippingAddressMenuItems({
         class="sv-shipping-addresses sv-root sv-component"
         no-spacing
         no-border
+        content-background="none"
         :title="
             $t(
                 {

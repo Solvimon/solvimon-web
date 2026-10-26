@@ -162,8 +162,8 @@ const getOptionalSuffix = (field: keyof CheckoutFormState): string =>
 defineExpose({
     /**
      * Checks the form and hands back the address to store, or nothing while something is missing —
-     * the fields say what. A new address gets a fresh reference, since the API keeps it unique per
-     * customer; an edited one keeps its own.
+     * the fields say what. Every address gets a fresh reference, since the API keeps it unique per
+     * customer, and an edit is stored as a new address next to the one it replaces.
      */
     submit: async (): Promise<CreateShippingAddressPayload | undefined> => {
         if (!(await validation.value.$validate())) {
@@ -171,11 +171,7 @@ defineExpose({
         }
 
         return {
-            ...toShippingAddressDetails(
-                form.value,
-                props.address?.reference ?? crypto.randomUUID(),
-                format.value,
-            ),
+            ...toShippingAddressDetails(form.value, crypto.randomUUID(), format.value),
             customer_id: props.customer.id,
         };
     },

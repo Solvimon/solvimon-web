@@ -185,14 +185,14 @@ describe('ShippingAddressForm', () => {
         });
     });
 
-    it('keeps the reference of the address it edits', async () => {
+    it('gives an edit a reference of its own, since it is stored as a new address', async () => {
         const wrapper = await mountForm(person, storedAddress);
         fillIn({ shippingAddressLine1: 'Via Roma 2' });
 
         const result = await (wrapper.vm as unknown as FormInstance).submit();
 
         expect(result).toMatchObject({
-            reference: 'ref_office',
+            reference: expect.not.stringMatching(/^ref_office$/),
             recipient: { organization: { company_name: 'Acme Logistics' } },
             address: { line1: 'Via Roma 2', country: 'IT' },
         });

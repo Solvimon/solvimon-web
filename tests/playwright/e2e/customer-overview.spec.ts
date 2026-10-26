@@ -1,4 +1,4 @@
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, type Locator, type Page } from '@playwright/test';
 import type { ApiMock } from '../support/api-mock';
 import {
     customerOverview,
@@ -571,51 +571,94 @@ test.describe('Customer overview', () => {
             );
         });
 
-        test('edits an address from the modal, keeping its reference', async ({ page }) => {
-            api = await mountLoaded(page, {
-                ...withShipping,
-                shippingAddresses: [HOME, OFFICE],
-                mocks: { updateShippingAddress: { body: OFFICE } },
-            });
-            await openManage(page);
-
-            await customerOverview(page).shippingAddressMenuFor(1).click();
+        const openEditFor = async (page: Page, menu: Locator) => {
+            await menu.click();
             // The billing information has an Edit button of its own.
             await page
                 .getByRole('list')
                 .getByRole('button', { name: /^edit$/i })
                 .click();
+        };
+
+        test('stores an edit as a new address and retires the old one', async ({ page }) => {
+            const REPLACEMENT = aShippingAddress({ id: 'shad_new', line1: 'Herengracht 12' });
+            api = await mountLoaded(page, {
+                ...withShipping,
+                shippingAddresses: [HOME, OFFICE],
+                mocks: {
+                    createShippingAddress: { status: 201, body: REPLACEMENT },
+                    deleteShippingAddress: { body: OFFICE },
+                },
+            });
+            await openManage(page);
+
+            await openEditFor(page, customerOverview(page).shippingAddressMenuFor(1));
             const line1 = page.locator('input[name="shipping_address_line_1"]');
             await expect(line1).toHaveValue('Herengracht 10');
             await line1.fill('Herengracht 12');
             await page.getByRole('button', { name: /save address/i }).click();
 
-            const call = await api.waitForCall('updateShippingAddress');
-            expect(new URL(call.url).pathname).toBe('/v1/portal/shipping-addresses/shad_office');
-            expect(call.body).toMatchObject({
-                reference: 'shad_office',
+            const created = await api.waitForCall('createShippingAddress');
+            expect(created.body).toMatchObject({
+                customer_id: CUSTOMER_ID,
                 address: { line1: 'Herengracht 12', city: 'Amsterdam', country: 'NL' },
             });
-            await expect(modalItems(page)).toHaveCount(2);
+            expect((created.body as { reference: string }).reference).not.toBe('shad_office');
+            const retired = await api.waitForCall('deleteShippingAddress');
+            expect(new URL(retired.url).pathname).toBe(
+                '/v1/portal/shipping-addresses/shad_office/deprecate',
+            );
+            expect(api.calls('setDefaultShippingAddress')).toEqual([]);
+            expect(api.calls('updateShippingAddress')).toEqual([]);
+        });
+
+        test('moves the default to the edit before retiring the default address', async ({
+            page,
+        }) => {
+            const REPLACEMENT = aShippingAddress({ id: 'shad_new', line1: 'Damrak 2' });
+            api = await mountLoaded(page, {
+                ...withShipping,
+                shippingAddresses: [HOME, OFFICE],
+                mocks: {
+                    createShippingAddress: { status: 201, body: REPLACEMENT },
+                    setDefaultShippingAddress: { body: REPLACEMENT },
+                    deleteShippingAddress: { body: HOME },
+                },
+            });
+            await openManage(page);
+
+            await openEditFor(page, customerOverview(page).shippingAddressMenuFor(0));
+            await page.locator('input[name="shipping_address_line_1"]').fill('Damrak 2');
+            await page.getByRole('button', { name: /save address/i }).click();
+
+            const madeDefault = await api.waitForCall('setDefaultShippingAddress');
+            expect(new URL(madeDefault.url).pathname).toBe(
+                '/v1/portal/shipping-addresses/shad_new/set-as-default',
+            );
+            const retired = await api.waitForCall('deleteShippingAddress');
+            expect(new URL(retired.url).pathname).toBe(
+                '/v1/portal/shipping-addresses/shad_home/deprecate',
+            );
         });
 
         test("edits an address from the block's menu and closes once saved", async ({ page }) => {
             api = await mountLoaded(page, {
                 ...withShipping,
                 shippingAddresses: [HOME, OFFICE],
-                mocks: { updateShippingAddress: { body: OFFICE } },
+                mocks: {
+                    createShippingAddress: {
+                        status: 201,
+                        body: aShippingAddress({ id: 'shad_new' }),
+                    },
+                    deleteShippingAddress: { body: OFFICE },
+                },
             });
 
-            await customerOverview(page).shippingAddressBlockMenuFor(1).click();
-            // The billing information has an Edit button of its own.
-            await page
-                .getByRole('list')
-                .getByRole('button', { name: /^edit$/i })
-                .click();
+            await openEditFor(page, customerOverview(page).shippingAddressBlockMenuFor(1));
             await expect(page.getByText('Edit shipping address')).toBeVisible();
             await page.getByRole('button', { name: /save address/i }).click();
 
-            await api.waitForCall('updateShippingAddress');
+            await api.waitForCall('deleteShippingAddress');
             await expect(customerOverview(page).shippingAddressesModal).toBeHidden();
         });
     });

@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - The checkout description and an enabled pricing's price name the billing period in the element's language, "per dag" in Dutch rather than "per day".
+- The **My subscription** and **Payment method** blocks on the customer overview were a darker gray than the billing information next to them: their title wrapper laid its own translucent gray under the cards. They now have the same single gray background.
 
 ## [0.1.0-alpha.28] - 2026-10-21
 

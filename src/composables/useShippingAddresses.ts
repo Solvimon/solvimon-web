@@ -2,7 +2,11 @@ import type { Customer } from '@solvimon/solvimon-types';
 import { computed, ref, toValue, type ComputedRef, type MaybeRefOrGetter, type Ref } from 'vue';
 import { useLogger } from '@/components/providers';
 import { createShippingAddressesService } from '@/services/shippingAddresses';
-import type { CreateShippingAddressPayload, ShippingAddress } from '@/types/shippingAddress';
+import type {
+    CreateShippingAddressPayload,
+    ShippingAddress,
+    UpdateShippingAddressPayload,
+} from '@/types/shippingAddress';
 
 export interface UseShippingAddresses {
     items: Ref<ShippingAddress[]>;
@@ -13,6 +17,7 @@ export interface UseShippingAddresses {
     fetchAll: () => Promise<void>;
     /** Stores an address and reloads the list, so it shows up where the customer expects it. */
     create: (payload: CreateShippingAddressPayload) => Promise<ShippingAddress>;
+    update: (address: ShippingAddress, payload: UpdateShippingAddressPayload) => Promise<void>;
     remove: (address: ShippingAddress) => Promise<void>;
     setDefault: (address: ShippingAddress) => Promise<void>;
 }
@@ -71,6 +76,11 @@ export function useShippingAddresses({
         return created;
     };
 
+    const update = async (address: ShippingAddress, payload: UpdateShippingAddressPayload) => {
+        await service.updateShippingAddress({ shippingAddressId: address.id, payload });
+        await fetchAll();
+    };
+
     const remove = async (address: ShippingAddress) => {
         await service.deleteShippingAddress({ shippingAddressId: address.id });
         await fetchAll();
@@ -81,5 +91,15 @@ export function useShippingAddresses({
         await fetchAll();
     };
 
-    return { items, defaultAddress, isPending, error, fetchAll, create, remove, setDefault };
+    return {
+        items,
+        defaultAddress,
+        isPending,
+        error,
+        fetchAll,
+        create,
+        update,
+        remove,
+        setDefault,
+    };
 }

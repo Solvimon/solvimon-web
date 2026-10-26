@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import {
     Button,
     ErrorNotification,
@@ -7,21 +7,24 @@ import {
     Section,
     Typography,
     useIntl,
-    type ContextMenuOption,
 } from '@solvimon/solvimon-ui';
 import type {
     ShippingAddressesModalEmits,
     ShippingAddressesModalProps,
+    ShippingAddressesModalStart,
 } from './ShippingAddressesModal.types';
 import ShippingAddressCard from './ShippingAddressCard.vue';
+import ShippingAddressList from './ShippingAddressList.vue';
 import ShippingAddressForm from '@/components/customer/ShippingAddressForm/ShippingAddressForm.vue';
 import EmptyStatePlaceholder from '@/components/checkout/EmptyStatePlaceholder.vue';
 import SlidingPanes from '@/components/shared/SlidingPanes/SlidingPanes.vue';
 import { useLogger } from '@/components/providers';
+import { useShippingAddressMenuItems } from '@/composables/useShippingAddressMenuItems';
 import type { ShippingAddress } from '@/types/shippingAddress';
 
-const PANES = ['LIST', 'ADD', 'DELETE'] as const;
-type Pane = (typeof PANES)[number];
+type Step = ShippingAddressesModalStart['step'];
+
+const PANES = ['LIST', 'FORM', 'DELETE'] as const;
 
 const props = defineProps<ShippingAddressesModalProps>();
 const emit = defineEmits<ShippingAddressesModalEmits>();
@@ -29,18 +32,23 @@ const emit = defineEmits<ShippingAddressesModalEmits>();
 const { $t } = useIntl();
 const logger = useLogger();
 
-const step = ref<Pane>('LIST');
+const step = ref<Step>('LIST');
+/** The step the modal opened on, which is where closing it is one step back. */
+const openedAt = ref<Step>('LIST');
+/** The address being edited or deleted. */
+const target = ref<ShippingAddress>();
 const isWorking = ref(false);
 const errorMessage = ref<string>();
-const pendingDelete = ref<ShippingAddress>();
 
 const formRef = ref<InstanceType<typeof ShippingAddressForm>>();
 
 /**
- * The form is built afresh every time the customer goes to add an address, so one they gave up on
- * does not come back half filled in.
+ * The form is built afresh every time the customer goes to it, so one they gave up on does not
+ * come back half filled in.
  */
 const formKey = ref(0);
+
+const pane = computed(() => (step.value === 'ADD' || step.value === 'EDIT' ? 'FORM' : step.value));
 
 const somethingWentWrong = () =>
     $t({
@@ -49,14 +57,33 @@ const somethingWentWrong = () =>
         description: 'Error shown in the shipping addresses modal when a change cannot be made',
     });
 
-const goTo = (pane: Pane) => {
+const goTo = (next: ShippingAddressesModalStart) => {
     errorMessage.value = undefined;
-    step.value = pane;
+    target.value = 'address' in next ? next.address : undefined;
+    if (next.step === 'ADD' || next.step === 'EDIT') formKey.value += 1;
+    step.value = next.step;
 };
 
-const openAdd = () => {
-    formKey.value += 1;
-    goTo('ADD');
+watch(
+    () => props.showModal,
+    (isShown) => {
+        if (!isShown) return;
+
+        const start = props.start ?? { step: 'LIST' };
+        openedAt.value = start.step;
+        goTo(start);
+    },
+    { immediate: true },
+);
+
+/** Done with an address: back to the list, unless the modal was opened for just that. */
+const finish = () => {
+    if (openedAt.value === 'LIST') {
+        goTo({ step: 'LIST' });
+        return;
+    }
+
+    emit('close');
 };
 
 /** Runs a change, holding the modal while it is out and saying so when it fails. */
@@ -81,8 +108,10 @@ const save = async () => {
 
     if (!payload) return;
 
+    const editing = step.value === 'EDIT' ? target.value : undefined;
+
     const saved = await run(
-        () => props.actions.create(payload),
+        () => (editing ? props.actions.update(editing, payload) : props.actions.create(payload)),
         (error) =>
             logger.error(
                 'SHIPPING_ADDRESS_SAVE_FAILED',
@@ -92,12 +121,12 @@ const save = async () => {
             ),
     );
 
-    // Back to the list, which has reloaded with the address on it by now.
-    if (saved) goTo('LIST');
+    // The list has reloaded with the change by now.
+    if (saved) finish();
 };
 
 const confirmDelete = async () => {
-    const address = pendingDelete.value;
+    const address = target.value;
 
     if (!address) return;
 
@@ -112,10 +141,7 @@ const confirmDelete = async () => {
             ),
     );
 
-    if (deleted) {
-        pendingDelete.value = undefined;
-        goTo('LIST');
-    }
+    if (deleted) finish();
 };
 
 const setDefault = (address: ShippingAddress) =>
@@ -130,99 +156,99 @@ const setDefault = (address: ShippingAddress) =>
             ),
     );
 
-const getMenuItems = (address: ShippingAddress): ContextMenuOption[] => [
-    ...(address.is_default
-        ? []
-        : [
-              {
-                  label: $t({
-                      defaultMessage: 'Set as default',
-                      id: 'shipping_address.context_menu.set_as_default.label',
-                      description: 'Menu option that makes a shipping address the default',
-                  }),
-                  onClick: () => void setDefault(address),
-              },
-          ]),
-    {
-        label: $t({
-            defaultMessage: 'Delete',
-            id: 'shipping_address.context_menu.delete.label',
-            description: 'Menu option that deletes a shipping address',
-        }),
-        onClick: () => {
-            pendingDelete.value = address;
-            goTo('DELETE');
-        },
-    },
-];
+const { getMenuItems } = useShippingAddressMenuItems({
+    onSetDefault: (address) => void setDefault(address),
+    onEdit: (address) => goTo({ step: 'EDIT', address }),
+    onDelete: (address) => goTo({ step: 'DELETE', address }),
+});
 
-/** A step back while the customer is in a form or confirmation; closing from the list. */
 const handleClose = () => {
     if (isWorking.value) return;
 
-    if (step.value === 'LIST') {
+    if (step.value === openedAt.value) {
         emit('close');
         return;
     }
 
-    pendingDelete.value = undefined;
-    goTo('LIST');
+    goTo({ step: 'LIST' });
 };
 
 const handleConfirm = () => {
-    if (step.value === 'ADD') void save();
-    if (step.value === 'DELETE') void confirmDelete();
+    if (pane.value === 'FORM') void save();
+    if (pane.value === 'DELETE') void confirmDelete();
 };
 
-const title = computed(() =>
-    step.value === 'ADD'
-        ? $t({
-              defaultMessage: 'Add shipping address',
-              id: 'shipping_addresses_modal.add.title',
-              description: 'Title of the shipping addresses modal while a new address is added',
-          })
-        : step.value === 'DELETE'
-          ? $t({
+const title = computed(() => {
+    switch (step.value) {
+        case 'ADD':
+            return $t({
+                defaultMessage: 'Add shipping address',
+                id: 'shipping_addresses_modal.add.title',
+                description: 'Title of the shipping addresses modal while a new address is added',
+            });
+        case 'EDIT':
+            return $t({
+                defaultMessage: 'Edit shipping address',
+                id: 'shipping_addresses_modal.edit.title',
+                description: 'Title of the shipping addresses modal while an address is changed',
+            });
+        case 'DELETE':
+            return $t({
                 defaultMessage: 'Delete shipping address',
                 id: 'shipping_addresses_modal.delete.title',
                 description: 'Title of the shipping addresses modal while a delete is confirmed',
-            })
-          : $t({
+            });
+        default:
+            return $t({
                 defaultMessage: 'Shipping addresses',
                 id: 'shipping_addresses_modal.title',
                 description: 'Title of the modal that lists the customer shipping addresses',
-            }),
-);
+            });
+    }
+});
 
-const confirmButtonText = computed(() =>
-    step.value === 'ADD'
-        ? $t({
-              defaultMessage: 'Save address',
-              id: 'shipping_addresses_modal.save_button.label',
-              description: 'Label of the button that stores the new shipping address',
-          })
-        : step.value === 'DELETE'
-          ? $t({
-                defaultMessage: 'Delete',
-                id: 'shipping_addresses_modal.delete_button.label',
-                description: 'Label of the button that confirms deleting a shipping address',
-            })
-          : undefined,
-);
+const confirmButtonText = computed(() => {
+    if (pane.value === 'FORM') {
+        return $t({
+            defaultMessage: 'Save address',
+            id: 'shipping_addresses_modal.save_button.label',
+            description: 'Label of the button that stores a new or changed shipping address',
+        });
+    }
 
-const cancelButtonText = computed(() =>
-    step.value === 'LIST'
+    if (pane.value === 'DELETE') {
+        return $t({
+            defaultMessage: 'Delete',
+            id: 'shipping_addresses_modal.delete_button.label',
+            description: 'Label of the button that confirms deleting a shipping address',
+        });
+    }
+
+    return undefined;
+});
+
+const cancelButtonText = computed(() => {
+    if (step.value !== openedAt.value) {
+        return $t({
+            defaultMessage: 'Back',
+            id: 'shipping_addresses_modal.back_button.label',
+            description: 'Label of the button that goes back to the list of shipping addresses',
+        });
+    }
+
+    return step.value === 'LIST'
         ? $t({
               defaultMessage: 'Close',
               id: 'shipping_addresses_modal.close_button.label',
               description: 'Label of the button that closes the shipping addresses modal',
           })
         : $t({
-              defaultMessage: 'Back',
-              id: 'shipping_addresses_modal.back_button.label',
-              description: 'Label of the button that goes back to the list of shipping addresses',
-          }),
-);
+              defaultMessage: 'Cancel',
+              id: 'shipping_addresses_modal.cancel_button.label',
+              description:
+                  'Label of the button that closes the shipping addresses modal without saving or deleting',
+          });
+});
 </script>
 
 <template>
@@ -237,6 +263,17 @@ const cancelButtonText = computed(() =>
         @confirm="handleConfirm"
         @close="handleClose"
     >
+        <!-- The list has nothing to confirm, so it closes with one button rather than two. -->
+        <template v-if="step === 'LIST'" #footer>
+            <Button
+                size="lg"
+                intent="secondary"
+                class="sv-action sv-action--secondary sv-shipping-addresses-modal__close w-full"
+                @click="handleClose"
+                >{{ cancelButtonText }}</Button
+            >
+        </template>
+
         <template #body>
             <div class="sv-shipping-addresses-modal grid grid-cols-1 gap-4 pb-4">
                 <ErrorNotification
@@ -245,23 +282,17 @@ const cancelButtonText = computed(() =>
                     :title="errorMessage"
                 />
 
-                <SlidingPanes :panes="PANES" :current="step">
+                <SlidingPanes :panes="PANES" :current="pane">
                     <template #LIST>
-                        <div class="sv-shipping-addresses-modal__list grid grid-cols-1 gap-2">
-                            <Section
-                                v-for="address in addresses"
-                                :key="address.id"
-                                class="sv-shipping-addresses-modal__item"
-                            >
-                                <ShippingAddressCard
-                                    :address="address"
-                                    :menu-items="getMenuItems(address)"
-                                    show-default
-                                />
-                            </Section>
+                        <div class="sv-shipping-addresses-modal__list grid grid-cols-1 gap-4">
+                            <ShippingAddressList
+                                v-if="addresses.length"
+                                :addresses="addresses"
+                                :get-menu-items="getMenuItems"
+                            />
 
                             <EmptyStatePlaceholder
-                                v-if="!addresses.length && !isLoading"
+                                v-else-if="!isLoading"
                                 class="sv-shipping-addresses-modal__empty"
                                 icon="home"
                             >
@@ -284,7 +315,7 @@ const cancelButtonText = computed(() =>
                                 type="button"
                                 size="sm"
                                 :disabled="isWorking"
-                                @click="openAdd"
+                                @click="goTo({ step: 'ADD' })"
                             >
                                 {{
                                     $t({
@@ -298,17 +329,18 @@ const cancelButtonText = computed(() =>
                         </div>
                     </template>
 
-                    <template #ADD>
+                    <template #FORM>
                         <ShippingAddressForm
                             ref="formRef"
                             :key="formKey"
                             :customer="customer"
+                            :address="step === 'EDIT' ? target : undefined"
                             :disabled="isWorking"
                         />
                     </template>
 
                     <template #DELETE>
-                        <div v-if="pendingDelete" class="grid grid-cols-1 gap-3">
+                        <div v-if="target" class="grid grid-cols-1 gap-3">
                             <Typography variant="body-sm" color="secondary" tag="p">
                                 {{
                                     $t({
@@ -321,7 +353,7 @@ const cancelButtonText = computed(() =>
                                 }}
                             </Typography>
                             <Section class="sv-shipping-addresses-modal__pending-delete">
-                                <ShippingAddressCard :address="pendingDelete" />
+                                <ShippingAddressCard :address="target" />
                             </Section>
                         </div>
                     </template>

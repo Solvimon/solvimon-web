@@ -2,6 +2,7 @@ import { flushPromises, mount } from '@vue/test-utils';
 import { defineComponent, h } from 'vue';
 import type { Customer } from '@solvimon/solvimon-types';
 import ShippingAddressesModal from './ShippingAddressesModal.vue';
+import type { ShippingAddressesModalStart } from './ShippingAddressesModal.types';
 import type { ShippingAddress } from '@/types/shippingAddress';
 
 const { mockSubmit, mockLoggerError } = vi.hoisted(() => ({
@@ -17,7 +18,7 @@ vi.mock('@/components/providers', () => ({
 vi.mock('@/components/customer/ShippingAddressForm/ShippingAddressForm.vue', () => ({
     default: defineComponent({
         name: 'ShippingAddressForm',
-        props: { customer: Object, disabled: Boolean },
+        props: { customer: Object, address: Object, disabled: Boolean },
         setup(_, { expose }) {
             expose({ submit: mockSubmit });
             return () => h('div', { class: 'shipping-address-form-stub' });
@@ -45,18 +46,26 @@ vi.mock('@solvimon/solvimon-ui', async () => {
                         ? h('div', { class: 'modal' }, [
                               h('h1', { class: 'modal__title' }, props.title),
                               h('div', { class: 'modal__body' }, slots.body?.()),
-                              props.confirmButtonText
-                                  ? h(
-                                        'button',
-                                        { class: 'modal__confirm', onClick: () => emit('confirm') },
-                                        props.confirmButtonText,
-                                    )
-                                  : null,
-                              h(
-                                  'button',
-                                  { class: 'modal__cancel', onClick: () => emit('close') },
-                                  props.cancelButtonText,
-                              ),
+                              ...(slots.footer
+                                  ? [h('div', { class: 'modal__footer' }, slots.footer())]
+                                  : [
+                                        h(
+                                            'button',
+                                            {
+                                                class: 'modal__confirm',
+                                                onClick: () => emit('confirm'),
+                                            },
+                                            props.confirmButtonText ?? 'Confirm',
+                                        ),
+                                        h(
+                                            'button',
+                                            {
+                                                class: 'modal__cancel',
+                                                onClick: () => emit('close'),
+                                            },
+                                            props.cancelButtonText,
+                                        ),
+                                    ]),
                           ])
                         : null,
         }),
@@ -98,14 +107,16 @@ const address = (id: string, isDefault = false) =>
         address: { line1: `${id} street`, country: 'NL' },
     }) as unknown as ShippingAddress;
 
-const mountComponent = (actions = {}) =>
+const mountComponent = (actions = {}, start?: ShippingAddressesModalStart) =>
     mount(ShippingAddressesModal, {
         props: {
             showModal: true,
             customer,
             addresses: [address('home', true), address('office')],
+            start,
             actions: {
                 create: vi.fn().mockResolvedValue(address('new')),
+                update: vi.fn().mockResolvedValue(undefined),
                 remove: vi.fn().mockResolvedValue(undefined),
                 setDefault: vi.fn().mockResolvedValue(undefined),
                 ...actions,
@@ -115,7 +126,7 @@ const mountComponent = (actions = {}) =>
 
 const menuItem = (wrapper: ReturnType<typeof mountComponent>, index: number, label: string) =>
     wrapper
-        .findAll('.sv-shipping-addresses-modal__item')
+        .findAll('.sv-shipping-address-list__item')
         [index].findAll('.context-menu-stub__item')
         .find((item) => item.text() === label)!;
 
@@ -130,7 +141,7 @@ describe('ShippingAddressesModal', () => {
         const wrapper = mountComponent();
 
         expect(title(wrapper)).toBe('Shipping addresses');
-        expect(wrapper.findAll('.sv-shipping-addresses-modal__item')).toHaveLength(2);
+        expect(wrapper.findAll('.sv-shipping-address-list__item')).toHaveLength(2);
         expect(wrapper.findAll('.sv-shipping-address__default')).toHaveLength(1);
         expect(wrapper.find('.sv-shipping-addresses-modal__add').text()).toBe(
             'Add shipping address',
@@ -139,10 +150,11 @@ describe('ShippingAddressesModal', () => {
 
     it('offers to set an address as the default only when it is not already', () => {
         const wrapper = mountComponent();
-        const [home, office] = wrapper.findAll('.sv-shipping-addresses-modal__item');
+        const [home, office] = wrapper.findAll('.sv-shipping-address-list__item');
 
         expect(home.text()).not.toContain('Set as default');
         expect(office.text()).toContain('Set as default');
+        expect(home.text()).toContain('Edit');
         expect(home.text()).toContain('Delete');
     });
 
@@ -239,10 +251,12 @@ describe('ShippingAddressesModal', () => {
         );
     });
 
-    it('closes from the list', async () => {
+    it('closes from the list, which has nothing to confirm', async () => {
         const wrapper = mountComponent();
 
-        await wrapper.find('.modal__cancel').trigger('click');
+        expect(wrapper.find('.modal__confirm').exists()).toBe(false);
+
+        await wrapper.find('.sv-shipping-addresses-modal__close').trigger('click');
 
         expect(wrapper.emitted('close')).toHaveLength(1);
     });
@@ -263,10 +277,80 @@ describe('ShippingAddressesModal', () => {
                 showModal: true,
                 customer,
                 addresses: [],
-                actions: { create: vi.fn(), remove: vi.fn(), setDefault: vi.fn() },
+                actions: { create: vi.fn(), update: vi.fn(), remove: vi.fn(), setDefault: vi.fn() },
             },
         });
 
         expect(wrapper.find('.sv-shipping-addresses-modal__empty').exists()).toBe(true);
+    });
+
+    it('edits an address on the form, starting from what is stored', async () => {
+        const payload = { customer_id: 'cust_1', reference: 'ref_office' };
+        mockSubmit.mockResolvedValue(payload);
+        const update = vi.fn().mockResolvedValue(undefined);
+        const create = vi.fn();
+        const wrapper = mountComponent({ update, create });
+
+        await menuItem(wrapper, 1, 'Edit').trigger('click');
+
+        expect(title(wrapper)).toBe('Edit shipping address');
+        expect(
+            wrapper.findComponent({ name: 'ShippingAddressForm' }).props('address'),
+        ).toMatchObject({ id: 'office' });
+
+        await wrapper.find('.modal__confirm').trigger('click');
+        await flushPromises();
+
+        expect(update).toHaveBeenCalledWith(expect.objectContaining({ id: 'office' }), payload);
+        expect(create).not.toHaveBeenCalled();
+        expect(title(wrapper)).toBe('Shipping addresses');
+    });
+
+    it('adds on an empty form, not on the address edited before', async () => {
+        const wrapper = mountComponent();
+
+        await menuItem(wrapper, 1, 'Edit').trigger('click');
+        await wrapper.find('.modal__cancel').trigger('click');
+        await wrapper.find('.sv-shipping-addresses-modal__add').trigger('click');
+
+        expect(wrapper.findComponent({ name: 'ShippingAddressForm' }).props('address')).toBe(
+            undefined,
+        );
+    });
+
+    it('opened on one address, closes once it is saved instead of going on to the list', async () => {
+        mockSubmit.mockResolvedValue({ customer_id: 'cust_1' });
+        const office = address('office');
+        const wrapper = mountComponent({}, { step: 'EDIT', address: office });
+
+        expect(title(wrapper)).toBe('Edit shipping address');
+        expect(wrapper.find('.modal__cancel').text()).toBe('Cancel');
+
+        await wrapper.find('.modal__confirm').trigger('click');
+        await flushPromises();
+
+        expect(wrapper.emitted('close')).toHaveLength(1);
+    });
+
+    it('opened on a delete, closes when the customer thinks better of it', async () => {
+        const remove = vi.fn();
+        const wrapper = mountComponent({ remove }, { step: 'DELETE', address: address('office') });
+
+        expect(title(wrapper)).toBe('Delete shipping address');
+
+        await wrapper.find('.modal__cancel').trigger('click');
+
+        expect(wrapper.emitted('close')).toHaveLength(1);
+        expect(remove).not.toHaveBeenCalled();
+    });
+
+    it('opens on the list again after being opened on an address', async () => {
+        const wrapper = mountComponent({}, { step: 'DELETE', address: address('office') });
+
+        await wrapper.setProps({ showModal: false });
+        await wrapper.setProps({ showModal: true, start: { step: 'LIST' } });
+
+        expect(title(wrapper)).toBe('Shipping addresses');
+        expect(wrapper.find('.sv-shipping-addresses-modal__close').text()).toBe('Close');
     });
 });

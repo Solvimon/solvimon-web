@@ -5,6 +5,7 @@ const { mockService, mockLoggerError } = vi.hoisted(() => ({
     mockService: {
         getShippingAddresses: vi.fn(),
         createShippingAddress: vi.fn(),
+        updateShippingAddress: vi.fn(),
         deleteShippingAddress: vi.fn(),
         setDefaultShippingAddress: vi.fn(),
     },
@@ -90,6 +91,7 @@ describe('useShippingAddresses', () => {
     // Setting a default clears the previous one, so the list is read again rather than patched.
     it.each([
         ['stores an address', 'create', 'createShippingAddress'],
+        ['edits an address', 'update', 'updateShippingAddress'],
         ['deletes an address', 'remove', 'deleteShippingAddress'],
         ['sets the default', 'setDefault', 'setDefaultShippingAddress'],
     ] as const)('reloads the list once it %s', async (_, action, serviceCall) => {
@@ -98,6 +100,8 @@ describe('useShippingAddresses', () => {
 
         if (action === 'create') {
             await addresses.create({ customer_id: 'cust_1' } as never);
+        } else if (action === 'update') {
+            await addresses.update(address(), { reference: 'ref_1' } as never);
         } else {
             await addresses[action](address());
         }
@@ -106,12 +110,19 @@ describe('useShippingAddresses', () => {
         expect(mockService.getShippingAddresses).toHaveBeenCalledTimes(1);
     });
 
-    it('deletes and sets the default by the address id', async () => {
+    it('edits, deletes and sets the default by the address id', async () => {
         const addresses = useShippingAddresses({ customerId: 'cust_1' });
+        const payload = { reference: 'ref_9' } as never;
+
+        await addresses.update(address({ id: 'shad_9' }), payload);
 
         await addresses.remove(address({ id: 'shad_9' }));
         await addresses.setDefault(address({ id: 'shad_9' }));
 
+        expect(mockService.updateShippingAddress).toHaveBeenCalledWith({
+            shippingAddressId: 'shad_9',
+            payload,
+        });
         expect(mockService.deleteShippingAddress).toHaveBeenCalledWith({
             shippingAddressId: 'shad_9',
         });

@@ -20,3 +20,6 @@ export interface ShippingAddress extends ShippingAddressDetails {
 export type CreateShippingAddressPayload = ShippingAddressDetails & {
     customer_id: Customer['id'];
 };
+
+/** What an edit sends: the whole recipient and address, under the reference the address keeps. */
+export type UpdateShippingAddressPayload = ShippingAddressDetails;

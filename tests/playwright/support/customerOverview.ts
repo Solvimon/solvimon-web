@@ -55,11 +55,22 @@ export function customerOverview(page: Page) {
         walletBalances: page.locator('.sv-customer-overview__wallet-balances'),
         paymentMethods: page.locator('.sv-customer-overview__payment-methods'),
         billingInformation: page.locator('.sv-customer-overview__billing-information'),
-        shippingInformation: page.locator('.sv-customer-overview__shipping-information'),
+        shippingAddresses: page.locator('.sv-customer-overview__shipping-addresses'),
         shippingAddressesModal: page.locator('.sv-shipping-addresses-modal'),
-        /** The per-address menu, which is an icon button with no text of its own. */
+        /** The per-address menu in the block, an icon button with no text of its own. */
+        shippingAddressBlockMenuFor: (index: number) =>
+            page
+                .locator(
+                    '.sv-customer-overview__shipping-addresses .sv-shipping-address-list__item',
+                )
+                .nth(index)
+                .getByRole('button'),
+        /** The per-address menu in the modal. */
         shippingAddressMenuFor: (index: number) =>
-            page.locator('.sv-shipping-addresses-modal__item').nth(index).getByRole('button'),
+            page
+                .locator('.sv-shipping-addresses-modal .sv-shipping-address-list__item')
+                .nth(index)
+                .getByRole('button'),
     };
 }
 

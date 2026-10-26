@@ -25,7 +25,7 @@ import {
     loadAddressFormats,
     type AddressFormatTable,
 } from '@/components/customer/CheckoutForm/addressFormat';
-import type { CreateShippingAddressPayload } from '@/types/shippingAddress';
+import type { CreateShippingAddressPayload, ShippingAddress } from '@/types/shippingAddress';
 
 const props = defineProps<ShippingAddressFormProps>();
 
@@ -45,19 +45,44 @@ const customerCountry = ((country) => (country && isCountryCode(country) ? count
     getCustomerCountry(customer),
 );
 
+const fromCustomer = (): Partial<CheckoutFormState> => ({
+    type: customer.type,
+    email: customer.email,
+    country: customerCountry,
+    shippingCountry: customerCountry,
+    // An organization is shipped to under its legal name; a person under their own.
+    ...(isOrganization(customer) && { companyLegalName: customer.organization?.legal_name }),
+    ...(isIndividual(customer) && {
+        shippingFirstName: customer.individual?.name?.first_name,
+        shippingLastName: customer.individual?.name?.last_name,
+    }),
+});
+
+const fromAddress = ({ recipient, address }: ShippingAddress): Partial<CheckoutFormState> => {
+    const country = isCountryCode(address.country) ? address.country : customerCountry;
+
+    return {
+        type: recipient.type,
+        email: recipient.email || customer.email,
+        country,
+        shippingCountry: country,
+        companyLegalName: recipient.organization?.company_name,
+        shippingAttentionName: recipient.organization?.attention_name,
+        shippingFirstName: recipient.individual?.name?.first_name,
+        shippingLastName: recipient.individual?.name?.last_name,
+        shippingAddressLine1: address.line1,
+        shippingAddressLine2: address.line2,
+        shippingPostalCode: address.postal_code,
+        shippingCity: address.city,
+        shippingState: address.state,
+        shippingPhoneNumber: recipient.phone_number || undefined,
+    };
+};
+
 const form = ref<CheckoutFormState>(
     getInitialState({
-        type: customer.type,
-        email: customer.email,
-        country: customerCountry,
-        shippingCountry: customerCountry,
+        ...(props.address ? fromAddress(props.address) : fromCustomer()),
         billingAddressSameAsShipping: true,
-        // An organization is shipped to under its legal name; a person under their own.
-        ...(isOrganization(customer) && { companyLegalName: customer.organization?.legal_name }),
-        ...(isIndividual(customer) && {
-            shippingFirstName: customer.individual?.name?.first_name,
-            shippingLastName: customer.individual?.name?.last_name,
-        }),
     }),
 );
 
@@ -137,7 +162,8 @@ const getOptionalSuffix = (field: keyof CheckoutFormState): string =>
 defineExpose({
     /**
      * Checks the form and hands back the address to store, or nothing while something is missing —
-     * the fields say what. A fresh reference per address, since the API keeps it unique per customer.
+     * the fields say what. A new address gets a fresh reference, since the API keeps it unique per
+     * customer; an edited one keeps its own.
      */
     submit: async (): Promise<CreateShippingAddressPayload | undefined> => {
         if (!(await validation.value.$validate())) {
@@ -145,7 +171,11 @@ defineExpose({
         }
 
         return {
-            ...toShippingAddressDetails(form.value, crypto.randomUUID(), format.value),
+            ...toShippingAddressDetails(
+                form.value,
+                props.address?.reference ?? crypto.randomUUID(),
+                format.value,
+            ),
             customer_id: props.customer.id,
         };
     },

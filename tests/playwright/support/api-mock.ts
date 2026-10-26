@@ -51,6 +51,10 @@ export const ENDPOINTS = {
     paymentMethods: { method: 'GET', path: '/v1/portal/payment-methods' },
     shippingAddresses: { method: 'GET', path: '/v1/portal/shipping-addresses' },
     createShippingAddress: { method: 'POST', path: '/v1/portal/shipping-addresses' },
+    updateShippingAddress: {
+        method: 'PATCH',
+        path: /^\/v1\/portal\/shipping-addresses\/[^/]+$/,
+    },
     deleteShippingAddress: {
         method: 'POST',
         path: /^\/v1\/portal\/shipping-addresses\/[^/]+\/deprecate$/,

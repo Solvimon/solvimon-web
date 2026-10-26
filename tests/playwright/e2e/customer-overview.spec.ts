@@ -466,6 +466,33 @@ test.describe('Customer overview', () => {
             );
         });
 
+        test('activates a new address the API stored as a draft', async ({ page }) => {
+            api = await mountLoaded(page, {
+                ...withShipping,
+                shippingAddresses: [HOME],
+                mocks: {
+                    createShippingAddress: {
+                        status: 201,
+                        body: aShippingAddress({ id: 'shad_new', status: 'DRAFT' }),
+                    },
+                    activateShippingAddress: { body: aShippingAddress({ id: 'shad_new' }) },
+                },
+            });
+            await openManage(page);
+
+            await page.getByRole('button', { name: /add shipping address/i }).click();
+            await page.locator('input[name="shipping_address_line_1"]').fill('Keizersgracht 5');
+            await page.locator('input[name="shipping_postal_code"]').fill('1015 CJ');
+            await page.locator('input[name="shipping_city"]').fill('Amsterdam');
+            await page.locator('input[name="shipping_phone_number"]').fill('+31 6 12345678');
+            await page.getByRole('button', { name: /save address/i }).click();
+
+            const call = await api.waitForCall('activateShippingAddress');
+            expect(new URL(call.url).pathname).toBe(
+                '/v1/portal/shipping-addresses/shad_new/activate',
+            );
+        });
+
         test('makes a new address the default when the customer turns it on', async ({ page }) => {
             const NEW = aShippingAddress({ id: 'shad_new', line1: 'Keizersgracht 5' });
             api = await mountLoaded(page, {

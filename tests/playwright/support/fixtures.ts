@@ -611,19 +611,21 @@ export function aShippingAddress({
     lastName = 'Lovelace',
     line1 = 'Damrak 1',
     city = 'Amsterdam',
+    status = 'ACTIVE',
 }: {
     id?: string;
     isDefault?: boolean;
     lastName?: string;
     line1?: string;
     city?: string;
+    status?: string;
 } = {}): Json {
     return {
         object_type: 'SHIPPING_ADDRESS',
         id,
         reference: id,
         customer_id: CUSTOMER_ID,
-        status: 'ACTIVE',
+        status,
         is_default: isDefault,
         recipient: {
             type: 'INDIVIDUAL',

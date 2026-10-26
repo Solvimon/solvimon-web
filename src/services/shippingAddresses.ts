@@ -3,11 +3,7 @@ import { withPagination } from '@solvimon/solvimon-ui';
 import { createRequestService } from './requests';
 import { buildUrl } from './requests.lib';
 import { useConfig } from '@/components/providers/ConfigProvider/composables/useConfig';
-import type {
-    CreateShippingAddressPayload,
-    ShippingAddress,
-    UpdateShippingAddressPayload,
-} from '@/types/shippingAddress';
+import type { CreateShippingAddressPayload, ShippingAddress } from '@/types/shippingAddress';
 
 /** The most addresses one customer is expected to keep; the list asks for them in one page. */
 const PAGE_SIZE = 50;
@@ -17,13 +13,6 @@ export interface ShippingAddressesService {
         customerId: Customer['id'];
     }): Promise<ApiSuccessCollectionResponse<ShippingAddress>>;
     createShippingAddress(payload: CreateShippingAddressPayload): Promise<ShippingAddress>;
-    updateShippingAddress(args: {
-        shippingAddressId: ShippingAddress['id'];
-        payload: UpdateShippingAddressPayload;
-    }): Promise<ShippingAddress>;
-    activateShippingAddress(args: {
-        shippingAddressId: ShippingAddress['id'];
-    }): Promise<ShippingAddress>;
     deleteShippingAddress(args: {
         shippingAddressId: ShippingAddress['id'];
     }): Promise<ShippingAddress>;
@@ -60,33 +49,6 @@ export function createShippingAddressesService(): ShippingAddressesService {
         return request<ShippingAddress>({
             url: buildUrl(config.apiUrls.config, ...BASE_PATH),
             data: payload,
-            options: { method: 'POST' },
-        });
-    }
-
-    /** PATCH /v1/portal/shipping-addresses/{id} */
-    function updateShippingAddress({
-        shippingAddressId,
-        payload,
-    }: {
-        shippingAddressId: ShippingAddress['id'];
-        payload: UpdateShippingAddressPayload;
-    }): Promise<ShippingAddress> {
-        return request<ShippingAddress>({
-            url: buildUrl(config.apiUrls.config, ...BASE_PATH, shippingAddressId),
-            data: payload,
-            options: { method: 'PATCH' },
-        });
-    }
-
-    /** POST /v1/portal/shipping-addresses/{id}/activate — a DRAFT address goes into use. */
-    function activateShippingAddress({
-        shippingAddressId,
-    }: {
-        shippingAddressId: ShippingAddress['id'];
-    }): Promise<ShippingAddress> {
-        return request<ShippingAddress>({
-            url: buildUrl(config.apiUrls.config, ...BASE_PATH, shippingAddressId, 'activate'),
             options: { method: 'POST' },
         });
     }
@@ -128,8 +90,6 @@ export function createShippingAddressesService(): ShippingAddressesService {
     return {
         getShippingAddresses,
         createShippingAddress,
-        updateShippingAddress,
-        activateShippingAddress,
         deleteShippingAddress,
         setDefaultShippingAddress,
     };

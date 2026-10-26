@@ -20,10 +20,7 @@ import ShippingAddressForm from '@/components/customer/ShippingAddressForm/Shipp
 import EmptyStatePlaceholder from '@/components/checkout/EmptyStatePlaceholder.vue';
 import SlidingPanes from '@/components/shared/SlidingPanes/SlidingPanes.vue';
 import { useLogger } from '@/components/providers';
-import {
-    ShippingAddressNotActivatedError,
-    type ShippingAddressReplacement,
-} from '@/composables/useShippingAddresses';
+import type { ShippingAddressReplacement } from '@/composables/useShippingAddresses';
 import { useShippingAddressMenuItems } from '@/composables/useShippingAddressMenuItems';
 import type { ShippingAddress } from '@/types/shippingAddress';
 
@@ -46,8 +43,6 @@ const isWorking = ref(false);
 const errorMessage = ref<string>();
 /** Whether a new address replaces the customer's default once it is stored. */
 const makeDefault = ref(false);
-/** A new address that was stored but not activated, which saving again finishes off. */
-const draft = ref<ShippingAddress>();
 /** How far replacing the edited address got, which saving again carries on from. */
 const replacement = ref<ShippingAddressReplacement>({});
 
@@ -73,10 +68,7 @@ const goTo = (next: ShippingAddressesModalStart) => {
     target.value = 'address' in next ? next.address : undefined;
     if (next.step === 'ADD' || next.step === 'EDIT') formKey.value += 1;
     // A customer's first address is their default; any later one only when they say so.
-    if (next.step === 'ADD') {
-        makeDefault.value = !props.addresses.length;
-        draft.value = undefined;
-    }
+    if (next.step === 'ADD') makeDefault.value = !props.addresses.length;
     if (next.step === 'EDIT') replacement.value = {};
     step.value = next.step;
 };
@@ -131,17 +123,15 @@ const save = async () => {
     const saved = await run(
         async () => {
             if (editing) return props.actions.replace(editing, payload, replacement.value);
-            created = await props.actions.create(payload, draft.value);
+            created = await props.actions.create(payload);
         },
-        (error) => {
-            if (error instanceof ShippingAddressNotActivatedError) draft.value = error.address;
+        (error) =>
             logger.error(
                 'SHIPPING_ADDRESS_SAVE_FAILED',
                 'Failed to save the shipping address',
                 {},
                 error,
-            );
-        },
+            ),
     );
 
     if (!saved) return;

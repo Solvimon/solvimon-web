@@ -458,38 +458,12 @@ test.describe('Customer overview', () => {
             const created = await api.waitForCall('createShippingAddress');
             expect(created.body).toMatchObject({
                 customer_id: CUSTOMER_ID,
+                status: 'ACTIVE',
                 address: { line1: 'Keizersgracht 5', city: 'Amsterdam', country: 'NL' },
             });
             await expect(modalItems(page)).toHaveCount(2);
             await expect(customerOverview(page).shippingAddressesModal).toContainText(
                 'Keizersgracht 5',
-            );
-        });
-
-        test('activates a new address the API stored as a draft', async ({ page }) => {
-            api = await mountLoaded(page, {
-                ...withShipping,
-                shippingAddresses: [HOME],
-                mocks: {
-                    createShippingAddress: {
-                        status: 201,
-                        body: aShippingAddress({ id: 'shad_new', status: 'DRAFT' }),
-                    },
-                    activateShippingAddress: { body: aShippingAddress({ id: 'shad_new' }) },
-                },
-            });
-            await openManage(page);
-
-            await page.getByRole('button', { name: /add shipping address/i }).click();
-            await page.locator('input[name="shipping_address_line_1"]').fill('Keizersgracht 5');
-            await page.locator('input[name="shipping_postal_code"]').fill('1015 CJ');
-            await page.locator('input[name="shipping_city"]').fill('Amsterdam');
-            await page.locator('input[name="shipping_phone_number"]').fill('+31 6 12345678');
-            await page.getByRole('button', { name: /save address/i }).click();
-
-            const call = await api.waitForCall('activateShippingAddress');
-            expect(new URL(call.url).pathname).toBe(
-                '/v1/portal/shipping-addresses/shad_new/activate',
             );
         });
 
@@ -601,6 +575,7 @@ test.describe('Customer overview', () => {
             const created = await api.waitForCall('createShippingAddress');
             expect(created.body).toMatchObject({
                 customer_id: CUSTOMER_ID,
+                status: 'ACTIVE',
                 address: { line1: 'Herengracht 12', city: 'Amsterdam', country: 'NL' },
             });
             expect((created.body as { reference: string }).reference).not.toBe('shad_office');
@@ -609,7 +584,6 @@ test.describe('Customer overview', () => {
                 '/v1/portal/shipping-addresses/shad_office/deprecate',
             );
             expect(api.calls('setDefaultShippingAddress')).toEqual([]);
-            expect(api.calls('updateShippingAddress')).toEqual([]);
         });
 
         test('moves the default to the edit before retiring the default address', async ({

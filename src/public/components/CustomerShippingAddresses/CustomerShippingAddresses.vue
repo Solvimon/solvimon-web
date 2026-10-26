@@ -166,11 +166,12 @@ const { getMenuItems } = useShippingAddressMenuItems({
                         })
                     }}
                 </template>
-                <template #action>
-                    <!-- A link to the eye, but it opens the modal rather than going anywhere. -->
+                <template #message>
+                    <!-- A link to the eye, in the text's own size and colour, but it opens the modal
+                         rather than going anywhere. -->
                     <button
                         type="button"
-                        class="sv-action sv-action--link sv-shipping-addresses__add text-sm font-semibold text-primary-600 hover:underline"
+                        class="sv-action sv-action--link sv-shipping-addresses__add underline"
                         @click="openModal({ step: 'ADD' })"
                     >
                         {{

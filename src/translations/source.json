@@ -1315,6 +1315,14 @@
     "defaultMessage": "Something went wrong. Please try again.",
     "description": "Error shown in the shipping addresses modal when a change cannot be made"
   },
+  "shipping_addresses_modal.make_default.label": {
+    "defaultMessage": "Make this my default shipping address",
+    "description": "Label of the checkbox that makes a new shipping address the default"
+  },
+  "shipping_addresses_modal.make_default_error": {
+    "defaultMessage": "Your address is saved, but we could not make it your default. Please try again from its menu.",
+    "description": "Shown when a new shipping address is stored but cannot be made the default"
+  },
   "shipping_addresses_modal.save_button.label": {
     "defaultMessage": "Save address",
     "description": "Label of the button that stores a new or changed shipping address"

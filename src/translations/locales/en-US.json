@@ -328,6 +328,8 @@
   "shipping_addresses_modal.edit.title": "Edit shipping address",
   "shipping_addresses_modal.empty.title": "No shipping addresses yet",
   "shipping_addresses_modal.error": "Something went wrong. Please try again.",
+  "shipping_addresses_modal.make_default.label": "Make this my default shipping address",
+  "shipping_addresses_modal.make_default_error": "Your address is saved, but we could not make it your default. Please try again from its menu.",
   "shipping_addresses_modal.save_button.label": "Save address",
   "shipping_addresses_modal.title": "Shipping addresses",
   "subscription_cancellation_modal.cancel.confirm_button.label": "Cancel subscription",

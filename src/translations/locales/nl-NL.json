@@ -328,6 +328,8 @@
     "shipping_addresses_modal.edit.title": "Verzendadres bewerken",
     "shipping_addresses_modal.empty.title": "Nog geen verzendadressen",
     "shipping_addresses_modal.error": "Er is iets misgegaan. Probeer het opnieuw.",
+    "shipping_addresses_modal.make_default.label": "Maak dit mijn standaard verzendadres",
+    "shipping_addresses_modal.make_default_error": "Je adres is opgeslagen, maar we konden het niet je standaard maken. Probeer het opnieuw via het menu van het adres.",
     "shipping_addresses_modal.save_button.label": "Adres opslaan",
     "shipping_addresses_modal.title": "Verzendadressen",
     "subscription_cancellation_modal.cancel.confirm_button.label": "Abonnement opzeggen",

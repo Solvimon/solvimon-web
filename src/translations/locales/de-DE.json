@@ -328,6 +328,8 @@
     "shipping_addresses_modal.edit.title": "Lieferadresse bearbeiten",
     "shipping_addresses_modal.empty.title": "Noch keine Lieferadressen",
     "shipping_addresses_modal.error": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.",
+    "shipping_addresses_modal.make_default.label": "Als meine Standard-Lieferadresse festlegen",
+    "shipping_addresses_modal.make_default_error": "Ihre Adresse wurde gespeichert, konnte aber nicht als Standard festgelegt werden. Bitte versuchen Sie es erneut über das Menü der Adresse.",
     "shipping_addresses_modal.save_button.label": "Adresse speichern",
     "shipping_addresses_modal.title": "Lieferadressen",
     "subscription_cancellation_modal.cancel.confirm_button.label": "Abonnement kündigen",

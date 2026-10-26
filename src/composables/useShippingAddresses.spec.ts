@@ -1,4 +1,4 @@
-import { useShippingAddresses } from './useShippingAddresses';
+import { ShippingAddressNotActivatedError, useShippingAddresses } from './useShippingAddresses';
 import type { ShippingAddress } from '@/types/shippingAddress';
 
 const { mockService, mockLoggerError } = vi.hoisted(() => ({
@@ -6,6 +6,7 @@ const { mockService, mockLoggerError } = vi.hoisted(() => ({
         getShippingAddresses: vi.fn(),
         createShippingAddress: vi.fn(),
         updateShippingAddress: vi.fn(),
+        activateShippingAddress: vi.fn(),
         deleteShippingAddress: vi.fn(),
         setDefaultShippingAddress: vi.fn(),
     },
@@ -23,6 +24,7 @@ vi.mock('@/components/providers', () => ({
 const address = (overrides: Partial<ShippingAddress> = {}) =>
     ({
         id: 'shad_1',
+        status: 'ACTIVE',
         is_default: false,
         created_at: '2026-10-01T00:00:00Z',
         ...overrides,
@@ -53,6 +55,21 @@ describe('useShippingAddresses', () => {
         expect(items.value.map(({ id }) => id)).toEqual(['shad_default', 'shad_new', 'shad_old']);
         expect(defaultAddress.value?.id).toBe('shad_default');
         expect(mockService.getShippingAddresses).toHaveBeenCalledWith({ customerId: 'cust_1' });
+    });
+
+    it('lists only active addresses, whatever else the API returns', async () => {
+        mockService.getShippingAddresses.mockResolvedValue({
+            data: [
+                address({ id: 'shad_draft', status: 'DRAFT' }),
+                address({ id: 'shad_active', status: 'ACTIVE' }),
+                address({ id: 'shad_retired', status: 'DEPRECATED' }),
+            ],
+        });
+        const addresses = useShippingAddresses({ customerId: 'cust_1' });
+
+        await addresses.fetchAll();
+
+        expect(addresses.items.value.map(({ id }) => id)).toEqual(['shad_active']);
     });
 
     it('has no default while none is marked as one', async () => {
@@ -108,6 +125,79 @@ describe('useShippingAddresses', () => {
 
         expect(mockService[serviceCall]).toHaveBeenCalled();
         expect(mockService.getShippingAddresses).toHaveBeenCalledTimes(1);
+    });
+
+    it('activates a new address the API stored as a draft', async () => {
+        const active = address({ id: 'shad_new', status: 'ACTIVE' });
+        mockService.createShippingAddress.mockResolvedValue(
+            address({ id: 'shad_new', status: 'DRAFT' }),
+        );
+        mockService.activateShippingAddress.mockResolvedValue(active);
+        const addresses = useShippingAddresses({ customerId: 'cust_1' });
+
+        const created = await addresses.create({ customer_id: 'cust_1' } as never);
+
+        expect(mockService.activateShippingAddress).toHaveBeenCalledWith({
+            shippingAddressId: 'shad_new',
+        });
+        expect(created).toBe(active);
+        expect(mockService.getShippingAddresses).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not activate a new address that is active already', async () => {
+        mockService.createShippingAddress.mockResolvedValue(address({ status: 'ACTIVE' }));
+        const addresses = useShippingAddresses({ customerId: 'cust_1' });
+
+        await addresses.create({ customer_id: 'cust_1' } as never);
+
+        expect(mockService.activateShippingAddress).not.toHaveBeenCalled();
+    });
+
+    it('hands back the stored draft when the activation fails, and still reloads', async () => {
+        const failure = new Error('nope');
+        const stored = address({ id: 'shad_new', status: 'DRAFT' });
+        mockService.createShippingAddress.mockResolvedValue(stored);
+        mockService.activateShippingAddress.mockRejectedValue(failure);
+        const addresses = useShippingAddresses({ customerId: 'cust_1' });
+
+        const error = await addresses.create({ customer_id: 'cust_1' } as never).catch((e) => e);
+
+        expect(error).toBeInstanceOf(ShippingAddressNotActivatedError);
+        expect(error.address).toBe(stored);
+        expect(error.cause).toBe(failure);
+        expect(mockService.getShippingAddresses).toHaveBeenCalledTimes(1);
+    });
+
+    it('saves onto a draft it is given and activates it, rather than storing another', async () => {
+        const stored = address({ id: 'shad_new', status: 'DRAFT' });
+        const payload = { customer_id: 'cust_1', reference: 'ref_new' } as never;
+        mockService.updateShippingAddress.mockResolvedValue(stored);
+        mockService.activateShippingAddress.mockResolvedValue(
+            address({ id: 'shad_new', status: 'ACTIVE' }),
+        );
+        const addresses = useShippingAddresses({ customerId: 'cust_1' });
+
+        await addresses.create(payload, stored);
+
+        expect(mockService.createShippingAddress).not.toHaveBeenCalled();
+        expect(mockService.updateShippingAddress).toHaveBeenCalledWith({
+            shippingAddressId: 'shad_new',
+            payload,
+        });
+        expect(mockService.activateShippingAddress).toHaveBeenCalledWith({
+            shippingAddressId: 'shad_new',
+        });
+    });
+
+    it('leaves the status of an edited address alone', async () => {
+        const addresses = useShippingAddresses({ customerId: 'cust_1' });
+
+        await addresses.update(address({ id: 'shad_9' }), { reference: 'ref_9' } as never);
+
+        expect(mockService.updateShippingAddress).toHaveBeenCalledWith({
+            shippingAddressId: 'shad_9',
+            payload: { reference: 'ref_9' },
+        });
     });
 
     it('edits, deletes and sets the default by the address id', async () => {

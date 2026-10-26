@@ -58,6 +58,16 @@ describe('shipping addresses service', () => {
         });
     });
 
+    it('activates a draft address', async () => {
+        const { activateShippingAddress } = createShippingAddressesService();
+        await activateShippingAddress({ shippingAddressId: 'shad_1' });
+
+        expect(mockRequest).toHaveBeenCalledWith({
+            url: 'https://api.test/portal/shipping-addresses/shad_1/activate',
+            options: { method: 'POST' },
+        });
+    });
+
     it('deletes an address by retiring it', async () => {
         const { deleteShippingAddress } = createShippingAddressesService();
         await deleteShippingAddress({ shippingAddressId: 'shad_1' });

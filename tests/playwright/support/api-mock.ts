@@ -59,6 +59,10 @@ export const ENDPOINTS = {
         method: 'POST',
         path: /^\/v1\/portal\/shipping-addresses\/[^/]+\/deprecate$/,
     },
+    activateShippingAddress: {
+        method: 'POST',
+        path: /^\/v1\/portal\/shipping-addresses\/[^/]+\/activate$/,
+    },
     setDefaultShippingAddress: {
         method: 'POST',
         path: /^\/v1\/portal\/shipping-addresses\/[^/]+\/set-as-default$/,

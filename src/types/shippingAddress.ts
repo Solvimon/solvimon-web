@@ -2,7 +2,7 @@ import type { Customer } from '@solvimon/solvimon-types';
 import type { ShippingAddressDetails } from '@/components/payments/PaymentIntegrationForm/PaymentIntegrationForm.types';
 
 /** Not in `@solvimon/solvimon-types` yet. */
-export type ShippingAddressStatus = 'ACTIVE' | 'DEPRECATED';
+export type ShippingAddressStatus = 'DRAFT' | 'ACTIVE' | 'DEPRECATED';
 
 /** A shipping address stored for a customer, as `/portal/shipping-addresses` returns it. */
 export interface ShippingAddress extends ShippingAddressDetails {

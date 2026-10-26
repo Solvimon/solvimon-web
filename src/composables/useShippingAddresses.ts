@@ -15,11 +15,29 @@ export interface UseShippingAddresses {
     isPending: Ref<boolean>;
     error: Ref<unknown>;
     fetchAll: () => Promise<void>;
-    /** Stores an address and reloads the list, so it shows up where the customer expects it. */
-    create: (payload: CreateShippingAddressPayload) => Promise<ShippingAddress>;
+    /**
+     * Stores an address, puts it into use, and reloads the list, so it shows up where the customer
+     * expects it. Given the draft a failed activation left behind, it saves onto that one instead
+     * of storing another.
+     */
+    create: (
+        payload: CreateShippingAddressPayload,
+        draft?: ShippingAddress,
+    ) => Promise<ShippingAddress>;
     update: (address: ShippingAddress, payload: UpdateShippingAddressPayload) => Promise<void>;
     remove: (address: ShippingAddress) => Promise<void>;
     setDefault: (address: ShippingAddress) => Promise<void>;
+}
+
+/** The address was stored, but stayed a DRAFT: not listed, and not usable until activated. */
+export class ShippingAddressNotActivatedError extends Error {
+    constructor(
+        readonly address: ShippingAddress,
+        options?: ErrorOptions,
+    ) {
+        super('The shipping address was stored but not activated', options);
+        this.name = 'ShippingAddressNotActivatedError';
+    }
 }
 
 /** Newest first, with the default leading: the order the customer picks between them in. */
@@ -56,7 +74,10 @@ export function useShippingAddresses({
 
         try {
             const response = await service.getShippingAddresses({ customerId: id });
-            items.value = [...response.data].sort(byDefaultThenNewest);
+            // Asked for already, but the list must never offer a draft or a retired address.
+            items.value = response.data
+                .filter(({ status }) => status === 'ACTIVE')
+                .sort(byDefaultThenNewest);
         } catch (loadError) {
             logger.error(
                 'SHIPPING_ADDRESSES_LOAD_FAILED',
@@ -70,10 +91,24 @@ export function useShippingAddresses({
         }
     };
 
-    const create = async (payload: CreateShippingAddressPayload) => {
-        const created = await service.createShippingAddress(payload);
-        await fetchAll();
-        return created;
+    /**
+     * A customer adding an address means to use it. The API creates it as a DRAFT, which the list
+     * leaves out and cannot be the default, so it is activated straight away.
+     */
+    const create = async (payload: CreateShippingAddressPayload, draft?: ShippingAddress) => {
+        const stored = draft
+            ? await service.updateShippingAddress({ shippingAddressId: draft.id, payload })
+            : await service.createShippingAddress(payload);
+
+        try {
+            return stored.status === 'DRAFT'
+                ? await service.activateShippingAddress({ shippingAddressId: stored.id })
+                : stored;
+        } catch (cause) {
+            throw new ShippingAddressNotActivatedError(stored, { cause });
+        } finally {
+            await fetchAll();
+        }
     };
 
     const update = async (address: ShippingAddress, payload: UpdateShippingAddressPayload) => {

@@ -21,6 +21,9 @@ export interface ShippingAddressesService {
         shippingAddressId: ShippingAddress['id'];
         payload: UpdateShippingAddressPayload;
     }): Promise<ShippingAddress>;
+    activateShippingAddress(args: {
+        shippingAddressId: ShippingAddress['id'];
+    }): Promise<ShippingAddress>;
     deleteShippingAddress(args: {
         shippingAddressId: ShippingAddress['id'];
     }): Promise<ShippingAddress>;
@@ -76,6 +79,18 @@ export function createShippingAddressesService(): ShippingAddressesService {
         });
     }
 
+    /** POST /v1/portal/shipping-addresses/{id}/activate — a DRAFT address goes into use. */
+    function activateShippingAddress({
+        shippingAddressId,
+    }: {
+        shippingAddressId: ShippingAddress['id'];
+    }): Promise<ShippingAddress> {
+        return request<ShippingAddress>({
+            url: buildUrl(config.apiUrls.config, ...BASE_PATH, shippingAddressId, 'activate'),
+            options: { method: 'POST' },
+        });
+    }
+
     /**
      * POST /v1/portal/shipping-addresses/{id}/deprecate
      *
@@ -114,6 +129,7 @@ export function createShippingAddressesService(): ShippingAddressesService {
         getShippingAddresses,
         createShippingAddress,
         updateShippingAddress,
+        activateShippingAddress,
         deleteShippingAddress,
         setDefaultShippingAddress,
     };

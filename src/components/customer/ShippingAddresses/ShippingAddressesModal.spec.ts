@@ -3,6 +3,7 @@ import { defineComponent, h } from 'vue';
 import type { Customer } from '@solvimon/solvimon-types';
 import ShippingAddressesModal from './ShippingAddressesModal.vue';
 import type { ShippingAddressesModalStart } from './ShippingAddressesModal.types';
+import { ShippingAddressNotActivatedError } from '@/composables/useShippingAddresses';
 import type { ShippingAddress } from '@/types/shippingAddress';
 
 const { mockSubmit, mockLoggerError } = vi.hoisted(() => ({
@@ -215,7 +216,32 @@ describe('ShippingAddressesModal', () => {
         await wrapper.find('.modal__confirm').trigger('click');
         await flushPromises();
 
-        expect(create).toHaveBeenCalledWith(payload);
+        expect(create).toHaveBeenCalledWith(payload, undefined);
+        expect(title(wrapper)).toBe('Shipping addresses');
+    });
+
+    it('finishes the stored draft on a second save rather than storing another', async () => {
+        const payload = { customer_id: 'cust_1', reference: 'ref' };
+        mockSubmit.mockResolvedValue(payload);
+        const stored = address('new');
+        const create = vi
+            .fn()
+            .mockRejectedValueOnce(new ShippingAddressNotActivatedError(stored))
+            .mockResolvedValueOnce(stored);
+        const wrapper = mountComponent({ create });
+
+        await wrapper.find('.sv-shipping-addresses-modal__add').trigger('click');
+        await wrapper.find('.modal__confirm').trigger('click');
+        await flushPromises();
+
+        expect(title(wrapper)).toBe('Add shipping address');
+        expect(wrapper.find('.error-notification-stub').exists()).toBe(true);
+
+        await wrapper.find('.modal__confirm').trigger('click');
+        await flushPromises();
+
+        expect(create).toHaveBeenNthCalledWith(1, payload, undefined);
+        expect(create).toHaveBeenNthCalledWith(2, payload, stored);
         expect(title(wrapper)).toBe('Shipping addresses');
     });
 

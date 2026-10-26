@@ -2,6 +2,7 @@
 import { computed, ref, watch } from 'vue';
 import {
     Button,
+    Checkbox,
     ErrorNotification,
     Modal,
     Section,
@@ -39,6 +40,8 @@ const openedAt = ref<Step>('LIST');
 const target = ref<ShippingAddress>();
 const isWorking = ref(false);
 const errorMessage = ref<string>();
+/** Whether a new address replaces the customer's default once it is stored. */
+const makeDefault = ref(false);
 
 const formRef = ref<InstanceType<typeof ShippingAddressForm>>();
 
@@ -61,6 +64,9 @@ const goTo = (next: ShippingAddressesModalStart) => {
     errorMessage.value = undefined;
     target.value = 'address' in next ? next.address : undefined;
     if (next.step === 'ADD' || next.step === 'EDIT') formKey.value += 1;
+    // A customer without a default would want their first address to be it.
+    if (next.step === 'ADD')
+        makeDefault.value = !props.addresses.some(({ is_default }) => is_default);
     step.value = next.step;
 };
 
@@ -109,9 +115,13 @@ const save = async () => {
     if (!payload) return;
 
     const editing = step.value === 'EDIT' ? target.value : undefined;
+    let created: ShippingAddress | undefined;
 
     const saved = await run(
-        () => (editing ? props.actions.update(editing, payload) : props.actions.create(payload)),
+        async () => {
+            if (editing) return props.actions.update(editing, payload);
+            created = await props.actions.create(payload);
+        },
         (error) =>
             logger.error(
                 'SHIPPING_ADDRESS_SAVE_FAILED',
@@ -121,8 +131,24 @@ const save = async () => {
             ),
     );
 
+    if (!saved) return;
+
+    // The create cannot clear the previous default; only set-as-default does that.
+    if (created && makeDefault.value && !(await setDefault(created))) {
+        // The address is stored, so the form is done with; the list shows it is not the default.
+        goTo({ step: 'LIST' });
+        errorMessage.value = $t({
+            defaultMessage:
+                'Your address is saved, but we could not make it your default. Please try again from its menu.',
+            id: 'shipping_addresses_modal.make_default_error',
+            description:
+                'Shown when a new shipping address is stored but cannot be made the default',
+        });
+        return;
+    }
+
     // The list has reloaded with the change by now.
-    if (saved) finish();
+    finish();
 };
 
 const confirmDelete = async () => {
@@ -330,13 +356,32 @@ const cancelButtonText = computed(() => {
                     </template>
 
                     <template #FORM>
-                        <ShippingAddressForm
-                            ref="formRef"
-                            :key="formKey"
-                            :customer="customer"
-                            :address="step === 'EDIT' ? target : undefined"
-                            :disabled="isWorking"
-                        />
+                        <div class="grid grid-cols-1 gap-3">
+                            <ShippingAddressForm
+                                ref="formRef"
+                                :key="formKey"
+                                :customer="customer"
+                                :address="step === 'EDIT' ? target : undefined"
+                                :disabled="isWorking"
+                            />
+                            <!-- wrapped: Checkbox passes its attributes, margin included, on to its input -->
+                            <div v-if="step === 'ADD'">
+                                <Checkbox
+                                    v-model="makeDefault"
+                                    name="shipping_address_make_default"
+                                    class="sv-shipping-addresses-modal__make-default"
+                                    :disabled="isWorking"
+                                    :label="
+                                        $t({
+                                            defaultMessage: 'Make this my default shipping address',
+                                            id: 'shipping_addresses_modal.make_default.label',
+                                            description:
+                                                'Label of the checkbox that makes a new shipping address the default',
+                                        })
+                                    "
+                                />
+                            </div>
+                        </div>
                     </template>
 
                     <template #DELETE>

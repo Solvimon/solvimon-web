@@ -328,6 +328,8 @@
     "shipping_addresses_modal.edit.title": "Modifica indirizzo di spedizione",
     "shipping_addresses_modal.empty.title": "Nessun indirizzo di spedizione",
     "shipping_addresses_modal.error": "Qualcosa è andato storto. Riprova.",
+    "shipping_addresses_modal.make_default.label": "Imposta come mio indirizzo di spedizione predefinito",
+    "shipping_addresses_modal.make_default_error": "L'indirizzo è stato salvato, ma non è stato possibile impostarlo come predefinito. Riprova dal menu dell'indirizzo.",
     "shipping_addresses_modal.save_button.label": "Salva indirizzo",
     "shipping_addresses_modal.title": "Indirizzi di spedizione",
     "subscription_cancellation_modal.cancel.confirm_button.label": "Disdici abbonamento",

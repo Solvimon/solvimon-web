@@ -353,4 +353,106 @@ describe('ShippingAddressesModal', () => {
         expect(title(wrapper)).toBe('Shipping addresses');
         expect(wrapper.find('.sv-shipping-addresses-modal__close').text()).toBe('Close');
     });
+
+    describe('making a new address the default', () => {
+        const checkbox = (wrapper: ReturnType<typeof mountComponent>) =>
+            wrapper.find<HTMLInputElement>('input[name="shipping_address_make_default"]');
+
+        it('is offered when adding, not when editing', async () => {
+            const wrapper = mountComponent();
+
+            await wrapper.find('.sv-shipping-addresses-modal__add').trigger('click');
+            expect(checkbox(wrapper).exists()).toBe(true);
+
+            await wrapper.find('.modal__cancel').trigger('click');
+            await menuItem(wrapper, 1, 'Edit').trigger('click');
+            expect(checkbox(wrapper).exists()).toBe(false);
+        });
+
+        it('starts unticked while the customer has a default', async () => {
+            const wrapper = mountComponent();
+
+            await wrapper.find('.sv-shipping-addresses-modal__add').trigger('click');
+
+            expect(checkbox(wrapper).element.checked).toBe(false);
+        });
+
+        it('starts ticked for a customer without a default', async () => {
+            const wrapper = mount(ShippingAddressesModal, {
+                props: {
+                    showModal: true,
+                    customer,
+                    addresses: [address('office')],
+                    start: { step: 'ADD' },
+                    actions: {
+                        create: vi.fn(),
+                        update: vi.fn(),
+                        remove: vi.fn(),
+                        setDefault: vi.fn(),
+                    },
+                },
+            });
+
+            expect(checkbox(wrapper).element.checked).toBe(true);
+        });
+
+        it('stores the address, then makes it the default when ticked', async () => {
+            mockSubmit.mockResolvedValue({ customer_id: 'cust_1' });
+            const created = address('new');
+            const create = vi.fn().mockResolvedValue(created);
+            const setDefault = vi.fn().mockResolvedValue(undefined);
+            const wrapper = mountComponent({ create, setDefault });
+
+            await wrapper.find('.sv-shipping-addresses-modal__add').trigger('click');
+            await checkbox(wrapper).setValue(true);
+            await wrapper.find('.modal__confirm').trigger('click');
+            await flushPromises();
+
+            expect(create).toHaveBeenCalled();
+            expect(setDefault).toHaveBeenCalledWith(created);
+            expect(create.mock.invocationCallOrder[0]).toBeLessThan(
+                setDefault.mock.invocationCallOrder[0],
+            );
+            expect(title(wrapper)).toBe('Shipping addresses');
+        });
+
+        it('leaves the default alone when unticked', async () => {
+            mockSubmit.mockResolvedValue({ customer_id: 'cust_1' });
+            const setDefault = vi.fn();
+            const wrapper = mountComponent({ setDefault });
+
+            await wrapper.find('.sv-shipping-addresses-modal__add').trigger('click');
+            await wrapper.find('.modal__confirm').trigger('click');
+            await flushPromises();
+
+            expect(setDefault).not.toHaveBeenCalled();
+        });
+
+        it('says the address is saved but not the default when that part fails', async () => {
+            mockSubmit.mockResolvedValue({ customer_id: 'cust_1' });
+            const failure = new Error('nope');
+            const create = vi.fn().mockResolvedValue(address('new'));
+            const wrapper = mountComponent({
+                create,
+                setDefault: vi.fn().mockRejectedValue(failure),
+            });
+
+            await wrapper.find('.sv-shipping-addresses-modal__add').trigger('click');
+            await checkbox(wrapper).setValue(true);
+            await wrapper.find('.modal__confirm').trigger('click');
+            await flushPromises();
+
+            expect(create).toHaveBeenCalledTimes(1);
+            expect(title(wrapper)).toBe('Shipping addresses');
+            expect(wrapper.find('.error-notification-stub').text()).toContain(
+                'Your address is saved, but we could not make it your default.',
+            );
+            expect(mockLoggerError).toHaveBeenCalledWith(
+                'SHIPPING_ADDRESS_SET_DEFAULT_FAILED',
+                'Failed to set the default shipping address',
+                {},
+                failure,
+            );
+        });
+    });
 });

@@ -5,7 +5,6 @@ import {
     ErrorNotification,
     Modal,
     Section,
-    Toggle,
     Typography,
     useIntl,
 } from '@solvimon/solvimon-ui';
@@ -41,8 +40,6 @@ const openedAt = ref<Step>('LIST');
 const target = ref<ShippingAddress>();
 const isWorking = ref(false);
 const errorMessage = ref<string>();
-/** Whether a new address replaces the customer's default once it is stored. */
-const makeDefault = ref(false);
 /** How far replacing the edited address got, which saving again carries on from. */
 const replacement = ref<ShippingAddressReplacement>({});
 
@@ -67,8 +64,6 @@ const goTo = (next: ShippingAddressesModalStart) => {
     errorMessage.value = undefined;
     target.value = 'address' in next ? next.address : undefined;
     if (next.step === 'ADD' || next.step === 'EDIT') formKey.value += 1;
-    // A customer's first address is their default; any later one only when they say so.
-    if (next.step === 'ADD') makeDefault.value = !props.addresses.length;
     if (next.step === 'EDIT') replacement.value = {};
     step.value = next.step;
 };
@@ -118,13 +113,12 @@ const save = async () => {
     if (!payload) return;
 
     const editing = step.value === 'EDIT' ? target.value : undefined;
-    let created: ShippingAddress | undefined;
 
     const saved = await run(
-        async () => {
-            if (editing) return props.actions.replace(editing, payload, replacement.value);
-            created = await props.actions.create(payload);
-        },
+        () =>
+            editing
+                ? props.actions.replace(editing, payload, replacement.value)
+                : props.actions.create(payload),
         (error) =>
             logger.error(
                 'SHIPPING_ADDRESS_SAVE_FAILED',
@@ -134,24 +128,8 @@ const save = async () => {
             ),
     );
 
-    if (!saved) return;
-
-    // The create cannot clear the previous default; only set-as-default does that.
-    if (created && makeDefault.value && !(await setDefault(created))) {
-        // The address is stored, so the form is done with; the list shows it is not the default.
-        goTo({ step: 'LIST' });
-        errorMessage.value = $t({
-            defaultMessage:
-                'Your address is saved, but we could not make it your default. Please try again from its menu.',
-            id: 'shipping_addresses_modal.make_default_error',
-            description:
-                'Shown when a new shipping address is stored but cannot be made the default',
-        });
-        return;
-    }
-
     // The list has reloaded with the change by now.
-    finish();
+    if (saved) finish();
 };
 
 const confirmDelete = async () => {
@@ -173,20 +151,7 @@ const confirmDelete = async () => {
     if (deleted) finish();
 };
 
-const setDefault = (address: ShippingAddress) =>
-    run(
-        () => props.actions.setDefault(address),
-        (error) =>
-            logger.error(
-                'SHIPPING_ADDRESS_SET_DEFAULT_FAILED',
-                'Failed to set the default shipping address',
-                {},
-                error,
-            ),
-    );
-
 const { getMenuItems } = useShippingAddressMenuItems({
-    onSetDefault: (address) => void setDefault(address),
     onEdit: (address) => goTo({ step: 'EDIT', address }),
     onDelete: (address) => goTo({ step: 'DELETE', address }),
 });
@@ -367,25 +332,6 @@ const cancelButtonText = computed(() => {
                                 :address="step === 'EDIT' ? target : undefined"
                                 :disabled="isWorking"
                             />
-                            <Toggle
-                                v-if="step === 'ADD'"
-                                v-model="makeDefault"
-                                class="sv-shipping-addresses-modal__make-default"
-                                size="sm"
-                                no-spacing
-                                :disabled="isWorking"
-                            >
-                                <template #inline-label>
-                                    <Typography tag="span" variant="body-sm">{{
-                                        $t({
-                                            defaultMessage: 'Make this my default shipping address',
-                                            id: 'shipping_addresses_modal.make_default.label',
-                                            description:
-                                                'Label of the toggle that makes a new shipping address the default',
-                                        })
-                                    }}</Typography>
-                                </template>
-                            </Toggle>
                         </div>
                     </template>
 

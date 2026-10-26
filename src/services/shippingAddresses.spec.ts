@@ -52,14 +52,4 @@ describe('shipping addresses service', () => {
             options: { method: 'POST' },
         });
     });
-
-    it('sets an address as the default through an action of its own', async () => {
-        const { setDefaultShippingAddress } = createShippingAddressesService();
-        await setDefaultShippingAddress({ shippingAddressId: 'shad_1' });
-
-        expect(mockRequest).toHaveBeenCalledWith({
-            url: 'https://api.test/portal/shipping-addresses/shad_1/set-as-default',
-            options: { method: 'POST' },
-        });
-    });
 });

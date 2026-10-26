@@ -16,9 +16,6 @@ export interface ShippingAddressesService {
     deleteShippingAddress(args: {
         shippingAddressId: ShippingAddress['id'];
     }): Promise<ShippingAddress>;
-    setDefaultShippingAddress(args: {
-        shippingAddressId: ShippingAddress['id'];
-    }): Promise<ShippingAddress>;
 }
 
 export function createShippingAddressesService(): ShippingAddressesService {
@@ -70,27 +67,9 @@ export function createShippingAddressesService(): ShippingAddressesService {
         });
     }
 
-    /**
-     * POST /v1/portal/shipping-addresses/{id}/set-as-default
-     *
-     * Makes the address the customer's default and clears the previous one. `is_default` cannot be
-     * written through an update, so this is an action of its own, as on the merchant API.
-     */
-    function setDefaultShippingAddress({
-        shippingAddressId,
-    }: {
-        shippingAddressId: ShippingAddress['id'];
-    }): Promise<ShippingAddress> {
-        return request<ShippingAddress>({
-            url: buildUrl(config.apiUrls.config, ...BASE_PATH, shippingAddressId, 'set-as-default'),
-            options: { method: 'POST' },
-        });
-    }
-
     return {
         getShippingAddresses,
         createShippingAddress,
         deleteShippingAddress,
-        setDefaultShippingAddress,
     };
 }

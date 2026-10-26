@@ -467,33 +467,6 @@ test.describe('Customer overview', () => {
             );
         });
 
-        test('makes a new address the default when the customer turns it on', async ({ page }) => {
-            const NEW = aShippingAddress({ id: 'shad_new', line1: 'Keizersgracht 5' });
-            api = await mountLoaded(page, {
-                ...withShipping,
-                shippingAddresses: [HOME],
-                mocks: {
-                    createShippingAddress: { status: 201, body: NEW },
-                    setDefaultShippingAddress: { body: NEW },
-                },
-            });
-            await openManage(page);
-
-            await page.getByRole('button', { name: /add shipping address/i }).click();
-            await page.locator('input[name="shipping_address_line_1"]').fill('Keizersgracht 5');
-            await page.locator('input[name="shipping_postal_code"]').fill('1015 CJ');
-            await page.locator('input[name="shipping_city"]').fill('Amsterdam');
-            await page.locator('input[name="shipping_phone_number"]').fill('+31 6 12345678');
-            await page.getByText('Make this my default shipping address').click();
-            await page.getByRole('button', { name: /save address/i }).click();
-
-            await api.waitForCall('createShippingAddress');
-            const call = await api.waitForCall('setDefaultShippingAddress');
-            expect(new URL(call.url).pathname).toBe(
-                '/v1/portal/shipping-addresses/shad_new/set-as-default',
-            );
-        });
-
         test('stores nothing while the form says something is missing', async ({ page }) => {
             api = await mountLoaded(page, withShipping);
             await openManage(page);
@@ -503,24 +476,6 @@ test.describe('Customer overview', () => {
 
             await expect(page.locator('input[name="shipping_address_line_1"]')).toBeVisible();
             expect(api.calls('createShippingAddress')).toEqual([]);
-        });
-
-        test('sets another address as the default from its menu', async ({ page }) => {
-            api = await mountLoaded(page, {
-                ...withShipping,
-                shippingAddresses: [HOME, OFFICE],
-                mocks: { setDefaultShippingAddress: { body: OFFICE } },
-            });
-            await openManage(page);
-
-            await customerOverview(page).shippingAddressMenuFor(1).click();
-            await page.getByText('Set as default').click();
-
-            const call = await api.waitForCall('setDefaultShippingAddress');
-            expect(new URL(call.url).pathname).toBe(
-                '/v1/portal/shipping-addresses/shad_office/set-as-default',
-            );
-            await expect.poll(() => api.calls('shippingAddresses').length).toBeGreaterThan(1);
         });
 
         test('deletes an address once the customer confirms', async ({ page }) => {
@@ -582,36 +537,6 @@ test.describe('Customer overview', () => {
             const retired = await api.waitForCall('deleteShippingAddress');
             expect(new URL(retired.url).pathname).toBe(
                 '/v1/portal/shipping-addresses/shad_office/deprecate',
-            );
-            expect(api.calls('setDefaultShippingAddress')).toEqual([]);
-        });
-
-        test('moves the default to the edit before retiring the default address', async ({
-            page,
-        }) => {
-            const REPLACEMENT = aShippingAddress({ id: 'shad_new', line1: 'Damrak 2' });
-            api = await mountLoaded(page, {
-                ...withShipping,
-                shippingAddresses: [HOME, OFFICE],
-                mocks: {
-                    createShippingAddress: { status: 201, body: REPLACEMENT },
-                    setDefaultShippingAddress: { body: REPLACEMENT },
-                    deleteShippingAddress: { body: HOME },
-                },
-            });
-            await openManage(page);
-
-            await openEditFor(page, customerOverview(page).shippingAddressMenuFor(0));
-            await page.locator('input[name="shipping_address_line_1"]').fill('Damrak 2');
-            await page.getByRole('button', { name: /save address/i }).click();
-
-            const madeDefault = await api.waitForCall('setDefaultShippingAddress');
-            expect(new URL(madeDefault.url).pathname).toBe(
-                '/v1/portal/shipping-addresses/shad_new/set-as-default',
-            );
-            const retired = await api.waitForCall('deleteShippingAddress');
-            expect(new URL(retired.url).pathname).toBe(
-                '/v1/portal/shipping-addresses/shad_home/deprecate',
             );
         });
 

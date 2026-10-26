@@ -20,6 +20,7 @@ const hasPaymentMethods = computed<boolean>(() => props.paymentMethods.length > 
         class="sv-payment-methods"
         no-spacing
         no-border
+        content-background="none"
         :title="
             $t(
                 {

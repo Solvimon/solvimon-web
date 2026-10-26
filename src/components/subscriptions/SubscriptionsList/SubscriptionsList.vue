@@ -33,6 +33,7 @@ const isViewAllButtonVisible = computed<boolean>(() => props.showViewAllButton);
         class="sv-subscriptions-list"
         no-spacing
         no-border
+        content-background="none"
         :title="
             $t(
                 {

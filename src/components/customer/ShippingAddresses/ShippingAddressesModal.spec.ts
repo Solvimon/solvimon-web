@@ -117,7 +117,7 @@ const mountComponent = (actions = {}, start?: ShippingAddressesModalStart) =>
             start,
             actions: {
                 create: vi.fn().mockResolvedValue(address('new')),
-                update: vi.fn().mockResolvedValue(undefined),
+                replace: vi.fn().mockResolvedValue(address('new')),
                 remove: vi.fn().mockResolvedValue(undefined),
                 setDefault: vi.fn().mockResolvedValue(undefined),
                 ...actions,
@@ -303,19 +303,24 @@ describe('ShippingAddressesModal', () => {
                 showModal: true,
                 customer,
                 addresses: [],
-                actions: { create: vi.fn(), update: vi.fn(), remove: vi.fn(), setDefault: vi.fn() },
+                actions: {
+                    create: vi.fn(),
+                    replace: vi.fn(),
+                    remove: vi.fn(),
+                    setDefault: vi.fn(),
+                },
             },
         });
 
         expect(wrapper.find('.sv-shipping-addresses-modal__empty').exists()).toBe(true);
     });
 
-    it('edits an address on the form, starting from what is stored', async () => {
-        const payload = { customer_id: 'cust_1', reference: 'ref_office' };
+    it('saves an edit as a replacement for the address, starting from what is stored', async () => {
+        const payload = { customer_id: 'cust_1', reference: 'ref_new' };
         mockSubmit.mockResolvedValue(payload);
-        const update = vi.fn().mockResolvedValue(undefined);
+        const replace = vi.fn().mockResolvedValue(address('new'));
         const create = vi.fn();
-        const wrapper = mountComponent({ update, create });
+        const wrapper = mountComponent({ replace, create });
 
         await menuItem(wrapper, 1, 'Edit').trigger('click');
 
@@ -327,9 +332,60 @@ describe('ShippingAddressesModal', () => {
         await wrapper.find('.modal__confirm').trigger('click');
         await flushPromises();
 
-        expect(update).toHaveBeenCalledWith(expect.objectContaining({ id: 'office' }), payload);
+        expect(replace).toHaveBeenCalledWith(
+            expect.objectContaining({ id: 'office' }),
+            payload,
+            {},
+        );
         expect(create).not.toHaveBeenCalled();
         expect(title(wrapper)).toBe('Shipping addresses');
+    });
+
+    it('carries on with the same replacement when saving an edit again after a failure', async () => {
+        mockSubmit.mockResolvedValue({ customer_id: 'cust_1' });
+        const replace = vi
+            .fn()
+            .mockImplementationOnce(async (_, __, progress) => {
+                progress.replacement = address('new');
+                throw new Error('nope');
+            })
+            .mockResolvedValueOnce(address('new'));
+        const wrapper = mountComponent({ replace });
+
+        await menuItem(wrapper, 1, 'Edit').trigger('click');
+        await wrapper.find('.modal__confirm').trigger('click');
+        await flushPromises();
+
+        expect(title(wrapper)).toBe('Edit shipping address');
+        expect(wrapper.find('.error-notification-stub').exists()).toBe(true);
+
+        await wrapper.find('.modal__confirm').trigger('click');
+        await flushPromises();
+
+        expect(replace.mock.calls[1][2]).toEqual({
+            replacement: expect.objectContaining({ id: 'new' }),
+        });
+        expect(title(wrapper)).toBe('Shipping addresses');
+    });
+
+    it('starts a fresh replacement for every edit', async () => {
+        mockSubmit.mockResolvedValue({ customer_id: 'cust_1' });
+        const replace = vi.fn().mockImplementation(async (_, __, progress) => {
+            progress.replacement = address('new');
+            throw new Error('nope');
+        });
+        const wrapper = mountComponent({ replace });
+
+        await menuItem(wrapper, 1, 'Edit').trigger('click');
+        await wrapper.find('.modal__confirm').trigger('click');
+        await flushPromises();
+        await wrapper.find('.modal__cancel').trigger('click');
+        await menuItem(wrapper, 0, 'Edit').trigger('click');
+        await wrapper.find('.modal__confirm').trigger('click');
+        await flushPromises();
+
+        expect(replace.mock.calls[1][0]).toMatchObject({ id: 'home' });
+        expect(replace.mock.calls[1][2]).not.toBe(replace.mock.calls[0][2]);
     });
 
     it('adds on an empty form, not on the address edited before', async () => {
@@ -414,7 +470,7 @@ describe('ShippingAddressesModal', () => {
                     start: { step: 'ADD' },
                     actions: {
                         create: vi.fn(),
-                        update: vi.fn(),
+                        replace: vi.fn(),
                         remove: vi.fn(),
                         setDefault: vi.fn(),
                     },
@@ -433,7 +489,7 @@ describe('ShippingAddressesModal', () => {
                     start: { step: 'ADD' },
                     actions: {
                         create: vi.fn(),
-                        update: vi.fn(),
+                        replace: vi.fn(),
                         remove: vi.fn(),
                         setDefault: vi.fn(),
                     },

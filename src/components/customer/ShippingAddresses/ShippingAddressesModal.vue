@@ -20,7 +20,10 @@ import ShippingAddressForm from '@/components/customer/ShippingAddressForm/Shipp
 import EmptyStatePlaceholder from '@/components/checkout/EmptyStatePlaceholder.vue';
 import SlidingPanes from '@/components/shared/SlidingPanes/SlidingPanes.vue';
 import { useLogger } from '@/components/providers';
-import { ShippingAddressNotActivatedError } from '@/composables/useShippingAddresses';
+import {
+    ShippingAddressNotActivatedError,
+    type ShippingAddressReplacement,
+} from '@/composables/useShippingAddresses';
 import { useShippingAddressMenuItems } from '@/composables/useShippingAddressMenuItems';
 import type { ShippingAddress } from '@/types/shippingAddress';
 
@@ -45,6 +48,8 @@ const errorMessage = ref<string>();
 const makeDefault = ref(false);
 /** A new address that was stored but not activated, which saving again finishes off. */
 const draft = ref<ShippingAddress>();
+/** How far replacing the edited address got, which saving again carries on from. */
+const replacement = ref<ShippingAddressReplacement>({});
 
 const formRef = ref<InstanceType<typeof ShippingAddressForm>>();
 
@@ -72,6 +77,7 @@ const goTo = (next: ShippingAddressesModalStart) => {
         makeDefault.value = !props.addresses.length;
         draft.value = undefined;
     }
+    if (next.step === 'EDIT') replacement.value = {};
     step.value = next.step;
 };
 
@@ -124,7 +130,7 @@ const save = async () => {
 
     const saved = await run(
         async () => {
-            if (editing) return props.actions.update(editing, payload);
+            if (editing) return props.actions.replace(editing, payload, replacement.value);
             created = await props.actions.create(payload, draft.value);
         },
         (error) => {

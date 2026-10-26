@@ -189,7 +189,7 @@
     "customer_overview.payment_methods_block.add_payment_method_helper_text": "Aggiungi un metodo di pagamento per i pagamenti ricorrenti delle fatture.",
     "customer_overview.payment_methods_block.view_all_payment_methods_link_label": "Mostra tutti",
     "customer_overview.shipping_addresses_block.add_button_label": "Aggiungi indirizzo di spedizione",
-    "customer_overview.shipping_addresses_block.empty": "Aggiungi un indirizzo a cui spedire i tuoi ordini.",
+    "customer_overview.shipping_addresses_block.empty": "Nessun indirizzo di spedizione",
     "customer_overview.shipping_addresses_block.load_error": "Impossibile caricare i tuoi indirizzi di spedizione.",
     "customer_overview.shipping_addresses_block.manage_button_label": "Gestisci",
     "customer_overview.shipping_addresses_block.set_default_error": "Impossibile impostare questo indirizzo come predefinito. Riprova.",

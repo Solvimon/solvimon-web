@@ -2,10 +2,10 @@
 import { computed, ref, watch } from 'vue';
 import {
     Button,
-    Checkbox,
     ErrorNotification,
     Modal,
     Section,
+    Toggle,
     Typography,
     useIntl,
 } from '@solvimon/solvimon-ui';
@@ -64,9 +64,8 @@ const goTo = (next: ShippingAddressesModalStart) => {
     errorMessage.value = undefined;
     target.value = 'address' in next ? next.address : undefined;
     if (next.step === 'ADD' || next.step === 'EDIT') formKey.value += 1;
-    // A customer without a default would want their first address to be it.
-    if (next.step === 'ADD')
-        makeDefault.value = !props.addresses.some(({ is_default }) => is_default);
+    // A customer's first address is their default; any later one only when they say so.
+    if (next.step === 'ADD') makeDefault.value = !props.addresses.length;
     step.value = next.step;
 };
 
@@ -364,23 +363,25 @@ const cancelButtonText = computed(() => {
                                 :address="step === 'EDIT' ? target : undefined"
                                 :disabled="isWorking"
                             />
-                            <!-- wrapped: Checkbox passes its attributes, margin included, on to its input -->
-                            <div v-if="step === 'ADD'">
-                                <Checkbox
-                                    v-model="makeDefault"
-                                    name="shipping_address_make_default"
-                                    class="sv-shipping-addresses-modal__make-default"
-                                    :disabled="isWorking"
-                                    :label="
+                            <Toggle
+                                v-if="step === 'ADD'"
+                                v-model="makeDefault"
+                                class="sv-shipping-addresses-modal__make-default"
+                                size="sm"
+                                no-spacing
+                                :disabled="isWorking"
+                            >
+                                <template #inline-label>
+                                    <Typography tag="span" variant="body-sm">{{
                                         $t({
                                             defaultMessage: 'Make this my default shipping address',
                                             id: 'shipping_addresses_modal.make_default.label',
                                             description:
-                                                'Label of the checkbox that makes a new shipping address the default',
+                                                'Label of the toggle that makes a new shipping address the default',
                                         })
-                                    "
-                                />
-                            </div>
+                                    }}</Typography>
+                                </template>
+                            </Toggle>
                         </div>
                     </template>
 

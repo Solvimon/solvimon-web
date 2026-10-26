@@ -7,6 +7,8 @@ export type CheckoutAddressVariant = 'BILLING' | 'SHIPPING';
 export interface CheckoutAddressFieldsProps {
     variant: CheckoutAddressVariant;
     withCountry?: boolean;
+    /** Puts the country below the recipient, just above the address lines, rather than first. */
+    countryBeforeAddress?: boolean;
     countryLabel?: string;
     format?: AddressFormat;
     getOptionalSuffix: (field: keyof CheckoutFormState) => string;

@@ -757,10 +757,10 @@
   },
   "customer_overview.shipping_addresses_block.add_button_label": {
     "defaultMessage": "Add shipping address",
-    "description": "Label of the button that opens the form for a first shipping address"
+    "description": "Label of the link that opens the form for a first shipping address"
   },
   "customer_overview.shipping_addresses_block.empty": {
-    "defaultMessage": "Add an address to have your orders shipped to.",
+    "defaultMessage": "No shipping addresses yet",
     "description": "Shown in the shipping addresses block when the customer has no shipping addresses"
   },
   "customer_overview.shipping_addresses_block.load_error": {
@@ -1317,7 +1317,7 @@
   },
   "shipping_addresses_modal.make_default.label": {
     "defaultMessage": "Make this my default shipping address",
-    "description": "Label of the checkbox that makes a new shipping address the default"
+    "description": "Label of the toggle that makes a new shipping address the default"
   },
   "shipping_addresses_modal.make_default_error": {
     "defaultMessage": "Your address is saved, but we could not make it your default. Please try again from its menu.",

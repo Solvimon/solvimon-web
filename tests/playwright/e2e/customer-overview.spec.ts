@@ -466,7 +466,7 @@ test.describe('Customer overview', () => {
             );
         });
 
-        test('makes a new address the default when the customer ticks it', async ({ page }) => {
+        test('makes a new address the default when the customer turns it on', async ({ page }) => {
             const NEW = aShippingAddress({ id: 'shad_new', line1: 'Keizersgracht 5' });
             api = await mountLoaded(page, {
                 ...withShipping,
@@ -483,7 +483,7 @@ test.describe('Customer overview', () => {
             await page.locator('input[name="shipping_postal_code"]').fill('1015 CJ');
             await page.locator('input[name="shipping_city"]').fill('Amsterdam');
             await page.locator('input[name="shipping_phone_number"]').fill('+31 6 12345678');
-            await page.getByLabel(/make this my default shipping address/i).check();
+            await page.getByText('Make this my default shipping address').click();
             await page.getByRole('button', { name: /save address/i }).click();
 
             await api.waitForCall('createShippingAddress');

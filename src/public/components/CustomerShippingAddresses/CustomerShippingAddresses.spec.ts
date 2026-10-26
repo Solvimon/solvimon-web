@@ -171,10 +171,12 @@ describe('CustomerShippingAddresses', () => {
         expect(items(wrapper)).toHaveLength(3);
     });
 
-    it('offers to add a first address when there are none', async () => {
+    it('says there are none yet, with a link that opens the form for a first one', async () => {
         const wrapper = mountComponent({ addresses: [] });
 
-        expect(wrapper.find('.sv-shipping-addresses__empty').exists()).toBe(true);
+        expect(wrapper.find('.sv-shipping-addresses__empty').text()).toContain(
+            'No shipping addresses yet',
+        );
 
         await wrapper.find('.sv-shipping-addresses__add').trigger('click');
         await flushPromises();

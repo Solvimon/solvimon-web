@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed, defineAsyncComponent, ref, watch } from 'vue';
-import { Button, ErrorNotification, Section, Typography, useIntl } from '@solvimon/solvimon-ui';
+import { Button, ErrorNotification, Section, useIntl } from '@solvimon/solvimon-ui';
 import type { CustomerShippingAddressesProps } from './CustomerShippingAddresses.types';
+import EmptyStatePlaceholder from '@/components/checkout/EmptyStatePlaceholder.vue';
 import ShippingAddressList from '@/components/customer/ShippingAddresses/ShippingAddressList.vue';
 import type { ShippingAddressesModalStart } from '@/components/customer/ShippingAddresses/ShippingAddressesModal.types';
 import Skeleton from '@/components/shared/Skeleton.vue';
@@ -154,38 +155,35 @@ const { getMenuItems } = useShippingAddressMenuItems({
                 />
             </template>
 
-            <Section v-else class="sv-empty-state sv-shipping-addresses__empty">
-                <Typography
-                    variant="body-sm"
-                    color="subtle"
-                    no-spacing
-                    class="sv-shipping-addresses__empty-message"
-                    >{{
+            <EmptyStatePlaceholder v-else class="sv-shipping-addresses__empty" icon="home">
+                <template #title>
+                    {{
                         $t({
-                            defaultMessage: 'Add an address to have your orders shipped to.',
+                            defaultMessage: 'No shipping addresses yet',
                             id: 'customer_overview.shipping_addresses_block.empty',
                             description:
                                 'Shown in the shipping addresses block when the customer has no shipping addresses',
                         })
-                    }}</Typography
-                >
-                <Button
-                    class="sv-action sv-action--secondary sv-action--full-width sv-shipping-addresses__add mt-4 w-full"
-                    intent="secondary"
-                    icon-prefix="add"
-                    type="button"
-                    @click="openModal({ step: 'ADD' })"
-                >
-                    {{
-                        $t({
-                            defaultMessage: 'Add shipping address',
-                            id: 'customer_overview.shipping_addresses_block.add_button_label',
-                            description:
-                                'Label of the button that opens the form for a first shipping address',
-                        })
                     }}
-                </Button>
-            </Section>
+                </template>
+                <template #action>
+                    <!-- A link to the eye, but it opens the modal rather than going anywhere. -->
+                    <button
+                        type="button"
+                        class="sv-action sv-action--link sv-shipping-addresses__add text-sm font-semibold text-primary-600 hover:underline"
+                        @click="openModal({ step: 'ADD' })"
+                    >
+                        {{
+                            $t({
+                                defaultMessage: 'Add shipping address',
+                                id: 'customer_overview.shipping_addresses_block.add_button_label',
+                                description:
+                                    'Label of the link that opens the form for a first shipping address',
+                            })
+                        }}
+                    </button>
+                </template>
+            </EmptyStatePlaceholder>
         </div>
 
         <ShippingAddressesModal

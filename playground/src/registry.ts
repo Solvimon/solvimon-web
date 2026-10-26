@@ -22,6 +22,7 @@ export const screens: StoryEntry[] = [
         label: 'Customer Overview',
         description:
             "Overview of a customer's billing information, subscriptions, invoices, and payment methods.",
+        defaultConfiguration: { showShippingAddresses: true },
     },
     {
         kind: 'screen',

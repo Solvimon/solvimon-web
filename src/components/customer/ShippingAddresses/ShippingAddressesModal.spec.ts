@@ -355,29 +355,31 @@ describe('ShippingAddressesModal', () => {
     });
 
     describe('making a new address the default', () => {
-        const checkbox = (wrapper: ReturnType<typeof mountComponent>) =>
-            wrapper.find<HTMLInputElement>('input[name="shipping_address_make_default"]');
+        const toggle = (wrapper: ReturnType<typeof mountComponent>) =>
+            wrapper.find<HTMLInputElement>(
+                '.sv-shipping-addresses-modal__make-default input[type="checkbox"]',
+            );
 
         it('is offered when adding, not when editing', async () => {
             const wrapper = mountComponent();
 
             await wrapper.find('.sv-shipping-addresses-modal__add').trigger('click');
-            expect(checkbox(wrapper).exists()).toBe(true);
+            expect(toggle(wrapper).exists()).toBe(true);
 
             await wrapper.find('.modal__cancel').trigger('click');
             await menuItem(wrapper, 1, 'Edit').trigger('click');
-            expect(checkbox(wrapper).exists()).toBe(false);
+            expect(toggle(wrapper).exists()).toBe(false);
         });
 
-        it('starts unticked while the customer has a default', async () => {
+        it('starts off while the customer has addresses', async () => {
             const wrapper = mountComponent();
 
             await wrapper.find('.sv-shipping-addresses-modal__add').trigger('click');
 
-            expect(checkbox(wrapper).element.checked).toBe(false);
+            expect(toggle(wrapper).element.checked).toBe(false);
         });
 
-        it('starts ticked for a customer without a default', async () => {
+        it('starts off even when none of them is the default', async () => {
             const wrapper = mount(ShippingAddressesModal, {
                 props: {
                     showModal: true,
@@ -393,10 +395,29 @@ describe('ShippingAddressesModal', () => {
                 },
             });
 
-            expect(checkbox(wrapper).element.checked).toBe(true);
+            expect(toggle(wrapper).element.checked).toBe(false);
         });
 
-        it('stores the address, then makes it the default when ticked', async () => {
+        it("starts on for the customer's first address", async () => {
+            const wrapper = mount(ShippingAddressesModal, {
+                props: {
+                    showModal: true,
+                    customer,
+                    addresses: [],
+                    start: { step: 'ADD' },
+                    actions: {
+                        create: vi.fn(),
+                        update: vi.fn(),
+                        remove: vi.fn(),
+                        setDefault: vi.fn(),
+                    },
+                },
+            });
+
+            expect(toggle(wrapper).element.checked).toBe(true);
+        });
+
+        it('stores the address, then makes it the default when on', async () => {
             mockSubmit.mockResolvedValue({ customer_id: 'cust_1' });
             const created = address('new');
             const create = vi.fn().mockResolvedValue(created);
@@ -404,7 +425,7 @@ describe('ShippingAddressesModal', () => {
             const wrapper = mountComponent({ create, setDefault });
 
             await wrapper.find('.sv-shipping-addresses-modal__add').trigger('click');
-            await checkbox(wrapper).setValue(true);
+            await toggle(wrapper).setValue(true);
             await wrapper.find('.modal__confirm').trigger('click');
             await flushPromises();
 
@@ -416,7 +437,7 @@ describe('ShippingAddressesModal', () => {
             expect(title(wrapper)).toBe('Shipping addresses');
         });
 
-        it('leaves the default alone when unticked', async () => {
+        it('leaves the default alone when off', async () => {
             mockSubmit.mockResolvedValue({ customer_id: 'cust_1' });
             const setDefault = vi.fn();
             const wrapper = mountComponent({ setDefault });
@@ -438,7 +459,7 @@ describe('ShippingAddressesModal', () => {
             });
 
             await wrapper.find('.sv-shipping-addresses-modal__add').trigger('click');
-            await checkbox(wrapper).setValue(true);
+            await toggle(wrapper).setValue(true);
             await wrapper.find('.modal__confirm').trigger('click');
             await flushPromises();
 

@@ -189,7 +189,7 @@
   "customer_overview.payment_methods_block.add_payment_method_helper_text": "Add a payment method for recurring invoice payments.",
   "customer_overview.payment_methods_block.view_all_payment_methods_link_label": "View all",
   "customer_overview.shipping_addresses_block.add_button_label": "Add shipping address",
-  "customer_overview.shipping_addresses_block.empty": "Add an address to have your orders shipped to.",
+  "customer_overview.shipping_addresses_block.empty": "No shipping addresses yet",
   "customer_overview.shipping_addresses_block.load_error": "We could not load your shipping addresses.",
   "customer_overview.shipping_addresses_block.manage_button_label": "Manage",
   "customer_overview.shipping_addresses_block.set_default_error": "We could not make this your default shipping address. Please try again.",

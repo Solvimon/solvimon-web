@@ -189,7 +189,7 @@
     "customer_overview.payment_methods_block.add_payment_method_helper_text": "Voeg een betaalmethode toe voor terugkerende factuurbetalingen.",
     "customer_overview.payment_methods_block.view_all_payment_methods_link_label": "Alles weergeven",
     "customer_overview.shipping_addresses_block.add_button_label": "Verzendadres toevoegen",
-    "customer_overview.shipping_addresses_block.empty": "Voeg een adres toe waar je bestellingen naartoe worden verzonden.",
+    "customer_overview.shipping_addresses_block.empty": "Nog geen verzendadressen",
     "customer_overview.shipping_addresses_block.load_error": "We konden je verzendadressen niet laden.",
     "customer_overview.shipping_addresses_block.manage_button_label": "Beheren",
     "customer_overview.shipping_addresses_block.set_default_error": "We konden dit niet je standaard verzendadres maken. Probeer het opnieuw.",

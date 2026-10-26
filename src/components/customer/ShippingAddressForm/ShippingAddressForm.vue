@@ -188,6 +188,7 @@ defineExpose({
             v-model="form"
             variant="SHIPPING"
             with-country
+            country-before-address
             :country-label="
                 $t({
                     defaultMessage: 'Country',

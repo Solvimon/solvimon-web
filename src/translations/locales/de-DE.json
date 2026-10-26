@@ -189,7 +189,7 @@
     "customer_overview.payment_methods_block.add_payment_method_helper_text": "Fügen Sie eine Zahlungsmethode für wiederkehrende Rechnungszahlungen hinzu.",
     "customer_overview.payment_methods_block.view_all_payment_methods_link_label": "Alle anzeigen",
     "customer_overview.shipping_addresses_block.add_button_label": "Lieferadresse hinzufügen",
-    "customer_overview.shipping_addresses_block.empty": "Fügen Sie eine Adresse hinzu, an die Ihre Bestellungen geliefert werden.",
+    "customer_overview.shipping_addresses_block.empty": "Noch keine Lieferadressen",
     "customer_overview.shipping_addresses_block.load_error": "Ihre Lieferadressen konnten nicht geladen werden.",
     "customer_overview.shipping_addresses_block.manage_button_label": "Verwalten",
     "customer_overview.shipping_addresses_block.set_default_error": "Diese Adresse konnte nicht als Standard-Lieferadresse festgelegt werden. Bitte versuchen Sie es erneut.",

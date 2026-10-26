@@ -104,7 +104,7 @@ const localize = (errors?: ErrorObject[]): ErrorObject[] | undefined =>
 <template>
     <div class="sv-checkout-address-fields flex flex-col gap-2">
         <CountrySelect
-            v-if="withCountry"
+            v-if="withCountry && !countryBeforeAddress"
             v-model:single-model-value="country"
             label-screen-reader-only
             :i18n="{ placeholderDefault: labels.countryPlaceholder }"
@@ -183,6 +183,16 @@ const localize = (errors?: ErrorObject[]): ErrorObject[] | undefined =>
                 />
             </div>
         </template>
+        <CountrySelect
+            v-if="withCountry && countryBeforeAddress"
+            v-model:single-model-value="country"
+            label-screen-reader-only
+            :i18n="{ placeholderDefault: labels.countryPlaceholder }"
+            required
+            :label="countryLabel ?? labels.countryLabel"
+            :name="`${namePrefix}country`"
+            :error="errors?.country"
+        />
         <HiddenLabelInput
             v-if="shownParts.has('line1')"
             v-model="fields.addressLine1"

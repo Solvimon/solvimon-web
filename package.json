@@ -162,7 +162,7 @@
         "@formatjs/cli": "^6.6.1",
         "@formatjs/icu-messageformat-parser": "^2.11.4",
         "@formatjs/intl": "^3.1.8",
-        "@playwright/test": "^1.57.0",
+        "@playwright/test": "^1.64.1",
         "@solvimon/solvimon-types": "^1.2.0",
         "@solvimon/solvimon-ui": "^1.19.0",
         "@stripe/stripe-js": "^9.8.0",

@@ -22,6 +22,12 @@ const DATA_ENDPOINTS: EndpointName[] = [
     'walletBalances',
 ];
 
+/**
+ * Requests to each endpoint in one load of the overview. Subscriptions are asked for twice: the
+ * ones the customer is billed for, and every status to see whether any of them ships.
+ */
+const CALLS_PER_LOAD: Partial<Record<EndpointName, number>> = { subscriptions: 2 };
+
 const tokenOf = (response: Record<string, unknown>) => String(response.access_token);
 const bearer = (api: ApiMock, endpoint: EndpointName) =>
     api.lastCall(endpoint)?.headers['authorization'];
@@ -99,7 +105,9 @@ test.describe('Auth session', () => {
         });
 
         expect(api.calls('refreshToken')).toHaveLength(1);
-        DATA_ENDPOINTS.forEach((endpoint) => expect(api.calls(endpoint)).toHaveLength(1));
+        DATA_ENDPOINTS.forEach((endpoint) =>
+            expect(api.calls(endpoint)).toHaveLength(CALLS_PER_LOAD[endpoint] ?? 1),
+        );
     });
 
     test('refreshes once when the tab comes back after the laptop slept', async ({ page }) => {

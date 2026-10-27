@@ -418,6 +418,7 @@ The SDK emits structured log entries via the [`onLog`](#error-logging) callback.
 | `REQUEST_PARSE_FAILED`                      | Failed to parse JSON response                                      |
 | `RESOURCE_REVOKED`                          | The portal object is not published                                 |
 | `SESSION_EXPIRED`                           | Stopped refreshing the access token after repeated 401 responses   |
+| `SHIPPED_SUBSCRIPTIONS_LOAD_FAILED`         | Failed to find out whether the customer has shipped subscriptions  |
 | `SHIPPING_ADDRESSES_LOAD_FAILED`            | Failed to load the shipping addresses                              |
 | `SHIPPING_ADDRESS_DELETE_FAILED`            | Failed to delete the shipping address                              |
 | `SHIPPING_ADDRESS_SAVE_FAILED`              | Failed to save the shipping address                                |

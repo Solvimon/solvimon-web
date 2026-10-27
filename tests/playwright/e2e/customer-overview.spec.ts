@@ -66,7 +66,11 @@ test.describe('Customer overview', () => {
         test('asks only for the subscriptions a customer is being billed for', async ({ page }) => {
             api = await mountLoaded(page);
 
-            const query = new URL(api.lastCall('subscriptions')!.url).searchParams;
+            // The other request, for every status, only finds out whether a subscription ships.
+            const query = api
+                .calls('subscriptions')
+                .map(({ url }) => new URL(url).searchParams)
+                .find((params) => params.has('statuses[]'))!;
             expect(query.getAll('statuses[]')).toEqual(['ACTIVE']);
             expect(query.get('type')).toBe('BILLING');
             expect(query.getAll('expand[]')).toEqual(['ALL']);
@@ -354,14 +358,33 @@ test.describe('Customer overview', () => {
     // ─── Shipping addresses ───────────────────────────────────────────────────
 
     test.describe('shipping addresses', () => {
-        const withShipping = { configuration: { showShippingAddresses: true } };
+        /** A subscription that ships, which is what puts the shipping addresses on the overview. */
+        const shippedSubscription = (status = 'ACTIVE') => ({
+            ...aSubscription(),
+            status,
+            default_shipping_address_id: 'shad_home',
+        });
+        const withShipping = { subscriptions: [shippedSubscription()] };
 
-        test('leaves them out, and does not load them, unless the host asks', async ({ page }) => {
+        test('leaves them out, and does not load them, without a subscription that ships', async ({
+            page,
+        }) => {
             api = await mountLoaded(page);
 
             await expect(customerOverview(page).paymentMethods).toBeVisible();
             await expect(customerOverview(page).shippingAddresses).toHaveCount(0);
             expect(api.calls('shippingAddresses')).toEqual([]);
+        });
+
+        test('shows them for a subscription that ships, whatever its status', async ({ page }) => {
+            api = await mountLoaded(page, { subscriptions: [shippedSubscription('ENDED')] });
+
+            await expect(customerOverview(page).shippingAddresses).toContainText('Damrak 1');
+            const everyStatus = api
+                .calls('subscriptions')
+                .map(({ url }) => new URL(url).searchParams)
+                .find((params) => !params.has('statuses[]'));
+            expect(everyStatus?.get('customer_id')).toBe(CUSTOMER_ID);
         });
 
         const HOME = aShippingAddress({ id: 'shad_home', isDefault: true });

@@ -19,6 +19,12 @@ export const SUBSCRIPTION_CANCELLATION_TYPES = {
 /** Which of the two the customer asked for. */
 export type SubscriptionCancellationVariant = keyof typeof SUBSCRIPTION_CANCELLATION_TYPES;
 
+/** `default_shipping_address_id` is not in `@solvimon/solvimon-types` yet. */
+export type PricingPlanSubscriptionWithShipping = PricingPlanSubscription & {
+    /** The shipping address the subscription ships to, when it ships. */
+    default_shipping_address_id?: string | null;
+};
+
 interface SubscriptionsService {
     getSubscription(params: {
         id: PricingPlanSubscription['id'];
@@ -32,6 +38,11 @@ interface SubscriptionsService {
         customerId: string;
         pagination?: WithPagination<string>;
     }): Promise<ApiSuccessCollectionResponse<PricingPlanSubscriptionExpanded>>;
+    getSubscriptionsOfEveryStatus(args: {
+        customerId: string;
+        page: number;
+        pageSize: number;
+    }): Promise<ApiSuccessCollectionResponse<PricingPlanSubscriptionWithShipping>>;
     setSubscriptionCancellation(params: {
         id: PricingPlanSubscription['id'];
         variant: SubscriptionCancellationVariant;
@@ -89,6 +100,23 @@ export function createSubscriptionsService(): SubscriptionsService {
         });
     }
 
+    /** A page of the customer's subscriptions, whatever their status, without expansions. */
+    function getSubscriptionsOfEveryStatus({
+        customerId,
+        page,
+        pageSize,
+    }: {
+        customerId: string;
+        page: number;
+        pageSize: number;
+    }): Promise<ApiSuccessCollectionResponse<PricingPlanSubscriptionWithShipping>> {
+        return request<PricingPlanSubscriptionWithShipping>({
+            url: buildUrl(config.apiUrls.config, ...ENDPOINT),
+            query: withPagination({ customer_id: customerId }, { page, pageSize }),
+            isCollection: true,
+        });
+    }
+
     async function setSubscriptionCancellation({
         id,
         variant,
@@ -106,6 +134,7 @@ export function createSubscriptionsService(): SubscriptionsService {
     return {
         getSubscription,
         getActiveSubscriptions,
+        getSubscriptionsOfEveryStatus,
         setSubscriptionCancellation,
     };
 }

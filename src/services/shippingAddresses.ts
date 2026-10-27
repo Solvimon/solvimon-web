@@ -13,6 +13,10 @@ export interface ShippingAddressesService {
         customerId: Customer['id'];
     }): Promise<ApiSuccessCollectionResponse<ShippingAddress>>;
     createShippingAddress(payload: CreateShippingAddressPayload): Promise<ShippingAddress>;
+    updateShippingAddress(args: {
+        shippingAddressId: ShippingAddress['id'];
+        payload: CreateShippingAddressPayload;
+    }): Promise<ShippingAddress>;
     deleteShippingAddress(args: {
         shippingAddressId: ShippingAddress['id'];
     }): Promise<ShippingAddress>;
@@ -50,6 +54,21 @@ export function createShippingAddressesService(): ShippingAddressesService {
         });
     }
 
+    /** PATCH /v1/portal/shipping-addresses/{id} */
+    function updateShippingAddress({
+        shippingAddressId,
+        payload,
+    }: {
+        shippingAddressId: ShippingAddress['id'];
+        payload: CreateShippingAddressPayload;
+    }): Promise<ShippingAddress> {
+        return request<ShippingAddress>({
+            url: buildUrl(config.apiUrls.config, ...BASE_PATH, shippingAddressId),
+            data: payload,
+            options: { method: 'PATCH' },
+        });
+    }
+
     /**
      * POST /v1/portal/shipping-addresses/{id}/deprecate
      *
@@ -70,6 +89,7 @@ export function createShippingAddressesService(): ShippingAddressesService {
     return {
         getShippingAddresses,
         createShippingAddress,
+        updateShippingAddress,
         deleteShippingAddress,
     };
 }

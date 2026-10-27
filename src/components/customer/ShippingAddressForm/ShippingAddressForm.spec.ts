@@ -197,4 +197,54 @@ describe('ShippingAddressForm', () => {
             address: { line1: 'Via Roma 2', country: 'IT' },
         });
     });
+
+    it('asks an organization for the company name it ships under when it has none on file', async () => {
+        const wrapper = await mountForm({
+            ...organization,
+            organization: { registered_address: { country: 'NL' } },
+        } as unknown as Customer);
+        fillIn({
+            shippingAddressLine1: 'Damrak 1',
+            shippingPostalCode: '1012 LG',
+            shippingCity: 'Amsterdam',
+            shippingPhoneNumber: '+31612345678',
+        });
+        const form = wrapper.vm as unknown as FormInstance;
+
+        expect(wrapper.find('input[name="shipping_company_name"]').exists()).toBe(true);
+        expect(await form.submit()).toBeUndefined();
+
+        await wrapper.find('input[name="shipping_company_name"]').setValue('Acme Logistics');
+
+        expect(await form.submit()).toMatchObject({
+            recipient: { organization: { company_name: 'Acme Logistics' } },
+        });
+    });
+
+    it('asks a person for no company name', async () => {
+        const wrapper = await mountForm();
+
+        expect(wrapper.find('input[name="shipping_company_name"]').exists()).toBe(false);
+    });
+
+    it('saves on a page without crypto.randomUUID, as a plain-http host has', async () => {
+        vi.stubGlobal('crypto', { getRandomValues: crypto.getRandomValues.bind(crypto) });
+        try {
+            const wrapper = await mountForm();
+            fillIn({
+                shippingAddressLine1: 'Damrak 1',
+                shippingPostalCode: '1012 LG',
+                shippingCity: 'Amsterdam',
+                shippingPhoneNumber: '+31612345678',
+            });
+
+            const result = (await (wrapper.vm as unknown as FormInstance).submit()) as {
+                reference: string;
+            };
+
+            expect(result.reference).toMatch(/^[0-9a-f-]{36}$/);
+        } finally {
+            vi.unstubAllGlobals();
+        }
+    });
 });

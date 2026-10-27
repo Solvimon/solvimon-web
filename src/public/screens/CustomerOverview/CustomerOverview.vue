@@ -128,6 +128,7 @@ useActiveScheduleWarning(subscriptions.items);
                 v-if="configuration?.showShippingAddresses"
                 class="sv-customer-overview__shipping-addresses"
                 :is-loading="isLoading"
+                :customer-id="customerId"
                 :customer="customer.customer.value"
             />
         </template>

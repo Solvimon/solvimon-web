@@ -21,14 +21,15 @@ const props = defineProps<CustomerShippingAddressesProps>();
 
 const { $t } = useIntl();
 
-const shippingAddresses = useShippingAddresses({ customerId: () => props.customer?.id });
+const customerId = computed(() => props.customerId ?? props.customer?.id);
+
+const shippingAddresses = useShippingAddresses({ customerId });
 const { items, isPending, error } = shippingAddresses;
 
 const shownAddresses = computed(() => items.value.slice(0, ADDRESSES_SHOWN));
 
-/** Loaded once the customer is known; the addresses belong to them. */
 watch(
-    () => props.customer?.id,
+    customerId,
     (customerId) => {
         if (customerId) void shippingAddresses.fetchAll();
     },
@@ -53,12 +54,12 @@ const { getMenuItems } = useShippingAddressMenuItems({
 
 <template>
     <Skeleton
-        v-if="isLoading || !customer"
+        v-if="isLoading"
         variant="section"
         class="sv-shipping-addresses sv-root sv-component sv-loading min-h-[100px]"
     />
     <Section
-        v-else
+        v-else-if="customer"
         class="sv-shipping-addresses sv-root sv-component"
         no-spacing
         no-border

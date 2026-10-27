@@ -1,13 +1,11 @@
 import type { Customer } from '@solvimon/solvimon-types';
-import { computed, ref, toValue, type ComputedRef, type MaybeRefOrGetter, type Ref } from 'vue';
+import { ref, toValue, type MaybeRefOrGetter, type Ref } from 'vue';
 import { useLogger } from '@/components/providers';
 import { createShippingAddressesService } from '@/services/shippingAddresses';
 import type { CreateShippingAddressPayload, ShippingAddress } from '@/types/shippingAddress';
 
 export interface UseShippingAddresses {
     items: Ref<ShippingAddress[]>;
-    /** The customer's default address, or undefined while they have none. */
-    defaultAddress: ComputedRef<ShippingAddress | undefined>;
     isPending: Ref<boolean>;
     error: Ref<unknown>;
     fetchAll: () => Promise<void>;
@@ -16,7 +14,8 @@ export interface UseShippingAddresses {
     /**
      * Edits an address. An ACTIVE address cannot be changed, so the edit is stored as a new active
      * address and the old one is retired.
-     * `progress` records how far it got, so calling it again after a failure carries on from there.
+     * `progress` records how far it got, so calling it again after a failure carries on from there,
+     * with any change made to the form since saved onto the new address.
      */
     replace: (
         address: ShippingAddress,
@@ -30,7 +29,13 @@ export interface UseShippingAddresses {
 export interface ShippingAddressReplacement {
     /** The new address, stored and active. */
     replacement?: ShippingAddress;
+    /** What the new address was stored with, to tell whether the form changed since. */
+    storedDetails?: string;
 }
+
+/** The details an address is stored with, apart from its reference, which every save makes anew. */
+const detailsOf = ({ reference: _reference, ...details }: CreateShippingAddressPayload) =>
+    JSON.stringify(details);
 
 /** Newest first, with the default leading: the order the customer picks between them in. */
 const byDefaultThenNewest = (a: ShippingAddress, b: ShippingAddress) =>
@@ -54,8 +59,6 @@ export function useShippingAddresses({
     const isPending = ref(false);
     const error = ref<unknown>();
 
-    const defaultAddress = computed(() => items.value.find(({ is_default }) => is_default));
-
     const fetchAll = async () => {
         const id = toValue(customerId);
 
@@ -66,7 +69,8 @@ export function useShippingAddresses({
 
         try {
             const response = await service.getShippingAddresses({ customerId: id });
-            // Asked for already, but the list must never offer a draft or a retired address.
+            // The request asks for ACTIVE ones, but the portal is not known to apply that filter,
+            // and the list must never offer a draft or a retired address.
             items.value = response.data
                 .filter(({ status }) => status === 'ACTIVE')
                 .sort(byDefaultThenNewest);
@@ -105,7 +109,17 @@ export function useShippingAddresses({
         progress: ShippingAddressReplacement,
     ) => {
         try {
-            progress.replacement ??= await storeActive(payload);
+            if (!progress.replacement) {
+                progress.replacement = await storeActive(payload);
+                progress.storedDetails = detailsOf(payload);
+            } else if (progress.storedDetails !== detailsOf(payload)) {
+                // Still new, so no order ships to it yet and it can take the correction in place.
+                progress.replacement = await service.updateShippingAddress({
+                    shippingAddressId: progress.replacement.id,
+                    payload: { ...payload, reference: progress.replacement.reference },
+                });
+                progress.storedDetails = detailsOf(payload);
+            }
 
             await service.deleteShippingAddress({ shippingAddressId: address.id });
 
@@ -122,7 +136,6 @@ export function useShippingAddresses({
 
     return {
         items,
-        defaultAddress,
         isPending,
         error,
         fetchAll,

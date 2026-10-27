@@ -1,33 +1,16 @@
 import { isValidCountryCode, objectDiff, useValidation } from '@solvimon/solvimon-ui';
 import { taxId } from '@solvimon/solvimon-ui/validators';
 import { email, required, requiredIf } from '@vuelidate/validators';
-import {
-    computed,
-    onMounted,
-    ref,
-    shallowRef,
-    toRaw,
-    watch,
-    type MaybeRefOrGetter,
-    toValue,
-} from 'vue';
+import { computed, onMounted, ref, toRaw, watch, type MaybeRefOrGetter, toValue } from 'vue';
 import type { CheckoutFormState } from './CheckoutForm.types';
+import { addressRules, shippingRecipientRules } from './addressRules';
+import { useAddressFormats } from './useAddressFormats';
 import {
-    getAddressFormat,
-    isPhoneNumberPlausible,
-    isPostalCodeValid,
-    loadAddressFormats,
-    type AddressFormat,
-    type AddressFormatTable,
-} from './addressFormat';
-import {
-    ADDRESS_KEYS,
     billingAddressFromShipping,
     getRequiredAddressFields,
     getRequiredFieldsForCountry,
     getTaxedAddressFields,
     isVatNumberShown,
-    type AddressVariant,
 } from './CheckoutForm.lib';
 import { useWatchDebounced } from '@/composables/useWatchDebounced';
 import { createGeoLocationService } from '@/services/geolocation';
@@ -59,33 +42,10 @@ export function useCheckoutForm({
         initialFormState.value = structuredClone(newState);
     };
 
-    const addressFormats = shallowRef<AddressFormatTable>();
-
-    let isLoadingAddressFormats = false;
-
-    // A failed download is tried again on the next country change.
-    watch(
-        [isShipped, () => form.value.shippingCountry, () => form.value.country],
-        ([shipped]) => {
-            if (!shipped || addressFormats.value || isLoadingAddressFormats) return;
-
-            isLoadingAddressFormats = true;
-            loadAddressFormats()
-                .then((formats) => {
-                    addressFormats.value = formats;
-                })
-                .catch(() => {
-                    // The fallback rules apply until then.
-                })
-                .finally(() => {
-                    isLoadingAddressFormats = false;
-                });
-        },
-        { immediate: true },
-    );
-
-    const formatOf = (country: string | undefined): AddressFormat | undefined =>
-        addressFormats.value ? getAddressFormat(addressFormats.value, country) : undefined;
+    const { formatOf } = useAddressFormats({
+        isNeeded: () => isShipped.value,
+        countries: [() => form.value.shippingCountry, () => form.value.country],
+    });
 
     const shippingAddressFormat = computed(() => formatOf(form.value.shippingCountry));
 
@@ -127,59 +87,18 @@ export function useCheckoutForm({
     const getIsFieldRequired = (field: keyof CheckoutFormState): boolean =>
         requiredFields.value.includes(field);
 
-    const isPostalCodeValidFor =
-        (format: () => AddressFormat | undefined) =>
-        (value: unknown): boolean => {
-            const addressFormat = format();
-            return (
-                typeof value !== 'string' ||
-                !value.trim() ||
-                !addressFormat ||
-                isPostalCodeValid(addressFormat, value)
-            );
-        };
-
-    const requiredWhenAsked = (field: keyof CheckoutFormState) => ({
-        required: requiredIf(() => getIsFieldRequired(field)),
-    });
-
-    const addressRules = (variant: AddressVariant, format: () => AddressFormat | undefined) => {
-        const keys = ADDRESS_KEYS[variant];
-        return {
-            [keys.line1]: requiredWhenAsked(keys.line1),
-            [keys.city]: requiredWhenAsked(keys.city),
-            [keys.state]: requiredWhenAsked(keys.state),
-            [keys.country]: requiredWhenAsked(keys.country),
-            [keys.postalCode]: {
-                ...requiredWhenAsked(keys.postalCode),
-                postalCodeFormat: {
-                    $validator: isPostalCodeValidFor(format),
-                    $message: 'The postal code does not match the country',
-                },
-            },
-        };
-    };
-
     // A hidden VAT number is not checked: the customer could not see or correct it.
     const validation = useValidation(
         computed(() => ({
-            ...addressRules('BILLING', () => billingAddressFormat.value),
-            ...addressRules('SHIPPING', () => shippingAddressFormat.value),
+            ...addressRules('BILLING', () => billingAddressFormat.value, getIsFieldRequired),
+            ...addressRules('SHIPPING', () => shippingAddressFormat.value, getIsFieldRequired),
             email: { required, email },
             country: { required },
             companyLegalName: {
                 required: requiredIf(() => form.value.type === 'ORGANIZATION'),
             },
             companyVatNumber: isVatNumberShown(form.value) ? { taxId } : {},
-            shippingPhoneNumber: {
-                ...requiredWhenAsked('shippingPhoneNumber'),
-                phoneNumberFormat: {
-                    $validator: (value: unknown) =>
-                        typeof value !== 'string' || !value.trim() || isPhoneNumberPlausible(value),
-                    $message: 'The phone number is not valid',
-                },
-            },
-            shippingLastName: requiredWhenAsked('shippingLastName'),
+            ...shippingRecipientRules(getIsFieldRequired),
         })),
         form,
     );

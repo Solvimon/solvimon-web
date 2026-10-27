@@ -307,7 +307,7 @@ const cancelButtonText = computed(() => {
                                 intent="secondary"
                                 icon-prefix="add"
                                 type="button"
-                                size="sm"
+                                size="lg"
                                 :disabled="isWorking"
                                 @click="goTo({ step: 'ADD' })"
                             >

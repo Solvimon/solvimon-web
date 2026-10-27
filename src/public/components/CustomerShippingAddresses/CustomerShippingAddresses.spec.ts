@@ -79,11 +79,13 @@ const mountComponent = ({
     error,
     isLoading = false,
     withCustomer = true,
+    customerId,
 }: {
     addresses?: ShippingAddress[];
     error?: unknown;
     isLoading?: boolean;
     withCustomer?: boolean;
+    customerId?: string;
 } = {}) => {
     const items = ref(addresses);
     mockUseShippingAddresses.mockReturnValue({
@@ -98,7 +100,7 @@ const mountComponent = ({
     });
 
     return mount(CustomerShippingAddresses, {
-        props: { customer: withCustomer ? customer : undefined, isLoading },
+        props: { customer: withCustomer ? customer : undefined, customerId, isLoading },
     });
 };
 
@@ -124,11 +126,29 @@ describe('CustomerShippingAddresses', () => {
         expect(mockFetchAll).toHaveBeenCalledTimes(1);
     });
 
-    it('waits for the customer before loading anything', () => {
+    it('loads the addresses by the customer id before the customer itself has arrived', () => {
+        mountComponent({ withCustomer: false, customerId: 'cust_1', isLoading: true });
+
+        expect(mockFetchAll).toHaveBeenCalledTimes(1);
+    });
+
+    it('waits while the screen is loading', () => {
+        const wrapper = mountComponent({ isLoading: true });
+
+        expect(wrapper.find('.sv-loading').exists()).toBe(true);
+    });
+
+    it('is left out, rather than loading forever, when the customer cannot be loaded', () => {
         const wrapper = mountComponent({ withCustomer: false });
 
+        expect(wrapper.find('.sv-loading').exists()).toBe(false);
+        expect(wrapper.find('.sv-shipping-addresses').exists()).toBe(false);
+    });
+
+    it('loads nothing while it does not know whose addresses to load', () => {
+        mountComponent({ withCustomer: false });
+
         expect(mockFetchAll).not.toHaveBeenCalled();
-        expect(wrapper.find('.sv-loading').exists()).toBe(true);
     });
 
     it('lists the addresses under one title, marking the default', () => {

@@ -40,7 +40,11 @@ const openedAt = ref<Step>('LIST');
 const target = ref<ShippingAddress>();
 const isWorking = ref(false);
 const errorMessage = ref<string>();
-/** How far replacing the edited address got, which saving again carries on from. */
+/**
+ * How far replacing each edited address got, which saving it again carries on from, also after
+ * going back to the list and opening it again.
+ */
+const replacements = new Map<ShippingAddress['id'], ShippingAddressReplacement>();
 const replacement = ref<ShippingAddressReplacement>({});
 
 const formRef = ref<InstanceType<typeof ShippingAddressForm>>();
@@ -64,7 +68,10 @@ const goTo = (next: ShippingAddressesModalStart) => {
     errorMessage.value = undefined;
     target.value = 'address' in next ? next.address : undefined;
     if (next.step === 'ADD' || next.step === 'EDIT') formKey.value += 1;
-    if (next.step === 'EDIT') replacement.value = {};
+    if (next.step === 'EDIT') {
+        if (!replacements.has(next.address.id)) replacements.set(next.address.id, {});
+        replacement.value = replacements.get(next.address.id)!;
+    }
     step.value = next.step;
 };
 

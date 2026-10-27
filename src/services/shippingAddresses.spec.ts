@@ -43,6 +43,21 @@ describe('shipping addresses service', () => {
         });
     });
 
+    it('edits an address in place', async () => {
+        const payload = {
+            customer_id: 'cust_1',
+            reference: 'ref_1',
+        } as unknown as CreateShippingAddressPayload;
+        const { updateShippingAddress } = createShippingAddressesService();
+        await updateShippingAddress({ shippingAddressId: 'shad_1', payload });
+
+        expect(mockRequest).toHaveBeenCalledWith({
+            url: 'https://api.test/portal/shipping-addresses/shad_1',
+            data: payload,
+            options: { method: 'PATCH' },
+        });
+    });
+
     it('deletes an address by retiring it', async () => {
         const { deleteShippingAddress } = createShippingAddressesService();
         await deleteShippingAddress({ shippingAddressId: 'shad_1' });

@@ -1259,6 +1259,14 @@
     "defaultMessage": "Default",
     "description": "Marks the shipping address the customer uses by default"
   },
+  "shipping_address_form.company_name.label": {
+    "defaultMessage": "Company name",
+    "description": "Label of the name of the company a shipping address is for"
+  },
+  "shipping_address_form.company_name.placeholder": {
+    "defaultMessage": "Company name",
+    "description": "Placeholder of the name of the company a shipping address is for"
+  },
   "shipping_address_form.country.label": {
     "defaultMessage": "Country",
     "description": "Label of the country of a shipping address"

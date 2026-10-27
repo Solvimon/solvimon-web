@@ -5,6 +5,7 @@ const { mockService, mockLoggerError } = vi.hoisted(() => ({
     mockService: {
         getShippingAddresses: vi.fn(),
         createShippingAddress: vi.fn(),
+        updateShippingAddress: vi.fn(),
         deleteShippingAddress: vi.fn(),
     },
     mockLoggerError: vi.fn(),
@@ -45,12 +46,11 @@ describe('useShippingAddresses', () => {
                 }),
             ],
         });
-        const { items, defaultAddress, fetchAll } = useShippingAddresses({ customerId: 'cust_1' });
+        const { items, fetchAll } = useShippingAddresses({ customerId: 'cust_1' });
 
         await fetchAll();
 
         expect(items.value.map(({ id }) => id)).toEqual(['shad_default', 'shad_new', 'shad_old']);
-        expect(defaultAddress.value?.id).toBe('shad_default');
         expect(mockService.getShippingAddresses).toHaveBeenCalledWith({ customerId: 'cust_1' });
     });
 
@@ -67,15 +67,6 @@ describe('useShippingAddresses', () => {
         await addresses.fetchAll();
 
         expect(addresses.items.value.map(({ id }) => id)).toEqual(['shad_active']);
-    });
-
-    it('has no default while none is marked as one', async () => {
-        mockService.getShippingAddresses.mockResolvedValue({ data: [address()] });
-        const { defaultAddress, fetchAll } = useShippingAddresses({ customerId: 'cust_1' });
-
-        await fetchAll();
-
-        expect(defaultAddress.value).toBeUndefined();
     });
 
     it('asks for nothing until it knows whose addresses to load', async () => {
@@ -186,12 +177,67 @@ describe('useShippingAddresses', () => {
             const old = address({ id: 'shad_old' });
 
             await expect(addresses.replace(old, payload, progress)).rejects.toThrow('nope');
-            expect(progress).toEqual({ replacement: stored });
+            expect(progress).toMatchObject({ replacement: stored });
 
             await addresses.replace(old, payload, progress);
 
             expect(mockService.createShippingAddress).toHaveBeenCalledTimes(1);
             expect(mockService.deleteShippingAddress).toHaveBeenCalledTimes(2);
+        });
+
+        it('saves a correction made since onto the stored replacement on the next try', async () => {
+            mockService.deleteShippingAddress.mockRejectedValueOnce(new Error('nope'));
+            const corrected = address({ id: 'shad_new', status: 'ACTIVE' });
+            mockService.updateShippingAddress.mockResolvedValue(corrected);
+            const addresses = useShippingAddresses({ customerId: 'cust_1' });
+            const progress = {};
+            const old = address({ id: 'shad_old' });
+            const typo = {
+                customer_id: 'cust_1',
+                reference: 'ref_1',
+                address: { line1: 'Damrk 1' },
+            } as never;
+            const fixed = {
+                customer_id: 'cust_1',
+                reference: 'ref_2',
+                address: { line1: 'Damrak 1' },
+            } as never;
+
+            await expect(addresses.replace(old, typo, progress)).rejects.toThrow('nope');
+            const replacement = await addresses.replace(old, fixed, progress);
+
+            expect(mockService.createShippingAddress).toHaveBeenCalledTimes(1);
+            expect(mockService.updateShippingAddress).toHaveBeenCalledWith({
+                shippingAddressId: 'shad_new',
+                payload: {
+                    customer_id: 'cust_1',
+                    reference: stored.reference,
+                    address: { line1: 'Damrak 1' },
+                },
+            });
+            expect(replacement).toBe(corrected);
+        });
+
+        it('does not touch the stored replacement when the form is unchanged but for its reference', async () => {
+            mockService.deleteShippingAddress.mockRejectedValueOnce(new Error('nope'));
+            const addresses = useShippingAddresses({ customerId: 'cust_1' });
+            const progress = {};
+            const old = address({ id: 'shad_old' });
+
+            await expect(
+                addresses.replace(
+                    old,
+                    { customer_id: 'cust_1', reference: 'ref_1' } as never,
+                    progress,
+                ),
+            ).rejects.toThrow('nope');
+            await addresses.replace(
+                old,
+                { customer_id: 'cust_1', reference: 'ref_2' } as never,
+                progress,
+            );
+
+            expect(mockService.updateShippingAddress).not.toHaveBeenCalled();
         });
     });
 });

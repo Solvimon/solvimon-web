@@ -127,7 +127,7 @@ vi.mock('@/public/components/CustomerShippingAddresses/CustomerShippingAddresses
     __esModule: true,
     default: defineComponent({
         name: 'CustomerShippingAddresses',
-        props: { customer: Object, isLoading: Boolean },
+        props: { customerId: String, customer: Object, isLoading: Boolean },
         setup: () => () => h('div', { class: 'shipping-addresses-stub' }),
     }),
 }));
@@ -267,6 +267,8 @@ describe('CustomerOverview — shipping addresses', () => {
         const shipping = wrapper.findComponent({ name: 'CustomerShippingAddresses' });
 
         expect(shipping.exists()).toBe(true);
+        // The portal's customer id, so the addresses load alongside the customer, not after it.
+        expect(shipping.props('customerId')).toBe('cust_1');
         expect(shipping.props('customer')).toEqual(
             wrapper.findComponent({ name: 'BillingInformationStub' }).props('customer'),
         );

@@ -314,6 +314,8 @@
   "shipping_address.context_menu.delete.label": "Delete",
   "shipping_address.context_menu.edit.label": "Edit",
   "shipping_address.default_chip.label": "Default",
+  "shipping_address_form.company_name.label": "Company name",
+  "shipping_address_form.company_name.placeholder": "Company name",
   "shipping_address_form.country.label": "Country",
   "shipping_addresses_modal.add.title": "Add shipping address",
   "shipping_addresses_modal.add_button.label": "Add shipping address",

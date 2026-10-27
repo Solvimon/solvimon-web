@@ -330,7 +330,31 @@ describe('ShippingAddressesModal', () => {
         expect(title(wrapper)).toBe('Shipping addresses');
     });
 
-    it('starts a fresh replacement for every edit', async () => {
+    it('carries on with the replacement after going back to the list and editing it again', async () => {
+        mockSubmit.mockResolvedValue({ customer_id: 'cust_1' });
+        const replace = vi
+            .fn()
+            .mockImplementationOnce(async (_, __, progress) => {
+                progress.replacement = address('new');
+                throw new Error('nope');
+            })
+            .mockResolvedValueOnce(address('new'));
+        const wrapper = mountComponent({ replace });
+
+        await menuItem(wrapper, 1, 'Edit').trigger('click');
+        await wrapper.find('.modal__confirm').trigger('click');
+        await flushPromises();
+        await wrapper.find('.modal__cancel').trigger('click');
+        await menuItem(wrapper, 1, 'Edit').trigger('click');
+        await wrapper.find('.modal__confirm').trigger('click');
+        await flushPromises();
+
+        expect(replace.mock.calls[1][2]).toEqual({
+            replacement: expect.objectContaining({ id: 'new' }),
+        });
+    });
+
+    it('starts a fresh replacement for every other address', async () => {
         mockSubmit.mockResolvedValue({ customer_id: 'cust_1' });
         const replace = vi.fn().mockImplementation(async (_, __, progress) => {
             progress.replacement = address('new');

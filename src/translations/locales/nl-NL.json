@@ -314,6 +314,8 @@
     "shipping_address.context_menu.delete.label": "Verwijderen",
     "shipping_address.context_menu.edit.label": "Bewerken",
     "shipping_address.default_chip.label": "Standaard",
+    "shipping_address_form.company_name.label": "Bedrijfsnaam",
+    "shipping_address_form.company_name.placeholder": "Bedrijfsnaam",
     "shipping_address_form.country.label": "Land",
     "shipping_addresses_modal.add.title": "Verzendadres toevoegen",
     "shipping_addresses_modal.add_button.label": "Verzendadres toevoegen",

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, shallowRef } from 'vue';
+import { computed, ref } from 'vue';
 import {
     getCustomerCountry,
     isIndividual,
@@ -19,12 +19,13 @@ import {
     toShippingAddressDetails,
 } from '@/components/customer/CheckoutForm/CheckoutForm.lib';
 import {
-    getAddressFormat,
-    isPhoneNumberPlausible,
-    isPostalCodeValid,
-    loadAddressFormats,
-    type AddressFormatTable,
-} from '@/components/customer/CheckoutForm/addressFormat';
+    addressRules,
+    shippingRecipientRules,
+} from '@/components/customer/CheckoutForm/addressRules';
+import { useAddressFormats } from '@/components/customer/CheckoutForm/useAddressFormats';
+import HiddenLabelInput from '@/components/customer/HiddenLabelInput.vue';
+import { asOptionalText, formControlModel } from '@/utils/formControl';
+import { randomUuid } from '@/utils/randomUuid';
 import type { CreateShippingAddressPayload, ShippingAddress } from '@/types/shippingAddress';
 
 const props = defineProps<ShippingAddressFormProps>();
@@ -86,65 +87,32 @@ const form = ref<CheckoutFormState>(
     }),
 );
 
-const addressFormats = shallowRef<AddressFormatTable>();
-
-/**
- * The per-country formats are a chunk of their own. One that does not download leaves the fields
- * asking only for what every country needs, rather than the form not opening at all.
- */
-onMounted(async () => {
-    try {
-        addressFormats.value = await loadAddressFormats();
-    } catch {
-        addressFormats.value = undefined;
-    }
+const { formatOf } = useAddressFormats({
+    isNeeded: () => true,
+    countries: [() => form.value.shippingCountry],
 });
 
-const format = computed(() =>
-    addressFormats.value
-        ? getAddressFormat(addressFormats.value, form.value.shippingCountry)
-        : undefined,
-);
+const format = computed(() => formatOf(form.value.shippingCountry));
+
+const isOrganizationRecipient = computed(() => form.value.type === 'ORGANIZATION');
+
+/** An organization is shipped to under its name, which the customer may not have on file. */
+const companyName = formControlModel(form, 'companyLegalName', asOptionalText);
 
 const requiredFields = computed<(keyof CheckoutFormState)[]>(() => [
     ...getRequiredAddressFields('SHIPPING', form.value.shippingCountry, format.value),
     'shippingCountry',
     'shippingPhoneNumber',
-    ...(form.value.type === 'ORGANIZATION' ? [] : (['shippingLastName'] as const)),
+    ...(isOrganizationRecipient.value ? [] : (['shippingLastName'] as const)),
 ]);
 
 const isRequired = (field: keyof CheckoutFormState) => requiredFields.value.includes(field);
 
-const requiredWhenAsked = (field: keyof CheckoutFormState) => ({
-    required: requiredIf(() => isRequired(field)),
-});
-
 const validation = useValidation(
     computed(() => ({
-        shippingAddressLine1: requiredWhenAsked('shippingAddressLine1'),
-        shippingCity: requiredWhenAsked('shippingCity'),
-        shippingState: requiredWhenAsked('shippingState'),
-        shippingCountry: requiredWhenAsked('shippingCountry'),
-        shippingPostalCode: {
-            ...requiredWhenAsked('shippingPostalCode'),
-            postalCodeFormat: {
-                $validator: (value: unknown) =>
-                    typeof value !== 'string' ||
-                    !value.trim() ||
-                    !format.value ||
-                    isPostalCodeValid(format.value, value),
-                $message: 'The postal code does not match the country',
-            },
-        },
-        shippingPhoneNumber: {
-            ...requiredWhenAsked('shippingPhoneNumber'),
-            phoneNumberFormat: {
-                $validator: (value: unknown) =>
-                    typeof value !== 'string' || !value.trim() || isPhoneNumberPlausible(value),
-                $message: 'The phone number is not valid',
-            },
-        },
-        shippingLastName: requiredWhenAsked('shippingLastName'),
+        ...addressRules('SHIPPING', () => format.value, isRequired),
+        ...shippingRecipientRules(isRequired),
+        companyLegalName: { required: requiredIf(() => isOrganizationRecipient.value) },
     })),
     form,
 );
@@ -171,7 +139,7 @@ defineExpose({
         }
 
         return {
-            ...toShippingAddressDetails(form.value, crypto.randomUUID(), format.value),
+            ...toShippingAddressDetails(form.value, randomUuid(), format.value),
             customer_id: props.customer.id,
         };
     },
@@ -180,6 +148,28 @@ defineExpose({
 
 <template>
     <fieldset class="sv-shipping-address-form grid grid-cols-1 gap-2" :disabled="disabled">
+        <HiddenLabelInput
+            v-if="isOrganizationRecipient"
+            v-model="companyName"
+            name="shipping_company_name"
+            class="sv-shipping-address-form__company-name"
+            autocomplete="shipping organization"
+            :label="
+                $t({
+                    defaultMessage: 'Company name',
+                    id: 'shipping_address_form.company_name.label',
+                    description: 'Label of the name of the company a shipping address is for',
+                })
+            "
+            :placeholder="
+                $t({
+                    defaultMessage: 'Company name',
+                    id: 'shipping_address_form.company_name.placeholder',
+                    description: 'Placeholder of the name of the company a shipping address is for',
+                })
+            "
+            :error="validation.companyLegalName.$errors"
+        />
         <CheckoutAddressFields
             v-model="form"
             variant="SHIPPING"

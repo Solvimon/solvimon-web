@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import {
     formatAmount,
-    formatBillingPeriod,
     Skeleton,
     Tooltip,
     TooltipContent,
@@ -9,6 +8,7 @@ import {
     TrialChip,
     Typography,
     useIntl,
+    useTimePeriod,
 } from '@solvimon/solvimon-ui';
 import { computed } from 'vue';
 import { strong, toRichTextParts } from './CheckoutTitle.lib';
@@ -17,9 +17,10 @@ import type { CheckoutTitleProps } from './CheckoutTitle.types';
 const props = defineProps<CheckoutTitleProps>();
 
 const { $t } = useIntl();
+const { formatTimePeriod } = useTimePeriod();
 
 const periodName = computed(() =>
-    formatBillingPeriod(props.billingPeriod, { short: true, hideValueForExactPeriods: true }),
+    formatTimePeriod(props.billingPeriod, { short: true, hideValueForExactPeriods: true }),
 );
 
 const description = computed(() => {

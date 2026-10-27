@@ -1,14 +1,12 @@
 import { mount } from '@vue/test-utils';
-import {
-    ErrorHandlingProvider,
-    IntlProvider,
-    formatAmount,
-    formatBillingPeriod,
-} from '@solvimon/solvimon-ui';
+import { ErrorHandlingProvider, IntlProvider, formatAmount } from '@solvimon/solvimon-ui';
+import type { IntlProviderProps } from '@solvimon/solvimon-ui';
+import uiDutch from '@solvimon/solvimon-ui/translations/nl-NL';
 import type { Amount, BillingPeriod } from '@solvimon/solvimon-types';
 import { h } from 'vue';
 import CheckoutTitle from './CheckoutTitle.vue';
 import type { CheckoutTitleProps } from './CheckoutTitle.types';
+import dutch from '@/translations/locales/nl-NL.json';
 
 const { formatted } = vi.hoisted(() => ({
     formatted: {} as { amount?: string; period?: string },
@@ -23,8 +21,14 @@ vi.mock('@solvimon/solvimon-ui', async () => {
         ...actual,
         formatAmount: (...args: Parameters<typeof actual.formatAmount>) =>
             formatted.amount ?? actual.formatAmount(...args),
-        formatBillingPeriod: (...args: Parameters<typeof actual.formatBillingPeriod>) =>
-            formatted.period ?? actual.formatBillingPeriod(...args),
+        useTimePeriod: () => {
+            const timePeriod = actual.useTimePeriod();
+            return {
+                ...timePeriod,
+                formatTimePeriod: (...args: Parameters<typeof timePeriod.formatTimePeriod>) =>
+                    formatted.period ?? timePeriod.formatTimePeriod(...args),
+            };
+        },
     };
 });
 
@@ -41,11 +45,11 @@ const baseProps: CheckoutTitleProps = {
     subscriptionStartDate: new Date('2026-01-01'),
 };
 
-const mountTitle = (props: Partial<CheckoutTitleProps> = {}) =>
+const mountTitle = (props: Partial<CheckoutTitleProps> = {}, intl: IntlProviderProps = {}) =>
     mount({
         render: () =>
             h(ErrorHandlingProvider, null, () =>
-                h(IntlProvider, { locale: 'en-US' }, () =>
+                h(IntlProvider, { locale: 'en-US', ...intl }, () =>
                     h(CheckoutTitle, { ...baseProps, ...props }),
                 ),
             ),
@@ -113,18 +117,21 @@ const MONTHLY = { type: 'MONTH', value: 1 } as BillingPeriod;
 const DUE_TODAY: Amount = { quantity: '35.00', currency: 'EUR' };
 const RECURRING: Amount = { quantity: '10.00', currency: 'EUR' };
 
-const month = formatBillingPeriod(MONTHLY, { short: true, hideValueForExactPeriods: true });
+const month = 'month';
 
-const mountPricedTitle = (props: Partial<CheckoutTitleProps>) =>
-    mountTitle({
-        subscriptionName: 'Pro plan',
-        amount: RECURRING,
-        dueTodayAmount: DUE_TODAY,
-        billingPeriod: MONTHLY,
-        countryCode: 'NL',
-        subscriptionStartDate: new Date('2026-10-09T00:00:00Z'),
-        ...props,
-    });
+const mountPricedTitle = (props: Partial<CheckoutTitleProps>, intl?: IntlProviderProps) =>
+    mountTitle(
+        {
+            subscriptionName: 'Pro plan',
+            amount: RECURRING,
+            dueTodayAmount: DUE_TODAY,
+            billingPeriod: MONTHLY,
+            countryCode: 'NL',
+            subscriptionStartDate: new Date('2026-10-09T00:00:00Z'),
+            ...props,
+        },
+        intl,
+    );
 
 /** The amounts the description sets in bold, in order. */
 const boldAmounts = (wrapper: ReturnType<typeof mountPricedTitle>) =>
@@ -163,6 +170,21 @@ describe('CheckoutTitle description', () => {
             `You will be billed ${formatAmount(DUE_TODAY)} today. Usage is billed every ${month}.`,
         );
         expect(boldAmounts(wrapper)).toEqual([formatAmount(DUE_TODAY)]);
+    });
+
+    it('names the usage period in the language of the locale', () => {
+        const wrapper = mountPricedTitle(
+            {
+                hasOneOffCharges: true,
+                hasRecurringCharge: true,
+                hasUsageCharges: true,
+                billingPeriod: { type: 'DAY', value: 1 } as BillingPeriod,
+                recurringAmount: { quantity: '0.00', currency: 'EUR' },
+            },
+            { locale: 'nl-NL', messages: { ...uiDutch, ...dutch } },
+        );
+
+        expect(wrapper.text()).toContain('Verbruik wordt per dag gefactureerd.');
     });
 
     it('states only what is due today for an order that renews at nothing', () => {

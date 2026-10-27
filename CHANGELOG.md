@@ -14,6 +14,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A host that already exchanged the handle can pass the response it got, as it is, as `portalToken`, on the element or in `createScreen` / `createComponent`, and the element signs in with it instead of exchanging the handle again. When the API rejects that token, the element exchanges the handle. It is an object, so the token never becomes an HTML attribute of the element.
 - A failed API call's `ApiError` carries the API's own error code as `errorCode`, and for a closed checkout session link its status as `checkoutSessionStatus`.
 
+### Fixed
+
+- The checkout description and an enabled pricing's price name the billing period in the element's language, "per dag" in Dutch rather than "per day".
+
 ## [0.1.0-alpha.28] - 2026-10-21
 
 ### Added

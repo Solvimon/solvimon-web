@@ -5,8 +5,8 @@ import {
     Section,
     Typography,
     formatAmount,
-    formatBillingPeriod,
     useIntl,
+    useTimePeriod,
 } from '@solvimon/solvimon-ui';
 import type {
     EnabledPricingsListItemEmits,
@@ -17,6 +17,7 @@ const props = withDefaults(defineProps<EnabledPricingsListItemProps>(), { canUpg
 defineEmits<EnabledPricingsListItemEmits>();
 
 const { $t } = useIntl();
+const { formatTimePeriod } = useTimePeriod();
 
 /** Left out entirely when the pricing has no flat amount — a partial price is worse than none. */
 const price = computed<string | undefined>(() => {
@@ -38,7 +39,7 @@ const price = computed<string | undefined>(() => {
         },
         {
             amount: formatAmount(amount),
-            period: formatBillingPeriod(billingPeriod, {
+            period: formatTimePeriod(billingPeriod, {
                 short: true,
                 hideValueForExactPeriods: true,
             }),

@@ -2,7 +2,7 @@ import { flushPromises, mount } from '@vue/test-utils';
 import { defineComponent, h, ref } from 'vue';
 import type { PaymentMethod, PricingPlanSubscriptionExpanded } from '@solvimon/solvimon-types';
 import CustomerOverview from './CustomerOverview.vue';
-import type { CustomerOverviewConfiguration } from './CustomerOverview.types';
+import type { CustomerPaymentMethodsConfiguration } from '@/public/components/CustomerPaymentMethods/CustomerPaymentMethods.types';
 
 const {
     subscriptionsState,
@@ -10,13 +10,28 @@ const {
     mockFetchAll,
     mockFetchInitial,
     mockFetchWalletBalances,
+    shippedState,
+    mockCheckShipped,
 } = vi.hoisted(() => ({
     subscriptionsState: {} as { items: { value: unknown[] }; error: { value: Error | null } },
     paymentMethodsState: {} as { items: { value: unknown[] } },
     mockFetchAll: vi.fn(),
     mockFetchInitial: vi.fn(),
     mockFetchWalletBalances: vi.fn(),
+    shippedState: { value: false },
+    mockCheckShipped: vi.fn(),
 }));
+
+vi.mock('@/composables/useHasShippedSubscription', async () => {
+    const { computed } = await import('vue');
+
+    return {
+        useHasShippedSubscription: () => ({
+            hasShippedSubscription: computed(() => shippedState.value),
+            check: mockCheckShipped,
+        }),
+    };
+});
 
 vi.mock('@/composables/useSubscriptionsList', async () => {
     const { ref: createRef } = await import('vue');
@@ -154,7 +169,7 @@ const paymentMethodsOf = (count: number) =>
         (_, index) => ({ id: `pm_${index + 1}` }) as unknown as PaymentMethod,
     );
 
-const mountOverview = async (configuration?: CustomerOverviewConfiguration) => {
+const mountOverview = async (configuration?: CustomerPaymentMethodsConfiguration) => {
     const wrapper = mount(CustomerOverview, { props: { configuration } });
     await flushPromises();
 
@@ -254,14 +269,25 @@ describe('CustomerOverview — payment methods', () => {
 });
 
 describe('CustomerOverview — shipping addresses', () => {
-    it('leaves the shipping addresses out unless the host asks for them', async () => {
+    afterEach(() => {
+        shippedState.value = false;
+    });
+
+    it('finds out whether the customer has a subscription that ships', async () => {
+        await mountOverview();
+
+        expect(mockCheckShipped).toHaveBeenCalled();
+    });
+
+    it('leaves the shipping addresses out for a customer without a subscription that ships', async () => {
         const wrapper = await mountOverview();
 
         expect(wrapper.findComponent({ name: 'CustomerShippingAddresses' }).exists()).toBe(false);
     });
 
     it('shows the shipping addresses below the billing information, for its customer', async () => {
-        const wrapper = await mountOverview({ showShippingAddresses: true });
+        shippedState.value = true;
+        const wrapper = await mountOverview();
 
         const aside = wrapper.html();
         const shipping = wrapper.findComponent({ name: 'CustomerShippingAddresses' });

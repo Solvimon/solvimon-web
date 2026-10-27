@@ -42,6 +42,19 @@ describe('subscriptions service', () => {
         });
     });
 
+    describe('getSubscriptionsOfEveryStatus', () => {
+        it('asks for a page of the customer subscriptions, whatever their status or type', async () => {
+            const { getSubscriptionsOfEveryStatus } = createSubscriptionsService();
+            await getSubscriptionsOfEveryStatus({ customerId: 'cust_1', page: 2, pageSize: 50 });
+
+            expect(mockRequest).toHaveBeenCalledWith({
+                url: 'https://api.test/portal/pricing-plan-subscriptions',
+                query: { customer_id: 'cust_1', page: '2', limit: 50 },
+                isCollection: true,
+            });
+        });
+    });
+
     describe('getActiveSubscriptions', () => {
         it('asks for the active billing subscriptions of the customer, expanded, from the first page', async () => {
             const collection = { data: [subscription], links: { current: 'current' } };

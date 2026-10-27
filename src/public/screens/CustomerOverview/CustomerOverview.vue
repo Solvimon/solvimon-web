@@ -17,8 +17,9 @@ import { DEFAULT_MAX_ITEMS } from '@/public/components/CustomerPaymentMethods/Cu
 import { useCustomerWalletBalances } from '@/composables/useCustomerWalletBalances';
 import CustomerWalletBalances from '@/public/components/CustomerWalletBalances/CustomerWalletBalances.vue';
 import { useActiveScheduleWarning } from '@/composables/useActiveScheduleWarning';
+import { useHasShippedSubscription } from '@/composables/useHasShippedSubscription';
 
-/** Only merchants that ship turn it on, so the rest never download it. */
+/** Only customers with an order that ships see it, so the rest never download it. */
 const CustomerShippingAddresses = defineAsyncComponent(
     () => import('@/public/components/CustomerShippingAddresses/CustomerShippingAddresses.vue'),
 );
@@ -52,12 +53,16 @@ const shownPaymentMethods = computed(() =>
     paymentMethods.items.value.slice(0, props.configuration?.maxItems ?? DEFAULT_MAX_ITEMS),
 );
 
+/** Shipping addresses are only shown to a customer with a subscription, of any status, that ships. */
+const shippedSubscriptions = useHasShippedSubscription({ customerId });
+
 const { isLoading } = useLoadInitialData(
     customer.get.execute(),
     invoices.fetchInitial(),
     subscriptions.fetchAll(),
     paymentMethods.fetchAll(),
     customerWalletBalances.fetch(),
+    shippedSubscriptions.check(),
 );
 
 const handlePaymentMethodStored = () => {
@@ -125,7 +130,7 @@ useActiveScheduleWarning(subscriptions.items);
             />
 
             <CustomerShippingAddresses
-                v-if="configuration?.showShippingAddresses"
+                v-if="shippedSubscriptions.hasShippedSubscription.value"
                 class="sv-customer-overview__shipping-addresses"
                 :is-loading="isLoading"
                 :customer-id="customerId"

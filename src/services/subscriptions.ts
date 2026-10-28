@@ -19,12 +19,6 @@ export const SUBSCRIPTION_CANCELLATION_TYPES = {
 /** Which of the two the customer asked for. */
 export type SubscriptionCancellationVariant = keyof typeof SUBSCRIPTION_CANCELLATION_TYPES;
 
-/** `default_shipping_address_id` is not in `@solvimon/solvimon-types` yet. */
-export type PricingPlanSubscriptionWithShipping = PricingPlanSubscription & {
-    /** The shipping address the subscription ships to, when it ships. */
-    default_shipping_address_id?: string | null;
-};
-
 interface SubscriptionsService {
     getSubscription(params: {
         id: PricingPlanSubscription['id'];
@@ -42,7 +36,7 @@ interface SubscriptionsService {
         customerId: string;
         page: number;
         pageSize: number;
-    }): Promise<ApiSuccessCollectionResponse<PricingPlanSubscriptionWithShipping>>;
+    }): Promise<ApiSuccessCollectionResponse<PricingPlanSubscription>>;
     setSubscriptionCancellation(params: {
         id: PricingPlanSubscription['id'];
         variant: SubscriptionCancellationVariant;
@@ -109,8 +103,8 @@ export function createSubscriptionsService(): SubscriptionsService {
         customerId: string;
         page: number;
         pageSize: number;
-    }): Promise<ApiSuccessCollectionResponse<PricingPlanSubscriptionWithShipping>> {
-        return request<PricingPlanSubscriptionWithShipping>({
+    }): Promise<ApiSuccessCollectionResponse<PricingPlanSubscription>> {
+        return request<PricingPlanSubscription>({
             url: buildUrl(config.apiUrls.config, ...ENDPOINT),
             query: withPagination({ customer_id: customerId }, { page, pageSize }),
             isCollection: true,

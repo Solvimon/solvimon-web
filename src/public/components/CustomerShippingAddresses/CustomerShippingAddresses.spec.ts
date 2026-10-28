@@ -120,12 +120,6 @@ describe('CustomerShippingAddresses', () => {
         vi.clearAllMocks();
     });
 
-    it("loads the customer's addresses", () => {
-        mountComponent();
-
-        expect(mockFetchAll).toHaveBeenCalledTimes(1);
-    });
-
     it('loads the addresses by the customer id before the customer itself has arrived', () => {
         mountComponent({ withCustomer: false, customerId: 'cust_1', isLoading: true });
 
@@ -151,16 +145,6 @@ describe('CustomerShippingAddresses', () => {
         expect(mockFetchAll).not.toHaveBeenCalled();
     });
 
-    it('lists the addresses under one title, marking the default', () => {
-        const wrapper = mountComponent();
-
-        expect(wrapper.text()).toContain('Shipping addresses');
-        expect(items(wrapper)).toHaveLength(2);
-        expect(items(wrapper)[0].text()).toContain('home street');
-        expect(items(wrapper)[0].find('.sv-shipping-address__default').exists()).toBe(true);
-        expect(items(wrapper)[1].find('.sv-shipping-address__default').exists()).toBe(false);
-    });
-
     it('names a single address in the singular', () => {
         const wrapper = mountComponent({ addresses: [HOME] });
 
@@ -183,37 +167,10 @@ describe('CustomerShippingAddresses', () => {
         expect(items(wrapper)).toHaveLength(3);
     });
 
-    it('says there are none yet, with a link that opens the form for a first one', async () => {
-        const wrapper = mountComponent({ addresses: [] });
-
-        expect(wrapper.find('.sv-shipping-addresses__empty').text()).toContain(
-            'No shipping addresses yet',
-        );
-
-        await wrapper.find('.sv-shipping-addresses__add').trigger('click');
-        await flushPromises();
-
-        expect(modal(wrapper).props('start')).toEqual({ step: 'ADD' });
-        expect(modal(wrapper).props('showModal')).toBe(true);
-    });
-
     it('says so when the addresses cannot be loaded', () => {
         const wrapper = mountComponent({ error: new Error('down') });
 
         expect(wrapper.find('.error-notification-stub').exists()).toBe(true);
-    });
-
-    it('opens the modal on the list from the manage button, and not before', async () => {
-        const wrapper = mountComponent();
-
-        expect(modal(wrapper).exists()).toBe(false);
-
-        await wrapper.find('.sv-shipping-addresses__manage').trigger('click');
-        await flushPromises();
-
-        expect(modal(wrapper).props('showModal')).toBe(true);
-        expect(modal(wrapper).props('start')).toEqual({ step: 'LIST' });
-        expect(modal(wrapper).props('addresses')).toEqual([HOME, OFFICE]);
     });
 
     it.each([

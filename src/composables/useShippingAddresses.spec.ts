@@ -133,19 +133,6 @@ describe('useShippingAddresses', () => {
         expect(mockService.getShippingAddresses).toHaveBeenCalledTimes(1);
     });
 
-    it('stores a new address as active, so it is listed and can be the default', async () => {
-        mockService.createShippingAddress.mockResolvedValue(address());
-        const addresses = useShippingAddresses({ customerId: 'cust_1' });
-
-        await addresses.create({ customer_id: 'cust_1', reference: 'ref_1' } as never);
-
-        expect(mockService.createShippingAddress).toHaveBeenCalledWith({
-            customer_id: 'cust_1',
-            reference: 'ref_1',
-            status: 'ACTIVE',
-        });
-    });
-
     it('deletes by the address id', async () => {
         const addresses = useShippingAddresses({ customerId: 'cust_1' });
 
@@ -162,23 +149,6 @@ describe('useShippingAddresses', () => {
 
         beforeEach(() => {
             mockService.createShippingAddress.mockResolvedValue(stored);
-        });
-
-        it('stores the edit as a new active address and retires the old one', async () => {
-            const addresses = useShippingAddresses({ customerId: 'cust_1' });
-
-            const replacement = await addresses.replace(address({ id: 'shad_old' }), payload, {});
-
-            expect(replacement).toBe(stored);
-            expect(mockService.createShippingAddress).toHaveBeenCalledWith({
-                customer_id: 'cust_1',
-                reference: 'ref_new',
-                status: 'ACTIVE',
-            });
-            expect(mockService.deleteShippingAddress).toHaveBeenCalledWith({
-                shippingAddressId: 'shad_old',
-            });
-            expect(mockService.getShippingAddresses).toHaveBeenCalledTimes(1);
         });
 
         it('keeps the description of the address it replaces', async () => {

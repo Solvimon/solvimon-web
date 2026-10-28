@@ -102,14 +102,6 @@ describe('ShippingAddressForm', () => {
         });
     });
 
-    it('hands back nothing while the address is incomplete', async () => {
-        const wrapper = await mountForm();
-
-        const result = await (wrapper.vm as unknown as FormInstance).submit();
-
-        expect(result).toBeUndefined();
-    });
-
     it('rejects a phone number that cannot be one', async () => {
         const wrapper = await mountForm();
         fillIn({

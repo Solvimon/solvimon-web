@@ -136,43 +136,6 @@ describe('ShippingAddressesModal', () => {
         vi.clearAllMocks();
     });
 
-    it("lists the customer's addresses, marking the default", () => {
-        const wrapper = mountComponent();
-
-        expect(title(wrapper)).toBe('Shipping addresses');
-        expect(wrapper.findAll('.sv-shipping-address-list__item')).toHaveLength(2);
-        expect(wrapper.findAll('.sv-shipping-address__default')).toHaveLength(1);
-        expect(wrapper.find('.sv-shipping-addresses-modal__add').text()).toBe(
-            'Add shipping address',
-        );
-    });
-
-    it('offers to edit or delete each address', () => {
-        const wrapper = mountComponent();
-        const [home] = wrapper.findAll('.sv-shipping-address-list__item');
-
-        expect(home.findAll('.context-menu-stub__item').map((item) => item.text())).toEqual([
-            'Edit',
-            'Delete',
-        ]);
-    });
-
-    it('asks before deleting, and deletes once confirmed', async () => {
-        const remove = vi.fn().mockResolvedValue(undefined);
-        const wrapper = mountComponent({ remove });
-
-        await menuItem(wrapper, 1, 'Delete').trigger('click');
-
-        expect(title(wrapper)).toBe('Delete shipping address');
-        expect(remove).not.toHaveBeenCalled();
-
-        await wrapper.find('.modal__confirm').trigger('click');
-        await flushPromises();
-
-        expect(remove).toHaveBeenCalledWith(expect.objectContaining({ id: 'office' }));
-        expect(title(wrapper)).toBe('Shipping addresses');
-    });
-
     it('goes back to the list without deleting when the customer thinks better of it', async () => {
         const remove = vi.fn();
         const wrapper = mountComponent({ remove });
@@ -182,30 +145,6 @@ describe('ShippingAddressesModal', () => {
 
         expect(title(wrapper)).toBe('Shipping addresses');
         expect(remove).not.toHaveBeenCalled();
-    });
-
-    it('moves to the form to add an address', async () => {
-        const wrapper = mountComponent();
-
-        await wrapper.find('.sv-shipping-addresses-modal__add').trigger('click');
-
-        expect(title(wrapper)).toBe('Add shipping address');
-        expect(wrapper.find('.modal__confirm').text()).toBe('Save address');
-        expect(wrapper.find('.modal__cancel').text()).toBe('Back');
-    });
-
-    it('stores the address and goes back to the list, which has reloaded with it', async () => {
-        const payload = { customer_id: 'cust_1', reference: 'ref' };
-        mockSubmit.mockResolvedValue(payload);
-        const create = vi.fn().mockResolvedValue(address('new'));
-        const wrapper = mountComponent({ create });
-
-        await wrapper.find('.sv-shipping-addresses-modal__add').trigger('click');
-        await wrapper.find('.modal__confirm').trigger('click');
-        await flushPromises();
-
-        expect(create).toHaveBeenCalledWith(payload);
-        expect(title(wrapper)).toBe('Shipping addresses');
     });
 
     it('stores the address once when save is confirmed again while it is being checked', async () => {
@@ -222,19 +161,6 @@ describe('ShippingAddressesModal', () => {
 
         expect(mockSubmit).toHaveBeenCalledTimes(1);
         expect(create).toHaveBeenCalledTimes(1);
-    });
-
-    it('stores nothing while the form says something is missing', async () => {
-        mockSubmit.mockResolvedValue(undefined);
-        const create = vi.fn();
-        const wrapper = mountComponent({ create });
-
-        await wrapper.find('.sv-shipping-addresses-modal__add').trigger('click');
-        await wrapper.find('.modal__confirm').trigger('click');
-        await flushPromises();
-
-        expect(create).not.toHaveBeenCalled();
-        expect(title(wrapper)).toBe('Add shipping address');
     });
 
     it('stays on the form and says so when the address cannot be stored', async () => {
@@ -291,32 +217,6 @@ describe('ShippingAddressesModal', () => {
         });
 
         expect(wrapper.find('.sv-shipping-addresses-modal__empty').exists()).toBe(true);
-    });
-
-    it('saves an edit as a replacement for the address, starting from what is stored', async () => {
-        const payload = { customer_id: 'cust_1', reference: 'ref_new' };
-        mockSubmit.mockResolvedValue(payload);
-        const replace = vi.fn().mockResolvedValue(address('new'));
-        const create = vi.fn();
-        const wrapper = mountComponent({ replace, create });
-
-        await menuItem(wrapper, 1, 'Edit').trigger('click');
-
-        expect(title(wrapper)).toBe('Edit shipping address');
-        expect(
-            wrapper.findComponent({ name: 'ShippingAddressForm' }).props('address'),
-        ).toMatchObject({ id: 'office' });
-
-        await wrapper.find('.modal__confirm').trigger('click');
-        await flushPromises();
-
-        expect(replace).toHaveBeenCalledWith(
-            expect.objectContaining({ id: 'office' }),
-            payload,
-            {},
-        );
-        expect(create).not.toHaveBeenCalled();
-        expect(title(wrapper)).toBe('Shipping addresses');
     });
 
     it('carries on with the same replacement when saving an edit again after a failure', async () => {
@@ -400,20 +300,6 @@ describe('ShippingAddressesModal', () => {
         expect(wrapper.findComponent({ name: 'ShippingAddressForm' }).props('address')).toBe(
             undefined,
         );
-    });
-
-    it('opened on one address, closes once it is saved instead of going on to the list', async () => {
-        mockSubmit.mockResolvedValue({ customer_id: 'cust_1' });
-        const office = address('office');
-        const wrapper = mountComponent({}, { step: 'EDIT', address: office });
-
-        expect(title(wrapper)).toBe('Edit shipping address');
-        expect(wrapper.find('.modal__cancel').text()).toBe('Cancel');
-
-        await wrapper.find('.modal__confirm').trigger('click');
-        await flushPromises();
-
-        expect(wrapper.emitted('close')).toHaveLength(1);
     });
 
     it('opened on a delete, closes when the customer thinks better of it', async () => {

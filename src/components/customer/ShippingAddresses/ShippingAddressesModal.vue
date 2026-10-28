@@ -115,7 +115,16 @@ const run = async (change: () => Promise<unknown>, onError: (error: unknown) => 
 };
 
 const save = async () => {
-    const payload = await formRef.value?.submit();
+    // A second confirm while the first is still being checked would store the address twice.
+    if (isWorking.value) return;
+
+    isWorking.value = true;
+    let payload: Awaited<ReturnType<NonNullable<typeof formRef.value>['submit']>>;
+    try {
+        payload = await formRef.value?.submit();
+    } finally {
+        isWorking.value = false;
+    }
 
     if (!payload) return;
 
@@ -142,7 +151,7 @@ const save = async () => {
 const confirmDelete = async () => {
     const address = target.value;
 
-    if (!address) return;
+    if (!address || isWorking.value) return;
 
     const deleted = await run(
         () => props.actions.remove(address),

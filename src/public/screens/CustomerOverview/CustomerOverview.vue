@@ -59,10 +59,13 @@ const shippedSubscriptions = useHasShippedSubscription({ customerId });
 const { isLoading } = useLoadInitialData(
     customer.get.execute(),
     invoices.fetchInitial(),
-    subscriptions.fetchAll(),
+    // The active subscriptions answer it for most customers whose order ships. Reading the others
+    // can take several requests, so it does not hold up the rest of the screen.
+    subscriptions
+        .fetchAll()
+        .finally(() => void shippedSubscriptions.check(subscriptions.items.value)),
     paymentMethods.fetchAll(),
     customerWalletBalances.fetch(),
-    shippedSubscriptions.check(),
 );
 
 const handlePaymentMethodStored = () => {

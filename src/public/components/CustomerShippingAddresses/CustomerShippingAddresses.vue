@@ -110,7 +110,7 @@ const { getMenuItems } = useShippingAddressMenuItems({
             <Skeleton
                 v-else-if="isPending && !items.length"
                 variant="section"
-                class="min-h-[60px]"
+                class="min-h-[100px]"
             />
 
             <ShippingAddressList

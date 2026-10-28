@@ -12,8 +12,9 @@ export interface UseShippingAddresses {
     /** Stores an address, ready for use, and reloads the list so it shows up there. */
     create: (payload: CreateShippingAddressPayload) => Promise<ShippingAddress>;
     /**
-     * Edits an address. An ACTIVE address cannot be changed, so the edit is stored as a new active
-     * address and the old one is retired.
+     * Edits an address. Subscriptions point to an address, so one in use is not changed in place:
+     * the edit is stored as a new active address, which keeps the old one's description, and the
+     * old one is retired.
      * `progress` records how far it got, so calling it again after a failure carries on from there,
      * with any change made to the form since saved onto the new address.
      */
@@ -39,7 +40,7 @@ const detailsOf = ({ reference: _reference, ...details }: CreateShippingAddressP
 
 /** Newest first, with the default leading: the order the customer picks between them in. */
 const byDefaultThenNewest = (a: ShippingAddress, b: ShippingAddress) =>
-    Number(b.is_default) - Number(a.is_default) ||
+    Number(Boolean(b.is_default)) - Number(Boolean(a.is_default)) ||
     (Date.parse(b.created_at ?? '') || 0) - (Date.parse(a.created_at ?? '') || 0);
 
 /**
@@ -108,6 +109,9 @@ export function useShippingAddresses({
         payload: CreateShippingAddressPayload,
         progress: ShippingAddressReplacement,
     ) => {
+        // The form does not ask for it, so it would otherwise be lost with the old address.
+        payload = { description: address.description, ...payload };
+
         try {
             if (!progress.replacement) {
                 progress.replacement = await storeActive(payload);

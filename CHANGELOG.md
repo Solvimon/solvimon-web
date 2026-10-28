@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- The checkout screen shows the terms and conditions in the order summary column, centred under the secure payments line next to the pay button, instead of in a footer below both columns.
+- `ContentWithAsideLayout` no longer takes a `footer` slot; the checkout terms were its only content.
 - `@solvimon/solvimon-ui` is 1.20.2 and `@solvimon/solvimon-types` 1.10.0. Tab now moves through the fields of a modal instead of jumping back to its close button.
 - The buttons in the customer overview's section headers (**View all**, **Edit** and **Manage**) are extra small, a step down from small.
 

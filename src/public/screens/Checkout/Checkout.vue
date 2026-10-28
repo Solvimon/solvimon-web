@@ -1020,7 +1020,7 @@ onMounted(() => {
                 />
 
                 <!-- pay button-->
-                <div class="flex flex-col gap-2">
+                <div class="flex flex-col gap-4">
                     <Skeleton class="sv-checkout__submit-skeleton min-h-10">
                         <Button
                             v-if="invoicePreview"
@@ -1059,20 +1059,19 @@ onMounted(() => {
 
                     <!-- kpis-->
                     <SecurePaymentsKPI :payment-method-options="paymentMethodOptions" />
+
+                    <Typography
+                        v-if="termsAndConditions"
+                        tag="div"
+                        variant="body-xs"
+                        color="subtle"
+                        class="sv-checkout__terms px-4 text-center"
+                        data-testid="checkout-terms"
+                    >
+                        <MarkdownText :source="termsAndConditions" />
+                    </Typography>
                 </div>
             </template>
-        </template>
-
-        <template v-if="termsAndConditions && !isPaid" #footer>
-            <Typography
-                tag="div"
-                variant="body-xs"
-                color="subtle"
-                class="sv-checkout__terms"
-                data-testid="checkout-terms"
-            >
-                <MarkdownText :source="termsAndConditions" />
-            </Typography>
         </template>
     </ContentWithAsideLayout>
 </template>

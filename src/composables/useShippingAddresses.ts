@@ -116,7 +116,10 @@ export function useShippingAddresses({
                 // Still new, so no order ships to it yet and it can take the correction in place.
                 progress.replacement = await service.updateShippingAddress({
                     shippingAddressId: progress.replacement.id,
-                    payload: { ...payload, reference: progress.replacement.reference },
+                    payload: {
+                        ...payload,
+                        reference: progress.replacement.reference ?? payload.reference,
+                    },
                 });
                 progress.storedDetails = detailsOf(payload);
             }

@@ -136,7 +136,7 @@ describe('useShippingAddresses', () => {
 
     describe('replacing an address', () => {
         const payload = { customer_id: 'cust_1', reference: 'ref_new' } as never;
-        const stored = address({ id: 'shad_new', status: 'ACTIVE' });
+        const stored = address({ id: 'shad_new', status: 'ACTIVE', reference: 'ref_1' });
 
         beforeEach(() => {
             mockService.createShippingAddress.mockResolvedValue(stored);

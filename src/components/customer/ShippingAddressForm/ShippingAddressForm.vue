@@ -26,6 +26,7 @@ import { useAddressFormats } from '@/components/customer/CheckoutForm/useAddress
 import HiddenLabelInput from '@/components/customer/HiddenLabelInput.vue';
 import { asOptionalText, formControlModel } from '@/utils/formControl';
 import { randomUuid } from '@/utils/randomUuid';
+import { toAddress } from '@/utils/shippingAddress';
 import type { CreateShippingAddressPayload, ShippingAddress } from '@/types/shippingAddress';
 
 const props = defineProps<ShippingAddressFormProps>();
@@ -59,16 +60,20 @@ const fromCustomer = (): Partial<CheckoutFormState> => ({
     }),
 });
 
-const fromAddress = ({ recipient, address }: ShippingAddress): Partial<CheckoutFormState> => {
+const fromAddress = ({
+    recipient = {},
+    ...stored
+}: ShippingAddress): Partial<CheckoutFormState> => {
+    const address = toAddress(stored.address);
     const country = isCountryCode(address.country) ? address.country : customerCountry;
 
     return {
-        type: recipient.type,
+        type: recipient.type ?? customer.type,
         email: recipient.email || customer.email,
         country,
         shippingCountry: country,
         companyLegalName: recipient.organization?.company_name,
-        shippingAttentionName: recipient.organization?.attention_name,
+        shippingAttentionName: recipient.organization?.attention_name ?? undefined,
         shippingFirstName: recipient.individual?.name?.first_name,
         shippingLastName: recipient.individual?.name?.last_name,
         shippingAddressLine1: address.line1,

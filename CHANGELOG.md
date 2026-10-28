@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- `@solvimon/solvimon-ui` is 1.20.2 and `@solvimon/solvimon-types` 1.10.0. Tab now moves through the fields of a modal instead of jumping back to its close button.
 - The buttons in the customer overview's section headers (**View all**, **Edit** and **Manage**) are extra small, a step down from small.
 
 ### Fixed

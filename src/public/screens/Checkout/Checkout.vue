@@ -95,12 +95,8 @@ const subscriptionId = portal.value?.init_pricing_plan_subscription?.pricing_pla
 const successRedirectUrl = portal.value?.init_pricing_plan_subscription?.success_url;
 // Trimmed so a note of only whitespace renders nothing rather than an empty gap in the column.
 const termsAndConditions = portal.value?.init_pricing_plan_subscription?.note?.trim() || undefined;
-// `use_shipping_addresses` is not in `@solvimon/solvimon-types` yet.
-const checkoutPortal = portal.value?.init_pricing_plan_subscription;
 const isShippingAddressRequired =
-    !!checkoutPortal &&
-    'use_shipping_addresses' in checkoutPortal &&
-    checkoutPortal.use_shipping_addresses === true;
+    portal.value?.init_pricing_plan_subscription?.use_shipping_addresses === true;
 
 const {
     validatedEmail,

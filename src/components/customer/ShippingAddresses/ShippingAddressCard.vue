@@ -9,6 +9,7 @@ import {
     useIntl,
 } from '@solvimon/solvimon-ui';
 import type { ShippingAddressCardProps } from './ShippingAddressCard.types';
+import { toAddress } from '@/utils/shippingAddress';
 
 const props = defineProps<ShippingAddressCardProps>();
 
@@ -16,7 +17,7 @@ const { $t } = useIntl();
 
 /** Who the parcel is for: the person, or the organization with whoever it is marked for. */
 const recipientName = computed(() => {
-    const { individual, organization } = props.address.recipient;
+    const { individual, organization } = props.address.recipient ?? {};
 
     if (organization) {
         return [organization.company_name, organization.attention_name].filter(Boolean).join(', ');
@@ -26,7 +27,7 @@ const recipientName = computed(() => {
 });
 
 const addressLines = computed(() => [
-    ...getAddressLines(props.address.address),
+    ...getAddressLines(toAddress(props.address.address)),
     ...(props.address.address.country ? [getCountryNameByCode(props.address.address.country)] : []),
 ]);
 </script>
@@ -52,12 +53,12 @@ const addressLines = computed(() => [
                 >{{ line }}</Typography
             >
             <Typography
-                v-if="address.recipient.phone_number && !compact"
+                v-if="address.recipient?.phone_number && !compact"
                 tag="span"
                 variant="body-sm"
                 color="secondary"
                 class="sv-shipping-address__phone"
-                >{{ address.recipient.phone_number }}</Typography
+                >{{ address.recipient?.phone_number }}</Typography
             >
         </div>
 

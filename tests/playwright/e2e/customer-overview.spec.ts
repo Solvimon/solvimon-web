@@ -377,7 +377,15 @@ test.describe('Customer overview', () => {
         });
 
         test('shows them for a subscription that ships, whatever its status', async ({ page }) => {
-            api = await mountLoaded(page, { subscriptions: [shippedSubscription('ENDED')] });
+            api = await mountLoaded(page, {
+                mocks: {
+                    // The active subscriptions first, then every status.
+                    subscriptions: [
+                        { body: collection([aSubscription()]) },
+                        { body: collection([shippedSubscription('ENDED')]) },
+                    ],
+                },
+            });
 
             await expect(customerOverview(page).shippingAddresses).toContainText('Damrak 1');
             const everyStatus = api
@@ -385,6 +393,13 @@ test.describe('Customer overview', () => {
                 .map(({ url }) => new URL(url).searchParams)
                 .find((params) => !params.has('statuses[]'));
             expect(everyStatus?.get('customer_id')).toBe(CUSTOMER_ID);
+        });
+
+        test('needs no further request when an active subscription ships', async ({ page }) => {
+            api = await mountLoaded(page, withShipping);
+
+            await expect(customerOverview(page).shippingAddresses).toContainText('Damrak 1');
+            expect(api.calls('subscriptions')).toHaveLength(1);
         });
 
         const HOME = aShippingAddress({ id: 'shad_home', isDefault: true });

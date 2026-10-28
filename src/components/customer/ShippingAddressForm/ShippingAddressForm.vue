@@ -13,8 +13,8 @@ import type { CountryCode } from '@solvimon/solvimon-types';
 import type { ShippingAddressFormProps } from './ShippingAddressForm.types';
 import CheckoutAddressFields from '@/components/customer/CheckoutForm/CheckoutAddressFields.vue';
 import type { CheckoutFormState } from '@/components/customer/CheckoutForm/CheckoutForm.types';
-import { getInitialState } from '@/components/customer/CheckoutForm/useCheckoutForm';
 import {
+    getInitialState,
     getRequiredAddressFields,
     toShippingAddressDetails,
 } from '@/components/customer/CheckoutForm/CheckoutForm.lib';

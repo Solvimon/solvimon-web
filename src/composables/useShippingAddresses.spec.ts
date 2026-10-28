@@ -54,6 +54,28 @@ describe('useShippingAddresses', () => {
         expect(mockService.getShippingAddresses).toHaveBeenCalledWith({ customerId: 'cust_1' });
     });
 
+    it('lists the default first when the others leave is_default out', async () => {
+        const { is_default: _omitted, ...withoutFlag } = address({
+            id: 'shad_newer',
+            created_at: '2026-09-01T00:00:00Z',
+        });
+        mockService.getShippingAddresses.mockResolvedValue({
+            data: [
+                withoutFlag,
+                address({
+                    id: 'shad_default',
+                    is_default: true,
+                    created_at: '2025-01-01T00:00:00Z',
+                }),
+            ],
+        });
+        const { items, fetchAll } = useShippingAddresses({ customerId: 'cust_1' });
+
+        await fetchAll();
+
+        expect(items.value.map(({ id }) => id)).toEqual(['shad_default', 'shad_newer']);
+    });
+
     it('lists only active addresses, whatever else the API returns', async () => {
         mockService.getShippingAddresses.mockResolvedValue({
             data: [
@@ -157,6 +179,20 @@ describe('useShippingAddresses', () => {
                 shippingAddressId: 'shad_old',
             });
             expect(mockService.getShippingAddresses).toHaveBeenCalledTimes(1);
+        });
+
+        it('keeps the description of the address it replaces', async () => {
+            const addresses = useShippingAddresses({ customerId: 'cust_1' });
+
+            await addresses.replace(
+                address({ id: 'shad_old', description: 'Office' }),
+                payload,
+                {},
+            );
+
+            expect(mockService.createShippingAddress).toHaveBeenCalledWith(
+                expect.objectContaining({ description: 'Office' }),
+            );
         });
 
         it('keeps the old address when the new one cannot be stored', async () => {

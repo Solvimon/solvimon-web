@@ -235,3 +235,39 @@ export const toCustomer = (
         },
     };
 };
+
+/** A complete form state, every field unset unless given. */
+export const getInitialState = (
+    initialState: Partial<CheckoutFormState> = {},
+): CheckoutFormState => {
+    return {
+        email: undefined,
+        country: undefined,
+        type: 'INDIVIDUAL',
+        companyLegalName: undefined,
+        firstName: undefined,
+        infix: undefined,
+        lastName: undefined,
+        addressLine1: undefined,
+        addressLine2: undefined,
+        postalCode: undefined,
+        city: undefined,
+        state: undefined,
+        companyVatNumber: undefined,
+        shippingAddressLine1: undefined,
+        shippingAddressLine2: undefined,
+        shippingPostalCode: undefined,
+        shippingCity: undefined,
+        shippingState: undefined,
+        shippingCountry: undefined,
+        shippingPhoneNumber: undefined,
+        shippingFirstName: undefined,
+        shippingLastName: undefined,
+        shippingAttentionName: undefined,
+        billingAddressSameAsShipping: true,
+        seatsValues: undefined,
+        unitsValues: undefined,
+        enabledPricingIds: undefined,
+        ...initialState,
+    };
+};

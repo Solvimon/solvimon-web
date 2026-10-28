@@ -15,7 +15,7 @@ const {
 } = vi.hoisted(() => ({
     subscriptionsState: {} as { items: { value: unknown[] }; error: { value: Error | null } },
     paymentMethodsState: {} as { items: { value: unknown[] } },
-    mockFetchAll: vi.fn(),
+    mockFetchAll: vi.fn(() => Promise.resolve()),
     mockFetchInitial: vi.fn(),
     mockFetchWalletBalances: vi.fn(),
     shippedState: { value: false },
@@ -273,10 +273,10 @@ describe('CustomerOverview — shipping addresses', () => {
         shippedState.value = false;
     });
 
-    it('finds out whether the customer has a subscription that ships', async () => {
+    it('finds out whether the customer has a subscription that ships, starting from the loaded ones', async () => {
         await mountOverview();
 
-        expect(mockCheckShipped).toHaveBeenCalled();
+        expect(mockCheckShipped).toHaveBeenCalledWith(subscriptionsState.items.value);
     });
 
     it('leaves the shipping addresses out for a customer without a subscription that ships', async () => {

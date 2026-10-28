@@ -208,6 +208,22 @@ describe('ShippingAddressesModal', () => {
         expect(title(wrapper)).toBe('Shipping addresses');
     });
 
+    it('stores the address once when save is confirmed again while it is being checked', async () => {
+        let finishChecking!: (payload: unknown) => void;
+        mockSubmit.mockReturnValueOnce(new Promise((resolve) => (finishChecking = resolve)));
+        const create = vi.fn().mockResolvedValue(address('new'));
+        const wrapper = mountComponent({ create });
+
+        await wrapper.find('.sv-shipping-addresses-modal__add').trigger('click');
+        await wrapper.find('.modal__confirm').trigger('click');
+        await wrapper.find('.modal__confirm').trigger('click');
+        finishChecking({ customer_id: 'cust_1' });
+        await flushPromises();
+
+        expect(mockSubmit).toHaveBeenCalledTimes(1);
+        expect(create).toHaveBeenCalledTimes(1);
+    });
+
     it('stores nothing while the form says something is missing', async () => {
         mockSubmit.mockResolvedValue(undefined);
         const create = vi.fn();

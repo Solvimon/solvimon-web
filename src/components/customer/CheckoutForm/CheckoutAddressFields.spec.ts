@@ -3,7 +3,7 @@ import { mount } from '@vue/test-utils';
 import { ErrorHandlingProvider, IntlProvider } from '@solvimon/solvimon-ui';
 import CheckoutAddressFields from './CheckoutAddressFields.vue';
 import type { CheckoutFormState } from './CheckoutForm.types';
-import { getInitialState } from './useCheckoutForm';
+import { getInitialState } from './CheckoutForm.lib';
 
 const mountFields = (props: { countryBeforeAddress?: boolean } = {}) =>
     mount(

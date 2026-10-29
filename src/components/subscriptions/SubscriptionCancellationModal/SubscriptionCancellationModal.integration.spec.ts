@@ -232,6 +232,17 @@ describe('SubscriptionCancellationModal', () => {
             );
         });
 
+        it('names the payment method without saying whether it is the default', () => {
+            const wrapper = mountComponent({
+                subscription: subscriptionWithPaymentMethod,
+                paymentMethod: { ...mockPaymentMethod, is_default: true },
+            });
+
+            const shown = wrapper.findComponent({ name: 'PaymentMethodStub' });
+
+            expect(shown.props('paymentMethod')).toMatchObject({ id: 'pmet_1', is_default: false });
+        });
+
         it('still lets the customer cancel without a payment method to show', () => {
             const wrapper = mountComponent({ subscription: subscriptionWithPaymentMethod });
 

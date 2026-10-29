@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- French: elements render in French for the `fr-FR` locale. Every message the SDK itself shows is translated. Labels drawn by `@solvimon/solvimon-ui` components — the invoice and invoice preview, the country select and the payment method cards among them — stay in English until the UI exports its French catalogue.
+- French: elements render in French for the `fr-FR` locale. This includes the labels drawn by `@solvimon/solvimon-ui` components, such as the invoice, the country select and the payment method cards.
 - An element accepts a portal object whose `authentication` is `SIGNED_TOKEN`, which carries a handle in `token` instead of a portal token. The element exchanges the handle at `POST /v1/portal/token` for a token that lasts as long as the link, with no refresh, and exchanges it again once when the API rejects that token. The handle is returned only when the portal URL is created, so pass on the `token` from the create response. Portal objects that sign in through identity work as before.
 - A link that has expired, was revoked or whose checkout session has closed shows the element's "no longer available" notice, and logs `PORTAL_URL_EXPIRED` or `PORTAL_URL_REVOKED` (error), or `CHECKOUT_SESSION_CLOSED` (warning, with the session's `status` in `context`). When the API cannot verify the link, the exchange is retried a few times before the element logs `PORTAL_TOKEN_UNAVAILABLE` (error) and offers a "Try again" button (`sv-portal-unverified`). These are new members of the exported `ErrorCode` and `WarnCode` unions.
 - A host that already exchanged the handle can pass the response it got, as it is, as `portalToken`, on the element or in `createScreen` / `createComponent`, and the element signs in with it instead of exchanging the handle again. When the API rejects that token, the element exchanges the handle. It is an object, so the token never becomes an HTML attribute of the element.
@@ -20,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The checkout screen shows the terms and conditions in the order summary column, centred under the secure payments line next to the pay button, instead of in a footer below both columns.
 - `ContentWithAsideLayout` no longer takes a `footer` slot; the checkout terms were its only content.
-- `@solvimon/solvimon-ui` is 1.20.2 and `@solvimon/solvimon-types` 1.10.0. Tab now moves through the fields of a modal instead of jumping back to its close button.
+- `@solvimon/solvimon-ui` is 1.22.0 and `@solvimon/solvimon-types` 1.10.0. Tab now moves through the fields of a modal instead of jumping back to its close button.
 - The buttons in the customer overview's section headers (**View all**, **Edit** and **Manage**) are extra small, a step down from small.
 
 ### Fixed

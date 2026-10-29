@@ -164,7 +164,7 @@
         "@formatjs/intl": "^3.1.8",
         "@playwright/test": "^1.64.1",
         "@solvimon/solvimon-types": "^1.10.0",
-        "@solvimon/solvimon-ui": "^1.20.2",
+        "@solvimon/solvimon-ui": "^1.22.0",
         "@stripe/stripe-js": "^9.8.0",
         "@types/node": "^22.10.2",
         "@typescript-eslint/parser": "^8.46.2",

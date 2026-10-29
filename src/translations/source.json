@@ -1508,12 +1508,8 @@
     "description": "Heading above the total of the invoice previewing a subscription change, replacing the shared preview’s \"Total due today\""
   },
   "subscription_management.title": {
-    "defaultMessage": "Manage {subject}",
-    "description": "Title for the manage subscription page, naming the pricing group being changed"
-  },
-  "subscription_management.title.default_subject": {
-    "defaultMessage": "subscription",
-    "description": "Stands in for the pricing group name in the manage subscription title when no group is known, e.g. \"Manage subscription\""
+    "defaultMessage": "Manage subscription",
+    "description": "Title for the manage subscription page"
   },
   "subscription_management.update_button.current_plan_label": {
     "defaultMessage": "Your current plan",

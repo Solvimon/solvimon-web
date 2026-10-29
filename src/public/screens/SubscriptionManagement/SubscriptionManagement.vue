@@ -159,29 +159,12 @@ const pricingGroup = computed(() => {
         .find((group) => Boolean(group));
 });
 
-/**
- * Names the group being changed — "Manage Credit packs". Falls back to the subscription itself
- * while it is still loading, or when the host did not name a pricing to manage.
- */
 const title = computed<string>(() =>
-    $t(
-        {
-            defaultMessage: 'Manage {subject}',
-            id: 'subscription_management.title',
-            description:
-                'Title for the manage subscription page, naming the pricing group being changed',
-        },
-        {
-            subject:
-                pricingGroup.value?.name ||
-                $t({
-                    defaultMessage: 'subscription',
-                    id: 'subscription_management.title.default_subject',
-                    description:
-                        'Stands in for the pricing group name in the manage subscription title when no group is known, e.g. "Manage subscription"',
-                }),
-        },
-    ),
+    $t({
+        defaultMessage: 'Manage subscription',
+        id: 'subscription_management.title',
+        description: 'Title for the manage subscription page',
+    }),
 );
 
 const enabledPricingIds = ref<Pricing['id'][]>([]);

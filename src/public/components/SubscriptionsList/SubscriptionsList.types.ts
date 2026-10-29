@@ -16,8 +16,7 @@ export type SubscriptionsListConfiguration = {
      * @default true
      */
     showViewDetailsButton?: boolean;
-    showUpgradeButton?: boolean;
-    showCancelButton?: boolean;
+    showManageButton?: boolean;
 };
 
 export interface SubscriptionsListProps {
@@ -33,5 +32,4 @@ export interface SubscriptionsListProps {
 
 export interface SubscriptionsListEmits {
     (e: 'load-more'): void;
-    (e: 'subscription-changed'): void;
 }

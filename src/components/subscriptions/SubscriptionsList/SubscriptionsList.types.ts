@@ -14,13 +14,11 @@ export interface SubscriptionsListProps {
     isLoadingMore?: boolean;
     showViewAllButton?: boolean;
     showViewDetailsButton?: boolean;
-    showUpgradeButton?: boolean;
-    showCancelButton?: boolean;
+    showManageButton?: boolean;
 }
 
 export interface SubscriptionsListEmits {
     (e: 'view-subscription-details', payload: { subscriptionId: string }): void;
     (e: 'view-all-subscriptions'): void;
-    (e: 'subscription-changed'): void;
     (e: 'load-more'): void;
 }

@@ -343,64 +343,17 @@ describe('SubscriptionManagement', () => {
     });
 
     describe('title', () => {
-        it('names the group the enabled pricing was chosen from', () => {
+        // The screen manages the subscription as a whole, plans and pricings alike.
+        it('is the same whichever group the enabled pricing was chosen from', () => {
             const wrapper = mountComponent({ currentPricingId: 'pri_1000' });
 
             expect(wrapper.find('.sv-subscription-management__title').text()).toBe(
-                'Manage Credit packs',
-            );
-        });
-
-        it('names the group of what the schedule has enabled when the host names no pricing', () => {
-            const wrapper = mountComponent();
-
-            expect(wrapper.find('.sv-subscription-management__title').text()).toBe(
-                'Manage Credit packs',
-            );
-        });
-
-        it('falls back to the generic title when nothing enabled belongs to a group', () => {
-            const wrapper = mountComponent({ subscription: subscriptionWithoutGroups });
-
-            expect(wrapper.find('.sv-subscription-management__title').text()).toBe(
                 'Manage subscription',
             );
         });
 
-        it('falls back when the pricing belongs to no group on the active schedule', () => {
-            const wrapper = mountComponent({ currentPricingId: 'pri_unknown' });
-
-            expect(wrapper.find('.sv-subscription-management__title').text()).toBe(
-                'Manage subscription',
-            );
-        });
-
-        it('falls back while the subscription is still loading', () => {
-            const wrapper = mountComponent({
-                currentPricingId: 'pri_1000',
-                subscription: null,
-            });
-
-            expect(wrapper.find('.sv-subscription-management__title').text()).toBe(
-                'Manage subscription',
-            );
-        });
-
-        it('ignores groups on a schedule that is not the active one', () => {
-            const endedSchedule = {
-                ...mockSubscription,
-                pricing_plan_schedule_infos: [
-                    {
-                        ...mockSubscription.pricing_plan_schedule_infos[0],
-                        end_at: '2026-02-01T00:00:00.000Z',
-                    },
-                ],
-            } as unknown as PricingPlanSubscriptionExpanded;
-
-            const wrapper = mountComponent({
-                currentPricingId: 'pri_1000',
-                subscription: endedSchedule,
-            });
+        it('is there while the subscription is still loading', () => {
+            const wrapper = mountComponent({ subscription: null });
 
             expect(wrapper.find('.sv-subscription-management__title').text()).toBe(
                 'Manage subscription',
@@ -674,15 +627,17 @@ describe('SubscriptionManagement', () => {
             ],
         } as unknown as PricingPlanSubscriptionExpanded;
 
-        it('names the group of a customized pricing', () => {
+        // Without the group the screen would have nothing to manage, and say so instead.
+        it('finds the group of a customized pricing the host names', () => {
             const wrapper = mountComponent({
                 subscription: customizedSubscription,
                 currentPricingId: 'pri_1000_custom',
             });
 
-            expect(wrapper.find('.sv-subscription-management__title').text()).toBe(
-                'Manage Credit packs',
+            expect(wrapper.find('.sv-subscription-management__customized-pricing').exists()).toBe(
+                true,
             );
+            expect(wrapper.find('.sv-subscription-management__empty-state').exists()).toBe(false);
         });
 
         it('says it cannot be changed here, in place of a form that would drop it', () => {
@@ -1014,7 +969,7 @@ describe('SubscriptionManagement', () => {
 
         it('keeps pricing the pricings while the current plan is kept', () => {
             const wrapper = mountComponent({
-                enabledPricingId: 'pri_1000',
+                currentPricingId: 'pri_1000',
                 planGroupOptions: planOptions,
             });
 
@@ -1024,7 +979,7 @@ describe('SubscriptionManagement', () => {
 
         it('stops previewing once another plan is picked', async () => {
             const wrapper = mountComponent({
-                enabledPricingId: 'pri_1000',
+                currentPricingId: 'pri_1000',
                 planGroupOptions: planOptions,
             });
             mockLoadPreview.mockClear();
@@ -1076,7 +1031,7 @@ describe('SubscriptionManagement', () => {
 
         it('offers to update the subscription once a pricing on the current plan is changed', () => {
             const wrapper = mountComponent({
-                enabledPricingId: 'pri_5000',
+                currentPricingId: 'pri_5000',
                 planGroupOptions: planOptions,
             });
 
@@ -1095,7 +1050,7 @@ describe('SubscriptionManagement', () => {
 
         it('moves the subscription to the plan that was picked', async () => {
             const wrapper = await pickPlan(
-                mountComponent({ enabledPricingId: 'pri_1000', planGroupOptions: planOptions }),
+                mountComponent({ currentPricingId: 'pri_1000', planGroupOptions: planOptions }),
                 'ppla_pro',
             );
 
@@ -1111,7 +1066,7 @@ describe('SubscriptionManagement', () => {
         it('commits a move on its own price, whatever the pricings on this plan cost', async () => {
             const wrapper = await pickPlan(
                 mountComponent({
-                    enabledPricingId: 'pri_1000',
+                    currentPricingId: 'pri_1000',
                     planGroupOptions: planOptions,
                     preview: { invoice: ref(undefined), error: ref(new Error('not priced')) },
                 }),
@@ -1160,7 +1115,7 @@ describe('SubscriptionManagement', () => {
 
         it('starts a new schedule instead when the plan is left alone', async () => {
             const wrapper = mountComponent({
-                enabledPricingId: 'pri_5000',
+                currentPricingId: 'pri_5000',
                 planGroupOptions: planOptions,
             });
             await flushPromises();
@@ -1173,7 +1128,7 @@ describe('SubscriptionManagement', () => {
 
         it('confirms the move by naming the plan it landed on', async () => {
             const wrapper = await pickPlan(
-                mountComponent({ enabledPricingId: 'pri_1000', planGroupOptions: planOptions }),
+                mountComponent({ currentPricingId: 'pri_1000', planGroupOptions: planOptions }),
                 'ppla_pro',
             );
 
@@ -1189,7 +1144,7 @@ describe('SubscriptionManagement', () => {
             mockChangeSubscriptionPlan.mockRejectedValue(new Error('nope'));
 
             const wrapper = await pickPlan(
-                mountComponent({ enabledPricingId: 'pri_1000', planGroupOptions: planOptions }),
+                mountComponent({ currentPricingId: 'pri_1000', planGroupOptions: planOptions }),
                 'ppla_pro',
             );
 

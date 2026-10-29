@@ -81,10 +81,12 @@ test.describe('Subscription management', () => {
             });
         });
 
-        test('names the group it is about', async ({ page }) => {
+        test('is titled after the subscription rather than the group being changed', async ({
+            page,
+        }) => {
             api = await mountLoaded(page);
 
-            await expect(subscriptionManagement(page).title).toHaveText('Manage Add-ons');
+            await expect(subscriptionManagement(page).title).toHaveText('Manage subscription');
         });
 
         test('renders what the change comes to', async ({ page }) => {
@@ -354,7 +356,7 @@ test.describe('Subscription management', () => {
             await expect(subscriptionManagement(page).updateButton).toBeDisabled();
         });
 
-        test('falls back to a generic title when there is no group to name', async ({ page }) => {
+        test('keeps its title when the subscription cannot be loaded', async ({ page }) => {
             api = await mountSubscriptionManagement(page, {
                 subscription: aManageableSubscription(),
                 mocks: { subscription: { status: 404, body: { message: 'Not found' } } },

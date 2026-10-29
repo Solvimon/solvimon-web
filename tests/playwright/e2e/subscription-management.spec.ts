@@ -559,4 +559,54 @@ test.describe('Subscription management', () => {
             await expect(page.getByRole('radio', { name: /scale plan/i })).toBeChecked();
         });
     });
+
+    // ─── Cancelling ───────────────────────────────────────────────────────────
+
+    test.describe('cancelling', () => {
+        test('cancels at the end of the billing period once the modal confirms it', async ({
+            page,
+        }) => {
+            api = await mountLoaded(page, {
+                mocks: {
+                    subscription: [
+                        { body: aManageableSubscription() },
+                        { body: aManageableSubscription({ cancelled: true }) },
+                    ],
+                    cancelSubscription: { body: aManageableSubscription({ cancelled: true }) },
+                },
+            });
+            const ui = subscriptionManagement(page);
+
+            await ui.cancelButton.click();
+            await page
+                .getByRole('dialog')
+                .getByRole('button', { name: /cancel subscription/i })
+                .click();
+
+            const cancellation = await api.waitForCall('cancelSubscription');
+            expect(cancellation.body).toEqual({ type: 'NEXT_BILLING_PERIOD' });
+            await api.waitForCall('subscription', 2);
+            await expect(ui.cancellationSuccess).toBeVisible();
+            await expect(ui.renewButton).toBeVisible();
+            await expect(ui.cancelButton).toHaveCount(0);
+        });
+
+        test('renews a cancellation that has yet to take effect', async ({ page }) => {
+            api = await mountLoaded(page, {
+                subscription: aManageableSubscription({ cancelled: true }),
+                mocks: { cancelSubscription: { body: aManageableSubscription() } },
+            });
+            const ui = subscriptionManagement(page);
+
+            await ui.renewButton.click();
+            await page
+                .getByRole('dialog')
+                .getByRole('button', { name: /renew subscription/i })
+                .click();
+
+            const renewal = await api.waitForCall('cancelSubscription');
+            expect(renewal.body).toEqual({ type: 'UNDO' });
+            await expect(ui.cancellationSuccess).toBeVisible();
+        });
+    });
 });

@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, defineAsyncComponent, ref, watch } from 'vue';
 import {
+    Alert,
     Button,
     ErrorNotification,
     Typography,
@@ -17,6 +18,8 @@ import type { SubscriptionManagementProps } from './SubscriptionManagement.types
 import { ContentWithAsideLayout } from '@/layouts';
 import { useActionDispatchProvider, useLogger, usePortal } from '@/components/providers';
 import { useSubscription } from '@/composables/useSubscription';
+import { useSubscriptionActions } from '@/composables/useSubscriptionActions';
+import { useCustomer } from '@/composables/useCustomer';
 import { usePaymentMethods } from '@/composables/usePaymentMethods';
 import { usePaymentMethodOptions } from '@/composables/usePaymentMethodOptions';
 import { useLoadInitialData } from '@/composables/useLoadInitialData';
@@ -27,7 +30,10 @@ import {
     type SubscriptionPlanOption,
 } from '@/composables/useSubscriptionPlanGroup';
 import { createPricingPlanSchedulesService } from '@/services/pricingPlanSchedules';
-import { createSubscriptionsService } from '@/services/subscriptions';
+import {
+    createSubscriptionsService,
+    type SubscriptionCancellationVariant,
+} from '@/services/subscriptions';
 import SecurePaymentsKPI from '@/components/payments/SecurePaymentsKPI/SecurePaymentsKPI.vue';
 import SubscriptionManagementForm from '@/components/subscriptions/SubscriptionManagement/SubscriptionManagementForm.vue';
 import SubscriptionManagementSummary from '@/components/subscriptions/SubscriptionManagement/SubscriptionManagementSummary.vue';
@@ -42,6 +48,11 @@ import {
 import { hasCustomizedPricings, withScheduleOverrides } from '@/utils/pricingPlanScheduleOverrides';
 
 const props = defineProps<SubscriptionManagementProps>();
+
+const SubscriptionCancellationModal = defineAsyncComponent(
+    () =>
+        import('@/components/subscriptions/SubscriptionCancellationModal/SubscriptionCancellationModal.vue'),
+);
 
 /**
  * The submit button sits in the aside, outside the form, so it names the form — which is also what
@@ -443,6 +454,72 @@ const billingPeriod = computed(
         subscription.value?.billing_period,
 );
 
+const {
+    isCancellable,
+    isRenewable,
+    pendingVariant,
+    cancel,
+    renew,
+    dismiss: handleDismissCancellation,
+} = useSubscriptionActions({ subscription });
+
+/**
+ * The confirmation modal, and the customer whose timezone it dates the change in, are loaded the
+ * first time the customer asks for it: most visits to this screen are for a change, not to cancel.
+ */
+const hasRequestedCancellation = ref(false);
+const { customer, get: fetchCustomer } = useCustomer({ customerId: portal.value.customer_id });
+
+const requestCancellation = (variant: SubscriptionCancellationVariant) => {
+    if (!hasRequestedCancellation.value) {
+        hasRequestedCancellation.value = true;
+        void fetchCustomer.execute();
+    }
+
+    if (variant === 'RENEW') renew();
+    else cancel();
+};
+
+/** The method the subscription is charged to, which the modal names in its summary. */
+const subscriptionPaymentMethod = computed(() =>
+    paymentMethods.value.find(({ id }) => id === subscription.value?.payment_method_id),
+);
+
+/**
+ * What the customer just did, kept after the modal closes so the screen can confirm it. Cleared when
+ * either button is used again, so a second confirmation replaces the first rather than stacking.
+ */
+const confirmedVariant = ref<SubscriptionCancellationVariant | undefined>();
+
+watch(pendingVariant, (variant) => {
+    if (variant) confirmedVariant.value = undefined;
+});
+
+/** The subscription on screen is stale once it is cancelled or renewed, which is what flips the button. */
+const handleCancellationConfirmed = () => {
+    confirmedVariant.value = pendingVariant.value;
+    void fetchSubscription();
+};
+
+const cancellationSuccessMessage = computed<string | undefined>(() => {
+    if (!confirmedVariant.value) return undefined;
+
+    return confirmedVariant.value === 'RENEW'
+        ? $t({
+              defaultMessage: 'Your subscription has been renewed.',
+              id: 'subscription_management.renew_success',
+              description:
+                  'Confirmation shown on the manage subscription screen after a cancellation has been undone',
+          })
+        : $t({
+              defaultMessage:
+                  'Your subscription has been cancelled. You keep access until the end of the billing period.',
+              id: 'subscription_management.cancel_success',
+              description:
+                  'Confirmation shown on the manage subscription screen after a subscription has been cancelled',
+          });
+});
+
 /** What the content column shows, in order of precedence. */
 const contentState = computed<
     'updated' | 'loading' | 'load-error' | 'customized' | 'form' | 'empty'
@@ -474,14 +551,63 @@ const submitButtonAttrs = computed(() => {
 <template>
     <ContentWithAsideLayout class="sv-subscription-management sv-root sv-screen">
         <template #header>
-            <div class="sv-subscription-management__header">
-                <Typography variant="heading-2" tag="h1" class="sv-subscription-management__title">
+            <div
+                class="sv-subscription-management__header flex flex-col gap-2 md:flex-row md:items-center"
+            >
+                <Typography
+                    variant="heading-2"
+                    tag="h1"
+                    class="sv-subscription-management__title grow"
+                >
                     {{ title }}
                 </Typography>
+
+                <template v-if="contentState !== 'updated'">
+                    <Button
+                        v-if="isRenewable"
+                        intent="secondary"
+                        class="sv-action sv-action--secondary sv-subscription-management__renew w-full md:w-auto"
+                        type="button"
+                        @click="requestCancellation('RENEW')"
+                    >
+                        {{
+                            $t({
+                                defaultMessage: 'Renew subscription',
+                                id: 'subscription_management.renew_button.label',
+                                description:
+                                    'Label of the button on the manage subscription screen that undoes a pending cancellation',
+                            })
+                        }}
+                    </Button>
+
+                    <Button
+                        v-else-if="isCancellable"
+                        intent="secondary"
+                        class="sv-action sv-action--secondary sv-subscription-management__cancel w-full md:w-auto"
+                        type="button"
+                        @click="requestCancellation('CANCEL')"
+                    >
+                        {{
+                            $t({
+                                defaultMessage: 'Cancel subscription',
+                                id: 'subscription_management.cancel_button.label',
+                                description:
+                                    'Label of the button on the manage subscription screen that cancels the subscription',
+                            })
+                        }}
+                    </Button>
+                </template>
             </div>
         </template>
 
         <template #content>
+            <Alert
+                v-if="cancellationSuccessMessage"
+                class="sv-subscription-management__cancellation-success"
+                type="success"
+                :title="cancellationSuccessMessage"
+            />
+
             <SubscriptionManagementSuccess
                 v-if="contentState === 'updated'"
                 class="sv-subscription-management__success"
@@ -640,6 +766,17 @@ const submitButtonAttrs = computed(() => {
                     />
                 </div>
             </template>
+
+            <SubscriptionCancellationModal
+                v-if="hasRequestedCancellation"
+                :show-modal="Boolean(pendingVariant)"
+                :variant="pendingVariant"
+                :subscription="subscription"
+                :customer="customer"
+                :payment-method="subscriptionPaymentMethod"
+                @confirmed="handleCancellationConfirmed"
+                @close="handleDismissCancellation"
+            />
         </template>
     </ContentWithAsideLayout>
 </template>

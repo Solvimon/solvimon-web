@@ -727,25 +727,17 @@
     "defaultMessage": "Pay",
     "description": "The label for the pay invoice button"
   },
-  "customer.subscriptions_block.cancel_button_label": {
-    "defaultMessage": "Cancel",
-    "description": "The label for the cancel button on a subscription in the subscriptions block"
+  "customer.subscriptions_block.manage_button_label": {
+    "defaultMessage": "Manage",
+    "description": "The label for the button that opens the management of a subscription in the subscriptions block"
   },
   "customer.subscriptions_block.next_billing_date": {
     "defaultMessage": "Next billing date",
     "description": "The label for the next billing date"
   },
-  "customer.subscriptions_block.renew_button_label": {
-    "defaultMessage": "Renew",
-    "description": "The label for the renew button on a cancelled subscription in the subscriptions block"
-  },
   "customer.subscriptions_block.show_details_button_label": {
     "defaultMessage": "Subscription details",
     "description": "The label for the subscription details button in the subscriptions block"
-  },
-  "customer.subscriptions_block.upgrade_button_label": {
-    "defaultMessage": "Upgrade",
-    "description": "The label for the upgrade button on a subscription in the subscriptions block"
   },
   "customer_overview.billing_information_block.edit_button_label": {
     "defaultMessage": "Edit",
@@ -1419,6 +1411,14 @@
     "defaultMessage": "Subscription details",
     "description": "Title for the subscription details page"
   },
+  "subscription_management.cancel_button.label": {
+    "defaultMessage": "Cancel subscription",
+    "description": "Label of the button on the manage subscription screen that cancels the subscription"
+  },
+  "subscription_management.cancel_success": {
+    "defaultMessage": "Your subscription has been cancelled. You keep access until the end of the billing period.",
+    "description": "Confirmation shown on the manage subscription screen after a subscription has been cancelled"
+  },
   "subscription_management.customized_pricing.message": {
     "defaultMessage": "Please contact support to change it.",
     "description": "Message shown on the manage subscription screen when the subscription has pricing customized for it, which cannot be changed here"
@@ -1474,6 +1474,14 @@
   "subscription_management.plan_selector.title": {
     "defaultMessage": "Pick your plan",
     "description": "Heading above the plans a subscription can be moved between"
+  },
+  "subscription_management.renew_button.label": {
+    "defaultMessage": "Renew subscription",
+    "description": "Label of the button on the manage subscription screen that undoes a pending cancellation"
+  },
+  "subscription_management.renew_success": {
+    "defaultMessage": "Your subscription has been renewed.",
+    "description": "Confirmation shown on the manage subscription screen after a cancellation has been undone"
   },
   "subscription_management.success.message": {
     "defaultMessage": "Your {subject} has been changed. Please be aware that it can take some time to reflect this change in your subscription.",

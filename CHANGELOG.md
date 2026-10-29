@@ -45,6 +45,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- The cancellation modal no longer marks the subscription's payment method as the customer's default; whether it is has no bearing on cancelling or renewing.
 - The checkout's toggles are one size smaller (`sm`), and its pay button is `md` (40px) instead of `lg` (48px).
 - The checkout form's placeholders lose their trailing "...", the billing country select says "Billing country" until one is picked, and its fields sit 8px apart and its sections 16px apart.
 - Moved to `@solvimon/solvimon-ui` 1.19.0, for its phone number input and fields that keep their label for screen readers only.

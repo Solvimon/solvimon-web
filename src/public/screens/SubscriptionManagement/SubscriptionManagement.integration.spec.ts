@@ -15,6 +15,7 @@ const {
     mockLoadPlanChangePreview,
     mockResetPlanChangePreview,
     mockGet,
+    mockFetchCustomer,
     mockFetchAll,
     mockDispatchAction,
     mockCreatePricingPlanSchedule,
@@ -31,6 +32,7 @@ const {
     mockLoadPlanChangePreview: vi.fn(),
     mockResetPlanChangePreview: vi.fn(),
     mockGet: vi.fn(),
+    mockFetchCustomer: vi.fn(),
     mockFetchAll: vi.fn(),
     mockDispatchAction: vi.fn(),
     mockCreatePricingPlanSchedule: vi.fn(),
@@ -60,6 +62,38 @@ vi.mock('@/composables/usePaymentMethodOptions', () => ({
 vi.mock('@/composables/useSubscriptionUpgradePreview', () => ({
     useSubscriptionUpgradePreview: mockUseUpgradePreview,
 }));
+
+vi.mock('@/composables/useCustomer', async () => {
+    const { ref } = await import('vue');
+
+    return {
+        useCustomer: () => ({
+            customer: ref({ id: 'cus_123', timezone: 'Europe/Amsterdam' }),
+            get: { execute: mockFetchCustomer },
+        }),
+    };
+});
+
+// Confirms and carries out the cancellation itself; its own spec covers that. Loaded with
+// `import()`, which only unwraps `default` from a module that says it is one.
+vi.mock(
+    '@/components/subscriptions/SubscriptionCancellationModal/SubscriptionCancellationModal.vue',
+    () => ({
+        __esModule: true,
+        default: defineComponent({
+            name: 'SubscriptionCancellationModal',
+            props: {
+                showModal: Boolean,
+                variant: String,
+                subscription: Object,
+                customer: Object,
+                paymentMethod: Object,
+            },
+            emits: ['confirmed', 'close'],
+            setup: () => () => h('div', { class: 'sv-subscription-cancellation-modal-stub' }),
+        }),
+    }),
+);
 
 vi.mock('@/composables/useSubscriptionPlanChangePreview', () => ({
     useSubscriptionPlanChangePreview: mockUsePlanChangePreview,
@@ -1144,6 +1178,102 @@ describe('SubscriptionManagement', () => {
                 id: 'ppsu_1',
                 pricingPlanId: 'ppla_pro',
             });
+        });
+    });
+
+    describe('cancelling', () => {
+        const runningSubscription = {
+            ...mockSubscription,
+            status: 'ACTIVE',
+            type: 'BILLING',
+        } as unknown as PricingPlanSubscriptionExpanded;
+
+        const cancelledSubscription = {
+            ...runningSubscription,
+            inactive_periods: [{ type: 'CANCEL', start_at: '2099-05-01T00:00:00.000Z' }],
+        } as unknown as PricingPlanSubscriptionExpanded;
+
+        const findModal = (wrapper: ReturnType<typeof mountComponent>) =>
+            wrapper.findComponent({ name: 'SubscriptionCancellationModal' });
+
+        it('offers to cancel a running subscription', () => {
+            const wrapper = mountComponent({ subscription: runningSubscription });
+
+            expect(wrapper.find('.sv-subscription-management__cancel').text()).toBe(
+                'Cancel subscription',
+            );
+            expect(wrapper.find('.sv-subscription-management__renew').exists()).toBe(false);
+        });
+
+        it('offers to renew a subscription whose cancellation has yet to take effect', () => {
+            const wrapper = mountComponent({ subscription: cancelledSubscription });
+
+            expect(wrapper.find('.sv-subscription-management__renew').text()).toBe(
+                'Renew subscription',
+            );
+            expect(wrapper.find('.sv-subscription-management__cancel').exists()).toBe(false);
+        });
+
+        it('loads neither the modal nor the customer until the customer asks to cancel', () => {
+            const wrapper = mountComponent({ subscription: runningSubscription });
+
+            expect(findModal(wrapper).exists()).toBe(false);
+            expect(mockFetchCustomer).not.toHaveBeenCalled();
+        });
+
+        it('confirms the cancellation in the modal, dated for the customer', async () => {
+            const wrapper = mountComponent({ subscription: runningSubscription });
+
+            await wrapper.find('.sv-subscription-management__cancel').trigger('click');
+            await flushPromises();
+
+            const modal = findModal(wrapper);
+            expect(modal.props('showModal')).toBe(true);
+            expect(modal.props('variant')).toBe('CANCEL');
+            expect(modal.props('paymentMethod')).toEqual(savedPaymentMethod);
+            expect(mockFetchCustomer).toHaveBeenCalledTimes(1);
+            expect(modal.props('customer')).toEqual({
+                id: 'cus_123',
+                timezone: 'Europe/Amsterdam',
+            });
+        });
+
+        it('confirms a renewal in the same modal', async () => {
+            const wrapper = mountComponent({ subscription: cancelledSubscription });
+
+            await wrapper.find('.sv-subscription-management__renew').trigger('click');
+            await flushPromises();
+
+            expect(findModal(wrapper).props('variant')).toBe('RENEW');
+        });
+
+        it('reloads the subscription and says so once the cancellation is confirmed', async () => {
+            const wrapper = mountComponent({ subscription: runningSubscription });
+            await wrapper.find('.sv-subscription-management__cancel').trigger('click');
+            await flushPromises();
+            mockGet.mockClear();
+
+            findModal(wrapper).vm.$emit('confirmed');
+            await flushPromises();
+
+            expect(mockGet).toHaveBeenCalled();
+            expect(wrapper.find('.sv-subscription-management__cancellation-success').exists()).toBe(
+                true,
+            );
+        });
+
+        it('closes the modal without changing anything when it is dismissed', async () => {
+            const wrapper = mountComponent({ subscription: runningSubscription });
+            await wrapper.find('.sv-subscription-management__cancel').trigger('click');
+            await flushPromises();
+
+            findModal(wrapper).vm.$emit('close');
+            await flushPromises();
+
+            expect(findModal(wrapper).props('showModal')).toBe(false);
+            expect(wrapper.find('.sv-subscription-management__cancellation-success').exists()).toBe(
+                false,
+            );
         });
     });
 });

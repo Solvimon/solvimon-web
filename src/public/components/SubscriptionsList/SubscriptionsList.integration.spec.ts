@@ -81,8 +81,7 @@ describe('SubscriptionsList component', () => {
             maxItems?: number;
             showViewAllButton?: boolean;
             showViewDetailsButton?: boolean;
-            showUpgradeButton?: boolean;
-            showCancelButton?: boolean;
+            showManageButton?: boolean;
         };
         isLoading?: boolean;
         hasError?: boolean;
@@ -307,73 +306,50 @@ describe('SubscriptionsList component', () => {
         });
     });
 
-    describe('upgrade button', () => {
+    describe('manage button', () => {
         it('is rendered by default', () => {
             const wrapper = mountComponent();
 
-            expect(wrapper.text()).toContain('Upgrade');
+            expect(wrapper.find('.sv-subscriptions-list__item-manage').text()).toBe('Manage');
         });
 
-        it('is not rendered when showUpgradeButton is false', () => {
+        it('is not rendered when showManageButton is false', () => {
             const wrapper = mountComponent({
-                configuration: { showUpgradeButton: false },
+                configuration: { showManageButton: false },
             });
 
-            expect(wrapper.text()).not.toContain('Upgrade');
+            expect(wrapper.find('.sv-subscriptions-list__item-manage').exists()).toBe(false);
         });
 
         // The management screen is a flow of the host's own, so the card asks for it rather than
         // navigating itself.
         it('dispatches the manage subscription action when clicked', async () => {
             const wrapper = mountComponent({
-                subscriptions: [createSubscription({ id: 'sub_upgrade' })],
+                subscriptions: [createSubscription({ id: 'sub_manage' })],
             });
 
-            await getButtonByText(wrapper, 'Upgrade').trigger('click');
+            await getButtonByText(wrapper, 'Manage').trigger('click');
 
             expect(mockDispatchAction).toHaveBeenCalledWith({
                 action: 'manage-subscription',
-                data: { subscriptionId: 'sub_upgrade' },
+                data: { subscriptionId: 'sub_manage' },
             });
         });
-    });
 
-    describe('cancel button', () => {
-        it('is rendered for a running subscription', () => {
-            const wrapper = mountComponent();
-
-            expect(wrapper.text()).toContain('Cancel');
-        });
-
-        it('is not rendered when showCancelButton is false', () => {
-            const wrapper = mountComponent({
-                configuration: { showCancelButton: false },
-            });
-
-            expect(wrapper.text()).not.toContain('Cancel');
-        });
-
-        // A cancellation still to take effect can only be taken back, not made again.
-        it('is replaced by renew once the subscription has been cancelled', () => {
+        // Cancelling and renewing are on the manage subscription screen the button opens.
+        it('is the only way the card changes the subscription', () => {
             const wrapper = mountComponent({
                 subscriptions: [
+                    createSubscription(),
                     createSubscription({
+                        id: 'sub_cancelled',
                         inactivePeriods: [{ type: 'CANCEL', start_at: '2099-05-01T00:00:00.000Z' }],
                     }),
                 ],
             });
 
-            expect(wrapper.text()).toContain('Renew');
-            expect(wrapper.text()).not.toContain('Cancel');
-        });
-
-        // Cancelling is confirmed in a modal and carried out by the SDK, so it is not dispatched.
-        it('opens the cancellation modal rather than dispatching an action', async () => {
-            const wrapper = mountComponent();
-
-            await getButtonByText(wrapper, 'Cancel').trigger('click');
-
-            expect(mockDispatchAction).not.toHaveBeenCalled();
+            expect(wrapper.find('.sv-subscriptions-list__item-cancel').exists()).toBe(false);
+            expect(wrapper.find('.sv-subscriptions-list__item-renew').exists()).toBe(false);
         });
     });
 });

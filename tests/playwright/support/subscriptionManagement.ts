@@ -17,8 +17,11 @@ import {
 } from './fixtures';
 
 /** A plan with a group the customer can move between, which is what this screen changes. */
-export const aManageableSubscription = (): Json =>
+export const aManageableSubscription = ({
+    cancelled = false,
+}: { cancelled?: boolean } = {}): Json =>
     aSubscription({
+        cancelled,
         addons: [
             { pricingId: 'pri_small', name: 'Small pack', preselected: true },
             { pricingId: 'pri_large', name: 'Large pack' },
@@ -93,6 +96,9 @@ export function subscriptionManagement(page: Page) {
         planSelector: page.locator('.sv-subscription-management-form__plan'),
         planChangeSummary: page.locator('.sv-subscription-management__plan-change-summary'),
         updateButton: page.locator('.sv-subscription-management__update'),
+        cancelButton: page.locator('.sv-subscription-management__cancel'),
+        renewButton: page.locator('.sv-subscription-management__renew'),
+        cancellationSuccess: page.locator('.sv-subscription-management__cancellation-success'),
         updateError: page.locator('.sv-subscription-management__update-error'),
         success: page.locator('.sv-subscription-management__success'),
         doneButton: page.locator('.sv-subscription-management__done'),

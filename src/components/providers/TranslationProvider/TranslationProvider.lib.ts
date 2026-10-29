@@ -45,9 +45,7 @@ const UI_LOCALE_IMPORTS: Record<TranslatedLocale, LocaleLoader> = {
     'nl-NL': () => import('@solvimon/solvimon-ui/translations/nl-NL'),
     'de-DE': () => import('@solvimon/solvimon-ui/translations/de-DE'),
     'it-IT': () => import('@solvimon/solvimon-ui/translations/it-IT'),
-    // The UI does not export its French catalogue yet, so its own components keep their en-US
-    // defaults until it does; everything the SDK says is French already.
-    'fr-FR': () => Promise.resolve({ default: {} }),
+    'fr-FR': () => import('@solvimon/solvimon-ui/translations/fr-FR'),
 };
 
 export async function loadLocaleMessages(locale: string, logger: Logger): Promise<IntlMessages> {

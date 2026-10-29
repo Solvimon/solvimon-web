@@ -80,11 +80,11 @@ describe('loadLocaleMessages', () => {
         });
     });
 
-    // The UI does not export a French catalogue yet, so French is the SDK's own messages alone.
-    it("loads the sdk's french messages", async () => {
+    it('loads the french messages of both the ui and the sdk', async () => {
         const messages = await loadLocaleMessages('fr-FR', logger);
 
         expect(messages['checkout.pay_and_subscribe_button.label']).toBe('Payer et s’abonner');
+        expect(messages['invoice.summaryTitle']).toBe('Résumé de la facture');
         expect(logger.warn).not.toHaveBeenCalled();
     });
 

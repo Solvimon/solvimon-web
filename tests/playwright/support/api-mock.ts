@@ -44,6 +44,10 @@ export const ENDPOINTS = {
         path: /^\/v1\/portal\/pricing-plan-schedules\/[^/]+\/on-demand-pricing-items$/,
     },
     createPricingPlanSchedule: { method: 'POST', path: '/v1/portal/pricing-plan-schedules' },
+    setSubscriptionPaymentMethod: {
+        method: 'POST',
+        path: /^\/v1\/portal\/pricing-plan-subscriptions\/[^/]+\/update-payment-method$/,
+    },
     changeSubscriptionPlan: {
         method: 'POST',
         path: /^\/v1\/portal\/pricing-plan-subscriptions\/[^/]+\/change-plan$/,

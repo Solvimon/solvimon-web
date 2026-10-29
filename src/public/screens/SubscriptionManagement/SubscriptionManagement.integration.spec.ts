@@ -20,6 +20,7 @@ const {
     mockDispatchAction,
     mockCreatePricingPlanSchedule,
     mockChangeSubscriptionPlan,
+    mockSetSubscriptionPaymentMethod,
     mockUsePlanGroup,
     mockLoadPlanGroup,
 } = vi.hoisted(() => ({
@@ -37,12 +38,16 @@ const {
     mockDispatchAction: vi.fn(),
     mockCreatePricingPlanSchedule: vi.fn(),
     mockChangeSubscriptionPlan: vi.fn(),
+    mockSetSubscriptionPaymentMethod: vi.fn(),
     mockUsePlanGroup: vi.fn(),
     mockLoadPlanGroup: vi.fn(),
 }));
 
 vi.mock('@/services/subscriptions', () => ({
-    createSubscriptionsService: () => ({ changeSubscriptionPlan: mockChangeSubscriptionPlan }),
+    createSubscriptionsService: () => ({
+        changeSubscriptionPlan: mockChangeSubscriptionPlan,
+        setSubscriptionPaymentMethod: mockSetSubscriptionPaymentMethod,
+    }),
 }));
 
 vi.mock('@/composables/useSubscriptionPlanGroup', () => ({
@@ -73,6 +78,17 @@ vi.mock('@/composables/useCustomer', async () => {
         }),
     };
 });
+
+// Stores the method through the payment gateway; its own spec covers that.
+vi.mock('@/components/payments/AddPaymentMethodModal/AddPaymentMethodModal.vue', () => ({
+    __esModule: true,
+    default: defineComponent({
+        name: 'AddPaymentMethodModal',
+        props: { showModal: Boolean, customer: Object, subscription: Object, subTitle: String },
+        emits: ['stored', 'failure', 'close'],
+        setup: () => () => h('div', { class: 'sv-add-payment-method-modal-stub' }),
+    }),
+}));
 
 // Confirms and carries out the cancellation itself; its own spec covers that. Loaded with
 // `import()`, which only unwraps `default` from a module that says it is one.
@@ -137,13 +153,15 @@ vi.mock('@/components/subscriptions/SubscriptionManagement/SubscriptionManagemen
             'update:enabledPricingIds',
             'update:paymentMethodId',
             'update:pricingPlanId',
+            'add-payment-method',
         ],
-        // The real form opens on a payment method of its own accord, which the screen leans on.
+        // The real form opens on a payment method of its own accord when the screen has not
+        // picked one, which the screen leans on.
         setup: (props, { emit }) => {
             onMounted(() => {
                 const [first] = props.paymentMethods as { id: string }[];
 
-                if (first) {
+                if (first && !props.paymentMethodId) {
                     emit('update:paymentMethodId', first.id);
                 }
             });
@@ -515,16 +533,34 @@ describe('SubscriptionManagement', () => {
     });
 
     describe('payment method', () => {
-        const methodsOffered = (wrapper: ReturnType<typeof mountComponent>) =>
-            wrapper.findComponent({ name: 'SubscriptionManagementForm' }).props('paymentMethods');
+        const otherPaymentMethod = { ...savedPaymentMethod, id: 'pm_other' } as PaymentMethod;
 
-        it("offers only the subscription's own method, since that is what the API charges", () => {
+        const findForm = (wrapper: ReturnType<typeof mountComponent>) =>
+            wrapper.findComponent({ name: 'SubscriptionManagementForm' });
+
+        const pickPaymentMethod = async (
+            wrapper: ReturnType<typeof mountComponent>,
+            paymentMethodId: string,
+        ) => {
+            findForm(wrapper).vm.$emit('update:paymentMethodId', paymentMethodId);
+            await flushPromises();
+        };
+
+        const update = async (wrapper: ReturnType<typeof mountComponent>) => {
+            await wrapper.find('.sv-subscription-management__update').trigger('click');
+            await flushPromises();
+        };
+
+        it("offers every stored method the API can charge, not only the subscription's own", () => {
             const wrapper = mountComponent({
                 enabledPricingId: 'pri_5000',
-                paymentMethods: [{ ...savedPaymentMethod, id: 'pm_other' }, savedPaymentMethod],
+                paymentMethods: [otherPaymentMethod, savedPaymentMethod],
             });
 
-            expect(methodsOffered(wrapper)).toEqual([savedPaymentMethod]);
+            expect(findForm(wrapper).props('paymentMethods')).toEqual([
+                otherPaymentMethod,
+                savedPaymentMethod,
+            ]);
         });
 
         it.each([
@@ -533,44 +569,107 @@ describe('SubscriptionManagement', () => {
             ['is prepaid', { type: 'PREPAID' }],
             ['is of an unknown type', { type: 'UNKNOWN' }],
             ['belongs to another customer', { customer_id: 'cus_other' }],
-        ])('offers nothing when the method %s, since the API refuses it', async (_, change) => {
+        ])('leaves out a method that %s, since the API refuses it', async (_, change) => {
+            const refused = { ...otherPaymentMethod, ...change } as unknown as PaymentMethod;
             const wrapper = mountComponent({
                 enabledPricingId: 'pri_5000',
-                paymentMethods: [{ ...savedPaymentMethod, ...change } as unknown as PaymentMethod],
+                paymentMethods: [refused, savedPaymentMethod],
             });
             await flushPromises();
 
-            expect(methodsOffered(wrapper)).toEqual([]);
+            expect(findForm(wrapper).props('paymentMethods')).toEqual([savedPaymentMethod]);
+        });
+
+        it("opens on the subscription's own method, whichever is listed first", async () => {
+            const wrapper = mountComponent({
+                enabledPricingId: 'pri_5000',
+                paymentMethods: [otherPaymentMethod, savedPaymentMethod],
+            });
+            await flushPromises();
+
+            expect(findForm(wrapper).props('paymentMethodId')).toBe('pm_saved');
+        });
+
+        it('cannot be committed without a method the API can charge', async () => {
+            const wrapper = mountComponent({
+                enabledPricingId: 'pri_5000',
+                paymentMethods: [{ ...savedPaymentMethod, status: 'INACTIVE' } as PaymentMethod],
+            });
+            await flushPromises();
+
             expect(
                 wrapper.find('.sv-subscription-management__update').attributes('disabled'),
             ).toBeDefined();
         });
 
-        it('cannot be committed when the subscription has no method among the saved ones', async () => {
-            const wrapper = mountComponent({
-                enabledPricingId: 'pri_5000',
-                paymentMethods: [{ ...savedPaymentMethod, id: 'pm_other' }],
-            });
+        it("commits without linking anything while the subscription's own method is picked", async () => {
+            const wrapper = mountComponent({ enabledPricingId: 'pri_5000' });
             await flushPromises();
 
-            const button = wrapper.find('.sv-subscription-management__update');
+            await update(wrapper);
 
-            expect(button.attributes('disabled')).toBeDefined();
-            expect(button.attributes('aria-describedby')).toBe(
-                'sv-subscription-management-form__no-payment-method',
+            expect(mockSetSubscriptionPaymentMethod).not.toHaveBeenCalled();
+            expect(mockCreatePricingPlanSchedule).toHaveBeenCalled();
+        });
+
+        // The API charges the change to the subscription's own method and takes no other.
+        it('links another picked method to the subscription before committing', async () => {
+            const wrapper = mountComponent({
+                enabledPricingId: 'pri_5000',
+                paymentMethods: [otherPaymentMethod, savedPaymentMethod],
+            });
+            await pickPaymentMethod(wrapper, 'pm_other');
+
+            await update(wrapper);
+
+            expect(mockSetSubscriptionPaymentMethod).toHaveBeenCalledWith({
+                id: 'ppsu_1',
+                paymentMethodId: 'pm_other',
+            });
+            expect(mockSetSubscriptionPaymentMethod.mock.invocationCallOrder[0]).toBeLessThan(
+                mockCreatePricingPlanSchedule.mock.invocationCallOrder[0],
             );
         });
 
-        it('describes the button by nothing while the message is not on screen yet', () => {
+        it('commits nothing when the method cannot be linked, and says so', async () => {
+            mockSetSubscriptionPaymentMethod.mockRejectedValue(new Error('nope'));
             const wrapper = mountComponent({
                 enabledPricingId: 'pri_5000',
-                paymentMethods: [],
-                isLoading: true,
+                paymentMethods: [otherPaymentMethod, savedPaymentMethod],
             });
+            await pickPaymentMethod(wrapper, 'pm_other');
 
-            expect(
-                wrapper.find('.sv-subscription-management__update').attributes('aria-describedby'),
-            ).toBeUndefined();
+            await update(wrapper);
+
+            expect(mockCreatePricingPlanSchedule).not.toHaveBeenCalled();
+            expect(wrapper.find('.sv-subscription-management__update-error').exists()).toBe(true);
+        });
+
+        it('adds a method in a modal, for the customer it is stored for', async () => {
+            const wrapper = mountComponent({ enabledPricingId: 'pri_5000' });
+            await flushPromises();
+
+            findForm(wrapper).vm.$emit('add-payment-method');
+            await flushPromises();
+
+            const modal = wrapper.findComponent({ name: 'AddPaymentMethodModal' });
+            expect(modal.props('showModal')).toBe(true);
+            expect(modal.props('subscription')).toMatchObject({ id: 'ppsu_1' });
+            expect(mockFetchCustomer).toHaveBeenCalledTimes(1);
+        });
+
+        it('reloads the methods once one is stored, so the form can select it', async () => {
+            const wrapper = mountComponent({ enabledPricingId: 'pri_5000' });
+            await flushPromises();
+            findForm(wrapper).vm.$emit('add-payment-method');
+            await flushPromises();
+            mockFetchAll.mockClear();
+
+            wrapper.findComponent({ name: 'AddPaymentMethodModal' }).vm.$emit('stored');
+            await flushPromises();
+
+            expect(mockFetchAll).toHaveBeenCalled();
+            expect(wrapper.findComponent({ name: 'AddPaymentMethodModal' }).exists()).toBe(false);
         });
 
         it('describes the button by nothing while there is a method', () => {

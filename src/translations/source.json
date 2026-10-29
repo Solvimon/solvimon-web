@@ -1,4 +1,24 @@
 {
+  "add_payment_method_modal.cancel_button.label": {
+    "defaultMessage": "Cancel",
+    "description": "Label of the button that closes the modal without storing a method"
+  },
+  "add_payment_method_modal.options_error": {
+    "defaultMessage": "We couldn't load the ways to add a payment method. Please try again.",
+    "description": "Error shown in the modal that stores a new payment method when the ways to pay cannot be loaded"
+  },
+  "add_payment_method_modal.save_button.label": {
+    "defaultMessage": "Save payment method",
+    "description": "Label of the button that stores the new payment method"
+  },
+  "add_payment_method_modal.subtitle": {
+    "defaultMessage": "Add a new payment method.",
+    "description": "Shown under the title of the modal that stores a new payment method, when the host says nothing about what it is for"
+  },
+  "add_payment_method_modal.title": {
+    "defaultMessage": "Add payment method",
+    "description": "Title of the modal that stores a new payment method"
+  },
   "addon_multiple_editor.add_to_subscription_button": {
     "defaultMessage": "Add to subscription",
     "description": "The button to add a pricing to the subscription"
@@ -1411,6 +1431,10 @@
     "defaultMessage": "Subscription details",
     "description": "Title for the subscription details page"
   },
+  "subscription_management.add_payment_method.subtitle": {
+    "defaultMessage": "Add a payment method to pay for your subscription.",
+    "description": "Shown under the title of the modal that stores a new payment method on the manage subscription screen"
+  },
   "subscription_management.cancel_button.label": {
     "defaultMessage": "Cancel subscription",
     "description": "Label of the button on the manage subscription screen that cancels the subscription"
@@ -1442,10 +1466,6 @@
   "subscription_management.load_error": {
     "defaultMessage": "Unable to load this subscription. Please try again later.",
     "description": "Error shown in place of the manage subscription form when the subscription cannot be loaded"
-  },
-  "subscription_management.no_payment_method": {
-    "defaultMessage": "This subscription has no payment method to charge the change to. Please contact support to change it.",
-    "description": "Shown in place of the payment method on the manage subscription screen when the subscription has no usable payment method"
   },
   "subscription_management.payment_method_selector.label": {
     "defaultMessage": "Pick a payment method",

@@ -154,35 +154,27 @@ describe('SubscriptionManagementForm', () => {
         });
     });
 
-    it('offers no other payment method, since the change is charged to the subscription', () => {
+    it('offers to add a payment method, for the screen to store in a modal', async () => {
         const wrapper = mountComponent();
 
-        expect(
-            wrapper.findComponent({ name: 'PaymentMethodSelector' }).props('showAddOption'),
-        ).toBe(false);
-        expect(wrapper.find('.sv-payment-method-selector__add').exists()).toBe(false);
+        await wrapper.find('.sv-payment-method-selector__add').trigger('click');
+
+        expect(wrapper.emitted('add-payment-method')).toHaveLength(1);
     });
 
-    it('says so when there is no payment method to charge the change to', () => {
+    // A subscription without a method the API can charge gets one by adding it.
+    it('still offers to add one when there is no stored method to pick', () => {
         const wrapper = mountComponent({ paymentMethods: [] });
 
-        expect(wrapper.find('.sv-subscription-management-form__payment-methods').exists()).toBe(
-            false,
-        );
-        expect(wrapper.find('.sv-subscription-management-form__no-payment-method').exists()).toBe(
-            true,
-        );
+        expect(wrapper.find('.sv-payment-method-selector__add').exists()).toBe(true);
     });
 
-    it('names the message after the form, so a button outside it can point at it', async () => {
-        const wrapper = mountComponent({ paymentMethods: [] });
+    it('names itself, so a submit button outside it can point at it', async () => {
+        const wrapper = mountComponent();
 
         await wrapper.setProps({ id: 'sv-form' });
 
         expect(wrapper.find('form').attributes('id')).toBe('sv-form');
-        expect(
-            wrapper.find('.sv-subscription-management-form__no-payment-method').attributes('id'),
-        ).toBe('sv-form__no-payment-method');
     });
 
     it('reports being submitted, so Enter commits the change too', async () => {

@@ -257,48 +257,98 @@ test.describe('Subscription management', () => {
             expect(api.calls('createPricingPlanSchedule')).toEqual([]);
         });
 
-        test("offers only the subscription's own method, the one the API charges", async ({
+        test("offers every stored method it can charge, opening on the subscription's own", async ({
             page,
         }) => {
             api = await mountLoaded(page, {
                 paymentMethods: [
-                    aPaymentMethod({ id: 'pmet_other', isDefault: true }),
+                    aPaymentMethod({ id: 'pmet_other', isDefault: true, lastFourDigits: '1111' }),
                     aPaymentMethod(),
                 ],
             });
             const form = subscriptionManagement(page).form;
 
-            await expect(
-                form.getByRole('group', { name: 'Payment method' }).getByRole('radio'),
-            ).toHaveCount(1);
-            await expect(page.getByRole('button', { name: /add payment method/i })).toHaveCount(0);
+            await expect(form.getByRole('radio')).toHaveCount(2);
+            await expect(form.getByRole('radio', { name: /4242/ })).toBeChecked();
+            await expect(form.getByRole('button', { name: /add payment method/i })).toBeVisible();
         });
 
-        test('says so when the subscription has no method to charge', async ({ page }) => {
+        test('links another picked method to the subscription before committing', async ({
+            page,
+        }) => {
             api = await mountLoaded(page, {
-                paymentMethods: [aPaymentMethod({ id: 'pmet_other', isDefault: true })],
+                paymentMethods: [
+                    aPaymentMethod({ id: 'pmet_other', lastFourDigits: '1111' }),
+                    aPaymentMethod(),
+                ],
+                mocks: {
+                    setSubscriptionPaymentMethod: { body: aManageableSubscription() },
+                    createPricingPlanSchedule: { body: { id: 'ppsc_new' } },
+                },
             });
+            const ui = subscriptionManagement(page);
 
-            await expect(
-                subscriptionManagement(page).form.locator(
-                    '.sv-subscription-management-form__no-payment-method',
-                ),
-            ).toBeVisible();
-            await expect(subscriptionManagement(page).updateButton).toBeDisabled();
+            await ui.form.getByRole('radio', { name: /1111/ }).check();
+            await chooseLargePack(page);
+            await ui.updateButton.click();
+
+            const link = await api.waitForCall('setSubscriptionPaymentMethod');
+            expect(new URL(link.url).pathname).toBe(
+                `/v1/portal/pricing-plan-subscriptions/${SUBSCRIPTION_ID}/update-payment-method`,
+            );
+            expect(link.body).toEqual({ payment_method_id: 'pmet_other' });
+            await api.waitForCall('createPricingPlanSchedule');
+            await expect(ui.success).toBeVisible();
         });
 
-        test('offers no method the API would refuse to charge', async ({ page }) => {
+        test('commits nothing when the picked method cannot be linked', async ({ page }) => {
+            api = await mountLoaded(page, {
+                paymentMethods: [
+                    aPaymentMethod({ id: 'pmet_other', lastFourDigits: '1111' }),
+                    aPaymentMethod(),
+                ],
+                mocks: { setSubscriptionPaymentMethod: { status: 500, body: { message: 'Boom' } } },
+            });
+            const ui = subscriptionManagement(page);
+
+            await ui.form.getByRole('radio', { name: /1111/ }).check();
+            await chooseLargePack(page);
+            await ui.updateButton.click();
+
+            await expect(ui.updateError).toBeVisible();
+            expect(api.calls('createPricingPlanSchedule')).toEqual([]);
+        });
+
+        test('leaves out a method the API would refuse, and offers to add one', async ({
+            page,
+        }) => {
             api = await mountLoaded(page, {
                 paymentMethods: [aPaymentMethod({ isDefault: true, status: 'INACTIVE' })],
             });
             const ui = subscriptionManagement(page);
 
+            await expect(ui.form.getByRole('radio')).toHaveCount(0);
             await expect(
-                ui.form.locator('.sv-subscription-management-form__no-payment-method'),
+                ui.form.getByRole('button', { name: /add payment method/i }),
             ).toBeVisible();
             await ui.form.getByText('Large pack').click();
             await expect(ui.updateButton).toBeDisabled();
-            await expect(ui.updateButton).toHaveAccessibleDescription(/no payment method/i);
+        });
+
+        test('adds a method in a modal', async ({ page }) => {
+            api = await mountLoaded(page);
+            const ui = subscriptionManagement(page);
+
+            await ui.form.getByRole('button', { name: /add payment method/i }).click();
+
+            const dialog = page.getByRole('dialog');
+            await expect(dialog).toContainText('Add payment method');
+            await expect(dialog).toContainText(
+                'Add a payment method to pay for your subscription.',
+            );
+            await expect(
+                dialog.getByRole('button', { name: /save payment method/i }),
+            ).toBeVisible();
         });
     });
 

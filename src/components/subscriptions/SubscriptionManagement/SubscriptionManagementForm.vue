@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, watch } from 'vue';
-import { Divider, Typography, useIntl } from '@solvimon/solvimon-ui';
+import { Divider, useIntl } from '@solvimon/solvimon-ui';
 import type { PaymentMethod, Pricing } from '@solvimon/solvimon-types';
 import type { PricingPlan } from '@solvimon/solvimon-types';
 import type {
@@ -111,11 +111,9 @@ watch(
             </div>
 
             <PaymentMethodSelector
-                v-if="sortedPaymentMethods.length > 0"
                 v-model="paymentMethodId"
                 class="sv-subscription-management-form__payment-methods"
                 :payment-methods="sortedPaymentMethods"
-                :show-add-option="false"
                 required
                 :disabled="disabled"
                 :label="
@@ -126,26 +124,8 @@ watch(
                             'Label above the payment method that pays for the subscription change',
                     })
                 "
+                @add-payment-method="emit('add-payment-method')"
             />
-
-            <Typography
-                v-else
-                :id="id && `${id}__no-payment-method`"
-                variant="body-sm"
-                color="subtle"
-                tag="p"
-                class="sv-subscription-management-form__no-payment-method"
-            >
-                {{
-                    $t({
-                        defaultMessage:
-                            'This subscription has no payment method to charge the change to. Please contact support to change it.',
-                        id: 'subscription_management.no_payment_method',
-                        description:
-                            'Shown in place of the payment method on the manage subscription screen when the subscription has no usable payment method',
-                    })
-                }}
-            </Typography>
         </div>
     </form>
 </template>

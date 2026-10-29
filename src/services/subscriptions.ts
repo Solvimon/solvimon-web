@@ -1,6 +1,7 @@
 import type {
     ApiSuccessCollectionResponse,
     BillingPeriod,
+    PaymentMethod,
     PricingPlan,
     PricingPlanSchedule,
     PricingPlanSubscription,
@@ -46,6 +47,10 @@ interface SubscriptionsService {
         variant: SubscriptionCancellationVariant;
     }): Promise<PricingPlanSubscription>;
     changeSubscriptionPlan(params: ChangeSubscriptionPlanPayload): Promise<PricingPlanSchedule>;
+    setSubscriptionPaymentMethod(params: {
+        id: PricingPlanSubscription['id'];
+        paymentMethodId: PaymentMethod['id'];
+    }): Promise<PricingPlanSubscription>;
     getSubscriptionPricingPlanGroup(params: {
         id: PricingPlanSubscription['id'];
     }): Promise<PricingPlanGroup>;
@@ -189,7 +194,29 @@ export function createSubscriptionsService(): SubscriptionsService {
         });
     }
 
+    /**
+     * POST /v1/portal/pricing-plan-subscriptions/{id}/update-payment-method
+     *
+     * Links a stored payment method to the subscription, so it pays what the subscription is billed
+     * from then on — a change committed right after included. The portal counterpart of the merchant
+     * API's action of the same name.
+     */
+    function setSubscriptionPaymentMethod({
+        id,
+        paymentMethodId,
+    }: {
+        id: PricingPlanSubscription['id'];
+        paymentMethodId: PaymentMethod['id'];
+    }): Promise<PricingPlanSubscription> {
+        return request<PricingPlanSubscription>({
+            url: buildUrl(config.apiUrls.config, ...ENDPOINT, id, 'update-payment-method'),
+            data: { payment_method_id: paymentMethodId },
+            options: { method: 'POST' },
+        });
+    }
+
     return {
+        setSubscriptionPaymentMethod,
         getSubscription,
         getActiveSubscriptions,
         getSubscriptionsOfEveryStatus,

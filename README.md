@@ -429,6 +429,7 @@ The SDK emits structured log entries via the [`onLog`](#error-logging) callback.
 | `STRIPE_SUBMIT_FAILED`                      | Unexpected error during Stripe submission                          |
 | `SUBSCRIPTION_CANCELLATION_FAILED`          | Failed to change the cancellation state of a subscription          |
 | `SUBSCRIPTION_LOAD_FAILED`                  | Failed to load the subscription the checkout prices                |
+| `SUBSCRIPTION_PAYMENT_METHOD_UPDATE_FAILED` | Failed to link the payment method to the subscription              |
 | `SUBSCRIPTION_PLAN_CHANGE_FAILED`           | Failed to move the subscription to another plan in its group       |
 | `SUBSCRIPTION_UPDATE_FAILED`                | Failed to start a new pricing plan schedule                        |
 | `TOKENIZATION_FAILED`                       | Missing customer id for payment acceptor with id…                  |

@@ -80,10 +80,6 @@ const handleWalletBalancesChanged = () => {
     void customerWalletBalances.fetch();
 };
 
-const handleSubscriptionChanged = () => {
-    void subscriptions.fetchAll();
-};
-
 useActiveScheduleWarning(subscriptions.items);
 </script>
 
@@ -98,7 +94,6 @@ useActiveScheduleWarning(subscriptions.items);
                 :payment-methods="paymentMethods.items.value"
                 :is-loading="isLoading"
                 :has-error="Boolean(subscriptions.error.value)"
-                @subscription-changed="handleSubscriptionChanged"
             />
         </template>
         <template #content>

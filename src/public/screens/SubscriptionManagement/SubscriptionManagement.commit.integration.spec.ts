@@ -67,6 +67,13 @@ vi.mock('@/composables/useSubscriptionPlanChangePreview', async () => {
     };
 });
 
+// The customer only dates the cancellation modal, which these tests do not open.
+vi.mock('@/composables/useCustomer', async () => {
+    const { ref } = await import('vue');
+
+    return { useCustomer: () => ({ customer: ref(undefined), get: { execute: vi.fn() } }) };
+});
+
 vi.mock('@/composables/usePaymentMethodOptions', () => ({
     usePaymentMethodOptions: () => ({ paymentMethodOptions: ref([]), get: vi.fn() }),
 }));

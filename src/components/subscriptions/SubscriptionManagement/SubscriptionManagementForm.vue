@@ -111,11 +111,9 @@ watch(
             </div>
 
             <PaymentMethodSelector
-                v-if="sortedPaymentMethods.length > 0"
                 v-model="paymentMethodId"
                 class="sv-subscription-management-form__payment-methods"
                 :payment-methods="sortedPaymentMethods"
-                :show-add-option="false"
                 required
                 :disabled="disabled"
                 :label="
@@ -126,34 +124,26 @@ watch(
                             'Label above the payment method that pays for the subscription change',
                     })
                 "
+                @add-payment-method="emit('add-payment-method')"
             />
 
             <Typography
-                v-else
-                :id="id && `${id}__no-payment-method`"
+                v-if="hasExpiredPaymentMethod"
+                :id="id && `${id}__expired-payment-method`"
                 variant="body-sm"
                 color="subtle"
                 tag="p"
-                class="sv-subscription-management-form__no-payment-method"
+                class="sv-subscription-management-form__expired-payment-method"
             >
-                <template v-if="hasExpiredPaymentMethod">{{
+                {{
                     $t({
                         defaultMessage:
-                            'The card this subscription is paid with has expired. Replace it under your payment methods to make a change.',
-                        id: 'subscription_management.expired_payment_method',
+                            'The card this subscription is paid with has expired. Pick another payment method or add a new one.',
+                        id: 'subscription_management.expired_payment_method_replace',
                         description:
-                            'Shown in place of the payment method on the manage subscription screen when the card the subscription is paid with has expired',
+                            'Shown under the payment method choice on the manage subscription screen when the card the subscription is paid with has expired',
                     })
-                }}</template>
-                <template v-else>{{
-                    $t({
-                        defaultMessage:
-                            'This subscription has no payment method to charge the change to. Please contact support to change it.',
-                        id: 'subscription_management.no_payment_method',
-                        description:
-                            'Shown in place of the payment method on the manage subscription screen when the subscription has no usable payment method',
-                    })
-                }}</template>
+                }}
             </Typography>
         </div>
     </form>

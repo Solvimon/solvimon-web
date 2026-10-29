@@ -174,7 +174,7 @@ one, mount a new element:
 - the subscription management screen's `configuration.enabledPricingId`, which picks the pricing
   it opens on.
 
-The supported locales are `en-US`, `nl-NL`, `de-DE` and `it-IT`. Any other — `nl` or `en-GB`, say
+The supported locales are `en-US`, `nl-NL`, `de-DE`, `it-IT` and `fr-FR`. Any other — `nl` or `en-GB`, say
 — renders in `en-US` and logs `UNSUPPORTED_LOCALE`.
 
 ### Navigation requests

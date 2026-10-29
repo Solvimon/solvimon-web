@@ -123,6 +123,11 @@ const handleClose = () => {
 
     emit('close');
 };
+
+/** Whether it is the customer's default has no bearing on cancelling, so the summary leaves it out. */
+const summaryPaymentMethod = computed(() =>
+    props.paymentMethod ? { ...props.paymentMethod, is_default: false } : undefined,
+);
 </script>
 
 <template>
@@ -192,10 +197,10 @@ const handleClose = () => {
                         </div>
 
                         <PaymentMethod
-                            v-if="paymentMethod"
+                            v-if="summaryPaymentMethod"
                             variant="condensed"
                             class="sv-subscription-cancellation-modal__payment-method"
-                            :payment-method="paymentMethod"
+                            :payment-method="summaryPaymentMethod"
                         />
                     </div>
                 </Section>

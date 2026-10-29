@@ -40,6 +40,7 @@ describe('supportedLocaleSet', () => {
         expect(supportedLocaleSet.has('nl-NL')).toBe(true);
         expect(supportedLocaleSet.has('de-DE')).toBe(true);
         expect(supportedLocaleSet.has('it-IT')).toBe(true);
+        expect(supportedLocaleSet.has('fr-FR')).toBe(true);
     });
 
     it('does not contain unsupported locales', () => {
@@ -54,6 +55,7 @@ describe('isSupportedLocale', () => {
         expect(isSupportedLocale('nl-NL')).toBe(true);
         expect(isSupportedLocale('de-DE')).toBe(true);
         expect(isSupportedLocale('it-IT')).toBe(true);
+        expect(isSupportedLocale('fr-FR')).toBe(true);
     });
 
     it('returns false for unsupported locales', () => {
@@ -76,6 +78,14 @@ describe('loadLocaleMessages', () => {
             farewell: 'Doei',
             appName: 'Solvimon',
         });
+    });
+
+    // The UI does not export a French catalogue yet, so French is the SDK's own messages alone.
+    it("loads the sdk's french messages", async () => {
+        const messages = await loadLocaleMessages('fr-FR', logger);
+
+        expect(messages['checkout.pay_and_subscribe_button.label']).toBe('Payer et s’abonner');
+        expect(logger.warn).not.toHaveBeenCalled();
     });
 
     // Every element waits for its catalogue before it renders, so en-US must not need a download.

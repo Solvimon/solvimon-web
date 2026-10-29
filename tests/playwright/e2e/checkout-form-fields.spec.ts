@@ -167,6 +167,7 @@ test.describe('Checkout form fields', () => {
             ['nl-NL', 'Postcode'],
             ['de-DE', 'Postleitzahl'],
             ['it-IT', 'Codice postale'],
+            ['fr-FR', 'Code postal'],
         ]) {
             test(`names the postal code exactly "${postal}" in ${locale}`, async ({ page }) => {
                 await forceLocale(page, locale);

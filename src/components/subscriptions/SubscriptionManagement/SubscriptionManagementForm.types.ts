@@ -20,8 +20,8 @@ export interface SubscriptionManagementFormProps {
      */
     planOptions?: SubscriptionPlanOption[];
     /**
-     * What the change can be charged to. The API only charges the subscription's own method, so
-     * nothing can be added here.
+     * The stored methods the change can be paid with. Picking another than the subscription's own
+     * links it to the subscription, so it pays this change and what is billed after it.
      */
     paymentMethods?: PaymentMethod[];
     /** The subscription's own method is a card that has expired, which is why none is on offer. */
@@ -35,4 +35,6 @@ export interface SubscriptionManagementFormProps {
 export interface SubscriptionManagementFormEmits {
     /** The customer submitted the form, from its own fields or a button tied to it by `form`. */
     (e: 'submit'): void;
+    /** The customer wants to pay with a method they have not stored yet. */
+    (e: 'add-payment-method'): void;
 }

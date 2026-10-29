@@ -183,4 +183,17 @@ describe('subscriptions service', () => {
             expect(mockRequest.mock.calls[0][0].query).toMatchObject({ expand: ['ALL'] });
         });
     });
+
+    describe('setSubscriptionPaymentMethod', () => {
+        it('links the stored method to the subscription', async () => {
+            const { setSubscriptionPaymentMethod } = createSubscriptionsService();
+            await setSubscriptionPaymentMethod({ id: 'ppsu_1', paymentMethodId: 'pmet_new' });
+
+            expect(mockRequest).toHaveBeenCalledWith({
+                url: 'https://api.test/portal/pricing-plan-subscriptions/ppsu_1/update-payment-method',
+                data: { payment_method_id: 'pmet_new' },
+                options: { method: 'POST' },
+            });
+        });
+    });
 });

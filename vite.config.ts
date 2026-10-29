@@ -17,6 +17,7 @@ import {
 import { defineConfig } from 'vite';
 import type { Plugin, PluginOption } from 'vite';
 import vue from '@vitejs/plugin-vue';
+import { invalidateTypeCache } from 'vue/compiler-sfc';
 import { glob } from 'glob';
 import dts from 'vite-plugin-dts';
 import type { TemplateChildNode, RootNode } from '@vue/compiler-core';
@@ -63,6 +64,56 @@ const PRODUCTION_DROPS: ('console' | 'debugger')[] = ['console', 'debugger'];
  * hostnames to every customer.
  */
 const withInternalEnvironments = process.env.SOLVIMON_INTERNAL_ENVIRONMENTS === '1';
+
+/** The modules a source imports for their types alone — what `defineProps<…>()` is resolved from. */
+const TYPE_IMPORT =
+    /import\s+type\s[^;]*?from\s*['"]([^'"]+)['"]|import\s*\{[^}]*\btype\s[^}]*\}\s*from\s*['"]([^'"]+)['"]/g;
+
+/**
+ * Keeps `vite build --watch` compiling components against the types as they are now.
+ *
+ * The SFC compiler caches the files `defineProps<…>()` and `defineEmits<…>()` resolve their types
+ * from, and @vitejs/plugin-vue only clears that cache on a dev server's hot update. A watch build —
+ * `npm run watch`, which a linked Desk runs on — kept the types it first read for as long as it ran:
+ * a component rebuilt after a prop was added was compiled without it, so the prop never arrived
+ * and whatever it showed was silently gone.
+ *
+ * So a component's type imports are watched, followed through the type files they import in turn,
+ * and a changed file is dropped from the cache before the rebuild reads it. A component recompiles
+ * once its own source changes too, as it does along with any prop it uses: plugin-vue keeps the
+ * compiled script of an unchanged component, which is out of reach here.
+ */
+function refreshVueTypesInWatch(): Plugin {
+    return {
+        name: 'solvimon:refresh-vue-types-in-watch',
+        apply: 'build',
+        watchChange(id) {
+            invalidateTypeCache(id);
+        },
+        async transform(_code, id) {
+            // The component itself, read from disk: by now its type imports are compiled away.
+            if (!this.meta.watchMode || !id.endsWith('.vue')) return null;
+
+            const seen = new Set<string>();
+            const follow = async (source: string, importer: string): Promise<void> => {
+                for (const [, typeOnly, mixed] of source.matchAll(TYPE_IMPORT)) {
+                    const resolved = await this.resolve(typeOnly ?? mixed, importer);
+                    const file = resolved?.id.split('?')[0];
+
+                    if (!file || seen.has(file) || file.includes('/node_modules/')) continue;
+                    if (!/\.(ts|vue)$/.test(file) || !existsSync(file)) continue;
+
+                    seen.add(file);
+                    this.addWatchFile(file);
+                    if (file.endsWith('.ts')) await follow(readFileSync(file, 'utf8'), file);
+                }
+            };
+
+            await follow(readFileSync(id, 'utf8'), id);
+            return null;
+        },
+    };
+}
 
 /**
  * Removes the stylesheet vite extracts from the library build.
@@ -164,6 +215,7 @@ export default defineConfig(({ mode }) => {
                     },
                 },
             }),
+            refreshVueTypesInWatch(),
             dropRedundantStylesheet(),
             dts({
                 bundleTypes: false,

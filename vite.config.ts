@@ -234,6 +234,9 @@ function subsetIconSpritePlugin(): Plugin {
                 return null;
             }
 
+            this.info(
+                `Icon sprite: kept ${subset.kept.length} icons, dropped the ${subset.dropped.length} that no code names.`,
+            );
             return { code: subset.code, map: null };
         },
     };

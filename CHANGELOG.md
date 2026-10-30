@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `@solvimon/solvimon-ui` is 1.22.0 and `@solvimon/solvimon-types` 1.10.0. Tab now moves through the fields of a modal instead of jumping back to its close button.
 - The buttons in the customer overview's section headers (**View all**, **Edit** and **Manage**) are extra small, a step down from small.
 - Screens and components with a tooltip, a dropdown or a select download about 8 kB (gzip) less up front. The code that positions those popups loads the first time one opens, starting as soon as the pointer or focus reaches what opens it.
+- Every screen and component downloads about 4.5 kB (gzip) less up front: the English labels of `@solvimon/solvimon-ui` components come with the components that show them, instead of all of them with every element. The labels themselves are unchanged.
 
 ### Fixed
 

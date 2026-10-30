@@ -1,7 +1,7 @@
 import { flushPromises, mount } from '@vue/test-utils';
 import { computed, ref } from 'vue';
 import type { PortalUrl } from '@solvimon/solvimon-types';
-import Checkout from './Checkout.vue';
+import LegacyCheckout from './LegacyCheckout.vue';
 
 // ─── Mocks ────────────────────────────────────────────────────────────────────
 
@@ -189,7 +189,7 @@ const STUBBED_CHILDREN = [
 ];
 
 const mountCheckout = async (stubOverrides: Record<string, boolean> = {}) => {
-    const wrapper = mount(Checkout, {
+    const wrapper = mount(LegacyCheckout, {
         global: {
             stubs: {
                 ...Object.fromEntries(STUBBED_CHILDREN.map((name) => [name, true])),

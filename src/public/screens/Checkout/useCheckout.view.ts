@@ -8,12 +8,14 @@ import type {
     Amount,
     Invoice,
     ConfiguredMeterValue,
+    BillingPeriod,
 } from '@solvimon/solvimon-types';
 import { computed, nextTick, onMounted, ref, shallowRef, watch } from 'vue';
 import { taxId } from '@solvimon/solvimon-ui/validators';
 import { email } from '@vuelidate/validators';
 import { isValidCountryCode } from '@solvimon/solvimon-ui';
 import { toRestorableForm } from './savedFormState';
+import type { PriceSettlement } from './Checkout.source.types';
 import { useLogger } from '@/components/providers';
 import { createSubscriptionsService } from '@/services/subscriptions';
 import { useInvoicePreview } from '@/composables/useInvoicePreview';
@@ -86,9 +88,6 @@ function restoreOnOrder(
 
 /** How long a payment waits for the price before it is held back instead. */
 export const PRICE_SETTLE_TIMEOUT_MS = 10_000;
-
-/** `CHANGED`: the customer changed the order while the payment waited for its price. */
-export type PriceSettlement = 'SETTLED' | 'CHANGED' | 'FAILED';
 
 export function useCheckoutView({
     initialCountry,
@@ -196,6 +195,17 @@ export function useCheckoutView({
             enabledPricingIds: formState.enabledPricingIds ?? enabledPricingIds,
             promotionCode: formState.promotionCode,
         });
+    };
+
+    const changeBillingPeriod = (billingPeriod: BillingPeriod) => {
+        if (!subscription.value) {
+            return;
+        }
+
+        subscription.value = { ...subscription.value, billing_period: billingPeriod };
+
+        // Already logged as INVOICE_PREVIEW_FAILED, and the next change loads it again.
+        loadInvoicePreview().catch(() => {});
     };
 
     /**
@@ -654,6 +664,7 @@ export function useCheckoutView({
         trialInvoicePreview: invoicePreview.trialInvoicePreview,
         trialPeriod: invoicePreview.trialPeriod,
         loadInvoicePreview,
+        changeBillingPeriod,
         updateInvoicePreviewOnBillingInformationChange,
         lastPreviewScheduleId: invoicePreview.lastPreviewScheduleId,
         paymentMethodOptions,

@@ -12,7 +12,7 @@ vi.mock('@/components/providers', () => ({
     }),
 }));
 
-vi.mock('@/public/screens/Checkout/Checkout.vue', () => ({
+vi.mock('@/public/screens/Checkout/LegacyCheckout.vue', () => ({
     default: defineComponent({
         name: 'CheckoutStub',
         props: { configuration: { type: Object, required: true } },

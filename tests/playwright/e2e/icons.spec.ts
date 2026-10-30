@@ -57,11 +57,14 @@ test.describe('Icons', () => {
             await mount(page);
             await page.waitForLoadState('networkidle');
 
-            // The sprite arrives after the first render, so the symbols are waited for.
+            // The sprite arrives after the first render, so the symbols are waited for, and only once
+            // an icon has rendered: with none, nothing would be checked.
             await expect
-                .poll(() => renderedIcons(page))
-                .toEqual({ rendered: expect.any(Number), withoutSymbol: [] });
-            expect((await renderedIcons(page)).rendered).toBeGreaterThan(0);
+                .poll(async () => {
+                    const { rendered, withoutSymbol } = await renderedIcons(page);
+                    return rendered ? withoutSymbol : ['no icon rendered yet'];
+                })
+                .toEqual([]);
         });
     }
 });

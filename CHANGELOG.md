@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The buttons in the customer overview's section headers (**View all**, **Edit** and **Manage**) are extra small, a step down from small.
 - Screens and components with a tooltip, a dropdown or a select download about 8 kB (gzip) less up front. The code that positions those popups loads the first time one opens, starting as soon as the pointer or focus reaches what opens it.
 - Every screen and component downloads about 4.5 kB (gzip) less up front: the English labels of `@solvimon/solvimon-ui` components come with the components that show them, instead of all of them with every element. The labels themselves are unchanged.
+- Every screen and component downloads about 2.7 kB (gzip) less up front: the styles of `@solvimon/solvimon-ui` components are minified, and no longer include a second copy of each rule or the styles of its editor, which no element renders. The elements look the same.
 
 ### Fixed
 

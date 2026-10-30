@@ -60,7 +60,7 @@ export async function loadLocaleMessages(locale: string, logger: Logger): Promis
         return {};
     }
 
-    // en-US is what every SDK `defaultMessage` says, and the UI bundles its own en-US messages.
+    // en-US is what every `defaultMessage` says, in the SDK and in the UI alike.
     if (locale === DEFAULT_LOCALE) {
         return {};
     }

@@ -236,24 +236,37 @@ export function getCurrentMeterValues(
     }));
 }
 
-/** One value per config the customer may edit, starting at its current number or its minimum. */
-export function getEditableMeterValues(
+/**
+ * Every config at its current number, and one the customer may edit but that has none yet at its
+ * minimum; with the range of each editable config.
+ */
+export function getMeterValues(
     bounds: CheckoutSessionMeterBound[] | undefined,
     current: ConfiguredMeterValue[],
-): { values: ConfiguredMeterValue[]; minimums: ConfiguredMeterValue[] } | undefined {
-    if (!bounds?.length) return undefined;
-
+): {
+    values: ConfiguredMeterValue[];
+    minimums: ConfiguredMeterValue[];
+    maximums: ConfiguredMeterValue[];
+} {
+    const unset = (bounds ?? []).filter(
+        ({ pricing_item_config_id }) =>
+            !current.some((value) => value.pricing_item_config_id === pricing_item_config_id),
+    );
+    const toValues = (key: 'min' | 'max') =>
+        (bounds ?? []).map((bound) => ({
+            pricing_item_config_id: bound.pricing_item_config_id,
+            number: bound[key].number,
+        }));
     return {
-        values: bounds.map(({ pricing_item_config_id, min }) => ({
-            pricing_item_config_id,
-            number:
-                current.find((value) => value.pricing_item_config_id === pricing_item_config_id)
-                    ?.number ?? min.number,
-        })),
-        minimums: bounds.map(({ pricing_item_config_id, min }) => ({
-            pricing_item_config_id,
-            number: min.number,
-        })),
+        values: [
+            ...current,
+            ...unset.map(({ pricing_item_config_id, min }) => ({
+                pricing_item_config_id,
+                number: min.number,
+            })),
+        ],
+        minimums: toValues('min'),
+        maximums: toValues('max'),
     };
 }
 

@@ -10,6 +10,8 @@ export interface OrderSummaryProps {
      * The subscription to display.
      */
     subscription: PricingPlanSubscriptionExpanded;
+    /** Every subscription of an order of several, each summarised in place of `subscription`. */
+    subscriptions?: PricingPlanSubscriptionExpanded[];
     /**
      * The invoice to display.
      */

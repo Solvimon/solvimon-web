@@ -11,15 +11,20 @@ import type {
 } from '@/types/checkoutSession';
 import { providerMockLogger } from '@/test-utils/providerMock';
 
-const { mockGet, mockUpdate, mockPreview, mockGetSubscription, mockGetGeoLocation } = vi.hoisted(
-    () => ({
+const { mockGet, mockUpdate, mockPreview, mockGetSubscription, mockGetGeoLocation, mockRedirect } =
+    vi.hoisted(() => ({
         mockGet: vi.fn(),
         mockGetGeoLocation: vi.fn(),
         mockUpdate: vi.fn(),
         mockPreview: vi.fn(),
         mockGetSubscription: vi.fn(),
-    }),
-);
+        mockRedirect: vi.fn(),
+    }));
+
+vi.mock('@/utils/url', async (importOriginal) => ({
+    ...(await importOriginal<typeof import('@/utils/url')>()),
+    safeUrlRedirect: mockRedirect,
+}));
 
 vi.mock('@/services/checkoutSessions', async (importOriginal) => ({
     ...(await importOriginal<typeof import('@/services/checkoutSessions')>()),
@@ -128,12 +133,12 @@ const template = {
     pricing_plan_schedule_infos: [],
 } as unknown as PricingPlanSubscriptionExpanded;
 
-function setup() {
+function setup(portalUrlId = PORTAL_URL_ID) {
     let result!: ReturnType<typeof useCheckoutSession>;
     mount(
         defineComponent({
             setup() {
-                result = useCheckoutSession({ portalUrlId: PORTAL_URL_ID });
+                result = useCheckoutSession({ portalUrlId });
                 return () => h('div');
             },
         }),
@@ -141,11 +146,14 @@ function setup() {
     return result;
 }
 
-async function loaded() {
-    const result = setup();
+async function loaded(portalUrlId?: string) {
+    const result = setup(portalUrlId);
     await flushPromises();
     return result;
 }
+
+const sectionOf = (source: ReturnType<typeof useCheckoutSession>['source'], index = 0) =>
+    source.planCustomizations!.value[index];
 
 const settleEdits = async () => {
     await vi.advanceTimersByTimeAsync(CHECKOUT_SESSION_EDIT_DEBOUNCE_MS + 10);
@@ -160,6 +168,7 @@ describe('useCheckoutSession', () => {
         mockPreview.mockReset().mockResolvedValue(previewOf(1));
         mockGetSubscription.mockReset().mockResolvedValue(template);
         mockGetGeoLocation.mockReset().mockRejectedValue(new Error('none'));
+        mockRedirect.mockReset();
     });
 
     afterEach(() => {
@@ -186,7 +195,7 @@ describe('useCheckoutSession', () => {
             expect(source.subscription.value).toBe(template);
         });
 
-        it('fills the form from the first customer and the first subscription', async () => {
+        it('fills the form from the first customer, and the quantities from the subscription', async () => {
             const { source } = await loaded();
 
             expect(source.checkoutForm.form.value).toMatchObject({
@@ -195,10 +204,15 @@ describe('useCheckoutSession', () => {
                 companyLegalName: 'Acme',
                 country: 'NL',
                 city: 'Utrecht',
-                seatsValues: [{ pricing_item_config_id: 'pic_seats', number: '3' }],
             });
-            expect(source.orderMeterValues.value.seatsValues).toStrictEqual([
-                { pricing_item_config_id: 'pic_seats', number: '2' },
+            expect(sectionOf(source)).toMatchObject({
+                subscription: template,
+                minimums: { seatsValues: [{ pricing_item_config_id: 'pic_seats', number: '2' }] },
+                maximums: { seatsValues: [{ pricing_item_config_id: 'pic_seats', number: '10' }] },
+                editableConfigIds: ['pic_seats'],
+            });
+            expect(sectionOf(source).seatsValues.value).toStrictEqual([
+                { pricing_item_config_id: 'pic_seats', number: '3' },
             ]);
         });
 
@@ -212,10 +226,10 @@ describe('useCheckoutSession', () => {
         });
 
         it('puts the portal URL id in place of the placeholder in both URLs, and passes the note on', async () => {
-            const { source, cancelUrl } = await loaded();
+            const { source } = await loaded();
 
             expect(source.successUrl.value).toBe('https://shop.test/done?session=purl_1');
-            expect(cancelUrl.value).toBe('https://shop.test/cancel/purl_1');
+            expect(source.cancelUrl?.value).toBe('https://shop.test/cancel/purl_1');
             expect(source.note.value).toBe('Read the **terms**.');
         });
 
@@ -291,7 +305,7 @@ describe('useCheckoutSession', () => {
             mockUpdate.mockResolvedValue(portalUrl({ version: 2 }));
             const { source } = await loaded();
 
-            source.checkoutForm.form.value.seatsValues = [
+            sectionOf(source).seatsValues.value = [
                 { pricing_item_config_id: 'pic_seats', number: '5' },
             ];
             await settleEdits();
@@ -426,7 +440,7 @@ describe('useCheckoutSession', () => {
             const { source } = await loaded();
             const seats = (number: string) => [{ pricing_item_config_id: 'pic_seats', number }];
 
-            source.checkoutForm.form.value.seatsValues = seats('5');
+            sectionOf(source).seatsValues.value = seats('5');
             await settleEdits();
             source.checkoutForm.form.value.companyLegalName = 'Acme BV';
             await settleEdits();
@@ -439,7 +453,7 @@ describe('useCheckoutSession', () => {
                 },
             });
 
-            source.checkoutForm.form.value.seatsValues = seats('6');
+            sectionOf(source).seatsValues.value = seats('6');
             await settleEdits();
 
             expect(mockUpdate).toHaveBeenCalledTimes(3);
@@ -451,6 +465,55 @@ describe('useCheckoutSession', () => {
                         { pricing_plan_schedule_id: 'pps_1', seats_values: seats('6') },
                     ],
                 },
+            ]);
+        });
+
+        it('leaves out all of a customer the API refused on a field the edit did not send', async () => {
+            mockUpdate
+                .mockRejectedValueOnce(
+                    new ApiError({
+                        statusCode: 400,
+                        field: 'checkout_session.customers.0.customer.organization.registration_number',
+                    }),
+                )
+                .mockResolvedValue(portalUrl({ version: 2 }));
+            mockPreview.mockResolvedValue(previewOf(2));
+            const { source } = await loaded();
+
+            source.checkoutForm.form.value.email = 'finance@acme.test';
+            await settleEdits();
+            sectionOf(source).seatsValues.value = [
+                { pricing_item_config_id: 'pic_seats', number: '5' },
+            ];
+            await settleEdits();
+
+            expect(mockUpdate).toHaveBeenCalledTimes(2);
+            expect(mockUpdate.mock.calls[1][1].checkout_session.customers).toBeUndefined();
+        });
+
+        it('does not resend an edit the API refused after a stale version', async () => {
+            mockUpdate
+                .mockRejectedValueOnce(
+                    new ApiError({ statusCode: 400, field: 'checkout_session.expected_version' }),
+                )
+                .mockRejectedValueOnce(
+                    new ApiError({
+                        statusCode: 400,
+                        field: 'checkout_session.customers.0.customer.email',
+                    }),
+                );
+            const { source } = await loaded();
+            mockGet.mockResolvedValue(portalUrl({ version: 3 }));
+
+            source.checkoutForm.form.value.email = 'finance@acme.test';
+            await settleEdits();
+            mockUpdate.mockResolvedValue(portalUrl({ version: 4 }));
+            source.checkoutForm.form.value.companyLegalName = 'Acme BV';
+            await settleEdits();
+
+            expect(mockUpdate).toHaveBeenCalledTimes(3);
+            expect(mockUpdate.mock.calls[2][1].checkout_session.customers).toStrictEqual([
+                { customer: { organization: { legal_name: 'Acme BV' } } },
             ]);
         });
 
@@ -590,9 +653,7 @@ describe('useCheckoutSession', () => {
         ])('does not send a seat count %s', async (_, number) => {
             const { source } = await loaded();
 
-            source.checkoutForm.form.value.seatsValues = [
-                { pricing_item_config_id: 'pic_seats', number },
-            ];
+            sectionOf(source).seatsValues.value = [{ pricing_item_config_id: 'pic_seats', number }];
             await settleEdits();
 
             expect(mockUpdate).not.toHaveBeenCalled();
@@ -629,7 +690,7 @@ describe('useCheckoutSession', () => {
             mockPreview.mockResolvedValue(previewOf(2));
             const { source } = await loaded();
 
-            source.checkoutForm.form.value.seatsValues = [
+            sectionOf(source).seatsValues.value = [
                 { pricing_item_config_id: 'pic_seats', number: '5' },
             ];
             await settleEdits();
@@ -894,6 +955,25 @@ describe('useCheckoutSession', () => {
     });
 
     describe('previewing', () => {
+        it('warns once when the preview holds more than one invoice', async () => {
+            const two = previewOf(1);
+            two.invoices = [...two.invoices!, ...two.invoices!];
+            mockPreview.mockResolvedValue(two);
+            mockUpdate.mockResolvedValue(portalUrl({ version: 2 }));
+            const { source } = await loaded();
+            mockPreview.mockResolvedValue({ ...two, checkout_session: { version: 2 } });
+
+            source.checkoutForm.form.value.email = 'finance@acme.test';
+            await settleEdits();
+
+            expect(
+                providerMockLogger.warn.mock.calls.filter(
+                    ([code]) => code === 'CHECKOUT_SESSION_SEVERAL_INVOICES',
+                ),
+            ).toHaveLength(1);
+            expect(source.invoicePreview.value).toMatchObject({ id: 'inv_1' });
+        });
+
         it('stays pending until every preview asked for has answered', async () => {
             let answerSecond!: (preview: CheckoutSessionPreview) => void;
             mockUpdate.mockResolvedValue(portalUrl({ version: 2 }));
@@ -1066,6 +1146,437 @@ describe('useCheckoutSession', () => {
             const { source } = await loaded();
 
             expect(source.promotionCode.isAllowed?.value).toBe(false);
+        });
+    });
+
+    describe('several subscriptions', () => {
+        const second: CheckoutSession['pricing_plan_subscriptions'][number] = {
+            template_pricing_plan_subscription_id: 'ppsu_second',
+            pricing_plan_subscription: { reference: 'second-ref', customer_reference: 'cust-ref' },
+            options: {
+                edit_units: [
+                    {
+                        pricing_item_config_id: 'pic_units',
+                        min: { number: '0.5' },
+                        max: { number: '4' },
+                    },
+                ],
+                allow_promotion_codes: 'SINGLE',
+            },
+            starting_values: [
+                {
+                    pricing_plan_schedule_id: 'pps_2',
+                    seats_values: [{ pricing_item_config_id: 'pic_fixed', number: '7' }],
+                    units: [{ pricing_item_config_id: 'pic_units', number: '1.5' }],
+                },
+            ],
+        };
+        const secondTemplate = {
+            id: 'ppsu_second',
+            name: 'Hardware',
+            pricing_plan_schedule_infos: [],
+        } as unknown as PricingPlanSubscriptionExpanded;
+        const twoSubscriptions = (
+            subscriptions = [createSession().pricing_plan_subscriptions[0], second],
+            overrides: Partial<CheckoutSession> = {},
+        ) => portalUrl({ pricing_plan_subscriptions: subscriptions, ...overrides });
+
+        beforeEach(() => {
+            mockGet.mockResolvedValue(twoSubscriptions());
+            mockGetSubscription.mockImplementation(({ id }: { id: string }) =>
+                Promise.resolve(id === 'ppsu_second' ? secondTemplate : template),
+            );
+        });
+
+        it('gives each subscription a section of its own, named after its plan', async () => {
+            const { source } = await loaded();
+            const [first, other] = source.planCustomizations!.value;
+
+            expect(first).toMatchObject({
+                key: '0',
+                subscription: template,
+                title: 'Subscription',
+            });
+            expect(other).toMatchObject({
+                key: '1',
+                subscription: secondTemplate,
+                title: 'Hardware',
+            });
+        });
+
+        it('starts each config at its starting value, and lets only the listed ones be changed', async () => {
+            const { source } = await loaded();
+            const other = sectionOf(source, 1);
+
+            expect(other.seatsValues.value).toStrictEqual([
+                { pricing_item_config_id: 'pic_fixed', number: '7' },
+            ]);
+            expect(other.unitsValues.value).toStrictEqual([
+                { pricing_item_config_id: 'pic_units', number: '1.5' },
+            ]);
+            expect(other.editableConfigIds).toStrictEqual(['pic_units']);
+            expect(other.minimums.unitsValues).toStrictEqual([
+                { pricing_item_config_id: 'pic_units', number: '0.5' },
+            ]);
+            expect(other.maximums.unitsValues).toStrictEqual([
+                { pricing_item_config_id: 'pic_units', number: '4' },
+            ]);
+        });
+
+        it('starts a listed config the session has no value for at its minimum', async () => {
+            mockGet.mockResolvedValue(
+                twoSubscriptions([
+                    createSession().pricing_plan_subscriptions[0],
+                    { ...second, starting_values: [{ pricing_plan_schedule_id: 'pps_2' }] },
+                ]),
+            );
+            const { source } = await loaded();
+            await settleEdits();
+
+            expect(sectionOf(source, 1).unitsValues.value).toStrictEqual([
+                { pricing_item_config_id: 'pic_units', number: '0.5' },
+            ]);
+            expect(mockUpdate).not.toHaveBeenCalled();
+        });
+
+        it('sends a config the session has no value for once the customer changes it', async () => {
+            mockGet.mockResolvedValue(
+                twoSubscriptions([
+                    createSession().pricing_plan_subscriptions[0],
+                    { ...second, starting_values: [{ pricing_plan_schedule_id: 'pps_2' }] },
+                ]),
+            );
+            mockUpdate.mockResolvedValue(twoSubscriptions(undefined, { version: 2 }));
+            const { source } = await loaded();
+
+            sectionOf(source, 1).unitsValues.value = [
+                { pricing_item_config_id: 'pic_units', number: '1' },
+            ];
+            await settleEdits();
+
+            expect(
+                mockUpdate.mock.calls[0][1].checkout_session.pricing_plan_subscriptions[1],
+            ).toStrictEqual({
+                pricing_plan_schedule_customizations: [
+                    {
+                        pricing_plan_schedule_id: 'pps_2',
+                        units: [{ pricing_item_config_id: 'pic_units', number: '1' }],
+                    },
+                ],
+            });
+        });
+
+        it('sends a fractional unit count of a later subscription in its own position, on its schedule', async () => {
+            mockUpdate.mockResolvedValue(twoSubscriptions(undefined, { version: 2 }));
+            const { source } = await loaded();
+
+            sectionOf(source, 1).unitsValues.value = [
+                { pricing_item_config_id: 'pic_units', number: '2.5' },
+            ];
+            await settleEdits();
+
+            expect(
+                mockUpdate.mock.calls[0][1].checkout_session.pricing_plan_subscriptions,
+            ).toStrictEqual([
+                {},
+                {
+                    pricing_plan_schedule_customizations: [
+                        {
+                            pricing_plan_schedule_id: 'pps_2',
+                            units: [{ pricing_item_config_id: 'pic_units', number: '2.5' }],
+                        },
+                    ],
+                },
+            ]);
+        });
+
+        it.each([
+            ['a unit count above its maximum', 'unitsValues', 'pic_units', '4.5'],
+            ['a unit count below its minimum', 'unitsValues', 'pic_units', '0.25'],
+            [
+                'a config the session does not let the customer change',
+                'seatsValues',
+                'pic_fixed',
+                '8',
+            ],
+        ] as const)('does not send %s', async (_, key, id, number) => {
+            const { source } = await loaded();
+
+            sectionOf(source, 1)[key].value = [{ pricing_item_config_id: id, number }];
+            await settleEdits();
+
+            expect(mockUpdate).not.toHaveBeenCalled();
+        });
+
+        it('patches nothing and previews once on load', async () => {
+            await loaded();
+            await settleEdits();
+
+            expect(mockUpdate).not.toHaveBeenCalled();
+            expect(mockPreview).toHaveBeenCalledTimes(1);
+        });
+
+        describe('promotion codes', () => {
+            const withCode = (index: number, code: string, version = 2) => {
+                const subscriptions = [createSession().pricing_plan_subscriptions[0], second];
+                subscriptions[index] = {
+                    ...subscriptions[index],
+                    pricing_plan_schedule_customizations: [
+                        {
+                            pricing_plan_schedule_id: index === 0 ? 'pps_1' : 'pps_2',
+                            promotion_codes: [code],
+                        },
+                    ],
+                };
+                return twoSubscriptions(subscriptions, { version });
+            };
+            const refusedOn = (index: number) =>
+                new ApiError({
+                    statusCode: 400,
+                    field: `checkout_session.pricing_plan_subscriptions.${index}.pricing_plan_schedule_customizations.0.promotion_codes`,
+                });
+
+            it('offers a code per subscription that takes one, instead of one for the order', async () => {
+                const { source } = await loaded();
+
+                expect(source.promotionCode.isAllowed?.value).toBe(false);
+                expect(sectionOf(source, 0).promotionCode?.isAllowed?.value).toBe(true);
+                expect(sectionOf(source, 1).promotionCode?.isAllowed?.value).toBe(true);
+            });
+
+            it('keeps the single code of the order when only one subscription takes one', async () => {
+                mockGet.mockResolvedValue(
+                    twoSubscriptions([
+                        createSession().pricing_plan_subscriptions[0],
+                        {
+                            ...second,
+                            options: { ...second.options, allow_promotion_codes: 'NONE' },
+                        },
+                    ]),
+                );
+                const { source } = await loaded();
+
+                expect(source.promotionCode.isAllowed?.value).toBe(true);
+                expect(sectionOf(source, 0).promotionCode).toBeUndefined();
+                expect(sectionOf(source, 1).promotionCode).toBeUndefined();
+            });
+
+            it('applies a code to the first schedule of its own subscription', async () => {
+                mockUpdate.mockResolvedValue(withCode(1, 'SPRING'));
+                mockPreview.mockResolvedValue(previewOf(2));
+                const { source } = await loaded();
+
+                await sectionOf(source, 1).promotionCode!.apply('SPRING');
+
+                expect(
+                    mockUpdate.mock.calls[0][1].checkout_session.pricing_plan_subscriptions,
+                ).toStrictEqual([
+                    {},
+                    {
+                        pricing_plan_schedule_customizations: [
+                            { pricing_plan_schedule_id: 'pps_2', promotion_codes: ['SPRING'] },
+                        ],
+                    },
+                ]);
+                expect(sectionOf(source, 1).promotionCode!.code.value).toBe('SPRING');
+                expect(sectionOf(source, 0).promotionCode!.code.value).toBeNull();
+            });
+
+            it('shows a refused code inline on the subscription the error names', async () => {
+                mockUpdate.mockRejectedValue(refusedOn(1));
+                const { source } = await loaded();
+
+                await sectionOf(source, 1).promotionCode!.apply('NOPE');
+                await flushPromises();
+
+                expect(sectionOf(source, 1).promotionCode!.errorMessage.value).toBe(
+                    'This promotion code is not valid.',
+                );
+                expect(sectionOf(source, 0).promotionCode!.errorMessage.value).toBeNull();
+                expect(mockUpdate).toHaveBeenCalledTimes(1);
+            });
+
+            it("applies one subscription's code after the other's was refused in the same save", async () => {
+                mockUpdate
+                    .mockRejectedValueOnce(refusedOn(1))
+                    .mockResolvedValueOnce(withCode(0, 'SPRING'));
+                mockPreview.mockResolvedValue(previewOf(2));
+                const { source } = await loaded();
+
+                const applied = sectionOf(source, 0).promotionCode!.apply('SPRING');
+                const refused = sectionOf(source, 1).promotionCode!.apply('NOPE');
+                await Promise.all([applied, refused]);
+                await flushPromises();
+
+                expect(mockUpdate).toHaveBeenCalledTimes(2);
+                expect(
+                    mockUpdate.mock.calls[1][1].checkout_session.pricing_plan_subscriptions,
+                ).toStrictEqual([
+                    {
+                        pricing_plan_schedule_customizations: [
+                            { pricing_plan_schedule_id: 'pps_1', promotion_codes: ['SPRING'] },
+                        ],
+                    },
+                ]);
+                expect(sectionOf(source, 0).promotionCode!.code.value).toBe('SPRING');
+                expect(sectionOf(source, 0).promotionCode!.errorMessage.value).toBeNull();
+                expect(sectionOf(source, 1).promotionCode!.errorMessage.value).toBe(
+                    'This promotion code is not valid.',
+                );
+            });
+        });
+    });
+
+    describe('cancel link', () => {
+        it.each([
+            ['a script URL', 'javascript:alert(1)'],
+            ['a relative URL', '/cancel'],
+            ['a data URL', 'data:text/html,<p>hi</p>'],
+            ['a protocol-relative URL', '//evil.test/cancel'],
+        ])('leaves out %s', async (_, cancelUrl) => {
+            mockGet.mockResolvedValue(portalUrl({ cancel_url: cancelUrl }));
+            const { source } = await loaded();
+
+            expect(source.cancelUrl?.value).toBeUndefined();
+        });
+
+        it('encodes the portal URL id it puts in place of the placeholder', async () => {
+            mockGet.mockResolvedValue({
+                ...portalUrl({ cancel_url: 'https://shop.test/c?id={CHECKOUT_SESSION_ID}' }),
+            });
+            const { source } = await loaded();
+
+            expect(source.cancelUrl?.value).toBe('https://shop.test/c?id=purl_1');
+        });
+
+        it('encodes an id that needs it, at every placeholder', async () => {
+            mockGet.mockResolvedValue(
+                portalUrl({
+                    cancel_url:
+                        'https://shop.test/c/{CHECKOUT_SESSION_ID}?again={CHECKOUT_SESSION_ID}',
+                    success_url: 'https://shop.test/done/{CHECKOUT_SESSION_ID}',
+                }),
+            );
+            const { source } = await loaded('a b/c');
+
+            expect(source.cancelUrl?.value).toBe('https://shop.test/c/a%20b%2Fc?again=a%20b%2Fc');
+            expect(source.successUrl.value).toBe('https://shop.test/done/a%20b%2Fc');
+        });
+    });
+
+    describe('a session that cannot be read', () => {
+        it('says the session could not be loaded on a server error', async () => {
+            mockGet.mockRejectedValue(new ApiError({ statusCode: 503 }));
+            const { loadFailure, endState } = await loaded();
+
+            expect(loadFailure.value).toStrictEqual({});
+            expect(endState.value).toBeUndefined();
+        });
+
+        it('says how the link ended on a 410', async () => {
+            mockGet.mockRejectedValue(
+                new ApiError({
+                    statusCode: 410,
+                    errorCode: 'CHECKOUT_SESSION_CLOSED',
+                    checkoutSessionStatus: 'FAILED',
+                }),
+            );
+            const { loadFailure } = await loaded();
+
+            expect(loadFailure.value).toStrictEqual({ reason: 'closed', status: 'FAILED' });
+        });
+
+        it('has no failure while the session loads fine', async () => {
+            const { loadFailure } = await loaded();
+
+            expect(loadFailure.value).toBeUndefined();
+        });
+    });
+
+    describe('a session that has ended', () => {
+        it('goes to the success URL of a completed session, with its id in place', async () => {
+            mockGet.mockResolvedValue(portalUrl({ status: 'COMPLETED' }, 'CLOSED'));
+            const { endState, isRedirecting } = await loaded();
+
+            expect(endState.value).toBe('COMPLETED');
+            expect(isRedirecting.value).toBe(true);
+            expect(mockRedirect).toHaveBeenCalledWith('https://shop.test/done?session=purl_1');
+        });
+
+        it('does not go to a success URL that is not a web address', async () => {
+            mockGet.mockResolvedValue(
+                portalUrl({ status: 'COMPLETED', success_url: 'javascript:alert(1)' }, 'CLOSED'),
+            );
+            const { endState, isRedirecting } = await loaded();
+
+            expect(endState.value).toBe('COMPLETED');
+            expect(isRedirecting.value).toBe(false);
+            expect(mockRedirect).not.toHaveBeenCalled();
+        });
+
+        it('ends, and goes to the success URL, when a save returns a completed session', async () => {
+            mockUpdate.mockResolvedValue(portalUrl({ status: 'COMPLETED', version: 2 }, 'CLOSED'));
+            const { source, endState } = await loaded();
+
+            source.checkoutForm.form.value.email = 'finance@acme.test';
+            await settleEdits();
+
+            expect(endState.value).toBe('COMPLETED');
+            expect(mockRedirect).toHaveBeenCalledWith('https://shop.test/done?session=purl_1');
+        });
+
+        it('ends when a save returns a session that is no longer open', async () => {
+            mockUpdate.mockResolvedValue(portalUrl({ status: 'PROCESSING', version: 2 }));
+            const { source, endState } = await loaded();
+
+            source.checkoutForm.form.value.email = 'finance@acme.test';
+            await settleEdits();
+
+            expect(endState.value).toBe('PROCESSING');
+            expect(mockRedirect).not.toHaveBeenCalled();
+        });
+
+        it('shows a completed session without a success URL as completed', async () => {
+            mockGet.mockResolvedValue(
+                portalUrl({ status: 'COMPLETED', success_url: undefined }, 'CLOSED'),
+            );
+            const { endState, isRedirecting } = await loaded();
+
+            expect(endState.value).toBe('COMPLETED');
+            expect(isRedirecting.value).toBe(false);
+            expect(mockRedirect).not.toHaveBeenCalled();
+        });
+
+        it.each([
+            ['FAILED', portalUrl({ status: 'FAILED' }, 'CLOSED')],
+            ['PROCESSING', portalUrl({ status: 'PROCESSING' })],
+            ['CLOSED', portalUrl({}, 'CLOSED')],
+        ])('ends as %s without redirecting', async (state, response) => {
+            mockGet.mockResolvedValue(response);
+            const { endState } = await loaded();
+
+            expect(endState.value).toBe(state);
+            expect(mockRedirect).not.toHaveBeenCalled();
+        });
+
+        it('loads no plan, patches nothing and previews no more than once', async () => {
+            mockGet.mockResolvedValue(portalUrl({ status: 'FAILED', version: 3 }, 'CLOSED'));
+            const { source } = await loaded();
+
+            source.checkoutForm.form.value.email = 'finance@acme.test';
+            await settleEdits();
+            await settleEdits();
+
+            expect(mockGetSubscription).not.toHaveBeenCalled();
+            expect(mockUpdate).not.toHaveBeenCalled();
+            expect(mockPreview).toHaveBeenCalledTimes(1);
+            expect(source.planCustomizations?.value).toStrictEqual([]);
+        });
+
+        it('is not ended while the session is open', async () => {
+            const { endState } = await loaded();
+
+            expect(endState.value).toBeUndefined();
         });
     });
 });

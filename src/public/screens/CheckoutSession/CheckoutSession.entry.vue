@@ -4,6 +4,7 @@ import type {
     SolvimonCheckoutSessionEntryProps,
 } from './CheckoutSession.entry.types';
 import SessionCheckout from './SessionCheckout.vue';
+import CheckoutSessionEnded from './CheckoutSessionEnded.vue';
 import CheckoutNotAvailable from '@/components/checkout/CheckoutNotAvailable.vue';
 import { EntryProvider } from '@/components/providers';
 import { getComponentName } from '@/utils/component';
@@ -26,8 +27,14 @@ const emit = defineEmits<SolvimonCheckoutSessionEmits>();
             :configuration="{ avatar: branding?.emblem?.public_url }"
             @ready="emit('ready')"
         />
-        <template #portal-unavailable>
-            <CheckoutNotAvailable class="sv-checkout sv-root sv-screen sv-checkout--error" />
+        <template #portal-unavailable="{ ending }">
+            <CheckoutSessionEnded
+                v-if="ending"
+                class="sv-checkout sv-root sv-screen"
+                :reason="ending.reason"
+                :status="ending.checkoutSessionStatus"
+            />
+            <CheckoutNotAvailable v-else class="sv-checkout sv-root sv-screen sv-checkout--error" />
         </template>
     </EntryProvider>
 </template>

@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `ContentWithAsideLayout` no longer takes a `footer` slot; the checkout terms were its only content.
 - `@solvimon/solvimon-ui` is 1.22.0 and `@solvimon/solvimon-types` 1.10.0. Tab now moves through the fields of a modal instead of jumping back to its close button.
 - The buttons in the customer overview's section headers (**View all**, **Edit** and **Manage**) are extra small, a step down from small.
+- Screens and components with a tooltip, a dropdown or a select download about 8 kB (gzip) less up front. The code that positions those popups loads the first time one opens, starting as soon as the pointer or focus reaches what opens it.
 
 ### Fixed
 

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { defineAsyncComponent, provide } from 'vue';
+import { computed, defineAsyncComponent, provide } from 'vue';
 import { getAuth, AUTH_INJECTION_KEY } from './AuthProvider.lib';
 import type { AuthProviderProps } from './AuthProvider.types';
 
@@ -12,6 +12,10 @@ const props = defineProps<AuthProviderProps>();
 const auth = getAuth(props.token, props.authentication, props.portalToken);
 
 provide(AUTH_INJECTION_KEY, auth);
+
+const ending = computed(() =>
+    auth.status.value.state === 'ended' ? auth.status.value : undefined,
+);
 </script>
 
 <template>
@@ -20,6 +24,7 @@ provide(AUTH_INJECTION_KEY, auth);
     <slot
         v-else-if="auth.status.value.state === 'ended' || auth.status.value.state === 'invalid'"
         name="ended"
+        :ending="ending"
     />
     <PortalLinkUnverified
         v-else-if="auth.status.value.state === 'unavailable'"

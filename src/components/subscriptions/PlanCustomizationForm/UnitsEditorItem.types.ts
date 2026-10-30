@@ -4,4 +4,6 @@ export interface UnitsEditorItemProps {
     modelValue: ConfiguredMeterValue;
     defaultValue?: ConfiguredMeterValue;
     pricings: PricingExtended[];
+    maxValue?: ConfiguredMeterValue;
+    disabled?: boolean;
 }

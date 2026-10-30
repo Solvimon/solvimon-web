@@ -1,9 +1,9 @@
 import { flushPromises, mount } from '@vue/test-utils';
-import { computed, ref, shallowRef } from 'vue';
+import { type Component, computed, defineComponent, h, ref, shallowRef } from 'vue';
 import type { PortalUrl } from '@solvimon/solvimon-types';
 import LegacyCheckout from './LegacyCheckout.vue';
 import Checkout from './Checkout.vue';
-import type { CheckoutSource } from './Checkout.source.types';
+import type { CheckoutPlanCustomization, CheckoutSource } from './Checkout.source.types';
 import { useCheckoutView } from './useCheckout.view';
 
 // ─── Mocks ────────────────────────────────────────────────────────────────────
@@ -697,7 +697,13 @@ describe('Checkout', () => {
             mockExperimentalFeatures.value['express-checkout'] = false;
         });
 
-        const mountWithoutPayment = async (overrides: Partial<CheckoutSource> = {}) => {
+        const mountWithoutPayment = async (
+            overrides: Partial<CheckoutSource> = {},
+            {
+                renderStubDefaultSlot = false,
+                stubs = {},
+            }: { renderStubDefaultSlot?: boolean; stubs?: Record<string, Component> } = {},
+        ) => {
             const view = useCheckoutView({} as never);
             const source: CheckoutSource = {
                 ...view,
@@ -717,9 +723,11 @@ describe('Checkout', () => {
             const wrapper = mount(Checkout, {
                 props: { source },
                 global: {
+                    renderStubDefaultSlot,
                     stubs: {
                         ...Object.fromEntries(STUBBED_CHILDREN.map((name) => [name, true])),
                         Skeleton: false,
+                        ...stubs,
                     },
                 },
             });
@@ -727,6 +735,53 @@ describe('Checkout', () => {
             await vi.dynamicImportSettled();
             return wrapper;
         };
+
+        /** The editor is loaded on demand, and a plain stub of it would not know its props. */
+        const PlanCustomizationEditorStub = defineComponent({
+            name: 'PlanCustomizationEditor',
+            props: {
+                title: String,
+                subscription: Object,
+                seatsValues: Array,
+                initialSeatsValues: Array,
+                maxSeatsValues: Array,
+                editableConfigIds: Array,
+                hidePricingChoices: Boolean,
+            },
+            setup:
+                (_props, { slots }) =>
+                () =>
+                    h('div', slots.default?.()),
+        });
+
+        const planCustomization = (
+            key: string,
+            overrides: Partial<CheckoutPlanCustomization> = {},
+        ): CheckoutPlanCustomization => ({
+            key,
+            subscription: { id: `sub_${key}`, billing_period: 'MONTHLY' } as never,
+            seatsValues: ref([{ pricing_item_config_id: `pic_${key}`, number: '3' }]),
+            unitsValues: ref([]),
+            minimums: {
+                seatsValues: [{ pricing_item_config_id: `pic_${key}`, number: '2' }],
+                unitsValues: [],
+            },
+            maximums: {
+                seatsValues: [{ pricing_item_config_id: `pic_${key}`, number: '9' }],
+                unitsValues: [],
+            },
+            editableConfigIds: [`pic_${key}`],
+            ...overrides,
+        });
+
+        const promotionCodeOf = (code: string | null, errorMessage: string | null = null) => ({
+            isAllowed: ref(true),
+            code: ref(code),
+            isPending: ref(false),
+            errorMessage: ref(errorMessage),
+            apply: vi.fn(),
+            remove: vi.fn(),
+        });
 
         it('says payment is not available, offers no way to pay and keeps Pay off', async () => {
             paymentMethodOptions.value = [
@@ -756,6 +811,97 @@ describe('Checkout', () => {
             expect(forms.map((form) => form.props('title'))).toStrictEqual(['Acme', 'Jane Doe']);
             expect(forms[0].props('isTypeLocked')).toBe(true);
             expect(forms[1].props('display')).toStrictEqual(display);
+        });
+
+        it('shows a section per subscription the flow lists, bounded and without pricing choices', async () => {
+            const wrapper = await mountWithoutPayment(
+                {
+                    planCustomizations: shallowRef([
+                        planCustomization('0', { title: 'Platform' }),
+                        planCustomization('1', { title: 'Hardware' }),
+                    ]),
+                },
+                { stubs: { PlanCustomizationEditor: PlanCustomizationEditorStub } },
+            );
+            const editors = wrapper.findAllComponents({ name: 'PlanCustomizationEditor' });
+
+            expect(editors.map((section) => section.props('title'))).toStrictEqual([
+                'Platform',
+                'Hardware',
+            ]);
+            expect(editors[1].props()).toMatchObject({
+                subscription: { id: 'sub_1' },
+                seatsValues: [{ pricing_item_config_id: 'pic_1', number: '3' }],
+                initialSeatsValues: [{ pricing_item_config_id: 'pic_1', number: '2' }],
+                maxSeatsValues: [{ pricing_item_config_id: 'pic_1', number: '9' }],
+                editableConfigIds: ['pic_1'],
+                hidePricingChoices: true,
+            });
+            expect(
+                wrapper.findComponent({ name: 'OrderSummary' }).props('subscriptions'),
+            ).toStrictEqual([
+                { id: 'sub_0', billing_period: 'MONTHLY' },
+                { id: 'sub_1', billing_period: 'MONTHLY' },
+            ]);
+        });
+
+        it('leaves out the section of a subscription with nothing to change', async () => {
+            const wrapper = await mountWithoutPayment({
+                planCustomizations: shallowRef([planCustomization('0', { seatsValues: ref([]) })]),
+            });
+
+            expect(wrapper.findComponent({ name: 'PlanCustomizationEditor' }).exists()).toBe(false);
+        });
+
+        it('shows the promotion code of each subscription, and its error, in its own section', async () => {
+            const wrapper = await mountWithoutPayment(
+                {
+                    promotionCode: { ...promotionCodeOf(null), isAllowed: ref(false) },
+                    planCustomizations: shallowRef([
+                        planCustomization('0', { promotionCode: promotionCodeOf('SPRING') }),
+                        planCustomization('1', {
+                            promotionCode: promotionCodeOf(
+                                null,
+                                'This promotion code is not valid.',
+                            ),
+                        }),
+                    ]),
+                },
+                {
+                    renderStubDefaultSlot: true,
+                    stubs: { PlanCustomizationEditor: PlanCustomizationEditorStub },
+                },
+            );
+            const sections = wrapper.findAllComponents({ name: 'PlanCustomizationEditor' });
+
+            expect(
+                sections.map((section) =>
+                    section.findComponent({ name: 'PromotionCodeSection' }).props('promotionCode'),
+                ),
+            ).toStrictEqual(['SPRING', null]);
+            expect(sections[0].findComponent({ name: 'ErrorNotification' }).exists()).toBe(false);
+            expect(sections[1].findComponent({ name: 'ErrorNotification' }).props('title')).toBe(
+                'This promotion code is not valid.',
+            );
+            expect(wrapper.find('.sv-checkout__promotion-code').exists()).toBe(true);
+            expect(wrapper.findAllComponents({ name: 'PromotionCodeSection' })).toHaveLength(2);
+        });
+
+        it('links back to where the customer came from without paying', async () => {
+            const wrapper = await mountWithoutPayment(
+                { cancelUrl: ref('https://shop.test/cancel') },
+                { renderStubDefaultSlot: true },
+            );
+
+            expect(wrapper.find('.sv-checkout__cancel a').attributes('href')).toBe(
+                'https://shop.test/cancel',
+            );
+        });
+
+        it('offers no way back when the flow has no cancel URL', async () => {
+            const wrapper = await mountWithoutPayment({}, { renderStubDefaultSlot: true });
+
+            expect(wrapper.find('.sv-checkout__cancel').exists()).toBe(false);
         });
 
         it('shows no customer form when the flow lists none', async () => {

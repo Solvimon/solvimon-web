@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { BrandProvider, IconSpriteProvider } from '@solvimon/solvimon-ui';
-import type { ProviderEmits, ProviderProps } from './Provider.types';
+import type { ProviderEmits, ProviderProps, ProviderSlots } from './Provider.types';
 import CssOverridesProvider from '@/components/providers/CssOverridesProvider/CssOverridesProvider.vue';
 import ActionDispatchProvider from '@/components/providers/ActionDispatchProvider/ActionDispatchProvider.vue';
 import LoggerProvider from '@/components/providers/LoggerProvider/LoggerProvider.vue';
@@ -24,6 +24,7 @@ const props = defineProps<
 >();
 const authentication = computed(() => getPortalAuthentication(props.portalObject));
 const emit = defineEmits<ProviderEmits>();
+defineSlots<ProviderSlots>();
 </script>
 
 <template>
@@ -71,8 +72,11 @@ const emit = defineEmits<ProviderEmits>();
                                                         <slot />
                                                         <!-- The exchange found the link expired,
                                                         revoked or closed. -->
-                                                        <template #ended>
-                                                            <slot name="portal-unavailable" />
+                                                        <template #ended="{ ending }">
+                                                            <slot
+                                                                name="portal-unavailable"
+                                                                :ending="ending"
+                                                            />
                                                         </template>
                                                     </AuthProvider>
                                                     <template #unavailable>

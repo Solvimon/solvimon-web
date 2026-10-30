@@ -51,6 +51,22 @@ export interface CheckoutCustomerForm {
     title?: string;
 }
 
+/** The quantities of one subscription of the order, and the promotion code it takes. */
+export interface CheckoutPlanCustomization {
+    key: string;
+    subscription: PricingPlanSubscriptionExpanded;
+    /** Names the section when the order has several subscriptions. */
+    title?: string;
+    seatsValues: Ref<ConfiguredMeterValue[]>;
+    unitsValues: Ref<ConfiguredMeterValue[]>;
+    minimums: { seatsValues: ConfiguredMeterValue[]; unitsValues: ConfiguredMeterValue[] };
+    maximums: { seatsValues: ConfiguredMeterValue[]; unitsValues: ConfiguredMeterValue[] };
+    /** The configs the customer may change; the others show at their number. */
+    editableConfigIds: string[];
+    /** Left out when the order's own `promotionCode` covers it. */
+    promotionCode?: CheckoutPromotionCode;
+}
+
 /** Everything the checkout screen renders and pays from; each checkout flow supplies its own. */
 export interface CheckoutSource {
     /** What the host configured, once anything unusable has been dropped and reported. */
@@ -62,6 +78,11 @@ export interface CheckoutSource {
     orderMeterValues: Readonly<
         Ref<{ seatsValues?: ConfiguredMeterValue[]; unitsValues?: ConfiguredMeterValue[] }>
     >;
+    /**
+     * A section per subscription, shown in place of the editor of `subscription` and without
+     * its pricing choices. Held shallowly, like `customerForms`.
+     */
+    planCustomizations?: Readonly<Ref<CheckoutPlanCustomization[]>>;
     checkoutForm: ReturnType<typeof useCheckoutForm>;
     /**
      * A section per customer, shown and validated in place of `checkoutForm`'s own. Held shallowly
@@ -93,6 +114,8 @@ export interface CheckoutSource {
     isPaid: Ref<boolean>;
 
     successUrl: Readonly<Ref<string | undefined>>;
+    /** Where the customer goes back to without paying; already sanitised. */
+    cancelUrl?: Readonly<Ref<string | undefined>>;
     /** Markdown shown with the pay button. */
     note: Readonly<Ref<string | undefined>>;
 

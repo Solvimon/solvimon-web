@@ -4,4 +4,6 @@ export interface SeatsEditorItemProps {
     modelValue: ConfiguredMeterValue;
     defaultValue?: ConfiguredMeterValue;
     pricings: PricingExtended[];
+    maxValue?: ConfiguredMeterValue;
+    disabled?: boolean;
 }

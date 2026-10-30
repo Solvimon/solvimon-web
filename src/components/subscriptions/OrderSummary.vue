@@ -351,11 +351,16 @@ const handleBinaryBillingToggle = (checked: boolean) => {
     >
         <div class="sv-order-summary__body grid grid-cols-1 gap-1">
             <!-- subscription summary -->
-            <Section no-spacing class="sv-order-summary__subscription">
+            <Section
+                v-for="(summarised, index) in subscriptions ?? [subscription]"
+                :key="index"
+                no-spacing
+                class="sv-order-summary__subscription"
+            >
                 <SubscriptionSummary
-                    v-if="subscription"
+                    v-if="summarised"
                     :avatar="avatar"
-                    :subscription="subscription"
+                    :subscription="summarised"
                     :enabled-pricing-ids="enabledPricingIds"
                 />
             </Section>

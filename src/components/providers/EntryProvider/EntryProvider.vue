@@ -4,6 +4,7 @@ import type { EntryProviderProps } from './EntryProvider.types';
 import { getMissingProperties } from './EntryProvider.lib';
 import Provider from '@/components/providers/Provider/Provider.vue';
 import type { EntryBaseEmits } from '@/types/EntryBaseProps';
+import type { ProviderSlots } from '@/components/providers/Provider/Provider.types';
 
 // Every element loads EntryProvider, and only a revoked portal needs the notice.
 const PortalNotAvailable = defineAsyncComponent(() =>
@@ -12,6 +13,7 @@ const PortalNotAvailable = defineAsyncComponent(() =>
 
 const props = defineProps<EntryProviderProps>();
 defineEmits<EntryBaseEmits>();
+defineSlots<ProviderSlots>();
 
 const missingProperties = computed(() =>
     getMissingProperties(props.entry, props.requiredConfiguration),
@@ -38,8 +40,8 @@ const missingProperties = computed(() =>
         @error="(error: Error) => $emit('error', error)"
     >
         <slot />
-        <template #portal-unavailable>
-            <slot name="portal-unavailable"><PortalNotAvailable /></slot>
+        <template #portal-unavailable="{ ending }">
+            <slot name="portal-unavailable" :ending="ending"><PortalNotAvailable /></slot>
         </template>
     </Provider>
 </template>

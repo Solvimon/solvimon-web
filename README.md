@@ -448,6 +448,7 @@ The SDK emits structured log entries via the [`onLog`](#error-logging) callback.
 | `CHECKOUT_FORM_STATE_NOT_SAVED`      | Could not keep the checkout form for a redirect return                                                       |
 | `CHECKOUT_SESSION_CLOSED`            | The checkout session of the portal link is closed                                                            |
 | `CHECKOUT_SESSION_EDIT_NOT_APPLIED`  | The checkout session was saved but kept a value the customer changed                                         |
+| `CHECKOUT_SESSION_SEVERAL_INVOICES`  | The checkout session previewed several invoices; only the first is shown                                     |
 | `CHECKOUT_SESSION_UPDATE_REFUSED`    | The API refused a change to the checkout session                                                             |
 | `INVOICE_PREVIEW_SKIPPED`            | Skipped the on-demand charge invoice preview: no schedule to charge it on                                    |
 | `MISSING_REQUIRED_PROPERTIES`        | Not rendering until these properties are set:…                                                               |

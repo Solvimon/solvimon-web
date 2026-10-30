@@ -44,6 +44,7 @@ const pricingGroups = computed(() =>
     <Section
         class="sv-plan-customization"
         :title="
+            title ??
             $t({
                 defaultMessage: 'Customize plan',
                 id: 'checkout.customize_plan_block.title',
@@ -60,6 +61,8 @@ const pricingGroups = computed(() =>
                 v-model="seatsModel"
                 class="sv-plan-customization__seats"
                 :initial-seats-values="initialSeatsValues"
+                :max-values="maxSeatsValues"
+                :editable-config-ids="editableConfigIds"
                 :pricings="pricings"
             />
 
@@ -68,11 +71,16 @@ const pricingGroups = computed(() =>
                 v-model="unitsModel"
                 class="sv-plan-customization__units"
                 :initial-units-values="initialUnitsValues"
+                :max-values="maxUnitsValues"
+                :editable-config-ids="editableConfigIds"
                 :pricings="pricings"
             />
 
             <!-- pricing group level addons-->
-            <template v-for="pricingGroup in pricingGroups" :key="pricingGroup.id">
+            <template
+                v-for="pricingGroup in hidePricingChoices ? [] : pricingGroups"
+                :key="pricingGroup.id"
+            >
                 <PricingGroupSingleEditor
                     v-if="
                         pricingGroup.product_type === 'DEFAULT' &&
@@ -115,12 +123,15 @@ const pricingGroups = computed(() =>
 
             <!-- product level addons -->
             <AddonMultipleEditor
+                v-if="!hidePricingChoices"
                 v-model="enabledPricingIdsModel"
                 class="sv-plan-customization__group"
                 :pricings="addonPricings"
                 :billing-period="billingPeriod"
                 :currency="currency"
             />
+
+            <slot />
         </div>
     </Section>
 </template>

@@ -19,7 +19,7 @@ export interface ExchangeSession {
 
 const EXCHANGE_RETRY_DELAYS_MS = [1000, 2000, 4000];
 
-const LINK_ENDINGS: Record<string, PortalLinkEnding> = {
+export const LINK_ENDINGS: Record<string, PortalLinkEnding> = {
     PORTAL_URL_EXPIRED: 'expired',
     PORTAL_URL_REVOKED: 'revoked',
     CHECKOUT_SESSION_CLOSED: 'closed',

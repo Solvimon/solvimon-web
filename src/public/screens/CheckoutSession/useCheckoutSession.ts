@@ -1,17 +1,18 @@
 import type {
     Amount,
+    CheckoutSessionStatus,
     ConfiguredMeterValue,
     Invoice,
     PricingPlanSubscriptionExpanded,
 } from '@solvimon/solvimon-types';
 import { useIntl } from '@solvimon/solvimon-ui';
-import { computed, effectScope, onMounted, reactive, ref, shallowRef, watch } from 'vue';
+import { type Ref, computed, effectScope, onMounted, reactive, ref, shallowRef, watch } from 'vue';
 import {
     type TextField,
     getCurrentMeterValues,
     getCustomerEdit,
-    getEditableMeterValues,
     getMeterEdit,
+    getMeterValues,
     getMissingFormFields,
     getPromotionCodes,
     getScheduleId,
@@ -19,10 +20,14 @@ import {
 } from './checkoutSessionForm';
 import type {
     CheckoutCustomerForm,
+    CheckoutPlanCustomization,
+    CheckoutPromotionCode,
     CheckoutSource,
     PriceSettlement,
 } from '@/public/screens/Checkout/Checkout.source.types';
 import { useLogger } from '@/components/providers';
+import { LINK_ENDINGS } from '@/components/providers/AuthProvider/AuthProvider.handle';
+import type { PortalLinkEnding } from '@/components/providers/AuthProvider/AuthProvider.lib';
 import { useCheckoutForm } from '@/components/customer/CheckoutForm/useCheckoutForm';
 import { getInitialState } from '@/components/customer/CheckoutForm/CheckoutForm.lib';
 import { useWatchDebounced } from '@/composables/useWatchDebounced';
@@ -36,6 +41,8 @@ import {
 import { createSubscriptionsService } from '@/services/subscriptions';
 import { getFirstPricingPlanScheduleOfType } from '@/utils/pricingPlanSchedule';
 import { splitInvoiceByRecurrence } from '@/utils/invoice';
+import { getSubscriptionName } from '@/utils/subscription';
+import { safeUrlRedirect, sanitizeUrl } from '@/utils/url';
 import type { CheckoutFormState } from '@/components/customer/CheckoutForm/CheckoutForm.types';
 import type {
     CheckoutSessionCustomerPatch,
@@ -44,6 +51,7 @@ import type {
     CheckoutSessionNewCustomer,
     CheckoutSessionPortalUrlResponse,
     CheckoutSessionPreview,
+    CheckoutSessionSubscription,
 } from '@/types/checkoutSession';
 
 export const CHECKOUT_SESSION_EDIT_DEBOUNCE_MS = 400;
@@ -114,6 +122,22 @@ const titleOf = (customer: CheckoutSessionNewCustomer) => {
 const isBadRequestOn = (error: unknown, field: string) =>
     isApiError(error) && error.statusCode === 400 && !!error.field?.endsWith(field);
 
+/** The subscription whose promotion code a 400 refused, or `-1` when its field names none. */
+const refusedPromotionCodeIndex = (error: unknown): number | undefined => {
+    if (!isBadRequestOn(error, 'promotion_codes') || !isApiError(error)) return undefined;
+    const match = /pricing_plan_subscriptions\.(\d+)\./.exec(error.field ?? '');
+    return match ? Number(match[1]) : -1;
+};
+
+/** Why the session can no longer be edited: its status, or `CLOSED` for a link that is. */
+export type CheckoutSessionEndState = Exclude<CheckoutSessionStatus, 'OPEN'> | 'CLOSED';
+
+interface PromotionCodeState {
+    code: Ref<string | null>;
+    isPending: Ref<boolean>;
+    errorMessage: Ref<string | null>;
+}
+
 export function useCheckoutSession({ portalUrlId }: { portalUrlId: string }) {
     const logger = useLogger();
     const { $t } = useIntl();
@@ -181,8 +205,6 @@ export function useCheckoutSession({ portalUrlId }: { portalUrlId: string }) {
         if (added?.length) forms.value = [...forms.value, ...added];
     };
 
-    // shortcut: the editor edits the first subscription; an editor per subscription comes with
-    // the screen that lists them all.
     const scheduleIdOf = (index: number) => {
         const subscription = session.value?.pricing_plan_subscriptions[index];
         const template = templates.value[index];
@@ -197,15 +219,29 @@ export function useCheckoutSession({ portalUrlId }: { portalUrlId: string }) {
         );
     };
 
-    /** The one subscription a promotion code goes on: the first that takes one. */
-    const promotionCodeIndex = computed(
-        () =>
-            session.value?.pricing_plan_subscriptions.findIndex(
-                (subscription) => subscription.options?.allow_promotion_codes === 'SINGLE',
-            ) ?? -1,
+    /** The subscriptions that take a promotion code, by index. */
+    const promotionCodeIndexes = computed(() =>
+        (session.value?.pricing_plan_subscriptions ?? []).flatMap((subscription, index) =>
+            subscription.options?.allow_promotion_codes === 'SINGLE' ? [index] : [],
+        ),
     );
-    /** `undefined` follows the session; a string applies that code, `null` removes it. */
-    const wantedPromotionCode = ref<string | null>();
+    /** By subscription: a string applies that code, `null` removes it; absent follows the session. */
+    const wantedPromotionCodes = reactive(new Map<number, string | null>());
+
+    /** The quantities of each subscription, by index; absent for one whose plan did not load. */
+    const customizations = shallowRef<(CheckoutPlanCustomization | undefined)[]>([]);
+
+    /** What a config was shown at, so one the session has no value for is not sent unchanged. */
+    const shownMeterValues = (
+        subscription: CheckoutSessionSubscription,
+        scheduleId: string,
+        key: 'seats_values' | 'units',
+        bounds: 'edit_seats' | 'edit_units',
+    ) =>
+        getMeterValues(
+            subscription.options?.[bounds],
+            getCurrentMeterValues(subscription, scheduleId, key),
+        ).values;
 
     const getCustomerChange = (index: number) => {
         const customer = session.value?.customers[index];
@@ -276,17 +312,26 @@ export function useCheckoutSession({ portalUrlId }: { portalUrlId: string }) {
         ),
     ];
 
-    /** The part of the edit a 400's `field` names, or everything sent when it names none. */
+    /**
+     * The part of the edit a 400's `field` names; else all of that customer or subscription; else
+     * everything sent, so a refused edit is never sent again as it was.
+     */
     const rememberRefused = (edit: CheckoutSessionEdit, field: string | undefined) => {
         const [root, index, ...rest] = (field ?? '').replace(/^checkout_session\./, '').split('.');
-        const prefix =
-            root === 'customers' && rest[0] === 'customer'
-                ? ['customers', index, ...rest.slice(1, 3)].join('.')
-                : root === 'pricing_plan_subscriptions'
-                  ? ['subs', index, ...rest.slice(2, 3)].join('.')
-                  : '';
-        for (const [path, value] of partsOf(edit)) {
-            if (path === prefix || path.startsWith(`${prefix}.`) || !prefix) {
+        const prefixes =
+            root === 'customers' && /^\d+$/.test(index ?? '')
+                ? [['customers', index, ...rest.slice(1, 3)].join('.'), `customers.${index}`]
+                : root === 'pricing_plan_subscriptions' && /^\d+$/.test(index ?? '')
+                  ? [['subs', index, ...rest.slice(2, 3)].join('.'), `subs.${index}`]
+                  : [];
+        const parts = partsOf(edit);
+        const isUnder = (path: string, prefix: string) =>
+            path === prefix || path.startsWith(`${prefix}.`);
+        const prefix = prefixes.find((candidate) =>
+            parts.some(([path]) => isUnder(path, candidate)),
+        );
+        for (const [path, value] of parts) {
+            if (prefix === undefined || isUnder(path, prefix)) {
                 refusedParts.set(path, JSON.stringify(value));
             }
         }
@@ -303,17 +348,18 @@ export function useCheckoutSession({ portalUrlId }: { portalUrlId: string }) {
             const customization: CheckoutSessionCustomizationPatch = {
                 pricing_plan_schedule_id: scheduleId,
             };
-            if (index === 0) {
+            const meters = customizations.value[index];
+            if (meters) {
                 const seats = getMeterEdit(
-                    checkoutForm.form.value.seatsValues,
+                    meters.seatsValues.value,
                     subscription.options?.edit_seats,
-                    getCurrentMeterValues(subscription, scheduleId, 'seats_values'),
+                    shownMeterValues(subscription, scheduleId, 'seats_values', 'edit_seats'),
                     { wholeOnly: true },
                 );
                 const units = getMeterEdit(
-                    checkoutForm.form.value.unitsValues,
+                    meters.unitsValues.value,
                     subscription.options?.edit_units,
-                    getCurrentMeterValues(subscription, scheduleId, 'units'),
+                    shownMeterValues(subscription, scheduleId, 'units', 'edit_units'),
                     { wholeOnly: false },
                 );
                 const allowed = (
@@ -329,8 +375,9 @@ export function useCheckoutSession({ portalUrlId }: { portalUrlId: string }) {
                 if (sentSeats?.length) customization.seats_values = sentSeats;
                 if (sentUnits?.length) customization.units = sentUnits;
             }
-            if (index === promotionCodeIndex.value && wantedPromotionCode.value !== undefined) {
-                const codes = wantedPromotionCode.value ? [wantedPromotionCode.value] : null;
+            const wantedCode = wantedPromotionCodes.get(index);
+            if (wantedCode !== undefined && promotionCodeIndexes.value.includes(index)) {
+                const codes = wantedCode ? [wantedCode] : null;
                 const currentCodes = getPromotionCodes(subscription, scheduleId);
                 if ((codes?.[0] ?? null) !== (currentCodes?.[0] ?? null)) {
                     customization.promotion_codes = codes;
@@ -434,12 +481,7 @@ export function useCheckoutSession({ portalUrlId }: { portalUrlId: string }) {
                     toCheckoutSessionPatch(session.value.version, edit),
                 );
             } catch (error) {
-                if (!isBadRequestOn(error, 'expected_version')) {
-                    if (isApiError(error) && error.statusCode === 400) {
-                        rememberRefused(edit, error.field);
-                    }
-                    throw error;
-                }
+                if (!isBadRequestOn(error, 'expected_version')) throw error;
 
                 // Changed elsewhere since it was read: the same edit goes again on the new version.
                 portalUrl.value = await service.getCheckoutSession(portalUrlId);
@@ -460,6 +502,16 @@ export function useCheckoutSession({ portalUrlId }: { portalUrlId: string }) {
                     'The checkout session was saved but kept a value the customer changed',
                 );
             }
+        } catch (error) {
+            // Either attempt: a refused code has its own handling, and a stale version is no refusal.
+            const isRefusedEdit =
+                isApiError(error) &&
+                error.statusCode === 400 &&
+                !isBadRequestOn(error, 'expected_version') &&
+                refusedPromotionCodeIndex(error) === undefined;
+            if (isRefusedEdit) rememberRefused(edit, error.field);
+            rejectPromotionCodes(error);
+            throw error;
         } finally {
             isSaving.value = false;
         }
@@ -499,81 +551,145 @@ export function useCheckoutSession({ portalUrlId }: { portalUrlId: string }) {
         debounce: CHECKOUT_SESSION_EDIT_DEBOUNCE_MS,
     });
 
-    const promotionCode = ref<string | null>(null);
-    const isPromotionCodePending = ref(false);
-    const promotionCodeErrorMessage = ref<string | null>(null);
+    const promotionCodeStates = new Map<number, PromotionCodeState>();
+    const promotionCodeState = (index: number): PromotionCodeState => {
+        let state = promotionCodeStates.get(index);
+        if (!state) {
+            state = { code: ref(null), isPending: ref(false), errorMessage: ref(null) };
+            promotionCodeStates.set(index, state);
+        }
+        return state;
+    };
 
-    const appliedPromotionCode = computed(() => {
-        const index = promotionCodeIndex.value;
+    const appliedPromotionCode = (index: number) => {
         const subscription = session.value?.pricing_plan_subscriptions[index];
         return subscription
             ? (getPromotionCodes(subscription, scheduleIdOf(index))?.[0] ?? null)
             : null;
+    };
+
+    watch(session, () => {
+        for (const index of promotionCodeIndexes.value) {
+            const state = promotionCodeState(index);
+            if (!state.isPending.value) state.code.value = appliedPromotionCode(index);
+        }
     });
 
-    watch(appliedPromotionCode, (code) => {
-        if (!isPromotionCodePending.value) promotionCode.value = code;
-    });
+    const failureMessage = (action: 'apply' | 'remove') =>
+        action === 'apply'
+            ? $t({
+                  defaultMessage: 'Promotion code could not be applied. Please try again.',
+                  id: 'checkout.promotion_code.apply_failed',
+                  description: 'Error message when applying a promotion code in checkout failed',
+              })
+            : $t({
+                  defaultMessage: 'Promotion code could not be removed. Please try again.',
+                  id: 'checkout.promotion_code.remove_failed',
+                  description: 'Error message when removing a promotion code in checkout failed',
+              });
 
-    const changePromotionCode = async (code: string | null, action: 'apply' | 'remove') => {
-        wantedPromotionCode.value = code;
-        promotionCodeErrorMessage.value = null;
-        isPromotionCodePending.value = true;
-        try {
-            await enqueueSave();
-        } catch (error) {
-            const isRejected = action === 'apply' && isBadRequestOn(error, 'promotion_codes');
-            if (isRejected) {
-                logger.warn(
-                    'PROMOTION_CODE_REJECTED',
-                    'The promotion code was not accepted',
-                    {},
-                    error,
-                );
-            } else if (isRefusal(error)) {
-                logger.warn(
-                    'CHECKOUT_SESSION_UPDATE_REFUSED',
-                    'The API refused a change to the checkout session',
-                    { field: isApiError(error) ? error.field : undefined },
-                    error,
-                );
-            } else {
-                logger.capture(error, {
-                    code:
-                        action === 'apply'
-                            ? 'PROMOTION_CODE_APPLY_FAILED'
-                            : 'PROMOTION_CODE_REMOVE_FAILED',
-                    message: 'Failed to change the promotion code of the checkout session',
-                });
-            }
-            promotionCodeErrorMessage.value = isRejected
+    /** Drops the code a 400 refused, with an inline error on its own subscription. */
+    function rejectPromotionCodes(error: unknown) {
+        const refused = refusedPromotionCodeIndex(error);
+        if (refused === undefined) return;
+        for (const [index, code] of [...wantedPromotionCodes]) {
+            if (refused !== -1 && refused !== index) continue;
+            wantedPromotionCodes.delete(index);
+            promotionCodeState(index).errorMessage.value = code
                 ? $t({
                       defaultMessage: 'This promotion code is not valid.',
                       id: 'checkout_session.promotion_code.rejected',
                       description:
                           'Error shown under the promotion code field when the code the customer entered was not accepted',
                   })
-                : action === 'apply'
-                  ? $t({
-                        defaultMessage: 'Promotion code could not be applied. Please try again.',
-                        id: 'checkout.promotion_code.apply_failed',
-                        description:
-                            'Error message when applying a promotion code in checkout failed',
-                    })
-                  : $t({
-                        defaultMessage: 'Promotion code could not be removed. Please try again.',
-                        id: 'checkout.promotion_code.remove_failed',
-                        description:
-                            'Error message when removing a promotion code in checkout failed',
+                : failureMessage('remove');
+            logger.warn(
+                'PROMOTION_CODE_REJECTED',
+                'The promotion code was not accepted',
+                {},
+                error,
+            );
+        }
+    }
+
+    const changePromotionCode = async (
+        index: number,
+        code: string | null,
+        action: 'apply' | 'remove',
+    ) => {
+        const state = promotionCodeState(index);
+        wantedPromotionCodes.set(index, code);
+        state.errorMessage.value = null;
+        state.isPending.value = true;
+        try {
+            // A code refused on another subscription fails this save too; dropped, this one goes again.
+            for (let attempt = 0; ; attempt++) {
+                try {
+                    await enqueueSave();
+                    break;
+                } catch (error) {
+                    const refused = refusedPromotionCodeIndex(error);
+                    const isOtherRefused =
+                        refused !== undefined && refused !== -1 && refused !== index;
+                    if (!isOtherRefused || attempt >= promotionCodeIndexes.value.length) {
+                        throw error;
+                    }
+                }
+            }
+        } catch (error) {
+            if (refusedPromotionCodeIndex(error) === undefined) {
+                if (isRefusal(error)) {
+                    logger.warn(
+                        'CHECKOUT_SESSION_UPDATE_REFUSED',
+                        'The API refused a change to the checkout session',
+                        { field: isApiError(error) ? error.field : undefined },
+                        error,
+                    );
+                } else {
+                    logger.capture(error, {
+                        code:
+                            action === 'apply'
+                                ? 'PROMOTION_CODE_APPLY_FAILED'
+                                : 'PROMOTION_CODE_REMOVE_FAILED',
+                        message: 'Failed to change the promotion code of the checkout session',
                     });
-            wantedPromotionCode.value = undefined;
+                }
+                state.errorMessage.value = failureMessage(action);
+            }
+            wantedPromotionCodes.delete(index);
             // The rest of the edit went down with the code, so it goes again without it.
             void saveQuietly();
         } finally {
-            isPromotionCodePending.value = false;
-            promotionCode.value = appliedPromotionCode.value;
+            state.isPending.value = false;
+            state.code.value = appliedPromotionCode(index);
         }
     };
+
+    const promotionCodeOf = (index: () => number): CheckoutPromotionCode => {
+        const state = () => promotionCodeState(index());
+        return {
+            isAllowed: computed(() => isOpen.value && index() !== -1),
+            code: computed({
+                get: () => state().code.value,
+                set: (code) => (state().code.value = code),
+            }),
+            isPending: computed(() => state().isPending.value),
+            errorMessage: computed({
+                get: () => state().errorMessage.value,
+                set: (message) => (state().errorMessage.value = message),
+            }),
+            apply: (code) => {
+                const trimmed = code?.trim();
+                return trimmed ? changePromotionCode(index(), trimmed, 'apply') : undefined;
+            },
+            remove: () => changePromotionCode(index(), null, 'remove'),
+        };
+    };
+
+    /** With one subscription that takes a code, its code is the order's, as on any checkout. */
+    const orderPromotionCodeIndex = computed(() =>
+        promotionCodeIndexes.value.length === 1 ? promotionCodeIndexes.value[0] : -1,
+    );
 
     const loadTemplates = async (response: CheckoutSessionPortalUrlResponse) => {
         templates.value = await Promise.all(
@@ -592,27 +708,46 @@ export function useCheckoutSession({ portalUrlId }: { portalUrlId: string }) {
         );
     };
 
-    const orderMeterValues = shallowRef<CheckoutSource['orderMeterValues']['value']>({});
-
-    /** Each form follows its customer; the first also the first subscription's quantities. */
+    /** Each form follows its customer, and each subscription's section its quantities. */
     const fillForm = () => {
         const current = session.value;
-        const subscription = current?.pricing_plan_subscriptions[0];
-        const scheduleId = scheduleIdOf(0);
-        const editable = (key: 'seats_values' | 'units', bounds: 'edit_seats' | 'edit_units') =>
-            subscription && scheduleId
-                ? getEditableMeterValues(
-                      subscription.options?.[bounds],
-                      getCurrentMeterValues(subscription, scheduleId, key),
-                  )
-                : undefined;
-        const seats = editable('seats_values', 'edit_seats');
-        const units = editable('units', 'edit_units');
-
-        orderMeterValues.value = { seatsValues: seats?.minimums, unitsValues: units?.minimums };
-        checkoutForm.updateInitialState({
-            ...(seats && { seatsValues: seats.values }),
-            ...(units && { unitsValues: units.values }),
+        const subscriptions = current?.pricing_plan_subscriptions ?? [];
+        customizations.value = subscriptions.map((subscription, index) => {
+            const template = templates.value[index];
+            const scheduleId = scheduleIdOf(index);
+            if (!template) return undefined;
+            const meters = (key: 'seats_values' | 'units', bounds: 'edit_seats' | 'edit_units') =>
+                getMeterValues(
+                    subscription.options?.[bounds],
+                    scheduleId ? getCurrentMeterValues(subscription, scheduleId, key) : [],
+                );
+            const seats = meters('seats_values', 'edit_seats');
+            const units = meters('units', 'edit_units');
+            const allowsCode =
+                promotionCodeIndexes.value.includes(index) && orderPromotionCodeIndex.value === -1;
+            return {
+                key: `${index}`,
+                subscription: template,
+                ...(subscriptions.length > 1 && {
+                    title: getSubscriptionName({
+                        subscription: template,
+                        fallback: $t({
+                            defaultMessage: 'Subscription',
+                            description:
+                                'The fallback name for when no subscription name can be determined',
+                            id: 'customer_overview.subscriptions_block.fallback_subscription_name',
+                        }),
+                    }),
+                }),
+                seatsValues: ref(seats.values),
+                unitsValues: ref(units.values),
+                minimums: { seatsValues: seats.minimums, unitsValues: units.minimums },
+                maximums: { seatsValues: seats.maximums, unitsValues: units.maximums },
+                editableConfigIds: [...seats.minimums, ...units.minimums].map(
+                    ({ pricing_item_config_id }) => pricing_item_config_id,
+                ),
+                ...(allowsCode && { promotionCode: promotionCodeOf(() => index) }),
+            };
         });
         forms.value.forEach((form, index) =>
             form.updateInitialState(toFormState(current?.customers[index]?.customer)),
@@ -632,28 +767,63 @@ export function useCheckoutSession({ portalUrlId }: { portalUrlId: string }) {
         });
     });
 
+    const endState = computed<CheckoutSessionEndState | undefined>(() => {
+        if (!portalUrl.value || isOpen.value) return undefined;
+        const { status } = portalUrl.value.checkout_session;
+        return status === 'OPEN' ? 'CLOSED' : status;
+    });
+
+    const withSessionId = (url: string | undefined) =>
+        url?.replaceAll(SESSION_ID_PLACEHOLDER, encodeURIComponent(portalUrlId));
+    const successUrl = computed(() => withSessionId(session.value?.success_url));
+    const isRedirecting = ref(false);
+
+    // Read on load or returned by a save: either way the customer goes on to the merchant.
+    watch(
+        endState,
+        (state) => {
+            const url = state === 'COMPLETED' ? sanitizeUrl(successUrl.value ?? '') : '';
+            isRedirecting.value = !!url;
+            if (url) safeUrlRedirect(url);
+        },
+        { immediate: true },
+    );
+
     const load = async () => {
         const [response] = await Promise.all([
             service.getCheckoutSession(portalUrlId),
             refreshPreview(),
         ]);
+        if (response.status !== 'PUBLISHED' || response.checkout_session.status !== 'OPEN') {
+            portalUrl.value = response;
+            return;
+        }
         await loadTemplates(response);
         createFormsFor(response.checkout_session.customers.length);
         // Set together with the form, so the form is never compared with a session it has not seen.
         portalUrl.value = response;
         fillForm();
         isLoaded.value = true;
-        promotionCode.value = appliedPromotionCode.value;
 
         if ((preview.value?.checkout_session.version ?? -1) < response.checkout_session.version) {
             await refreshPreview();
         }
     };
 
+    /** Why the session could not be read: a 410 says how the link ended, anything else is `{}`. */
+    const loadFailure = shallowRef<{ reason?: PortalLinkEnding; status?: string }>();
+
     onMounted(async () => {
         try {
             await load();
         } catch (error) {
+            loadFailure.value =
+                isApiError(error) && error.statusCode === 410
+                    ? {
+                          reason: LINK_ENDINGS[error.errorCode ?? ''] ?? 'expired',
+                          status: error.checkoutSessionStatus,
+                      }
+                    : {};
             logger.error(
                 'CHECKOUT_SESSION_LOAD_FAILED',
                 'Failed to load the checkout session',
@@ -663,9 +833,19 @@ export function useCheckoutSession({ portalUrlId }: { portalUrlId: string }) {
         }
     });
 
+    // shortcut: V1 sessions have one invoice; upgrade when the API returns several.
     const invoicePreview = computed<Invoice | undefined>(
         () => preview.value?.invoices?.[0]?.invoice,
     );
+    const stopInvoiceCountWatch = watch(preview, (current) => {
+        if ((current?.invoices?.length ?? 0) <= 1) return;
+        logger.warn(
+            'CHECKOUT_SESSION_SEVERAL_INVOICES',
+            'The checkout session previewed several invoices; only the first is shown',
+            { count: current?.invoices?.length },
+        );
+        stopInvoiceCountWatch();
+    });
     const amount = computed<Amount | undefined>(() => {
         const total = preview.value?.total;
         return total ? { quantity: total.amount_incl_tax, currency: total.currency } : undefined;
@@ -700,12 +880,12 @@ export function useCheckoutSession({ portalUrlId }: { portalUrlId: string }) {
         return isInvoicePreviewStale.value ? 'CHANGED' : 'SETTLED';
     };
 
-    const withSessionId = (url: string | undefined) =>
-        url?.replaceAll(SESSION_ID_PLACEHOLDER, encodeURIComponent(portalUrlId));
-
     const source: CheckoutSource = {
         subscription: computed(() => templates.value[0]),
-        orderMeterValues,
+        orderMeterValues: computed(() => ({})),
+        planCustomizations: computed(() =>
+            customizations.value.filter((entry) => entry !== undefined),
+        ),
         checkoutForm,
         customerForms: computed(() => {
             const customers = session.value?.customers ?? [];
@@ -735,20 +915,13 @@ export function useCheckoutSession({ portalUrlId }: { portalUrlId: string }) {
         amount,
         recurringAmount,
         hasOneOffCharges: computed(() => invoiceRecurrence.value?.hasOneOff ?? false),
-        promotionCode: {
-            isAllowed: computed(() => isOpen.value && promotionCodeIndex.value !== -1),
-            code: promotionCode,
-            isPending: isPromotionCodePending,
-            errorMessage: promotionCodeErrorMessage,
-            apply: (code) => {
-                const trimmed = code?.trim();
-                return trimmed ? changePromotionCode(trimmed, 'apply') : undefined;
-            },
-            remove: () => changePromotionCode(null, 'remove'),
-        },
+        promotionCode: promotionCodeOf(() => orderPromotionCodeIndex.value),
         canPay,
         isPaid,
-        successUrl: computed(() => withSessionId(session.value?.success_url)),
+        successUrl,
+        cancelUrl: computed(
+            () => sanitizeUrl(withSessionId(session.value?.cancel_url) ?? '') || undefined,
+        ),
         note: computed(() => session.value?.note),
     };
 
@@ -761,6 +934,8 @@ export function useCheckoutSession({ portalUrlId }: { portalUrlId: string }) {
         templates,
         isOpen,
         missingFields,
-        cancelUrl: computed(() => withSessionId(session.value?.cancel_url)),
+        endState,
+        isRedirecting,
+        loadFailure,
     };
 }

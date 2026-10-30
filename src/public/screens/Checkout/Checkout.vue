@@ -11,7 +11,7 @@ import {
 import { computed, defineAsyncComponent, nextTick, onMounted, ref, watch } from 'vue';
 import type { Amount, AuthorizePaymentPayload, CountryCode } from '@solvimon/solvimon-types';
 import type { CheckoutEmits, CheckoutProps } from './Checkout.types';
-import type { CheckoutSource } from './Checkout.source.types';
+import type { CheckoutPromotionCode, CheckoutSource } from './Checkout.source.types';
 import type { ExpressBillingInformation } from '@/components/payments/ExpressPaymentMethod/ExpressPaymentMethod.types';
 import CheckoutForm from '@/components/customer/CheckoutForm/CheckoutForm.vue';
 import CheckoutTitle from '@/components/checkout/CheckoutTitle.vue';
@@ -86,6 +86,7 @@ const {
     settleInvoicePreview,
     checkoutForm,
     customerForms,
+    planCustomizations,
     invoicePreview,
     invoicePreviewByBillingPeriod,
     trialInvoicePreview,
@@ -99,6 +100,7 @@ const {
     saveFormStateForRedirect,
     clearSavedFormState,
     successUrl: successRedirectUrl,
+    cancelUrl,
     isShippingAddressRequired,
 } = props.source;
 
@@ -505,6 +507,7 @@ const agreement = computed(() => {
 });
 
 const orderSummaryProps = computed(() => ({
+    subscriptions: planCustomizations?.value.map((entry) => entry.subscription),
     invoicePreviewByBillingPeriod: invoicePreviewByBillingPeriod.value,
     trialInvoice: trialInvoicePreview.value,
     enabledPricingIds: enabledPricingIdsModel.value,
@@ -637,6 +640,12 @@ const isPromotionCodeAllowed = computed(() => props.source.promotionCode.isAllow
 const setPromotionCode = (code: string | null) => {
     promotionCode.value = code;
 };
+const setPromotionCodeOf = (
+    sectionCode: CheckoutPromotionCode | undefined,
+    code: string | null,
+) => {
+    if (sectionCode) sectionCode.code.value = code;
+};
 
 const handleRedirect = () => {
     if (!successRedirectUrl.value) return;
@@ -723,8 +732,51 @@ onMounted(() => {
                 />
 
                 <!-- plan customization -->
+                <template v-if="planCustomizations">
+                    <template v-for="entry in planCustomizations" :key="entry.key">
+                        <PlanCustomizationEditor
+                            v-if="
+                                entry.seatsValues.value.length ||
+                                entry.unitsValues.value.length ||
+                                entry.promotionCode
+                            "
+                            v-bind="orderLockAttrs"
+                            v-model:seats-values="entry.seatsValues.value"
+                            v-model:units-values="entry.unitsValues.value"
+                            class="sv-checkout__plan-customization"
+                            :title="entry.title"
+                            :subscription="entry.subscription"
+                            :enabled-pricing-ids="[]"
+                            hide-pricing-choices
+                            :initial-seats-values="entry.minimums.seatsValues"
+                            :initial-units-values="entry.minimums.unitsValues"
+                            :max-seats-values="entry.maximums.seatsValues"
+                            :max-units-values="entry.maximums.unitsValues"
+                            :editable-config-ids="entry.editableConfigIds"
+                            :billing-period="entry.subscription.billing_period"
+                        >
+                            <template v-if="entry.promotionCode?.isAllowed?.value">
+                                <PromotionCodeSection
+                                    class="sv-checkout__promotion-code"
+                                    :promotion-code="entry.promotionCode.code.value"
+                                    :is-pending="entry.promotionCode.isPending.value"
+                                    @update:applied-code="
+                                        (code) => setPromotionCodeOf(entry.promotionCode, code)
+                                    "
+                                    @remove="entry.promotionCode.remove"
+                                    @apply="entry.promotionCode.apply"
+                                />
+                                <ErrorNotification
+                                    v-if="entry.promotionCode.errorMessage.value"
+                                    class="sv-checkout__promotion-error"
+                                    :title="entry.promotionCode.errorMessage.value"
+                                />
+                            </template>
+                        </PlanCustomizationEditor>
+                    </template>
+                </template>
                 <PlanCustomizationEditor
-                    v-if="showPlanCustomizationEditor && subscription"
+                    v-else-if="showPlanCustomizationEditor && subscription"
                     v-bind="orderLockAttrs"
                     v-model:seats-values="seatsValuesModel"
                     v-model:units-values="unitsValuesModel"
@@ -1039,6 +1091,22 @@ onMounted(() => {
                             }}
                         </Button>
                     </Skeleton>
+
+                    <Typography
+                        v-if="cancelUrl"
+                        tag="div"
+                        variant="body-xs"
+                        class="sv-checkout__cancel text-center"
+                    >
+                        <a :href="cancelUrl" class="text-primary-900 hover:underline">{{
+                            $t({
+                                defaultMessage: 'Cancel and return',
+                                id: 'checkout.cancel_link',
+                                description:
+                                    'The link under the pay button that leaves the checkout without paying and goes back to the shop',
+                            })
+                        }}</a>
+                    </Typography>
 
                     <!-- kpis-->
                     <SecurePaymentsKPI :payment-method-options="paymentMethodOptions" />

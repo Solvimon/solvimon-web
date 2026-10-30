@@ -1,5 +1,12 @@
+import { mkdirSync, mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { describe, it, expect } from 'vitest';
-import { bundledUnscannedUiFiles } from './tailwind-content.mjs';
+import {
+    bundledUnscannedUiFiles,
+    missingUiDirs,
+    UI_DIRS_NOT_SCANNED,
+} from './tailwind-content.mjs';
 
 const installed = '/app/node_modules/@solvimon/solvimon-ui/dist';
 
@@ -18,7 +25,7 @@ describe('bundledUnscannedUiFiles', () => {
         expect(bundledUnscannedUiFiles([linked])).toEqual([linked]);
     });
 
-    it('does not take a directory for another whose name it starts', () => {
+    it('does not match a directory that only shares a name prefix', () => {
         const toastProvider = `${installed}/components/shared/ToastProvider/ToastProvider.vue.es.js`;
 
         expect(bundledUnscannedUiFiles([toastProvider])).toEqual([]);
@@ -29,5 +36,19 @@ describe('bundledUnscannedUiFiles', () => {
             'C:\\app\\node_modules\\@solvimon\\solvimon-ui\\dist\\party-details\\x.es.js';
 
         expect(bundledUnscannedUiFiles([windows])).toEqual([windows]);
+    });
+});
+
+describe('missingUiDirs', () => {
+    it('returns the listed directories solvimon-ui does not have', () => {
+        const uiDist = mkdtempSync(join(tmpdir(), 'ui-dist-'));
+        const [renamed, ...present] = UI_DIRS_NOT_SCANNED;
+        present.forEach((dir) => mkdirSync(join(uiDist, dir), { recursive: true }));
+
+        try {
+            expect(missingUiDirs(uiDist)).toEqual([renamed]);
+        } finally {
+            rmSync(uiDist, { recursive: true, force: true });
+        }
     });
 });

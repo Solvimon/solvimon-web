@@ -1,3 +1,6 @@
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
+
 /**
  * solvimon-ui directories, relative to its `dist`, that no SDK entry bundles: desk, PDF and editor
  * components.
@@ -58,4 +61,15 @@ export function bundledUnscannedUiFiles(moduleIds) {
         const path = id.replace(/\\/g, '/');
         return UI_DIRS_NOT_SCANNED.some((dir) => path.includes(`/dist/${dir}/`));
     });
+}
+
+/**
+ * The listed directories `uiDist` does not have. A directory solvimon-ui renamed or moved is
+ * scanned again under its new name, which costs every entry its classes without failing anything.
+ *
+ * @param {string} uiDist - solvimon-ui's `dist` directory
+ * @returns {string[]}
+ */
+export function missingUiDirs(uiDist) {
+    return UI_DIRS_NOT_SCANNED.filter((dir) => !existsSync(join(uiDist, dir)));
 }

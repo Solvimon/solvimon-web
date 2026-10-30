@@ -70,6 +70,34 @@ const NAME_FIELDS = {
     last_name: 'lastName',
 } as const satisfies Record<(typeof NAME_PARTS)[number], TextField>;
 
+/** The form fields each customer path of `missing_fields` stands for. */
+const MISSING_FIELD_PATHS: Record<string, TextField[]> = {
+    email: ['email'],
+    'organization.legal_name': ['companyLegalName'],
+    'organization.tax_id': ['companyVatNumber'],
+    'organization.tax_ids': ['companyVatNumber'],
+    'individual.name': ['firstName', 'lastName'],
+    ...Object.fromEntries(
+        NAME_PARTS.map((part) => [`individual.name.${part}`, [NAME_FIELDS[part]]]),
+    ),
+    ...Object.fromEntries(
+        ['organization.registered_address', 'individual.residential_address'].flatMap((path) =>
+            ADDRESS_PARTS.map((part) => [`${path}.${part}`, [ADDRESS_FIELDS[part]]]),
+        ),
+    ),
+};
+
+/** Per customer, in session order, the form fields `missing_fields` lists; other paths are left out. */
+export function getMissingFormFields(paths: string[], customerCount: number): TextField[][] {
+    const fields: TextField[][] = Array.from({ length: customerCount }, () => []);
+    for (const path of paths) {
+        const match = /^checkout_session\.customers\.(\d+)\.customer\.(.+)$/.exec(path);
+        const known = match && MISSING_FIELD_PATHS[match[2]];
+        if (known) fields[Number(match[1])]?.push(...known);
+    }
+    return fields;
+}
+
 /** Blank and untrimmed values read the same as the API keeps them. */
 const clean = (value: string | undefined): string | undefined => value?.trim() || undefined;
 

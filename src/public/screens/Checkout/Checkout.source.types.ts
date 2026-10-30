@@ -11,6 +11,7 @@ import type {
     TimePeriod,
 } from '@solvimon/solvimon-types';
 import type { CheckoutFormState } from '@/components/customer/CheckoutForm/CheckoutForm.types';
+import type { CheckoutFormDisplay } from '@/components/customer/CheckoutForm/CheckoutForm.lib';
 import type { useCheckoutForm } from '@/components/customer/CheckoutForm/useCheckoutForm';
 
 /** `CHANGED`: the customer changed the order while the payment waited for its price. */
@@ -40,6 +41,16 @@ export interface CheckoutPayment {
     ) => Promise<{ trialInvoicePreview: Invoice; invoicePreview: Invoice }>;
 }
 
+/** The form of one customer of the order. */
+export interface CheckoutCustomerForm {
+    key: string;
+    form: ReturnType<typeof useCheckoutForm>;
+    display?: CheckoutFormDisplay;
+    isTypeLocked?: boolean;
+    /** Names the section when the order has several customers. */
+    title?: string;
+}
+
 /** Everything the checkout screen renders and pays from; each checkout flow supplies its own. */
 export interface CheckoutSource {
     /** What the host configured, once anything unusable has been dropped and reported. */
@@ -54,6 +65,11 @@ export interface CheckoutSource {
     /** The add-ons bought in a quantity of their own; left out by a flow without add-on choices. */
     quantityAddonConfigIds?: Readonly<Ref<Set<string>>>;
     checkoutForm: ReturnType<typeof useCheckoutForm>;
+    /**
+     * A section per customer, shown and validated in place of `checkoutForm`'s own. Held shallowly
+     * (`computed`, `shallowRef`): a deep `ref` would unwrap the refs each form keeps.
+     */
+    customerForms?: Readonly<Ref<CheckoutCustomerForm[]>>;
     isShippingAddressRequired: boolean;
 
     invoicePreview: Readonly<Ref<Invoice | undefined>>;

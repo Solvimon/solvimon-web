@@ -1,5 +1,5 @@
 import { flushPromises, mount } from '@vue/test-utils';
-import { computed, ref } from 'vue';
+import { computed, ref, shallowRef } from 'vue';
 import type { PortalUrl } from '@solvimon/solvimon-types';
 import LegacyCheckout from './LegacyCheckout.vue';
 import Checkout from './Checkout.vue';
@@ -697,7 +697,7 @@ describe('Checkout', () => {
             mockExperimentalFeatures.value['express-checkout'] = false;
         });
 
-        const mountWithoutPayment = async () => {
+        const mountWithoutPayment = async (overrides: Partial<CheckoutSource> = {}) => {
             const view = useCheckoutView({} as never);
             const source: CheckoutSource = {
                 ...view,
@@ -712,6 +712,7 @@ describe('Checkout', () => {
                 canPay: ref(true),
                 successUrl: ref(undefined),
                 note: ref(undefined),
+                ...overrides,
             };
             const wrapper = mount(Checkout, {
                 props: { source },
@@ -739,6 +740,28 @@ describe('Checkout', () => {
             expect(wrapper.findComponent({ name: 'PaymentIntegrationForm' }).exists()).toBe(false);
             expect(wrapper.findComponent({ name: 'ExpressPaymentMethods' }).exists()).toBe(false);
             expect(wrapper.find('.sv-checkout__submit').attributes('disabled')).toBe('true');
+        });
+
+        it('shows a form per customer the flow lists, in its order, in place of its own form', async () => {
+            const view = useCheckoutView({} as never);
+            const display = { email: 'READ_ONLY' as const };
+            const wrapper = await mountWithoutPayment({
+                customerForms: shallowRef([
+                    { key: '0', form: view.checkoutForm, title: 'Acme', isTypeLocked: true },
+                    { key: '1', form: view.checkoutForm, title: 'Jane Doe', display },
+                ]),
+            });
+            const forms = wrapper.findAllComponents({ name: 'CheckoutForm' });
+
+            expect(forms.map((form) => form.props('title'))).toStrictEqual(['Acme', 'Jane Doe']);
+            expect(forms[0].props('isTypeLocked')).toBe(true);
+            expect(forms[1].props('display')).toStrictEqual(display);
+        });
+
+        it('shows no customer form when the flow lists none', async () => {
+            const wrapper = await mountWithoutPayment({ customerForms: ref([]) });
+
+            expect(wrapper.findComponent({ name: 'CheckoutForm' }).exists()).toBe(false);
         });
     });
 });

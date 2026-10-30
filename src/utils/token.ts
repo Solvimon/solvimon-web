@@ -1,4 +1,4 @@
-import type { PortalUrl } from '@solvimon/solvimon-types';
+import type { PortalObject } from '@/types/checkoutSession';
 import type { PortalAuthentication } from '@/types/portalAuthentication';
 
 const TOKEN_DELIMITER = '.';
@@ -36,7 +36,7 @@ export function parseToken(token: string): { tokenUserName: string; portalUrlRes
 }
 
 /** `authentication` is not in `@solvimon/solvimon-types` yet; a portal object without it is an identity link. */
-export function getPortalAuthentication(portalObject: PortalUrl): PortalAuthentication {
+export function getPortalAuthentication(portalObject: PortalObject): PortalAuthentication {
     return 'authentication' in portalObject && portalObject.authentication === 'SIGNED_TOKEN'
         ? 'SIGNED_TOKEN'
         : 'IDENTITY_TOKEN';

@@ -335,6 +335,10 @@
     "defaultMessage": "Billing details",
     "description": "The title of the billing information block in the checkout form"
   },
+  "checkout.cancel_link": {
+    "defaultMessage": "Cancel and return",
+    "description": "The link under the pay button that leaves the checkout without paying and goes back to the shop"
+  },
   "checkout.company_purchase_toggle.sub_title": {
     "defaultMessage": "I am purchasing on behalf of a company",
     "description": "The subtitle of the company purchase toggle in the checkout"
@@ -377,11 +381,15 @@
   },
   "checkout.first_name.label": {
     "defaultMessage": "First name",
-    "description": "The first name of the customer in the checkout form"
+    "description": "Label of the first name of a customer who buys as an individual"
   },
   "checkout.first_name.placeholder": {
     "defaultMessage": "First name",
     "description": "The first name of the customer in the checkout form"
+  },
+  "checkout.individual_name.label": {
+    "defaultMessage": "Name",
+    "description": "Label of the name of a customer who buys as an individual"
   },
   "checkout.invoice_preview.no_country_selected_message": {
     "defaultMessage": "Please select a country first",
@@ -393,7 +401,7 @@
   },
   "checkout.last_name.label": {
     "defaultMessage": "Last name",
-    "description": "The last name of the customer in the checkout form"
+    "description": "Label of the last name of a customer who buys as an individual"
   },
   "checkout.last_name.placeholder": {
     "defaultMessage": "Last name",
@@ -518,6 +526,10 @@
   "checkout.payment_method_block.no_payment_methods_available_title": {
     "defaultMessage": "No payment methods available",
     "description": "The title shown when there are no available payment methods"
+  },
+  "checkout.payment_method_block.payment_unavailable_title": {
+    "defaultMessage": "Payment is not available yet",
+    "description": "The title shown where the payment methods go when this checkout cannot take a payment yet"
   },
   "checkout.payment_method_block.title": {
     "defaultMessage": "Payment method",
@@ -686,6 +698,46 @@
   "checkout.vat_number.placeholder": {
     "defaultMessage": "VAT number",
     "description": "The label for the vat number in the checkout form"
+  },
+  "checkout_session.ended.closed_title": {
+    "defaultMessage": "This checkout is closed",
+    "description": "Shown in place of a checkout that can no longer be used"
+  },
+  "checkout_session.ended.completed_title": {
+    "defaultMessage": "This checkout has been completed",
+    "description": "Shown in place of a checkout that the customer already paid for"
+  },
+  "checkout_session.ended.expired_title": {
+    "defaultMessage": "This checkout link has expired",
+    "description": "Shown in place of a checkout whose link has expired"
+  },
+  "checkout_session.ended.failed_message": {
+    "defaultMessage": "We are finishing your account. There is nothing more you need to do.",
+    "description": "Shown under the notice that the payment was received while the account is being set up"
+  },
+  "checkout_session.ended.failed_title": {
+    "defaultMessage": "We received your payment",
+    "description": "Shown in place of a checkout that was paid for but whose account could not be set up yet"
+  },
+  "checkout_session.ended.processing_message": {
+    "defaultMessage": "This can take a few minutes. You do not need to pay again.",
+    "description": "Shown under the notice that the payment is still being processed"
+  },
+  "checkout_session.ended.processing_title": {
+    "defaultMessage": "We are processing your payment",
+    "description": "Shown in place of a checkout whose payment is still being processed"
+  },
+  "checkout_session.ended.redirecting_message": {
+    "defaultMessage": "Taking you back…",
+    "description": "Shown under the completed checkout notice while the page goes to the shop"
+  },
+  "checkout_session.ended.revoked_title": {
+    "defaultMessage": "This checkout is no longer available",
+    "description": "Shown in place of a checkout whose link the merchant revoked"
+  },
+  "checkout_session.promotion_code.rejected": {
+    "defaultMessage": "This promotion code is not valid.",
+    "description": "Error shown under the promotion code field when the code the customer entered was not accepted"
   },
   "components.payment_method_form.continue_button.label": {
     "defaultMessage": "Continue",

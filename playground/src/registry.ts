@@ -18,6 +18,12 @@ export const screens: StoryEntry[] = [
     },
     {
         kind: 'screen',
+        id: 'checkout-session',
+        label: 'Checkout Session',
+        description: 'Checkout of a checkout session. Requires a CHECKOUT_SESSION portal object.',
+    },
+    {
+        kind: 'screen',
         id: 'customer-overview',
         label: 'Customer Overview',
         description:

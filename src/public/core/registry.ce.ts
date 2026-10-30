@@ -20,6 +20,10 @@ const SCREEN_LOADERS: Record<RegisteredScreenId, DefineLoader> = {
         import('@/public/screens/Checkout/Checkout.entry.ce').then(
             (module) => module.defineSolvimonCheckout,
         ),
+    'checkout-session': () =>
+        import('@/public/screens/CheckoutSession/CheckoutSession.entry.ce').then(
+            (module) => module.defineSolvimonCheckoutSession,
+        ),
     'subscription-management': () =>
         import('@/public/screens/SubscriptionManagement/SubscriptionManagement.entry.ce').then(
             (module) => module.defineSolvimonSubscriptionManagement,

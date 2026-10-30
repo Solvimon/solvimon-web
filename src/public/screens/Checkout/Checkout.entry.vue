@@ -3,7 +3,7 @@ import { computed } from 'vue';
 import type { SolvimonCheckoutEntryProps } from './Checkout.entry.types';
 import CheckoutNotAvailable from '@/components/checkout/CheckoutNotAvailable.vue';
 import { EntryProvider } from '@/components/providers';
-import Checkout from '@/public/screens/Checkout/Checkout.vue';
+import LegacyCheckout from '@/public/screens/Checkout/LegacyCheckout.vue';
 import { sanitizeCouponCode } from '@/public/screens/Checkout/couponCode';
 import { getQueryParam } from '@/utils/url';
 import { getComponentName } from '@/utils/component';
@@ -23,14 +23,14 @@ const couponCode = computed(
         :component-name="componentName"
         :allowed-portal-types="['INIT_PRICING_PLAN_SUBSCRIPTION']"
     >
-        <Checkout
+        <LegacyCheckout
             :configuration="{ ...configuration, couponCode }"
             :avatar="branding?.emblem?.public_url ?? undefined"
         >
             <template v-if="$slots['terms-and-conditions']" #terms-and-conditions
                 ><slot name="terms-and-conditions"
             /></template>
-        </Checkout>
+        </LegacyCheckout>
         <template #portal-unavailable>
             <CheckoutNotAvailable class="sv-checkout sv-root sv-screen sv-checkout--error" />
         </template>

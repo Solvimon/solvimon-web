@@ -23,6 +23,7 @@ import dts from 'vite-plugin-dts';
 import type { TemplateChildNode, RootNode } from '@vue/compiler-core';
 import { selectorsMissingFrom } from './scripts/css-duplication.mjs';
 import { bundledUnscannedUiFiles, missingUiDirs } from './scripts/tailwind-content.mjs';
+import { ICON_SPRITE_MODULE, subsetIconSprite } from './scripts/icon-sprite.mjs';
 
 function getLibEntries(
     basePath: string,
@@ -210,6 +211,34 @@ function requireScannedUiFiles(): Plugin {
     };
 }
 
+/**
+ * Cuts solvimon-ui's icon sprite down to the icons this build can render (see
+ * `scripts/icon-sprite.mjs`). Every mount fetches the sprite, and most of its icons are desk's.
+ */
+function subsetIconSpritePlugin(): Plugin {
+    return {
+        name: 'solvimon:subset-icon-sprite',
+        renderChunk(code, chunk, _options, meta) {
+            const spriteId = chunk.moduleIds.find((id) => ICON_SPRITE_MODULE.test(id));
+            if (!spriteId) return null;
+
+            const otherCode = Object.values(meta.chunks)
+                .flatMap((other) => other.moduleIds)
+                .filter((id) => id !== spriteId)
+                .map((id) => this.getModuleInfo(id)?.code ?? '')
+                .join('\n');
+            const subset = subsetIconSprite(code, otherCode);
+
+            if (!subset) {
+                this.warn(`Kept the whole icon sprite: ${spriteId} holds no sprite this can read.`);
+                return null;
+            }
+
+            return { code: subset.code, map: null };
+        },
+    };
+}
+
 const coreEntry = resolve(__dirname, 'src/public/core/index.ts');
 const rootEntry = resolve(__dirname, 'src/index.ts');
 
@@ -263,6 +292,7 @@ export default defineConfig(({ mode }) => {
             refreshVueTypesInWatch(),
             dropRedundantStylesheet(),
             requireScannedUiFiles(),
+            subsetIconSpritePlugin(),
             dts({
                 bundleTypes: false,
                 outDirs: './dist',

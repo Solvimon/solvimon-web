@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Every element downloads about 8 kB (gzip) less when it mounts: the icon sprite it fetches holds only the 55 icons the SDK can show, out of the 121 in `@solvimon/solvimon-ui`.
 - Every screen and component downloads about 1.5 kB (gzip) less up front: the stylesheet they share no longer carries the classes of `@solvimon/solvimon-ui` components that no element renders, such as its editor and PDF components.
 - The checkout screen shows the terms and conditions in the order summary column, centred under the secure payments line next to the pay button, instead of in a footer below both columns.
 - `ContentWithAsideLayout` no longer takes a `footer` slot; the checkout terms were its only content.

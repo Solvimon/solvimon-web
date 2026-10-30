@@ -19,6 +19,8 @@ interface TestConfig {
     component?: RegisteredComponentId;
     environment?: string;
     locale?: string;
+    /** The host's own `messages`, as a host passes them. */
+    messages?: Record<string, string>;
     portalObject?: Record<string, unknown>;
     configuration?: Record<string, unknown>;
 }
@@ -80,6 +82,7 @@ const solvimon = createSolvimonCore({
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     environment: (testConfig?.environment ?? 'DEV') as unknown as Environment,
     locale: testConfig?.locale ?? 'en-US',
+    messages: testConfig?.messages,
     logLevel: 'info',
     onLog: handleLog,
 });

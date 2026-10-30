@@ -24,6 +24,15 @@ import type { TemplateChildNode, RootNode } from '@vue/compiler-core';
 import { selectorsMissingFrom } from './scripts/css-duplication.mjs';
 import { bundledUnscannedUiFiles, missingUiDirs } from './scripts/tailwind-content.mjs';
 import { ICON_SPRITE_MODULE, subsetIconSprite } from './scripts/icon-sprite.mjs';
+import {
+    CATALOGUE_MODULE,
+    PARSER_STUB,
+    UI_PARSER_MODULE,
+    precompileCatalogueJson,
+    precompileCatalogueModule,
+    precompileDescriptors,
+    unparsedDefaultMessages,
+} from './scripts/precompile-messages.mjs';
 
 function getLibEntries(
     basePath: string,
@@ -242,6 +251,64 @@ function subsetIconSpritePlugin(): Plugin {
     };
 }
 
+/**
+ * Parses every message at build time and leaves solvimon-ui's ICU parser out of the bundle (see
+ * `scripts/precompile-messages.mjs`). Two plugins, because the JSON catalogues have to be read
+ * before vite turns them into modules, and the descriptors after vue and TypeScript are compiled.
+ */
+function precompileMessages(): Plugin[] {
+    return [
+        {
+            name: 'solvimon:precompile-catalogues',
+            apply: 'build',
+            enforce: 'pre',
+            load(id) {
+                return UI_PARSER_MODULE.test(id) ? PARSER_STUB : null;
+            },
+            transform(code, id) {
+                return id.endsWith('.json') && CATALOGUE_MODULE.test(id)
+                    ? { code: precompileCatalogueJson(code), map: null }
+                    : null;
+            },
+        },
+        {
+            name: 'solvimon:precompile-messages',
+            apply: 'build',
+            enforce: 'post',
+            transform(code, id) {
+                const path = id.split('?')[0];
+                if (CATALOGUE_MODULE.test(path) && path.endsWith('.js')) {
+                    return { code: precompileCatalogueModule(this.parse(code), code), map: null };
+                }
+                if (!code.includes('defaultMessage')) return null;
+
+                const precompiled = precompileDescriptors(this.parse(code), code);
+                return precompiled === null ? null : { code: precompiled, map: null };
+            },
+            generateBundle(_options, bundle) {
+                const unparsed = Object.values(bundle).flatMap((output) =>
+                    output.type === 'chunk'
+                        ? unparsedDefaultMessages(output.code).map(
+                              (text) => `${output.fileName}: ${text}`,
+                          )
+                        : [],
+                );
+
+                if (unparsed.length) {
+                    this.error(
+                        [
+                            'These messages are still strings, and the bundle has no parser to read them:',
+                            ...unparsed.map((place) => `    ${place}`),
+                            '',
+                            'Give each one a literal `defaultMessage`.',
+                        ].join('\n'),
+                    );
+                }
+            },
+        },
+    ];
+}
+
 const coreEntry = resolve(__dirname, 'src/public/core/index.ts');
 const rootEntry = resolve(__dirname, 'src/index.ts');
 
@@ -296,6 +363,7 @@ export default defineConfig(({ mode }) => {
             dropRedundantStylesheet(),
             requireScannedUiFiles(),
             subsetIconSpritePlugin(),
+            ...precompileMessages(),
             dts({
                 bundleTypes: false,
                 outDirs: './dist',

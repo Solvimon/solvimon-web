@@ -6,6 +6,7 @@ import {
     DEFAULT_LOCALE,
     isSupportedLocale,
     loadLocaleMessages,
+    parseHostMessages,
     TRANSLATION_SETTINGS_KEY,
     warnIfUnsupportedLocale,
 } from './TranslationProvider.lib';
@@ -32,9 +33,18 @@ const { data: baseMessages, version: intlKey } = useWatchAsync<string, IntlMessa
     {},
 );
 
+const { data: hostMessages, version: hostMessagesVersion } = useWatchAsync<
+    IntlMessages | undefined,
+    IntlMessages
+>(
+    () => props.messages,
+    (messages) => parseHostMessages(messages, logger),
+    {},
+);
+
 const localizedMessages = computed<IntlMessages>(() => ({
     ...baseMessages.value,
-    ...props.messages,
+    ...hostMessages.value,
 }));
 
 /** Handed down so a part of the tree can replace a message without restating the rest. */
@@ -53,7 +63,7 @@ provide(TRANSLATION_SETTINGS_KEY, {
         :messages="localizedMessages"
         :show-timezones="false"
     >
-        <!-- Rendered once the catalogue is in, so the tree below renders translated the first time. -->
-        <slot v-if="intlKey > 0" />
+        <!-- Rendered once the catalogue and the host's messages are in, so the tree below renders translated the first time. -->
+        <slot v-if="intlKey > 0 && hostMessagesVersion > 0" />
     </IntlProvider>
 </template>

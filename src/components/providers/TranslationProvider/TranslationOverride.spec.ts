@@ -48,7 +48,9 @@ describe('TranslationOverride', () => {
         mountComponent();
 
         expect(intlProviderProps).toHaveBeenCalledWith(
-            expect.objectContaining({ messages: { greeting: 'Hallo', farewell: 'Doei' } }),
+            expect.objectContaining({
+                messages: { greeting: 'Hallo', farewell: [{ type: 0, value: 'Doei' }] },
+            }),
         );
     });
 
@@ -70,7 +72,10 @@ describe('TranslationOverride', () => {
         mountComponent({ withSettings: false });
 
         expect(intlProviderProps).toHaveBeenCalledWith(
-            expect.objectContaining({ messages: { farewell: 'Doei' }, locale: undefined }),
+            expect.objectContaining({
+                messages: { farewell: [{ type: 0, value: 'Doei' }] },
+                locale: undefined,
+            }),
         );
     });
 });

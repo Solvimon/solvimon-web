@@ -4,6 +4,7 @@ import {
     DEFAULT_LOCALE,
     isSupportedLocale,
     loadLocaleMessages,
+    parseHostMessages,
     supportedLocaleSet,
     warnIfUnsupportedLocale,
 } from './TranslationProvider.lib';
@@ -145,5 +146,36 @@ describe('warnIfUnsupportedLocale', () => {
         warnIfUnsupportedLocale(locale, logger);
 
         expect(logger.warn).not.toHaveBeenCalled();
+    });
+});
+
+describe('parseHostMessages', () => {
+    it('parses the messages a host passes', async () => {
+        const messages = await parseHostMessages({ greeting: 'Hello {name}' }, makeLogger());
+
+        expect(messages).toEqual({
+            greeting: [
+                { type: 0, value: 'Hello ' },
+                { type: 1, value: 'name' },
+            ],
+        });
+    });
+
+    it('leaves out a message that does not parse, and logs INVALID_MESSAGE', async () => {
+        const logger = makeLogger();
+
+        const messages = await parseHostMessages({ broken: 'Hello {name', fine: 'Hi' }, logger);
+
+        expect(Object.keys(messages)).toEqual(['fine']);
+        expect(logger.warn).toHaveBeenCalledWith(
+            'INVALID_MESSAGE',
+            expect.any(String),
+            { id: 'broken' },
+            expect.anything(),
+        );
+    });
+
+    it('loads no parser without messages', async () => {
+        await expect(parseHostMessages(undefined, makeLogger())).resolves.toEqual({});
     });
 });

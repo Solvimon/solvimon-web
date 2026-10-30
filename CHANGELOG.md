@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `INVALID_MESSAGE` (warning) is logged, with the message's `id` in `context`, for a message passed in `messages` that is not a valid ICU message. The element shows that message's default instead. It is a new member of the exported `WarnCode` union.
 - French: elements render in French for the `fr-FR` locale. This includes the labels drawn by `@solvimon/solvimon-ui` components, such as the invoice, the country select and the payment method cards.
 - An element accepts a portal object whose `authentication` is `SIGNED_TOKEN`, which carries a handle in `token` instead of a portal token. The element exchanges the handle at `POST /v1/portal/token` for a token that lasts as long as the link, with no refresh, and exchanges it again once when the API rejects that token. The handle is returned only when the portal URL is created, so pass on the `token` from the create response. Portal objects that sign in through identity work as before.
 - A link that has expired, was revoked or whose checkout session has closed shows the element's "no longer available" notice, and logs `PORTAL_URL_EXPIRED` or `PORTAL_URL_REVOKED` (error), or `CHECKOUT_SESSION_CLOSED` (warning, with the session's `status` in `context`). When the API cannot verify the link, the exchange is retried a few times before the element logs `PORTAL_TOKEN_UNAVAILABLE` (error) and offers a "Try again" button (`sv-portal-unverified`). These are new members of the exported `ErrorCode` and `WarnCode` unions.
@@ -18,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Every screen and component downloads about 10 kB (gzip) less up front. Messages are parsed when the SDK is built, so the bundle no longer carries an ICU message parser, and the notes for translators are left out. A host that passes `messages` loads a parser for them when the element mounts, before it renders.
 - Every element downloads about 8 kB (gzip) less when it mounts: the icon sprite it fetches holds only the 55 icons the SDK can show, out of the 121 in `@solvimon/solvimon-ui`.
 - Every screen and component downloads about 1.5 kB (gzip) less up front: the stylesheet they share no longer carries the classes of `@solvimon/solvimon-ui` components that no element renders, such as its editor and PDF components.
 - The checkout screen shows the terms and conditions in the order summary column, centred under the secure payments line next to the pay button, instead of in a footer below both columns.

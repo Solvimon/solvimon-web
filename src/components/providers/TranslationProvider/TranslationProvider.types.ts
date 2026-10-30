@@ -22,6 +22,6 @@ export interface TranslationSettings {
 }
 
 export interface TranslationOverrideProps {
-    /** The messages to replace, by id. Everything else is inherited as it is. */
+    /** The text to show instead, by message id, as it is. Everything else is inherited as it is. */
     messages: IntlMessages;
 }

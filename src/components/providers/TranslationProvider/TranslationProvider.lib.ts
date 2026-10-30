@@ -1,3 +1,4 @@
+import type { MessageFormatElement } from '@formatjs/icu-messageformat-parser';
 import type { IntlMessages } from '@solvimon/solvimon-ui';
 import type { InjectionKey } from 'vue';
 import type {
@@ -80,4 +81,55 @@ export async function loadLocaleMessages(locale: string, logger: Logger): Promis
         );
         return {};
     }
+}
+
+/**
+ * A host's own `messages`, parsed. Every other message is parsed when the SDK is built and the
+ * bundle carries no ICU parser, so one is loaded only for a host that passes messages. A message
+ * that does not parse is left out, so that its default shows, and logged.
+ */
+export async function parseHostMessages(
+    messages: IntlMessages | undefined,
+    logger: Logger,
+): Promise<IntlMessages> {
+    const entries = Object.entries(messages ?? {});
+    if (!entries.length) return {};
+
+    let parse: typeof import('@formatjs/icu-messageformat-parser').parse;
+    try {
+        ({ parse } = await import('@formatjs/icu-messageformat-parser'));
+    } catch (err) {
+        logger.warn(
+            'TRANSLATION_LOAD_FAILED',
+            'Failed to load the parser for the messages passed in, showing the defaults instead',
+            {},
+            err,
+        );
+        return {};
+    }
+
+    const parsed = entries.flatMap(([id, message]) => {
+        try {
+            return [[id, parse(message)] as const];
+        } catch (err) {
+            logger.warn(
+                'INVALID_MESSAGE',
+                'A message passed in is not a valid ICU message, showing its default instead',
+                { id },
+                err,
+            );
+            return [];
+        }
+    });
+
+    return asIntlMessages(Object.fromEntries(parsed));
+}
+
+/**
+ * Parsed messages, typed as the `IntlMessages` solvimon-ui's `IntlProvider` takes. That type only
+ * names the string form, while formatjs takes both, and in the bundle every message is parsed.
+ */
+export function asIntlMessages(messages: Record<string, MessageFormatElement[]>): IntlMessages {
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    return messages as unknown as IntlMessages;
 }

@@ -1,4 +1,4 @@
-import type { PortalUrl } from '@solvimon/solvimon-types';
+import type { PortalObject } from '@/types/checkoutSession';
 import type { SolvimonBranding } from '@/types/branding';
 import type { ProviderProps } from '@/components/providers/Provider/Provider.types';
 
@@ -6,7 +6,7 @@ import type { ProviderProps } from '@/components/providers/Provider/Provider.typ
  * The properties every element takes: those `EntryProvider` reads from it. Picked rather than
  * omitted, so a prop added to the provider stack does not become element surface by accident.
  */
-export type EntryBaseProps<PortalObjectType extends PortalUrl> = Pick<
+export type EntryBaseProps<PortalObjectType extends PortalObject> = Pick<
     ProviderProps,
     | 'environment'
     | 'locale'

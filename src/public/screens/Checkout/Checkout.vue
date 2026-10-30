@@ -13,8 +13,6 @@ import type { CheckoutProps } from './Checkout.types';
 import type { CheckoutSource } from './Checkout.source.types';
 import { useHostEvent } from '@/components/providers/HostElementProvider/composables/useHostEvent';
 import type { ExpressBillingInformation } from '@/components/payments/ExpressPaymentMethod/ExpressPaymentMethod.types';
-import { usePromotionCode } from '@/composables/usePromotionCode';
-import { useAutoApplyPromotionCode } from '@/composables/useAutoApplyPromotionCode';
 import CheckoutForm from '@/components/customer/CheckoutForm/CheckoutForm.vue';
 import CheckoutTitle from '@/components/checkout/CheckoutTitle.vue';
 import { isInvoiceUsageBased } from '@/utils/invoice';
@@ -78,18 +76,14 @@ const { formatTimePeriod } = useTimePeriod();
 const { isMobileViewport } = useViewport();
 
 // Trimmed so a note of only whitespace renders nothing rather than an empty gap in the column.
-const termsAndConditions = props.source.note?.trim() || undefined;
+const termsAndConditions = computed(() => props.source.note.value?.trim() || undefined);
 
 const {
     validatedEmail,
     validatedCountry,
-    paymentMethodOptions,
-    hasPaymentMethodOptionsError,
-    retryPaymentMethodOptions,
     subscription,
     orderMeterValues,
     quantityAddonConfigIds,
-    isPaymentMethodsPending,
     isInvoicePreviewPending,
     isInvoicePreviewStale,
     isInvoicePreviewFailed,
@@ -100,14 +94,13 @@ const {
     invoicePreviewByBillingPeriod,
     trialInvoicePreview,
     trialPeriod,
-    authorizationContext,
+    payment,
     pricingCurrency,
     isPaid,
     amount,
     recurringAmount,
     hasOneOffCharges,
     loadInvoicePreview,
-    updateInvoicePreviewOnBillingInformationChange,
     changeBillingPeriod,
     saveFormStateForRedirect,
     clearSavedFormState,
@@ -129,6 +122,15 @@ watch(
     },
     { immediate: true },
 );
+
+const paymentMethodOptions = computed(() => payment?.paymentMethodOptions.value ?? []);
+const isPaymentMethodsPending = computed(() => payment?.isPaymentMethodsPending.value ?? false);
+const hasPaymentMethodOptionsError = computed(
+    () => payment?.hasPaymentMethodOptionsError.value ?? false,
+);
+const authorizationContext = computed(() => payment?.authorizationContext.value);
+const retryPaymentMethodOptions = () => payment?.retryPaymentMethodOptions();
+const canPay = computed(() => !!payment && (props.source.canPay?.value ?? true));
 
 const experimentalFeatures = useExperimentalFeature();
 const isExpressCheckoutEnabled = computed(
@@ -635,54 +637,21 @@ const showPlanCustomizationEditor = computed(() => {
     return false;
 });
 
-const promotionCode = ref<string | null>(null);
-
-// The code the preview and the payment are priced with can also come from a redirect return.
-watch(
-    () => checkoutForm.form.value.promotionCode,
-    (code) => {
-        promotionCode.value = code ?? null;
-    },
-);
-
 const {
-    applyPromotionCode,
-    removePromotionCode,
-    isPromotionCodePending,
-    promotionCodeErrorMessage,
-} = usePromotionCode({
-    checkoutForm,
-    updateInvoicePreviewOnBillingInformationChange,
-    formatErrorMessage: ({ action }) =>
-        action === 'apply'
-            ? $t({
-                  defaultMessage: 'Promotion code could not be applied. Please try again.',
-                  id: 'checkout.promotion_code.apply_failed',
-                  description: 'Error message when applying a promotion code in checkout failed',
-              })
-            : $t({
-                  defaultMessage: 'Promotion code could not be removed. Please try again.',
-                  id: 'checkout.promotion_code.remove_failed',
-                  description: 'Error message when removing a promotion code in checkout failed',
-              }),
-    onInvalidPromotionCode: () => {
-        promotionCode.value = null;
-    },
-    onApplyError: () => {
-        promotionCode.value = null;
-    },
-});
-
-useAutoApplyPromotionCode({
-    subscription,
-    promotionCode: () => props.configuration?.couponCode,
-    appliedPromotionCode: promotionCode,
-    applyPromotionCode,
-});
+    code: promotionCode,
+    isPending: isPromotionCodePending,
+    errorMessage: promotionCodeErrorMessage,
+    apply: applyPromotionCode,
+    remove: removePromotionCode,
+} = props.source.promotionCode;
+const isPromotionCodeAllowed = computed(() => props.source.promotionCode.isAllowed?.value ?? true);
+const setPromotionCode = (code: string | null) => {
+    promotionCode.value = code;
+};
 
 const handleRedirect = () => {
-    if (!successRedirectUrl) return;
-    safeUrlRedirect(successRedirectUrl);
+    if (!successRedirectUrl.value) return;
+    safeUrlRedirect(successRedirectUrl.value);
 };
 
 /**
@@ -690,7 +659,10 @@ const handleRedirect = () => {
  * A host that cancels `solvimon-payment-succeeded` takes the flow over and may navigate itself, but
  * that is theirs to announce — all the success card can honestly promise is this screen's redirect.
  */
-const redirectsOnSuccess = ref(!!successRedirectUrl);
+const isSuccessRedirectCancelled = ref(false);
+const redirectsOnSuccess = computed(
+    () => !isSuccessRedirectCancelled.value && !!successRedirectUrl.value,
+);
 
 const handlePaymentSuccess = () => {
     isPaid.value = true;
@@ -705,7 +677,7 @@ const handlePaymentSuccess = () => {
             subscriptionId: subscription.value?.id,
         })
     ) {
-        redirectsOnSuccess.value = false;
+        isSuccessRedirectCancelled.value = true;
         return;
     }
 
@@ -786,6 +758,7 @@ const retryInvoicePreview = () => loadInvoicePreview().catch(() => {});
                 <!-- express payment methods -->
                 <ExpressPaymentMethods
                     v-if="
+                        payment &&
                         isExpressCheckoutEnabled &&
                         !isPaymentUnconfirmed &&
                         checkoutForm.form.value.country &&
@@ -798,7 +771,9 @@ const retryInvoicePreview = () => loadInvoicePreview().catch(() => {});
                     :locale="locale"
                     :payment-methods-options-response="paymentMethodOptions ?? []"
                     :billing-information="expressPaymentMethodBillingInformation"
-                    :on-billing-information-change="updateInvoicePreviewOnBillingInformationChange"
+                    :on-billing-information-change="
+                        payment.updateInvoicePreviewOnBillingInformationChange
+                    "
                     :context="authorizationContext"
                     :validate-on-submit="handleValidateOnSubmit"
                     @update-billing-information="handleUpdateBillingInformation"
@@ -845,7 +820,23 @@ const retryInvoicePreview = () => loadInvoicePreview().catch(() => {});
                                 }}</Typography
                             >
                             <EmptyStatePlaceholder
-                                v-if="!checkoutForm.form.value.country"
+                                v-if="!payment"
+                                class="sv-checkout__payment-unavailable"
+                                icon="credit_card_off"
+                            >
+                                <template #title>
+                                    {{
+                                        $t({
+                                            defaultMessage: 'Payment is not available yet',
+                                            id: 'checkout.payment_method_block.payment_unavailable_title',
+                                            description:
+                                                'The title shown where the payment methods go when this checkout cannot take a payment yet',
+                                        })
+                                    }}
+                                </template>
+                            </EmptyStatePlaceholder>
+                            <EmptyStatePlaceholder
+                                v-else-if="!checkoutForm.form.value.country"
                                 class="sv-checkout__payment-methods-empty"
                                 icon="captive_portal"
                             >
@@ -1031,11 +1022,12 @@ const retryInvoicePreview = () => loadInvoicePreview().catch(() => {});
             <template v-if="!isPaid">
                 <!-- promotion code -->
                 <PromotionCodeSection
+                    v-if="isPromotionCodeAllowed"
                     class="sv-checkout__promotion-code"
                     v-bind="orderLockAttrs"
                     :promotion-code="promotionCode"
                     :is-pending="isPromotionCodePending"
-                    @update:applied-code="promotionCode = $event"
+                    @update:applied-code="setPromotionCode"
                     @remove="removePromotionCode"
                     @apply="applyPromotionCode"
                 />
@@ -1060,6 +1052,7 @@ const retryInvoicePreview = () => loadInvoicePreview().catch(() => {});
                             size="md"
                             class="sv-action sv-action--primary sv-action--full-width sv-checkout__submit w-full"
                             :disabled="
+                                !canPay ||
                                 isPromotionCodePending ||
                                 isInvoicePreviewPending ||
                                 isInvoicePreviewStale ||

@@ -1,12 +1,12 @@
-import type { PortalUrl } from '@solvimon/solvimon-types';
+import type { PortalObject } from '@/types/checkoutSession';
 
 export type PortalProviderProps = {
     /**
      * The portal object to be used for the portal.
      */
-    portalObject: PortalUrl;
+    portalObject: PortalObject;
     /**
      * The allowed portal types.
      */
-    allowedPortalTypes?: PortalUrl['type'][];
+    allowedPortalTypes?: PortalObject['type'][];
 };

@@ -1,6 +1,7 @@
 import type { ConfiguredMeterValue, CountryCode, Pricing } from '@solvimon/solvimon-types';
 import type { useCheckoutForm } from './useCheckoutForm';
 import type { AddressFormat } from './addressFormat';
+import type { CheckoutFormDisplay } from './CheckoutForm.lib';
 
 export interface CheckoutFormProps {
     validation: ReturnType<typeof useCheckoutForm>['validation'];
@@ -12,6 +13,12 @@ export interface CheckoutFormProps {
     getIsFieldRequired: (field: keyof CheckoutFormState) => boolean;
     shippingAddressFormat?: AddressFormat;
     readOnly?: boolean;
+    /** Left out, every group is editable. */
+    display?: CheckoutFormDisplay;
+    /** Hides the individual/company switch, keeping the type the form holds. */
+    isTypeLocked?: boolean;
+    /** In place of the default title of the customer's section. */
+    title?: string;
 }
 
 export interface CheckoutFormEmits {

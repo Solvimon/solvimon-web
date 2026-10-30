@@ -7,6 +7,7 @@ import type {
     Amount,
     Pricing,
     AuthorizePaymentPayload,
+    BillingPeriod,
 } from '@solvimon/solvimon-types';
 import { PRICE_SETTLE_TIMEOUT_MS, useCheckoutView } from './useCheckout.view';
 import type { CheckoutFormState } from '@/components/customer/CheckoutForm/CheckoutForm.types';
@@ -1082,6 +1083,43 @@ describe('useCheckoutView', () => {
         }
 
         expect(mockLoadInvoicePreview).toHaveBeenCalled();
+    });
+
+    describe('changeBillingPeriod', () => {
+        const yearly = { type: 'YEAR', value: 1 } as BillingPeriod;
+
+        it('previews the order again for the billing period the customer picked', async () => {
+            const result = useCheckoutView({
+                initialCountry: undefined,
+                initialEmail: undefined,
+                subscriptionId: 'sub_123' as PricingPlanSubscription['id'],
+            });
+            result.subscription.value = mockSubscription;
+            mockLoadInvoicePreview.mockClear();
+
+            result.changeBillingPeriod(yearly);
+
+            expect(result.subscription.value?.billing_period).toEqual(yearly);
+            expect(mockLoadInvoicePreview).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    subscription: expect.objectContaining({ billing_period: yearly }),
+                }),
+            );
+        });
+
+        it('does nothing before the subscription has loaded', () => {
+            const result = useCheckoutView({
+                initialCountry: undefined,
+                initialEmail: undefined,
+                subscriptionId: 'sub_123' as PricingPlanSubscription['id'],
+            });
+            mockLoadInvoicePreview.mockClear();
+
+            result.changeBillingPeriod(yearly);
+
+            expect(result.subscription.value).toBeUndefined();
+            expect(mockLoadInvoicePreview).not.toHaveBeenCalled();
+        });
     });
 
     it('does not call loadInvoicePreview when subscription is not loaded yet', async () => {

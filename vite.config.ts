@@ -22,7 +22,7 @@ import { glob } from 'glob';
 import dts from 'vite-plugin-dts';
 import type { TemplateChildNode, RootNode } from '@vue/compiler-core';
 import { selectorsMissingFrom } from './scripts/css-duplication.mjs';
-import { bundledUnscannedUiFiles } from './scripts/tailwind-content.mjs';
+import { bundledUnscannedUiFiles, missingUiDirs } from './scripts/tailwind-content.mjs';
 
 function getLibEntries(
     basePath: string,
@@ -174,6 +174,22 @@ function dropRedundantStylesheet(): PluginOption {
 function requireScannedUiFiles(): Plugin {
     return {
         name: 'solvimon:require-scanned-ui-files',
+        buildStart() {
+            const missing = missingUiDirs(
+                resolve(__dirname, 'node_modules/@solvimon/solvimon-ui/dist'),
+            );
+
+            if (missing.length) {
+                this.warn(
+                    [
+                        'UI_DIRS_NOT_SCANNED in scripts/tailwind-content.mjs lists directories solvimon-ui no longer has:',
+                        ...missing.map((dir) => `    ${dir}`),
+                        '',
+                        'Remove them, and list their new location if it is still unbundled.',
+                    ].join('\n'),
+                );
+            }
+        },
         generateBundle(_options, bundle) {
             const moduleIds = Object.values(bundle).flatMap((output) =>
                 output.type === 'chunk' ? Object.keys(output.modules) : [],

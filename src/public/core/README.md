@@ -33,7 +33,7 @@ const unmount = solvimon.createScreen('customer-overview', {
 
 ## Registered IDs
 
-- **Screens**: `customer-overview`, `checkout`, `subscription-management`, `subscription-details`, `pay-invoice`, `payment-methods-management`
+- **Screens**: `customer-overview`, `checkout`, `checkout-session`, `subscription-management`, `subscription-details`, `pay-invoice`, `payment-methods-management`
 - **Components**: `invoice`, `invoice-header`, `invoice-details`, `invoices-list`, `payment-history`, `subscriptions-list`, `subscription-schedules`, `customer-payment-methods`, `wallet-balances`, `billing-information`, `billing-information-form`, `payment-method-form`
 
 Use `getRegisteredScreenIds()` and `getRegisteredComponentIds()` from `@solvimon/solvimon-web/core` to get the list at runtime.

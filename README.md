@@ -25,7 +25,8 @@ Every component requires at minimum:
 carries the portal token the element signs in with; there is no separate `token` property.
 
 An element renders only for a published portal of the type it accepts: `checkout` takes an
-`INIT_PRICING_PLAN_SUBSCRIPTION` portal, every other element a `CUSTOMER` one. Any other type logs
+`INIT_PRICING_PLAN_SUBSCRIPTION` portal, `checkout-session` a `CHECKOUT_SESSION` one (also once it
+is `CLOSED`, to show how the session ended), every other element a `CUSTOMER` one. Any other type logs
 `PORTAL_TYPE_NOT_ALLOWED`, dispatches an `error` event and renders nothing. A revoked portal logs `RESOURCE_REVOKED`; the
 checkout shows its "Checkout not available" notice, and the other elements say that they are no longer
 available (`sv-portal-unavailable`).
@@ -241,6 +242,7 @@ Full-page experiences.
 | Export path                                                 | Custom element                          |
 | ----------------------------------------------------------- | --------------------------------------- |
 | `@solvimon/solvimon-web/screens/checkout`                   | `<solvimon-checkout>`                   |
+| `@solvimon/solvimon-web/screens/checkout-session`           | `<solvimon-checkout-session>`           |
 | `@solvimon/solvimon-web/screens/customer-overview`          | `<solvimon-customer-overview>`          |
 | `@solvimon/solvimon-web/screens/pay-invoice`                | `<solvimon-pay-invoice>`                |
 | `@solvimon/solvimon-web/screens/payment-methods-management` | `<solvimon-payment-methods-management>` |
@@ -390,6 +392,8 @@ The SDK emits structured log entries via the [`onLog`](#error-logging) callback.
 | `APPLE_PAY_ERROR`                           | Apple Pay error                                                    |
 | `AUTO_TOP_UP_CANCELLATION_FAILED`           | Failed to turn off a wallet                                        |
 | `AUTO_TOP_UP_SAVE_FAILED`                   | Failed to save the automatic top-up rule                           |
+| `CHECKOUT_SESSION_LOAD_FAILED`              | Failed to load the checkout session                                |
+| `CHECKOUT_SESSION_UPDATE_FAILED`            | Failed to save the checkout session                                |
 | `EXPRESS_CHECKOUT_GOOGLE_PAY_ERROR`         | The Google Pay button reference is not found and cannot be mounted |
 | `EXPRESS_CHECKOUT_PAYPAL_ERROR`             | The PayPal button reference is not found and cannot be mounted     |
 | `INITIAL_DATA_LOAD_FAILED`                  | Failed to load initial data                                        |
@@ -443,6 +447,8 @@ The SDK emits structured log entries via the [`onLog`](#error-logging) callback.
 | `APPLE_PAY_FORM_INCOMPLETE`          | Apple Pay authorization stopped: the checkout form is incomplete                                             |
 | `CHECKOUT_FORM_STATE_NOT_SAVED`      | Could not keep the checkout form for a redirect return                                                       |
 | `CHECKOUT_SESSION_CLOSED`            | The checkout session of the portal link is closed                                                            |
+| `CHECKOUT_SESSION_EDIT_NOT_APPLIED`  | The checkout session was saved but kept a value the customer changed                                         |
+| `CHECKOUT_SESSION_UPDATE_REFUSED`    | The API refused a change to the checkout session                                                             |
 | `INVOICE_PREVIEW_SKIPPED`            | Skipped the on-demand charge invoice preview: no schedule to charge it on                                    |
 | `MISSING_REQUIRED_PROPERTIES`        | Not rendering until these properties are set:…                                                               |
 | `ON_DEMAND_CHARGE_REFUSED`           | The on-demand order was refused or its payment did not go through                                            |

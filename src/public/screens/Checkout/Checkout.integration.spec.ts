@@ -2,6 +2,9 @@ import { flushPromises, mount } from '@vue/test-utils';
 import { computed, ref } from 'vue';
 import type { PortalUrl } from '@solvimon/solvimon-types';
 import LegacyCheckout from './LegacyCheckout.vue';
+import Checkout from './Checkout.vue';
+import type { CheckoutSource } from './Checkout.source.types';
+import { useCheckoutView } from './useCheckout.view';
 
 // ─── Mocks ────────────────────────────────────────────────────────────────────
 
@@ -685,6 +688,56 @@ describe('Checkout', () => {
             });
             await flushPromises();
 
+            expect(wrapper.find('.sv-checkout__submit').attributes('disabled')).toBe('true');
+        });
+    });
+
+    describe('a flow that cannot take a payment yet', () => {
+        afterEach(() => {
+            mockExperimentalFeatures.value['express-checkout'] = false;
+        });
+
+        const mountWithoutPayment = async () => {
+            const view = useCheckoutView({} as never);
+            const source: CheckoutSource = {
+                ...view,
+                isShippingAddressRequired: false,
+                promotionCode: {
+                    code: ref(null),
+                    isPending: ref(false),
+                    errorMessage: ref(null),
+                    apply: vi.fn(),
+                    remove: vi.fn(),
+                },
+                canPay: ref(true),
+                successUrl: ref(undefined),
+                note: ref(undefined),
+            };
+            const wrapper = mount(Checkout, {
+                props: { source },
+                global: {
+                    stubs: {
+                        ...Object.fromEntries(STUBBED_CHILDREN.map((name) => [name, true])),
+                        Skeleton: false,
+                    },
+                },
+            });
+            await flushPromises();
+            await vi.dynamicImportSettled();
+            return wrapper;
+        };
+
+        it('says payment is not available, offers no way to pay and keeps Pay off', async () => {
+            paymentMethodOptions.value = [
+                { integration: { payment_gateway: { variant: 'ADYEN' } } },
+            ];
+            mockExperimentalFeatures.value['express-checkout'] = true;
+            const wrapper = await mountWithoutPayment();
+
+            expect(wrapper.find('.sv-checkout__payment-unavailable').exists()).toBe(true);
+            expect(wrapper.find('.sv-checkout__payment-methods-empty').exists()).toBe(false);
+            expect(wrapper.findComponent({ name: 'PaymentIntegrationForm' }).exists()).toBe(false);
+            expect(wrapper.findComponent({ name: 'ExpressPaymentMethods' }).exists()).toBe(false);
             expect(wrapper.find('.sv-checkout__submit').attributes('disabled')).toBe('true');
         });
     });

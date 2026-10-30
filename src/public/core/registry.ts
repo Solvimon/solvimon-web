@@ -7,6 +7,7 @@ import type { RegisteredScreenId, RegisteredComponentId } from './types';
 const SCREEN_IDS: Record<RegisteredScreenId, true> = {
     'customer-overview': true,
     checkout: true,
+    'checkout-session': true,
     'subscription-management': true,
     'subscription-details': true,
     'pay-invoice': true,

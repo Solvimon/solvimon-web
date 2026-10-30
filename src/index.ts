@@ -30,6 +30,7 @@ export type { IntlMessages, Environment } from './public/types';
 export type { ExperimentalFeature } from '@/components/providers/ExperimentalFeatureProvider/ExperimentalFeatureProvider.lib';
 
 export { defineSolvimonCheckout } from './public/screens/Checkout/Checkout.entry.ce';
+export { defineSolvimonCheckoutSession } from './public/screens/CheckoutSession/CheckoutSession.entry.ce';
 export { defineSolvimonCustomerOverview } from './public/screens/CustomerOverview/CustomerOverview.entry.ce';
 export { defineSolvimonSubscriptionManagement } from './public/screens/SubscriptionManagement/SubscriptionManagement.entry.ce';
 export { defineSolvimonSubscriptionDetails } from './public/screens/SubscriptionDetails/SubscriptionDetails.entry.ce';

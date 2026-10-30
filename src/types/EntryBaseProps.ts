@@ -1,7 +1,8 @@
-import type { PlatformBranding, PortalUrl } from '@solvimon/solvimon-types';
+import type { PlatformBranding } from '@solvimon/solvimon-types';
+import type { PortalObject } from '@/types/checkoutSession';
 import type { ProviderEmits, ProviderProps } from '@/components/providers/Provider/Provider.types';
 
-export type EntryBaseProps<PortalObjectType extends PortalUrl> = Omit<
+export type EntryBaseProps<PortalObjectType extends PortalObject> = Omit<
     ProviderProps,
     'customElementName'
 > & {

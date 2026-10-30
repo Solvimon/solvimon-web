@@ -1,4 +1,4 @@
-import { onUnmounted, toValue, watch, type MaybeRefOrGetter, type WatchSource } from 'vue';
+import { onScopeDispose, toValue, watch, type MaybeRefOrGetter, type WatchSource } from 'vue';
 
 export function useWatchDebounced<T>(
     source: WatchSource<T>,
@@ -27,5 +27,5 @@ export function useWatchDebounced<T>(
         { deep: options.deep },
     );
 
-    onUnmounted(() => clearTimeout(timer));
+    onScopeDispose(() => clearTimeout(timer));
 }

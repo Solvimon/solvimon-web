@@ -13,25 +13,26 @@ import {
     Typography,
     useIntl,
 } from '@solvimon/solvimon-ui';
-import { computed, reactive, ref } from 'vue';
+import { computed, reactive, ref, useId } from 'vue';
 import type { CountryCode } from '@solvimon/solvimon-types';
 import type { CheckoutFormState, CheckoutFormProps, CheckoutFormEmits } from './CheckoutForm.types';
 import TaxIDCheckNotice from './TaxIDCheckNotice.vue';
 import CheckoutAddressFields from './CheckoutAddressFields.vue';
-import { isVatNumberShown, toShippingAddressDetails } from './CheckoutForm.lib';
+import { getFieldDisplay, isVatNumberShown, toShippingAddressDetails } from './CheckoutForm.lib';
 import CompanyPurchaseToggle from '@/components/customer/CompanyPurchaseToggle.vue';
 import HiddenLabelInput from '@/components/customer/HiddenLabelInput.vue';
 import { useCustomerFormLabels } from '@/components/customer/useCustomerFormLabels';
 import { useTaxIDValidationCheck } from '@/composables/useTaxIDValidationCheck';
 import { asOptionalText, formControlModel, type SelectControlValue } from '@/utils/formControl';
 
-const FORM_ID = 'checkout-form';
-
 // `isValidCountryCode` answers with a plain boolean, so the narrowing is ours to state.
 const isCountryCode = (value: string): value is CountryCode => isValidCountryCode(value);
 
 const props = defineProps<CheckoutFormProps>();
 defineEmits<CheckoutFormEmits>();
+
+// Unique, as a checkout can show a form per customer.
+const formId = useId();
 
 const showBillingDetails = ref(false);
 
@@ -54,7 +55,20 @@ const fields = reactive({
     state: formControlModel(model, 'state', asOptionalText),
     companyLegalName: formControlModel(model, 'companyLegalName', asOptionalText),
     companyVatNumber: formControlModel(model, 'companyVatNumber', asOptionalText),
+    firstName: formControlModel(model, 'firstName', asOptionalText),
+    lastName: formControlModel(model, 'lastName', asOptionalText),
 });
+
+const displayOf = (field: keyof CheckoutFormState) => getFieldDisplay(props.display, field);
+const isEditable = (field: keyof CheckoutFormState) => displayOf(field) === 'EDITABLE';
+
+/** Only a form told how to show the customer's details asks an individual for their name. */
+const showsIndividualName = computed(
+    () =>
+        !isCompanyPurchase.value &&
+        !!props.display?.customer_details &&
+        displayOf('firstName') !== 'HIDDEN',
+);
 
 const country = computed<SelectControlValue>({
     get: () => model.value.country,
@@ -99,6 +113,59 @@ const readableCountryName = computed(() =>
     model.value.country ? getCountryNameByCode(model.value.country) : undefined,
 );
 
+const isAddressDetailRequired = computed(() =>
+    (['addressLine1', 'postalCode', 'city', 'state'] as const).some(props.getIsFieldRequired),
+);
+
+const readOnlyAddressLines = computed(() =>
+    [
+        model.value.addressLine1,
+        model.value.addressLine2,
+        [model.value.postalCode, model.value.city].filter(Boolean).join(' '),
+        model.value.state,
+        readableCountryName.value,
+    ].filter((line): line is string => !!line),
+);
+
+const nameLabel = computed(() =>
+    $t({
+        defaultMessage: 'Name',
+        id: 'checkout.individual_name.label',
+        description: 'Label of the name of a customer who buys as an individual',
+    }),
+);
+
+const readOnlyDetails = computed(() =>
+    [
+        isCompanyPurchase.value &&
+            displayOf('companyLegalName') === 'READ_ONLY' && {
+                label: labels.legalNameLabel,
+                value: model.value.companyLegalName,
+            },
+        isCompanyPurchase.value &&
+            displayOf('companyVatNumber') === 'READ_ONLY' && {
+                label: labels.vatNumberLabel,
+                value: model.value.companyVatNumber,
+            },
+        showsIndividualName.value &&
+            displayOf('firstName') === 'READ_ONLY' && {
+                label: nameLabel.value,
+                value: [model.value.firstName, model.value.infix, model.value.lastName]
+                    .filter(Boolean)
+                    .join(' '),
+            },
+    ].filter((detail): detail is { label: string; value: string } => !!detail && !!detail.value),
+);
+
+const hasTypeSection = computed(
+    () =>
+        !props.isTypeLocked ||
+        showsIndividualName.value ||
+        (isCompanyPurchase.value &&
+            (displayOf('companyLegalName') !== 'HIDDEN' ||
+                displayOf('companyVatNumber') !== 'HIDDEN')),
+);
+
 const shippingAddressLines = computed<string[]>(() => {
     const { recipient, address } = toShippingAddressDetails(
         model.value,
@@ -125,14 +192,16 @@ const billingAddressSameAsShipping = computed({
     },
 });
 
-const customerSectionTitle = computed(() =>
-    props.isShippingAddressRequired
-        ? $t({
-              defaultMessage: 'Shipping information',
-              id: 'checkout.shipping_information_block.title',
-              description: 'The title of the shipping information block in the checkout form',
-          })
-        : labels.contactInformationTitle,
+const customerSectionTitle = computed(
+    () =>
+        props.title ??
+        (props.isShippingAddressRequired
+            ? $t({
+                  defaultMessage: 'Shipping information',
+                  id: 'checkout.shipping_information_block.title',
+                  description: 'The title of the shipping information block in the checkout form',
+              })
+            : labels.contactInformationTitle),
 );
 
 const shippingAddressLabel = computed(() =>
@@ -161,7 +230,7 @@ const shippingCountryPlaceholder = computed(() =>
 </script>
 
 <template>
-    <form :id="FORM_ID" @submit.prevent="$emit('submit', model)">
+    <form :id="formId" @submit.prevent="$emit('submit', model)">
         <div class="grid grid-cols-1 gap-4">
             <Section :title="customerSectionTitle">
                 <div v-if="readOnly" class="grid grid-cols-1 gap-2">
@@ -186,7 +255,17 @@ const shippingCountryPlaceholder = computed(() =>
                     </Typography>
                 </div>
                 <div v-else class="flex flex-col gap-2">
+                    <Typography
+                        v-if="displayOf('email') === 'READ_ONLY'"
+                        variant="body"
+                        tag="span"
+                        weight="semibold"
+                        no-spacing
+                    >
+                        {{ model.email }}
+                    </Typography>
                     <Input
+                        v-else-if="isEditable('email')"
                         v-model="fields.email"
                         required
                         type="email"
@@ -198,8 +277,22 @@ const shippingCountryPlaceholder = computed(() =>
                         :error="validation.value.email.$errors"
                     />
 
+                    <template
+                        v-if="!isShippingAddressRequired && displayOf('country') === 'READ_ONLY'"
+                    >
+                        <Typography
+                            v-for="(line, index) in readOnlyAddressLines"
+                            :key="index"
+                            variant="body-sm"
+                            tag="span"
+                            color="subtle"
+                            no-spacing
+                        >
+                            {{ line }}
+                        </Typography>
+                    </template>
                     <CountrySelect
-                        v-if="!isShippingAddressRequired"
+                        v-else-if="!isShippingAddressRequired && isEditable('country')"
                         v-model:single-model-value="country"
                         :i18n="{ placeholderDefault: labels.countryPlaceholder }"
                         required
@@ -209,7 +302,11 @@ const shippingCountryPlaceholder = computed(() =>
                     >
                         <template #label-suffix>
                             <Button
-                                v-if="!showBillingDetails && !isBillingInformationMandatory"
+                                v-if="
+                                    !showBillingDetails &&
+                                    !isBillingInformationMandatory &&
+                                    !isAddressDetailRequired
+                                "
                                 size="xs"
                                 intent="subtle"
                                 icon-prefix="add"
@@ -226,7 +323,11 @@ const shippingCountryPlaceholder = computed(() =>
                                 }}
                             </Button>
                             <Button
-                                v-if="showBillingDetails && !isBillingInformationMandatory"
+                                v-if="
+                                    showBillingDetails &&
+                                    !isBillingInformationMandatory &&
+                                    !isAddressDetailRequired
+                                "
                                 size="sm"
                                 intent="subtle"
                                 icon-prefix="close"
@@ -246,10 +347,20 @@ const shippingCountryPlaceholder = computed(() =>
                 </div>
 
                 <Expand
-                    v-if="!isShippingAddressRequired"
-                    :is-open="showBillingDetails || !!isBillingInformationMandatory"
+                    v-if="!isShippingAddressRequired && isEditable('country')"
+                    :is-open="
+                        showBillingDetails ||
+                        !!isBillingInformationMandatory ||
+                        isAddressDetailRequired
+                    "
                 >
-                    <div v-if="showBillingDetails || isBillingInformationMandatory">
+                    <div
+                        v-if="
+                            showBillingDetails ||
+                            isBillingInformationMandatory ||
+                            isAddressDetailRequired
+                        "
+                    >
                         <div class="mt-2 flex flex-col gap-2">
                             <Input
                                 v-model="fields.addressLine1"
@@ -400,13 +511,70 @@ const shippingCountryPlaceholder = computed(() =>
                 </Section>
             </template>
 
-            <Section v-if="!readOnly">
-                <CompanyPurchaseToggle v-model="companyPurchaseModel" no-spacing class="!flex" />
+            <Section v-if="!readOnly && hasTypeSection">
+                <CompanyPurchaseToggle
+                    v-if="!isTypeLocked"
+                    v-model="companyPurchaseModel"
+                    no-spacing
+                    class="!flex"
+                />
+
+                <div v-if="readOnlyDetails.length" class="grid grid-cols-1 gap-2">
+                    <div
+                        v-for="detail in readOnlyDetails"
+                        :key="detail.label"
+                        class="flex flex-col"
+                    >
+                        <Typography variant="body-sm" tag="span" color="subtle" no-spacing>
+                            {{ detail.label }}
+                        </Typography>
+                        <Typography variant="body" tag="span" no-spacing>
+                            {{ detail.value }}
+                        </Typography>
+                    </div>
+                </div>
+
+                <div
+                    v-if="showsIndividualName && isEditable('firstName')"
+                    class="mt-2 grid grid-cols-2 gap-2"
+                >
+                    <Input
+                        v-model="fields.firstName"
+                        name="first_name"
+                        :required="getIsFieldRequired('firstName')"
+                        autocomplete="given-name"
+                        :label="
+                            $t({
+                                defaultMessage: 'First name',
+                                id: 'checkout.first_name.label',
+                                description:
+                                    'Label of the first name of a customer who buys as an individual',
+                            })
+                        "
+                        :error="validation.value.firstName.$errors"
+                    />
+                    <Input
+                        v-model="fields.lastName"
+                        name="last_name"
+                        :required="getIsFieldRequired('lastName')"
+                        autocomplete="family-name"
+                        :label="
+                            $t({
+                                defaultMessage: 'Last name',
+                                id: 'checkout.last_name.label',
+                                description:
+                                    'Label of the last name of a customer who buys as an individual',
+                            })
+                        "
+                        :error="validation.value.lastName.$errors"
+                    />
+                </div>
 
                 <Expand :is-open="isCompanyPurchase">
                     <div v-if="isCompanyPurchase">
                         <div class="mt-2 flex flex-col gap-2">
                             <Input
+                                v-if="isEditable('companyLegalName')"
                                 v-model="fields.companyLegalName"
                                 required
                                 name="legal_name"
@@ -417,7 +585,7 @@ const shippingCountryPlaceholder = computed(() =>
                             />
 
                             <Input
-                                v-if="showVatIdInput"
+                                v-if="showVatIdInput && isEditable('companyVatNumber')"
                                 v-model="fields.companyVatNumber"
                                 name="vat_number"
                                 autocomplete="off"

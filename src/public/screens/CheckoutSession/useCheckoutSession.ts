@@ -5,18 +5,20 @@ import type {
     PricingPlanSubscriptionExpanded,
 } from '@solvimon/solvimon-types';
 import { useIntl } from '@solvimon/solvimon-ui';
-import { computed, onMounted, reactive, ref, shallowRef, watch } from 'vue';
+import { computed, effectScope, onMounted, reactive, ref, shallowRef, watch } from 'vue';
 import {
     type TextField,
     getCurrentMeterValues,
     getCustomerEdit,
     getEditableMeterValues,
     getMeterEdit,
+    getMissingFormFields,
     getPromotionCodes,
     getScheduleId,
     toFormState,
 } from './checkoutSessionForm';
 import type {
+    CheckoutCustomerForm,
     CheckoutSource,
     PriceSettlement,
 } from '@/public/screens/Checkout/Checkout.source.types';
@@ -38,6 +40,7 @@ import type { CheckoutFormState } from '@/components/customer/CheckoutForm/Check
 import type {
     CheckoutSessionCustomerPatch,
     CheckoutSessionCustomizationPatch,
+    CheckoutSessionEffectiveDisplay,
     CheckoutSessionNewCustomer,
     CheckoutSessionPortalUrlResponse,
     CheckoutSessionPreview,
@@ -82,6 +85,32 @@ const pickBy = <T extends object>(
     return picked;
 };
 
+type CheckoutForm = ReturnType<typeof useCheckoutForm>;
+
+/** A customer that already exists cannot be edited, so its form asks for nothing. */
+const NOTHING_SHOWN: CheckoutSessionEffectiveDisplay = {
+    customer_details: 'HIDDEN',
+    address: 'HIDDEN',
+    tax_ids: 'HIDDEN',
+    email: 'HIDDEN',
+    custom_fields: 'HIDDEN',
+};
+
+const fieldValidation = (form: CheckoutForm, field: TextField) => {
+    const result: unknown = Reflect.get(form.validation.value, field);
+    return typeof result === 'object' && result !== null ? result : undefined;
+};
+
+const titleOf = (customer: CheckoutSessionNewCustomer) => {
+    const name = customer.individual?.name;
+    return (
+        (customer.type === 'ORGANIZATION'
+            ? customer.organization?.legal_name
+            : [name?.first_name, name?.infix, name?.last_name].filter(Boolean).join(' ')) ||
+        customer.reference
+    );
+};
+
 const isBadRequestOn = (error: unknown, field: string) =>
     isApiError(error) && error.statusCode === 400 && !!error.field?.endsWith(field);
 
@@ -103,14 +132,57 @@ export function useCheckoutSession({ portalUrlId }: { portalUrlId: string }) {
         () => portalUrl.value?.status === 'PUBLISHED' && session.value?.status === 'OPEN',
     );
 
-    const checkoutForm = useCheckoutForm({
-        initialState: {},
-        // Every change is saved to the session, not only those that move the price.
-        onRequiredFieldChange: () => {},
-    });
+    const isPreviewBehind = computed(
+        () =>
+            !!session.value &&
+            (preview.value?.checkout_session.version ?? -1) < session.value.version,
+    );
 
-    // shortcut: the form edits the first customer and the editor the first subscription; a form
-    // per customer and an editor per subscription come with the screen that lists them all.
+    const missingFields = computed(() => [
+        ...new Set([
+            ...(session.value?.missing_fields ?? []),
+            ...(isPreviewBehind.value
+                ? []
+                : (preview.value?.checkout_session.missing_fields ?? [])),
+        ]),
+    ]);
+    const missingFormFields = computed(() =>
+        getMissingFormFields(missingFields.value, session.value?.customers.length ?? 0),
+    );
+
+    const displayOf = (index: number) => {
+        const customer = session.value?.customers[index];
+        if (!customer) return undefined;
+        return customer.customer ? customer.effective_display : NOTHING_SHOWN;
+    };
+
+    const createForm = (index: number) =>
+        useCheckoutForm({
+            initialState: {},
+            // Every change is saved to the session, not only those that move the price.
+            onRequiredFieldChange: () => {},
+            display: () => displayOf(index),
+            alsoRequired: () => missingFormFields.value[index] ?? [],
+            // A guess would be saved into the merchant's session as the customer's country.
+            guessCountry: false,
+        });
+
+    /** One form per customer, in session order; the first also holds the quantities. */
+    const checkoutForm = createForm(0);
+    const forms = shallowRef<CheckoutForm[]>([checkoutForm]);
+    // Made once the session says how many customers there are, and stopped with the screen.
+    const formsScope = effectScope();
+    const createFormsFor = (count: number) => {
+        const added = formsScope.run(() =>
+            Array.from({ length: count - forms.value.length }, (_, offset) =>
+                createForm(forms.value.length + offset),
+            ),
+        );
+        if (added?.length) forms.value = [...forms.value, ...added];
+    };
+
+    // shortcut: the editor edits the first subscription; an editor per subscription comes with
+    // the screen that lists them all.
     const scheduleIdOf = (index: number) => {
         const subscription = session.value?.pricing_plan_subscriptions[index];
         const template = templates.value[index];
@@ -135,24 +207,16 @@ export function useCheckoutSession({ portalUrlId }: { portalUrlId: string }) {
     /** `undefined` follows the session; a string applies that code, `null` removes it. */
     const wantedPromotionCode = ref<string | null>();
 
-    const isInvalid = (field: TextField) => {
-        const fieldValidation: unknown = Reflect.get(checkoutForm.validation.value, field);
-        return (
-            typeof fieldValidation === 'object' &&
-            fieldValidation !== null &&
-            Reflect.get(fieldValidation, '$invalid') === true
-        );
-    };
-
-    const getCustomerChange = () => {
-        const customer = session.value?.customers[0];
+    const getCustomerChange = (index: number) => {
+        const customer = session.value?.customers[index];
+        const form = forms.value[index];
         // A customer that already exists cannot be edited from the checkout.
-        return customer?.customer
+        return customer?.customer && form
             ? getCustomerEdit(
-                  checkoutForm.form.value,
+                  form.form.value,
                   customer.customer,
                   customer.effective_display,
-                  isInvalid,
+                  (field) => Reflect.get(fieldValidation(form, field) ?? {}, '$invalid') === true,
               )
             : undefined;
     };
@@ -164,8 +228,10 @@ export function useCheckoutSession({ portalUrlId }: { portalUrlId: string }) {
 
     const withoutRefusedCustomerParts = (
         patch: CheckoutSessionCustomerPatch | undefined,
+        index: number,
     ): CheckoutSessionCustomerPatch | undefined => {
         if (!patch) return undefined;
+        const at = `customers.${index}`;
         const { individual, organization, ...rest } = patch;
         const keep = <T extends object>(group: T | undefined, prefix: string) => {
             if (!group) return undefined;
@@ -173,12 +239,12 @@ export function useCheckoutSession({ portalUrlId }: { portalUrlId: string }) {
             return Object.keys(kept).length ? kept : undefined;
         };
         const kept: CheckoutSessionCustomerPatch = {
-            ...keep(rest, 'customers.0'),
-            ...(keep(individual, 'customers.0.individual') && {
-                individual: keep(individual, 'customers.0.individual'),
+            ...keep(rest, at),
+            ...(keep(individual, `${at}.individual`) && {
+                individual: keep(individual, `${at}.individual`),
             }),
-            ...(keep(organization, 'customers.0.organization') && {
-                organization: keep(organization, 'customers.0.organization'),
+            ...(keep(organization, `${at}.organization`) && {
+                organization: keep(organization, `${at}.organization`),
             }),
         };
         return Object.keys(kept).length ? kept : undefined;
@@ -186,13 +252,15 @@ export function useCheckoutSession({ portalUrlId }: { portalUrlId: string }) {
 
     /** Every part of an edit by path; a promotion code is left to its own error handling. */
     const partsOf = (edit: CheckoutSessionEdit): [string, unknown][] => [
-        ...Object.entries(edit.customers?.[0] ?? {}).flatMap(([key, value]): [string, unknown][] =>
-            key === 'individual' || key === 'organization'
-                ? Object.entries(value ?? {}).map(([part, partValue]) => [
-                      `customers.0.${key}.${part}`,
-                      partValue,
-                  ])
-                : [[`customers.0.${key}`, value]],
+        ...(edit.customers ?? []).flatMap((customer, index) =>
+            Object.entries(customer ?? {}).flatMap(([key, value]): [string, unknown][] =>
+                key === 'individual' || key === 'organization'
+                    ? Object.entries(value ?? {}).map(([part, partValue]) => [
+                          `customers.${index}.${key}.${part}`,
+                          partValue,
+                      ])
+                    : [[`customers.${index}.${key}`, value]],
+            ),
         ),
         ...(edit.pricing_plan_subscriptions ?? []).flatMap((customizations, index) =>
             (customizations ?? []).flatMap((customization): [string, unknown][] =>
@@ -272,7 +340,9 @@ export function useCheckoutSession({ portalUrlId }: { portalUrlId: string }) {
         });
 
         return {
-            customers: [withoutRefusedCustomerParts(getCustomerChange()?.patch)],
+            customers: forms.value.map((_, index) =>
+                withoutRefusedCustomerParts(getCustomerChange(index)?.patch, index),
+            ),
             pricing_plan_subscriptions: subscriptions,
         };
     };
@@ -324,13 +394,14 @@ export function useCheckoutSession({ portalUrlId }: { portalUrlId: string }) {
      * invalid keeps what the customer typed.
      */
     const refillForm = (
+        index: number,
         before: CheckoutSessionNewCustomer | undefined,
         sentForm: CheckoutFormState,
         sentFields: TextField[],
     ) => {
         const stored = getInitialState(toFormState(before));
-        const fresh = getInitialState(toFormState(session.value?.customers[0]?.customer));
-        const form = checkoutForm.form.value;
+        const fresh = getInitialState(toFormState(session.value?.customers[index]?.customer));
+        const form = forms.value[index].form.value;
         for (const field of REFILLED_FIELDS) {
             const isUntypedSince = form[field] === sentForm[field];
             const isSentOrUntouched =
@@ -349,9 +420,11 @@ export function useCheckoutSession({ portalUrlId }: { portalUrlId: string }) {
         const key = keyOf(edit);
         if (!key || key === settledKey.value) return;
 
-        const before = session.value.customers[0]?.customer;
-        const sentForm = { ...checkoutForm.form.value };
-        const sentFields = getCustomerChange()?.fields ?? [];
+        const sent = forms.value.map((form, index) => ({
+            before: session.value?.customers[index]?.customer,
+            form: { ...form.form.value },
+            fields: getCustomerChange(index)?.fields ?? [],
+        }));
 
         isSaving.value = true;
         try {
@@ -376,7 +449,9 @@ export function useCheckoutSession({ portalUrlId }: { portalUrlId: string }) {
                     toCheckoutSessionPatch(portalUrl.value.checkout_session.version, edit),
                 );
             }
-            refillForm(before, sentForm, sentFields);
+            sent.forEach(({ before, form, fields }, index) =>
+                refillForm(index, before, form, fields),
+            );
 
             if (keyOf(getEdit()) === key) {
                 settledKey.value = key;
@@ -519,7 +594,7 @@ export function useCheckoutSession({ portalUrlId }: { portalUrlId: string }) {
 
     const orderMeterValues = shallowRef<CheckoutSource['orderMeterValues']['value']>({});
 
-    /** The form follows the session: its first customer, and the first subscription's quantities. */
+    /** Each form follows its customer; the first also the first subscription's quantities. */
     const fillForm = () => {
         const current = session.value;
         const subscription = current?.pricing_plan_subscriptions[0];
@@ -536,11 +611,26 @@ export function useCheckoutSession({ portalUrlId }: { portalUrlId: string }) {
 
         orderMeterValues.value = { seatsValues: seats?.minimums, unitsValues: units?.minimums };
         checkoutForm.updateInitialState({
-            ...toFormState(current?.customers[0]?.customer),
             ...(seats && { seatsValues: seats.values }),
             ...(units && { unitsValues: units.values }),
         });
+        forms.value.forEach((form, index) =>
+            form.updateInitialState(toFormState(current?.customers[index]?.customer)),
+        );
     };
+
+    const isLoaded = ref(false);
+
+    // A field the session misses shows as such, typed in or not, once the session is read.
+    watch([isLoaded, missingFormFields], () => {
+        if (!isLoaded.value) return;
+        forms.value.forEach((form, index) => {
+            for (const field of missingFormFields.value[index] ?? []) {
+                const touch: unknown = Reflect.get(fieldValidation(form, field) ?? {}, '$touch');
+                if (typeof touch === 'function') touch();
+            }
+        });
+    });
 
     const load = async () => {
         const [response] = await Promise.all([
@@ -548,9 +638,11 @@ export function useCheckoutSession({ portalUrlId }: { portalUrlId: string }) {
             refreshPreview(),
         ]);
         await loadTemplates(response);
+        createFormsFor(response.checkout_session.customers.length);
         // Set together with the form, so the form is never compared with a session it has not seen.
         portalUrl.value = response;
         fillForm();
+        isLoaded.value = true;
         promotionCode.value = appliedPromotionCode.value;
 
         if ((preview.value?.checkout_session.version ?? -1) < response.checkout_session.version) {
@@ -588,21 +680,7 @@ export function useCheckoutSession({ portalUrlId }: { portalUrlId: string }) {
         return split.hasUnattributed ? undefined : split.recurring.includingTax;
     });
 
-    const isPreviewBehind = computed(
-        () =>
-            !!session.value &&
-            (preview.value?.checkout_session.version ?? -1) < session.value.version,
-    );
     const isInvoicePreviewStale = computed(() => hasUnsavedEdit.value || isPreviewBehind.value);
-
-    const missingFields = computed(() => [
-        ...new Set([
-            ...(session.value?.missing_fields ?? []),
-            ...(isPreviewBehind.value
-                ? []
-                : (preview.value?.checkout_session.missing_fields ?? [])),
-        ]),
-    ]);
 
     const canPay = computed(
         () =>
@@ -629,6 +707,23 @@ export function useCheckoutSession({ portalUrlId }: { portalUrlId: string }) {
         subscription: computed(() => templates.value[0]),
         orderMeterValues,
         checkoutForm,
+        customerForms: computed(() => {
+            const customers = session.value?.customers ?? [];
+            return customers.flatMap((customer, index): CheckoutCustomerForm[] => {
+                const form = forms.value[index];
+                // An existing customer cannot be edited, and the session gives nothing to show of it.
+                if (!customer.customer || !form) return [];
+                return [
+                    {
+                        key: `${index}`,
+                        form,
+                        display: customer.effective_display,
+                        isTypeLocked: true,
+                        ...(customers.length > 1 && { title: titleOf(customer.customer) }),
+                    },
+                ];
+            });
+        }),
         isShippingAddressRequired: false,
         invoicePreview,
         invoicePreviewByBillingPeriod: computed(() => ({})),

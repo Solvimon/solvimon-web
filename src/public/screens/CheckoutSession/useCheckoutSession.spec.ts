@@ -11,12 +11,15 @@ import type {
 } from '@/types/checkoutSession';
 import { providerMockLogger } from '@/test-utils/providerMock';
 
-const { mockGet, mockUpdate, mockPreview, mockGetSubscription } = vi.hoisted(() => ({
-    mockGet: vi.fn(),
-    mockUpdate: vi.fn(),
-    mockPreview: vi.fn(),
-    mockGetSubscription: vi.fn(),
-}));
+const { mockGet, mockUpdate, mockPreview, mockGetSubscription, mockGetGeoLocation } = vi.hoisted(
+    () => ({
+        mockGet: vi.fn(),
+        mockGetGeoLocation: vi.fn(),
+        mockUpdate: vi.fn(),
+        mockPreview: vi.fn(),
+        mockGetSubscription: vi.fn(),
+    }),
+);
 
 vi.mock('@/services/checkoutSessions', async (importOriginal) => ({
     ...(await importOriginal<typeof import('@/services/checkoutSessions')>()),
@@ -32,7 +35,7 @@ vi.mock('@/services/subscriptions', () => ({
 }));
 
 vi.mock('@/services/geolocation', () => ({
-    createGeoLocationService: () => ({ getGeoLocation: () => Promise.reject(new Error('none')) }),
+    createGeoLocationService: () => ({ getGeoLocation: mockGetGeoLocation }),
 }));
 
 const PORTAL_URL_ID = 'purl_1';
@@ -156,6 +159,7 @@ describe('useCheckoutSession', () => {
         mockUpdate.mockReset();
         mockPreview.mockReset().mockResolvedValue(previewOf(1));
         mockGetSubscription.mockReset().mockResolvedValue(template);
+        mockGetGeoLocation.mockReset().mockRejectedValue(new Error('none'));
     });
 
     afterEach(() => {
@@ -701,6 +705,191 @@ describe('useCheckoutSession', () => {
             expect(mockUpdate).not.toHaveBeenCalled();
             expect(source.canPay?.value).toBe(false);
             expect(source.promotionCode.isAllowed?.value).toBe(false);
+        });
+    });
+
+    describe('several customers', () => {
+        const individualCustomer: CheckoutSession['customers'][number] = {
+            ...createSession().customers[0],
+            customer: {
+                reference: 'person-ref',
+                type: 'INDIVIDUAL',
+                email: 'jane@example.test',
+                individual: {
+                    name: { first_name: 'Jane', last_name: 'Doe' },
+                    residential_address: { country: 'BE' },
+                },
+            },
+        };
+        const existingCustomer: CheckoutSession['customers'][number] = {
+            customer_id: 'cus_1',
+            effective_display: createSession().customers[0].effective_display,
+        };
+        const formsOf = (result: ReturnType<typeof useCheckoutSession>) =>
+            result.source.customerForms?.value ?? [];
+
+        it('gives each customer a form of its own, in session order, named after the customer', async () => {
+            mockGet.mockResolvedValue(
+                portalUrl({ customers: [createSession().customers[0], individualCustomer] }),
+            );
+            const result = await loaded();
+            const [first, second] = formsOf(result);
+
+            expect(formsOf(result)).toHaveLength(2);
+            expect(first.form).toBe(result.source.checkoutForm);
+            expect(first).toMatchObject({ title: 'Acme', isTypeLocked: true });
+            expect(second).toMatchObject({ title: 'Jane Doe', isTypeLocked: true });
+            expect(second.form.form.value).toMatchObject({
+                type: 'INDIVIDUAL',
+                email: 'jane@example.test',
+                firstName: 'Jane',
+                country: 'BE',
+            });
+        });
+
+        it("names a single customer's form with the default title", async () => {
+            const result = await loaded();
+
+            expect(formsOf(result)[0].title).toBeUndefined();
+        });
+
+        it('does not guess the country of a customer without one, so nothing is patched', async () => {
+            mockGetGeoLocation.mockResolvedValue({ ip: '127.0.0.1', country: 'DE' });
+            mockGet.mockResolvedValue(
+                portalUrl({ customers: [organizationCustomer({ legal_name: 'Acme' })] }),
+            );
+            const { source } = await loaded();
+            await settleEdits();
+
+            expect(mockGetGeoLocation).not.toHaveBeenCalled();
+            expect(source.checkoutForm.form.value.country).toBeUndefined();
+            expect(mockUpdate).not.toHaveBeenCalled();
+        });
+
+        it('patches nothing on load', async () => {
+            mockGet.mockResolvedValue(
+                portalUrl({ customers: [createSession().customers[0], individualCustomer] }),
+            );
+            await loaded();
+            await settleEdits();
+
+            expect(mockUpdate).not.toHaveBeenCalled();
+        });
+
+        it('sends an edit of a later customer in its own position', async () => {
+            mockGet.mockResolvedValue(
+                portalUrl({ customers: [createSession().customers[0], individualCustomer] }),
+            );
+            mockUpdate.mockResolvedValue(portalUrl({ version: 2 }));
+            const result = await loaded();
+
+            formsOf(result)[1].form.form.value.lastName = 'Smith';
+            await settleEdits();
+
+            expect(mockUpdate.mock.calls[0][1].checkout_session.customers).toStrictEqual([
+                {},
+                { customer: { individual: { name: { last_name: 'Smith' } } } },
+            ]);
+        });
+
+        it('shows no form for a customer that already exists, and never sends it', async () => {
+            mockGet.mockResolvedValue(
+                portalUrl({ customers: [existingCustomer, individualCustomer] }),
+            );
+            mockUpdate.mockResolvedValue(portalUrl({ version: 2 }));
+            const result = await loaded();
+
+            expect(formsOf(result).map(({ title }) => title)).toStrictEqual(['Jane Doe']);
+            expect(result.source.checkoutForm.validation.value.$invalid).toBe(false);
+
+            result.source.checkoutForm.form.value.email = 'finance@acme.test';
+            formsOf(result)[0].form.form.value.email = 'jane@doe.test';
+            await settleEdits();
+
+            expect(mockUpdate.mock.calls[0][1].checkout_session.customers).toStrictEqual([
+                {},
+                { customer: { email: 'jane@doe.test' } },
+            ]);
+        });
+
+        it('leaves a refused part of one customer out, and keeps sending the other customer', async () => {
+            mockGet.mockResolvedValue(
+                portalUrl({ customers: [createSession().customers[0], individualCustomer] }),
+            );
+            mockUpdate.mockRejectedValueOnce(
+                new ApiError({
+                    statusCode: 400,
+                    field: 'checkout_session.customers.1.customer.email',
+                }),
+            );
+            const result = await loaded();
+
+            formsOf(result)[1].form.form.value.email = 'jane@doe.test';
+            await settleEdits();
+            mockUpdate.mockResolvedValue(portalUrl({ version: 2 }));
+            result.source.checkoutForm.form.value.companyLegalName = 'Acme BV';
+            await settleEdits();
+
+            expect(mockUpdate).toHaveBeenCalledTimes(2);
+            expect(mockUpdate.mock.calls[1][1].checkout_session.customers).toStrictEqual([
+                { customer: { organization: { legal_name: 'Acme BV' } } },
+            ]);
+        });
+    });
+
+    describe('missing fields', () => {
+        const missingCountry =
+            'checkout_session.customers.0.customer.organization.registered_address.country';
+
+        it('shows a field the session misses as needing input, before it is touched', async () => {
+            mockGet.mockResolvedValue(
+                portalUrl({
+                    customers: [organizationCustomer({ legal_name: 'Acme' })],
+                    missing_fields: [
+                        missingCountry,
+                        'checkout_session.customers.0.customer.organization.registered_address.line1',
+                    ],
+                }),
+            );
+            const { source } = await loaded();
+            const validation = source.checkoutForm.validation.value;
+
+            expect(validation.country.$errors).not.toHaveLength(0);
+            expect(validation.addressLine1.$errors).not.toHaveLength(0);
+            expect(source.checkoutForm.getIsFieldRequired('addressLine1')).toBe(true);
+            expect(validation.city.$dirty).toBe(false);
+        });
+
+        it('does not mark a missing field before the session is read', async () => {
+            mockGet.mockReturnValue(new Promise(() => {}));
+            mockPreview.mockResolvedValue({
+                checkout_session: { version: 1, missing_fields: [missingCountry] },
+            });
+            const { source } = setup();
+            await flushPromises();
+
+            expect(source.checkoutForm.validation.value.country.$dirty).toBe(false);
+        });
+
+        it('does not ask for a field the customer cannot edit', async () => {
+            mockGet.mockResolvedValue(
+                portalUrl({
+                    customers: [
+                        {
+                            ...organizationCustomer({ legal_name: 'Acme' }, ''),
+                            effective_display: {
+                                ...createSession().customers[0].effective_display,
+                                address: 'READ_ONLY',
+                                email: 'HIDDEN',
+                            },
+                        },
+                    ],
+                    missing_fields: [missingCountry],
+                }),
+            );
+            const { source } = await loaded();
+
+            expect(source.checkoutForm.validation.value.$invalid).toBe(false);
         });
     });
 

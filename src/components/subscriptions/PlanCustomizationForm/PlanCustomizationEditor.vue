@@ -72,6 +72,7 @@ const planUnitsModel = planValuesModel(unitsModel);
     <Section
         class="sv-plan-customization"
         :title="
+            title ??
             $t({
                 defaultMessage: 'Customize plan',
                 id: 'checkout.customize_plan_block.title',
@@ -88,6 +89,8 @@ const planUnitsModel = planValuesModel(unitsModel);
                 v-model="planSeatsModel"
                 class="sv-plan-customization__seats"
                 :initial-seats-values="initialSeatsValues"
+                :max-values="maxSeatsValues"
+                :editable-config-ids="editableConfigIds"
                 :pricings="pricings"
             />
 
@@ -96,11 +99,16 @@ const planUnitsModel = planValuesModel(unitsModel);
                 v-model="planUnitsModel"
                 class="sv-plan-customization__units"
                 :initial-units-values="initialUnitsValues"
+                :max-values="maxUnitsValues"
+                :editable-config-ids="editableConfigIds"
                 :pricings="pricings"
             />
 
             <!-- pricing group level addons-->
-            <template v-for="pricingGroup in pricingGroups" :key="pricingGroup.id">
+            <template
+                v-for="pricingGroup in hidePricingChoices ? [] : pricingGroups"
+                :key="pricingGroup.id"
+            >
                 <PricingGroupSingleEditor
                     v-if="
                         pricingGroup.product_type === 'DEFAULT' &&
@@ -146,6 +154,7 @@ const planUnitsModel = planValuesModel(unitsModel);
 
             <!-- product level addons -->
             <AddonMultipleEditor
+                v-if="!hidePricingChoices"
                 v-model="enabledPricingIdsModel"
                 v-model:seats-values="seatsModel"
                 v-model:units-values="unitsModel"
@@ -155,6 +164,8 @@ const planUnitsModel = planValuesModel(unitsModel);
                 :billing-period="billingPeriod"
                 :currency="currency"
             />
+
+            <slot />
         </div>
     </Section>
 </template>

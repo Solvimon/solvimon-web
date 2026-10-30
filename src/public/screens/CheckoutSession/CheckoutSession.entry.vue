@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { SolvimonCheckoutSessionEntryProps } from './CheckoutSession.entry.types';
 import SessionCheckout from './SessionCheckout.vue';
+import CheckoutSessionEnded from './CheckoutSessionEnded.vue';
 import CheckoutNotAvailable from '@/components/checkout/CheckoutNotAvailable.vue';
 import { EntryProvider } from '@/components/providers';
 import { getComponentName } from '@/utils/component';
@@ -20,8 +21,14 @@ defineProps<SolvimonCheckoutSessionEntryProps>();
             :portal-url-id="portalObject.id"
             :avatar="branding?.emblem?.public_url ?? undefined"
         />
-        <template #portal-unavailable>
-            <CheckoutNotAvailable class="sv-checkout sv-root sv-screen sv-checkout--error" />
+        <template #portal-unavailable="{ ending }">
+            <CheckoutSessionEnded
+                v-if="ending"
+                class="sv-checkout sv-root sv-screen"
+                :reason="ending.reason"
+                :status="ending.checkoutSessionStatus"
+            />
+            <CheckoutNotAvailable v-else class="sv-checkout sv-root sv-screen sv-checkout--error" />
         </template>
     </EntryProvider>
 </template>

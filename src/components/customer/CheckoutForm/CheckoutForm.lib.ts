@@ -32,6 +32,34 @@ export const getRequiredFieldsForCountry = (
     return [...countrySpecificRequiredFieldsMap[country], ...DEFAULT_REQUIRED_FIELDS];
 };
 
+export type CheckoutFormGroup =
+    | 'customer_details'
+    | 'address'
+    | 'tax_ids'
+    | 'email'
+    | 'custom_fields';
+
+export type CheckoutFormGroupDisplay = 'EDITABLE' | 'READ_ONLY' | 'HIDDEN';
+
+/** How each group of the customer's fields shows; a group left out is editable. */
+export type CheckoutFormDisplay = Partial<Record<CheckoutFormGroup, CheckoutFormGroupDisplay>>;
+
+// Custom fields have no field in the form.
+const FIELDS_BY_GROUP: [CheckoutFormGroup, (keyof CheckoutFormState)[]][] = [
+    ['customer_details', ['companyLegalName', 'firstName', 'infix', 'lastName']],
+    ['address', ['addressLine1', 'addressLine2', 'postalCode', 'city', 'state', 'country']],
+    ['tax_ids', ['companyVatNumber']],
+    ['email', ['email']],
+];
+
+export const getFieldDisplay = (
+    display: CheckoutFormDisplay | undefined,
+    field: keyof CheckoutFormState,
+): CheckoutFormGroupDisplay => {
+    const group = FIELDS_BY_GROUP.find(([, fields]) => fields.includes(field))?.[0];
+    return (group && display?.[group]) || 'EDITABLE';
+};
+
 /** The VAT number is asked for on a company purchase only, and not in the US. */
 export const isVatNumberShown = (
     state: Partial<Pick<CheckoutFormState, 'type' | 'country'>>,

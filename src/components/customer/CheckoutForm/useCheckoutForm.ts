@@ -1,17 +1,28 @@
 import { isValidCountryCode, objectDiff, useValidation } from '@solvimon/solvimon-ui';
 import { taxId } from '@solvimon/solvimon-ui/validators';
 import { email, required, requiredIf } from '@vuelidate/validators';
-import { computed, onMounted, ref, toRaw, watch, type MaybeRefOrGetter, toValue } from 'vue';
+import {
+    computed,
+    getCurrentInstance,
+    onMounted,
+    ref,
+    toRaw,
+    watch,
+    type MaybeRefOrGetter,
+    toValue,
+} from 'vue';
 import type { CheckoutFormState } from './CheckoutForm.types';
-import { addressRules, shippingRecipientRules } from './addressRules';
+import { addressRules, requiredWhenAsked, shippingRecipientRules } from './addressRules';
 import { useAddressFormats } from './useAddressFormats';
 import {
     billingAddressFromShipping,
     getInitialState,
     getRequiredAddressFields,
     getRequiredFieldsForCountry,
+    getFieldDisplay,
     getTaxedAddressFields,
     isVatNumberShown,
+    type CheckoutFormDisplay,
 } from './CheckoutForm.lib';
 import { useWatchDebounced } from '@/composables/useWatchDebounced';
 import { createGeoLocationService } from '@/services/geolocation';
@@ -20,10 +31,19 @@ export function useCheckoutForm({
     initialState,
     onRequiredFieldChange,
     isShippingAddressRequired,
+    display,
+    alsoRequired,
+    guessCountry = true,
 }: {
     initialState: Partial<CheckoutFormState>;
     onRequiredFieldChange: (form: CheckoutFormState) => void;
     isShippingAddressRequired?: MaybeRefOrGetter<boolean>;
+    /** A field the customer cannot edit is not validated: they could not correct it. */
+    display?: MaybeRefOrGetter<CheckoutFormDisplay | undefined>;
+    /** Fields required on top of those the country asks for. */
+    alsoRequired?: MaybeRefOrGetter<(keyof CheckoutFormState)[]>;
+    /** Fill in a missing country from the customer's location. */
+    guessCountry?: boolean;
 }) {
     const isShipped = computed<boolean>(() => toValue(isShippingAddressRequired) ?? false);
 
@@ -82,6 +102,7 @@ export function useCheckoutForm({
                       billingAddressFormat.value,
                   )
                 : []),
+            ...(toValue(alsoRequired) ?? []),
         ];
     });
 
@@ -90,17 +111,31 @@ export function useCheckoutForm({
 
     // A hidden VAT number is not checked: the customer could not see or correct it.
     const validation = useValidation(
-        computed(() => ({
-            ...addressRules('BILLING', () => billingAddressFormat.value, getIsFieldRequired),
-            ...addressRules('SHIPPING', () => shippingAddressFormat.value, getIsFieldRequired),
-            email: { required, email },
-            country: { required },
-            companyLegalName: {
-                required: requiredIf(() => form.value.type === 'ORGANIZATION'),
-            },
-            companyVatNumber: isVatNumberShown(form.value) ? { taxId } : {},
-            ...shippingRecipientRules(getIsFieldRequired),
-        })),
+        computed(() => {
+            const rules = {
+                ...addressRules('BILLING', () => billingAddressFormat.value, getIsFieldRequired),
+                ...addressRules('SHIPPING', () => shippingAddressFormat.value, getIsFieldRequired),
+                email: { required, email },
+                country: { required },
+                companyLegalName: {
+                    required: requiredIf(() => form.value.type === 'ORGANIZATION'),
+                },
+                firstName: requiredWhenAsked(getIsFieldRequired, 'firstName'),
+                lastName: requiredWhenAsked(getIsFieldRequired, 'lastName'),
+                companyVatNumber: isVatNumberShown(form.value) ? { taxId } : {},
+                ...shippingRecipientRules(getIsFieldRequired),
+            };
+            const shown = toValue(display);
+            if (!shown) return rules;
+            return Object.fromEntries(
+                Object.entries(rules).map(([field, fieldRules]) => [
+                    field,
+                    isCheckoutFormStateKey(field) && getFieldDisplay(shown, field) !== 'EDITABLE'
+                        ? {}
+                        : fieldRules,
+                ]),
+            );
+        }),
         form,
     );
 
@@ -210,11 +245,14 @@ export function useCheckoutForm({
         }
     };
 
-    onMounted(() => {
-        if (!initialState?.country) {
-            void fillCountryFromGeoLocation();
-        }
-    });
+    // A form made after its screen mounted has no mount to wait for.
+    if (guessCountry && getCurrentInstance()) {
+        onMounted(() => {
+            if (!initialState?.country) {
+                void fillCountryFromGeoLocation();
+            }
+        });
+    }
 
     useWatchDebounced(snapshot, handleFormChange, { debounce: 200 });
 

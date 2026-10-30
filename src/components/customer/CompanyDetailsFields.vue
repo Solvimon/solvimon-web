@@ -16,6 +16,8 @@ const props = defineProps<{
     };
     /** Holds back the VIES check while the number would fail the form's own check. */
     isVatNumberInvalid?: boolean;
+    hidesLegalName?: boolean;
+    hidesVatNumber?: boolean;
 }>();
 
 const model = defineModel<CheckoutFormState>({ required: true });
@@ -41,6 +43,7 @@ const isCheckDisabled = computed(
 <template>
     <div class="flex flex-col gap-2">
         <Input
+            v-if="!hidesLegalName"
             v-model="fields.companyLegalName"
             required
             name="legal_name"
@@ -51,7 +54,7 @@ const isCheckDisabled = computed(
         />
 
         <Input
-            v-if="showVatIdInput"
+            v-if="showVatIdInput && !hidesVatNumber"
             v-model="fields.companyVatNumber"
             name="vat_number"
             autocomplete="off"

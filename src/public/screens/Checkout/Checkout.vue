@@ -8,7 +8,7 @@ import {
     useTimePeriod,
 } from '@solvimon/solvimon-ui';
 import { computed, defineAsyncComponent, nextTick, ref, watch } from 'vue';
-import type { Amount, AuthorizePaymentPayload } from '@solvimon/solvimon-types';
+import type { Amount, AuthorizePaymentPayload, CountryCode } from '@solvimon/solvimon-types';
 import type { CheckoutProps } from './Checkout.types';
 import type { CheckoutSource } from './Checkout.source.types';
 import { useHostEvent } from '@/components/providers/HostElementProvider/composables/useHostEvent';
@@ -90,6 +90,7 @@ const {
     hasSubscriptionLoadFailed,
     settleInvoicePreview,
     checkoutForm,
+    customerForms,
     invoicePreview,
     invoicePreviewByBillingPeriod,
     trialInvoicePreview,
@@ -140,11 +141,21 @@ const isExpressCheckoutEnabled = computed(
 const isPaymentPending = ref(false);
 const { isFormHeld, handleActionRequired } = usePaymentFormHold(isPaymentPending);
 
+const validatedForms = computed(
+    () => customerForms?.value.map(({ form }) => form) ?? [checkoutForm],
+);
+
+/** Validates every form, so each one shows what it misses. */
+const validateForms = async (): Promise<boolean> => {
+    await Promise.all(validatedForms.value.map((form) => form.validation.value.$validate()));
+    return validatedForms.value.every((form) => !form.validation.value.$invalid);
+};
+
 const handleSubmit = async () => {
-    await checkoutForm.validation.value.$validate();
+    const isValid = await validateForms();
 
     // Without a mounted form nothing would ever answer the submit and end the pending state.
-    if (checkoutForm.validation.value.$invalid || !paymentIntegrationFormRef.value) {
+    if (!isValid || !paymentIntegrationFormRef.value) {
         return;
     }
 
@@ -220,8 +231,7 @@ const orderLockAttrs = computed(() => (paymentOrder.value ? { inert: true } : {}
 // Every way to pay comes through here (the button, Enter in a card field, an express sheet), so
 // none of them authorizes an amount the preview is about to replace.
 const handleValidateOnSubmit = async () => {
-    await checkoutForm.validation.value.$validate();
-    if (checkoutForm.validation.value.$invalid) return false;
+    if (!(await validateForms())) return false;
 
     const settlement = await settleInvoicePreview();
     if (settlement === 'CHANGED') {
@@ -318,11 +328,11 @@ const titleRecurringAmount = computed(() =>
     hasOneOffCharges.value ? recurringAmount.value : undefined,
 );
 
-const isBillingInformationMandatory = computed(
-    () =>
-        (checkoutForm.form.value.country &&
-            ['US', 'CA'].includes(checkoutForm.form.value.country)) ||
-        false,
+const isBillingInformationMandatoryIn = (country: CountryCode | undefined) =>
+    !!country && ['US', 'CA'].includes(country);
+
+const isBillingInformationMandatory = computed(() =>
+    isBillingInformationMandatoryIn(checkoutForm.form.value.country),
 );
 
 const enabledPricingIdsModel = computed({
@@ -782,7 +792,28 @@ const retryInvoicePreview = () => loadInvoicePreview().catch(() => {});
                 />
 
                 <!-- customer information form -->
+                <template v-if="customerForms">
+                    <CheckoutForm
+                        v-for="customerForm in customerForms"
+                        :key="customerForm.key"
+                        v-model="customerForm.form.form.value"
+                        class="sv-checkout__customer-form"
+                        :validation="customerForm.form.validation"
+                        :display="customerForm.display"
+                        :is-type-locked="customerForm.isTypeLocked"
+                        :title="customerForm.title"
+                        :show-customer-info-on-top="showCustomerInfoOnTop || isPaid"
+                        :is-billing-information-mandatory="
+                            isBillingInformationMandatoryIn(customerForm.form.form.value.country)
+                        "
+                        :get-is-field-required="customerForm.form.getIsFieldRequired"
+                        :shipping-address-format="customerForm.form.shippingAddressFormat.value"
+                        :read-only="isPaid"
+                        v-bind="orderLockAttrs"
+                    />
+                </template>
                 <CheckoutForm
+                    v-else
                     v-model="checkoutForm.form.value"
                     class="sv-checkout__customer-form"
                     :validation="checkoutForm.validation"

@@ -1,5 +1,6 @@
 import defaultTheme from 'tailwindcss/defaultTheme';
 import tailwindColors from 'tailwindcss/colors';
+import { UI_DIRS_NOT_SCANNED } from './scripts/tailwind-content.mjs';
 
 /**
  * Semantic roles solvimon-ui's components emit classes for (`text-default`, `bg-feedback-info`,
@@ -43,6 +44,8 @@ export default {
         // Tailwind resolves the symlinked package to its real path, so the `node_modules` segment
         // disappears from the pattern and it gets flagged as a broad glob.
         '!./node_modules/@solvimon/solvimon-ui/dist/node_modules/**',
+        // ...nor the components no entry bundles, whose classes would otherwise reach every entry.
+        ...UI_DIRS_NOT_SCANNED.map((dir) => `!./node_modules/@solvimon/solvimon-ui/dist/${dir}/**`),
     ],
     theme: {
         extend: {

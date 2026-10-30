@@ -22,6 +22,7 @@ import { glob } from 'glob';
 import dts from 'vite-plugin-dts';
 import type { TemplateChildNode, RootNode } from '@vue/compiler-core';
 import { selectorsMissingFrom } from './scripts/css-duplication.mjs';
+import { bundledUnscannedUiFiles } from './scripts/tailwind-content.mjs';
 
 function getLibEntries(
     basePath: string,
@@ -165,6 +166,34 @@ function dropRedundantStylesheet(): PluginOption {
     };
 }
 
+/**
+ * Fails the build when it bundles a solvimon-ui file Tailwind does not scan for classes (see
+ * `scripts/tailwind-content.mjs`): that component's classes would be missing from every entry's
+ * stylesheet, and it would render unstyled.
+ */
+function requireScannedUiFiles(): Plugin {
+    return {
+        name: 'solvimon:require-scanned-ui-files',
+        generateBundle(_options, bundle) {
+            const moduleIds = Object.values(bundle).flatMap((output) =>
+                output.type === 'chunk' ? Object.keys(output.modules) : [],
+            );
+            const unscanned = bundledUnscannedUiFiles(moduleIds);
+
+            if (unscanned.length) {
+                this.error(
+                    [
+                        'These solvimon-ui files are bundled, but Tailwind does not scan them for classes:',
+                        ...unscanned.map((id) => `    ${id}`),
+                        '',
+                        'Remove their directory from UI_DIRS_NOT_SCANNED in scripts/tailwind-content.mjs.',
+                    ].join('\n'),
+                );
+            }
+        },
+    };
+}
+
 const coreEntry = resolve(__dirname, 'src/public/core/index.ts');
 const rootEntry = resolve(__dirname, 'src/index.ts');
 
@@ -217,6 +246,7 @@ export default defineConfig(({ mode }) => {
             }),
             refreshVueTypesInWatch(),
             dropRedundantStylesheet(),
+            requireScannedUiFiles(),
             dts({
                 bundleTypes: false,
                 outDirs: './dist',

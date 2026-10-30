@@ -8,14 +8,13 @@ import {
     useTimePeriod,
 } from '@solvimon/solvimon-ui';
 import { computed, defineAsyncComponent, nextTick, ref, watch } from 'vue';
-import type { Amount, AuthorizePaymentPayload, BillingPeriod } from '@solvimon/solvimon-types';
+import type { Amount, AuthorizePaymentPayload } from '@solvimon/solvimon-types';
 import type { CheckoutProps } from './Checkout.types';
-import { useCheckoutView } from './useCheckout.view';
+import type { CheckoutSource } from './Checkout.source.types';
 import { useHostEvent } from '@/components/providers/HostElementProvider/composables/useHostEvent';
 import type { ExpressBillingInformation } from '@/components/payments/ExpressPaymentMethod/ExpressPaymentMethod.types';
 import { usePromotionCode } from '@/composables/usePromotionCode';
 import { useAutoApplyPromotionCode } from '@/composables/useAutoApplyPromotionCode';
-import { usePortal } from '@/components/providers/PortalProvider/composables/usePortal';
 import CheckoutForm from '@/components/customer/CheckoutForm/CheckoutForm.vue';
 import CheckoutTitle from '@/components/checkout/CheckoutTitle.vue';
 import { isInvoiceUsageBased } from '@/utils/invoice';
@@ -48,7 +47,6 @@ import {
 } from '@/utils/subscription';
 import SecurePaymentsKPI from '@/components/payments/SecurePaymentsKPI/SecurePaymentsKPI.vue';
 import { safeUrlRedirect } from '@/utils/url';
-import { CodedError } from '@/utils/error';
 import { isCountryCode } from '@/utils/countryCode';
 
 const PaymentIntegrationForm = defineAsyncComponent(
@@ -69,7 +67,7 @@ const PlanCustomizationEditor = defineAsyncComponent(
 );
 
 // `avatar` is the branding emblem, which the entry passes on; it is not a host option.
-const props = defineProps<CheckoutProps & { avatar?: string }>();
+const props = defineProps<CheckoutProps & { source: CheckoutSource; avatar?: string }>();
 
 const paymentIntegrationFormRef = ref();
 
@@ -77,23 +75,10 @@ const logger = useLogger();
 const intl = useIntl();
 const { $t, locale } = intl;
 const { formatTimePeriod } = useTimePeriod();
-const portal = usePortal();
 const { isMobileViewport } = useViewport();
 
-logger.info('COMPONENT_INITIALIZED', 'Checkout component initialized');
-
-// Nothing below works with another portal object, so the setup stops here. The error boundary
-// reports it, once, under this code.
-if (portal.value?.type !== 'INIT_PRICING_PLAN_SUBSCRIPTION') {
-    throw new CodedError('INVALID_TOKEN', 'Invalid token');
-}
-
-const subscriptionId = portal.value?.init_pricing_plan_subscription?.pricing_plan_subscription_id;
-const successRedirectUrl = portal.value?.init_pricing_plan_subscription?.success_url;
 // Trimmed so a note of only whitespace renders nothing rather than an empty gap in the column.
-const termsAndConditions = portal.value?.init_pricing_plan_subscription?.note?.trim() || undefined;
-const isShippingAddressRequired =
-    portal.value?.init_pricing_plan_subscription?.use_shipping_addresses === true;
+const termsAndConditions = props.source.note?.trim() || undefined;
 
 const {
     validatedEmail,
@@ -123,15 +108,12 @@ const {
     hasOneOffCharges,
     loadInvoicePreview,
     updateInvoicePreviewOnBillingInformationChange,
+    changeBillingPeriod,
     saveFormStateForRedirect,
     clearSavedFormState,
-} = useCheckoutView({
-    initialCountry: props.configuration?.countryCode,
-    initialEmail: props.configuration?.email,
-    subscriptionId,
-    enabledPricingIds: props.configuration?.enabledPricingIds,
+    successUrl: successRedirectUrl,
     isShippingAddressRequired,
-});
+} = props.source;
 
 // `solvimon-ready`, sent once, when the checkout's content has loaded — its subscription and first
 // price — whether the customer can pay yet, has paid already or has nothing to pay with. Later
@@ -172,7 +154,7 @@ const handleSubmit = async () => {
 const handlePaymentSubmitting = () => {
     isPaymentPending.value = true;
     paymentErrorMessage.value = null;
-    saveFormStateForRedirect();
+    saveFormStateForRedirect?.();
 };
 
 const paymentErrorMessage = ref<string | null>(null);
@@ -183,7 +165,7 @@ const paymentErrorMessage = ref<string | null>(null);
 const handlePaymentNotSubmitted = () => {
     isPaymentPending.value = false;
     paymentOrder.value = undefined;
-    clearSavedFormState();
+    clearSavedFormState?.();
 };
 
 /** The payment may still go through, so paying again could charge the customer twice. */
@@ -192,7 +174,7 @@ const isPaymentUnconfirmed = ref(false);
 const handlePaymentFailed = (error?: { message?: string; code?: string }) => {
     isPaymentPending.value = false;
     paymentOrder.value = undefined;
-    clearSavedFormState();
+    clearSavedFormState?.();
 
     if (error?.code === 'PAYMENT_OUTCOME_UNCONFIRMED') {
         isPaymentUnconfirmed.value = true;
@@ -412,7 +394,7 @@ const meterValuesModel = (key: 'seatsValues' | 'unitsValues') =>
             const filtered = current.filter(
                 ({ pricing_item_config_id }) =>
                     !ids.has(pricing_item_config_id) &&
-                    !quantityAddonConfigIds.value.has(pricing_item_config_id),
+                    !quantityAddonConfigIds?.value.has(pricing_item_config_id),
             );
             checkoutForm.form.value[key] = filtered.concat(value);
         },
@@ -713,11 +695,16 @@ const redirectsOnSuccess = ref(!!successRedirectUrl);
 const handlePaymentSuccess = () => {
     isPaid.value = true;
     paymentOrder.value = undefined;
-    clearSavedFormState();
+    clearSavedFormState?.();
     promotionCodeErrorMessage.value = null;
     paymentErrorMessage.value = null;
 
-    if (!dispatch('solvimon-payment-succeeded', { componentName, subscriptionId })) {
+    if (
+        !dispatch('solvimon-payment-succeeded', {
+            componentName,
+            subscriptionId: subscription.value?.id,
+        })
+    ) {
         redirectsOnSuccess.value = false;
         return;
     }
@@ -727,20 +714,6 @@ const handlePaymentSuccess = () => {
 
 // Already logged as INVOICE_PREVIEW_FAILED, and the placeholder stays up while it fails again.
 const retryInvoicePreview = () => loadInvoicePreview().catch(() => {});
-
-const handleBillingPeriodChange = (billingPeriod: BillingPeriod) => {
-    if (!subscription.value) {
-        return;
-    }
-
-    subscription.value = {
-        ...subscription.value,
-        billing_period: billingPeriod,
-    };
-
-    // Already logged as INVOICE_PREVIEW_FAILED, and the next change loads it again.
-    loadInvoicePreview().catch(() => {});
-};
 </script>
 
 <template>
@@ -792,7 +765,7 @@ const handleBillingPeriodChange = (billingPeriod: BillingPeriod) => {
                     :invoice="invoicePreview"
                     collapsible="collapsed"
                     variant="products-inline"
-                    @billing-period-change="handleBillingPeriodChange"
+                    @billing-period-change="changeBillingPeriod"
                 />
 
                 <!-- plan customization -->
@@ -1050,7 +1023,7 @@ const handleBillingPeriodChange = (billingPeriod: BillingPeriod) => {
                         v-bind="orderSummaryProps"
                         :subscription="subscription"
                         :invoice="invoicePreview"
-                        @billing-period-change="handleBillingPeriodChange"
+                        @billing-period-change="changeBillingPeriod"
                     />
                 </Skeleton>
             </div>

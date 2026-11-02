@@ -16,7 +16,6 @@ import {
     DEFAULT_SCHEDULE_ID,
     SUBSCRIPTION_ID,
     type Json,
-    PRICING_PLAN_ID,
     UPGRADE_PRICING_PLAN_ID,
 } from '../support/fixtures';
 
@@ -438,8 +437,6 @@ test.describe('Subscription management', () => {
             expect(new URL(groupCall.url).pathname).toBe(
                 `/v1/portal/pricing-plan-subscriptions/${SUBSCRIPTION_ID}/pricing-plan-group`,
             );
-            // Expanded, so the options are labelled off the response rather than a call per plan.
-            expect(api.lastCall('pricingPlan')).toBeUndefined();
             await expect(ui.planSelector).toContainText('Pick your plan');
             await expect(ui.planSelector).toContainText('Pro plan');
             await expect(ui.planSelector).toContainText('Scale plan');
@@ -452,25 +449,6 @@ test.describe('Subscription management', () => {
 
             await expect(subscriptionManagement(page).planSelector).toHaveCount(0);
             await expect(subscriptionManagement(page).summary).toBeVisible();
-        });
-
-        test('reads the member plans by id where the group expands none', async ({ page }) => {
-            api = await mountLoaded(page, {
-                planGroup: aPricingPlanGroup({ expanded: false }),
-            });
-
-            const plan = await api.waitForCall('pricingPlan');
-
-            expect(new URL(plan.url).pathname).toBe(
-                `/v1/portal/pricing-plans/${UPGRADE_PRICING_PLAN_ID}`,
-            );
-            await expect(subscriptionManagement(page).planSelector).toContainText('Scale plan');
-        });
-
-        test('offers no plan choice while the group is not active', async ({ page }) => {
-            api = await mountLoaded(page, { planGroup: aPricingPlanGroup({ status: 'DRAFT' }) });
-
-            await expect(subscriptionManagement(page).planSelector).toHaveCount(0);
         });
 
         test('explains when the move lands and what it comes to', async ({ page }) => {
@@ -514,49 +492,6 @@ test.describe('Subscription management', () => {
             await expect(ui.updateButton).toBeDisabled();
         });
 
-        test('promises the next billing period when the group times the move that way', async ({
-            page,
-        }) => {
-            api = await mountLoaded(page, {
-                planGroup: aPricingPlanGroup({ upgradeType: 'NEXT_BILLING_PERIOD' }),
-            });
-            const ui = subscriptionManagement(page);
-
-            await ui.planSelector.getByText('Scale plan').click();
-
-            await expect(ui.planChangeSummary).toContainText('next billing period');
-        });
-
-        test('offers to upgrade the plan when the plan picked is higher in the group', async ({
-            page,
-        }) => {
-            api = await mountLoaded(page, { planGroup: aPricingPlanGroup() });
-            const ui = subscriptionManagement(page);
-
-            await expect(ui.updateButton).toHaveText('Your current plan');
-            await ui.planSelector.getByText('Scale plan').click();
-
-            await expect(ui.updateButton).toHaveText('Upgrade plan');
-        });
-
-        test('offers to downgrade the plan when the plan picked is lower in the group', async ({
-            page,
-        }) => {
-            api = await mountLoaded(page, {
-                planGroup: aPricingPlanGroup({
-                    members: [
-                        { pricing_plan_id: UPGRADE_PRICING_PLAN_ID, order: 1 },
-                        { pricing_plan_id: PRICING_PLAN_ID, order: 2 },
-                    ],
-                }),
-            });
-            const ui = subscriptionManagement(page);
-
-            await ui.planSelector.getByText('Scale plan').click();
-
-            await expect(ui.updateButton).toHaveText('Downgrade plan');
-        });
-
         test('moves the subscription to the plan the customer picked', async ({ page }) => {
             api = await mountLoaded(page, { planGroup: aPricingPlanGroup() });
             const ui = subscriptionManagement(page);
@@ -585,16 +520,6 @@ test.describe('Subscription management', () => {
 
             await api.waitForCall('createPricingPlanSchedule');
             expect(api.lastCall('changeSubscriptionPlan')).toBeUndefined();
-        });
-
-        test('leaves out a transition the merchant has closed off', async ({ page }) => {
-            api = await mountLoaded(page, {
-                planGroup: aPricingPlanGroup({ upgradeType: 'NOT_ALLOWED' }),
-            });
-
-            // The only move out of the current plan is the one that is not allowed, so there is
-            // no choice left to offer.
-            await expect(subscriptionManagement(page).planSelector).toHaveCount(0);
         });
 
         test('keeps the choice when the move cannot be committed', async ({ page }) => {

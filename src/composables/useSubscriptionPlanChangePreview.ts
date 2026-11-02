@@ -5,11 +5,8 @@ import { useLogger } from '@/components/providers';
 import { createLatestGuard } from '@/utils/async';
 
 /**
- * What the customer would be invoiced if the subscription moved to another plan in its group: the
- * invoice raised where the new schedule starts, settling the plan being left. Nothing is moved —
- * the preview endpoint only calculates.
- *
- * Only the newest request may write the result, so a slow one cannot overwrite a later choice.
+ * The invoice a move to another plan would raise, settling the plan being left. Only the newest
+ * request may write the result, so a slow one cannot overwrite a later choice.
  */
 export function useSubscriptionPlanChangePreview(): {
     invoice: Ref<Invoice | undefined>;

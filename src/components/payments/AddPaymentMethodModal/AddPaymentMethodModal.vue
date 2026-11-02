@@ -110,7 +110,6 @@ const handleClose = () => {
                     :is-loading="isPending"
                     :is-active="showModal"
                     @success="emit('stored')"
-                    @failure="(error) => emit('failure', error)"
                 />
             </div>
         </template>

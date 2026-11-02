@@ -47,11 +47,11 @@ const createPaymentMethod = (overrides: Partial<PaymentMethod> = {}) =>
     }) as unknown as PaymentMethod;
 
 const planOptions: SubscriptionPlanOption[] = [
-    { pricingPlanId: 'ppla_starter', name: 'Starter', order: 1, isCurrent: true },
+    { pricingPlanId: 'ppla_starter', name: 'Starter', isCurrent: true },
     {
         pricingPlanId: 'ppla_pro',
         name: 'Pro',
-        order: 2,
+
         isCurrent: false,
         direction: 'UPGRADE',
         changeType: 'IMMEDIATE',
@@ -234,14 +234,6 @@ describe('SubscriptionManagementForm', () => {
 
         // The pricings on offer belong to the plan being left, so they have nothing to say about
         // the one being moved to.
-        it('drops the customisations once another plan is picked', () => {
-            const wrapper = mountComponent({ planOptions, pricingPlanId: 'ppla_pro' });
-
-            expect(wrapper.find('.sv-subscription-management-form__pricing-group').exists()).toBe(
-                false,
-            );
-        });
-
         it('reports the plan the customer picks', async () => {
             const wrapper = mountComponent({ planOptions, pricingPlanId: 'ppla_starter' });
 

@@ -23,6 +23,7 @@ const {
     mockSetSubscriptionPaymentMethod,
     mockUsePlanGroup,
     mockLoadPlanGroup,
+    mockLoggerError,
 } = vi.hoisted(() => ({
     mockUseSubscription: vi.fn(),
     mockUseLoadInitialData: vi.fn(),
@@ -41,6 +42,7 @@ const {
     mockSetSubscriptionPaymentMethod: vi.fn(),
     mockUsePlanGroup: vi.fn(),
     mockLoadPlanGroup: vi.fn(),
+    mockLoggerError: vi.fn(),
 }));
 
 vi.mock('@/services/subscriptions', () => ({
@@ -85,7 +87,7 @@ vi.mock('@/components/payments/AddPaymentMethodModal/AddPaymentMethodModal.vue',
     default: defineComponent({
         name: 'AddPaymentMethodModal',
         props: { showModal: Boolean, customer: Object, subscription: Object, subTitle: String },
-        emits: ['stored', 'failure', 'close'],
+        emits: ['stored', 'close'],
         setup: () => () => h('div', { class: 'sv-add-payment-method-modal-stub' }),
     }),
 }));
@@ -124,7 +126,7 @@ vi.mock('@/components/providers', async () => {
     return {
         ...createProviderMock(),
         usePortal: () => ref(createPortal()),
-        useLogger: () => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }),
+        useLogger: () => ({ error: mockLoggerError, warn: vi.fn(), info: vi.fn(), debug: vi.fn() }),
         useActionDispatchProvider: () => ({ dispatchAction: mockDispatchAction }),
     };
 });
@@ -147,6 +149,7 @@ vi.mock('@/components/subscriptions/SubscriptionManagement/SubscriptionManagemen
             paymentMethodId: String,
             pricingPlanId: String,
             disabled: Boolean,
+            canAddPaymentMethod: { type: Boolean, default: true },
         },
         emits: [
             'submit',
@@ -278,11 +281,10 @@ const savedPaymentMethod = {
 } as unknown as PaymentMethod;
 
 const planOptions: SubscriptionPlanOption[] = [
-    { pricingPlanId: 'ppla_starter', name: 'Starter', order: 1, isCurrent: true },
+    { pricingPlanId: 'ppla_starter', name: 'Starter', isCurrent: true },
     {
         pricingPlanId: 'ppla_pro',
         name: 'Pro',
-        order: 2,
         isCurrent: false,
         direction: 'UPGRADE',
         changeType: 'IMMEDIATE_PRO_RATA',
@@ -299,6 +301,7 @@ const mountComponent = ({
     preview = {},
     planChangePreview = {},
     planGroupOptions = [] as SubscriptionPlanOption[],
+    planGroup = {},
 }: {
     enabledPricingId?: string;
     paymentMethods?: PaymentMethod[];
@@ -314,6 +317,7 @@ const mountComponent = ({
     };
     /** The plans the subscription may move to. Empty for a plan that belongs to no group. */
     planGroupOptions?: SubscriptionPlanOption[];
+    planGroup?: { isPending?: Ref<boolean>; error?: Ref<unknown> };
     /** `null` stands for "not loaded yet" — `undefined` would fall back to the default. */
     subscription?: PricingPlanSubscriptionExpanded | null;
 } = {}) => {
@@ -358,13 +362,12 @@ const mountComponent = ({
         reset: mockResetPlanChangePreview,
     });
     mockUsePlanGroup.mockReturnValue({
-        group: ref(planGroupOptions.length ? { id: 'ppgr_1', name: 'Workspace plans' } : undefined),
         options: ref(planGroupOptions),
         currentPricingPlanId: ref(
             planGroupOptions.find(({ isCurrent }) => isCurrent)?.pricingPlanId,
         ),
-        isPending: ref(false),
-        error: ref(undefined),
+        isPending: planGroup.isPending ?? ref(false),
+        error: planGroup.error ?? ref(undefined),
         load: mockLoadPlanGroup,
     });
     mockUseLoadInitialData.mockReturnValue({ isLoading: ref(isLoading) });
@@ -383,6 +386,8 @@ describe('SubscriptionManagement', () => {
         vi.clearAllMocks();
         mockCreatePricingPlanSchedule.mockResolvedValue({ id: 'ppsc_new' });
         mockChangeSubscriptionPlan.mockResolvedValue({ id: 'ppsc_plan_change' });
+        mockGet.mockResolvedValue(undefined);
+        mockSetSubscriptionPaymentMethod.mockResolvedValue({ id: 'ppsu_1' });
         vi.useFakeTimers();
         vi.setSystemTime(NOW);
     });
@@ -658,6 +663,31 @@ describe('SubscriptionManagement', () => {
             expect(wrapper.find('.sv-subscription-management__update-error').exists()).toBe(true);
         });
 
+        // The method stays linked, so the subscription on screen must show it pays with it now.
+        it('reloads the subscription when the method is linked but the change then fails', async () => {
+            mockCreatePricingPlanSchedule.mockRejectedValue(new Error('nope'));
+            const wrapper = mountComponent({
+                enabledPricingId: 'pri_5000',
+                paymentMethods: [otherPaymentMethod, savedPaymentMethod],
+            });
+            await pickPaymentMethod(wrapper, 'pm_other');
+            mockGet.mockClear();
+
+            await update(wrapper);
+
+            expect(wrapper.find('.sv-subscription-management__update-error').exists()).toBe(true);
+            expect(mockGet).toHaveBeenCalledTimes(1);
+        });
+
+        it('offers no way to add a method for a subscription that accepts no gateway', () => {
+            const wrapper = mountComponent({
+                enabledPricingId: 'pri_5000',
+                subscription: { ...mockSubscription, payment_acceptor_ids: [] },
+            });
+
+            expect(findForm(wrapper).props('canAddPaymentMethod')).toBe(false);
+        });
+
         it('adds a method in a modal, for the customer it is stored for', async () => {
             const wrapper = mountComponent({ enabledPricingId: 'pri_5000' });
             await flushPromises();
@@ -703,6 +733,36 @@ describe('SubscriptionManagement', () => {
 
             expect(wrapper.find('.sv-subscription-management__load-error').exists()).toBe(true);
             expect(wrapper.find('.sv-subscription-management__empty-state').exists()).toBe(false);
+        });
+
+        it('holds the screen back until it knows whether the plan can be changed', async () => {
+            const isPending = ref(true);
+            const wrapper = mountComponent({
+                subscription: subscriptionWithoutGroups,
+                planGroup: { isPending },
+            });
+
+            expect(wrapper.find('.sv-subscription-management__empty-state').exists()).toBe(false);
+
+            isPending.value = false;
+            await flushPromises();
+
+            expect(wrapper.find('.sv-subscription-management__empty-state').exists()).toBe(true);
+        });
+
+        it('reports a plan group that cannot be loaded when there is nothing else to change', () => {
+            const wrapper = mountComponent({
+                subscription: subscriptionWithoutGroups,
+                planGroup: { error: ref(new Error('boom')) },
+            });
+
+            expect(wrapper.find('.sv-subscription-management__load-error').exists()).toBe(true);
+        });
+
+        it('still offers the pricings when the plan group cannot be loaded', () => {
+            const wrapper = mountComponent({ planGroup: { error: ref(new Error('boom')) } });
+
+            expect(wrapper.find('.sv-subscription-management__form').exists()).toBe(true);
         });
 
         it('says there is nothing to change when no group can be changed', () => {
@@ -989,13 +1049,6 @@ describe('SubscriptionManagement', () => {
             });
         });
 
-        it('hands the form the plans the subscription may move to', () => {
-            const wrapper = mountComponent({ planGroupOptions: planOptions });
-            const form = wrapper.findComponent({ name: 'SubscriptionManagementForm' });
-
-            expect(form.props('planOptions')).toEqual(planOptions);
-        });
-
         it('opens on the plan the subscription runs on today', () => {
             const wrapper = mountComponent({ planGroupOptions: planOptions });
 
@@ -1044,98 +1097,60 @@ describe('SubscriptionManagement', () => {
             expect(mockLoadPlanChangePreview).not.toHaveBeenCalled();
         });
 
-        it('drops the price of the move once the customer is back on their own plan', async () => {
-            const wrapper = await pickPlan(
-                mountComponent({ planGroupOptions: planOptions }),
-                'ppla_pro',
-            );
-            mockResetPlanChangePreview.mockClear();
-
-            await pickPlan(wrapper, 'ppla_starter');
-
-            expect(mockResetPlanChangePreview).toHaveBeenCalled();
-        });
-
-        it('keeps pricing the pricings while the current plan is kept', () => {
+        it('drops the customisations of the current plan once another plan is picked', async () => {
             const wrapper = mountComponent({
                 enabledPricingId: 'pri_1000',
                 planGroupOptions: planOptions,
             });
-
-            expect(wrapper.find('.sv-subscription-management__summary').exists()).toBe(true);
-            expect(mockLoadPreview).toHaveBeenCalled();
-        });
-
-        it('stops previewing once another plan is picked', async () => {
-            const wrapper = mountComponent({
-                enabledPricingId: 'pri_1000',
-                planGroupOptions: planOptions,
-            });
-            mockLoadPreview.mockClear();
+            const form = wrapper.findComponent({ name: 'SubscriptionManagementForm' });
+            expect(form.props('pricingGroup')).toBeDefined();
 
             await pickPlan(wrapper, 'ppla_pro');
 
-            expect(mockLoadPreview).not.toHaveBeenCalled();
+            expect(form.props('pricingGroup')).toBeUndefined();
         });
 
-        it('offers to upgrade the plan when the plan picked is higher in the group', async () => {
-            const wrapper = await pickPlan(
-                mountComponent({ planGroupOptions: planOptions }),
-                'ppla_pro',
-            );
+        const downgradeOption: SubscriptionPlanOption = {
+            pricingPlanId: 'ppla_free',
+            name: 'Free',
+            isCurrent: false,
+            direction: 'DOWNGRADE',
+            changeType: 'NEXT_BILLING_PERIOD',
+        };
 
-            expect(wrapper.find('.sv-subscription-management__update').text()).toBe('Upgrade plan');
-        });
-
-        it('offers to downgrade the plan when the plan picked is lower in the group', async () => {
-            const wrapper = await pickPlan(
-                mountComponent({
-                    planGroupOptions: [
-                        {
-                            pricingPlanId: 'ppla_free',
-                            name: 'Free',
-                            order: 0,
-                            isCurrent: false,
-                            direction: 'DOWNGRADE',
-                            changeType: 'NEXT_BILLING_PERIOD',
-                        },
-                        ...planOptions,
-                    ],
-                }),
+        it.each([
+            ['a higher plan is picked', planOptions, undefined, 'ppla_pro', 'Upgrade plan'],
+            [
+                'a lower plan is picked',
+                [downgradeOption, ...planOptions],
+                undefined,
                 'ppla_free',
-            );
-
-            expect(wrapper.find('.sv-subscription-management__update').text()).toBe(
                 'Downgrade plan',
-            );
-        });
-
-        it('says the plan selected is the current one while nothing is changed', () => {
-            const wrapper = mountComponent({ planGroupOptions: planOptions });
-
-            expect(wrapper.find('.sv-subscription-management__update').text()).toBe(
+            ],
+            [
+                'the current plan is kept unchanged',
+                planOptions,
+                undefined,
+                undefined,
                 'Your current plan',
-            );
-        });
-
-        it('offers to update the subscription once a pricing on the current plan is changed', () => {
-            const wrapper = mountComponent({
-                enabledPricingId: 'pri_5000',
-                planGroupOptions: planOptions,
-            });
-
-            expect(wrapper.find('.sv-subscription-management__update').text()).toBe(
+            ],
+            [
+                'a pricing on the current plan changes',
+                planOptions,
+                'pri_5000',
+                undefined,
                 'Update subscription',
-            );
-        });
+            ],
+            ['there is no other plan to move to', [], undefined, undefined, 'Update subscription'],
+        ])(
+            'labels the button for when %s',
+            async (_, planGroupOptions, enabledPricingId, picked, label) => {
+                const wrapper = mountComponent({ planGroupOptions, enabledPricingId });
+                if (picked) await pickPlan(wrapper, picked);
 
-        it('offers to update the subscription for a plan with no others to move to', () => {
-            const wrapper = mountComponent();
-
-            expect(wrapper.find('.sv-subscription-management__update').text()).toBe(
-                'Update subscription',
-            );
-        });
+                expect(wrapper.find('.sv-subscription-management__update').text()).toBe(label);
+            },
+        );
 
         it('moves the subscription to the plan that was picked', async () => {
             const wrapper = await pickPlan(
@@ -1371,6 +1386,25 @@ describe('SubscriptionManagement', () => {
             expect(mockGet).toHaveBeenCalled();
             expect(wrapper.find('.sv-subscription-management__cancellation-success').exists()).toBe(
                 true,
+            );
+        });
+
+        it('keeps the screen and logs it when the reload after a cancellation fails', async () => {
+            const wrapper = mountComponent({ subscription: runningSubscription });
+            await wrapper.find('.sv-subscription-management__cancel').trigger('click');
+            await flushPromises();
+            const failure = new Error('offline');
+            mockGet.mockRejectedValueOnce(failure);
+
+            findModal(wrapper).vm.$emit('confirmed');
+            await flushPromises();
+
+            expect(wrapper.find('.sv-subscription-management__load-error').exists()).toBe(false);
+            expect(mockLoggerError).toHaveBeenCalledWith(
+                'SUBSCRIPTION_LOAD_FAILED',
+                expect.any(String),
+                {},
+                failure,
             );
         });
 

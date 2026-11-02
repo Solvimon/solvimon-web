@@ -56,7 +56,6 @@ export const ENDPOINTS = {
         method: 'GET',
         path: /^\/v1\/portal\/pricing-plan-subscriptions\/[^/]+\/pricing-plan-group$/,
     },
-    pricingPlan: { method: 'GET', path: /^\/v1\/portal\/pricing-plans\/[^/]+$/ },
     invoices: { method: 'GET', path: '/v1/portal/invoices' },
     invoice: { method: 'GET', path: /^\/v1\/portal\/invoices\/[^/]+$/ },
     invoicePdf: { method: 'GET', path: /^\/v1\/portal\/invoices\/[^/]+\/pdf$/ },

@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { computed, watch } from 'vue';
 import { Divider, useIntl } from '@solvimon/solvimon-ui';
-import type { PaymentMethod, Pricing } from '@solvimon/solvimon-types';
-import type { PricingPlan } from '@solvimon/solvimon-types';
+import type { PaymentMethod, Pricing, PricingPlan } from '@solvimon/solvimon-types';
 import type {
     SubscriptionManagementFormEmits,
     SubscriptionManagementFormProps,
@@ -11,7 +10,9 @@ import SubscriptionPlanSelector from './SubscriptionPlanSelector.vue';
 import PricingGroupSingleEditor from '@/components/subscriptions/PlanCustomizationForm/PricingGroupSingleEditor.vue';
 import PaymentMethodSelector from '@/components/payments/PaymentMethodSelector/PaymentMethodSelector.vue';
 
-const props = defineProps<SubscriptionManagementFormProps>();
+const props = withDefaults(defineProps<SubscriptionManagementFormProps>(), {
+    canAddPaymentMethod: true,
+});
 const emit = defineEmits<SubscriptionManagementFormEmits>();
 
 const enabledPricingIds = defineModel<Pricing['id'][]>('enabledPricingIds', { required: true });
@@ -19,24 +20,6 @@ const paymentMethodId = defineModel<PaymentMethod['id'] | undefined>('paymentMet
 const pricingPlanId = defineModel<PricingPlan['id'] | undefined>('pricingPlanId');
 
 const { $t } = useIntl();
-
-/** One plan is no choice: the group only earns its section once there is somewhere to move to. */
-const canChangePlan = computed(() => (props.planOptions?.length ?? 0) > 1);
-
-/**
- * What the schedule can be customised with belongs to the plan it runs on, so once the customer
- * picks another plan there is nothing left to customise — the move starts the new plan on its own
- * defaults.
- */
-const isChangingPlan = computed(() =>
-    Boolean(
-        canChangePlan.value &&
-        pricingPlanId.value &&
-        props.planOptions?.some(
-            (option) => option.pricingPlanId === pricingPlanId.value && !option.isCurrent,
-        ),
-    ),
-);
 
 const toTime = (value?: string) => {
     const parsed = value ? Date.parse(value) : NaN;
@@ -83,11 +66,11 @@ watch(
 <template>
     <form :id="id" class="sv-subscription-management-form" @submit.prevent="emit('submit')">
         <div class="sv-subscription-management-form__body grid grid-cols-1 gap-4">
-            <template v-if="canChangePlan">
+            <template v-if="planOptions && planOptions.length > 1">
                 <SubscriptionPlanSelector
                     v-model:pricing-plan-id="pricingPlanId"
                     class="sv-subscription-management-form__plan"
-                    :options="planOptions ?? []"
+                    :options="planOptions"
                     :disabled="disabled"
                     :avatar="avatar"
                 />
@@ -98,7 +81,7 @@ watch(
             </template>
 
             <PricingGroupSingleEditor
-                v-if="pricingGroup && !isChangingPlan"
+                v-if="pricingGroup"
                 v-model="enabledPricingIds"
                 class="sv-subscription-management-form__pricing-group"
                 :group-name="pricingGroup.name"
@@ -107,7 +90,7 @@ watch(
                 :currency="currency"
             />
 
-            <div v-if="pricingGroup && !isChangingPlan">
+            <div v-if="pricingGroup">
                 <Divider spacing="xs" />
             </div>
 
@@ -116,6 +99,7 @@ watch(
                 class="sv-subscription-management-form__payment-methods"
                 :payment-methods="sortedPaymentMethods"
                 required
+                :show-add-option="canAddPaymentMethod"
                 :disabled="disabled"
                 :label="
                     $t({

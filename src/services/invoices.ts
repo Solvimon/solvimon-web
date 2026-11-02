@@ -136,22 +136,12 @@ export function createInvoicesService(): InvoicesService {
     }
 
     /**
-     * POST /v1/portal/invoices/charge-on-demand-pricing-items
-     *
-     * Calculates what the selected on-demand pricing items would be invoiced for, without
-     * creating anything.
-     */
-    /**
-     * POST /v1/portal/invoices/change-plan/preview
-     *
-     * The invoice a move to another plan in the group would raise at the start of the new
-     * schedule, without moving the subscription. It takes what change-plan takes, plus the
-     * subscription, so the API resolves the timing exactly as the move itself would.
+     * The invoice a move to another plan would raise, without moving the subscription. It takes
+     * what change-plan takes, so the API times it exactly as the move itself.
      */
     function getChangePlanInvoicePreview({
         id,
         pricingPlanId,
-        billingPeriod,
     }: ChangeSubscriptionPlanPayload): Promise<Invoice> {
         return request<Invoice>({
             url: buildUrl(
@@ -165,11 +155,16 @@ export function createInvoicesService(): InvoicesService {
             data: {
                 pricing_plan_subscription_id: id,
                 pricing_plan_id: pricingPlanId,
-                ...(billingPeriod && { billing_period: billingPeriod }),
             },
         });
     }
 
+    /**
+     * POST /v1/portal/invoices/charge-on-demand-pricing-items
+     *
+     * Calculates what the selected on-demand pricing items would be invoiced for, without
+     * creating anything.
+     */
     function previewChargeOnDemandPricingItems({
         pricingPlanScheduleId,
         pricingItems,

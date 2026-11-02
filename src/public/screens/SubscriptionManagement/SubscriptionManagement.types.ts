@@ -12,4 +12,5 @@ export interface SubscriptionManagementConfiguration {
 
 export interface SubscriptionManagementProps {
     configuration: SubscriptionManagementConfiguration;
+    avatar?: string;
 }

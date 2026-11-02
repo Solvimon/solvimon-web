@@ -11,6 +11,7 @@ import { createRequestService } from './requests';
 import { isRejectedPromotionCode } from './apiError';
 import { buildUrl } from './requests.lib';
 import type { GetInvoicePreviewPayload } from './invoices.types';
+import type { ChangeSubscriptionPlanPayload } from './subscriptions';
 import type { CustomerCollectionPayload } from './requests.types';
 import { useConfig } from '@/components/providers/ConfigProvider/composables/useConfig';
 
@@ -31,6 +32,7 @@ interface InvoicesService {
     ) => Promise<ApiSuccessCollectionResponse<Invoice>>;
     getInvoicePdf: (invoice: Pick<Invoice, 'id' | 'invoice_number'>) => Promise<void>;
     getInvoicePreview: (args: GetInvoicePreviewPayload) => Promise<InvoicePreview>;
+    getChangePlanInvoicePreview: (args: ChangeSubscriptionPlanPayload) => Promise<Invoice>;
     previewChargeOnDemandPricingItems: (
         args: ChargeOnDemandPricingItemsPreviewPayload,
     ) => Promise<Invoice>;
@@ -134,6 +136,30 @@ export function createInvoicesService(): InvoicesService {
     }
 
     /**
+     * The invoice a move to another plan would raise, without moving the subscription. It takes
+     * what change-plan takes, so the API times it exactly as the move itself.
+     */
+    function getChangePlanInvoicePreview({
+        id,
+        pricingPlanId,
+    }: ChangeSubscriptionPlanPayload): Promise<Invoice> {
+        return request<Invoice>({
+            url: buildUrl(
+                config.apiUrls.transaction,
+                'portal',
+                'invoices',
+                'change-plan',
+                'preview',
+            ),
+            options: { method: 'POST' },
+            data: {
+                pricing_plan_subscription_id: id,
+                pricing_plan_id: pricingPlanId,
+            },
+        });
+    }
+
+    /**
      * POST /v1/portal/invoices/charge-on-demand-pricing-items
      *
      * Calculates what the selected on-demand pricing items would be invoiced for, without
@@ -182,6 +208,7 @@ export function createInvoicesService(): InvoicesService {
         getInvoices,
         getInvoicePdf,
         getInvoicePreview,
+        getChangePlanInvoicePreview,
         previewChargeOnDemandPricingItems,
         chargeOnDemandPricingItems,
     };

@@ -1,18 +1,24 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, toRef } from 'vue';
 import { PaymentMethod, Section, Typography, useIntl, Button } from '@solvimon/solvimon-ui';
 import type {
     SubscriptionsListItemEmits,
     SubscriptionsListItemProps,
 } from './SubscriptionsListItem.types';
 import { getMostRecentPricingPlan, getSubscriptionName } from '@/utils/subscription';
+import { useSubscriptionActions } from '@/composables/useSubscriptionActions';
 
 const props = withDefaults(defineProps<SubscriptionsListItemProps>(), {
-    showViewSubscriptionDetailsButton: true,
+    showViewSubscriptionDetailsButton: false,
+    showManageButton: true,
 });
 defineEmits<SubscriptionsListItemEmits>();
 
 const { $t, formatDate } = useIntl();
+
+const { manage: handleManage } = useSubscriptionActions({
+    subscription: toRef(props, 'subscription'),
+});
 
 const mostRecentPricingPlan = computed(() => getMostRecentPricingPlan(props.subscription));
 
@@ -32,6 +38,9 @@ const subscriptionDescription = computed<string | undefined>(
 );
 
 const isDetailButtonVisible = computed<boolean>(() => props.showViewSubscriptionDetailsButton);
+
+/** A card has one primary action, and it is managing the subscription wherever that is on offer. */
+const detailButtonIntent = computed(() => (props.showManageButton ? 'subtle' : 'primary'));
 </script>
 
 <template>
@@ -86,12 +95,31 @@ const isDetailButtonVisible = computed<boolean>(() => props.showViewSubscription
                 </div>
             </div>
             <div
-                class="sv-subscriptions-list__item-actions flex flex-col items-center gap-2 md:flex-row"
+                class="sv-subscriptions-list__item-actions flex flex-col items-center gap-2 md:flex-row md:items-start"
             >
                 <Button
-                    v-if="isDetailButtonVisible"
+                    v-if="showManageButton"
                     intent="primary"
-                    class="sv-action sv-action--primary sv-subscriptions-list__item-details w-full md:w-auto"
+                    size="sm"
+                    class="sv-action sv-action--primary sv-subscriptions-list__item-manage w-full md:w-auto"
+                    type="button"
+                    @click="handleManage()"
+                >
+                    {{
+                        $t({
+                            defaultMessage: 'Manage',
+                            description:
+                                'The label for the button that opens the management of a subscription in the subscriptions block',
+                            id: 'customer.subscriptions_block.manage_button_label',
+                        })
+                    }}
+                </Button>
+
+                <Button
+                    v-if="isDetailButtonVisible"
+                    :intent="detailButtonIntent"
+                    size="sm"
+                    class="sv-action sv-subscriptions-list__item-details w-full md:w-auto"
                     type="button"
                     @click="$emit('view-subscription-details', { subscriptionId: subscription.id })"
                 >

@@ -47,6 +47,8 @@ describe('SubscriptionsList component', () => {
         ({
             id,
             name,
+            status: 'ACTIVE',
+            type: 'BILLING',
             payment_method_id: paymentMethodId,
             inactive_periods: inactivePeriods,
             next_invoice: nextInvoiceDate
@@ -79,6 +81,7 @@ describe('SubscriptionsList component', () => {
             maxItems?: number;
             showViewAllButton?: boolean;
             showViewDetailsButton?: boolean;
+            showManageButton?: boolean;
         };
         isLoading?: boolean;
         hasError?: boolean;
@@ -238,9 +241,17 @@ describe('SubscriptionsList component', () => {
             expect(wrapper.text()).toContain('Subscription details');
         });
 
+        // The card leads with Upgrade now, so the details button is opt-in rather than the default.
+        it('is not rendered by default', () => {
+            const wrapper = mountComponent();
+
+            expect(wrapper.text()).not.toContain('Subscription details');
+        });
+
         it('dispatches the view subscription details action when clicked', async () => {
             const wrapper = mountComponent({
                 subscriptions: [createSubscription({ id: 'sub_details' })],
+                configuration: { showViewDetailsButton: true },
             });
 
             await getButtonByText(wrapper, 'Subscription details').trigger('click');
@@ -292,6 +303,53 @@ describe('SubscriptionsList component', () => {
             await getButtonByText(wrapper, 'Load more').trigger('click');
 
             expect(wrapper.emitted('load-more')).toEqual([[]]);
+        });
+    });
+
+    describe('manage button', () => {
+        it('is rendered by default', () => {
+            const wrapper = mountComponent();
+
+            expect(wrapper.find('.sv-subscriptions-list__item-manage').text()).toBe('Manage');
+        });
+
+        it('is not rendered when showManageButton is false', () => {
+            const wrapper = mountComponent({
+                configuration: { showManageButton: false },
+            });
+
+            expect(wrapper.find('.sv-subscriptions-list__item-manage').exists()).toBe(false);
+        });
+
+        // The management screen is a flow of the host's own, so the card asks for it rather than
+        // navigating itself.
+        it('dispatches the manage subscription action when clicked', async () => {
+            const wrapper = mountComponent({
+                subscriptions: [createSubscription({ id: 'sub_manage' })],
+            });
+
+            await getButtonByText(wrapper, 'Manage').trigger('click');
+
+            expect(mockDispatchAction).toHaveBeenCalledWith({
+                action: 'manage-subscription',
+                data: { subscriptionId: 'sub_manage' },
+            });
+        });
+
+        // Cancelling and renewing are on the manage subscription screen the button opens.
+        it('is the only way the card changes the subscription', () => {
+            const wrapper = mountComponent({
+                subscriptions: [
+                    createSubscription(),
+                    createSubscription({
+                        id: 'sub_cancelled',
+                        inactivePeriods: [{ type: 'CANCEL', start_at: '2099-05-01T00:00:00.000Z' }],
+                    }),
+                ],
+            });
+
+            expect(wrapper.find('.sv-subscriptions-list__item-cancel').exists()).toBe(false);
+            expect(wrapper.find('.sv-subscriptions-list__item-renew').exists()).toBe(false);
         });
     });
 });

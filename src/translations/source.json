@@ -1,4 +1,24 @@
 {
+  "add_payment_method_modal.cancel_button.label": {
+    "defaultMessage": "Cancel",
+    "description": "Label of the button that closes the modal without storing a method"
+  },
+  "add_payment_method_modal.options_error": {
+    "defaultMessage": "We couldn't load the ways to add a payment method. Please try again.",
+    "description": "Error shown in the modal that stores a new payment method when the ways to pay cannot be loaded"
+  },
+  "add_payment_method_modal.save_button.label": {
+    "defaultMessage": "Save payment method",
+    "description": "Label of the button that stores the new payment method"
+  },
+  "add_payment_method_modal.subtitle": {
+    "defaultMessage": "Add a new payment method.",
+    "description": "Shown under the title of the modal that stores a new payment method, when the host says nothing about what it is for"
+  },
+  "add_payment_method_modal.title": {
+    "defaultMessage": "Add payment method",
+    "description": "Title of the modal that stores a new payment method"
+  },
   "addon_multiple_editor.add_to_subscription_button": {
     "defaultMessage": "Add to subscription",
     "description": "The button to add a pricing to the subscription"
@@ -727,6 +747,10 @@
     "defaultMessage": "Pay",
     "description": "The label for the pay invoice button"
   },
+  "customer.subscriptions_block.manage_button_label": {
+    "defaultMessage": "Manage",
+    "description": "The label for the button that opens the management of a subscription in the subscriptions block"
+  },
   "customer.subscriptions_block.next_billing_date": {
     "defaultMessage": "Next billing date",
     "description": "The label for the next billing date"
@@ -1407,6 +1431,10 @@
     "defaultMessage": "Subscription details",
     "description": "Title for the subscription details page"
   },
+  "subscription_management.add_payment_method.subtitle": {
+    "defaultMessage": "Add a payment method to pay for your subscription.",
+    "description": "Shown under the title of the modal that stores a new payment method on the manage subscription screen"
+  },
   "subscription_management.customized_pricing.message": {
     "defaultMessage": "Please contact support to change it.",
     "description": "Message shown on the manage subscription screen when the subscription has pricing customized for it, which cannot be changed here"
@@ -1431,13 +1459,25 @@
     "defaultMessage": "Unable to load this subscription. Please try again later.",
     "description": "Error shown in place of the manage subscription form when the subscription cannot be loaded"
   },
-  "subscription_management.no_payment_method": {
-    "defaultMessage": "This subscription has no payment method to charge the change to. Please contact support to change it.",
-    "description": "Shown in place of the payment method on the manage subscription screen when the subscription has no usable payment method"
-  },
-  "subscription_management.payment_method_selector.label": {
-    "defaultMessage": "Payment method",
+  "subscription_management.payment_method_selector.saved_label": {
+    "defaultMessage": "Saved payment methods",
     "description": "Label above the payment method that pays for the subscription change"
+  },
+  "subscription_management.plan_change_summary.immediate": {
+    "defaultMessage": "The change takes effect right away. The new price appears on your next invoice.",
+    "description": "Explains a plan change that takes effect immediately"
+  },
+  "subscription_management.plan_change_summary.next_billing_period": {
+    "defaultMessage": "The change takes effect at the start of your next billing period. You keep your current plan until then, and the new price appears on the invoice from that period onwards.",
+    "description": "Explains a plan change that only takes effect at the next billing period"
+  },
+  "subscription_management.plan_selector.current_plan": {
+    "defaultMessage": "Current plan",
+    "description": "Marks the plan a subscription already runs on"
+  },
+  "subscription_management.plan_selector.title": {
+    "defaultMessage": "Pick your plan",
+    "description": "Heading above the plans a subscription can be moved between"
   },
   "subscription_management.success.message": {
     "defaultMessage": "Your {subject} has been changed. Please be aware that it can take some time to reflect this change in your subscription.",
@@ -1446,6 +1486,10 @@
   "subscription_management.success.message_generic": {
     "defaultMessage": "Your subscription has been changed. Please be aware that it can take some time to reflect this change in your subscription.",
     "description": "Confirmation of a committed subscription change when the pricing group is not known"
+  },
+  "subscription_management.success.plan_message": {
+    "defaultMessage": "Your subscription has been moved to {plan}. Please be aware that it can take some time to reflect this change in your subscription.",
+    "description": "Confirmation of a committed move to another plan within the same pricing plan group"
   },
   "subscription_management.success.title": {
     "defaultMessage": "Subscription updated",
@@ -1468,16 +1512,24 @@
     "description": "Heading above the total of the invoice previewing a subscription change, replacing the shared preview’s \"Total due today\""
   },
   "subscription_management.title": {
-    "defaultMessage": "Manage {subject}",
-    "description": "Title for the manage subscription page, naming the pricing group being changed"
+    "defaultMessage": "Manage subscription",
+    "description": "Title for the manage subscription page"
   },
-  "subscription_management.title.default_subject": {
-    "defaultMessage": "subscription",
-    "description": "Stands in for the pricing group name in the manage subscription title when no group is known, e.g. \"Manage subscription\""
+  "subscription_management.update_button.current_plan_label": {
+    "defaultMessage": "Your current plan",
+    "description": "Label of the disabled button while the customer has their current plan selected and nothing changed"
+  },
+  "subscription_management.update_button.downgrade_label": {
+    "defaultMessage": "Downgrade plan",
+    "description": "Label of the button that moves the subscription to a lower plan in its group"
   },
   "subscription_management.update_button.label": {
     "defaultMessage": "Update subscription",
     "description": "Label of the button that commits the subscription change"
+  },
+  "subscription_management.update_button.upgrade_label": {
+    "defaultMessage": "Upgrade plan",
+    "description": "Label of the button that moves the subscription to a higher plan in its group"
   },
   "subscription_management.update_error": {
     "defaultMessage": "Something went wrong. Please try again.",

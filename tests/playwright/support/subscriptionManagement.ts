@@ -4,6 +4,7 @@ import { mountScreen, sharedMocks, type ScreenOptions } from './screen';
 import {
     aCustomer,
     aCustomerPortalObject,
+    anInvoice,
     anInvoicePreview,
     aPaymentMethod,
     aSubscription,
@@ -14,8 +15,11 @@ import {
 } from './fixtures';
 
 /** A plan with a group the customer can move between, which is what this screen changes. */
-export const aManageableSubscription = (): Json =>
+export const aManageableSubscription = ({
+    cancelled = false,
+}: { cancelled?: boolean } = {}): Json =>
     aSubscription({
+        cancelled,
         addons: [
             { pricingId: 'pri_small', name: 'Small pack', preselected: true },
             { pricingId: 'pri_large', name: 'Large pack' },
@@ -27,12 +31,31 @@ export interface MountOptions extends ScreenOptions {
     paymentMethods?: Json[];
     /** What the upgrade is priced at. */
     previewTotal?: string;
+    /**
+     * The group the subscription's plan belongs to, as the portal answers for it. Left out, the
+     * endpoint 404s — the plan belongs to no group and no move is offered.
+     */
+    planGroup?: Json;
+    /** What a move to another plan in the group is priced at. */
+    planChangeTotal?: string;
 }
 
 function defaultMocks(options: MountOptions): Partial<Record<EndpointName, Responder>> {
     return {
         ...sharedMocks,
         subscription: { body: options.subscription ?? aManageableSubscription() },
+        // A plan that belongs to no group is what the endpoint 404s for, and the common case.
+        pricingPlanGroup: options.planGroup
+            ? { body: options.planGroup }
+            : { status: 404, body: { message: 'Not found' } },
+        ...(options.planGroup
+            ? {
+                  changeSubscriptionPlan: { status: 201, body: { id: 'ppsc_plan_change' } },
+                  changePlanInvoicePreview: {
+                      body: anInvoice({ total: options.planChangeTotal ?? '45.00' }),
+                  },
+              }
+            : {}),
         customer: { body: aCustomer() },
         paymentMethods: {
             body: collection(options.paymentMethods ?? [aPaymentMethod({ isDefault: true })]),
@@ -64,11 +87,19 @@ export function subscriptionManagement(page: Page) {
         title: page.locator('.sv-subscription-management__title'),
         form: page.locator('.sv-subscription-management__form'),
         summary: page.locator('.sv-subscription-management__summary'),
+        planSelector: page.locator('.sv-subscription-management-form__plan'),
+        paymentMethods: page.locator('.sv-subscription-management-form__payment-methods'),
+        summaryPlan: page.locator('.sv-subscription-management-summary__plan'),
+        planChangeSummary: page.locator('.sv-subscription-management__plan-change-summary'),
         updateButton: page.locator('.sv-subscription-management__update'),
+        cancelButton: page.locator('.sv-subscription-management__cancel'),
+        renewButton: page.locator('.sv-subscription-management__renew'),
+        cancellationSuccess: page.locator('.sv-subscription-management__cancellation-success'),
         updateError: page.locator('.sv-subscription-management__update-error'),
         success: page.locator('.sv-subscription-management__success'),
         doneButton: page.locator('.sv-subscription-management__done'),
     };
 }
 
+export { aPricingPlanGroup } from './fixtures';
 export { hostEvents } from './screen';

@@ -2,6 +2,7 @@ import { test, expect, type Page } from '@playwright/test';
 import type { ApiMock } from '../support/api-mock';
 import {
     aManageableSubscription,
+    aPricingPlanGroup,
     hostEvents,
     mountSubscriptionManagement,
     subscriptionManagement,
@@ -15,6 +16,7 @@ import {
     DEFAULT_SCHEDULE_ID,
     SUBSCRIPTION_ID,
     type Json,
+    UPGRADE_PRICING_PLAN_ID,
 } from '../support/fixtures';
 
 /**
@@ -78,10 +80,12 @@ test.describe('Subscription management', () => {
             });
         });
 
-        test('names the group it is about', async ({ page }) => {
+        test('is titled after the subscription rather than the group being changed', async ({
+            page,
+        }) => {
             api = await mountLoaded(page);
 
-            await expect(subscriptionManagement(page).title).toHaveText('Manage Add-ons');
+            await expect(subscriptionManagement(page).title).toHaveText('Manage subscription');
         });
 
         test('renders what the change comes to', async ({ page }) => {
@@ -252,48 +256,100 @@ test.describe('Subscription management', () => {
             expect(api.calls('createPricingPlanSchedule')).toEqual([]);
         });
 
-        test("offers only the subscription's own method, the one the API charges", async ({
+        test("offers every stored method it can charge, opening on the subscription's own", async ({
             page,
         }) => {
             api = await mountLoaded(page, {
                 paymentMethods: [
-                    aPaymentMethod({ id: 'pmet_other', isDefault: true }),
+                    aPaymentMethod({ id: 'pmet_other', isDefault: true, lastFourDigits: '1111' }),
                     aPaymentMethod(),
                 ],
             });
-            const form = subscriptionManagement(page).form;
+            const { form, paymentMethods } = subscriptionManagement(page);
 
-            await expect(
-                form.getByRole('group', { name: 'Payment method' }).getByRole('radio'),
-            ).toHaveCount(1);
-            await expect(page.getByRole('button', { name: /add payment method/i })).toHaveCount(0);
+            await expect(paymentMethods.getByRole('radio')).toHaveCount(2);
+            await expect(paymentMethods.getByRole('radio', { name: /4242/ })).toBeChecked();
+            await expect(form.getByRole('button', { name: /add payment method/i })).toBeVisible();
         });
 
-        test('says so when the subscription has no method to charge', async ({ page }) => {
+        test('links another picked method to the subscription before committing', async ({
+            page,
+        }) => {
             api = await mountLoaded(page, {
-                paymentMethods: [aPaymentMethod({ id: 'pmet_other', isDefault: true })],
+                paymentMethods: [
+                    aPaymentMethod({ id: 'pmet_other', lastFourDigits: '1111' }),
+                    aPaymentMethod(),
+                ],
+                mocks: {
+                    setSubscriptionPaymentMethod: { body: aManageableSubscription() },
+                    createPricingPlanSchedule: { body: { id: 'ppsc_new' } },
+                },
             });
+            const ui = subscriptionManagement(page);
 
-            await expect(
-                subscriptionManagement(page).form.locator(
-                    '.sv-subscription-management-form__no-payment-method',
-                ),
-            ).toBeVisible();
-            await expect(subscriptionManagement(page).updateButton).toBeDisabled();
+            await ui.paymentMethods.getByText(/\*{4} 1111/).click();
+            await expect(ui.paymentMethods.getByRole('radio', { name: /1111/ })).toBeChecked();
+            await chooseLargePack(page);
+            await ui.updateButton.click();
+
+            const link = await api.waitForCall('setSubscriptionPaymentMethod');
+            expect(new URL(link.url).pathname).toBe(
+                `/v1/portal/pricing-plan-subscriptions/${SUBSCRIPTION_ID}/update-payment-method`,
+            );
+            expect(link.body).toEqual({ payment_method_id: 'pmet_other' });
+            await api.waitForCall('createPricingPlanSchedule');
+            await expect(ui.success).toBeVisible();
         });
 
-        test('offers no method the API would refuse to charge', async ({ page }) => {
+        test('commits nothing when the picked method cannot be linked', async ({ page }) => {
+            api = await mountLoaded(page, {
+                paymentMethods: [
+                    aPaymentMethod({ id: 'pmet_other', lastFourDigits: '1111' }),
+                    aPaymentMethod(),
+                ],
+                mocks: { setSubscriptionPaymentMethod: { status: 500, body: { message: 'Boom' } } },
+            });
+            const ui = subscriptionManagement(page);
+
+            await ui.paymentMethods.getByText(/\*{4} 1111/).click();
+            await expect(ui.paymentMethods.getByRole('radio', { name: /1111/ })).toBeChecked();
+            await chooseLargePack(page);
+            await ui.updateButton.click();
+
+            await expect(ui.updateError).toBeVisible();
+            expect(api.calls('createPricingPlanSchedule')).toEqual([]);
+        });
+
+        test('leaves out a method the API would refuse, and offers to add one', async ({
+            page,
+        }) => {
             api = await mountLoaded(page, {
                 paymentMethods: [aPaymentMethod({ isDefault: true, status: 'INACTIVE' })],
             });
             const ui = subscriptionManagement(page);
 
+            await expect(ui.paymentMethods.getByRole('radio')).toHaveCount(0);
             await expect(
-                ui.form.locator('.sv-subscription-management-form__no-payment-method'),
+                ui.form.getByRole('button', { name: /add payment method/i }),
             ).toBeVisible();
             await ui.form.getByText('Large pack').click();
             await expect(ui.updateButton).toBeDisabled();
-            await expect(ui.updateButton).toHaveAccessibleDescription(/no payment method/i);
+        });
+
+        test('adds a method in a modal', async ({ page }) => {
+            api = await mountLoaded(page);
+            const ui = subscriptionManagement(page);
+
+            await ui.form.getByRole('button', { name: /add payment method/i }).click();
+
+            const dialog = page.getByRole('dialog');
+            await expect(dialog).toContainText('Add payment method');
+            await expect(dialog).toContainText(
+                'Add a payment method to pay for your subscription.',
+            );
+            await expect(
+                dialog.getByRole('button', { name: /save payment method/i }),
+            ).toBeVisible();
         });
     });
 
@@ -351,7 +407,7 @@ test.describe('Subscription management', () => {
             await expect(subscriptionManagement(page).updateButton).toBeDisabled();
         });
 
-        test('falls back to a generic title when there is no group to name', async ({ page }) => {
+        test('keeps its title when the subscription cannot be loaded', async ({ page }) => {
             api = await mountSubscriptionManagement(page, {
                 subscription: aManageableSubscription(),
                 mocks: { subscription: { status: 404, body: { message: 'Not found' } } },
@@ -367,6 +423,168 @@ test.describe('Subscription management', () => {
 
             await expect(subscriptionManagement(page).screen).toHaveCount(0);
             expect(api.calls('subscription')).toEqual([]);
+        });
+    });
+
+    // ─── Changing plan ────────────────────────────────────────────────────────
+
+    test.describe('changing plan', () => {
+        test('offers the plans of the group the current plan belongs to', async ({ page }) => {
+            api = await mountLoaded(page, { planGroup: aPricingPlanGroup() });
+            const ui = subscriptionManagement(page);
+
+            const groupCall = await api.waitForCall('pricingPlanGroup');
+            expect(new URL(groupCall.url).pathname).toBe(
+                `/v1/portal/pricing-plan-subscriptions/${SUBSCRIPTION_ID}/pricing-plan-group`,
+            );
+            await expect(ui.planSelector).toContainText('Pick your plan');
+            await expect(ui.planSelector).toContainText('Pro plan');
+            await expect(ui.planSelector).toContainText('Scale plan');
+            await expect(page.getByRole('radio', { name: /pro plan/i })).toBeChecked();
+        });
+
+        // The endpoint 404s for a plan in no group, which is not a failure to report.
+        test('offers no plan choice for a plan that belongs to no group', async ({ page }) => {
+            api = await mountLoaded(page);
+
+            await expect(subscriptionManagement(page).planSelector).toHaveCount(0);
+            await expect(subscriptionManagement(page).summary).toBeVisible();
+        });
+
+        test('explains when the move lands and what it comes to', async ({ page }) => {
+            api = await mountLoaded(page, {
+                planGroup: aPricingPlanGroup(),
+                planChangeTotal: '72.50',
+            });
+            const ui = subscriptionManagement(page);
+
+            await ui.planSelector.getByText('Scale plan').click();
+
+            await expect(ui.summaryPlan).toContainText('Scale plan');
+            await expect(ui.planChangeSummary).toContainText('takes effect right away');
+            await expect(ui.summary).toContainText('€72.50');
+        });
+
+        test('prices the move with what change-plan would be sent', async ({ page }) => {
+            api = await mountLoaded(page, { planGroup: aPricingPlanGroup() });
+
+            await subscriptionManagement(page).planSelector.getByText('Scale plan').click();
+
+            const preview = await api.waitForCall('changePlanInvoicePreview');
+            expect(preview.body).toEqual({
+                pricing_plan_subscription_id: SUBSCRIPTION_ID,
+                pricing_plan_id: UPGRADE_PRICING_PLAN_ID,
+            });
+        });
+
+        test('does not move the subscription while its price cannot be loaded', async ({
+            page,
+        }) => {
+            api = await mountLoaded(page, {
+                planGroup: aPricingPlanGroup(),
+                mocks: { changePlanInvoicePreview: { status: 500, body: { message: 'boom' } } },
+            });
+            const ui = subscriptionManagement(page);
+
+            await ui.planSelector.getByText('Scale plan').click();
+
+            await expect(ui.summary).toContainText('Unable to calculate the total');
+            await expect(ui.updateButton).toBeDisabled();
+        });
+
+        test('moves the subscription to the plan the customer picked', async ({ page }) => {
+            api = await mountLoaded(page, { planGroup: aPricingPlanGroup() });
+            const ui = subscriptionManagement(page);
+
+            await ui.planSelector.getByText('Scale plan').click();
+            await ui.updateButton.click();
+
+            const changed = await api.waitForCall('changeSubscriptionPlan');
+
+            expect(new URL(changed.url).pathname).toBe(
+                `/v1/portal/pricing-plan-subscriptions/${SUBSCRIPTION_ID}/change-plan`,
+            );
+            // The group owns the timing, so the SDK sends nothing that would override it.
+            expect(changed.body).toEqual({ pricing_plan_id: UPGRADE_PRICING_PLAN_ID });
+            await expect(ui.success).toContainText('Scale plan');
+        });
+
+        test('starts a new schedule instead when the plan is left alone', async ({ page }) => {
+            api = await mountLoaded(page, {
+                planGroup: aPricingPlanGroup(),
+                mocks: { createPricingPlanSchedule: { body: { id: 'ppsc_new' } } },
+            });
+
+            await chooseLargePack(page);
+            await subscriptionManagement(page).updateButton.click();
+
+            await api.waitForCall('createPricingPlanSchedule');
+            expect(api.lastCall('changeSubscriptionPlan')).toBeUndefined();
+        });
+
+        test('keeps the choice when the move cannot be committed', async ({ page }) => {
+            api = await mountLoaded(page, {
+                planGroup: aPricingPlanGroup(),
+                mocks: { changeSubscriptionPlan: { status: 500, body: { message: 'Boom' } } },
+            });
+            const ui = subscriptionManagement(page);
+
+            await ui.planSelector.getByText('Scale plan').click();
+            await ui.updateButton.click();
+
+            await expect(ui.updateError).toBeVisible();
+            await expect(ui.success).toHaveCount(0);
+            await expect(page.getByRole('radio', { name: /scale plan/i })).toBeChecked();
+        });
+    });
+
+    // ─── Cancelling ───────────────────────────────────────────────────────────
+
+    test.describe('cancelling', () => {
+        test('cancels at the end of the billing period once the modal confirms it', async ({
+            page,
+        }) => {
+            api = await mountLoaded(page, {
+                mocks: {
+                    subscription: [
+                        { body: aManageableSubscription() },
+                        { body: aManageableSubscription({ cancelled: true }) },
+                    ],
+                    cancelSubscription: { body: aManageableSubscription({ cancelled: true }) },
+                },
+            });
+            const ui = subscriptionManagement(page);
+
+            await ui.cancelButton.click();
+            await page
+                .getByRole('dialog')
+                .getByRole('button', { name: /cancel subscription/i })
+                .click();
+
+            const cancellation = await api.waitForCall('cancelSubscription');
+            expect(cancellation.body).toEqual({ type: 'NEXT_BILLING_PERIOD' });
+            await api.waitForCall('subscription', 2);
+            await expect(ui.cancellationSuccess).toBeVisible();
+            await expect(ui.renewButton).toBeVisible();
+            await expect(ui.cancelButton).toHaveCount(0);
+        });
+
+        test('renews a cancellation that has yet to take effect', async ({ page }) => {
+            api = await mountLoaded(page, {
+                subscription: aManageableSubscription({ cancelled: true }),
+                mocks: { cancelSubscription: { body: aManageableSubscription() } },
+            });
+            const ui = subscriptionManagement(page);
+
+            await ui.renewButton.click();
+            await page
+                .getByRole('dialog')
+                .getByRole('button', { name: /renew subscription/i })
+                .click();
+
+            const renewal = await api.waitForCall('cancelSubscription');
+            expect(renewal.body).toEqual({ type: 'UNDO' });
+            await expect(ui.cancellationSuccess).toBeVisible();
         });
     });
 });

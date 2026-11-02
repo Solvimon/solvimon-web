@@ -3,6 +3,7 @@ import { defineComponent, h, onMounted, ref, type Ref } from 'vue';
 import type { PaymentMethod, PricingPlanSubscriptionExpanded } from '@solvimon/solvimon-types';
 import SubscriptionManagement from './SubscriptionManagement.vue';
 import { createTestPortalObject } from '@/test-utils/portalObjectFixture';
+import type { SubscriptionPlanOption } from '@/composables/useSubscriptionPlanGroup';
 
 const {
     mockUseSubscription,
@@ -10,20 +11,49 @@ const {
     mockUsePaymentMethods,
     mockUseUpgradePreview,
     mockLoadPreview,
+    mockUsePlanChangePreview,
+    mockLoadPlanChangePreview,
+    mockResetPlanChangePreview,
     mockGet,
+    mockFetchCustomer,
     mockFetchAll,
     mockDispatchAction,
     mockCreatePricingPlanSchedule,
+    mockChangeSubscriptionPlan,
+    mockSetSubscriptionPaymentMethod,
+    mockUsePlanGroup,
+    mockLoadPlanGroup,
+    mockLoggerError,
 } = vi.hoisted(() => ({
     mockUseSubscription: vi.fn(),
     mockUseLoadInitialData: vi.fn(),
     mockUsePaymentMethods: vi.fn(),
     mockUseUpgradePreview: vi.fn(),
     mockLoadPreview: vi.fn(),
+    mockUsePlanChangePreview: vi.fn(),
+    mockLoadPlanChangePreview: vi.fn(),
+    mockResetPlanChangePreview: vi.fn(),
     mockGet: vi.fn(),
+    mockFetchCustomer: vi.fn(),
     mockFetchAll: vi.fn(),
     mockDispatchAction: vi.fn(),
     mockCreatePricingPlanSchedule: vi.fn(),
+    mockChangeSubscriptionPlan: vi.fn(),
+    mockSetSubscriptionPaymentMethod: vi.fn(),
+    mockUsePlanGroup: vi.fn(),
+    mockLoadPlanGroup: vi.fn(),
+    mockLoggerError: vi.fn(),
+}));
+
+vi.mock('@/services/subscriptions', () => ({
+    createSubscriptionsService: () => ({
+        changeSubscriptionPlan: mockChangeSubscriptionPlan,
+        setSubscriptionPaymentMethod: mockSetSubscriptionPaymentMethod,
+    }),
+}));
+
+vi.mock('@/composables/useSubscriptionPlanGroup', () => ({
+    useSubscriptionPlanGroup: mockUsePlanGroup,
 }));
 
 vi.mock('@/services/pricingPlanSchedules', () => ({
@@ -40,6 +70,53 @@ vi.mock('@/composables/useSubscriptionUpgradePreview', () => ({
     useSubscriptionUpgradePreview: mockUseUpgradePreview,
 }));
 
+vi.mock('@/composables/useCustomer', async () => {
+    const { ref } = await import('vue');
+
+    return {
+        useCustomer: () => ({
+            customer: ref({ id: 'cus_123', timezone: 'Europe/Amsterdam' }),
+            get: { execute: mockFetchCustomer },
+        }),
+    };
+});
+
+// Stores the method through the payment gateway; its own spec covers that.
+vi.mock('@/components/payments/AddPaymentMethodModal/AddPaymentMethodModal.vue', () => ({
+    __esModule: true,
+    default: defineComponent({
+        name: 'AddPaymentMethodModal',
+        props: { showModal: Boolean, customer: Object, subscription: Object, subTitle: String },
+        emits: ['stored', 'close'],
+        setup: () => () => h('div', { class: 'sv-add-payment-method-modal-stub' }),
+    }),
+}));
+
+// Confirms and carries out the cancellation itself; its own spec covers that. Loaded with
+// `import()`, which only unwraps `default` from a module that says it is one.
+vi.mock(
+    '@/components/subscriptions/SubscriptionCancellationModal/SubscriptionCancellationModal.vue',
+    () => ({
+        __esModule: true,
+        default: defineComponent({
+            name: 'SubscriptionCancellationModal',
+            props: {
+                showModal: Boolean,
+                variant: String,
+                subscription: Object,
+                customer: Object,
+                paymentMethod: Object,
+            },
+            emits: ['confirmed', 'close'],
+            setup: () => () => h('div', { class: 'sv-subscription-cancellation-modal-stub' }),
+        }),
+    }),
+);
+
+vi.mock('@/composables/useSubscriptionPlanChangePreview', () => ({
+    useSubscriptionPlanChangePreview: mockUsePlanChangePreview,
+}));
+
 vi.mock('@/components/providers', async () => {
     const { createProviderMock } = await import('@/test-utils/providerMock');
     const { createTestPortalObject: createPortal } =
@@ -49,7 +126,7 @@ vi.mock('@/components/providers', async () => {
     return {
         ...createProviderMock(),
         usePortal: () => ref(createPortal()),
-        useLogger: () => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }),
+        useLogger: () => ({ error: mockLoggerError, warn: vi.fn(), info: vi.fn(), debug: vi.fn() }),
         useActionDispatchProvider: () => ({ dispatchAction: mockDispatchAction }),
     };
 });
@@ -64,20 +141,30 @@ vi.mock('@/components/subscriptions/SubscriptionManagement/SubscriptionManagemen
     default: defineComponent({
         name: 'SubscriptionManagementForm',
         props: {
-            pricingGroup: { type: Object, required: true },
+            pricingGroup: { type: Object, default: undefined },
+            planOptions: { type: Array, default: () => [] },
             paymentMethods: { type: Array, default: () => [] },
             billingPeriod: { type: Object, required: true },
             enabledPricingIds: { type: Array, required: true },
             paymentMethodId: String,
+            pricingPlanId: String,
             disabled: Boolean,
+            canAddPaymentMethod: { type: Boolean, default: true },
         },
-        emits: ['submit', 'update:enabledPricingIds', 'update:paymentMethodId'],
-        // The real form opens on a payment method of its own accord, which the screen leans on.
+        emits: [
+            'submit',
+            'update:enabledPricingIds',
+            'update:paymentMethodId',
+            'update:pricingPlanId',
+            'add-payment-method',
+        ],
+        // The real form opens on a payment method of its own accord when the screen has not
+        // picked one, which the screen leans on.
         setup: (props, { emit }) => {
             onMounted(() => {
                 const [first] = props.paymentMethods as { id: string }[];
 
-                if (first) {
+                if (first && !props.paymentMethodId) {
                     emit('update:paymentMethodId', first.id);
                 }
             });
@@ -102,8 +189,21 @@ vi.mock(
     () => ({
         default: defineComponent({
             name: 'SubscriptionManagementSummary',
-            props: { invoice: Object, isPending: Boolean, hasError: Boolean },
-            setup: () => () => h('div', { class: 'sv-subscription-management-summary-stub' }),
+            props: {
+                invoice: Object,
+                isPending: Boolean,
+                hasError: Boolean,
+                planName: String,
+                avatar: String,
+            },
+            setup:
+                (_, { slots }) =>
+                () =>
+                    h(
+                        'div',
+                        { class: 'sv-subscription-management-summary-stub' },
+                        slots.default?.(),
+                    ),
         }),
     }),
 );
@@ -180,6 +280,17 @@ const savedPaymentMethod = {
     customer_id: 'cus_123',
 } as unknown as PaymentMethod;
 
+const planOptions: SubscriptionPlanOption[] = [
+    { pricingPlanId: 'ppla_starter', name: 'Starter', isCurrent: true },
+    {
+        pricingPlanId: 'ppla_pro',
+        name: 'Pro',
+        isCurrent: false,
+        direction: 'UPGRADE',
+        changeType: 'IMMEDIATE_PRO_RATA',
+    },
+];
+
 const mountComponent = ({
     enabledPricingId,
     subscription = mockSubscription,
@@ -188,6 +299,9 @@ const mountComponent = ({
     extraEnabledPricingIds = [] as string[],
     subscriptionError = null,
     preview = {},
+    planChangePreview = {},
+    planGroupOptions = [] as SubscriptionPlanOption[],
+    planGroup = {},
 }: {
     enabledPricingId?: string;
     paymentMethods?: PaymentMethod[];
@@ -195,6 +309,15 @@ const mountComponent = ({
     extraEnabledPricingIds?: string[];
     subscriptionError?: Error | null;
     preview?: { invoice?: Ref<unknown>; isPending?: Ref<boolean>; error?: Ref<unknown> };
+    /** What the move to another plan is priced at. */
+    planChangePreview?: {
+        invoice?: Ref<unknown>;
+        isPending?: Ref<boolean>;
+        error?: Ref<unknown>;
+    };
+    /** The plans the subscription may move to. Empty for a plan that belongs to no group. */
+    planGroupOptions?: SubscriptionPlanOption[];
+    planGroup?: { isPending?: Ref<boolean>; error?: Ref<unknown> };
     /** `null` stands for "not loaded yet" — `undefined` would fall back to the default. */
     subscription?: PricingPlanSubscriptionExpanded | null;
 } = {}) => {
@@ -231,6 +354,22 @@ const mountComponent = ({
         error: preview.error ?? ref(undefined),
         load: mockLoadPreview,
     });
+    mockUsePlanChangePreview.mockReturnValue({
+        invoice: planChangePreview.invoice ?? ref({ id: 'invo_plan_change' }),
+        isPending: planChangePreview.isPending ?? ref(false),
+        error: planChangePreview.error ?? ref(undefined),
+        load: mockLoadPlanChangePreview,
+        reset: mockResetPlanChangePreview,
+    });
+    mockUsePlanGroup.mockReturnValue({
+        options: ref(planGroupOptions),
+        currentPricingPlanId: ref(
+            planGroupOptions.find(({ isCurrent }) => isCurrent)?.pricingPlanId,
+        ),
+        isPending: planGroup.isPending ?? ref(false),
+        error: planGroup.error ?? ref(undefined),
+        load: mockLoadPlanGroup,
+    });
     mockUseLoadInitialData.mockReturnValue({ isLoading: ref(isLoading) });
 
     return mount(SubscriptionManagement, {
@@ -246,6 +385,9 @@ describe('SubscriptionManagement', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         mockCreatePricingPlanSchedule.mockResolvedValue({ id: 'ppsc_new' });
+        mockChangeSubscriptionPlan.mockResolvedValue({ id: 'ppsc_plan_change' });
+        mockGet.mockResolvedValue(undefined);
+        mockSetSubscriptionPaymentMethod.mockResolvedValue({ id: 'ppsu_1' });
         vi.useFakeTimers();
         vi.setSystemTime(NOW);
     });
@@ -269,64 +411,17 @@ describe('SubscriptionManagement', () => {
     });
 
     describe('title', () => {
-        it('names the group the enabled pricing was chosen from', () => {
+        // The screen manages the subscription as a whole, plans and pricings alike.
+        it('is the same whichever group the enabled pricing was chosen from', () => {
             const wrapper = mountComponent({ enabledPricingId: 'pri_1000' });
 
             expect(wrapper.find('.sv-subscription-management__title').text()).toBe(
-                'Manage Credit packs',
-            );
-        });
-
-        it('names the group of what the schedule has enabled when the host names no pricing', () => {
-            const wrapper = mountComponent();
-
-            expect(wrapper.find('.sv-subscription-management__title').text()).toBe(
-                'Manage Credit packs',
-            );
-        });
-
-        it('falls back to the generic title when nothing enabled belongs to a group', () => {
-            const wrapper = mountComponent({ subscription: subscriptionWithoutGroups });
-
-            expect(wrapper.find('.sv-subscription-management__title').text()).toBe(
                 'Manage subscription',
             );
         });
 
-        it('falls back when the pricing belongs to no group on the active schedule', () => {
-            const wrapper = mountComponent({ enabledPricingId: 'pri_unknown' });
-
-            expect(wrapper.find('.sv-subscription-management__title').text()).toBe(
-                'Manage subscription',
-            );
-        });
-
-        it('falls back while the subscription is still loading', () => {
-            const wrapper = mountComponent({
-                enabledPricingId: 'pri_1000',
-                subscription: null,
-            });
-
-            expect(wrapper.find('.sv-subscription-management__title').text()).toBe(
-                'Manage subscription',
-            );
-        });
-
-        it('ignores groups on a schedule that is not the active one', () => {
-            const endedSchedule = {
-                ...mockSubscription,
-                pricing_plan_schedule_infos: [
-                    {
-                        ...mockSubscription.pricing_plan_schedule_infos[0],
-                        end_at: '2026-02-01T00:00:00.000Z',
-                    },
-                ],
-            } as unknown as PricingPlanSubscriptionExpanded;
-
-            const wrapper = mountComponent({
-                enabledPricingId: 'pri_1000',
-                subscription: endedSchedule,
-            });
+        it('is there while the subscription is still loading', () => {
+            const wrapper = mountComponent({ subscription: null });
 
             expect(wrapper.find('.sv-subscription-management__title').text()).toBe(
                 'Manage subscription',
@@ -456,16 +551,34 @@ describe('SubscriptionManagement', () => {
     });
 
     describe('payment method', () => {
-        const methodsOffered = (wrapper: ReturnType<typeof mountComponent>) =>
-            wrapper.findComponent({ name: 'SubscriptionManagementForm' }).props('paymentMethods');
+        const otherPaymentMethod = { ...savedPaymentMethod, id: 'pm_other' } as PaymentMethod;
 
-        it("offers only the subscription's own method, since that is what the API charges", () => {
+        const findForm = (wrapper: ReturnType<typeof mountComponent>) =>
+            wrapper.findComponent({ name: 'SubscriptionManagementForm' });
+
+        const pickPaymentMethod = async (
+            wrapper: ReturnType<typeof mountComponent>,
+            paymentMethodId: string,
+        ) => {
+            findForm(wrapper).vm.$emit('update:paymentMethodId', paymentMethodId);
+            await flushPromises();
+        };
+
+        const update = async (wrapper: ReturnType<typeof mountComponent>) => {
+            await wrapper.find('.sv-subscription-management__update').trigger('click');
+            await flushPromises();
+        };
+
+        it("offers every stored method the API can charge, not only the subscription's own", () => {
             const wrapper = mountComponent({
                 enabledPricingId: 'pri_5000',
-                paymentMethods: [{ ...savedPaymentMethod, id: 'pm_other' }, savedPaymentMethod],
+                paymentMethods: [otherPaymentMethod, savedPaymentMethod],
             });
 
-            expect(methodsOffered(wrapper)).toEqual([savedPaymentMethod]);
+            expect(findForm(wrapper).props('paymentMethods')).toEqual([
+                otherPaymentMethod,
+                savedPaymentMethod,
+            ]);
         });
 
         it.each([
@@ -474,44 +587,132 @@ describe('SubscriptionManagement', () => {
             ['is prepaid', { type: 'PREPAID' }],
             ['is of an unknown type', { type: 'UNKNOWN' }],
             ['belongs to another customer', { customer_id: 'cus_other' }],
-        ])('offers nothing when the method %s, since the API refuses it', async (_, change) => {
+        ])('leaves out a method that %s, since the API refuses it', async (_, change) => {
+            const refused = { ...otherPaymentMethod, ...change } as unknown as PaymentMethod;
             const wrapper = mountComponent({
                 enabledPricingId: 'pri_5000',
-                paymentMethods: [{ ...savedPaymentMethod, ...change } as unknown as PaymentMethod],
+                paymentMethods: [refused, savedPaymentMethod],
             });
             await flushPromises();
 
-            expect(methodsOffered(wrapper)).toEqual([]);
+            expect(findForm(wrapper).props('paymentMethods')).toEqual([savedPaymentMethod]);
+        });
+
+        it("opens on the subscription's own method, whichever is listed first", async () => {
+            const wrapper = mountComponent({
+                enabledPricingId: 'pri_5000',
+                paymentMethods: [otherPaymentMethod, savedPaymentMethod],
+            });
+            await flushPromises();
+
+            expect(findForm(wrapper).props('paymentMethodId')).toBe('pm_saved');
+        });
+
+        it('cannot be committed without a method the API can charge', async () => {
+            const wrapper = mountComponent({
+                enabledPricingId: 'pri_5000',
+                paymentMethods: [{ ...savedPaymentMethod, status: 'INACTIVE' } as PaymentMethod],
+            });
+            await flushPromises();
+
             expect(
                 wrapper.find('.sv-subscription-management__update').attributes('disabled'),
             ).toBeDefined();
         });
 
-        it('cannot be committed when the subscription has no method among the saved ones', async () => {
-            const wrapper = mountComponent({
-                enabledPricingId: 'pri_5000',
-                paymentMethods: [{ ...savedPaymentMethod, id: 'pm_other' }],
-            });
+        it("commits without linking anything while the subscription's own method is picked", async () => {
+            const wrapper = mountComponent({ enabledPricingId: 'pri_5000' });
             await flushPromises();
 
-            const button = wrapper.find('.sv-subscription-management__update');
+            await update(wrapper);
 
-            expect(button.attributes('disabled')).toBeDefined();
-            expect(button.attributes('aria-describedby')).toBe(
-                'sv-subscription-management-form__no-payment-method',
+            expect(mockSetSubscriptionPaymentMethod).not.toHaveBeenCalled();
+            expect(mockCreatePricingPlanSchedule).toHaveBeenCalled();
+        });
+
+        // The API charges the change to the subscription's own method and takes no other.
+        it('links another picked method to the subscription before committing', async () => {
+            const wrapper = mountComponent({
+                enabledPricingId: 'pri_5000',
+                paymentMethods: [otherPaymentMethod, savedPaymentMethod],
+            });
+            await pickPaymentMethod(wrapper, 'pm_other');
+
+            await update(wrapper);
+
+            expect(mockSetSubscriptionPaymentMethod).toHaveBeenCalledWith({
+                id: 'ppsu_1',
+                paymentMethodId: 'pm_other',
+            });
+            expect(mockSetSubscriptionPaymentMethod.mock.invocationCallOrder[0]).toBeLessThan(
+                mockCreatePricingPlanSchedule.mock.invocationCallOrder[0],
             );
         });
 
-        it('describes the button by nothing while the message is not on screen yet', () => {
+        it('commits nothing when the method cannot be linked, and says so', async () => {
+            mockSetSubscriptionPaymentMethod.mockRejectedValue(new Error('nope'));
             const wrapper = mountComponent({
                 enabledPricingId: 'pri_5000',
-                paymentMethods: [],
-                isLoading: true,
+                paymentMethods: [otherPaymentMethod, savedPaymentMethod],
+            });
+            await pickPaymentMethod(wrapper, 'pm_other');
+
+            await update(wrapper);
+
+            expect(mockCreatePricingPlanSchedule).not.toHaveBeenCalled();
+            expect(wrapper.find('.sv-subscription-management__update-error').exists()).toBe(true);
+        });
+
+        // The method stays linked, so the subscription on screen must show it pays with it now.
+        it('reloads the subscription when the method is linked but the change then fails', async () => {
+            mockCreatePricingPlanSchedule.mockRejectedValue(new Error('nope'));
+            const wrapper = mountComponent({
+                enabledPricingId: 'pri_5000',
+                paymentMethods: [otherPaymentMethod, savedPaymentMethod],
+            });
+            await pickPaymentMethod(wrapper, 'pm_other');
+            mockGet.mockClear();
+
+            await update(wrapper);
+
+            expect(wrapper.find('.sv-subscription-management__update-error').exists()).toBe(true);
+            expect(mockGet).toHaveBeenCalledTimes(1);
+        });
+
+        it('offers no way to add a method for a subscription that accepts no gateway', () => {
+            const wrapper = mountComponent({
+                enabledPricingId: 'pri_5000',
+                subscription: { ...mockSubscription, payment_acceptor_ids: [] },
             });
 
-            expect(
-                wrapper.find('.sv-subscription-management__update').attributes('aria-describedby'),
-            ).toBeUndefined();
+            expect(findForm(wrapper).props('canAddPaymentMethod')).toBe(false);
+        });
+
+        it('adds a method in a modal, for the customer it is stored for', async () => {
+            const wrapper = mountComponent({ enabledPricingId: 'pri_5000' });
+            await flushPromises();
+
+            findForm(wrapper).vm.$emit('add-payment-method');
+            await flushPromises();
+
+            const modal = wrapper.findComponent({ name: 'AddPaymentMethodModal' });
+            expect(modal.props('showModal')).toBe(true);
+            expect(modal.props('subscription')).toMatchObject({ id: 'ppsu_1' });
+            expect(mockFetchCustomer).toHaveBeenCalledTimes(1);
+        });
+
+        it('reloads the methods once one is stored, so the form can select it', async () => {
+            const wrapper = mountComponent({ enabledPricingId: 'pri_5000' });
+            await flushPromises();
+            findForm(wrapper).vm.$emit('add-payment-method');
+            await flushPromises();
+            mockFetchAll.mockClear();
+
+            wrapper.findComponent({ name: 'AddPaymentMethodModal' }).vm.$emit('stored');
+            await flushPromises();
+
+            expect(mockFetchAll).toHaveBeenCalled();
+            expect(wrapper.findComponent({ name: 'AddPaymentMethodModal' }).exists()).toBe(false);
         });
 
         it('describes the button by nothing while there is a method', () => {
@@ -532,6 +733,36 @@ describe('SubscriptionManagement', () => {
 
             expect(wrapper.find('.sv-subscription-management__load-error').exists()).toBe(true);
             expect(wrapper.find('.sv-subscription-management__empty-state').exists()).toBe(false);
+        });
+
+        it('holds the screen back until it knows whether the plan can be changed', async () => {
+            const isPending = ref(true);
+            const wrapper = mountComponent({
+                subscription: subscriptionWithoutGroups,
+                planGroup: { isPending },
+            });
+
+            expect(wrapper.find('.sv-subscription-management__empty-state').exists()).toBe(false);
+
+            isPending.value = false;
+            await flushPromises();
+
+            expect(wrapper.find('.sv-subscription-management__empty-state').exists()).toBe(true);
+        });
+
+        it('reports a plan group that cannot be loaded when there is nothing else to change', () => {
+            const wrapper = mountComponent({
+                subscription: subscriptionWithoutGroups,
+                planGroup: { error: ref(new Error('boom')) },
+            });
+
+            expect(wrapper.find('.sv-subscription-management__load-error').exists()).toBe(true);
+        });
+
+        it('still offers the pricings when the plan group cannot be loaded', () => {
+            const wrapper = mountComponent({ planGroup: { error: ref(new Error('boom')) } });
+
+            expect(wrapper.find('.sv-subscription-management__form').exists()).toBe(true);
         });
 
         it('says there is nothing to change when no group can be changed', () => {
@@ -576,15 +807,17 @@ describe('SubscriptionManagement', () => {
             ],
         } as unknown as PricingPlanSubscriptionExpanded;
 
-        it('names the group of a customized pricing', () => {
+        // Without the group the screen would have nothing to manage, and say so instead.
+        it('finds the group of a customized pricing the host names', () => {
             const wrapper = mountComponent({
                 subscription: customizedSubscription,
                 enabledPricingId: 'pri_1000_custom',
             });
 
-            expect(wrapper.find('.sv-subscription-management__title').text()).toBe(
-                'Manage Credit packs',
+            expect(wrapper.find('.sv-subscription-management__customized-pricing').exists()).toBe(
+                true,
             );
+            expect(wrapper.find('.sv-subscription-management__empty-state').exists()).toBe(false);
         });
 
         it('says it cannot be changed here, in place of a form that would drop it', () => {
@@ -784,6 +1017,409 @@ describe('SubscriptionManagement', () => {
             const wrapper = mountComponent({ enabledPricingId: 'pri_1000' });
 
             expect(wrapper.find('.sv-subscription-management__kpi').exists()).toBe(true);
+        });
+    });
+
+    describe('changing plan', () => {
+        const pickPlan = async (
+            wrapper: ReturnType<typeof mountComponent>,
+            pricingPlanId: string,
+        ) => {
+            wrapper
+                .findComponent({ name: 'SubscriptionManagementForm' })
+                .vm.$emit('update:pricingPlanId', pricingPlanId);
+            await flushPromises();
+
+            return wrapper;
+        };
+
+        const update = async (wrapper: ReturnType<typeof mountComponent>) => {
+            await wrapper.find('.sv-subscription-management__update').trigger('click');
+            await flushPromises();
+
+            return wrapper;
+        };
+
+        it('asks the subscription for the group its active schedule runs in', () => {
+            mountComponent({ planGroupOptions: planOptions });
+
+            expect(mockLoadPlanGroup).toHaveBeenCalledWith({
+                subscriptionId: 'ppsu_1',
+                scheduleInfo: expect.objectContaining({ id: 'ppsc_active' }),
+            });
+        });
+
+        it('opens on the plan the subscription runs on today', () => {
+            const wrapper = mountComponent({ planGroupOptions: planOptions });
+
+            expect(
+                wrapper
+                    .findComponent({ name: 'SubscriptionManagementForm' })
+                    .props('pricingPlanId'),
+            ).toBe('ppla_starter');
+        });
+
+        it('renders the form for a plan group even when there is no pricing group to change', () => {
+            const wrapper = mountComponent({
+                subscription: subscriptionWithoutGroups,
+                planGroupOptions: planOptions,
+            });
+
+            expect(wrapper.find('.sv-subscription-management__form').exists()).toBe(true);
+        });
+
+        it('explains when the move lands and prices it in the order summary', async () => {
+            const wrapper = await pickPlan(
+                mountComponent({ planGroupOptions: planOptions }),
+                'ppla_pro',
+            );
+
+            expect(wrapper.find('.sv-subscription-management__plan-change-summary').exists()).toBe(
+                true,
+            );
+            expect(
+                wrapper.findComponent({ name: 'SubscriptionManagementSummary' }).props('invoice'),
+            ).toEqual({ id: 'invo_plan_change' });
+        });
+
+        it('previews the move to the plan picked', async () => {
+            await pickPlan(mountComponent({ planGroupOptions: planOptions }), 'ppla_pro');
+
+            expect(mockLoadPlanChangePreview).toHaveBeenCalledWith({
+                subscriptionId: 'ppsu_1',
+                pricingPlanId: 'ppla_pro',
+            });
+        });
+
+        it('does not preview a move while the current plan is kept', () => {
+            mountComponent({ planGroupOptions: planOptions });
+
+            expect(mockLoadPlanChangePreview).not.toHaveBeenCalled();
+        });
+
+        it('drops the customisations of the current plan once another plan is picked', async () => {
+            const wrapper = mountComponent({
+                enabledPricingId: 'pri_1000',
+                planGroupOptions: planOptions,
+            });
+            const form = wrapper.findComponent({ name: 'SubscriptionManagementForm' });
+            expect(form.props('pricingGroup')).toBeDefined();
+
+            await pickPlan(wrapper, 'ppla_pro');
+
+            expect(form.props('pricingGroup')).toBeUndefined();
+        });
+
+        const downgradeOption: SubscriptionPlanOption = {
+            pricingPlanId: 'ppla_free',
+            name: 'Free',
+            isCurrent: false,
+            direction: 'DOWNGRADE',
+            changeType: 'NEXT_BILLING_PERIOD',
+        };
+
+        it.each([
+            ['a higher plan is picked', planOptions, undefined, 'ppla_pro', 'Upgrade plan'],
+            [
+                'a lower plan is picked',
+                [downgradeOption, ...planOptions],
+                undefined,
+                'ppla_free',
+                'Downgrade plan',
+            ],
+            [
+                'the current plan is kept unchanged',
+                planOptions,
+                undefined,
+                undefined,
+                'Your current plan',
+            ],
+            [
+                'a pricing on the current plan changes',
+                planOptions,
+                'pri_5000',
+                undefined,
+                'Update subscription',
+            ],
+            ['there is no other plan to move to', [], undefined, undefined, 'Update subscription'],
+        ])(
+            'labels the button for when %s',
+            async (_, planGroupOptions, enabledPricingId, picked, label) => {
+                const wrapper = mountComponent({ planGroupOptions, enabledPricingId });
+                if (picked) await pickPlan(wrapper, picked);
+
+                expect(wrapper.find('.sv-subscription-management__update').text()).toBe(label);
+            },
+        );
+
+        it('moves the subscription to the plan that was picked', async () => {
+            const wrapper = await pickPlan(
+                mountComponent({ enabledPricingId: 'pri_1000', planGroupOptions: planOptions }),
+                'ppla_pro',
+            );
+
+            await update(wrapper);
+
+            expect(mockChangeSubscriptionPlan).toHaveBeenCalledWith({
+                id: 'ppsu_1',
+                pricingPlanId: 'ppla_pro',
+            });
+            expect(mockCreatePricingPlanSchedule).not.toHaveBeenCalled();
+        });
+
+        it('commits a move on its own price, whatever the pricings on this plan cost', async () => {
+            const wrapper = await pickPlan(
+                mountComponent({
+                    enabledPricingId: 'pri_1000',
+                    planGroupOptions: planOptions,
+                    preview: { invoice: ref(undefined), error: ref(new Error('not priced')) },
+                }),
+                'ppla_pro',
+            );
+
+            await update(wrapper);
+
+            expect(mockChangeSubscriptionPlan).toHaveBeenCalledWith({
+                id: 'ppsu_1',
+                pricingPlanId: 'ppla_pro',
+            });
+        });
+
+        it('does not commit a move before its price has loaded', async () => {
+            const wrapper = await pickPlan(
+                mountComponent({
+                    planGroupOptions: planOptions,
+                    planChangePreview: { invoice: ref(undefined), isPending: ref(true) },
+                }),
+                'ppla_pro',
+            );
+
+            expect(
+                wrapper.find('.sv-subscription-management__update').attributes('disabled'),
+            ).toBeDefined();
+            await update(wrapper);
+            expect(mockChangeSubscriptionPlan).not.toHaveBeenCalled();
+        });
+
+        it('does not commit a move whose price could not be loaded', async () => {
+            const wrapper = await pickPlan(
+                mountComponent({
+                    planGroupOptions: planOptions,
+                    planChangePreview: { invoice: ref(undefined), error: ref(new Error('nope')) },
+                }),
+                'ppla_pro',
+            );
+
+            expect(
+                wrapper.findComponent({ name: 'SubscriptionManagementSummary' }).props('hasError'),
+            ).toBe(true);
+            await update(wrapper);
+            expect(mockChangeSubscriptionPlan).not.toHaveBeenCalled();
+        });
+
+        it('starts a new schedule instead when the plan is left alone', async () => {
+            const wrapper = mountComponent({
+                enabledPricingId: 'pri_5000',
+                planGroupOptions: planOptions,
+            });
+            await flushPromises();
+
+            await update(wrapper);
+
+            expect(mockCreatePricingPlanSchedule).toHaveBeenCalled();
+            expect(mockChangeSubscriptionPlan).not.toHaveBeenCalled();
+        });
+
+        it('confirms the move by naming the plan it landed on', async () => {
+            const wrapper = await pickPlan(
+                mountComponent({ enabledPricingId: 'pri_1000', planGroupOptions: planOptions }),
+                'ppla_pro',
+            );
+
+            await update(wrapper);
+
+            const success = wrapper.findComponent({ name: 'SubscriptionManagementSuccess' });
+
+            expect(success.props('pricingPlanName')).toBe('Pro');
+            expect(success.props('pricingGroupName')).toBeUndefined();
+        });
+
+        it('reports a failed move and stays put', async () => {
+            mockChangeSubscriptionPlan.mockRejectedValue(new Error('nope'));
+
+            const wrapper = await pickPlan(
+                mountComponent({ enabledPricingId: 'pri_1000', planGroupOptions: planOptions }),
+                'ppla_pro',
+            );
+
+            await update(wrapper);
+
+            expect(wrapper.find('.sv-subscription-management__update-error').exists()).toBe(true);
+            expect(wrapper.find('.sv-subscription-management__success').exists()).toBe(false);
+        });
+
+        // Nothing is enabled to pay for, but the move itself is still something to commit.
+        it('can be committed for a schedule with no pricings enabled at all', async () => {
+            const withoutEnabledPricings = {
+                ...mockSubscription,
+                pricing_plan_schedule_infos: [
+                    {
+                        ...mockSubscription.pricing_plan_schedule_infos[0],
+                        pricing_plan_schedule: {
+                            ...mockSubscription.pricing_plan_schedule_infos[0]
+                                .pricing_plan_schedule,
+                            enabled_pricings: [],
+                        },
+                    },
+                ],
+            } as unknown as PricingPlanSubscriptionExpanded;
+
+            const wrapper = await pickPlan(
+                mountComponent({
+                    subscription: withoutEnabledPricings,
+                    planGroupOptions: planOptions,
+                }),
+                'ppla_pro',
+            );
+
+            await update(wrapper);
+
+            expect(mockChangeSubscriptionPlan).toHaveBeenCalledWith({
+                id: 'ppsu_1',
+                pricingPlanId: 'ppla_pro',
+            });
+        });
+
+        it('can be committed for a plan that has no pricings to enable', async () => {
+            const wrapper = await pickPlan(
+                mountComponent({
+                    subscription: subscriptionWithoutGroups,
+                    planGroupOptions: planOptions,
+                }),
+                'ppla_pro',
+            );
+
+            await update(wrapper);
+
+            expect(mockChangeSubscriptionPlan).toHaveBeenCalledWith({
+                id: 'ppsu_1',
+                pricingPlanId: 'ppla_pro',
+            });
+        });
+    });
+
+    describe('cancelling', () => {
+        const runningSubscription = {
+            ...mockSubscription,
+            status: 'ACTIVE',
+            type: 'BILLING',
+        } as unknown as PricingPlanSubscriptionExpanded;
+
+        const cancelledSubscription = {
+            ...runningSubscription,
+            inactive_periods: [{ type: 'CANCEL', start_at: '2099-05-01T00:00:00.000Z' }],
+        } as unknown as PricingPlanSubscriptionExpanded;
+
+        const findModal = (wrapper: ReturnType<typeof mountComponent>) =>
+            wrapper.findComponent({ name: 'SubscriptionCancellationModal' });
+
+        it('offers to cancel a running subscription', () => {
+            const wrapper = mountComponent({ subscription: runningSubscription });
+
+            expect(wrapper.find('.sv-subscription-management__cancel').text()).toBe(
+                'Cancel subscription',
+            );
+            expect(wrapper.find('.sv-subscription-management__renew').exists()).toBe(false);
+        });
+
+        it('offers to renew a subscription whose cancellation has yet to take effect', () => {
+            const wrapper = mountComponent({ subscription: cancelledSubscription });
+
+            expect(wrapper.find('.sv-subscription-management__renew').text()).toBe(
+                'Renew subscription',
+            );
+            expect(wrapper.find('.sv-subscription-management__cancel').exists()).toBe(false);
+        });
+
+        it('loads neither the modal nor the customer until the customer asks to cancel', () => {
+            const wrapper = mountComponent({ subscription: runningSubscription });
+
+            expect(findModal(wrapper).exists()).toBe(false);
+            expect(mockFetchCustomer).not.toHaveBeenCalled();
+        });
+
+        it('confirms the cancellation in the modal, dated for the customer', async () => {
+            const wrapper = mountComponent({ subscription: runningSubscription });
+
+            await wrapper.find('.sv-subscription-management__cancel').trigger('click');
+            await flushPromises();
+
+            const modal = findModal(wrapper);
+            expect(modal.props('showModal')).toBe(true);
+            expect(modal.props('variant')).toBe('CANCEL');
+            expect(modal.props('paymentMethod')).toEqual(savedPaymentMethod);
+            expect(mockFetchCustomer).toHaveBeenCalledTimes(1);
+            expect(modal.props('customer')).toEqual({
+                id: 'cus_123',
+                timezone: 'Europe/Amsterdam',
+            });
+        });
+
+        it('confirms a renewal in the same modal', async () => {
+            const wrapper = mountComponent({ subscription: cancelledSubscription });
+
+            await wrapper.find('.sv-subscription-management__renew').trigger('click');
+            await flushPromises();
+
+            expect(findModal(wrapper).props('variant')).toBe('RENEW');
+        });
+
+        it('reloads the subscription and says so once the cancellation is confirmed', async () => {
+            const wrapper = mountComponent({ subscription: runningSubscription });
+            await wrapper.find('.sv-subscription-management__cancel').trigger('click');
+            await flushPromises();
+            mockGet.mockClear();
+
+            findModal(wrapper).vm.$emit('confirmed');
+            await flushPromises();
+
+            expect(mockGet).toHaveBeenCalled();
+            expect(wrapper.find('.sv-subscription-management__cancellation-success').exists()).toBe(
+                true,
+            );
+        });
+
+        it('keeps the screen and logs it when the reload after a cancellation fails', async () => {
+            const wrapper = mountComponent({ subscription: runningSubscription });
+            await wrapper.find('.sv-subscription-management__cancel').trigger('click');
+            await flushPromises();
+            const failure = new Error('offline');
+            mockGet.mockRejectedValueOnce(failure);
+
+            findModal(wrapper).vm.$emit('confirmed');
+            await flushPromises();
+
+            expect(wrapper.find('.sv-subscription-management__load-error').exists()).toBe(false);
+            expect(mockLoggerError).toHaveBeenCalledWith(
+                'SUBSCRIPTION_LOAD_FAILED',
+                expect.any(String),
+                {},
+                failure,
+            );
+        });
+
+        it('closes the modal without changing anything when it is dismissed', async () => {
+            const wrapper = mountComponent({ subscription: runningSubscription });
+            await wrapper.find('.sv-subscription-management__cancel').trigger('click');
+            await flushPromises();
+
+            findModal(wrapper).vm.$emit('close');
+            await flushPromises();
+
+            expect(findModal(wrapper).props('showModal')).toBe(false);
+            expect(wrapper.find('.sv-subscription-management__cancellation-success').exists()).toBe(
+                false,
+            );
         });
     });
 });

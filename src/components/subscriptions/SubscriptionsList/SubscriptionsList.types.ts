@@ -14,6 +14,7 @@ export interface SubscriptionsListProps {
     isLoadingMore?: boolean;
     showViewAllButton?: boolean;
     showViewDetailsButton?: boolean;
+    showManageButton?: boolean;
 }
 
 export interface SubscriptionsListEmits {

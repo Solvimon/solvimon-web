@@ -126,4 +126,43 @@ describe('subscriptions service', () => {
             });
         });
     });
+
+    describe('changeSubscriptionPlan', () => {
+        it('posts the target plan alone, leaving the timing to the group', async () => {
+            const { changeSubscriptionPlan } = createSubscriptionsService();
+            await changeSubscriptionPlan({ id: 'ppsu_1', pricingPlanId: 'ppla_pro' });
+
+            expect(mockRequest).toHaveBeenCalledWith({
+                url: 'https://api.test/portal/pricing-plan-subscriptions/ppsu_1/change-plan',
+                data: { pricing_plan_id: 'ppla_pro' },
+                options: { method: 'POST' },
+            });
+        });
+    });
+
+    describe('getSubscriptionPricingPlanGroup', () => {
+        it('asks the subscription for the group holding its plan, with the member plans expanded', async () => {
+            const { getSubscriptionPricingPlanGroup } = createSubscriptionsService();
+            await getSubscriptionPricingPlanGroup({ id: 'ppsu_1' });
+
+            expect(mockRequest).toHaveBeenCalledWith({
+                url: 'https://api.test/portal/pricing-plan-subscriptions/ppsu_1/pricing-plan-group',
+                query: { expand: ['ALL'] },
+                options: { expectedStatusCodes: [404] },
+            });
+        });
+    });
+
+    describe('setSubscriptionPaymentMethod', () => {
+        it('links the stored method to the subscription', async () => {
+            const { setSubscriptionPaymentMethod } = createSubscriptionsService();
+            await setSubscriptionPaymentMethod({ id: 'ppsu_1', paymentMethodId: 'pmet_new' });
+
+            expect(mockRequest).toHaveBeenCalledWith({
+                url: 'https://api.test/portal/pricing-plan-subscriptions/ppsu_1/update-payment-method',
+                data: { payment_method_id: 'pmet_new' },
+                options: { method: 'POST' },
+            });
+        });
+    });
 });

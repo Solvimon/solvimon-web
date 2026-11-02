@@ -62,7 +62,7 @@ describe('SubscriptionPlanSelector', () => {
             const wrapper = mountComponent();
 
             expect(wrapper.find('.sv-subscription-plan-selector__current').exists()).toBe(true);
-            expect(wrapper.text()).toContain('Current subscription');
+            expect(wrapper.text()).toContain('Current plan');
         });
 
         // One marker, on the plan being billed today — not on whichever plan is selected.

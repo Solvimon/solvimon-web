@@ -1535,13 +1535,9 @@
     "defaultMessage": "Unable to load this subscription. Please try again later.",
     "description": "Error shown in place of the manage subscription form when the subscription cannot be loaded"
   },
-  "subscription_management.payment_method_selector.label": {
-    "defaultMessage": "Pick a payment method",
+  "subscription_management.payment_method_selector.saved_label": {
+    "defaultMessage": "Saved payment methods",
     "description": "Label above the payment method that pays for the subscription change"
-  },
-  "subscription_management.plan_change_summary.headline": {
-    "defaultMessage": "Moving to {plan}",
-    "description": "Names the plan a subscription is about to be moved to"
   },
   "subscription_management.plan_change_summary.immediate": {
     "defaultMessage": "The change takes effect right away. The new price appears on your next invoice.",
@@ -1551,12 +1547,8 @@
     "defaultMessage": "The change takes effect at the start of your next billing period. You keep your current plan until then, and the new price appears on the invoice from that period onwards.",
     "description": "Explains a plan change that only takes effect at the next billing period"
   },
-  "subscription_management.plan_change_summary.title": {
-    "defaultMessage": "Your new plan",
-    "description": "Title of the block explaining the plan change about to be committed"
-  },
-  "subscription_management.plan_selector.current": {
-    "defaultMessage": "Current subscription",
+  "subscription_management.plan_selector.current_plan": {
+    "defaultMessage": "Current plan",
     "description": "Marks the plan a subscription already runs on"
   },
   "subscription_management.plan_selector.title": {

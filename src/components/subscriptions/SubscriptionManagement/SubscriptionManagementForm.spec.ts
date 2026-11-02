@@ -112,7 +112,7 @@ describe('SubscriptionManagementForm', () => {
         expect(wrapper.find('.sv-subscription-management-form__payment-methods').exists()).toBe(
             true,
         );
-        expect(wrapper.text()).toContain('Pick a payment method');
+        expect(wrapper.text()).toContain('Saved payment methods');
     });
 
     describe('payment method default', () => {

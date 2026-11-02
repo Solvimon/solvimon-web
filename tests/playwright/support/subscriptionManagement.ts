@@ -95,6 +95,7 @@ export function subscriptionManagement(page: Page) {
         summary: page.locator('.sv-subscription-management__summary'),
         planSelector: page.locator('.sv-subscription-management-form__plan'),
         paymentMethods: page.locator('.sv-subscription-management-form__payment-methods'),
+        summaryPlan: page.locator('.sv-subscription-management-summary__plan'),
         planChangeSummary: page.locator('.sv-subscription-management__plan-change-summary'),
         updateButton: page.locator('.sv-subscription-management__update'),
         cancelButton: page.locator('.sv-subscription-management__cancel'),

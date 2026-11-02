@@ -7,22 +7,10 @@ vi.mock('@solvimon/solvimon-ui', async () => {
     return createSolvimonUiMock();
 });
 
-const mountComponent = (
-    props: { planName?: string; changeType?: PricingPlanGroupChangeType } = {},
-) =>
-    mount(SubscriptionPlanChangeSummary, {
-        props: { planName: 'Pro', ...props },
-    });
+const mountComponent = (props: { changeType?: PricingPlanGroupChangeType } = {}) =>
+    mount(SubscriptionPlanChangeSummary, { props });
 
 describe('SubscriptionPlanChangeSummary', () => {
-    it('names the plan the subscription is moving to', () => {
-        const wrapper = mountComponent();
-
-        expect(wrapper.find('.sv-subscription-plan-change-summary__headline').text()).toBe(
-            'Moving to Pro',
-        );
-    });
-
     it('promises an immediate move for an immediate transition', () => {
         const wrapper = mountComponent({ changeType: 'IMMEDIATE_PRO_RATA' });
 

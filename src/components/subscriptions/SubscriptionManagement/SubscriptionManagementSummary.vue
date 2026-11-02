@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import {
-    Amount as AmountDisplay,
     Avatar,
     ErrorNotification,
     InvoicePreview,
@@ -55,14 +54,6 @@ const invoicePreviewMessages = computed(() => ({
                             {{ planName }}
                         </Typography>
                     </div>
-                    <Typography
-                        v-if="invoice && !isPending && !hasError"
-                        tag="span"
-                        variant="body-sm"
-                        no-spacing
-                    >
-                        <AmountDisplay :value="invoice.tax_summary.base_amount" />
-                    </Typography>
                 </div>
             </Section>
 

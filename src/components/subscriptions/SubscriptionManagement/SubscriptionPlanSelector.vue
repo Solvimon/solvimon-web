@@ -10,21 +10,32 @@ const pricingPlanId = defineModel<PricingPlan['id'] | undefined>('pricingPlanId'
 
 const { $t } = useIntl();
 
+const currentPlanLabel = computed(() =>
+    $t({
+        defaultMessage: 'Current plan',
+        id: 'subscription_management.plan_selector.current_plan',
+        description: 'Marks the plan a subscription already runs on',
+    }),
+);
+
+/**
+ * The group reads each option out by its label, which overrides what the option renders, so the
+ * current plan says so in its label too; on screen the chip says it.
+ */
 const options = computed(() =>
-    props.options.map(({ pricingPlanId: value, name, description }) => ({
-        label: name,
+    props.options.map(({ pricingPlanId: value, name, description, isCurrent }) => ({
+        label: isCurrent ? `${name} (${currentPlanLabel.value})` : name,
         value,
         ...(description && { description }),
     })),
 );
 
-/** The slot hands back the option it rendered, which carries no more than a label and a value. */
 const optionsByPlanId = computed(
     () => new Map(props.options.map((option) => [option.pricingPlanId, option])),
 );
 
-const isCurrentPlan = (value: string | boolean) =>
-    typeof value === 'string' && Boolean(optionsByPlanId.value.get(value)?.isCurrent);
+const getOption = (value: string | boolean) =>
+    typeof value === 'string' ? optionsByPlanId.value.get(value) : undefined;
 
 /** `RadioGroupExtended` reports `string | boolean`; only its string options are ever selectable. */
 const radioModelValue = computed<string | boolean | undefined>({
@@ -36,20 +47,16 @@ const radioModelValue = computed<string | boolean | undefined>({
 </script>
 
 <template>
-    <div class="sv-subscription-plan-selector flex flex-col gap-2">
-        <Typography tag="span" variant="body" weight="semibold" no-spacing>
-            {{
+    <div class="sv-subscription-plan-selector">
+        <RadioGroupExtended
+            v-model="radioModelValue"
+            :label="
                 $t({
                     defaultMessage: 'Pick your plan',
                     id: 'subscription_management.plan_selector.title',
                     description: 'Heading above the plans a subscription can be moved between',
                 })
-            }}
-        </Typography>
-
-        <RadioGroupExtended
-            v-model="radioModelValue"
-            class="sv-subscription-plan-selector__options [&>div[role=group]]:gap-2"
+            "
             :options="options"
             direction="column"
             :disabled="disabled"
@@ -59,23 +66,17 @@ const radioModelValue = computed<string | boolean | undefined>({
                 <Avatar :image-src="avatar" size="md" class="shrink-0 self-center" />
             </template>
 
-            <template #label="{ option, optionValue }">
+            <template #label="{ optionValue }">
                 <span class="flex flex-wrap items-center gap-2">
                     <Typography tag="span" variant="body" weight="semibold" no-spacing>
-                        {{ option.label }}
+                        {{ getOption(optionValue)?.name }}
                     </Typography>
                     <Chip
-                        v-if="isCurrentPlan(optionValue)"
+                        v-if="getOption(optionValue)?.isCurrent"
                         class="sv-subscription-plan-selector__current"
                         intent="brand"
                         size="xs"
-                        :content="
-                            $t({
-                                defaultMessage: 'Current plan',
-                                id: 'subscription_management.plan_selector.current_plan',
-                                description: 'Marks the plan a subscription already runs on',
-                            })
-                        "
+                        :content="currentPlanLabel"
                     />
                 </span>
             </template>

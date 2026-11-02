@@ -7,12 +7,10 @@ import {
     anInvoice,
     anInvoicePreview,
     aPaymentMethod,
-    aPricingPlan,
     aSubscription,
     collection,
     paymentMethodOptions,
     SUBSCRIPTION_ID,
-    UPGRADE_PRICING_PLAN_ID,
     type Json,
 } from './fixtures';
 
@@ -52,10 +50,6 @@ function defaultMocks(options: MountOptions): Partial<Record<EndpointName, Respo
             : { status: 404, body: { message: 'Not found' } },
         ...(options.planGroup
             ? {
-                  // Only reached where the group answers with member ids alone.
-                  pricingPlan: {
-                      body: aPricingPlan({ id: UPGRADE_PRICING_PLAN_ID, name: 'Scale plan' }),
-                  },
                   changeSubscriptionPlan: { status: 201, body: { id: 'ppsc_plan_change' } },
                   changePlanInvoicePreview: {
                       body: anInvoice({ total: options.planChangeTotal ?? '45.00' }),

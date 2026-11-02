@@ -1,24 +1,13 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import { Section, Typography, useIntl } from '@solvimon/solvimon-ui';
+import { Icon, Section, Typography, useIntl } from '@solvimon/solvimon-ui';
 import type { SubscriptionPlanChangeSummaryProps } from './SubscriptionPlanChangeSummary.types';
 
 const props = defineProps<SubscriptionPlanChangeSummaryProps>();
 
 const { $t } = useIntl();
 
-const headline = computed(() =>
-    $t(
-        {
-            defaultMessage: 'Moving to {plan}',
-            id: 'subscription_management.plan_change_summary.headline',
-            description: 'Names the plan a subscription is about to be moved to',
-        },
-        { plan: props.planName },
-    ),
-);
-
-/** When the move lands, in the group's own terms. What it costs is in the order summary below. */
+/** When the move lands, in the group's own terms. What it costs is in the totals below. */
 const timing = computed(() =>
     props.changeType === 'NEXT_BILLING_PERIOD'
         ? $t({
@@ -38,29 +27,14 @@ const timing = computed(() =>
 </script>
 
 <template>
-    <Section
-        class="sv-subscription-plan-change-summary"
-        :title="
-            $t({
-                defaultMessage: 'Your new plan',
-                id: 'subscription_management.plan_change_summary.title',
-                description: 'Title of the block explaining the plan change about to be committed',
-            })
-        "
-    >
-        <div class="grid grid-cols-1 gap-1">
+    <Section no-spacing class="sv-subscription-plan-change-summary">
+        <div class="flex flex-row gap-2 px-3 py-2">
+            <Icon icon="info" size="xs" class="mt-0.5 shrink-0 text-secondary" />
             <Typography
-                variant="body-sm"
-                weight="semibold"
+                variant="body-xs"
+                color="secondary"
                 tag="div"
-                class="sv-subscription-plan-change-summary__headline"
-            >
-                {{ headline }}
-            </Typography>
-            <Typography
-                variant="body-sm"
-                color="subtle"
-                tag="div"
+                no-spacing
                 class="sv-subscription-plan-change-summary__timing"
             >
                 {{ timing }}

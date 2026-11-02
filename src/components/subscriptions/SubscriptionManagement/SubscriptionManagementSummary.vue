@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import {
+    Amount as AmountDisplay,
+    Avatar,
     ErrorNotification,
     InvoicePreview,
     Section,
@@ -32,6 +34,9 @@ const invoicePreviewMessages = computed(() => ({
 <template>
     <Section
         class="sv-subscription-management-summary"
+        no-border
+        no-spacing
+        content-background="none"
         :title="
             $t({
                 defaultMessage: 'Order summary',
@@ -41,47 +46,73 @@ const invoicePreviewMessages = computed(() => ({
             })
         "
     >
-        <ErrorNotification
-            v-if="hasError"
-            class="sv-subscription-management-summary__error sv-error"
-            :title="
-                $t({
-                    defaultMessage: 'Unable to calculate the total. Please try again.',
-                    id: 'subscription_management.summary.error',
-                    description:
-                        'Error shown when the invoice preview for a subscription change cannot be loaded',
-                })
-            "
-        />
+        <div class="sv-subscription-management-summary__body grid grid-cols-1 gap-1">
+            <Section v-if="planName" no-spacing class="sv-subscription-management-summary__plan">
+                <div class="flex flex-row items-center gap-3 px-3 py-2">
+                    <Avatar v-if="avatar" :image-src="avatar" size="lg" class="my-1" />
+                    <div class="min-w-0 grow" :title="planName">
+                        <Typography variant="body" weight="semibold" no-spacing class="truncate">
+                            {{ planName }}
+                        </Typography>
+                    </div>
+                    <Typography
+                        v-if="invoice && !isPending && !hasError"
+                        tag="span"
+                        variant="body-sm"
+                        no-spacing
+                    >
+                        <AmountDisplay :value="invoice.tax_summary.base_amount" />
+                    </Typography>
+                </div>
+            </Section>
 
-        <Skeleton
-            v-else-if="isPending || !invoice"
-            variant="section"
-            class="sv-subscription-management-summary__skeleton min-h-[120px]"
-        >
-            <Typography
-                v-if="!isPending"
-                variant="body-sm"
-                color="subtle"
-                tag="div"
-                class="sv-subscription-management-summary__empty-state"
-                >{{
+            <slot />
+
+            <ErrorNotification
+                v-if="hasError"
+                class="sv-subscription-management-summary__error sv-error"
+                :title="
                     $t({
-                        defaultMessage: 'Select your plan to see what it costs.',
-                        id: 'subscription_management.summary.empty_state',
+                        defaultMessage: 'Unable to calculate the total. Please try again.',
+                        id: 'subscription_management.summary.error',
                         description:
-                            'Shown in the order summary before a plan has been picked to preview',
+                            'Error shown when the invoice preview for a subscription change cannot be loaded',
                     })
-                }}
-            </Typography>
-        </Skeleton>
-
-        <TranslationOverride v-else :messages="invoicePreviewMessages">
-            <InvoicePreview
-                class="sv-subscription-management-summary__invoice"
-                :invoice="invoice"
-                is-customer-facing
+                "
             />
-        </TranslationOverride>
+
+            <Skeleton
+                v-else-if="isPending || !invoice"
+                variant="section"
+                class="sv-subscription-management-summary__skeleton min-h-[120px]"
+            >
+                <Typography
+                    v-if="!isPending"
+                    variant="body-sm"
+                    color="subtle"
+                    tag="div"
+                    class="sv-subscription-management-summary__empty-state"
+                    >{{
+                        $t({
+                            defaultMessage: 'Select your plan to see what it costs.',
+                            id: 'subscription_management.summary.empty_state',
+                            description:
+                                'Shown in the order summary before a plan has been picked to preview',
+                        })
+                    }}
+                </Typography>
+            </Skeleton>
+
+            <Section v-else class="sv-subscription-management-summary__totals">
+                <TranslationOverride :messages="invoicePreviewMessages">
+                    <InvoicePreview
+                        class="sv-subscription-management-summary__invoice"
+                        variant="without-products"
+                        :invoice="invoice"
+                        is-customer-facing
+                    />
+                </TranslationOverride>
+            </Section>
+        </div>
     </Section>
 </template>

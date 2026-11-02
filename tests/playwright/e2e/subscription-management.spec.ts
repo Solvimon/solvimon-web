@@ -482,7 +482,7 @@ test.describe('Subscription management', () => {
 
             await ui.planSelector.getByText('Scale plan').click();
 
-            await expect(ui.planChangeSummary).toContainText('Moving to Scale plan');
+            await expect(ui.summaryPlan).toContainText('Scale plan');
             await expect(ui.planChangeSummary).toContainText('takes effect right away');
             await expect(ui.summary).toContainText('€72.50');
         });

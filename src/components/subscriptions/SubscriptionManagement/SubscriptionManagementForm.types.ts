@@ -28,6 +28,8 @@ export interface SubscriptionManagementFormProps {
     billingPeriod: BillingPeriod;
     currency?: Currency['currencyCode'];
     disabled?: boolean;
+    /** The merchant's emblem, shown on each plan. */
+    avatar?: string;
 }
 
 export interface SubscriptionManagementFormEmits {

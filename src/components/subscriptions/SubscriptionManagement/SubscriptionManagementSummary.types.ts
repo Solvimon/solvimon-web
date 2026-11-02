@@ -5,4 +5,7 @@ export interface SubscriptionManagementSummaryProps {
     invoice?: Invoice;
     isPending?: boolean;
     hasError?: boolean;
+    /** The plan the subscription runs on once the change is committed. */
+    planName?: string;
+    avatar?: string;
 }

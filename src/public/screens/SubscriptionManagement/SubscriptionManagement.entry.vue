@@ -20,6 +20,7 @@ defineProps<SolvimonSubscriptionManagementEntryProps>();
         <SubscriptionManagement
             :key="configuration.subscriptionId"
             :configuration="configuration"
+            :avatar="branding?.emblem?.public_url"
         />
     </EntryProvider>
 </template>

@@ -344,6 +344,11 @@ const isSummaryPending = computed(() =>
 const summaryError = computed(() =>
     isChangingPlan.value ? planChangePreviewError.value : previewError.value,
 );
+const summaryPlanName = computed(
+    () =>
+        selectedPlanOption.value?.name ??
+        activeScheduleInfo.value?.pricing_plan_version?.pricing_plan?.name,
+);
 
 /** One plan is no choice; the screen only offers the move when the group holds more than one. */
 const canChangePlan = computed(() => planOptions.value.length > 1);
@@ -734,6 +739,7 @@ const submitButtonAttrs = computed(() => {
                 :billing-period="billingPeriod"
                 :currency="subscription?.billing_currency"
                 :disabled="isUpdating"
+                :avatar="avatar"
                 @submit="handleUpdate"
                 @add-payment-method="openAddPaymentMethod"
             />
@@ -788,20 +794,21 @@ const submitButtonAttrs = computed(() => {
             </Button>
 
             <template v-else>
-                <SubscriptionPlanChangeSummary
-                    v-if="isChangingPlan && selectedPlanOption"
-                    class="sv-subscription-management__plan-change-summary"
-                    :plan-name="selectedPlanOption.name"
-                    :change-type="selectedPlanOption.changeType"
-                />
-
                 <SubscriptionManagementSummary
                     v-if="!isCustomized"
                     class="sv-subscription-management__summary"
                     :invoice="summaryInvoice"
                     :is-pending="isLoading || isSummaryPending"
                     :has-error="Boolean(summaryError)"
-                />
+                    :plan-name="summaryPlanName"
+                    :avatar="avatar"
+                >
+                    <SubscriptionPlanChangeSummary
+                        v-if="isChangingPlan && selectedPlanOption"
+                        class="sv-subscription-management__plan-change-summary"
+                        :change-type="selectedPlanOption.changeType"
+                    />
+                </SubscriptionManagementSummary>
 
                 <ErrorNotification
                     v-if="updateError"

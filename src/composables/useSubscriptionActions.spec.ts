@@ -1,4 +1,4 @@
-import { ref } from 'vue';
+import { nextTick, ref } from 'vue';
 import type { PricingPlanSubscriptionExpanded } from '@solvimon/solvimon-types';
 import { useSubscriptionActions } from './useSubscriptionActions';
 import { SUBSCRIPTION_CANCELLATION_TYPES } from '@/services/subscriptions';
@@ -162,6 +162,33 @@ describe('useSubscriptionActions', () => {
             const { isRenewable } = useSubscriptionActions({ subscription: ref(undefined) });
 
             expect(isRenewable.value).toBe(false);
+        });
+    });
+
+    describe('confirming', () => {
+        it('keeps what was confirmed once the modal closes', () => {
+            const { cancel, confirm, dismiss, confirmedVariant } = useSubscriptionActions({
+                subscription: ref(createSubscription()),
+            });
+
+            cancel();
+            confirm();
+            dismiss();
+
+            expect(confirmedVariant.value).toBe('CANCEL');
+        });
+
+        it('drops the last confirmation once the customer starts another', async () => {
+            const { cancel, renew, confirm, confirmedVariant } = useSubscriptionActions({
+                subscription: ref(createSubscription()),
+            });
+
+            cancel();
+            confirm();
+            renew();
+            await nextTick();
+
+            expect(confirmedVariant.value).toBeUndefined();
         });
     });
 

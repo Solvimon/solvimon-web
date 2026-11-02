@@ -1,4 +1,4 @@
-import { computed, ref, type ComputedRef, type Ref } from 'vue';
+import { computed, ref, watch, type ComputedRef, type Ref } from 'vue';
 import type { Pricing, PricingPlanSubscriptionExpanded } from '@solvimon/solvimon-types';
 import { useActionDispatchProvider } from '@/components/providers';
 import type { SubscriptionCancellationVariant } from '@/services/subscriptions';
@@ -24,6 +24,9 @@ export function useSubscriptionActions({
     isCancellable: ComputedRef<boolean>;
     isRenewable: ComputedRef<boolean>;
     pendingVariant: Ref<SubscriptionCancellationVariant | undefined>;
+    /** What the customer last confirmed, kept after the modal closes so the screen can say so. */
+    confirmedVariant: Ref<SubscriptionCancellationVariant | undefined>;
+    confirm: () => void;
     cancel: () => void;
     renew: () => void;
     dismiss: () => void;
@@ -43,6 +46,16 @@ export function useSubscriptionActions({
     );
 
     const pendingVariant = ref<SubscriptionCancellationVariant | undefined>();
+    const confirmedVariant = ref<SubscriptionCancellationVariant | undefined>();
+
+    // A second confirmation replaces the first rather than stacking.
+    watch(pendingVariant, (variant) => {
+        if (variant) confirmedVariant.value = undefined;
+    });
+
+    const confirm = () => {
+        confirmedVariant.value = pendingVariant.value;
+    };
 
     const cancel = () => {
         if (!subscription.value) return;
@@ -73,5 +86,15 @@ export function useSubscriptionActions({
         });
     };
 
-    return { isCancellable, isRenewable, pendingVariant, cancel, renew, dismiss, manage };
+    return {
+        isCancellable,
+        isRenewable,
+        pendingVariant,
+        confirmedVariant,
+        confirm,
+        cancel,
+        renew,
+        dismiss,
+        manage,
+    };
 }

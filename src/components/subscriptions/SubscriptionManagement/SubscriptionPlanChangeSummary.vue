@@ -7,7 +7,6 @@ const props = defineProps<SubscriptionPlanChangeSummaryProps>();
 
 const { $t } = useIntl();
 
-/** When the move lands, in the group's own terms. What it costs is in the totals below. */
 const timing = computed(() =>
     props.changeType === 'NEXT_BILLING_PERIOD'
         ? $t({

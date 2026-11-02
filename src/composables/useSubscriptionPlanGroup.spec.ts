@@ -1,12 +1,10 @@
 import type { PricingPlan, PricingPlanScheduleInfoExpanded } from '@solvimon/solvimon-types';
 import { useSubscriptionPlanGroup } from './useSubscriptionPlanGroup';
-import type { PricingPlanGroup } from '@/types/pricingPlanGroup';
+import type { PricingPlanGroup, PricingPlanGroupMember } from '@/types/pricingPlanGroup';
 import { ApiError } from '@/services/apiError';
 
-const { mockGetPricingPlanGroup, mockGetPricingPlan, mockWarn, mockError } = vi.hoisted(() => ({
+const { mockGetPricingPlanGroup, mockError } = vi.hoisted(() => ({
     mockGetPricingPlanGroup: vi.fn(),
-    mockGetPricingPlan: vi.fn(),
-    mockWarn: vi.fn(),
     mockError: vi.fn(),
 }));
 
@@ -16,244 +14,126 @@ vi.mock('@/services/subscriptions', () => ({
     }),
 }));
 
-vi.mock('@/services/pricingPlans', () => ({
-    createPricingPlansService: () => ({ getPricingPlan: mockGetPricingPlan }),
-}));
-
 vi.mock('@/components/providers', () => ({
-    useLogger: () => ({ error: mockError, warn: mockWarn, info: vi.fn(), debug: vi.fn() }),
+    useLogger: () => ({ error: mockError, warn: vi.fn(), info: vi.fn(), debug: vi.fn() }),
 }));
 
 const SUBSCRIPTION_ID = 'ppsu_1';
 
-const createScheduleInfo = ({ pricingPlanId = 'ppla_starter' }: { pricingPlanId?: string } = {}) =>
+const createScheduleInfo = (pricingPlanId = 'ppla_starter') =>
     ({
         id: 'ppsc_1',
         pricing_plan_version: {
+            pricing_plan_id: pricingPlanId,
             pricing_plan: { id: pricingPlanId, name: 'Starter' },
         },
     }) as unknown as PricingPlanScheduleInfoExpanded;
 
-const createGroup = (overrides: Partial<PricingPlanGroup> = {}): PricingPlanGroup =>
-    ({
-        object_type: 'PRICING_PLAN_GROUP',
-        id: 'ppgr_1',
-        reference: 'workspace-plans',
-        name: 'Workspace plans',
-        status: 'ACTIVE',
-        upgrade_type: 'IMMEDIATE_PRO_RATA',
-        downgrade_type: 'NEXT_BILLING_PERIOD',
-        cancellation_type: 'NEXT_BILLING_PERIOD',
-        pricing_plans: [
-            { pricing_plan_id: 'ppla_starter', order: 1 },
-            { pricing_plan_id: 'ppla_pro', order: 2 },
-        ],
-        ...overrides,
-    }) as PricingPlanGroup;
+const member = (id: string, order: number, name = id): PricingPlanGroupMember => ({
+    pricing_plan_id: id,
+    order,
+    pricing_plan: { id, name } as PricingPlan,
+});
+
+const createGroup = (overrides: Partial<PricingPlanGroup> = {}): PricingPlanGroup => ({
+    object_type: 'PRICING_PLAN_GROUP',
+    id: 'ppgr_1',
+    reference: 'workspace-plans',
+    name: 'Workspace plans',
+    status: 'ACTIVE',
+    upgrade_type: 'IMMEDIATE_PRO_RATA',
+    downgrade_type: 'NEXT_BILLING_PERIOD',
+    cancellation_type: 'NEXT_BILLING_PERIOD',
+    pricing_plans: [member('ppla_pro', 2, 'Pro plan'), member('ppla_starter', 1, 'Starter')],
+    ...overrides,
+});
+
+const loadOptions = async (scheduleInfo = createScheduleInfo()) => {
+    const planGroup = useSubscriptionPlanGroup();
+    await planGroup.load({ subscriptionId: SUBSCRIPTION_ID, scheduleInfo });
+    return planGroup;
+};
+
+const ids = (options: { pricingPlanId: string }[]) =>
+    options.map(({ pricingPlanId }) => pricingPlanId);
 
 describe('useSubscriptionPlanGroup', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         mockGetPricingPlanGroup.mockResolvedValue(createGroup());
-        mockGetPricingPlan.mockImplementation(({ pricingPlanId }: { pricingPlanId: string }) =>
-            Promise.resolve({ id: pricingPlanId, name: 'Pro' }),
-        );
     });
 
-    it('offers the plans of the group the current plan belongs to', async () => {
-        const { options, group, load } = useSubscriptionPlanGroup();
-
-        await load({ subscriptionId: SUBSCRIPTION_ID, scheduleInfo: createScheduleInfo() });
+    it('offers the plans of the group cheapest first, labelled by their expanded plans', async () => {
+        const { options, currentPricingPlanId } = await loadOptions();
 
         expect(mockGetPricingPlanGroup).toHaveBeenCalledWith({ id: SUBSCRIPTION_ID });
-        expect(group.value?.name).toBe('Workspace plans');
-        expect(options.value.map(({ pricingPlanId }) => pricingPlanId)).toEqual([
-            'ppla_starter',
-            'ppla_pro',
-        ]);
-    });
-
-    it('marks the plan the subscription runs on today', async () => {
-        const { options, currentPricingPlanId, load } = useSubscriptionPlanGroup();
-
-        await load({ subscriptionId: SUBSCRIPTION_ID, scheduleInfo: createScheduleInfo() });
-
         expect(currentPricingPlanId.value).toBe('ppla_starter');
-        expect(options.value.find(({ isCurrent }) => isCurrent)?.pricingPlanId).toBe(
-            'ppla_starter',
-        );
-    });
-
-    it('labels an option from the plan the response expanded, fetching nothing', async () => {
-        mockGetPricingPlanGroup.mockResolvedValue(
-            createGroup({
-                pricing_plans: [
-                    { pricing_plan_id: 'ppla_starter', order: 1 },
-                    {
-                        pricing_plan_id: 'ppla_pro',
-                        order: 2,
-                        pricing_plan: { id: 'ppla_pro', name: 'Pro plan' } as PricingPlan,
-                    },
-                ],
-            }),
-        );
-
-        const { options, load } = useSubscriptionPlanGroup();
-        await load({ subscriptionId: SUBSCRIPTION_ID, scheduleInfo: createScheduleInfo() });
-
-        expect(mockGetPricingPlan).not.toHaveBeenCalled();
-        expect(options.value.find(({ pricingPlanId }) => pricingPlanId === 'ppla_pro')?.name).toBe(
-            'Pro plan',
-        );
-    });
-
-    // The portal may answer with ids only, in which case each plan still has to be read.
-    it('falls back to fetching a member plan the response did not expand', async () => {
-        const { options, load } = useSubscriptionPlanGroup();
-
-        await load({ subscriptionId: SUBSCRIPTION_ID, scheduleInfo: createScheduleInfo() });
-
-        expect(mockGetPricingPlan).toHaveBeenCalledTimes(1);
-        expect(mockGetPricingPlan).toHaveBeenCalledWith({ pricingPlanId: 'ppla_pro' });
-        expect(options.value.find(({ isCurrent }) => isCurrent)?.name).toBe('Starter');
-    });
-
-    it('offers the plans cheapest first, whatever order the group lists them in', async () => {
-        mockGetPricingPlanGroup.mockResolvedValue(
-            createGroup({
-                pricing_plans: [
-                    { pricing_plan_id: 'ppla_pro', order: 2 },
-                    { pricing_plan_id: 'ppla_starter', order: 1 },
-                ],
-            }),
-        );
-
-        const { options, load } = useSubscriptionPlanGroup();
-        await load({ subscriptionId: SUBSCRIPTION_ID, scheduleInfo: createScheduleInfo() });
-
-        expect(options.value.map(({ pricingPlanId }) => pricingPlanId)).toEqual([
-            'ppla_starter',
-            'ppla_pro',
+        expect(options.value).toEqual([
+            { pricingPlanId: 'ppla_starter', name: 'Starter', isCurrent: true },
+            {
+                pricingPlanId: 'ppla_pro',
+                name: 'Pro plan',
+                isCurrent: false,
+                direction: 'UPGRADE',
+                changeType: 'IMMEDIATE_PRO_RATA',
+            },
         ]);
     });
 
-    describe('direction', () => {
-        it('reads a move up the order as an upgrade, timed as the group times upgrades', async () => {
-            const { options, load } = useSubscriptionPlanGroup();
+    it('reads a move down the order as a downgrade, timed as the group times downgrades', async () => {
+        const { options } = await loadOptions(createScheduleInfo('ppla_pro'));
 
-            await load({ subscriptionId: SUBSCRIPTION_ID, scheduleInfo: createScheduleInfo() });
-
-            expect(options.value.find(({ pricingPlanId }) => pricingPlanId === 'ppla_pro')).toEqual(
-                expect.objectContaining({
-                    direction: 'UPGRADE',
-                    changeType: 'IMMEDIATE_PRO_RATA',
-                }),
-            );
-        });
-
-        it('reads a move down the order as a downgrade', async () => {
-            const { options, load } = useSubscriptionPlanGroup();
-
-            await load({
-                subscriptionId: SUBSCRIPTION_ID,
-                scheduleInfo: createScheduleInfo({ pricingPlanId: 'ppla_pro' }),
-            });
-
-            expect(
-                options.value.find(({ pricingPlanId }) => pricingPlanId === 'ppla_starter'),
-            ).toEqual(
-                expect.objectContaining({
-                    direction: 'DOWNGRADE',
-                    changeType: 'NEXT_BILLING_PERIOD',
-                }),
-            );
-        });
-
-        it('leaves the current plan without a direction of its own', async () => {
-            const { options, load } = useSubscriptionPlanGroup();
-
-            await load({ subscriptionId: SUBSCRIPTION_ID, scheduleInfo: createScheduleInfo() });
-
-            const current = options.value.find(({ isCurrent }) => isCurrent);
-
-            expect(current?.direction).toBeUndefined();
-            expect(current?.changeType).toBeUndefined();
-        });
+        expect(options.value.find(({ pricingPlanId }) => pricingPlanId === 'ppla_starter')).toEqual(
+            expect.objectContaining({ direction: 'DOWNGRADE', changeType: 'NEXT_BILLING_PERIOD' }),
+        );
     });
 
-    it('leaves out a transition the merchant has closed off', async () => {
-        mockGetPricingPlanGroup.mockResolvedValue(createGroup({ upgrade_type: 'NOT_ALLOWED' }));
-
-        const { options, load } = useSubscriptionPlanGroup();
-        await load({ subscriptionId: SUBSCRIPTION_ID, scheduleInfo: createScheduleInfo() });
-
-        expect(options.value.map(({ pricingPlanId }) => pricingPlanId)).toEqual(['ppla_starter']);
-    });
-
-    it('offers nothing while the group is not active', async () => {
-        mockGetPricingPlanGroup.mockResolvedValue(createGroup({ status: 'DRAFT' }));
-
-        const { options, group, load } = useSubscriptionPlanGroup();
-        await load({ subscriptionId: SUBSCRIPTION_ID, scheduleInfo: createScheduleInfo() });
-
-        expect(options.value).toEqual([]);
-        expect(group.value).toBeUndefined();
-    });
-
-    it('offers nothing when the group does not hold the plan being billed', async () => {
+    it.each([
+        ['closed off', { upgrade_type: 'NOT_ALLOWED' }],
+        ['left untimed', { upgrade_type: null }],
+        [
+            'at the same place in the group',
+            { pricing_plans: [member('ppla_starter', 1), member('ppla_pro', 1)] },
+        ],
+    ] as const)('leaves out a move %s', async (_, overrides) => {
         mockGetPricingPlanGroup.mockResolvedValue(
-            createGroup({ pricing_plans: [{ pricing_plan_id: 'ppla_other', order: 1 }] }),
+            createGroup(overrides as Partial<PricingPlanGroup>),
         );
 
-        const { options, load } = useSubscriptionPlanGroup();
-        await load({ subscriptionId: SUBSCRIPTION_ID, scheduleInfo: createScheduleInfo() });
+        const { options } = await loadOptions();
+
+        expect(ids(options.value)).toEqual(['ppla_starter']);
+    });
+
+    it.each([
+        ['the group is not active', createGroup({ status: 'DRAFT' })],
+        [
+            'the group does not hold the plan being billed',
+            createGroup({ pricing_plans: [member('ppla_other', 1)] }),
+        ],
+    ])('offers nothing when %s', async (_, group) => {
+        mockGetPricingPlanGroup.mockResolvedValue(group);
+
+        const { options } = await loadOptions();
 
         expect(options.value).toEqual([]);
     });
 
-    it('offers nothing for a subscription whose plan belongs to no group', async () => {
+    it('offers nothing, and reports nothing, for a plan that belongs to no group', async () => {
         mockGetPricingPlanGroup.mockRejectedValue(new ApiError({ statusCode: 404 }));
 
-        const { options, error, load } = useSubscriptionPlanGroup();
-        await load({ subscriptionId: SUBSCRIPTION_ID, scheduleInfo: createScheduleInfo() });
+        const { options, error } = await loadOptions();
 
-        // The ordinary case for most subscriptions, so nothing is reported as a failure.
         expect(options.value).toEqual([]);
         expect(error.value).toBeUndefined();
         expect(mockError).not.toHaveBeenCalled();
-    });
-
-    it('asks for nothing while there is no schedule to read a plan off', async () => {
-        const { options, currentPricingPlanId, load } = useSubscriptionPlanGroup();
-
-        await load({ subscriptionId: SUBSCRIPTION_ID, scheduleInfo: undefined });
-
-        expect(mockGetPricingPlanGroup).not.toHaveBeenCalled();
-        expect(currentPricingPlanId.value).toBeUndefined();
-        expect(options.value).toEqual([]);
-    });
-
-    it('drops a member plan it cannot read and keeps offering the rest', async () => {
-        mockGetPricingPlan.mockRejectedValue(new Error('gone'));
-
-        const { options, load } = useSubscriptionPlanGroup();
-        await load({ subscriptionId: SUBSCRIPTION_ID, scheduleInfo: createScheduleInfo() });
-
-        expect(mockWarn).toHaveBeenCalledWith(
-            'PRICING_PLAN_GROUP_MEMBER_SKIPPED',
-            expect.any(String),
-            {},
-            expect.any(Error),
-        );
-        expect(options.value.map(({ pricingPlanId }) => pricingPlanId)).toEqual(['ppla_starter']);
     });
 
     it('reports a group that cannot be loaded and offers nothing', async () => {
         const failure = new Error('boom');
         mockGetPricingPlanGroup.mockRejectedValue(failure);
 
-        const { options, error, isPending, load } = useSubscriptionPlanGroup();
-        await load({ subscriptionId: SUBSCRIPTION_ID, scheduleInfo: createScheduleInfo() });
+        const { options, error, isPending } = await loadOptions();
 
         expect(mockError).toHaveBeenCalledWith(
             'PRICING_PLAN_GROUP_LOAD_FAILED',
@@ -266,19 +146,46 @@ describe('useSubscriptionPlanGroup', () => {
         expect(isPending.value).toBe(false);
     });
 
-    it('lets only the newest load write the options', async () => {
-        const slowGroup = createGroup({ name: 'Stale group' });
-        mockGetPricingPlanGroup.mockImplementationOnce(
-            () => new Promise((resolve) => setTimeout(() => resolve(slowGroup), 10)),
+    it('asks for nothing while there is no plan to move from', async () => {
+        const { options, currentPricingPlanId } = await loadOptions(
+            {} as PricingPlanScheduleInfoExpanded,
         );
 
-        const { group, load } = useSubscriptionPlanGroup();
+        expect(mockGetPricingPlanGroup).not.toHaveBeenCalled();
+        expect(currentPricingPlanId.value).toBeUndefined();
+        expect(options.value).toEqual([]);
+    });
+
+    it('lets only the newest load write the options, even one that has no plan to move from', async () => {
+        let resolveSlow: (group: PricingPlanGroup) => void = () => {};
+        mockGetPricingPlanGroup.mockImplementationOnce(
+            () => new Promise((resolve) => (resolveSlow = resolve)),
+        );
+
+        const { options, isPending, load } = useSubscriptionPlanGroup();
 
         const slow = load({ subscriptionId: SUBSCRIPTION_ID, scheduleInfo: createScheduleInfo() });
-        const fast = load({ subscriptionId: SUBSCRIPTION_ID, scheduleInfo: createScheduleInfo() });
+        await load({
+            subscriptionId: SUBSCRIPTION_ID,
+            scheduleInfo: {} as PricingPlanScheduleInfoExpanded,
+        });
+        resolveSlow(createGroup());
+        await slow;
 
-        await Promise.all([slow, fast]);
+        expect(options.value).toEqual([]);
+        expect(isPending.value).toBe(false);
+    });
 
-        expect(group.value?.name).toBe('Workspace plans');
+    it('keeps the options on screen while a reload is out', async () => {
+        const planGroup = await loadOptions();
+        mockGetPricingPlanGroup.mockImplementationOnce(() => new Promise(() => {}));
+
+        void planGroup.load({
+            subscriptionId: SUBSCRIPTION_ID,
+            scheduleInfo: createScheduleInfo(),
+        });
+
+        expect(ids(planGroup.options.value)).toEqual(['ppla_starter', 'ppla_pro']);
+        expect(planGroup.isPending.value).toBe(true);
     });
 });

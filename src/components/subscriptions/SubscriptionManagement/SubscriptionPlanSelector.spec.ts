@@ -8,11 +8,10 @@ vi.mock('@solvimon/solvimon-ui', async () => {
 });
 
 const options: SubscriptionPlanOption[] = [
-    { pricingPlanId: 'ppla_starter', name: 'Starter', order: 1, isCurrent: true },
+    { pricingPlanId: 'ppla_starter', name: 'Starter', isCurrent: true },
     {
         pricingPlanId: 'ppla_pro',
         name: 'Pro',
-        order: 2,
         isCurrent: false,
         direction: 'UPGRADE',
         changeType: 'IMMEDIATE_PRO_RATA',
@@ -43,10 +42,11 @@ describe('SubscriptionPlanSelector', () => {
         expect(wrapper.text()).toContain('Pro');
     });
 
-    it('heads the choice the way the design does', () => {
+    it('names the choice for assistive technology', () => {
         const wrapper = mountComponent();
 
-        expect(wrapper.text()).toContain('Pick your plan');
+        expect(wrapper.find('legend').text()).toContain('Pick your plan');
+        expect(wrapper.find('[role="group"]').attributes('aria-label')).toBe('Pick your plan');
     });
 
     it('describes a plan by its own description', () => {
@@ -63,6 +63,20 @@ describe('SubscriptionPlanSelector', () => {
 
             expect(wrapper.find('.sv-subscription-plan-selector__current').exists()).toBe(true);
             expect(wrapper.text()).toContain('Current plan');
+        });
+
+        // The option is read out by its label, which hides the chip from assistive technology.
+        it('is announced as the current plan', () => {
+            const wrapper = mountComponent();
+
+            expect(
+                wrapper
+                    .find('[data-testid="radio-group-item-ppla_starter"]')
+                    .attributes('aria-label'),
+            ).toBe('Starter (Current plan)');
+            expect(
+                wrapper.find('[data-testid="radio-group-item-ppla_pro"]').attributes('aria-label'),
+            ).toBe('Pro');
         });
 
         // One marker, on the plan being billed today — not on whichever plan is selected.

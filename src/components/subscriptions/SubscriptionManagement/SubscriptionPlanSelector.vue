@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import { Icon, RadioGroupExtended, Typography, useIntl } from '@solvimon/solvimon-ui';
+import { Avatar, Chip, RadioGroupExtended, Typography, useIntl } from '@solvimon/solvimon-ui';
 import type { PricingPlan } from '@solvimon/solvimon-types';
 import type { SubscriptionPlanSelectorProps } from './SubscriptionPlanSelector.types';
 
@@ -49,16 +49,35 @@ const radioModelValue = computed<string | boolean | undefined>({
 
         <RadioGroupExtended
             v-model="radioModelValue"
-            class="sv-subscription-plan-selector__options [&>div[role=group]]:gap-2 [&_label]:p-6"
+            class="sv-subscription-plan-selector__options [&>div[role=group]]:gap-2"
             :options="options"
             direction="column"
             :disabled="disabled"
             :show-radio="false"
         >
-            <template #label="{ option }">
-                <Typography tag="span" variant="heading-2" weight="semibold" no-spacing>
-                    {{ option.label }}
-                </Typography>
+            <template v-if="avatar" #prefix>
+                <Avatar :image-src="avatar" size="md" class="shrink-0 self-center" />
+            </template>
+
+            <template #label="{ option, optionValue }">
+                <span class="flex flex-wrap items-center gap-2">
+                    <Typography tag="span" variant="body" weight="semibold" no-spacing>
+                        {{ option.label }}
+                    </Typography>
+                    <Chip
+                        v-if="isCurrentPlan(optionValue)"
+                        class="sv-subscription-plan-selector__current"
+                        intent="brand"
+                        size="xs"
+                        :content="
+                            $t({
+                                defaultMessage: 'Current plan',
+                                id: 'subscription_management.plan_selector.current_plan',
+                                description: 'Marks the plan a subscription already runs on',
+                            })
+                        "
+                    />
+                </span>
             </template>
 
             <template #description="{ option }">
@@ -71,30 +90,6 @@ const radioModelValue = computed<string | boolean | undefined>({
                 >
                     {{ option.description }}
                 </Typography>
-            </template>
-
-            <template #suffix="{ optionValue }">
-                <div
-                    v-if="isCurrentPlan(optionValue)"
-                    class="sv-subscription-plan-selector__current flex shrink-0 items-center gap-1 rounded border border-gray-200 bg-white px-3 py-2 text-primary-600"
-                >
-                    <Icon icon="check" size="xs" />
-                    <Typography
-                        tag="span"
-                        variant="body-xs"
-                        weight="semibold"
-                        color="inherit"
-                        no-spacing
-                    >
-                        {{
-                            $t({
-                                defaultMessage: 'Current subscription',
-                                id: 'subscription_management.plan_selector.current',
-                                description: 'Marks the plan a subscription already runs on',
-                            })
-                        }}
-                    </Typography>
-                </div>
             </template>
         </RadioGroupExtended>
     </div>

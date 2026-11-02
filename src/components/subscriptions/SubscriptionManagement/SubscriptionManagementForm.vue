@@ -89,6 +89,7 @@ watch(
                     class="sv-subscription-management-form__plan"
                     :options="planOptions ?? []"
                     :disabled="disabled"
+                    :avatar="avatar"
                 />
 
                 <div>
@@ -118,8 +119,8 @@ watch(
                 :disabled="disabled"
                 :label="
                     $t({
-                        defaultMessage: 'Pick a payment method',
-                        id: 'subscription_management.payment_method_selector.label',
+                        defaultMessage: 'Saved payment methods',
+                        id: 'subscription_management.payment_method_selector.saved_label',
                         description:
                             'Label above the payment method that pays for the subscription change',
                     })

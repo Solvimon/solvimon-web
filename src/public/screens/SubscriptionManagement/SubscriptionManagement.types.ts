@@ -12,4 +12,6 @@ export interface SubscriptionManagementConfiguration {
 
 export interface SubscriptionManagementProps {
     configuration: SubscriptionManagementConfiguration;
+    /** The merchant's emblem, which the entry takes from the branding. */
+    avatar?: string;
 }

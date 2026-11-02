@@ -1,10 +1,6 @@
 import type { PricingPlan } from '@solvimon/solvimon-types';
 
-/**
- * The `PricingPlanGroup` resource (MD-4800): the plans a subscription may move between, plus the
- * rules for when such a move takes effect. Local to this package until
- * `@solvimon/solvimon-types` ships it.
- */
+/** Local to this package until `@solvimon/solvimon-types` ships the pricing plan group. */
 export type PricingPlanGroupChangeType =
     | 'IMMEDIATE'
     | 'IMMEDIATE_PRO_RATA'
@@ -15,26 +11,24 @@ export type PricingPlanGroupStatus = 'DRAFT' | 'ACTIVE' | 'DEPRECATED' | 'ARCHIV
 
 export interface PricingPlanGroupMember {
     pricing_plan_id: PricingPlan['id'];
-    /** Where the plan sits in the group. A higher order is an upgrade of a lower one. */
+    /** A higher order is an upgrade of a lower one. */
     order: number;
-    /** Only on an expanded response; the plan is fetched by id when it is absent. */
-    pricing_plan?: PricingPlan;
+    /** Only on an expanded response. */
+    pricing_plan?: PricingPlan | null;
 }
 
 export interface PricingPlanGroup {
     object_type: 'PRICING_PLAN_GROUP';
     id: string;
     reference: string;
-    name?: string;
-    /** Moving between member plans is only offered while the group is `ACTIVE`. */
-    status: PricingPlanGroupStatus;
-    upgrade_type: PricingPlanGroupChangeType;
-    downgrade_type: PricingPlanGroupChangeType;
-    cancellation_type: PricingPlanGroupChangeType;
-    pricing_plans?: PricingPlanGroupMember[];
+    name?: string | null;
+    status: PricingPlanGroupStatus | null;
+    upgrade_type: PricingPlanGroupChangeType | null;
+    downgrade_type: PricingPlanGroupChangeType | null;
+    cancellation_type: PricingPlanGroupChangeType | null;
+    pricing_plans?: PricingPlanGroupMember[] | null;
     created_at?: string;
     updated_at?: string;
 }
 
-/** Which way a move between two member plans goes, read off their order within the group. */
 export type PricingPlanChangeDirection = 'UPGRADE' | 'DOWNGRADE';

@@ -213,7 +213,6 @@ export function aPricingPlanGroup({
         { pricing_plan_id: PRICING_PLAN_ID, order: 1 },
         { pricing_plan_id: UPGRADE_PRICING_PLAN_ID, order: 2 },
     ],
-    expanded = true,
 }: {
     id?: string;
     name?: string;
@@ -221,8 +220,6 @@ export function aPricingPlanGroup({
     upgradeType?: string;
     downgradeType?: string;
     members?: { pricing_plan_id: string; order: number }[];
-    /** How the portal answers `expand[]=ALL`: with each member's plan, or with ids alone. */
-    expanded?: boolean;
 } = {}): Json {
     return {
         object_type: 'PRICING_PLAN_GROUP',
@@ -233,15 +230,13 @@ export function aPricingPlanGroup({
         upgrade_type: upgradeType,
         downgrade_type: downgradeType,
         cancellation_type: 'NEXT_BILLING_PERIOD',
-        pricing_plans: expanded
-            ? members.map((member) => ({
-                  ...member,
-                  pricing_plan: aPricingPlan({
-                      id: member.pricing_plan_id,
-                      name: member.pricing_plan_id === PRICING_PLAN_ID ? 'Pro plan' : 'Scale plan',
-                  }),
-              }))
-            : members,
+        pricing_plans: members.map((member) => ({
+            ...member,
+            pricing_plan: aPricingPlan({
+                id: member.pricing_plan_id,
+                name: member.pricing_plan_id === PRICING_PLAN_ID ? 'Pro plan' : 'Scale plan',
+            }),
+        })),
     };
 }
 

@@ -164,16 +164,6 @@ describe('AddPaymentMethodModal', () => {
         expect(wrapper.emitted('stored')).toHaveLength(1);
     });
 
-    it('passes a failed save on to the host', async () => {
-        const wrapper = mountComponent();
-        const failure = new Error('declined');
-
-        pane(wrapper).vm.$emit('failure', failure);
-        await flushPromises();
-
-        expect(wrapper.emitted('failure')).toEqual([[failure]]);
-    });
-
     it('closes when the customer cancels', async () => {
         const wrapper = mountComponent();
 

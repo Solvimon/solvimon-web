@@ -509,7 +509,6 @@ The SDK emits structured log entries via the [`onLog`](#error-logging) callback.
 | `ON_DEMAND_CHARGE_REFUSED`           | The on-demand order was refused or its payment did not go through                                            |
 | `PAYMENT_INTEGRATION_NOT_RENDERABLE` | No Adyen payment methods to offer                                                                            |
 | `PAYMENT_OUTCOME_UNCONFIRMED`        | The payment outcome could not be confirmed yet                                                               |
-| `PRICING_PLAN_GROUP_MEMBER_SKIPPED`  | Skipped a pricing plan group member that could not be loaded                                                 |
 | `PROMOTION_CODE_REJECTED`            | The promotion code was not accepted                                                                          |
 | `RECURRING_AMOUNT_UNRESOLVED`        | Could not tell the recurring part of the invoice from the one-off part; the mandate states the invoice total |
 | `REQUEST_FAILED`                     | Request failed with an expected status                                                                       |

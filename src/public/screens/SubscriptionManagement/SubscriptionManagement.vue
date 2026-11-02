@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed, defineAsyncComponent, ref, watch } from 'vue';
 import {
-    Alert,
     Button,
     ErrorNotification,
     Typography,
@@ -35,6 +34,7 @@ import {
     createSubscriptionsService,
     type SubscriptionCancellationVariant,
 } from '@/services/subscriptions';
+import SubscriptionCancellationSuccess from '@/components/subscriptions/SubscriptionCancellationSuccess/SubscriptionCancellationSuccess.vue';
 import SecurePaymentsKPI from '@/components/payments/SecurePaymentsKPI/SecurePaymentsKPI.vue';
 import SubscriptionManagementForm from '@/components/subscriptions/SubscriptionManagement/SubscriptionManagementForm.vue';
 import SubscriptionManagementSummary from '@/components/subscriptions/SubscriptionManagement/SubscriptionManagementSummary.vue';
@@ -112,6 +112,17 @@ const { isLoading } = useLoadInitialData(
     fetchPaymentMethodOptions({ customerId: portal.value.customer_id }),
 );
 
+/** A failed reload keeps the subscription on screen; only a failed first load replaces it. */
+const refreshSubscription = () =>
+    fetchSubscription().catch((error: unknown) => {
+        logger.error(
+            'SUBSCRIPTION_LOAD_FAILED',
+            'Failed to reload the subscription after it changed',
+            {},
+            error,
+        );
+    });
+
 /**
  * The stored methods the change can be paid with: any the API can charge. The API charges the
  * subscription's own method, so picking another links it to the subscription first.
@@ -128,7 +139,6 @@ const hasExpiredPaymentMethod = computed(() =>
     ),
 );
 
-/** Upgrades are bought on the schedule being billed now, so that is where the group is looked up. */
 const activeScheduleInfo = computed(() =>
     getActiveDefaultScheduleInfo(subscription.value?.pricing_plan_schedule_infos ?? []),
 );
@@ -214,6 +224,9 @@ const isPaymentMethodOffered = computed(() =>
 
 const isAddingPaymentMethod = ref(false);
 
+/** A subscription that accepts no gateway has no way to store a method for it either. */
+const canAddPaymentMethod = computed(() => subscription.value?.payment_acceptor_ids?.length !== 0);
+
 /** Reloaded, so the form picks up the stored method and selects it. */
 const handlePaymentMethodStored = () => {
     isAddingPaymentMethod.value = false;
@@ -248,15 +261,23 @@ const hasChange = computed(() => {
     return selected.size !== scheduled.size || [...selected].some((id) => !scheduled.has(id));
 });
 
-/**
- * The plans the subscription may move to (MD-5064): the group its current plan belongs to, which
- * is only there for plans a merchant has grouped.
- */
 const {
     options: planOptions,
     currentPricingPlanId,
+    isPending: isPlanGroupPending,
+    error: planGroupError,
     load: loadPlanGroup,
 } = useSubscriptionPlanGroup();
+
+/**
+ * Whether the screen knows yet if the plan can be changed. Only the first load holds the screen
+ * back; a reload keeps what is on screen until it answers.
+ */
+const hasLoadedPlanGroup = ref(false);
+
+watch(isPlanGroupPending, (pending, wasPending) => {
+    if (wasPending && !pending) hasLoadedPlanGroup.value = true;
+});
 
 watch(
     activeScheduleInfo,
@@ -271,7 +292,6 @@ watch(
 
 const pricingPlanId = ref<PricingPlan['id'] | undefined>();
 
-/** The choice opens on the plan being billed today, so staying put is the default. */
 watch(
     currentPricingPlanId,
     (planId) => {
@@ -280,12 +300,10 @@ watch(
     { immediate: true },
 );
 
-/** The plan the customer picked, as the group describes it — it carries the timing of the move. */
 const selectedPlanOption = computed(() =>
     planOptions.value.find((option) => option.pricingPlanId === pricingPlanId.value),
 );
 
-/** A move only happens once the customer picks a plan other than the one they are on. */
 const isChangingPlan = computed(() =>
     Boolean(selectedPlanOption.value && !selectedPlanOption.value.isCurrent),
 );
@@ -327,7 +345,6 @@ const {
     reset: resetPlanChangePreview,
 } = useSubscriptionPlanChangePreview();
 
-/** Prices the plan picked, and drops that price once the customer is back on their own plan. */
 watch(
     [subscription, pricingPlanId, isChangingPlan, isCustomized],
     ([loadedSubscription, planId, isPlanChange, customized]) => {
@@ -344,7 +361,6 @@ watch(
     { immediate: true },
 );
 
-/** The price of what is selected now: the move to another plan, or the pricings on this one. */
 const summaryInvoice = computed(() =>
     isChangingPlan.value ? planChangeInvoice.value : previewInvoice.value,
 );
@@ -360,13 +376,8 @@ const summaryPlanName = computed(
         activeScheduleInfo.value?.pricing_plan_version?.pricing_plan?.name,
 );
 
-/** One plan is no choice; the screen only offers the move when the group holds more than one. */
 const canChangePlan = computed(() => planOptions.value.length > 1);
 
-/**
- * Names the move by the plan's place in the group. Staying on the current plan with nothing changed
- * says so; a change to its pricings is an update.
- */
 const submitLabel = computed<string>(() => {
     if (isChangingPlan.value && selectedPlanOption.value?.direction === 'UPGRADE') {
         return $t({
@@ -457,7 +468,11 @@ const handleUpdate = async () => {
         });
 
     // The change is charged to the subscription's own method, so another one is linked first.
-    if (paymentMethodId.value && paymentMethodId.value !== subscription.value.payment_method_id) {
+    const isLinkingPaymentMethod = Boolean(
+        paymentMethodId.value && paymentMethodId.value !== subscription.value.payment_method_id,
+    );
+
+    if (paymentMethodId.value && isLinkingPaymentMethod) {
         try {
             await setSubscriptionPaymentMethod({
                 id: subscription.value.id,
@@ -478,7 +493,6 @@ const handleUpdate = async () => {
 
     try {
         if (isChangingPlan.value && pricingPlanId.value) {
-            // The group decides when the move lands, so nothing about its timing is sent along.
             await changeSubscriptionPlan({
                 id: subscription.value.id,
                 pricingPlanId: pricingPlanId.value,
@@ -512,6 +526,10 @@ const handleUpdate = async () => {
             );
         }
 
+        // The method stays linked whatever became of the change, so the subscription on screen has to
+        // show it pays with it now.
+        if (isLinkingPaymentMethod) void refreshSubscription();
+
         if (isOutcomeUnknownAfterError(error)) {
             isUpdateUnconfirmed.value = true;
             updateError.value = $t({
@@ -540,6 +558,8 @@ const {
     isCancellable,
     isRenewable,
     pendingVariant,
+    confirmedVariant,
+    confirm: confirmCancellation,
     cancel,
     renew,
     dismiss: handleDismissCancellation,
@@ -575,45 +595,15 @@ const requestCancellation = (variant: SubscriptionCancellationVariant) => {
     else cancel();
 };
 
-/** The method the subscription is charged to, which the modal names in its summary. */
 const subscriptionPaymentMethod = computed(() =>
     paymentMethods.value.find(({ id }) => id === subscription.value?.payment_method_id),
 );
 
-/**
- * What the customer just did, kept after the modal closes so the screen can confirm it. Cleared when
- * either button is used again, so a second confirmation replaces the first rather than stacking.
- */
-const confirmedVariant = ref<SubscriptionCancellationVariant | undefined>();
-
-watch(pendingVariant, (variant) => {
-    if (variant) confirmedVariant.value = undefined;
-});
-
 /** The subscription on screen is stale once it is cancelled or renewed, which is what flips the button. */
 const handleCancellationConfirmed = () => {
-    confirmedVariant.value = pendingVariant.value;
-    void fetchSubscription();
+    confirmCancellation();
+    void refreshSubscription();
 };
-
-const cancellationSuccessMessage = computed<string | undefined>(() => {
-    if (!confirmedVariant.value) return undefined;
-
-    return confirmedVariant.value === 'RENEW'
-        ? $t({
-              defaultMessage: 'Your subscription has been renewed.',
-              id: 'subscription_management.renew_success',
-              description:
-                  'Confirmation shown on the manage subscription screen after a cancellation has been undone',
-          })
-        : $t({
-              defaultMessage:
-                  'Your subscription has been cancelled. You keep access until the end of the billing period.',
-              id: 'subscription_management.cancel_success',
-              description:
-                  'Confirmation shown on the manage subscription screen after a subscription has been cancelled',
-          });
-});
 
 /** What the content column shows, in order of precedence. */
 const contentState = computed<
@@ -621,7 +611,9 @@ const contentState = computed<
 >(() => {
     if (isUpdated.value) return 'updated';
     if (isLoading.value) return 'loading';
-    if (subscriptionError.value) return 'load-error';
+    if (!subscription.value && subscriptionError.value) return 'load-error';
+    if (isPlanGroupPending.value && !hasLoadedPlanGroup.value) return 'loading';
+    if (!pricingGroup.value && planGroupError.value) return 'load-error';
     if ((pricingGroup.value || canChangePlan.value) && isCustomized.value) return 'customized';
     if ((pricingGroup.value || canChangePlan.value) && billingPeriod.value) return 'form';
     return 'empty';
@@ -663,9 +655,9 @@ const submitButtonAttrs = computed(() => {
                         {{
                             $t({
                                 defaultMessage: 'Renew subscription',
-                                id: 'subscription_management.renew_button.label',
+                                id: 'subscription_details.renew_button.label',
                                 description:
-                                    'Label of the button on the manage subscription screen that undoes a pending cancellation',
+                                    'Label for the renew subscription button on the subscription details page',
                             })
                         }}
                     </Button>
@@ -680,9 +672,9 @@ const submitButtonAttrs = computed(() => {
                         {{
                             $t({
                                 defaultMessage: 'Cancel subscription',
-                                id: 'subscription_management.cancel_button.label',
+                                id: 'subscription_details.cancel_button.label',
                                 description:
-                                    'Label of the button on the manage subscription screen that cancels the subscription',
+                                    'Label for the cancel subscription button on the subscription details page',
                             })
                         }}
                     </Button>
@@ -691,11 +683,10 @@ const submitButtonAttrs = computed(() => {
         </template>
 
         <template #content>
-            <Alert
-                v-if="cancellationSuccessMessage"
+            <SubscriptionCancellationSuccess
+                v-if="confirmedVariant"
                 class="sv-subscription-management__cancellation-success"
-                type="success"
-                :title="cancellationSuccessMessage"
+                :variant="confirmedVariant"
             />
 
             <SubscriptionManagementSuccess
@@ -758,7 +749,7 @@ const submitButtonAttrs = computed(() => {
                 v-model:payment-method-id="paymentMethodId"
                 v-model:pricing-plan-id="pricingPlanId"
                 class="sv-subscription-management__form"
-                :pricing-group="pricingGroup"
+                :pricing-group="isChangingPlan ? undefined : pricingGroup"
                 :plan-options="planOptions"
                 :payment-methods="chargeablePaymentMethods"
                 :has-expired-payment-method="hasExpiredPaymentMethod"
@@ -766,6 +757,7 @@ const submitButtonAttrs = computed(() => {
                 :currency="subscription?.billing_currency"
                 :disabled="isUpdating || isUpdateUnconfirmed"
                 :avatar="avatar"
+                :can-add-payment-method="canAddPaymentMethod"
                 @submit="handleUpdate"
                 @add-payment-method="openAddPaymentMethod"
             />

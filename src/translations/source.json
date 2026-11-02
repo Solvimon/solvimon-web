@@ -1499,14 +1499,6 @@
     "defaultMessage": "Add a payment method to pay for your subscription.",
     "description": "Shown under the title of the modal that stores a new payment method on the manage subscription screen"
   },
-  "subscription_management.cancel_button.label": {
-    "defaultMessage": "Cancel subscription",
-    "description": "Label of the button on the manage subscription screen that cancels the subscription"
-  },
-  "subscription_management.cancel_success": {
-    "defaultMessage": "Your subscription has been cancelled. You keep access until the end of the billing period.",
-    "description": "Confirmation shown on the manage subscription screen after a subscription has been cancelled"
-  },
   "subscription_management.customized_pricing.message": {
     "defaultMessage": "Please contact support to change it.",
     "description": "Message shown on the manage subscription screen when the subscription has pricing customized for it, which cannot be changed here"
@@ -1554,14 +1546,6 @@
   "subscription_management.plan_selector.title": {
     "defaultMessage": "Pick your plan",
     "description": "Heading above the plans a subscription can be moved between"
-  },
-  "subscription_management.renew_button.label": {
-    "defaultMessage": "Renew subscription",
-    "description": "Label of the button on the manage subscription screen that undoes a pending cancellation"
-  },
-  "subscription_management.renew_success": {
-    "defaultMessage": "Your subscription has been renewed.",
-    "description": "Confirmation shown on the manage subscription screen after a cancellation has been undone"
   },
   "subscription_management.success.message": {
     "defaultMessage": "Your {subject} has been changed. Please be aware that it can take some time to reflect this change in your subscription.",

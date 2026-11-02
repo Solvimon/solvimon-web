@@ -9,34 +9,22 @@ import type { SubscriptionPlanOption } from '@/composables/useSubscriptionPlanGr
 export interface SubscriptionManagementFormProps {
     /** Lets a submit button outside the form name it with its `form` attribute. */
     id?: string;
-    /**
-     * The group being changed. Its pricings are the options the customer picks between. Absent for
-     * a plan that offers nothing to customise, which a plan change on its own does not need.
-     */
+    /** Absent when the plan offers nothing to customise, or while another plan is picked. */
     pricingGroup?: PricingGroupExtended;
-    /**
-     * The plans of the group the current plan belongs to, cheapest first. Fewer than two means
-     * there is nothing to move to and the plan choice is left out.
-     */
+    /** Cheapest first. Fewer than two leaves the plan choice out. */
     planOptions?: SubscriptionPlanOption[];
-    /**
-     * The stored methods the change can be paid with. Picking another than the subscription's own
-     * links it to the subscription, so it pays this change and what is billed after it.
-     */
     paymentMethods?: PaymentMethod[];
-    /** The subscription's own method is a card that has expired, which is why none is on offer. */
+    /** The subscription's own method is a card that has expired, so it is not on offer. */
     hasExpiredPaymentMethod?: boolean;
-    /** Drives how each pricing's amount is rendered on its option. */
     billingPeriod: BillingPeriod;
     currency?: Currency['currencyCode'];
     disabled?: boolean;
-    /** The merchant's emblem, shown on each plan. */
     avatar?: string;
+    /** @default true */
+    canAddPaymentMethod?: boolean;
 }
 
 export interface SubscriptionManagementFormEmits {
-    /** The customer submitted the form, from its own fields or a button tied to it by `form`. */
     (e: 'submit'): void;
-    /** The customer wants to pay with a method they have not stored yet. */
     (e: 'add-payment-method'): void;
 }

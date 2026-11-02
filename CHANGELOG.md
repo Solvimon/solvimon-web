@@ -22,7 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Every screen and component downloads about 1.5 kB (gzip) less up front: the stylesheet they share no longer carries the classes of `@solvimon/solvimon-ui` components that no element renders, such as its editor and PDF components.
 - The checkout screen shows the terms and conditions in the order summary column, centred under the secure payments line next to the pay button, instead of in a footer below both columns.
 - `ContentWithAsideLayout` no longer takes a `footer` slot; the checkout terms were its only content.
-- `@solvimon/solvimon-ui` is 1.22.0 and `@solvimon/solvimon-types` 1.10.0. Tab now moves through the fields of a modal instead of jumping back to its close button.
+- `@solvimon/solvimon-ui` is 1.23.1 and `@solvimon/solvimon-types` 1.10.0. Tab now moves through the fields of a modal instead of jumping back to its close button, and an amount in an invoice preview or order summary no longer wraps, as a credit such as "-€48.33" did after its minus sign. The ui's English messages are no longer bundled with every element.
 - The buttons in the customer overview's section headers (**View all**, **Edit** and **Manage**) are extra small, a step down from small.
 - Screens and components with a tooltip, a dropdown or a select download about 8 kB (gzip) less up front. The code that positions those popups loads the first time one opens, starting as soon as the pointer or focus reaches what opens it.
 - Every screen and component downloads about 4.5 kB (gzip) less up front: the English labels of `@solvimon/solvimon-ui` components come with the components that show them, instead of all of them with every element. The labels themselves are unchanged.

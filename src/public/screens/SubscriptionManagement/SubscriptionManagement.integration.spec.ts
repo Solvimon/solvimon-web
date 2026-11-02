@@ -188,8 +188,21 @@ vi.mock(
     () => ({
         default: defineComponent({
             name: 'SubscriptionManagementSummary',
-            props: { invoice: Object, isPending: Boolean, hasError: Boolean },
-            setup: () => () => h('div', { class: 'sv-subscription-management-summary-stub' }),
+            props: {
+                invoice: Object,
+                isPending: Boolean,
+                hasError: Boolean,
+                planName: String,
+                avatar: String,
+            },
+            setup:
+                (_, { slots }) =>
+                () =>
+                    h(
+                        'div',
+                        { class: 'sv-subscription-management-summary-stub' },
+                        slots.default?.(),
+                    ),
         }),
     }),
 );

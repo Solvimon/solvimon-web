@@ -34,7 +34,10 @@ const subtotalOf = (groups: InvoiceGroup[]): Amount | undefined =>
 
 <template>
     <!-- invoice groups preview -->
-    <div v-if="variant !== 'products-inline'" class="sv-order-summary__items">
+    <div
+        v-if="variant !== 'products-inline'"
+        class="sv-order-summary__items grid grid-cols-1 gap-1"
+    >
         <template v-if="hasBothRecurrences">
             <div
                 v-for="section in [

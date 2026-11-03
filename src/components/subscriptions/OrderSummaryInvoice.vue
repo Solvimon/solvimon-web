@@ -1,11 +1,9 @@
 <script setup lang="ts">
 import {
     Amount as AmountDisplay,
-    Chip,
     Divider,
-    formatAmount,
-    Icon,
     InvoicePreview,
+    InvoicePricingClauseChip,
     Section,
     Typography,
     useIntl,
@@ -27,39 +25,8 @@ const discountsUnderAProduct = computed(
     () => new Set(groupsWithDiscounts.value.flatMap(([, ...discounts]) => discounts)),
 );
 
-const getDiscountLabel = (group: InvoiceGroup): string => {
-    const band = group.lines?.find(({ type }) => type === 'DISCOUNT')?.details?.band;
-
-    if (band?.percentage) {
-        return $t(
-            {
-                defaultMessage: '{percentage}% discount',
-                id: 'checkout.order_summary_block.discount_chip.percentage',
-                description:
-                    'Labels a discount listed right under the product it is on, where {percentage} is the percentage (number only)',
-            },
-            { percentage: band.percentage },
-        );
-    }
-
-    if (band?.amount) {
-        return $t(
-            {
-                defaultMessage: '{amount} discount',
-                id: 'checkout.order_summary_block.discount_chip.amount',
-                description:
-                    'Labels a discount listed right under the product it is on, where {amount} is the amount taken off',
-            },
-            { amount: formatAmount(band.amount) },
-        );
-    }
-
-    return $t({
-        defaultMessage: 'Discount',
-        id: 'checkout.order_summary_block.discount_chip',
-        description: 'Labels a discount listed right under the product it is on',
-    });
-};
+const getDiscountBand = (group: InvoiceGroup) =>
+    group.lines?.find(({ type }) => type === 'DISCOUNT')?.details?.band;
 
 // An invoice of one kind reads as it always has: a heading over every row explains nothing.
 const hasBothRecurrences = computed(
@@ -119,12 +86,12 @@ const subtotalOf = (groups: InvoiceGroup[]): Amount | undefined =>
                                 variant="body-xs"
                                 >{{ getInvoiceGroupName(group) }}</Typography
                             >
-                            <Chip v-else class="sv-order-summary__discount">
-                                <div class="flex items-center gap-2">
-                                    <Icon icon="south_east" size="xs" />
-                                    <span>{{ getDiscountLabel(group) }}</span>
-                                </div>
-                            </Chip>
+                            <InvoicePricingClauseChip
+                                v-else
+                                class="sv-order-summary__discount"
+                                clause-type="DISCOUNT"
+                                :price-details-band="getDiscountBand(group)"
+                            />
                         </div>
                         <Typography tag="span" variant="body-xs">
                             <AmountDisplay :value="group.amount_excluding_tax" />
@@ -184,12 +151,12 @@ const subtotalOf = (groups: InvoiceGroup[]): Amount | undefined =>
                                 variant="body-xs"
                                 >{{ getInvoiceGroupName(group) }}</Typography
                             >
-                            <Chip v-else class="sv-order-summary__discount">
-                                <div class="flex items-center gap-2">
-                                    <Icon icon="south_east" size="xs" />
-                                    <span>{{ getDiscountLabel(group) }}</span>
-                                </div>
-                            </Chip>
+                            <InvoicePricingClauseChip
+                                v-else
+                                class="sv-order-summary__discount"
+                                clause-type="DISCOUNT"
+                                :price-details-band="getDiscountBand(group)"
+                            />
                         </div>
                         <Typography tag="span" variant="body-xs">
                             <AmountDisplay :value="group.amount_excluding_tax" />

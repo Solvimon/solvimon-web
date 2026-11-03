@@ -462,6 +462,33 @@ describe('getInvoiceGroupsWithDiscounts', () => {
         ).toEqual([['PAX A35', 'PAX A35'], ['Standard Shipping']]);
     });
 
+    it('lists a discount on several products on its own, at the end', () => {
+        expect(
+            names([
+                group('Terminal', { products: [{ id: 'prod_terminal' }] }),
+                group('Stand', { products: [{ id: 'prod_stand' }] }),
+                discount('Bundle discount', {
+                    products: [{ id: 'prod_terminal' }, { id: 'prod_stand' }],
+                }),
+            ]),
+        ).toEqual([['Terminal'], ['Stand'], ['Bundle discount']]);
+    });
+
+    it('lists a discount whose lines name several charges on its own, at the end', () => {
+        expect(
+            names([
+                group('Terminal', { lines: [{ pricing_item_config_id: 'pico_terminal' }] }),
+                group('Stand', { lines: [{ pricing_item_config_id: 'pico_stand' }] }),
+                discount('Bundle discount', {
+                    lines: [
+                        { pricing_item_config_id: 'pico_terminal' },
+                        { pricing_item_config_id: 'pico_stand' },
+                    ],
+                }),
+            ]),
+        ).toEqual([['Terminal'], ['Stand'], ['Bundle discount']]);
+    });
+
     it('lists a discount on no one product on its own, at the end', () => {
         expect(names([discount('Welcome'), group('Seats')])).toEqual([['Seats'], ['Welcome']]);
     });

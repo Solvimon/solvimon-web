@@ -67,23 +67,23 @@ const isDiscount = (group: InvoiceGroup): boolean =>
     (!!group.lines?.length && group.lines.every(({ type }) => type === 'DISCOUNT'));
 
 // A discount's lines name the pricing item config they discount; its products are the fallback.
+// A discount that names more than one charge is on none of them alone.
 const findDiscountedGroup = (
     discount: InvoiceGroup,
-    groups: InvoiceGroup[],
+    charges: InvoiceGroup[],
 ): InvoiceGroup | undefined => {
     const configIds = new Set(
         discount.lines?.map(({ pricing_item_config_id }) => pricing_item_config_id).filter(Boolean),
     );
     const productIds = new Set(discount.products?.map(({ id }) => id));
-    const charges = groups.filter((group) => !isDiscount(group));
-
-    return (
-        charges.find((group) =>
-            group.lines?.some(({ pricing_item_config_id }) =>
-                configIds.has(pricing_item_config_id),
-            ),
-        ) ?? charges.find((group) => group.products?.some(({ id }) => productIds.has(id)))
+    const byConfig = charges.filter((group) =>
+        group.lines?.some(({ pricing_item_config_id }) => configIds.has(pricing_item_config_id)),
     );
+    const matches = byConfig.length
+        ? byConfig
+        : charges.filter((group) => group.products?.some(({ id }) => productIds.has(id)));
+
+    return matches.length === 1 ? matches[0] : undefined;
 };
 
 /**
@@ -92,13 +92,14 @@ const findDiscountedGroup = (
  */
 export function getInvoiceGroupsWithDiscounts(invoice: Invoice): InvoiceGroup[][] {
     return (invoice.periods ?? []).flatMap(({ groups = [] }) => {
+        const charges = groups.filter((group) => !isDiscount(group));
         const clusters = new Map<InvoiceGroup, InvoiceGroup[]>(
-            groups.filter((group) => !isDiscount(group)).map((group) => [group, [group]]),
+            charges.map((group) => [group, [group]]),
         );
         const unplaced: InvoiceGroup[][] = [];
 
         groups.filter(isDiscount).forEach((discount) => {
-            const discounted = findDiscountedGroup(discount, groups);
+            const discounted = findDiscountedGroup(discount, charges);
             if (discounted) {
                 clusters.get(discounted)!.push(discount);
             } else {

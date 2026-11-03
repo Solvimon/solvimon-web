@@ -487,6 +487,25 @@ describe('SubscriptionManagement', () => {
             ).toBeDefined();
         });
 
+        it('offers nothing when the method is a card that has expired, since it would be declined', async () => {
+            const wrapper = mountComponent({
+                enabledPricingId: 'pri_5000',
+                paymentMethods: [
+                    {
+                        ...savedPaymentMethod,
+                        card: {
+                            brand: 'VISA',
+                            last_four_digits: '0019',
+                            expiry_date: { expiry_month: 1, expiry_year: 2024 },
+                        },
+                    } as unknown as PaymentMethod,
+                ],
+            });
+            await flushPromises();
+
+            expect(methodsOffered(wrapper)).toEqual([]);
+        });
+
         it('cannot be committed when the subscription has no method among the saved ones', async () => {
             const wrapper = mountComponent({
                 enabledPricingId: 'pri_5000',

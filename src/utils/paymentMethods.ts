@@ -20,7 +20,7 @@ export function filterOutExpressPaymentMethods(
  * card `ACTIVE` and has no filter for it yet (MD-5862), so a screen that charges one leaves it out.
  */
 export function isExpiredCard(paymentMethod: PaymentMethod, now: Date = new Date()): boolean {
-    if (paymentMethod.type !== 'CARD' || !paymentMethod.card.expiry_date) return false;
+    if (paymentMethod.type !== 'CARD' || !paymentMethod.card?.expiry_date) return false;
 
     const { expiry_month: month, expiry_year: year } = paymentMethod.card.expiry_date;
 

@@ -60,14 +60,14 @@ body { overflow: hidden; }
       if (paymentElement) paymentElement.destroy();
       stripe = Stripe(event.data.publicKey);
       elements = stripe.elements(event.data.options);
-      paymentElement = elements.create('payment', { layout: { type: 'accordion', defaultCollapsed: false }, wallets: event.data.options.wallets, fields: event.data.options.fields });
+      paymentElement = elements.create('payment', { layout: { type: 'accordion', defaultCollapsed: event.data.collapsed === true }, wallets: event.data.options.wallets, fields: event.data.options.fields });
 
       paymentElement.on('ready', function () {
         parent.postMessage({ type: 'stripe:ready', initId: initId }, parentTarget());
       });
 
       paymentElement.on('change', function (e) {
-        parent.postMessage({ type: 'stripe:change', paymentMethodType: e.value.type, empty: e.empty === true }, parentTarget());
+        parent.postMessage({ type: 'stripe:change', paymentMethodType: e.value.type, empty: e.empty === true, collapsed: e.collapsed === true }, parentTarget());
       });
 
       paymentElement.on('loaderror', function (e) {

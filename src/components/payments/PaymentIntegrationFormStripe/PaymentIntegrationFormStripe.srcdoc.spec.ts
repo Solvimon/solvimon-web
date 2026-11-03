@@ -571,6 +571,17 @@ describe('STRIPE_FRAME_SRCDOC', () => {
             expect(frame.paymentElement.mount).toHaveBeenCalledExactlyOnceWith('#stripe-root');
         });
 
+        it('starts the payment element collapsed when the parent asks it to', () => {
+            const frame = runFrame();
+
+            frame.init({ collapsed: true });
+
+            expect(frame.elements.create).toHaveBeenCalledWith(
+                'payment',
+                expect.objectContaining({ layout: { type: 'accordion', defaultCollapsed: true } }),
+            );
+        });
+
         it('ignores messages that do not come from the parent window', () => {
             const frame = runFrame();
 
@@ -601,14 +612,26 @@ describe('STRIPE_FRAME_SRCDOC', () => {
             frame.init();
 
             frame.paymentElementHandlers['ready']?.({});
-            frame.paymentElementHandlers['change']?.({ value: { type: 'ideal' }, empty: true });
+            frame.paymentElementHandlers['change']?.({
+                value: { type: 'ideal' },
+                empty: true,
+                collapsed: false,
+            });
             frame.paymentElementHandlers['loaderror']?.({
                 error: { message: 'Invalid key', type: 'invalid_request_error', extra: 'x' },
             });
 
             expect(frame.parent.postMessage.mock.calls).toEqual([
                 [{ type: 'stripe:ready' }, PARENT_ORIGIN],
-                [{ type: 'stripe:change', paymentMethodType: 'ideal', empty: true }, PARENT_ORIGIN],
+                [
+                    {
+                        type: 'stripe:change',
+                        paymentMethodType: 'ideal',
+                        empty: true,
+                        collapsed: false,
+                    },
+                    PARENT_ORIGIN,
+                ],
                 [
                     {
                         type: 'stripe:loaderror',

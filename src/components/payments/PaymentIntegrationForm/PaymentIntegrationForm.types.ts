@@ -150,6 +150,8 @@ export interface PaymentIntegrationVariantProps {
     redirectsOnSuccess?: boolean;
     /** Named in the SEPA mandate. See the note on the same prop in the base props. */
     billingEntityName?: string;
+    /** Opens no method by itself, so the form selects nothing until the customer does. */
+    collapsed?: boolean;
 }
 
 export type PaymentIntegrationVariantEmits = PaymentIntegrationFormEmits;

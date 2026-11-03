@@ -49,7 +49,10 @@ export function stripeStubScript(config: StripeStubConfig): string {
         }
     }
 
-    function createPaymentElement() {
+    function createPaymentElement(_type, elementOptions) {
+        var collapsed = Boolean(
+            elementOptions && elementOptions.layout && elementOptions.layout.defaultCollapsed,
+        );
         var handlers = {};
         var node;
 
@@ -73,7 +76,9 @@ export function stripeStubScript(config: StripeStubConfig): string {
                     }
 
                     if (handlers.ready) handlers.ready();
-                    if (handlers.change) handlers.change({ value: { type: 'card' }, empty: true });
+                    if (handlers.change) {
+                        handlers.change({ value: { type: 'card' }, empty: true, collapsed: collapsed });
+                    }
                 }, 0);
             },
             unmount: function () {},

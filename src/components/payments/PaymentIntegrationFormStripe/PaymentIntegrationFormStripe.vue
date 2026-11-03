@@ -448,6 +448,27 @@ function retry() {
     integrationError.value = undefined;
 }
 
+let lastChange: { type: string; isCollapsed: boolean } | undefined;
+
+/**
+ * Stripe reports changes it makes itself while it renders as well as the customer's. One that
+ * leaves the element empty, collapsed as it was and on the same method is Stripe's own; opening a
+ * method or entering anything is the customer's — iDEAL and PayPal have nothing to enter.
+ */
+function handleChange(type: string, isEmpty: boolean, isCollapsed: boolean) {
+    const isAutomatic =
+        isEmpty &&
+        isCollapsed === (lastChange?.isCollapsed ?? props.collapsed === true) &&
+        (lastChange === undefined || type === lastChange.type);
+
+    lastChange = { type, isCollapsed };
+    emit('select', {
+        paymentMethodType: type,
+        paymentGatewayVariant: PAYMENT_GATEWAY_VARIANT_STRIPE,
+        ...(isAutomatic && { isAutomatic: true }),
+    });
+}
+
 function handleReady() {
     emit('select', {
         paymentMethodType: 'card',
@@ -534,15 +555,9 @@ onBeforeUnmount(() => {
         :country-code="countryCode"
         :email="email"
         :name="name"
+        :collapsed="collapsed"
         @ready="handleReady"
-        @change="
-            (type, isEmpty) =>
-                emit('select', {
-                    paymentMethodType: type,
-                    paymentGatewayVariant: PAYMENT_GATEWAY_VARIANT_STRIPE,
-                    ...(isEmpty && { isAutomatic: true }),
-                })
-        "
+        @change="handleChange"
         @loaderror="handleLoadError"
         @submit-success="handleConfirmationToken"
         @submit-error="handleSubmitError"

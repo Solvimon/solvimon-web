@@ -90,6 +90,7 @@ const adyen = vi.hoisted(() => {
         dropInConfig?: {
             paymentMethodComponents?: { name: string }[];
             paymentMethodsConfiguration?: { card?: { enableStoreDetails?: boolean } };
+            onSelect?: (component: { props: { type?: string } }) => void;
         };
     } = {};
 
@@ -1346,5 +1347,53 @@ describe('PaymentIntegrationFormAdyen', () => {
 
             expect(mockAuthorizePayment).toHaveBeenCalledTimes(2);
         });
+    });
+});
+
+describe("PaymentIntegrationFormAdyen telling the customer's choices from its own", () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+        mockGetAdyenDropInPaymentMethods.mockReturnValue([{ type: 'scheme', name: 'Card' }]);
+        captured.dropInConfig = undefined;
+    });
+
+    const select = () => captured.dropInConfig?.onSelect?.({ props: { type: 'scheme' } });
+    const automatic = (wrapper: Awaited<ReturnType<typeof mountComponent>>) =>
+        (wrapper.emitted('select') ?? []).map(([selection]) =>
+            Boolean((selection as { isAutomatic?: boolean }).isAutomatic),
+        );
+
+    it('marks only the method it opens by itself as its own', async () => {
+        const wrapper = await mountComponent({ selected: true });
+
+        select();
+        select();
+
+        expect(automatic(wrapper)).toEqual([true, false]);
+    });
+
+    it("takes every selection as the customer's while it opens nothing by itself", async () => {
+        const wrapper = await mountComponent({ selected: false });
+
+        select();
+
+        expect(automatic(wrapper)).toEqual([false]);
+    });
+
+    it('marks the method a rebuilt drop-in opens by itself as its own again', async () => {
+        const wrapper = await mountComponent({ selected: true });
+        select();
+        select();
+
+        await wrapper.setProps({
+            paymentMethodOptionResponseEntry: {
+                ...mockProps.paymentMethodOptionResponseEntry,
+                payment_acceptor: { id: 'paya_456' },
+            } as never,
+        });
+        await flushPromises();
+        select();
+
+        expect(automatic(wrapper)).toEqual([true, false, true]);
     });
 });

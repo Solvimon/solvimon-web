@@ -21,6 +21,7 @@ import {
     SUCCESS_URL,
     TOKEN_USER_NAME,
     YEARLY,
+    type Json,
 } from '../support/fixtures';
 import { clickRepeatedly } from '../support/screen';
 
@@ -329,6 +330,37 @@ test.describe('Checkout', () => {
             api = await mountLoaded(page);
 
             await expect(checkout(page).submit).toHaveText(/Pay and subscribe/i);
+        });
+
+        test('lists a discount right under the product it is on', async ({ page }) => {
+            const preview = anInvoicePreview({ total: '15.00' });
+            const invoice = preview.invoice as { periods: { groups: Json[] }[] };
+            const [template] = invoice.periods[0].groups;
+            const group = (
+                name: string,
+                productId: string,
+                quantity: string,
+                type = 'REVENUE',
+            ) => ({
+                ...template,
+                type,
+                pricing: type === 'DISCOUNT' ? undefined : { id: `pit_${productId}`, name },
+                products: [{ id: productId, name }],
+                amount_excluding_tax: { quantity, currency: 'EUR' },
+                amount_including_tax: { quantity, currency: 'EUR' },
+                lines: [],
+            });
+            invoice.periods[0].groups = [
+                group('PAX A35', 'prod_pax', '40.00', 'ONE_OFF'),
+                group('Standard Shipping', 'prod_shipping', '15.00', 'ONE_OFF'),
+                group('PAX A35', 'prod_pax', '-40.00', 'DISCOUNT'),
+            ];
+
+            api = await mountLoaded(page, { mocks: { invoicePreview: { body: preview } } });
+
+            await expect(page.locator('.sv-order-summary__items')).toHaveText(
+                /^PAX A35\s*€40\.00\s*PAX A35\s*[-−]€40\.00\s*Standard Shipping\s*€15\.00$/,
+            );
         });
 
         test('asks to start the trial when the plan has one', async ({ page }) => {

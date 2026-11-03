@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- A discount on one product is listed right under that product in the checkout's order summary and the `PayInvoice` invoice summary, in the same card, and under the same heading when the summary splits recurring and one-time charges. The discount's lines are matched to the product's by pricing item config, or else by product. A discount on no one product, such as an invoice-wide one, is still listed last.
 - The products in the checkout's order summary each sit in a card of their own, spaced apart like the summary's other cards; they touched before.
 - Every element downloads about 8 kB (gzip) less when it mounts: the icon sprite it fetches holds only the 55 icons the SDK can show, out of the 121 in `@solvimon/solvimon-ui`.
 - Every screen and component downloads about 1.5 kB (gzip) less up front: the stylesheet they share no longer carries the classes of `@solvimon/solvimon-ui` components that no element renders, such as its editor and PDF components.

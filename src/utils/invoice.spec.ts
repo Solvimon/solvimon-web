@@ -1,6 +1,7 @@
 import type { Amount, Invoice, InvoiceGroup, InvoiceLine } from '@solvimon/solvimon-types';
 import {
     getInvoiceGroupsByRecurrence,
+    getInvoiceGroupsWithDiscounts,
     isInvoiceUsageBased,
     splitInvoiceByRecurrence,
 } from './invoice';
@@ -373,11 +374,99 @@ describe('getInvoiceGroupsByRecurrence', () => {
         expect(result.recurring.map((group) => group.pricing?.name)).toEqual(['Plan']);
     });
 
+    it('lists a discount on a one-off product under the one-off heading, after the product', () => {
+        const result = getInvoiceGroupsByRecurrence(
+            invoice([
+                { type: 'REVENUE', pricing: { name: 'Seats' }, lines: [line('PER_SEAT')] },
+                {
+                    type: 'REVENUE',
+                    pricing: { name: 'Terminal' },
+                    products: [{ id: 'prod_terminal' }],
+                    lines: [line('ONE_OFF')],
+                },
+                { type: 'REVENUE', pricing: { name: 'Shipping' }, lines: [line('ONE_OFF')] },
+                {
+                    type: 'DISCOUNT',
+                    pricing: { name: 'Terminal discount' },
+                    products: [{ id: 'prod_terminal' }],
+                },
+            ]),
+        );
+
+        expect(result.oneOff.map((group) => group.pricing?.name)).toEqual([
+            'Terminal',
+            'Terminal discount',
+            'Shipping',
+        ]);
+        expect(result.other).toHaveLength(0);
+    });
+
     it('reports nothing for an invoice with no periods', () => {
         expect(getInvoiceGroupsByRecurrence({} as Invoice)).toEqual({
             recurring: [],
             oneOff: [],
             other: [],
         });
+    });
+});
+
+describe('getInvoiceGroupsWithDiscounts', () => {
+    const group = (name: string, fields: Record<string, unknown> = {}) => ({
+        type: 'REVENUE',
+        pricing: { name },
+        ...fields,
+    });
+
+    const discount = (name: string, fields: Record<string, unknown> = {}) =>
+        group(name, { type: 'DISCOUNT', ...fields });
+
+    const names = (groups: unknown[]) =>
+        getInvoiceGroupsWithDiscounts({ periods: [{ groups }] } as unknown as Invoice).map(
+            (cluster) => cluster.map(({ pricing }) => pricing?.name),
+        );
+
+    it('follows each product with the discounts on it', () => {
+        expect(
+            names([
+                group('Terminal', { products: [{ id: 'prod_terminal' }] }),
+                group('Shipping', { products: [{ id: 'prod_shipping' }] }),
+                discount('Terminal discount', { products: [{ id: 'prod_terminal' }] }),
+            ]),
+        ).toEqual([['Terminal', 'Terminal discount'], ['Shipping']]);
+    });
+
+    it('matches on the pricing item config before the product', () => {
+        const product = { products: [{ id: 'prod_terminal' }] };
+
+        expect(
+            names([
+                group('Rental', { ...product, lines: [{ pricing_item_config_id: 'pico_rent' }] }),
+                group('Purchase', { ...product, lines: [{ pricing_item_config_id: 'pico_buy' }] }),
+                discount('Purchase discount', {
+                    ...product,
+                    lines: [{ pricing_item_config_id: 'pico_buy' }],
+                }),
+            ]),
+        ).toEqual([['Rental'], ['Purchase', 'Purchase discount']]);
+    });
+
+    it('lists a discount on no one product on its own, at the end', () => {
+        expect(names([discount('Welcome'), group('Seats')])).toEqual([['Seats'], ['Welcome']]);
+    });
+
+    it('keeps a discount within its own period', () => {
+        const terminal = { products: [{ id: 'prod_terminal' }] };
+        const invoice = {
+            periods: [
+                { groups: [group('Terminal', terminal)] },
+                { groups: [discount('Terminal discount', terminal)] },
+            ],
+        } as unknown as Invoice;
+
+        expect(
+            getInvoiceGroupsWithDiscounts(invoice).map((cluster) =>
+                cluster.map(({ pricing }) => pricing?.name),
+            ),
+        ).toEqual([['Terminal'], ['Terminal discount']]);
     });
 });

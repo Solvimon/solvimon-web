@@ -459,6 +459,10 @@
     "defaultMessage": "{amount}{period}",
     "description": "Billing period option sublabel showing price per period"
   },
+  "checkout.order_summary_block.discount_chip": {
+    "defaultMessage": "Discount",
+    "description": "Marks a discount listed right under the product it is on, beside its name"
+  },
   "checkout.order_summary_block.one_off_heading": {
     "defaultMessage": "One-time charges",
     "description": "The heading above the charges that are made once and not again"

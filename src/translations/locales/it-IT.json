@@ -114,6 +114,7 @@
     "checkout.order_summary_block.billing_period.save_badge.prefix": "Risparmia {amount}",
     "checkout.order_summary_block.billing_period.save_badge.suffix": "/anno",
     "checkout.order_summary_block.billing_period.sub_label": "{amount}{period}",
+    "checkout.order_summary_block.discount_chip": "Sconto",
     "checkout.order_summary_block.one_off_heading": "Costi una tantum",
     "checkout.order_summary_block.recurring_heading": "Abbonamento",
     "checkout.order_summary_block.renews_at": "Poi {amount} ogni {period}",

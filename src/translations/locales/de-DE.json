@@ -114,6 +114,7 @@
     "checkout.order_summary_block.billing_period.save_badge.prefix": "{amount} sparen",
     "checkout.order_summary_block.billing_period.save_badge.suffix": "/Jahr",
     "checkout.order_summary_block.billing_period.sub_label": "{amount}{period}",
+    "checkout.order_summary_block.discount_chip": "Rabatt",
     "checkout.order_summary_block.one_off_heading": "Einmalige Kosten",
     "checkout.order_summary_block.recurring_heading": "Abonnement",
     "checkout.order_summary_block.renews_at": "Danach {amount} pro {period}",

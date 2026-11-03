@@ -332,7 +332,9 @@ test.describe('Checkout', () => {
             await expect(checkout(page).submit).toHaveText(/Pay and subscribe/i);
         });
 
-        test('lists a discount right under the product it is on', async ({ page }) => {
+        test('lists a discount right under the product it is on, as a discount', async ({
+            page,
+        }) => {
             const preview = anInvoicePreview({ total: '15.00' });
             const invoice = preview.invoice as { periods: { groups: Json[] }[] };
             const [template] = invoice.periods[0].groups;
@@ -367,8 +369,9 @@ test.describe('Checkout', () => {
             api = await mountLoaded(page, { mocks: { invoicePreview: { body: preview } } });
 
             await expect(page.locator('.sv-order-summary__items')).toHaveText(
-                /^PAX A35\s*€40\.00\s*PAX A35\s*[-−]€40\.00\s*Standard Shipping\s*€15\.00$/,
+                /^PAX A35\s*€40\.00\s*PAX A35\s*Discount\s*[-−]€40\.00\s*Standard Shipping\s*€15\.00$/,
             );
+            await expect(page.locator('.sv-order-summary__discount')).toHaveText('Discount');
         });
 
         test('asks to start the trial when the plan has one', async ({ page }) => {

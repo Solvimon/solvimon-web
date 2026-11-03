@@ -5,7 +5,6 @@ import {
     aCustomer,
     aCustomerPortalObject,
     anInvoiceRecord,
-    aPaymentMethod,
     collection,
     INVOICE_ID,
     paymentMethodOptions,
@@ -18,6 +17,8 @@ export interface MountOptions extends ScreenOptions {
     /** Earlier attempts at this invoice, which the header reports. */
     payments?: Json[];
     gateways?: ('STRIPE' | 'ADYEN')[];
+    /** The customer's stored methods. None by default, so the form is what pays. */
+    paymentMethods?: Json[];
 }
 
 function defaultMocks(options: MountOptions): Partial<Record<EndpointName, Responder>> {
@@ -25,7 +26,7 @@ function defaultMocks(options: MountOptions): Partial<Record<EndpointName, Respo
         ...sharedMocks,
         invoice: { body: options.invoice ?? anInvoiceRecord() },
         payments: { body: collection(options.payments ?? []) },
-        paymentMethods: { body: collection([aPaymentMethod({ isDefault: true })]) },
+        paymentMethods: { body: collection(options.paymentMethods ?? []) },
         paymentMethodOptions: { body: paymentMethodOptions({ gateways: options.gateways }) },
         customer: { body: aCustomer() },
     };
@@ -49,6 +50,8 @@ export function payInvoice(page: Page) {
         screen: page.locator('.sv-layout'),
         paid: page.getByText(/thank you for your payment/i),
         storePaymentMethod: page.getByText(/save this payment method/i),
+        storedPaymentMethods: page.locator('.sv-pay-invoice__stored-payment-methods'),
+        storedPaymentError: page.locator('.sv-pay-invoice__stored-payment-error'),
         payButton: page.getByRole('button', { name: /^pay /i }),
         downloadInvoice: page.getByRole('button', { name: /download invoice/i }),
         stripeElement: page

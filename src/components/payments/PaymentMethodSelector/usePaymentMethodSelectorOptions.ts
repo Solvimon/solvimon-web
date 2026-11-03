@@ -12,7 +12,7 @@ type PaymentMethodOption = RadioGroupExtendedProps['options'][number];
  * API already returns — brand, variant, owner, last digits — rather than translated copy, so it
  * needs no per-type wording in every locale.
  */
-function getAccessibleName(paymentMethod: PaymentMethod): string {
+export function getPaymentMethodName(paymentMethod: PaymentMethod): string {
     const parts: (string | undefined)[] = [];
 
     switch (paymentMethod.type) {
@@ -67,7 +67,7 @@ export function usePaymentMethodSelectorOptions(paymentMethods: Ref<PaymentMetho
     const options = computed<PaymentMethodOption[]>(() =>
         paymentMethods.value.map((paymentMethod) => ({
             value: paymentMethod.id,
-            label: getAccessibleName(paymentMethod),
+            label: getPaymentMethodName(paymentMethod),
         })),
     );
 

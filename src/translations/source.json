@@ -923,6 +923,10 @@
     "defaultMessage": "Something went wrong",
     "description": "Title shown when the invoice payment fails to load"
   },
+  "pay_invoice.new_payment_method.title": {
+    "defaultMessage": "Pay with a new payment method",
+    "description": "Section title for the payment form below the stored payment methods, on the pay invoice screen"
+  },
   "pay_invoice.paid.title": {
     "defaultMessage": "Thank you for your payment!",
     "description": "Title shown when the invoice has already been paid"
@@ -934,6 +938,18 @@
   "pay_invoice.store_payment_method.label": {
     "defaultMessage": "Save this payment method for future payments",
     "description": "Label of the checkbox that stores the payment method while paying an invoice"
+  },
+  "pay_invoice.stored_payment_method.failed": {
+    "defaultMessage": "The payment did not go through. Try again or use another payment method.",
+    "description": "Shown when charging the invoice to a stored payment method fails"
+  },
+  "pay_invoice.stored_payment_methods.divider_text": {
+    "defaultMessage": "or",
+    "description": "Between the stored payment methods and the form to pay with a new one"
+  },
+  "pay_invoice.stored_payment_methods.title": {
+    "defaultMessage": "Your payment methods",
+    "description": "Section title above the payment methods the customer stored before, on the pay invoice screen"
   },
   "pay_invoice.unavailable.download_invoice": {
     "defaultMessage": "Download invoice",

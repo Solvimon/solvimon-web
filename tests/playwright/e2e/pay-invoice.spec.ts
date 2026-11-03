@@ -13,8 +13,10 @@ import {
     anInvoiceRecord,
     aSuccessfulAuthorization,
     CUSTOMER_ID,
+    aPaymentMethod,
     INVOICE_ID,
     PAYMENT_ACCEPTOR_ID,
+    PAYMENT_METHOD_ID,
 } from '../support/fixtures';
 import { clickRepeatedly } from '../support/screen';
 
@@ -112,6 +114,75 @@ test.describe('Pay invoice', () => {
     });
 
     // ─── Paying ───────────────────────────────────────────────────────────────
+
+    test.describe('paying with a stored method', () => {
+        /** Stored on the gateway the invoice's first acceptor runs on, so it can be charged. */
+        const chargeable = (overrides = {}) => ({
+            ...aPaymentMethod({ isDefault: true }),
+            integration_id: 'int_test_0',
+            ...overrides,
+        });
+
+        test('pays with the default method in one click', async ({ page }) => {
+            api = await mountLoaded(page, {
+                paymentMethods: [chargeable()],
+                mocks: { authorizePayment: { body: aSuccessfulAuthorization() } },
+            });
+            const ui = payInvoice(page);
+
+            await expect(ui.storedPaymentMethods).toContainText('Your payment methods');
+            await expect(ui.payButton).toHaveText('Pay €20.00 with Visa •••• 4242');
+            await ui.payButton.click();
+
+            const charge = await api.waitForCall('authorizePayment');
+            expect(charge.body).toEqual({
+                payment_acceptor_id: PAYMENT_ACCEPTOR_ID,
+                customer_id: CUSTOMER_ID,
+                payment_method_id: PAYMENT_METHOD_ID,
+                amount: { quantity: '20.00', currency: 'EUR' },
+                context: {
+                    type: 'INVOICE',
+                    related_resource_ids: [{ type: 'INVOICE', id: INVOICE_ID }],
+                },
+            });
+            await expect(ui.paid).toBeVisible();
+        });
+
+        test('says so when the stored method is declined, and keeps the form on offer', async ({
+            page,
+        }) => {
+            api = await mountLoaded(page, {
+                paymentMethods: [chargeable()],
+                mocks: {
+                    authorizePayment: {
+                        status: 400,
+                        body: {
+                            type: 'INVALID_REQUEST',
+                            code: 'UNABLE_TO_PROCESS_INSTRUCTIONS',
+                            message: 'Payment failed for invoice',
+                            resource_type: 'PAYMENT',
+                        },
+                    },
+                },
+            });
+            const ui = payInvoice(page);
+
+            await ui.payButton.click();
+
+            await expect(ui.storedPaymentError).toBeVisible();
+            await expect(ui.stripeElement).toBeVisible();
+            await expect(ui.payButton).toBeEnabled();
+        });
+
+        test('shows only the form for a method stored with another gateway', async ({ page }) => {
+            api = await mountLoaded(page, {
+                paymentMethods: [chargeable({ integration_id: 'int_other' })],
+            });
+
+            await expect(payInvoice(page).storedPaymentMethods).toHaveCount(0);
+            await expect(page.getByText(/^or$/)).toHaveCount(0);
+        });
+    });
 
     test.describe('paying', () => {
         test('authorizes against the invoice it is paying', async ({ page }) => {

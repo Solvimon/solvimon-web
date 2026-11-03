@@ -48,6 +48,17 @@ describe('PayButton', () => {
         expect(wrapper.text()).toBe('Pay EUR 10.00 with Credit Card');
     });
 
+    it('names a stored method by its own label', () => {
+        const wrapper = mount(PayButton, {
+            props: {
+                amount,
+                paymentMethod: paymentMethod('scheme'),
+                paymentMethodLabel: 'Visa •••• 4242',
+            },
+        });
+        expect(wrapper.text()).toBe('Pay EUR 10.00 with Visa •••• 4242');
+    });
+
     it("names card payments in the customer's language", () => {
         translations['pay_button.payment_method.card'] = 'Creditcard';
 

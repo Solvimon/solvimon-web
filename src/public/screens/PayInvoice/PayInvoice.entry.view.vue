@@ -6,6 +6,7 @@ import { useLoadInitialData } from '@/composables/useLoadInitialData';
 import { useInvoice } from '@/composables/useInvoice';
 import { usePayments } from '@/composables/usePayments';
 import { usePaymentMethodOptions } from '@/composables/usePaymentMethodOptions';
+import { usePaymentMethods } from '@/composables/usePaymentMethods';
 
 const props = defineProps<SolvimonPayInvoiceEntryProps>();
 
@@ -17,6 +18,9 @@ const {
 } = useInvoice({ invoiceId: props.configuration.invoiceId });
 const { payments, get: getPayments } = usePayments();
 const { paymentMethodOptions, get: getPaymentMethodOptions } = usePaymentMethodOptions();
+const { items: paymentMethods, fetchAll: getPaymentMethods } = usePaymentMethods({
+    customerId: props.portalObject.customer_id,
+});
 
 const getInvoiceAndPaymentMethodOptions = async () => {
     const invoice = await getInvoice();
@@ -31,6 +35,7 @@ const getInvoiceAndPaymentMethodOptions = async () => {
 const { isLoading } = useLoadInitialData(
     getInvoiceAndPaymentMethodOptions(),
     getPayments(props.configuration.invoiceId),
+    getPaymentMethods(),
 );
 
 const refresh = () =>
@@ -49,6 +54,7 @@ const countryCode = computed(() =>
         :amount="invoice?.open_invoice_amount"
         :country-code="countryCode"
         :payment-method-options="paymentMethodOptions"
+        :payment-methods="paymentMethods"
         :payment-attempts="payments"
         :download-service="downloadInvoicePdf"
         :refresh="refresh"

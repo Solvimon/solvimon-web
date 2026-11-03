@@ -2,6 +2,7 @@ import { flushPromises, mount } from '@vue/test-utils';
 import { defineComponent, nextTick, ref } from 'vue';
 import type { Invoice, PaymentMethodOptionsResponse } from '@solvimon/solvimon-types';
 import PayInvoice from './PayInvoice.vue';
+import { ApiError } from '@/services/apiError';
 import {
     createPaymentMethodOptionEntry,
     createPaymentMethodOptionsResponseWithoutOptions,
@@ -51,12 +52,14 @@ vi.mock('@adyen/adyen-web/styles/adyen.css?inline', () => ({ default: '' }));
 
 const mockAuthorizePayment = vi.fn();
 const mockGetPaymentDetails = vi.fn();
+const mockChargeStoredPaymentMethod = vi.fn();
 const mockTokenizePaymentMethod = vi.fn();
 
 vi.mock('@/services/payments', () => ({
     createPaymentsService: () => ({
         authorizePayment: mockAuthorizePayment,
         getPaymentDetails: mockGetPaymentDetails,
+        chargeStoredPaymentMethod: mockChargeStoredPaymentMethod,
     }),
 }));
 
@@ -103,6 +106,16 @@ vi.mock('@solvimon/solvimon-ui', async () => {
         InvoiceSummary: defineComponent({
             name: 'InvoiceSummary',
             template: '<div data-testid="invoice-summary" />',
+        }),
+        ErrorNotification: defineComponent({
+            name: 'ErrorNotification',
+            props: { title: String },
+            template: '<div role="alert">{{ title }}</div>',
+        }),
+        PaymentMethod: defineComponent({
+            name: 'PaymentMethod',
+            props: { paymentMethod: Object },
+            template: '<div data-testid="stored-payment-method" />',
         }),
     };
 });
@@ -684,5 +697,170 @@ describe('PayInvoice around a 3DS challenge', () => {
         await submitThrough(1);
 
         expect(mockAuthorizePayment).toHaveBeenCalledTimes(1);
+    });
+});
+
+describe('PayInvoice with stored payment methods', () => {
+    const storedCard = (overrides: Record<string, unknown> = {}) => ({
+        id: 'pmet_4242',
+        type: 'CARD',
+        status: 'ACTIVE',
+        is_default: false,
+        customer_id: 'cus_123',
+        integration_id: 'int_123',
+        card: { brand: 'VISA', last_four_digits: '4242' },
+        ...overrides,
+    });
+
+    const payButton = (wrapper: ReturnType<typeof mountComponent>) =>
+        wrapper.findComponent({ name: 'PayButton' });
+
+    const storedSelector = (wrapper: ReturnType<typeof mountComponent>) =>
+        wrapper.findComponent({ name: 'PaymentMethodSelector' });
+
+    beforeEach(async () => {
+        await waitForAdyenMount();
+        vi.clearAllMocks();
+        mockChargeStoredPaymentMethod.mockResolvedValue({
+            status: 'SUCCESS',
+            payment: { result: 'AUTHORIZED' },
+        });
+    });
+
+    it('lists the stored methods above an "or" and the form to pay with a new one', () => {
+        const wrapper = mountComponent({ paymentMethods: [storedCard()] });
+
+        expect(wrapper.text()).toContain('Your payment methods');
+        expect(wrapper.text()).toContain('or');
+        expect(wrapper.text()).toContain('Pay with a new payment method');
+        expect(storedSelector(wrapper).props('paymentMethods')).toHaveLength(1);
+    });
+
+    it('offers only the methods stored on a gateway this invoice can be paid through', () => {
+        const wrapper = mountComponent({
+            paymentMethods: [
+                storedCard(),
+                storedCard({ id: 'pmet_stripe', integration_id: 'int_stripe' }),
+            ],
+        });
+
+        expect(
+            storedSelector(wrapper)
+                .props('paymentMethods')
+                .map(({ id }: { id: string }) => id),
+        ).toEqual(['pmet_4242']);
+    });
+
+    it('keeps the screen as it was for a customer with nothing stored', async () => {
+        const wrapper = mountComponent({ paymentMethods: [] });
+        await waitForAdyenMount();
+
+        expect(wrapper.text()).not.toContain('Your payment methods');
+        expect(MockDropIn.mock.calls[0]![1].openFirstPaymentMethod).toBe(true);
+    });
+
+    it('opens on the default method, so paying is one click', () => {
+        const wrapper = mountComponent({
+            paymentMethods: [storedCard(), storedCard({ id: 'pmet_1111', is_default: true })],
+        });
+
+        expect(storedSelector(wrapper).props('modelValue')).toBe('pmet_1111');
+        expect(payButton(wrapper).props('disabled')).toBe(false);
+    });
+
+    it('opens on the first stored method when none is the default', () => {
+        const wrapper = mountComponent({
+            paymentMethods: [storedCard(), storedCard({ id: 'pmet_1111' })],
+        });
+
+        expect(storedSelector(wrapper).props('modelValue')).toBe('pmet_4242');
+    });
+
+    it('opens on the only stored method, and names it on the pay button', () => {
+        const wrapper = mountComponent({ paymentMethods: [storedCard()] });
+
+        expect(storedSelector(wrapper).props('modelValue')).toBe('pmet_4242');
+        expect(payButton(wrapper).text()).toBe('Pay EUR 99.00 with Visa •••• 4242');
+    });
+
+    it('leaves the drop-in closed, so it cannot take the selection over', async () => {
+        mountComponent({ paymentMethods: [storedCard()] });
+        await waitForAdyenMount();
+
+        expect(MockDropIn.mock.calls[0]![1].openFirstPaymentMethod).toBe(false);
+    });
+
+    it('charges the invoice to the selected stored method', async () => {
+        const onPaymentSuccess = vi.fn();
+        const refresh = vi.fn().mockResolvedValue(undefined);
+        const wrapper = mountComponent({
+            paymentMethods: [storedCard()],
+            refresh,
+            configuration: { invoiceId: 'inv_123', onPaymentSuccess },
+        });
+
+        await payButton(wrapper).trigger('click');
+        await flushPromises();
+
+        expect(mockChargeStoredPaymentMethod).toHaveBeenCalledWith({
+            paymentAcceptorId: 'pa_123',
+            customerId: 'cus_123',
+            paymentMethodId: 'pmet_4242',
+            invoiceId: 'inv_123',
+            amount,
+        });
+        expect(mockAuthorizePayment).not.toHaveBeenCalled();
+        expect(onPaymentSuccess).toHaveBeenCalledOnce();
+        expect(refresh).toHaveBeenCalledOnce();
+        expect(wrapper.text()).toContain('Thank you for your payment!');
+    });
+
+    it('says so when the charge fails, and lets the customer try again', async () => {
+        mockChargeStoredPaymentMethod.mockRejectedValue(new ApiError({ statusCode: 400 }));
+        const wrapper = mountComponent({ paymentMethods: [storedCard()] });
+
+        await payButton(wrapper).trigger('click');
+        await flushPromises();
+
+        expect(wrapper.find('.sv-pay-invoice__stored-payment-error').exists()).toBe(true);
+        expect(payButton(wrapper).props('disabled')).toBe(false);
+    });
+
+    it('takes no second payment while the first one is out', async () => {
+        mockChargeStoredPaymentMethod.mockReturnValue(new Promise(() => {}));
+        const wrapper = mountComponent({ paymentMethods: [storedCard()] });
+
+        await payButton(wrapper).trigger('click');
+        await payButton(wrapper).trigger('click');
+        await flushPromises();
+
+        expect(mockChargeStoredPaymentMethod).toHaveBeenCalledTimes(1);
+        expect(payButton(wrapper).props('disabled')).toBe(true);
+    });
+
+    it('pays with the form instead once the customer picks a new method there', async () => {
+        const wrapper = mountComponent({ paymentMethods: [storedCard()] });
+        await waitForAdyenMount();
+        const [, dropInConfig] = MockDropIn.mock.calls[0]!;
+
+        dropInConfig.onSelect({ props: { type: 'scheme' } });
+        await nextTick();
+
+        expect(storedSelector(wrapper).props('modelValue')).toBeUndefined();
+        expect(payButton(wrapper).text()).toBe('Pay EUR 99.00 with Credit Card');
+    });
+
+    it('keeps the stored method selected through what a form selects on its own', async () => {
+        const wrapper = mountComponent({ paymentMethods: [storedCard()] });
+        await waitForAdyenMount();
+
+        wrapper.findComponent({ name: 'PaymentIntegrationForm' }).vm.$emit('select', {
+            paymentGatewayVariant: 'STRIPE',
+            paymentMethodType: 'card',
+            isAutomatic: true,
+        });
+        await nextTick();
+
+        expect(storedSelector(wrapper).props('modelValue')).toBe('pmet_4242');
     });
 });

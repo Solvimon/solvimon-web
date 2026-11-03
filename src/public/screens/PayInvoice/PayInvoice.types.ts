@@ -2,6 +2,7 @@ import type {
     Amount,
     Invoice,
     Payment,
+    PaymentMethod,
     PaymentMethodOptionsResponse,
 } from '@solvimon/solvimon-types';
 import type { BaseScreenProps } from '@/public/screens/types';
@@ -22,6 +23,8 @@ export interface PayInvoiceConfiguration {
 export interface PayInvoiceProps extends BaseScreenProps {
     invoice?: Invoice;
     paymentMethodOptions?: PaymentMethodOptionsResponse;
+    /** The customer's stored methods; those this invoice can be charged to are offered first. */
+    paymentMethods?: PaymentMethod[];
     paymentAttempts?: Payment[];
     countryCode?: string;
     amount?: Amount;

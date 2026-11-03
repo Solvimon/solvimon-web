@@ -26,6 +26,7 @@ defineProps<SolvimonPayInvoiceEntryProps>();
                     amount,
                     countryCode,
                     paymentMethodOptions,
+                    paymentMethods,
                     paymentAttempts,
                     downloadService,
                     refresh,
@@ -38,6 +39,7 @@ defineProps<SolvimonPayInvoiceEntryProps>();
                     :amount="amount"
                     :country-code="countryCode"
                     :payment-method-options="paymentMethodOptions"
+                    :payment-methods="paymentMethods"
                     :configuration="configuration"
                     :payment-attempts="paymentAttempts ?? []"
                     :download-service="downloadService"

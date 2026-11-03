@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0-alpha.29] - 2026-11-03
+
 ### Added
 
 - `PayInvoice` shows the invoice in an **Invoice summary** laid out like the checkout's order summary, in place of the invoice details: a card with the invoice number and its due date, then the products grouped as the checkout groups them, and the totals. The total reads **Total**, and an invoice paid in part also shows what is **Already paid** and the **Amount due**. The checkout's order summary and this one share `OrderSummaryInvoice`.
@@ -26,7 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Every screen and component downloads about 1.5 kB (gzip) less up front: the stylesheet they share no longer carries the classes of `@solvimon/solvimon-ui` components that no element renders, such as its editor and PDF components.
 - The checkout screen shows the terms and conditions in the order summary column, centred under the secure payments line next to the pay button, instead of in a footer below both columns.
 - `ContentWithAsideLayout` no longer takes a `footer` slot; the checkout terms were its only content.
-- `@solvimon/solvimon-ui` is 1.22.0 and `@solvimon/solvimon-types` 1.10.0. Tab now moves through the fields of a modal instead of jumping back to its close button.
+- `@solvimon/solvimon-ui` is 1.23.2 and `@solvimon/solvimon-types` 1.10.0. Tab now moves through the fields of a modal instead of jumping back to its close button.
 - The buttons in the customer overview's section headers (**View all**, **Edit** and **Manage**) are extra small, a step down from small.
 - Screens and components with a tooltip, a dropdown or a select download about 8 kB (gzip) less up front. The code that positions those popups loads the first time one opens, starting as soon as the pointer or focus reaches what opens it.
 - Every screen and component downloads about 4.5 kB (gzip) less up front: the English labels of `@solvimon/solvimon-ui` components come with the components that show them, instead of all of them with every element. The labels themselves are unchanged.
@@ -34,7 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- An expired card is no longer offered to pay with when ordering on-demand items, topping up, setting up an automatic top-up or managing a subscription, as on the pay invoice screen. The API keeps such a card `ACTIVE` (MD-5862), so it was offered, and could be preselected as the default, only for the charge to be declined. A card counts as expired from the first day of the month after its expiry month, in UTC. When the subscription's own card has expired, managing it says so and asks the customer to replace the card, in place of asking them to contact support. The payment methods management screen and the customer overview still list an expired card, so the customer can replace or remove it.
+- An expired card is no longer offered to pay with when ordering on-demand items, topping up, setting up an automatic top-up or managing a subscription, as on the pay invoice screen. The API keeps such a card `ACTIVE`, so it was offered, and could be preselected as the default, only for the charge to be declined. A card counts as expired from the first day of the month after its expiry month, in UTC. When the subscription's own card has expired, managing it says so and asks the customer to replace the card, in place of asking them to contact support. The payment methods management screen and the customer overview still list an expired card, so the customer can replace or remove it.
 - Topping up and setting up an automatic top-up no longer offer a payment method that is not `ACTIVE`, such as one still being set up, as the other screens that charge a stored method already did.
 - The checkout description and an enabled pricing's price name the billing period in the element's language, "per dag" in Dutch rather than "per day".
 - The **My subscription** and **Payment method** blocks on the customer overview were a darker gray than the billing information next to them: their title wrapper laid its own translucent gray under the cards. They now have the same single gray background.

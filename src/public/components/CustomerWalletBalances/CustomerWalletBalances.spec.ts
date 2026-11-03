@@ -108,7 +108,7 @@ describe('CustomerWalletBalances', () => {
         expect(autoTopUpModal(wrapper).attributes('data-open')).toBe('false');
     });
 
-    it('offers neither modal a card that has expired', () => {
+    it('offers neither modal a method that cannot pay', () => {
         const card = { id: 'pmet_valid', type: 'CARD', status: 'ACTIVE', card: { brand: 'VISA' } };
         const expired = {
             id: 'pmet_expired',
@@ -116,7 +116,13 @@ describe('CustomerWalletBalances', () => {
             status: 'ACTIVE',
             card: { brand: 'VISA', expiry_date: { expiry_month: 1, expiry_year: 2024 } },
         };
-        const wrapper = mountBlock({ paymentMethods: [card, expired] });
+        const inactive = {
+            id: 'pmet_inactive',
+            type: 'CARD',
+            status: 'INACTIVE',
+            card: { brand: 'VISA' },
+        };
+        const wrapper = mountBlock({ paymentMethods: [card, expired, inactive] });
 
         expect(topUpModal(wrapper).props('paymentMethods')).toEqual([card]);
         expect(autoTopUpModal(wrapper).props('paymentMethods')).toEqual([card]);

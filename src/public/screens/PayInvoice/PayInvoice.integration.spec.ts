@@ -293,6 +293,14 @@ describe('PayInvoice', () => {
         expect(MockDropIn).not.toHaveBeenCalled();
     });
 
+    it('says how payments are secured under the pay button, as the checkout does', () => {
+        const wrapper = mountComponent();
+        const kpi = wrapper.findComponent({ name: 'SecurePaymentsKPI' });
+
+        expect(kpi.exists()).toBe(true);
+        expect(kpi.props('paymentMethodOptions')).toEqual(mockPaymentMethodOptions);
+    });
+
     it('renders the invoice summary when an invoice is provided', () => {
         const wrapper = mountComponent();
 

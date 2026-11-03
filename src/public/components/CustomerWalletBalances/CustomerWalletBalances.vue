@@ -14,6 +14,7 @@ import Skeleton from '@/components/shared/Skeleton.vue';
 import TopUpModal from '@/components/wallets/TopUpModal/TopUpModal.vue';
 import AutoTopUpModal from '@/components/wallets/AutoTopUpModal/AutoTopUpModal.vue';
 import AutoTopUpCancellationModal from '@/components/wallets/AutoTopUpCancellationModal/AutoTopUpCancellationModal.vue';
+import { isExpiredCard } from '@/utils/paymentMethods';
 
 defineOptions({ inheritAttrs: false });
 
@@ -24,6 +25,10 @@ const { $t } = useIntl();
 
 const shownWalletBalances = computed(() =>
     getWalletBalancesForSubscriptions(props.walletBalances, props.subscriptions),
+);
+
+const payablePaymentMethods = computed(() =>
+    props.paymentMethods?.filter((paymentMethod) => !isExpiredCard(paymentMethod)),
 );
 
 const selectedTopUpItem = ref<ChargeOnDemandPricingItem | undefined>();
@@ -93,7 +98,7 @@ const showAutoTopUpCancellation = computed(() => !!cancellingAutoTopUpConfig.val
         v-if="showTopUpButton"
         :show-modal="showTopUpModal"
         :selected-balance-item="selectedBalanceItem"
-        :payment-methods="paymentMethods"
+        :payment-methods="payablePaymentMethods"
         :customer="customer"
         :subscriptions="subscriptions"
         @close="selectedTopUpItem = undefined"
@@ -108,7 +113,7 @@ const showAutoTopUpCancellation = computed(() => !!cancellingAutoTopUpConfig.val
         :show-modal="showAutoTopUpModal"
         :wallet-balance-item="autoTopUpWallet"
         :top-up-item="selectedAutoTopUpItem"
-        :payment-methods="paymentMethods"
+        :payment-methods="payablePaymentMethods"
         :customer="customer"
         @close="selectedAutoTopUpItem = undefined"
         @saved="emit('auto-top-up-saved')"

@@ -7,7 +7,6 @@ import {
     formatAmount,
     Icon,
     InvoiceHeader,
-    InvoiceSummary,
     Section,
     Typography,
     useIntl,
@@ -31,6 +30,7 @@ import { usePaymentMethodAvailability } from '@/composables/usePaymentMethodAvai
 import { usePaymentFormHold } from '@/composables/usePaymentFormHold';
 import { useStoredPaymentMethodPayment } from '@/composables/useStoredPaymentMethodPayment';
 import PaymentMethodSelector from '@/components/payments/PaymentMethodSelector/PaymentMethodSelector.vue';
+import InvoiceOrderSummary from '@/components/invoices/InvoiceOrderSummary/InvoiceOrderSummary.vue';
 
 const { $t } = useIntl();
 
@@ -367,7 +367,11 @@ const handlePaymentFailed = (error?: { code?: string }) => {
         </template>
         <template #aside>
             <Skeleton variant="section" class="min-h-[200px]">
-                <InvoiceSummary v-if="invoice" :invoice="invoice" />
+                <InvoiceOrderSummary
+                    v-if="invoice"
+                    :invoice="invoice"
+                    :is-paid="invoice.paid || isPaid"
+                />
             </Skeleton>
 
             <div v-if="invoice && !invoice.paid && !isPaid && availability === 'READY'">

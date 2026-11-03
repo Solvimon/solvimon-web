@@ -55,7 +55,8 @@ export type StripeSubmitError = Partial<Pick<StripeError, 'message' | 'type' | '
 
 export type PaymentIntegrationFormStripeFrameEmits = {
     ready: [];
-    change: [paymentMethodType: string];
+    /** `isEmpty` until the customer has entered anything, as when Stripe reports its first render. */
+    change: [paymentMethodType: string, isEmpty: boolean];
     loaderror: [error: StripeLoadError];
     'submit-success': [confirmationTokenId: string];
     'submit-error': [error: StripeSubmitError];

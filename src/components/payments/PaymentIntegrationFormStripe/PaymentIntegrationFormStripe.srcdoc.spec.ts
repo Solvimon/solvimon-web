@@ -601,14 +601,14 @@ describe('STRIPE_FRAME_SRCDOC', () => {
             frame.init();
 
             frame.paymentElementHandlers['ready']?.({});
-            frame.paymentElementHandlers['change']?.({ value: { type: 'ideal' } });
+            frame.paymentElementHandlers['change']?.({ value: { type: 'ideal' }, empty: true });
             frame.paymentElementHandlers['loaderror']?.({
                 error: { message: 'Invalid key', type: 'invalid_request_error', extra: 'x' },
             });
 
             expect(frame.parent.postMessage.mock.calls).toEqual([
                 [{ type: 'stripe:ready' }, PARENT_ORIGIN],
-                [{ type: 'stripe:change', paymentMethodType: 'ideal' }, PARENT_ORIGIN],
+                [{ type: 'stripe:change', paymentMethodType: 'ideal', empty: true }, PARENT_ORIGIN],
                 [
                     {
                         type: 'stripe:loaderror',

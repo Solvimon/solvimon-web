@@ -95,6 +95,7 @@ function handleMessage(event: MessageEvent) {
             emit(
                 'change',
                 typeof data['paymentMethodType'] === 'string' ? data['paymentMethodType'] : 'card',
+                data['empty'] === true,
             );
             break;
 

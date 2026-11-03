@@ -57,6 +57,7 @@ import { clearPaymentRedirectParams, readAdyenRedirectReturn } from '@/utils/pay
 let dropInInstance: any | null = null;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let checkoutInstance: any | null = null;
+let hasSelected = false;
 
 const props = withDefaults(defineProps<PaymentIntegrationFormAdyenProps>(), {
     validateOnSubmit: () => Promise.resolve(true),
@@ -242,7 +243,14 @@ async function getConfiguration(): Promise<{
             openFirstPaymentMethod: props.selected,
             onSelect: ({ props: { type } }) => {
                 if (!type) return;
-                emit('select', { paymentMethodType: type, paymentGatewayVariant: 'ADYEN' });
+                // Opening the first method selects it before the customer has done anything.
+                const isAutomatic = props.selected && !hasSelected;
+                hasSelected = true;
+                emit('select', {
+                    paymentMethodType: type,
+                    paymentGatewayVariant: 'ADYEN',
+                    ...(isAutomatic && { isAutomatic: true }),
+                });
             },
             onReady: () => emit('ready'),
         },

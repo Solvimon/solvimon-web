@@ -51,6 +51,13 @@ interface BasePaymentIntegrationFormProps {
     variant: 'AUTHORIZE' | 'TOKENIZE';
     amount: Amount;
     selectedOption?: string;
+    /**
+     * Whether the gateway form opens on its first method, which also selects it. Off where
+     * something else on screen is already the customer's choice.
+     *
+     * @default true
+     */
+    openFirstPaymentMethod?: boolean;
     email?: string;
     name?: string;
     validateOnSubmit?: () => Promise<boolean>;
@@ -89,6 +96,8 @@ export type PaymentIntegrationFormProps =
 export type SelectedPaymentMethod = {
     paymentGatewayVariant: PaymentGatewayVariant;
     paymentMethodType: string;
+    /** Selected by the form itself while it renders, rather than by the customer. */
+    isAutomatic?: boolean;
 };
 
 export interface PaymentIntegrationFormEmits {

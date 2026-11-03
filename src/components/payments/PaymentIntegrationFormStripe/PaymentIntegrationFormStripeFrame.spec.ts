@@ -356,13 +356,19 @@ describe('PaymentIntegrationFormStripeFrame', () => {
         it('emits change with the paymentMethodType on stripe:change', () => {
             const { wrapper, cw } = setup();
             dispatchMessage(cw, { type: 'stripe:change', paymentMethodType: 'sepa_debit' });
-            expect(wrapper.emitted('change')?.[0]).toEqual(['sepa_debit']);
+            expect(wrapper.emitted('change')?.[0]).toEqual(['sepa_debit', false]);
+        });
+
+        it('says when a change comes from a form the customer has not filled in yet', () => {
+            const { wrapper, cw } = setup();
+            dispatchMessage(cw, { type: 'stripe:change', paymentMethodType: 'card', empty: true });
+            expect(wrapper.emitted('change')?.[0]).toEqual(['card', true]);
         });
 
         it('defaults paymentMethodType to "card" when stripe:change has no string type', () => {
             const { wrapper, cw } = setup();
             dispatchMessage(cw, { type: 'stripe:change', paymentMethodType: 42 });
-            expect(wrapper.emitted('change')?.[0]).toEqual(['card']);
+            expect(wrapper.emitted('change')?.[0]).toEqual(['card', false]);
         });
 
         it('emits loaderror with message and type on stripe:loaderror', () => {

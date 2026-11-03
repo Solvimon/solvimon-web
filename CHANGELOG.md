@@ -34,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- An expired card is no longer offered to pay with when ordering on-demand items, topping up, setting up an automatic top-up or managing a subscription, as on the pay invoice screen. The API keeps such a card `ACTIVE` (MD-5862), so it was offered, and could be preselected as the default, only for the charge to be declined. A card counts as expired from the first day of the month after its expiry month, in UTC. The payment methods management screen and the customer overview still list it, so the customer can replace or remove it.
 - The checkout description and an enabled pricing's price name the billing period in the element's language, "per dag" in Dutch rather than "per day".
 - The **My subscription** and **Payment method** blocks on the customer overview were a darker gray than the billing information next to them: their title wrapper laid its own translucent gray under the cards. They now have the same single gray background.
 

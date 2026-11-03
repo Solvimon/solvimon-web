@@ -1,5 +1,6 @@
 import type { RawPaymentMethod } from '@adyen/adyen-web';
-import { filterOutExpressPaymentMethods } from './paymentMethods';
+import type { PaymentMethod } from '@solvimon/solvimon-types';
+import { filterOutExpressPaymentMethods, isExpiredCard } from './paymentMethods';
 
 describe('paymentMethods utils', () => {
     describe('filterOutExpressPaymentMethods', () => {
@@ -104,5 +105,36 @@ describe('paymentMethods utils', () => {
                 brands: ['visa', 'mc'],
             });
         });
+    });
+});
+
+describe('isExpiredCard', () => {
+    const card = (expiry_date?: { expiry_month: number; expiry_year: number }) =>
+        ({
+            id: 'pmet_1',
+            type: 'CARD',
+            status: 'ACTIVE',
+            card: { brand: 'VISA', last_four_digits: '4242', expiry_date },
+        }) as PaymentMethod;
+    const expiring = (expiry_month: number, expiry_year: number) =>
+        card({ expiry_month, expiry_year });
+
+    it.each([
+        ['through the last day of its expiry month', '2026-03-31T23:59:59Z', false],
+        ['from the first day of the month after', '2026-04-01T00:00:00Z', true],
+    ])('keeps a card valid %s', (_, now, expired) => {
+        expect(isExpiredCard(expiring(3, 2026), new Date(now))).toBe(expired);
+    });
+
+    it('rolls an expiry in December over to the next year', () => {
+        expect(isExpiredCard(expiring(12, 2026), new Date('2026-12-31T12:00:00Z'))).toBe(false);
+        expect(isExpiredCard(expiring(12, 2026), new Date('2027-01-01T00:00:00Z'))).toBe(true);
+    });
+
+    it('never calls a card without an expiry date, or another type, expired', () => {
+        expect(isExpiredCard(card())).toBe(false);
+        expect(
+            isExpiredCard({ id: 'pmet_dd', type: 'DIRECT_DEBIT' } as unknown as PaymentMethod),
+        ).toBe(false);
     });
 });

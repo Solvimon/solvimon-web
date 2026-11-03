@@ -5,23 +5,12 @@ import type {
 } from '@solvimon/solvimon-types';
 import { formatEnum } from '@solvimon/solvimon-ui';
 import { getPaymentMethodName } from '@/components/payments/PaymentMethodSelector/usePaymentMethodSelectorOptions';
+import { isExpiredCard } from '@/utils/paymentMethods';
 
 export interface ChargeableStoredPaymentMethod {
     paymentMethod: PaymentMethod;
     /** The acceptor of this invoice whose gateway holds the stored method. */
     paymentAcceptorId: PaymentAcceptor['id'];
-}
-
-/**
- * A card can be charged through the last day of its expiry month, in UTC. The API keeps an expired
- * card `ACTIVE` and has no filter for it yet (MD-5862), so it is left out here.
- */
-export function isExpiredCard(paymentMethod: PaymentMethod, now: Date = new Date()): boolean {
-    if (paymentMethod.type !== 'CARD' || !paymentMethod.card.expiry_date) return false;
-
-    const { expiry_month: month, expiry_year: year } = paymentMethod.card.expiry_date;
-
-    return now.getTime() >= Date.UTC(year, month, 1);
 }
 
 /**

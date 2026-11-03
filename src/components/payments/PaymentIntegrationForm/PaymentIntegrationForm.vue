@@ -207,6 +207,7 @@ function submit() {
             :store-payment-method="storePaymentMethod"
             :redirects-on-success="redirectsOnSuccess"
             :billing-entity-name="billingEntityName"
+            :collapsed="!openFirstPaymentMethod"
             @select="handleSelect"
             @payment-failed="handlePaymentFailed(paymentMethodOption.integration.id, $event)"
             @payment-success="handlePaymentSuccess(paymentMethodOption.integration.id)"

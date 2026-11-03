@@ -47,6 +47,8 @@ export interface PaymentIntegrationFormStripeFrameProps {
     countryCode?: string;
     email?: string;
     name?: string;
+    /** Starts the element with no method open, so it selects nothing on its own. */
+    collapsed?: boolean;
 }
 
 export type StripeLoadError = Partial<Pick<StripeError, 'message' | 'type'>>;
@@ -55,8 +57,8 @@ export type StripeSubmitError = Partial<Pick<StripeError, 'message' | 'type' | '
 
 export type PaymentIntegrationFormStripeFrameEmits = {
     ready: [];
-    /** `isEmpty` until the customer has entered anything, as when Stripe reports its first render. */
-    change: [paymentMethodType: string, isEmpty: boolean];
+    /** `isEmpty` until the customer has entered anything; `isCollapsed` while no method is open. */
+    change: [paymentMethodType: string, isEmpty: boolean, isCollapsed: boolean];
     loaderror: [error: StripeLoadError];
     'submit-success': [confirmationTokenId: string];
     'submit-error': [error: StripeSubmitError];

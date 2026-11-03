@@ -138,6 +138,39 @@ describe('PaymentIntegrationFormStripe', () => {
         delete window.Stripe;
     });
 
+    describe("telling the customer's choices from its own", () => {
+        const frame = (wrapper: ReturnType<typeof mountComponent>) =>
+            wrapper.findComponent({ name: 'PaymentIntegrationFormStripeFrame' });
+        const selections = (wrapper: ReturnType<typeof mountComponent>) =>
+            (wrapper.emitted('select') ?? []).map(([selection]) =>
+                Boolean((selection as { isAutomatic?: boolean }).isAutomatic),
+            );
+
+        it('marks what it selects while it renders as its own', async () => {
+            const wrapper = mountComponent({ collapsed: true });
+
+            frame(wrapper).vm.$emit('ready');
+            frame(wrapper).vm.$emit('change', 'card', true, true);
+            await nextTick();
+
+            expect(selections(wrapper)).toEqual([true, true]);
+        });
+
+        it.each([
+            ['opens a method in a collapsed form', ['card', true, false]],
+            ['picks a method with nothing to enter, such as iDEAL', ['ideal', true, true]],
+            ['starts entering card details', ['card', false, true]],
+        ])("takes it as the customer's choice when the customer %s", async (_, change) => {
+            const wrapper = mountComponent({ collapsed: true });
+
+            frame(wrapper).vm.$emit('change', 'card', true, true);
+            frame(wrapper).vm.$emit('change', ...change);
+            await nextTick();
+
+            expect(selections(wrapper)).toEqual([true, false]);
+        });
+    });
+
     describe('handlePaymentResult — ACTION_REQUIRED', () => {
         it('reads client_secret from action.data when not at top level', async () => {
             mockAuthorizePayment.mockResolvedValue(stripeActionRequiredResponse);

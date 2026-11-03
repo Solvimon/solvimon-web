@@ -43,6 +43,7 @@ function sendInit() {
             countryCode: props.countryCode,
             email: props.email,
             name: props.name,
+            collapsed: props.collapsed === true,
         },
         getFrameTargetOrigin(window.origin),
     );
@@ -96,6 +97,7 @@ function handleMessage(event: MessageEvent) {
                 'change',
                 typeof data['paymentMethodType'] === 'string' ? data['paymentMethodType'] : 'card',
                 data['empty'] === true,
+                data['collapsed'] === true,
             );
             break;
 

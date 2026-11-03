@@ -57,7 +57,6 @@ import { clearPaymentRedirectParams, readAdyenRedirectReturn } from '@/utils/pay
 let dropInInstance: any | null = null;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let checkoutInstance: any | null = null;
-let hasSelected = false;
 
 const props = withDefaults(defineProps<PaymentIntegrationFormAdyenProps>(), {
     validateOnSubmit: () => Promise.resolve(true),
@@ -201,6 +200,9 @@ async function getConfiguration(): Promise<{
 }> {
     const adyenAmount = toMinorUnitAmount(props.amount);
     const paymentMethods = dropInPaymentMethods.value;
+    // Per drop-in: each one opens its first method, and so selects it, only once.
+    const opensFirstPaymentMethod = props.selected;
+    let hasSelected = false;
 
     return {
         checkoutConfig: {
@@ -240,11 +242,11 @@ async function getConfiguration(): Promise<{
                     showPayButton: true,
                 },
             },
-            openFirstPaymentMethod: props.selected,
+            openFirstPaymentMethod: opensFirstPaymentMethod,
             onSelect: ({ props: { type } }) => {
                 if (!type) return;
                 // Opening the first method selects it before the customer has done anything.
-                const isAutomatic = props.selected && !hasSelected;
+                const isAutomatic = opensFirstPaymentMethod && !hasSelected;
                 hasSelected = true;
                 emit('select', {
                     paymentMethodType: type,

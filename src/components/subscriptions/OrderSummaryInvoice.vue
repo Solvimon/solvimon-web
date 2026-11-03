@@ -28,6 +28,12 @@ const discountsUnderAProduct = computed(
 const getDiscountBand = (group: InvoiceGroup) =>
     group.lines?.find(({ type }) => type === 'DISCOUNT')?.details?.band;
 
+// ui's chip draws nothing without a percentage or amount, so such a discount keeps its name.
+const showsDiscountChip = (group: InvoiceGroup): boolean => {
+    const band = getDiscountBand(group);
+    return discountsUnderAProduct.value.has(group) && !!(band?.percentage || band?.amount);
+};
+
 // An invoice of one kind reads as it always has: a heading over every row explains nothing.
 const hasBothRecurrences = computed(
     () =>
@@ -81,7 +87,7 @@ const subtotalOf = (groups: InvoiceGroup[]): Amount | undefined =>
                     >
                         <div class="flex grow flex-row items-center gap-2">
                             <Typography
-                                v-if="!discountsUnderAProduct.has(group)"
+                                v-if="!showsDiscountChip(group)"
                                 tag="span"
                                 variant="body-xs"
                                 >{{ getInvoiceGroupName(group) }}</Typography
@@ -146,7 +152,7 @@ const subtotalOf = (groups: InvoiceGroup[]): Amount | undefined =>
                     >
                         <div class="flex grow flex-row items-center gap-2">
                             <Typography
-                                v-if="!discountsUnderAProduct.has(group)"
+                                v-if="!showsDiscountChip(group)"
                                 tag="span"
                                 variant="body-xs"
                                 >{{ getInvoiceGroupName(group) }}</Typography

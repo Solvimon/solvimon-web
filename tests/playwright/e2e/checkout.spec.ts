@@ -332,13 +332,12 @@ test.describe('Checkout', () => {
             await expect(checkout(page).submit).toHaveText(/Pay and subscribe/i);
         });
 
-        test('lists a discount right under the product it is on, as a discount', async ({
-            page,
-        }) => {
+        /** A product, shipping, and a discount on the product, in the shape a real preview sends. */
+        function previewWithDiscount(band?: Json): Json {
             const preview = anInvoicePreview({ total: '15.00' });
             const invoice = preview.invoice as { periods: { groups: Json[] }[] };
             const [template] = invoice.periods[0].groups;
-            // The shape a preview sends a pricing's discount in: a REVENUE group of DISCOUNT lines.
+            // A preview sends a pricing's discount as a REVENUE group of DISCOUNT lines.
             const group = (
                 name: string,
                 configId: string,
@@ -355,7 +354,7 @@ test.describe('Checkout', () => {
                         type: lineType,
                         pricing_item_config_id: configId,
                         product_items: [{ model_type: 'ONE_OFF' }],
-                        details: lineType === 'DISCOUNT' ? { band: { percentage: '100' } } : {},
+                        details: lineType === 'DISCOUNT' && band ? { band } : {},
                         amount_excluding_tax: { quantity, currency: 'EUR' },
                         amount_including_tax: { quantity, currency: 'EUR' },
                     },
@@ -366,13 +365,31 @@ test.describe('Checkout', () => {
                 group('Standard Shipping', 'pico_shipping', '15.00'),
                 group('PAX A35', 'pico_pax', '-40.00', 'DISCOUNT'),
             ];
+            return preview;
+        }
 
-            api = await mountLoaded(page, { mocks: { invoicePreview: { body: preview } } });
+        test('lists a discount right under the product it is on, as a discount', async ({
+            page,
+        }) => {
+            api = await mountLoaded(page, {
+                mocks: { invoicePreview: { body: previewWithDiscount({ percentage: '100' }) } },
+            });
 
             await expect(page.locator('.sv-order-summary__items')).toHaveText(
                 /^PAX A35\s*€40\.00\s*100% discount\s*[-−]€40\.00\s*Standard Shipping\s*€15\.00$/,
             );
             await expect(page.locator('.sv-order-summary__discount')).toHaveText('100% discount');
+        });
+
+        test('names a discount that does not say what it takes off', async ({ page }) => {
+            api = await mountLoaded(page, {
+                mocks: { invoicePreview: { body: previewWithDiscount() } },
+            });
+
+            await expect(page.locator('.sv-order-summary__items')).toHaveText(
+                /^PAX A35\s*€40\.00\s*PAX A35\s*[-−]€40\.00\s*Standard Shipping\s*€15\.00$/,
+            );
+            await expect(page.locator('.sv-order-summary__discount')).toHaveCount(0);
         });
 
         test('asks to start the trial when the plan has one', async ({ page }) => {

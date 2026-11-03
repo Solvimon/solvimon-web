@@ -5,7 +5,7 @@ import type {
 } from '@solvimon/solvimon-types';
 import { formatEnum } from '@solvimon/solvimon-ui';
 import { getPaymentMethodName } from '@/components/payments/PaymentMethodSelector/usePaymentMethodSelectorOptions';
-import { isExpiredCard } from '@/utils/paymentMethods';
+import { isPayablePaymentMethod } from '@/utils/paymentMethods';
 
 export interface ChargeableStoredPaymentMethod {
     paymentMethod: PaymentMethod;
@@ -29,7 +29,7 @@ export function getChargeableStoredPaymentMethods(
                 integration?.id === paymentMethod.integration_id,
         );
 
-        return paymentMethod.status === 'ACTIVE' && entry && !isExpiredCard(paymentMethod, now)
+        return entry && isPayablePaymentMethod(paymentMethod, now)
             ? [{ paymentMethod, paymentAcceptorId: entry.payment_acceptor.id }]
             : [];
     });

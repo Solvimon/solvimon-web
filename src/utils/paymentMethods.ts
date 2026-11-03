@@ -26,3 +26,11 @@ export function isExpiredCard(paymentMethod: PaymentMethod, now: Date = new Date
 
     return now.getTime() >= Date.UTC(year, month, 1);
 }
+
+/** Whether a stored method can be charged: active and, for a card, not expired. */
+export function isPayablePaymentMethod(
+    paymentMethod: PaymentMethod,
+    now: Date = new Date(),
+): boolean {
+    return paymentMethod.status === 'ACTIVE' && !isExpiredCard(paymentMethod, now);
+}

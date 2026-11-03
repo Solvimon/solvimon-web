@@ -18,7 +18,7 @@ import { useActionDispatchProvider, useLogger, usePortal } from '@/components/pr
 import { useSubscription } from '@/composables/useSubscription';
 import { usePaymentMethods } from '@/composables/usePaymentMethods';
 import { usePaymentMethodOptions } from '@/composables/usePaymentMethodOptions';
-import { isExpiredCard } from '@/utils/paymentMethods';
+import { isPayablePaymentMethod } from '@/utils/paymentMethods';
 import { useLoadInitialData } from '@/composables/useLoadInitialData';
 import { useSubscriptionUpgradePreview } from '@/composables/useSubscriptionUpgradePreview';
 import { createPricingPlanSchedulesService } from '@/services/pricingPlanSchedules';
@@ -59,8 +59,7 @@ const isChargeable = (
 ): boolean =>
     Boolean(subscription) &&
     paymentMethod.id === subscription?.payment_method_id &&
-    paymentMethod.status === 'ACTIVE' &&
-    !isExpiredCard(paymentMethod) &&
+    isPayablePaymentMethod(paymentMethod) &&
     paymentMethod.customer_id === subscription?.customer_id &&
     CHARGEABLE_PAYMENT_METHOD_TYPES.includes(paymentMethod.type);
 

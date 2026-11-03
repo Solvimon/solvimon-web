@@ -21,7 +21,7 @@ import {
     type ChargeOnDemandPriceType,
     type ChargeOnDemandSelectionItem,
 } from '@solvimon/solvimon-ui';
-import { isExpiredCard } from '@/utils/paymentMethods';
+import { isPayablePaymentMethod } from '@/utils/paymentMethods';
 
 const CHARGEABLE_PRICE_TYPES: ChargeOnDemandPriceType[] = ['FIXED', 'FLAT'];
 
@@ -154,8 +154,7 @@ export const getPayablePaymentMethods = (
     return paymentMethods
         .filter(
             (paymentMethod) =>
-                paymentMethod.status === 'ACTIVE' &&
-                !isExpiredCard(paymentMethod) &&
+                isPayablePaymentMethod(paymentMethod) &&
                 !!paymentMethod.integration_id &&
                 integrationIds.has(paymentMethod.integration_id),
         )

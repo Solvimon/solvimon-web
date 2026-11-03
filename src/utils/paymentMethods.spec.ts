@@ -1,6 +1,10 @@
 import type { RawPaymentMethod } from '@adyen/adyen-web';
 import type { PaymentMethod } from '@solvimon/solvimon-types';
-import { filterOutExpressPaymentMethods, isExpiredCard } from './paymentMethods';
+import {
+    filterOutExpressPaymentMethods,
+    isExpiredCard,
+    isPayablePaymentMethod,
+} from './paymentMethods';
 
 describe('paymentMethods utils', () => {
     describe('filterOutExpressPaymentMethods', () => {
@@ -136,5 +140,31 @@ describe('isExpiredCard', () => {
         expect(
             isExpiredCard({ id: 'pmet_dd', type: 'DIRECT_DEBIT' } as unknown as PaymentMethod),
         ).toBe(false);
+    });
+});
+
+describe('isPayablePaymentMethod', () => {
+    const method = (overrides: Record<string, unknown>) =>
+        ({
+            id: 'pmet_1',
+            type: 'CARD',
+            status: 'ACTIVE',
+            card: { brand: 'VISA' },
+            ...overrides,
+        }) as unknown as PaymentMethod;
+
+    it('pays with an active method', () => {
+        expect(isPayablePaymentMethod(method({}))).toBe(true);
+    });
+
+    it.each([
+        ['is inactive', { status: 'INACTIVE' }],
+        ['is still being set up', { status: 'SETUP' }],
+        [
+            'is a card that has expired',
+            { card: { brand: 'VISA', expiry_date: { expiry_month: 1, expiry_year: 2024 } } },
+        ],
+    ])('does not pay with a method that %s', (_, overrides) => {
+        expect(isPayablePaymentMethod(method(overrides))).toBe(false);
     });
 });

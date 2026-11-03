@@ -233,7 +233,7 @@
     "pay_invoice.new_payment_method.title": "Betalen met een nieuwe betaalmethode",
     "pay_invoice.order_summary.already_paid": "Al betaald",
     "pay_invoice.order_summary.amount_due": "Te betalen",
-    "pay_invoice.order_summary.due_date": "Vervalt op {date}",
+    "pay_invoice.order_summary.due_date": "Vervaldatum {date}",
     "pay_invoice.order_summary.invoice_number": "Factuur {number}",
     "pay_invoice.order_summary.title": "Factuuroverzicht",
     "pay_invoice.order_summary.total_heading": "Totaal",

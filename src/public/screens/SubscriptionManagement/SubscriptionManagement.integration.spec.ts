@@ -66,6 +66,7 @@ vi.mock('@/components/subscriptions/SubscriptionManagement/SubscriptionManagemen
         props: {
             pricingGroup: { type: Object, required: true },
             paymentMethods: { type: Array, default: () => [] },
+            hasExpiredPaymentMethod: Boolean,
             billingPeriod: { type: Object, required: true },
             enabledPricingIds: { type: Array, required: true },
             paymentMethodId: String,
@@ -504,6 +505,11 @@ describe('SubscriptionManagement', () => {
             await flushPromises();
 
             expect(methodsOffered(wrapper)).toEqual([]);
+            expect(
+                wrapper
+                    .findComponent({ name: 'SubscriptionManagementForm' })
+                    .props('hasExpiredPaymentMethod'),
+            ).toBe(true);
         });
 
         it('cannot be committed when the subscription has no method among the saved ones', async () => {

@@ -15,6 +15,8 @@ export interface SubscriptionManagementFormProps {
      * nothing can be added here.
      */
     paymentMethods?: PaymentMethod[];
+    /** The subscription's own method is a card that has expired, which is why none is on offer. */
+    hasExpiredPaymentMethod?: boolean;
     /** Drives how each pricing's amount is rendered on its option. */
     billingPeriod: BillingPeriod;
     currency?: Currency['currencyCode'];

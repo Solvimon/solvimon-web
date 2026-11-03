@@ -366,6 +366,7 @@
     "subscription_management.done_button.label": "Klaar",
     "subscription_management.empty_state.message": "Er is op dit moment niets aan dit abonnement te wijzigen.",
     "subscription_management.empty_state.title": "Niets te wijzigen",
+    "subscription_management.expired_payment_method": "De kaart waarmee dit abonnement wordt betaald is verlopen. Vervang hem bij je betaalmethoden om een wijziging te maken.",
     "subscription_management.load_error": "Dit abonnement kon niet worden geladen. Probeer het later opnieuw.",
     "subscription_management.no_payment_method": "Dit abonnement heeft geen betaalmethode om de wijziging mee af te rekenen. Neem contact op met support om dit te wijzigen.",
     "subscription_management.payment_method_selector.label": "Betaalmethode",

@@ -366,6 +366,7 @@
     "subscription_management.done_button.label": "Fertig",
     "subscription_management.empty_state.message": "Bei diesem Abonnement kann derzeit nichts geändert werden.",
     "subscription_management.empty_state.title": "Nichts zu ändern",
+    "subscription_management.expired_payment_method": "Die Karte, mit der dieses Abonnement bezahlt wird, ist abgelaufen. Ersetzen Sie sie unter Ihren Zahlungsmethoden, um eine Änderung vorzunehmen.",
     "subscription_management.load_error": "Dieses Abonnement konnte nicht geladen werden. Bitte versuchen Sie es später erneut.",
     "subscription_management.no_payment_method": "Für dieses Abonnement ist keine Zahlungsmethode hinterlegt, mit der die Änderung abgerechnet werden kann. Bitte wenden Sie sich an den Support, um sie zu ändern.",
     "subscription_management.payment_method_selector.label": "Zahlungsmethode",

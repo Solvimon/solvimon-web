@@ -101,7 +101,16 @@ watch(
                 tag="p"
                 class="sv-subscription-management-form__no-payment-method"
             >
-                {{
+                <template v-if="hasExpiredPaymentMethod">{{
+                    $t({
+                        defaultMessage:
+                            'The card this subscription is paid with has expired. Replace it under your payment methods to make a change.',
+                        id: 'subscription_management.expired_payment_method',
+                        description:
+                            'Shown in place of the payment method on the manage subscription screen when the card the subscription is paid with has expired',
+                    })
+                }}</template>
+                <template v-else>{{
                     $t({
                         defaultMessage:
                             'This subscription has no payment method to charge the change to. Please contact support to change it.',
@@ -109,7 +118,7 @@ watch(
                         description:
                             'Shown in place of the payment method on the manage subscription screen when the subscription has no usable payment method',
                     })
-                }}
+                }}</template>
             </Typography>
         </div>
     </form>

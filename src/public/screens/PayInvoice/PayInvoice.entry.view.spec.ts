@@ -19,7 +19,10 @@ const {
     mockUsePaymentMethods: vi.fn(),
 }));
 
-vi.mock('@/composables/usePaymentMethods', () => ({ usePaymentMethods: mockUsePaymentMethods }));
+vi.mock('@/composables/usePaymentMethods', async (importOriginal) => ({
+    ...(await importOriginal<typeof import('@/composables/usePaymentMethods')>()),
+    usePaymentMethods: mockUsePaymentMethods,
+}));
 
 vi.mock('@/composables/useInvoice', () => ({ useInvoice: mockUseInvoice }));
 
@@ -115,11 +118,12 @@ describe('PayInvoice.entry.view', () => {
         expect(latestSlotProps()?.paymentMethodOptions).toEqual(options);
     });
 
-    it("offers the portal customer's stored methods too", async () => {
+    it("offers the portal customer's stored methods too, the default one first", async () => {
         const { latestSlotProps } = await mountEntryView();
 
         expect(mockUsePaymentMethods).toHaveBeenCalledWith({
             customerId: createTestPortalObject().customer_id,
+            order: { orderBy: 'default', orderDirection: 'desc' },
         });
         expect(latestSlotProps()?.paymentMethods).toEqual(storedPaymentMethods);
     });

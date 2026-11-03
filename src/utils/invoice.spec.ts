@@ -450,6 +450,18 @@ describe('getInvoiceGroupsWithDiscounts', () => {
         ).toEqual([['Rental'], ['Purchase', 'Purchase discount']]);
     });
 
+    it('takes a group of discount lines for a discount', () => {
+        const line = (type: string) => ({ type, pricing_item_config_id: 'pico_pax' });
+
+        expect(
+            names([
+                group('PAX A35', { lines: [line('REVENUE')] }),
+                group('Standard Shipping', { lines: [{ type: 'REVENUE' }] }),
+                group('PAX A35', { lines: [line('DISCOUNT')] }),
+            ]),
+        ).toEqual([['PAX A35', 'PAX A35'], ['Standard Shipping']]);
+    });
+
     it('lists a discount on no one product on its own, at the end', () => {
         expect(names([discount('Welcome'), group('Seats')])).toEqual([['Seats'], ['Welcome']]);
     });

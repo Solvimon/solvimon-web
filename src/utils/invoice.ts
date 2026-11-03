@@ -61,6 +61,11 @@ const classifyLine = (line: InvoiceLine): InvoiceRecurrence | undefined => {
     return modelTypes.every((modelType) => modelType === 'ONE_OFF') ? 'ONE_OFF' : 'RECURRING';
 };
 
+// A preview sends a pricing's discount as a REVENUE group of DISCOUNT lines.
+const isDiscount = (group: InvoiceGroup): boolean =>
+    group.type === 'DISCOUNT' ||
+    (!!group.lines?.length && group.lines.every(({ type }) => type === 'DISCOUNT'));
+
 // A discount's lines name the pricing item config they discount; its products are the fallback.
 const findDiscountedGroup = (
     discount: InvoiceGroup,
@@ -70,7 +75,7 @@ const findDiscountedGroup = (
         discount.lines?.map(({ pricing_item_config_id }) => pricing_item_config_id).filter(Boolean),
     );
     const productIds = new Set(discount.products?.map(({ id }) => id));
-    const charges = groups.filter(({ type }) => type !== 'DISCOUNT');
+    const charges = groups.filter((group) => !isDiscount(group));
 
     return (
         charges.find((group) =>
@@ -88,20 +93,18 @@ const findDiscountedGroup = (
 export function getInvoiceGroupsWithDiscounts(invoice: Invoice): InvoiceGroup[][] {
     return (invoice.periods ?? []).flatMap(({ groups = [] }) => {
         const clusters = new Map<InvoiceGroup, InvoiceGroup[]>(
-            groups.filter(({ type }) => type !== 'DISCOUNT').map((group) => [group, [group]]),
+            groups.filter((group) => !isDiscount(group)).map((group) => [group, [group]]),
         );
         const unplaced: InvoiceGroup[][] = [];
 
-        groups
-            .filter(({ type }) => type === 'DISCOUNT')
-            .forEach((discount) => {
-                const discounted = findDiscountedGroup(discount, groups);
-                if (discounted) {
-                    clusters.get(discounted)!.push(discount);
-                } else {
-                    unplaced.push([discount]);
-                }
-            });
+        groups.filter(isDiscount).forEach((discount) => {
+            const discounted = findDiscountedGroup(discount, groups);
+            if (discounted) {
+                clusters.get(discounted)!.push(discount);
+            } else {
+                unplaced.push([discount]);
+            }
+        });
 
         return [...clusters.values(), ...unplaced];
     });

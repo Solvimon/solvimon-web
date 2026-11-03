@@ -370,9 +370,9 @@ test.describe('Checkout', () => {
             api = await mountLoaded(page, { mocks: { invoicePreview: { body: preview } } });
 
             await expect(page.locator('.sv-order-summary__items')).toHaveText(
-                /^PAX A35\s*€40\.00\s*PAX A35\s*100% DISCOUNT\s*[-−]€40\.00\s*Standard Shipping\s*€15\.00$/,
+                /^PAX A35\s*€40\.00\s*100% discount\s*[-−]€40\.00\s*Standard Shipping\s*€15\.00$/,
             );
-            await expect(page.locator('.sv-order-summary__discount')).toHaveText('100% DISCOUNT');
+            await expect(page.locator('.sv-order-summary__discount')).toHaveText('100% discount');
         });
 
         test('asks to start the trial when the plan has one', async ({ page }) => {

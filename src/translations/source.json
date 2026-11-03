@@ -461,15 +461,15 @@
   },
   "checkout.order_summary_block.discount_chip": {
     "defaultMessage": "Discount",
-    "description": "Marks a discount listed right under the product it is on, beside its name"
+    "description": "Labels a discount listed right under the product it is on"
   },
   "checkout.order_summary_block.discount_chip.amount": {
     "defaultMessage": "{amount} discount",
-    "description": "Marks a discount beside the name of the product it is on, where {amount} is the amount taken off"
+    "description": "Labels a discount listed right under the product it is on, where {amount} is the amount taken off"
   },
   "checkout.order_summary_block.discount_chip.percentage": {
     "defaultMessage": "{percentage}% discount",
-    "description": "Marks a discount beside the name of the product it is on, where {percentage} is the percentage (number only)"
+    "description": "Labels a discount listed right under the product it is on, where {percentage} is the percentage (number only)"
   },
   "checkout.order_summary_block.one_off_heading": {
     "defaultMessage": "One-time charges",

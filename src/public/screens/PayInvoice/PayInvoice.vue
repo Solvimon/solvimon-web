@@ -32,6 +32,9 @@ import { useStoredPaymentMethodPayment } from '@/composables/useStoredPaymentMet
 import PaymentMethodSelector from '@/components/payments/PaymentMethodSelector/PaymentMethodSelector.vue';
 import InvoiceOrderSummary from '@/components/invoices/InvoiceOrderSummary/InvoiceOrderSummary.vue';
 import SecurePaymentsKPI from '@/components/payments/SecurePaymentsKPI/SecurePaymentsKPI.vue';
+import PaymentErrorCard from '@/components/payments/PaymentErrorCard/PaymentErrorCard.vue';
+import { createPaymentFailureError } from '@/utils/paymentFailure';
+import type { SdkError } from '@/types/errors';
 
 const { $t } = useIntl();
 
@@ -86,8 +89,22 @@ const handleFormSelect = (payload: SelectedPaymentMethod) => {
     if (!payload.isAutomatic) selectedStoredPaymentMethodId.value = undefined;
 };
 
+const storedPaymentMethodsTitle = computed(() =>
+    $t({
+        id: 'pay_invoice.stored_payment_methods.title',
+        defaultMessage: 'Your payment methods',
+        description:
+            'Section title above the payment methods the customer stored before, on the pay invoice screen',
+    }),
+);
+
 const { charge: chargeStoredPaymentMethod } = useStoredPaymentMethodPayment();
 const storedPaymentError = ref(false);
+/**
+ * A stored charge whose answer never arrived may still go through, so nothing is left on screen to
+ * pay with — the form included, which could otherwise take a second payment by itself.
+ */
+const storedPaymentUnconfirmed = ref<SdkError>();
 
 const payWithStoredPaymentMethod = async () => {
     const stored = selectedStoredPaymentMethod.value;
@@ -113,6 +130,10 @@ const payWithStoredPaymentMethod = async () => {
 
     if (outcome === 'UNCONFIRMED') {
         isPaymentUnconfirmed.value = true;
+        storedPaymentUnconfirmed.value = createPaymentFailureError({
+            code: 'PAYMENT_OUTCOME_UNCONFIRMED',
+            message: 'The charge to the stored payment method could not be confirmed',
+        });
         return;
     }
 
@@ -222,30 +243,33 @@ const handlePaymentFailed = (error?: { code?: string }) => {
 
             <!-- payment method form -->
             <template v-else-if="!isLoading && countryCode && amount && invoice">
-                <div v-if="availability === 'READY'" class="grid grid-cols-1 gap-6">
+                <PaymentErrorCard
+                    v-if="availability === 'READY' && storedPaymentUnconfirmed"
+                    class="sv-pay-invoice__stored-payment-unconfirmed"
+                    :error="storedPaymentUnconfirmed"
+                />
+
+                <div v-else-if="availability === 'READY'" class="grid grid-cols-1 gap-6">
                     <template v-if="storedPaymentMethods.length">
                         <Section
                             class="sv-pay-invoice__stored-payment-methods"
-                            :title="
-                                $t({
-                                    id: 'pay_invoice.stored_payment_methods.title',
-                                    defaultMessage: 'Your payment methods',
-                                    description:
-                                        'Section title above the payment methods the customer stored before, on the pay invoice screen',
-                                })
-                            "
+                            :title="storedPaymentMethodsTitle"
                             content-background="none"
                             no-border
                             no-spacing
                         >
-                            <PaymentMethodSelector
-                                v-model="selectedStoredPaymentMethodId"
-                                :payment-methods="
-                                    storedPaymentMethods.map(({ paymentMethod }) => paymentMethod)
-                                "
-                                :show-add-option="false"
-                                :disabled="isPaymentPending || isFormHeld"
-                            />
+                            <div role="group" :aria-label="storedPaymentMethodsTitle">
+                                <PaymentMethodSelector
+                                    v-model="selectedStoredPaymentMethodId"
+                                    :payment-methods="
+                                        storedPaymentMethods.map(
+                                            ({ paymentMethod }) => paymentMethod,
+                                        )
+                                    "
+                                    :show-add-option="false"
+                                    :disabled="isPaymentPending || isFormHeld"
+                                />
+                            </div>
                         </Section>
 
                         <ErrorNotification
@@ -295,7 +319,10 @@ const handlePaymentFailed = (error?: { code?: string }) => {
                         no-border
                         no-spacing
                     >
-                        <div :class="{ 'pointer-events-none opacity-60': isFormHeld }">
+                        <div
+                            :class="{ 'pointer-events-none opacity-60': isFormHeld }"
+                            :inert="isFormHeld || undefined"
+                        >
                             <PaymentIntegrationForm
                                 ref="paymentIntegrationFormRef"
                                 :amount="amount"

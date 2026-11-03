@@ -843,6 +843,30 @@ describe('PayInvoice with stored payment methods', () => {
         expect(payButton(wrapper).props('disabled')).toBe(false);
     });
 
+    it('leaves nothing to pay with while a stored charge may still go through', async () => {
+        mockChargeStoredPaymentMethod.mockRejectedValue(new ApiError({ statusCode: 503 }));
+        const wrapper = mountComponent({ paymentMethods: [storedCard()] });
+
+        await payButton(wrapper).trigger('click');
+        await flushPromises();
+
+        const card = wrapper.findComponent({ name: 'PaymentErrorCard' });
+        expect(card.props('error')).toMatchObject({ code: 'PAYMENT_OUTCOME_UNCONFIRMED' });
+        expect(storedSelector(wrapper).exists()).toBe(false);
+        expect(wrapper.findComponent({ name: 'PaymentIntegrationForm' }).exists()).toBe(false);
+        expect(payButton(wrapper).props('disabled')).toBe(true);
+    });
+
+    it('names the stored methods for assistive technology', () => {
+        const wrapper = mountComponent({ paymentMethods: [storedCard()] });
+
+        expect(
+            wrapper
+                .find('.sv-pay-invoice__stored-payment-methods [role="group"]')
+                .attributes('aria-label'),
+        ).toBe('Your payment methods');
+    });
+
     it('takes no second payment while the first one is out', async () => {
         mockChargeStoredPaymentMethod.mockReturnValue(new Promise(() => {}));
         const wrapper = mountComponent({ paymentMethods: [storedCard()] });
@@ -853,6 +877,8 @@ describe('PayInvoice with stored payment methods', () => {
 
         expect(mockChargeStoredPaymentMethod).toHaveBeenCalledTimes(1);
         expect(payButton(wrapper).props('disabled')).toBe(true);
+        // Out of reach of the keyboard too, not only of the pointer.
+        expect(wrapper.find('[inert]').exists()).toBe(true);
     });
 
     it('pays with the form instead once the customer picks a new method there', async () => {

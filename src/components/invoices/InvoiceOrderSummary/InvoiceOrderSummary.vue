@@ -30,14 +30,19 @@ const messages = computed(() => ({
 
 const amountDue = computed(() => props.invoice.open_invoice_amount);
 
+const negate = (quantity: string) =>
+    quantity.startsWith('-') ? quantity.slice(1) : `-${quantity}`;
+
+/** Only while something is still due: on a paid invoice the total says it all. */
 const alreadyPaid = computed(() => {
     const total = props.invoice.tax_summary.total_amount;
     const due = amountDue.value;
 
-    if (!due || Number(due.quantity) === Number(total.quantity)) return undefined;
+    if (props.isPaid || props.invoice.paid || !due) return undefined;
+    if (Number(due.quantity) === Number(total.quantity)) return undefined;
 
     return sumAmounts(
-        [total, { ...due, quantity: `-${due.quantity}` }],
+        [total, { ...due, quantity: negate(due.quantity) }],
         props.invoice.billing_currency,
     );
 });

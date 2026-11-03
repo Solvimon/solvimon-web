@@ -87,4 +87,41 @@ describe('InvoiceOrderSummary', () => {
         expect(wrapper.find('.sv-invoice-order-summary__paid').text()).toContain('EUR 50.00');
         expect(wrapper.find('.sv-invoice-order-summary__due').text()).toContain('EUR 25.00');
     });
+
+    it.each([
+        ['once it is paid', { isPaid: true }],
+        [
+            'when the invoice says it is paid',
+            {
+                invoice: anInvoice({
+                    paid: true,
+                    open_invoice_amount: { quantity: '0.00', currency: 'EUR' },
+                }),
+            },
+        ],
+    ])('leaves out what is already paid and still due %s', (_, props) => {
+        const wrapper = mount(InvoiceOrderSummary, {
+            props: {
+                invoice: anInvoice({ open_invoice_amount: { quantity: '25.00', currency: 'EUR' } }),
+                ...props,
+            },
+        });
+
+        expect(wrapper.find('.sv-invoice-order-summary__paid').exists()).toBe(false);
+        expect(wrapper.find('.sv-invoice-order-summary__due').exists()).toBe(false);
+    });
+
+    it('works out what is already paid on a credit note', () => {
+        const wrapper = mount(InvoiceOrderSummary, {
+            props: {
+                invoice: anInvoice({
+                    tax_summary: { total_amount: { quantity: '-50.00', currency: 'EUR' } },
+                    open_invoice_amount: { quantity: '-25.00', currency: 'EUR' },
+                } as Partial<Invoice>),
+            },
+        });
+
+        expect(wrapper.find('.sv-invoice-order-summary__paid').text()).toContain('EUR -25.00');
+        expect(wrapper.find('.sv-invoice-order-summary__due').text()).toContain('EUR -25.00');
+    });
 });

@@ -323,13 +323,21 @@ describe('getPayablePaymentMethods', () => {
         payment_method_id: 'pm-subscription',
     };
 
-    it("keeps the ACTIVE methods on one of the subscription's payment acceptors, the subscription's own first", () => {
+    it("keeps the ACTIVE, unexpired methods on one of the subscription's payment acceptors, the subscription's own first", () => {
         const methods = getPayablePaymentMethods(
             [
                 buildCardPaymentMethod({ id: 'pm-other' }),
                 buildCardPaymentMethod({ id: 'pm-subscription' }),
                 buildCardPaymentMethod({ id: 'pm-inactive', status: 'INACTIVE' }),
                 buildCardPaymentMethod({ id: 'pm-adyen', integration_id: 'integration-adyen' }),
+                buildCardPaymentMethod({
+                    id: 'pm-expired',
+                    card: {
+                        brand: 'VISA',
+                        last_four_digits: '0019',
+                        expiry_date: { expiry_month: 1, expiry_year: 2024 },
+                    },
+                }),
             ],
             subscription,
         );

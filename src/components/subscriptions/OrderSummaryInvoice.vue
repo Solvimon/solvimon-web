@@ -3,7 +3,6 @@ import {
     Amount as AmountDisplay,
     Divider,
     InvoicePreview,
-    InvoicePreviewGroups,
     Section,
     Typography,
     useIntl,
@@ -12,7 +11,7 @@ import type { Amount, InvoiceGroup } from '@solvimon/solvimon-types';
 import { computed } from 'vue';
 import type { OrderSummaryInvoiceProps } from './OrderSummaryInvoice.types';
 import { getGroupsSubtotal, getInvoiceGroupName } from './OrderSummary.lib';
-import { getInvoiceGroupsByRecurrence } from '@/utils/invoice';
+import { getInvoiceGroupsByRecurrence, getInvoiceGroupsWithDiscounts } from '@/utils/invoice';
 
 /** What an invoice is for and comes to, as the order summary lists it; the default slot follows the totals. */
 const props = defineProps<OrderSummaryInvoiceProps>();
@@ -20,6 +19,7 @@ const props = defineProps<OrderSummaryInvoiceProps>();
 const { $t } = useIntl();
 
 const groupsByRecurrence = computed(() => getInvoiceGroupsByRecurrence(props.invoice));
+const groupsWithDiscounts = computed(() => getInvoiceGroupsWithDiscounts(props.invoice));
 
 // An invoice of one kind reads as it always has: a heading over every row explains nothing.
 const hasBothRecurrences = computed(
@@ -118,11 +118,20 @@ const subtotalOf = (groups: InvoiceGroup[]): Amount | undefined =>
                 </Typography>
             </div>
         </Section>
-        <InvoicePreviewGroups
-            v-if="!hasBothRecurrences"
-            :invoice="invoice"
-            :wrapper-component="Section"
-        />
+        <template v-if="!hasBothRecurrences">
+            <Section v-for="(cluster, clusterIndex) in groupsWithDiscounts" :key="clusterIndex">
+                <div class="grid grid-cols-1 gap-1">
+                    <div v-for="(group, index) in cluster" :key="index" class="flex flex-row gap-2">
+                        <Typography tag="span" variant="body-xs" class="grow">{{
+                            getInvoiceGroupName(group)
+                        }}</Typography>
+                        <Typography tag="span" variant="body-xs">
+                            <AmountDisplay :value="group.amount_excluding_tax" />
+                        </Typography>
+                    </div>
+                </div>
+            </Section>
+        </template>
     </div>
 
     <!-- invoice totals preview -->

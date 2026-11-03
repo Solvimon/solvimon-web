@@ -61,10 +61,56 @@ const classifyLine = (line: InvoiceLine): InvoiceRecurrence | undefined => {
     return modelTypes.every((modelType) => modelType === 'ONE_OFF') ? 'ONE_OFF' : 'RECURRING';
 };
 
+// A discount's lines name the pricing item config they discount; its products are the fallback.
+const findDiscountedGroup = (
+    discount: InvoiceGroup,
+    groups: InvoiceGroup[],
+): InvoiceGroup | undefined => {
+    const configIds = new Set(
+        discount.lines?.map(({ pricing_item_config_id }) => pricing_item_config_id).filter(Boolean),
+    );
+    const productIds = new Set(discount.products?.map(({ id }) => id));
+    const charges = groups.filter(({ type }) => type !== 'DISCOUNT');
+
+    return (
+        charges.find((group) =>
+            group.lines?.some(({ pricing_item_config_id }) =>
+                configIds.has(pricing_item_config_id),
+            ),
+        ) ?? charges.find((group) => group.products?.some(({ id }) => productIds.has(id)))
+    );
+};
+
+/**
+ * The invoice's groups, each followed by the discounts on it. A discount on no one group, such as
+ * an invoice-wide one, stands alone at the end.
+ */
+export function getInvoiceGroupsWithDiscounts(invoice: Invoice): InvoiceGroup[][] {
+    return (invoice.periods ?? []).flatMap(({ groups = [] }) => {
+        const clusters = new Map<InvoiceGroup, InvoiceGroup[]>(
+            groups.filter(({ type }) => type !== 'DISCOUNT').map((group) => [group, [group]]),
+        );
+        const unplaced: InvoiceGroup[][] = [];
+
+        groups
+            .filter(({ type }) => type === 'DISCOUNT')
+            .forEach((discount) => {
+                const discounted = findDiscountedGroup(discount, groups);
+                if (discounted) {
+                    clusters.get(discounted)!.push(discount);
+                } else {
+                    unplaced.push([discount]);
+                }
+            });
+
+        return [...clusters.values(), ...unplaced];
+    });
+}
+
 /**
  * A group is taken whole, because a summary row carries the group's own amount: one whose lines
  * disagree would contradict whichever heading it went under, and lands in `other` with the
- * invoice-wide discounts, which belong under neither.
+ * invoice-wide discounts, which belong under neither. A discount on one group goes where it does.
  */
 export function getInvoiceGroupsByRecurrence(invoice: Invoice): {
     recurring: InvoiceGroup[];
@@ -77,18 +123,17 @@ export function getInvoiceGroupsByRecurrence(invoice: Invoice): {
         UNATTRIBUTED: [],
     };
 
-    invoice.periods?.forEach((period) => {
-        period.groups?.forEach((group) => {
-            const groupRecurrence = RECURRENCE_BY_GROUP_TYPE[group.type] ?? 'UNATTRIBUTED';
+    getInvoiceGroupsWithDiscounts(invoice).forEach((cluster) => {
+        const [group] = cluster;
+        const groupRecurrence = RECURRENCE_BY_GROUP_TYPE[group.type] ?? 'UNATTRIBUTED';
 
-            const recurrences = new Set(
-                groupRecurrence === 'RECURRING' && group.lines?.length
-                    ? group.lines.map((line) => classifyLine(line) ?? 'RECURRING')
-                    : [groupRecurrence],
-            );
+        const recurrences = new Set(
+            groupRecurrence === 'RECURRING' && group.lines?.length
+                ? group.lines.map((line) => classifyLine(line) ?? 'RECURRING')
+                : [groupRecurrence],
+        );
 
-            buckets[recurrences.size === 1 ? [...recurrences][0] : 'UNATTRIBUTED'].push(group);
-        });
+        buckets[recurrences.size === 1 ? [...recurrences][0] : 'UNATTRIBUTED'].push(...cluster);
     });
 
     return {

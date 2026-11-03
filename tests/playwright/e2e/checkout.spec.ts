@@ -355,6 +355,7 @@ test.describe('Checkout', () => {
                         type: lineType,
                         pricing_item_config_id: configId,
                         product_items: [{ model_type: 'ONE_OFF' }],
+                        details: lineType === 'DISCOUNT' ? { band: { percentage: '100' } } : {},
                         amount_excluding_tax: { quantity, currency: 'EUR' },
                         amount_including_tax: { quantity, currency: 'EUR' },
                     },
@@ -369,9 +370,9 @@ test.describe('Checkout', () => {
             api = await mountLoaded(page, { mocks: { invoicePreview: { body: preview } } });
 
             await expect(page.locator('.sv-order-summary__items')).toHaveText(
-                /^PAX A35\s*€40\.00\s*PAX A35\s*Discount\s*[-−]€40\.00\s*Standard Shipping\s*€15\.00$/,
+                /^PAX A35\s*€40\.00\s*PAX A35\s*100% DISCOUNT\s*[-−]€40\.00\s*Standard Shipping\s*€15\.00$/,
             );
-            await expect(page.locator('.sv-order-summary__discount')).toHaveText('Discount');
+            await expect(page.locator('.sv-order-summary__discount')).toHaveText('100% DISCOUNT');
         });
 
         test('asks to start the trial when the plan has one', async ({ page }) => {

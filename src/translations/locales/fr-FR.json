@@ -115,6 +115,8 @@
     "checkout.order_summary_block.billing_period.save_badge.suffix": "/an",
     "checkout.order_summary_block.billing_period.sub_label": "{amount}{period}",
     "checkout.order_summary_block.discount_chip": "Remise",
+    "checkout.order_summary_block.discount_chip.amount": "Remise de {amount}",
+    "checkout.order_summary_block.discount_chip.percentage": "Remise de {percentage} %",
     "checkout.order_summary_block.one_off_heading": "Frais uniques",
     "checkout.order_summary_block.recurring_heading": "Abonnement",
     "checkout.order_summary_block.renews_at": "Puis {amount} par {period}",

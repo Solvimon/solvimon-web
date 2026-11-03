@@ -115,6 +115,8 @@
   "checkout.order_summary_block.billing_period.save_badge.suffix": "/year",
   "checkout.order_summary_block.billing_period.sub_label": "{amount}{period}",
   "checkout.order_summary_block.discount_chip": "Discount",
+  "checkout.order_summary_block.discount_chip.amount": "{amount} discount",
+  "checkout.order_summary_block.discount_chip.percentage": "{percentage}% discount",
   "checkout.order_summary_block.one_off_heading": "One-time charges",
   "checkout.order_summary_block.recurring_heading": "Subscription",
   "checkout.order_summary_block.renews_at": "Then {amount} per {period}",

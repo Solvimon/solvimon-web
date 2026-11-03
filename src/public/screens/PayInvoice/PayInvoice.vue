@@ -31,6 +31,7 @@ import { usePaymentFormHold } from '@/composables/usePaymentFormHold';
 import { useStoredPaymentMethodPayment } from '@/composables/useStoredPaymentMethodPayment';
 import PaymentMethodSelector from '@/components/payments/PaymentMethodSelector/PaymentMethodSelector.vue';
 import InvoiceOrderSummary from '@/components/invoices/InvoiceOrderSummary/InvoiceOrderSummary.vue';
+import SecurePaymentsKPI from '@/components/payments/SecurePaymentsKPI/SecurePaymentsKPI.vue';
 
 const { $t } = useIntl();
 
@@ -374,7 +375,10 @@ const handlePaymentFailed = (error?: { code?: string }) => {
                 />
             </Skeleton>
 
-            <div v-if="invoice && !invoice.paid && !isPaid && availability === 'READY'">
+            <div
+                v-if="invoice && !invoice.paid && !isPaid && availability === 'READY'"
+                class="flex flex-col gap-2"
+            >
                 <PayButton
                     :disabled="!canPay"
                     :loading="isPaymentPending"
@@ -387,6 +391,11 @@ const handlePaymentFailed = (error?: { code?: string }) => {
                         getStoredPaymentMethodLabel(selectedStoredPaymentMethod.paymentMethod)
                     "
                     @click="handleSubmit"
+                />
+
+                <SecurePaymentsKPI
+                    class="sv-pay-invoice__kpi"
+                    :payment-method-options="paymentMethodOptions ?? []"
                 />
             </div>
         </template>

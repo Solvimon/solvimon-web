@@ -336,24 +336,32 @@ test.describe('Checkout', () => {
             const preview = anInvoicePreview({ total: '15.00' });
             const invoice = preview.invoice as { periods: { groups: Json[] }[] };
             const [template] = invoice.periods[0].groups;
+            // The shape a preview sends a pricing's discount in: a REVENUE group of DISCOUNT lines.
             const group = (
                 name: string,
-                productId: string,
+                configId: string,
                 quantity: string,
-                type = 'REVENUE',
+                lineType = 'REVENUE',
             ) => ({
                 ...template,
-                type,
-                pricing: type === 'DISCOUNT' ? undefined : { id: `pit_${productId}`, name },
-                products: [{ id: productId, name }],
+                type: 'REVENUE',
+                pricing: { id: `pric_${configId}`, name },
                 amount_excluding_tax: { quantity, currency: 'EUR' },
                 amount_including_tax: { quantity, currency: 'EUR' },
-                lines: [],
+                lines: [
+                    {
+                        type: lineType,
+                        pricing_item_config_id: configId,
+                        product_items: [{ model_type: 'ONE_OFF' }],
+                        amount_excluding_tax: { quantity, currency: 'EUR' },
+                        amount_including_tax: { quantity, currency: 'EUR' },
+                    },
+                ],
             });
             invoice.periods[0].groups = [
-                group('PAX A35', 'prod_pax', '40.00', 'ONE_OFF'),
-                group('Standard Shipping', 'prod_shipping', '15.00', 'ONE_OFF'),
-                group('PAX A35', 'prod_pax', '-40.00', 'DISCOUNT'),
+                group('PAX A35', 'pico_pax', '40.00'),
+                group('Standard Shipping', 'pico_shipping', '15.00'),
+                group('PAX A35', 'pico_pax', '-40.00', 'DISCOUNT'),
             ];
 
             api = await mountLoaded(page, { mocks: { invoicePreview: { body: preview } } });

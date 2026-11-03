@@ -73,7 +73,7 @@ export function stripeStubScript(config: StripeStubConfig): string {
                     }
 
                     if (handlers.ready) handlers.ready();
-                    if (handlers.change) handlers.change({ value: { type: 'card' } });
+                    if (handlers.change) handlers.change({ value: { type: 'card' }, empty: true });
                 }, 0);
             },
             unmount: function () {},

@@ -452,6 +452,7 @@ function handleReady() {
     emit('select', {
         paymentMethodType: 'card',
         paymentGatewayVariant: PAYMENT_GATEWAY_VARIANT_STRIPE,
+        isAutomatic: true,
     });
     emit('ready');
 }
@@ -535,10 +536,11 @@ onBeforeUnmount(() => {
         :name="name"
         @ready="handleReady"
         @change="
-            (type) =>
+            (type, isEmpty) =>
                 emit('select', {
                     paymentMethodType: type,
                     paymentGatewayVariant: PAYMENT_GATEWAY_VARIANT_STRIPE,
+                    ...(isEmpty && { isAutomatic: true }),
                 })
         "
         @loaderror="handleLoadError"

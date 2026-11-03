@@ -8,6 +8,7 @@ import type {
 import type {
     PaymentIntegrationFormEmits,
     PaymentIntegrationFormProps,
+    SelectedPaymentMethod,
 } from './PaymentIntegrationForm.types';
 import {
     isAdyenPaymentIntegration,
@@ -29,6 +30,7 @@ const PaymentIntegrationFormAdyen = defineAsyncComponent(() =>
 
 const props = withDefaults(defineProps<PaymentIntegrationFormProps>(), {
     storePaymentMethod: undefined,
+    openFirstPaymentMethod: true,
 });
 const emit = defineEmits<PaymentIntegrationFormEmits>();
 defineExpose({ submit });
@@ -45,16 +47,10 @@ const selectedIntegration = computed(
 const integrationRefs = ref(new Map());
 const showIntegrationError = ref(false);
 
-const handleSelect = ({
-    paymentGatewayVariant,
-    paymentMethodType,
-}: {
-    paymentGatewayVariant: PaymentGatewayVariant;
-    paymentMethodType: string;
-}) => {
+const handleSelect = (selection: SelectedPaymentMethod) => {
     showIntegrationError.value = false;
-    userSelectedIntegration.value = paymentGatewayVariant;
-    emit('select', { paymentGatewayVariant, paymentMethodType });
+    userSelectedIntegration.value = selection.paymentGatewayVariant;
+    emit('select', selection);
 };
 
 const setIntegrationRef = (paymentMethodOption: PaymentMethodOptionResponseEntry) => {
@@ -174,7 +170,10 @@ function submit() {
             :variant="variant"
             :amount="amount"
             :invoice-id="invoiceId"
-            :selected="isSelectedIntegration({ selectedIntegration, paymentMethodOption })"
+            :selected="
+                openFirstPaymentMethod &&
+                isSelectedIntegration({ selectedIntegration, paymentMethodOption })
+            "
             :validate-on-submit="validateFor(paymentMethodOption.integration.id, { claims: false })"
             :force-store-payment-method="forceStorePaymentMethod"
             :store-payment-method="storePaymentMethod"

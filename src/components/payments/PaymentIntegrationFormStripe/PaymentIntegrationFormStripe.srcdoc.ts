@@ -67,7 +67,7 @@ body { overflow: hidden; }
       });
 
       paymentElement.on('change', function (e) {
-        parent.postMessage({ type: 'stripe:change', paymentMethodType: e.value.type }, parentTarget());
+        parent.postMessage({ type: 'stripe:change', paymentMethodType: e.value.type, empty: e.empty === true }, parentTarget());
       });
 
       paymentElement.on('loaderror', function (e) {

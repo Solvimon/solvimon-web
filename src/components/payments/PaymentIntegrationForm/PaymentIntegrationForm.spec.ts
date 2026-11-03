@@ -75,6 +75,27 @@ describe('PaymentIntegrationForm', () => {
         expect(adyenStub(mountForm()).attributes('billing-entity-name')).toBeUndefined();
     });
 
+    it('passes on whether a gateway form selected on its own', async () => {
+        const wrapper = mountForm();
+        const selection = {
+            paymentGatewayVariant: 'ADYEN',
+            paymentMethodType: 'scheme',
+            isAutomatic: true,
+        };
+
+        forms(wrapper)[0]!.vm.$emit('select', selection);
+        await flushPromises();
+
+        expect(wrapper.emitted('select')).toEqual([[selection]]);
+    });
+
+    it('opens the gateway form on its first method unless told not to', () => {
+        expect(adyenStub(mountForm()).attributes('selected')).toBe('true');
+        expect(adyenStub(mountForm({ openFirstPaymentMethod: false })).attributes('selected')).toBe(
+            'false',
+        );
+    });
+
     it('asks for a payment method when the gateway form has none open', async () => {
         const wrapper = mountForm();
         await flushPromises();

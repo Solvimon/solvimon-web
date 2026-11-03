@@ -14,7 +14,7 @@ import Skeleton from '@/components/shared/Skeleton.vue';
 import TopUpModal from '@/components/wallets/TopUpModal/TopUpModal.vue';
 import AutoTopUpModal from '@/components/wallets/AutoTopUpModal/AutoTopUpModal.vue';
 import AutoTopUpCancellationModal from '@/components/wallets/AutoTopUpCancellationModal/AutoTopUpCancellationModal.vue';
-import { isExpiredCard } from '@/utils/paymentMethods';
+import { isPayablePaymentMethod } from '@/utils/paymentMethods';
 
 defineOptions({ inheritAttrs: false });
 
@@ -28,7 +28,7 @@ const shownWalletBalances = computed(() =>
 );
 
 const payablePaymentMethods = computed(() =>
-    props.paymentMethods?.filter((paymentMethod) => !isExpiredCard(paymentMethod)),
+    props.paymentMethods?.filter((paymentMethod) => isPayablePaymentMethod(paymentMethod)),
 );
 
 const selectedTopUpItem = ref<ChargeOnDemandPricingItem | undefined>();

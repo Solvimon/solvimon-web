@@ -6,7 +6,7 @@ import { useLoadInitialData } from '@/composables/useLoadInitialData';
 import { useInvoice } from '@/composables/useInvoice';
 import { usePayments } from '@/composables/usePayments';
 import { usePaymentMethodOptions } from '@/composables/usePaymentMethodOptions';
-import { usePaymentMethods } from '@/composables/usePaymentMethods';
+import { DEFAULT_PAYMENT_METHOD_FIRST, usePaymentMethods } from '@/composables/usePaymentMethods';
 
 const props = defineProps<SolvimonPayInvoiceEntryProps>();
 
@@ -20,6 +20,7 @@ const { payments, get: getPayments } = usePayments();
 const { paymentMethodOptions, get: getPaymentMethodOptions } = usePaymentMethodOptions();
 const { items: paymentMethods, fetchAll: getPaymentMethods } = usePaymentMethods({
     customerId: props.portalObject.customer_id,
+    order: DEFAULT_PAYMENT_METHOD_FIRST,
 });
 
 const getInvoiceAndPaymentMethodOptions = async () => {

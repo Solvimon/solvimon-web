@@ -130,6 +130,9 @@ test.describe('Pay invoice', () => {
             });
             const ui = payInvoice(page);
 
+            const listed = new URL((await api.waitForCall('paymentMethods')).url).searchParams;
+            expect(listed.get('order_by')).toBe('default');
+            expect(listed.get('order_direction')).toBe('desc');
             await expect(ui.storedPaymentMethods).toContainText('Your payment methods');
             await expect(ui.payButton).toHaveText('Pay €20.00 with Visa •••• 4242');
             await ui.payButton.click();

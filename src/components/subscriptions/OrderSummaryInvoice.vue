@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import {
     Amount as AmountDisplay,
+    Chip,
     Divider,
     InvoicePreview,
     Section,
@@ -20,6 +21,9 @@ const { $t } = useIntl();
 
 const groupsByRecurrence = computed(() => getInvoiceGroupsByRecurrence(props.invoice));
 const groupsWithDiscounts = computed(() => getInvoiceGroupsWithDiscounts(props.invoice));
+const discountsUnderAProduct = computed(
+    () => new Set(groupsWithDiscounts.value.flatMap(([, ...discounts]) => discounts)),
+);
 
 // An invoice of one kind reads as it always has: a heading over every row explains nothing.
 const hasBothRecurrences = computed(
@@ -70,11 +74,27 @@ const subtotalOf = (groups: InvoiceGroup[]): Amount | undefined =>
                     <div
                         v-for="(group, index) in section.groups"
                         :key="index"
-                        class="flex flex-row gap-2 py-1.5"
+                        class="flex flex-row items-center gap-2 py-1.5"
                     >
-                        <Typography tag="span" variant="body-xs" class="grow">{{
-                            getInvoiceGroupName(group)
-                        }}</Typography>
+                        <div class="flex grow flex-row items-center gap-2">
+                            <Typography tag="span" variant="body-xs">{{
+                                getInvoiceGroupName(group)
+                            }}</Typography>
+                            <Chip
+                                v-if="discountsUnderAProduct.has(group)"
+                                class="sv-order-summary__discount"
+                                intent="success"
+                                size="sm"
+                                :content="
+                                    $t({
+                                        defaultMessage: 'Discount',
+                                        id: 'checkout.order_summary_block.discount_chip',
+                                        description:
+                                            'Marks a discount listed right under the product it is on, beside its name',
+                                    })
+                                "
+                            />
+                        </div>
                         <Typography tag="span" variant="body-xs">
                             <AmountDisplay :value="group.amount_excluding_tax" />
                         </Typography>
@@ -121,10 +141,30 @@ const subtotalOf = (groups: InvoiceGroup[]): Amount | undefined =>
         <template v-if="!hasBothRecurrences">
             <Section v-for="(cluster, clusterIndex) in groupsWithDiscounts" :key="clusterIndex">
                 <div class="grid grid-cols-1 gap-1">
-                    <div v-for="(group, index) in cluster" :key="index" class="flex flex-row gap-2">
-                        <Typography tag="span" variant="body-xs" class="grow">{{
-                            getInvoiceGroupName(group)
-                        }}</Typography>
+                    <div
+                        v-for="(group, index) in cluster"
+                        :key="index"
+                        class="flex flex-row items-center gap-2"
+                    >
+                        <div class="flex grow flex-row items-center gap-2">
+                            <Typography tag="span" variant="body-xs">{{
+                                getInvoiceGroupName(group)
+                            }}</Typography>
+                            <Chip
+                                v-if="discountsUnderAProduct.has(group)"
+                                class="sv-order-summary__discount"
+                                intent="success"
+                                size="sm"
+                                :content="
+                                    $t({
+                                        defaultMessage: 'Discount',
+                                        id: 'checkout.order_summary_block.discount_chip',
+                                        description:
+                                            'Marks a discount listed right under the product it is on, beside its name',
+                                    })
+                                "
+                            />
+                        </div>
                         <Typography tag="span" variant="body-xs">
                             <AmountDisplay :value="group.amount_excluding_tax" />
                         </Typography>

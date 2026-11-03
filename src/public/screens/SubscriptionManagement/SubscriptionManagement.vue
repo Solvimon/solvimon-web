@@ -193,20 +193,6 @@ const title = computed<string>(() =>
 const enabledPricingIds = ref<Pricing['id'][]>([]);
 const paymentMethodId = ref<PaymentMethod['id'] | undefined>();
 
-/**
- * The choice opens on the method the subscription is charged to today, when that is one on offer —
- * one the API would refuse is not offered, so it cannot be the starting choice either.
- */
-watch(
-    [() => subscription.value?.payment_method_id, chargeablePaymentMethods],
-    ([subscriptionMethodId, offered]) => {
-        if (!paymentMethodId.value && offered.some(({ id }) => id === subscriptionMethodId)) {
-            paymentMethodId.value = subscriptionMethodId;
-        }
-    },
-    { immediate: true },
-);
-
 /** Only a method on offer can pay for the change, whatever was picked before the list changed. */
 const isPaymentMethodOffered = computed(() =>
     chargeablePaymentMethods.value.some(({ id }) => id === paymentMethodId.value),
@@ -725,6 +711,7 @@ const submitButtonAttrs = computed(() => {
                 :pricing-group="isChangingPlan ? undefined : pricingGroup"
                 :plan-options="planOptions"
                 :payment-methods="chargeablePaymentMethods"
+                :subscription-payment-method-id="subscription?.payment_method_id"
                 :billing-period="billingPeriod"
                 :currency="subscription?.billing_currency"
                 :disabled="isUpdating"

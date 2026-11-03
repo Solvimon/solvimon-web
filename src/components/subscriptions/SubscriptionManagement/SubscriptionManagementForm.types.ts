@@ -14,6 +14,8 @@ export interface SubscriptionManagementFormProps {
     /** Cheapest first. Fewer than two leaves the plan choice out. */
     planOptions?: SubscriptionPlanOption[];
     paymentMethods?: PaymentMethod[];
+    /** The method the subscription is charged to today, which the choice opens on while it is offered. */
+    subscriptionPaymentMethodId?: PaymentMethod['id'];
     billingPeriod: BillingPeriod;
     currency?: Currency['currencyCode'];
     disabled?: boolean;

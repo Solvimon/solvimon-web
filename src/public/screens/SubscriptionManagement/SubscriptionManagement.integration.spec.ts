@@ -147,6 +147,7 @@ vi.mock('@/components/subscriptions/SubscriptionManagement/SubscriptionManagemen
             billingPeriod: { type: Object, required: true },
             enabledPricingIds: { type: Array, required: true },
             paymentMethodId: String,
+            subscriptionPaymentMethodId: String,
             pricingPlanId: String,
             disabled: Boolean,
             canAddPaymentMethod: { type: Boolean, default: true },
@@ -159,13 +160,16 @@ vi.mock('@/components/subscriptions/SubscriptionManagement/SubscriptionManagemen
             'add-payment-method',
         ],
         // The real form opens on a payment method of its own accord when the screen has not
-        // picked one, which the screen leans on.
+        // picked one, the subscription's own while it is offered, which the screen leans on.
         setup: (props, { emit }) => {
             onMounted(() => {
-                const [first] = props.paymentMethods as { id: string }[];
+                const methods = props.paymentMethods as { id: string }[];
+                const opening =
+                    methods.find(({ id }) => id === props.subscriptionPaymentMethodId) ??
+                    methods[0];
 
-                if (first && !props.paymentMethodId) {
-                    emit('update:paymentMethodId', first.id);
+                if (opening && !props.paymentMethodId) {
+                    emit('update:paymentMethodId', opening.id);
                 }
             });
 
@@ -605,6 +609,7 @@ describe('SubscriptionManagement', () => {
             });
             await flushPromises();
 
+            expect(findForm(wrapper).props('subscriptionPaymentMethodId')).toBe('pm_saved');
             expect(findForm(wrapper).props('paymentMethodId')).toBe('pm_saved');
         });
 

@@ -25,6 +25,7 @@ const { $t } = useIntl();
 const { sortedPaymentMethods } = useDefaultPaymentMethod({
     paymentMethods: toRef(props, 'paymentMethods'),
     selectedPaymentMethodId: paymentMethodId,
+    preferredPaymentMethodId: toRef(props, 'subscriptionPaymentMethodId'),
 });
 </script>
 

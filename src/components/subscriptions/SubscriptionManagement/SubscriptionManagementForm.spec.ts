@@ -62,6 +62,7 @@ const mountComponent = ({
     enabledPricingIds = ['pric_basic'],
     paymentMethods = [createPaymentMethod()],
     paymentMethodId,
+    subscriptionPaymentMethodId,
     planOptions: planOptionsProp,
     pricingPlanId,
     withPricingGroup = true,
@@ -69,6 +70,7 @@ const mountComponent = ({
     enabledPricingIds?: string[];
     paymentMethods?: PaymentMethod[];
     paymentMethodId?: string;
+    subscriptionPaymentMethodId?: string;
     planOptions?: SubscriptionPlanOption[];
     pricingPlanId?: string;
     withPricingGroup?: boolean;
@@ -80,6 +82,7 @@ const mountComponent = ({
             billingPeriod,
             enabledPricingIds,
             paymentMethodId,
+            subscriptionPaymentMethodId,
             planOptions: planOptionsProp,
             pricingPlanId,
             'onUpdate:enabledPricingIds': (value: string[]) => value,
@@ -145,6 +148,32 @@ describe('SubscriptionManagementForm', () => {
             });
 
             expect(wrapper.emitted('update:paymentMethodId')).toBeUndefined();
+        });
+
+        it("starts on the subscription's own method over the customer default", () => {
+            const wrapper = mountComponent({
+                subscriptionPaymentMethodId: 'pm_subscription',
+                paymentMethods: [
+                    createPaymentMethod({ id: 'pm_default', is_default: true }),
+                    createPaymentMethod({ id: 'pm_subscription' }),
+                ],
+            });
+
+            expect(wrapper.emitted('update:paymentMethodId')?.at(-1)).toEqual(['pm_subscription']);
+        });
+
+        it('picks again once the choice is cleared', async () => {
+            const wrapper = mountComponent({
+                paymentMethodId: 'pm_chosen',
+                paymentMethods: [
+                    createPaymentMethod({ id: 'pm_chosen' }),
+                    createPaymentMethod({ id: 'pm_default', is_default: true }),
+                ],
+            });
+
+            await wrapper.setProps({ paymentMethodId: undefined });
+
+            expect(wrapper.emitted('update:paymentMethodId')?.at(-1)).toEqual(['pm_default']);
         });
 
         it('selects nothing when the customer has no payment methods', () => {

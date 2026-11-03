@@ -88,6 +88,15 @@ vi.mock(
     () => ({ useExperimentalFeature: () => ref(null) }),
 );
 
+// Its own spec covers what it renders.
+vi.mock('@/components/invoices/InvoiceOrderSummary/InvoiceOrderSummary.vue', () => ({
+    default: defineComponent({
+        name: 'InvoiceOrderSummary',
+        props: { invoice: Object, isPaid: Boolean },
+        template: '<div data-testid="invoice-summary" />',
+    }),
+}));
+
 // ─── UI library mock ──────────────────────────────────────────────────────────
 
 vi.mock('@solvimon/solvimon-ui', async () => {

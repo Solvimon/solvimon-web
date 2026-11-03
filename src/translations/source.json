@@ -927,6 +927,30 @@
     "defaultMessage": "Pay with a new payment method",
     "description": "Section title for the payment form below the stored payment methods, on the pay invoice screen"
   },
+  "pay_invoice.order_summary.already_paid": {
+    "defaultMessage": "Already paid",
+    "description": "What has been paid on the invoice so far, in its order summary"
+  },
+  "pay_invoice.order_summary.amount_due": {
+    "defaultMessage": "Amount due",
+    "description": "What is still to be paid on the invoice, in its order summary"
+  },
+  "pay_invoice.order_summary.due_date": {
+    "defaultMessage": "Due on {date}",
+    "description": "When the invoice being paid is due, under its number in the order summary"
+  },
+  "pay_invoice.order_summary.invoice_number": {
+    "defaultMessage": "Invoice {number}",
+    "description": "Names the invoice being paid at the top of its order summary"
+  },
+  "pay_invoice.order_summary.title": {
+    "defaultMessage": "Invoice summary",
+    "description": "Title of the block listing what the invoice being paid is for"
+  },
+  "pay_invoice.order_summary.total_heading": {
+    "defaultMessage": "Total",
+    "description": "Heading of the invoice total in the order summary of the pay invoice screen, replacing the shared preview’s \"Total due today\""
+  },
   "pay_invoice.paid.title": {
     "defaultMessage": "Thank you for your payment!",
     "description": "Title shown when the invoice has already been paid"

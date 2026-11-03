@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, watch } from 'vue';
+import { toRef } from 'vue';
 import { Divider, useIntl } from '@solvimon/solvimon-ui';
 import type { PaymentMethod, Pricing, PricingPlan } from '@solvimon/solvimon-types';
 import type {
@@ -9,6 +9,7 @@ import type {
 import SubscriptionPlanSelector from './SubscriptionPlanSelector.vue';
 import PricingGroupSingleEditor from '@/components/subscriptions/PlanCustomizationForm/PricingGroupSingleEditor.vue';
 import PaymentMethodSelector from '@/components/payments/PaymentMethodSelector/PaymentMethodSelector.vue';
+import { useDefaultPaymentMethod } from '@/composables/useDefaultPaymentMethod';
 
 const props = withDefaults(defineProps<SubscriptionManagementFormProps>(), {
     canAddPaymentMethod: true,
@@ -21,46 +22,10 @@ const pricingPlanId = defineModel<PricingPlan['id'] | undefined>('pricingPlanId'
 
 const { $t } = useIntl();
 
-const toTime = (value?: string) => {
-    const parsed = value ? Date.parse(value) : NaN;
-
-    return Number.isFinite(parsed) ? parsed : 0;
-};
-
-/** Newest first, so a method the customer just added leads the list rather than trailing it. */
-const sortedPaymentMethods = computed(() =>
-    [...(props.paymentMethods ?? [])].sort((a, b) => toTime(b.created_at) - toTime(a.created_at)),
-);
-
-/**
- * Start on the customer's default payment method, falling back to the newest one — but prefer one
- * they have just added, since adding it was a deliberate act. Otherwise a choice they have already
- * made is left alone, so the list arriving late cannot overrule them.
- */
-watch(
-    () => props.paymentMethods,
-    (paymentMethods, previousPaymentMethods) => {
-        const addedPaymentMethod = paymentMethods?.find(
-            ({ id }) => !previousPaymentMethods?.some((previous) => previous.id === id),
-        );
-
-        // Only a list that already had methods and then grew means the customer added one. Arriving
-        // from nothing is the list loading, where the default should still win.
-        if (addedPaymentMethod && previousPaymentMethods?.length) {
-            paymentMethodId.value = addedPaymentMethod.id;
-            return;
-        }
-
-        if (paymentMethods?.some(({ id }) => id === paymentMethodId.value)) {
-            return;
-        }
-
-        paymentMethodId.value = (
-            paymentMethods?.find(({ is_default }) => is_default) ?? sortedPaymentMethods.value[0]
-        )?.id;
-    },
-    { immediate: true },
-);
+const { sortedPaymentMethods } = useDefaultPaymentMethod({
+    paymentMethods: toRef(props, 'paymentMethods'),
+    selectedPaymentMethodId: paymentMethodId,
+});
 </script>
 
 <template>

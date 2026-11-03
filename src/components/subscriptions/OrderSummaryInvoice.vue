@@ -3,6 +3,8 @@ import {
     Amount as AmountDisplay,
     Chip,
     Divider,
+    formatAmount,
+    Icon,
     InvoicePreview,
     Section,
     Typography,
@@ -24,6 +26,41 @@ const groupsWithDiscounts = computed(() => getInvoiceGroupsWithDiscounts(props.i
 const discountsUnderAProduct = computed(
     () => new Set(groupsWithDiscounts.value.flatMap(([, ...discounts]) => discounts)),
 );
+
+// Upper case, as Desk marks a discount on an invoice line.
+const getDiscountLabel = (group: InvoiceGroup): string => {
+    const band = group.lines?.find(({ type }) => type === 'DISCOUNT')?.details?.band;
+
+    if (band?.percentage) {
+        return $t(
+            {
+                defaultMessage: '{percentage}% discount',
+                id: 'checkout.order_summary_block.discount_chip.percentage',
+                description:
+                    'Marks a discount beside the name of the product it is on, where {percentage} is the percentage (number only)',
+            },
+            { percentage: band.percentage },
+        ).toUpperCase();
+    }
+
+    if (band?.amount) {
+        return $t(
+            {
+                defaultMessage: '{amount} discount',
+                id: 'checkout.order_summary_block.discount_chip.amount',
+                description:
+                    'Marks a discount beside the name of the product it is on, where {amount} is the amount taken off',
+            },
+            { amount: formatAmount(band.amount) },
+        ).toUpperCase();
+    }
+
+    return $t({
+        defaultMessage: 'Discount',
+        id: 'checkout.order_summary_block.discount_chip',
+        description: 'Marks a discount listed right under the product it is on, beside its name',
+    }).toUpperCase();
+};
 
 // An invoice of one kind reads as it always has: a heading over every row explains nothing.
 const hasBothRecurrences = computed(
@@ -83,17 +120,12 @@ const subtotalOf = (groups: InvoiceGroup[]): Amount | undefined =>
                             <Chip
                                 v-if="discountsUnderAProduct.has(group)"
                                 class="sv-order-summary__discount"
-                                intent="success"
-                                size="sm"
-                                :content="
-                                    $t({
-                                        defaultMessage: 'Discount',
-                                        id: 'checkout.order_summary_block.discount_chip',
-                                        description:
-                                            'Marks a discount listed right under the product it is on, beside its name',
-                                    })
-                                "
-                            />
+                            >
+                                <div class="flex items-center gap-2">
+                                    <Icon icon="south_east" size="xs" />
+                                    <span>{{ getDiscountLabel(group) }}</span>
+                                </div>
+                            </Chip>
                         </div>
                         <Typography tag="span" variant="body-xs">
                             <AmountDisplay :value="group.amount_excluding_tax" />
@@ -153,17 +185,12 @@ const subtotalOf = (groups: InvoiceGroup[]): Amount | undefined =>
                             <Chip
                                 v-if="discountsUnderAProduct.has(group)"
                                 class="sv-order-summary__discount"
-                                intent="success"
-                                size="sm"
-                                :content="
-                                    $t({
-                                        defaultMessage: 'Discount',
-                                        id: 'checkout.order_summary_block.discount_chip',
-                                        description:
-                                            'Marks a discount listed right under the product it is on, beside its name',
-                                    })
-                                "
-                            />
+                            >
+                                <div class="flex items-center gap-2">
+                                    <Icon icon="south_east" size="xs" />
+                                    <span>{{ getDiscountLabel(group) }}</span>
+                                </div>
+                            </Chip>
                         </div>
                         <Typography tag="span" variant="body-xs">
                             <AmountDisplay :value="group.amount_excluding_tax" />

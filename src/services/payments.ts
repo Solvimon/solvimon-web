@@ -1,7 +1,11 @@
 import type {
+    Amount,
     AuthorizePaymentPayload,
+    Customer,
+    Invoice,
     Payment,
     PaymentAcceptor,
+    PaymentMethod,
     PaymentDetailsResponse,
     AuthorizePaymentResponse,
 } from '@solvimon/solvimon-types';
@@ -15,6 +19,14 @@ const BASE_PATH = ['portal', 'payments'];
 type AuthorizePaymentRequestPayload = Omit<AuthorizePaymentPayload, 'context'> & {
     context?: PaymentAuthorizationContext;
 };
+
+export interface ChargeStoredPaymentMethodPayload {
+    paymentAcceptorId: PaymentAcceptor['id'];
+    customerId: Customer['id'];
+    paymentMethodId: PaymentMethod['id'];
+    invoiceId: Invoice['id'];
+    amount: Amount;
+}
 
 export const createPaymentsService = () => {
     const request = createRequestService();
@@ -74,9 +86,37 @@ export const createPaymentsService = () => {
         });
     }
 
+    /**
+     * The API charges the stored method itself, without the customer at a gateway form, so it takes
+     * no gateway payload and refuses a return URL; a charge the gateway declines answers 400.
+     */
+    function chargeStoredPaymentMethod({
+        paymentAcceptorId,
+        customerId,
+        paymentMethodId,
+        invoiceId,
+        amount,
+    }: ChargeStoredPaymentMethodPayload) {
+        return request<AuthorizePaymentResponse>({
+            url: buildUrl(config.apiUrls.transaction, ...BASE_PATH, 'authorize'),
+            options: { method: 'POST' },
+            data: {
+                payment_acceptor_id: paymentAcceptorId,
+                customer_id: customerId,
+                payment_method_id: paymentMethodId,
+                amount,
+                context: {
+                    type: 'INVOICE',
+                    related_resource_ids: [{ type: 'INVOICE', id: invoiceId }],
+                },
+            },
+        });
+    }
+
     return {
         getPayments,
         getPaymentDetails,
         authorizePayment,
+        chargeStoredPaymentMethod,
     };
 };

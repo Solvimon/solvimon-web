@@ -5,14 +5,21 @@ import PayInvoiceEntryView from './PayInvoice.entry.view.vue';
 import { createPaymentMethodOptionEntry } from '@/test-utils/paymentMethodOptionsFixture';
 import { createTestPortalObject } from '@/test-utils/portalObjectFixture';
 
-const { mockUseInvoice, mockUsePaymentMethodOptions, mockGetInvoice, mockGetOptions } = vi.hoisted(
-    () => ({
-        mockUseInvoice: vi.fn(),
-        mockUsePaymentMethodOptions: vi.fn(),
-        mockGetInvoice: vi.fn(),
-        mockGetOptions: vi.fn(),
-    }),
-);
+const {
+    mockUseInvoice,
+    mockUsePaymentMethodOptions,
+    mockGetInvoice,
+    mockGetOptions,
+    mockUsePaymentMethods,
+} = vi.hoisted(() => ({
+    mockUseInvoice: vi.fn(),
+    mockUsePaymentMethodOptions: vi.fn(),
+    mockGetInvoice: vi.fn(),
+    mockGetOptions: vi.fn(),
+    mockUsePaymentMethods: vi.fn(),
+}));
+
+vi.mock('@/composables/usePaymentMethods', () => ({ usePaymentMethods: mockUsePaymentMethods }));
 
 vi.mock('@/composables/useInvoice', () => ({ useInvoice: mockUseInvoice }));
 
@@ -44,6 +51,8 @@ const options: PaymentMethodOptionsResponse = [
     createPaymentMethodOptionEntry({ paymentAcceptorId: 'paya_1' }),
 ];
 
+const storedPaymentMethods = [{ id: 'pmet_1', type: 'CARD', status: 'ACTIVE' }];
+
 /** The screen hands its data to the host through a slot; that is what a test reads. */
 const mountEntryView = async () => {
     mockUseInvoice.mockReturnValue({
@@ -55,6 +64,10 @@ const mountEntryView = async () => {
     mockUsePaymentMethodOptions.mockReturnValue({
         paymentMethodOptions: ref(options),
         get: mockGetOptions.mockResolvedValue(options),
+    });
+    mockUsePaymentMethods.mockReturnValue({
+        items: ref(storedPaymentMethods),
+        fetchAll: vi.fn().mockResolvedValue(undefined),
     });
 
     const slotProps: Record<string, unknown>[] = [];
@@ -100,5 +113,14 @@ describe('PayInvoice.entry.view', () => {
         const { latestSlotProps } = await mountEntryView();
 
         expect(latestSlotProps()?.paymentMethodOptions).toEqual(options);
+    });
+
+    it("offers the portal customer's stored methods too", async () => {
+        const { latestSlotProps } = await mountEntryView();
+
+        expect(mockUsePaymentMethods).toHaveBeenCalledWith({
+            customerId: createTestPortalObject().customer_id,
+        });
+        expect(latestSlotProps()?.paymentMethods).toEqual(storedPaymentMethods);
     });
 });

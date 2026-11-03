@@ -113,4 +113,34 @@ describe('payments service', () => {
             await expect(authorizePayment({} as AuthorizePaymentData)).rejects.toBe(error);
         });
     });
+
+    describe('chargeStoredPaymentMethod', () => {
+        it('authorizes the invoice on the stored method, with no gateway payload or return URL', async () => {
+            mockRequest.mockResolvedValue({ status: 'SUCCESS' });
+
+            const { chargeStoredPaymentMethod } = createPaymentsService();
+            await chargeStoredPaymentMethod({
+                paymentAcceptorId: 'paya_1',
+                customerId: 'cust_1',
+                paymentMethodId: 'pmet_1',
+                invoiceId: 'invo_1',
+                amount: { quantity: '99.00', currency: 'EUR' },
+            });
+
+            expect(mockRequest).toHaveBeenCalledWith({
+                url: 'https://api.test/portal/payments/authorize',
+                options: { method: 'POST' },
+                data: {
+                    payment_acceptor_id: 'paya_1',
+                    customer_id: 'cust_1',
+                    payment_method_id: 'pmet_1',
+                    amount: { quantity: '99.00', currency: 'EUR' },
+                    context: {
+                        type: 'INVOICE',
+                        related_resource_ids: [{ type: 'INVOICE', id: 'invo_1' }],
+                    },
+                },
+            });
+        });
+    });
 });

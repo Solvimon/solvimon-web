@@ -104,7 +104,7 @@ const paymentMethodTypeLabel = computed(() => {
 });
 
 const buttonText = computed(() => {
-    if (props.amount && props.paymentMethod) {
+    if (props.amount && (props.paymentMethod || props.paymentMethodLabel)) {
         return $t(
             {
                 defaultMessage: 'Pay {amount} with {type}',
@@ -114,7 +114,7 @@ const buttonText = computed(() => {
             },
             {
                 amount: formatAmount(props.amount),
-                type: paymentMethodTypeLabel.value,
+                type: props.paymentMethodLabel ?? paymentMethodTypeLabel.value,
             },
         );
     }

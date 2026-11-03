@@ -2,6 +2,8 @@
 import {
     Button,
     Checkbox,
+    DividerText,
+    ErrorNotification,
     formatAmount,
     Icon,
     InvoiceHeader,
@@ -10,8 +12,14 @@ import {
     Typography,
     useIntl,
 } from '@solvimon/solvimon-ui';
-import { ref } from 'vue';
+import { computed, ref, watch } from 'vue';
+import type { PaymentMethod } from '@solvimon/solvimon-types';
 import type { PayInvoiceProps } from './PayInvoice.types';
+import {
+    getChargeableStoredPaymentMethods,
+    getPreselectedPaymentMethodId,
+    getStoredPaymentMethodLabel,
+} from './PayInvoice.lib';
 import { ContentWithAsideLayout } from '@/layouts';
 import PaymentIntegrationForm from '@/components/payments/PaymentIntegrationForm/PaymentIntegrationForm.vue';
 import Skeleton from '@/components/shared/Skeleton.vue';
@@ -21,11 +29,14 @@ import PayButton from '@/components/payments/PayButton/PayButton.vue';
 import PaymentMethodsUnavailableCard from '@/components/payments/PaymentMethodsUnavailableCard/PaymentMethodsUnavailableCard.vue';
 import { usePaymentMethodAvailability } from '@/composables/usePaymentMethodAvailability';
 import { usePaymentFormHold } from '@/composables/usePaymentFormHold';
+import { useStoredPaymentMethodPayment } from '@/composables/useStoredPaymentMethodPayment';
+import PaymentMethodSelector from '@/components/payments/PaymentMethodSelector/PaymentMethodSelector.vue';
 
 const { $t } = useIntl();
 
 const props = withDefaults(defineProps<PayInvoiceProps>(), {
     paymentAttempts: () => [],
+    paymentMethods: () => [],
 });
 
 const { availability } = usePaymentMethodAvailability({
@@ -44,7 +55,75 @@ const isPaid = ref(false);
 /** The payment may still go through, so paying again could charge the customer twice. */
 const isPaymentUnconfirmed = ref(false);
 
+const storedPaymentMethods = computed(() =>
+    getChargeableStoredPaymentMethods(props.paymentMethods, props.paymentMethodOptions ?? []),
+);
+
+const selectedStoredPaymentMethodId = ref<PaymentMethod['id']>();
+
+watch(
+    storedPaymentMethods,
+    (stored) => {
+        if (selectedStoredPaymentMethodId.value) return;
+
+        selectedStoredPaymentMethodId.value = getPreselectedPaymentMethodId(
+            stored.map(({ paymentMethod }) => paymentMethod),
+        );
+    },
+    { immediate: true },
+);
+
+const selectedStoredPaymentMethod = computed(() =>
+    storedPaymentMethods.value.find(
+        ({ paymentMethod }) => paymentMethod.id === selectedStoredPaymentMethodId.value,
+    ),
+);
+
+/** Only a method the customer picks in the form takes over from the stored one. */
+const handleFormSelect = (payload: SelectedPaymentMethod) => {
+    selectedPaymentMethod.value = payload;
+    if (!payload.isAutomatic) selectedStoredPaymentMethodId.value = undefined;
+};
+
+const { charge: chargeStoredPaymentMethod } = useStoredPaymentMethodPayment();
+const storedPaymentError = ref(false);
+
+const payWithStoredPaymentMethod = async () => {
+    const stored = selectedStoredPaymentMethod.value;
+    if (!stored || !props.invoice || !props.amount) return;
+
+    isPaymentPending.value = true;
+    storedPaymentError.value = false;
+
+    const outcome = await chargeStoredPaymentMethod({
+        paymentAcceptorId: stored.paymentAcceptorId,
+        customerId: props.invoice.customer.id,
+        paymentMethodId: stored.paymentMethod.id,
+        invoiceId: props.invoice.id,
+        amount: props.amount,
+    });
+
+    if (outcome === 'SUCCEEDED') {
+        handlePaymentSuccess();
+        return;
+    }
+
+    isPaymentPending.value = false;
+
+    if (outcome === 'UNCONFIRMED') {
+        isPaymentUnconfirmed.value = true;
+        return;
+    }
+
+    storedPaymentError.value = true;
+};
+
 function handleSubmit() {
+    if (selectedStoredPaymentMethod.value) {
+        void payWithStoredPaymentMethod();
+        return;
+    }
+
     if (!paymentIntegrationFormRef.value) {
         throw new Error('payment integration form not found');
     }
@@ -52,6 +131,13 @@ function handleSubmit() {
     isPaymentPending.value = true;
     paymentIntegrationFormRef.value.submit();
 }
+
+const canPay = computed(
+    () =>
+        Boolean(selectedStoredPaymentMethod.value || selectedPaymentMethod.value) &&
+        !isPaymentPending.value &&
+        !isPaymentUnconfirmed.value,
+);
 
 const handlePaymentSuccess = () => {
     isPaid.value = true;
@@ -135,67 +221,125 @@ const handlePaymentFailed = (error?: { code?: string }) => {
 
             <!-- payment method form -->
             <template v-else-if="!isLoading && countryCode && amount && invoice">
-                <Section
-                    v-if="availability === 'READY'"
-                    :title="
-                        $t({
-                            id: 'pay_invoice.payment_methods.title',
-                            defaultMessage: 'Payment methods',
-                            description:
-                                'Section title for the payment method selector on the pay invoice screen',
-                        })
-                    "
-                    content-background="none"
-                    no-border
-                    no-spacing
-                >
-                    <div :class="{ 'pointer-events-none opacity-60': isFormHeld }">
-                        <PaymentIntegrationForm
-                            ref="paymentIntegrationFormRef"
-                            :amount="amount"
-                            :country-code="countryCode"
-                            :context="{
-                                type: 'INVOICE',
-                                related_resource_ids: [
-                                    {
-                                        type: 'INVOICE',
-                                        id: invoice.id,
-                                    },
-                                ],
-                            }"
-                            :customer-id="invoice.customer.id"
-                            :store-payment-method="storePaymentMethod"
-                            :invoice-id="invoice.id"
-                            :payment-method-options="paymentMethodOptions ?? []"
-                            variant="AUTHORIZE"
-                            :billing-entity-name="invoice?.billing_entity?.legal_name"
-                            @payment-success="handlePaymentSuccess"
-                            @payment-failed="handlePaymentFailed"
-                            @invalid="handlePaymentNotSubmitted"
-                            @submitting="isPaymentPending = true"
-                            @action-required="handleActionRequired"
-                            @select="
-                                (payload: SelectedPaymentMethod) =>
-                                    (selectedPaymentMethod = payload)
+                <div v-if="availability === 'READY'" class="grid grid-cols-1 gap-6">
+                    <template v-if="storedPaymentMethods.length">
+                        <Section
+                            class="sv-pay-invoice__stored-payment-methods"
+                            :title="
+                                $t({
+                                    id: 'pay_invoice.stored_payment_methods.title',
+                                    defaultMessage: 'Your payment methods',
+                                    description:
+                                        'Section title above the payment methods the customer stored before, on the pay invoice screen',
+                                })
+                            "
+                            content-background="none"
+                            no-border
+                            no-spacing
+                        >
+                            <PaymentMethodSelector
+                                v-model="selectedStoredPaymentMethodId"
+                                :payment-methods="
+                                    storedPaymentMethods.map(({ paymentMethod }) => paymentMethod)
+                                "
+                                :show-add-option="false"
+                                :disabled="isPaymentPending || isFormHeld"
+                            />
+                        </Section>
+
+                        <ErrorNotification
+                            v-if="storedPaymentError"
+                            class="sv-pay-invoice__stored-payment-error sv-error"
+                            :title="
+                                $t({
+                                    id: 'pay_invoice.stored_payment_method.failed',
+                                    defaultMessage:
+                                        'The payment did not go through. Try again or use another payment method.',
+                                    description:
+                                        'Shown when charging the invoice to a stored payment method fails',
+                                })
                             "
                         />
-                        <div class="mt-4">
-                            <Checkbox
-                                id="pay-invoice-store-payment-method"
-                                v-model="storePaymentMethod"
-                                :label="
-                                    $t({
-                                        id: 'pay_invoice.store_payment_method.label',
-                                        defaultMessage:
-                                            'Save this payment method for future payments',
-                                        description:
-                                            'Label of the checkbox that stores the payment method while paying an invoice',
-                                    })
-                                "
+
+                        <DividerText
+                            :text="
+                                $t({
+                                    id: 'pay_invoice.stored_payment_methods.divider_text',
+                                    defaultMessage: 'or',
+                                    description:
+                                        'Between the stored payment methods and the form to pay with a new one',
+                                })
+                            "
+                            text-position="center"
+                        />
+                    </template>
+
+                    <Section
+                        :title="
+                            storedPaymentMethods.length
+                                ? $t({
+                                      id: 'pay_invoice.new_payment_method.title',
+                                      defaultMessage: 'Pay with a new payment method',
+                                      description:
+                                          'Section title for the payment form below the stored payment methods, on the pay invoice screen',
+                                  })
+                                : $t({
+                                      id: 'pay_invoice.payment_methods.title',
+                                      defaultMessage: 'Payment methods',
+                                      description:
+                                          'Section title for the payment method selector on the pay invoice screen',
+                                  })
+                        "
+                        content-background="none"
+                        no-border
+                        no-spacing
+                    >
+                        <div :class="{ 'pointer-events-none opacity-60': isFormHeld }">
+                            <PaymentIntegrationForm
+                                ref="paymentIntegrationFormRef"
+                                :amount="amount"
+                                :country-code="countryCode"
+                                :context="{
+                                    type: 'INVOICE',
+                                    related_resource_ids: [
+                                        {
+                                            type: 'INVOICE',
+                                            id: invoice.id,
+                                        },
+                                    ],
+                                }"
+                                :customer-id="invoice.customer.id"
+                                :store-payment-method="storePaymentMethod"
+                                :invoice-id="invoice.id"
+                                :payment-method-options="paymentMethodOptions ?? []"
+                                :open-first-payment-method="!storedPaymentMethods.length"
+                                variant="AUTHORIZE"
+                                :billing-entity-name="invoice?.billing_entity?.legal_name"
+                                @payment-success="handlePaymentSuccess"
+                                @payment-failed="handlePaymentFailed"
+                                @invalid="handlePaymentNotSubmitted"
+                                @submitting="isPaymentPending = true"
+                                @action-required="handleActionRequired"
+                                @select="handleFormSelect"
                             />
+                            <div class="mt-4">
+                                <Checkbox
+                                    id="pay-invoice-store-payment-method"
+                                    v-model="storePaymentMethod"
+                                    :label="
+                                        $t({
+                                            id: 'pay_invoice.store_payment_method.label',
+                                            defaultMessage:
+                                                'Save this payment method for future payments',
+                                            description:
+                                                'Label of the checkbox that stores the payment method while paying an invoice',
+                                        })
+                                    "
+                                />
+                            </div>
                         </div>
-                    </div>
-                </Section>
+                    </Section>
+                </div>
 
                 <!-- nothing the customer can pay with -->
                 <PaymentMethodsUnavailableCard
@@ -228,10 +372,16 @@ const handlePaymentFailed = (error?: { code?: string }) => {
 
             <div v-if="invoice && !invoice.paid && !isPaid && availability === 'READY'">
                 <PayButton
-                    :disabled="!selectedPaymentMethod || isPaymentPending || isPaymentUnconfirmed"
+                    :disabled="!canPay"
                     :loading="isPaymentPending"
                     :amount="amount"
-                    :payment-method="selectedPaymentMethod"
+                    :payment-method="
+                        selectedStoredPaymentMethod ? undefined : selectedPaymentMethod
+                    "
+                    :payment-method-label="
+                        selectedStoredPaymentMethod &&
+                        getStoredPaymentMethodLabel(selectedStoredPaymentMethod.paymentMethod)
+                    "
                     @click="handleSubmit"
                 />
             </div>

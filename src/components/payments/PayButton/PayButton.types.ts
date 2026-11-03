@@ -5,6 +5,8 @@ import type { SelectedPaymentMethod } from '@/components/payments/PaymentIntegra
 export interface PayButtonProps extends ButtonProps {
     amount?: Amount;
     paymentMethod?: SelectedPaymentMethod;
+    /** Names a stored method, "Visa •••• 4242", in place of the type of `paymentMethod`. */
+    paymentMethodLabel?: string;
 }
 
 export interface PayButtonEmits {

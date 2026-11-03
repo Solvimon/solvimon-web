@@ -49,15 +49,18 @@ const mountComponent = ({
     enabledPricingIds = ['pric_basic'],
     paymentMethods = [createPaymentMethod()],
     paymentMethodId,
+    hasExpiredPaymentMethod,
 }: {
     enabledPricingIds?: string[];
     paymentMethods?: PaymentMethod[];
     paymentMethodId?: string;
+    hasExpiredPaymentMethod?: boolean;
 } = {}) =>
     mount(SubscriptionManagementForm, {
         props: {
             pricingGroup,
             paymentMethods,
+            hasExpiredPaymentMethod,
             billingPeriod,
             enabledPricingIds,
             paymentMethodId,
@@ -150,6 +153,15 @@ describe('SubscriptionManagementForm', () => {
         expect(wrapper.find('.sv-subscription-management-form__no-payment-method').exists()).toBe(
             true,
         );
+    });
+
+    it("says to replace the subscription's card when that has expired", () => {
+        const message = mountComponent({ paymentMethods: [], hasExpiredPaymentMethod: true }).find(
+            '.sv-subscription-management-form__no-payment-method',
+        );
+
+        expect(message.text()).toContain('has expired');
+        expect(message.text()).not.toContain('contact support');
     });
 
     it('names the message after the form, so a button outside it can point at it', async () => {

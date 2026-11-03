@@ -18,7 +18,7 @@ import { useActionDispatchProvider, useLogger, usePortal } from '@/components/pr
 import { useSubscription } from '@/composables/useSubscription';
 import { usePaymentMethods } from '@/composables/usePaymentMethods';
 import { usePaymentMethodOptions } from '@/composables/usePaymentMethodOptions';
-import { isPayablePaymentMethod } from '@/utils/paymentMethods';
+import { isExpiredCard, isPayablePaymentMethod } from '@/utils/paymentMethods';
 import { useLoadInitialData } from '@/composables/useLoadInitialData';
 import { useSubscriptionUpgradePreview } from '@/composables/useSubscriptionUpgradePreview';
 import { createPricingPlanSchedulesService } from '@/services/pricingPlanSchedules';
@@ -95,6 +95,14 @@ const { isLoading } = useLoadInitialData(
  */
 const subscriptionPaymentMethods = computed(() =>
     paymentMethods.value.filter((paymentMethod) => isChargeable(paymentMethod, subscription.value)),
+);
+
+const hasExpiredPaymentMethod = computed(() =>
+    paymentMethods.value.some(
+        (paymentMethod) =>
+            paymentMethod.id === subscription.value?.payment_method_id &&
+            isExpiredCard(paymentMethod),
+    ),
 );
 
 /** Upgrades are bought on the schedule being billed now, so that is where the group is looked up. */
@@ -402,6 +410,7 @@ const submitButtonAttrs = computed(() => {
                 class="sv-subscription-management__form"
                 :pricing-group="pricingGroup"
                 :payment-methods="subscriptionPaymentMethods"
+                :has-expired-payment-method="hasExpiredPaymentMethod"
                 :billing-period="billingPeriod"
                 :currency="subscription?.billing_currency"
                 :disabled="isUpdating"

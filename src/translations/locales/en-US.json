@@ -366,6 +366,7 @@
   "subscription_management.done_button.label": "Done",
   "subscription_management.empty_state.message": "This subscription has no options that can be changed right now.",
   "subscription_management.empty_state.title": "Nothing to change",
+  "subscription_management.expired_payment_method": "The card this subscription is paid with has expired. Replace it under your payment methods to make a change.",
   "subscription_management.load_error": "Unable to load this subscription. Please try again later.",
   "subscription_management.no_payment_method": "This subscription has no payment method to charge the change to. Please contact support to change it.",
   "subscription_management.payment_method_selector.label": "Payment method",

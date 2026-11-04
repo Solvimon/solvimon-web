@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Breaking:** the element properties `allowedPortalTypes`, `primaryColor`, `secondaryColor` and `isShadowRoot`. Every element declared them, carried over from its internal providers, but none read them: each element fixes the portal types it accepts, and takes its colours from `branding.colors`. Setting one did nothing and still does nothing; it is just no longer a property of the element.
 
+### Fixed
+
+- For a pricing plan priced in more than one currency, the checkout creates the subscription in the currency it showed and charged. The price and the amount paid followed the customer's country, but the subscription was created in the currency of the subscription the checkout link was made from, so a customer in the Netherlands could pay in euros and then be billed in US dollars. The seats on offer now follow the same currency, which on a shipped order is the destination country's, as the price already was.
+
 ## [0.1.0-alpha.30] - 2026-11-06
 
 ### Added

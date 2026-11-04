@@ -42,6 +42,7 @@ import {
 } from '@/utils/pricingPlanSchedule';
 import { getPricingCurrencyForCountry } from '@/utils/countryCurrency';
 import { getModelTypesFromScheduleInfo } from '@/utils/pricing';
+import { getAddonConfigIds, getAddonPricings } from '@/utils/addonQuantity';
 import { ContentWithAsideLayout } from '@/layouts';
 import { useViewport } from '@/composables/useViewport';
 import { usePaymentFormHold } from '@/composables/usePaymentFormHold';
@@ -318,6 +319,22 @@ const enabledPricingIdsModel = computed({
     get: () => checkoutForm.form.value.enabledPricingIds ?? [],
     set: (value) => {
         checkoutForm.form.value.enabledPricingIds = value;
+
+        // A removed add-on also loses the seats and units of the currencies not on offer.
+        const removedConfigIds = getAddonConfigIds(
+            subscription.value
+                ? getAddonPricings(subscription.value).filter(({ id }) => !value.includes(id))
+                : [],
+        );
+        if (!removedConfigIds.size) return;
+        for (const key of ['seatsValues', 'unitsValues'] as const) {
+            const values = checkoutForm.form.value[key];
+            if (values) {
+                checkoutForm.form.value[key] = values.filter(
+                    ({ pricing_item_config_id }) => !removedConfigIds.has(pricing_item_config_id),
+                );
+            }
+        }
     },
 });
 
@@ -395,8 +412,13 @@ const meterValuesModel = (key: 'seatsValues' | 'unitsValues') =>
                 return;
             }
 
+            // An add-on sets every one of its configs, the ones not on offer as well.
+            const valueIds = new Set(
+                value.map(({ pricing_item_config_id }) => pricing_item_config_id),
+            );
             const filtered = current.filter(
-                ({ pricing_item_config_id }) => !ids.has(pricing_item_config_id),
+                ({ pricing_item_config_id }) =>
+                    !ids.has(pricing_item_config_id) && !valueIds.has(pricing_item_config_id),
             );
             checkoutForm.form.value[key] = filtered.concat(value);
         },

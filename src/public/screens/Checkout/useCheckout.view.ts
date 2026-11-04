@@ -33,6 +33,7 @@ import {
     getScheduleCustomizations,
 } from '@/utils/pricingPlanSchedule';
 import { withPreselectedEnabledPricings } from '@/utils/enabledPricings';
+import { getAddonConfigIds, getAddonPricings } from '@/utils/addonQuantity';
 import { splitInvoiceByRecurrence } from '@/utils/invoice';
 import { getInitialMeterValues } from '@/utils/meterValues';
 import { hasPaymentRedirectReturn } from '@/utils/paymentRedirect';
@@ -82,6 +83,23 @@ function restoreOnOrder(
             ? { ...orderValue, number: String(savedNumber) }
             : orderValue;
     });
+}
+
+/** The order's seats or units as restored, plus the add-on quantities the customer saved. */
+function restoreWithAddons(
+    saved: ConfiguredMeterValue[] | undefined,
+    orderValues: ConfiguredMeterValue[] | undefined,
+    addonConfigIds: Set<string>,
+): ConfiguredMeterValue[] | undefined {
+    const isAddon = ({ pricing_item_config_id }: ConfiguredMeterValue) =>
+        addonConfigIds.has(pricing_item_config_id);
+    const addonValues = saved?.filter(isAddon) ?? [];
+    const restored = restoreOnOrder(
+        saved?.filter((value) => !isAddon(value)),
+        orderValues,
+    );
+
+    return addonValues.length ? [...(restored ?? orderValues ?? []), ...addonValues] : restored;
 }
 
 /** How long a payment waits for the price before it is held back instead. */
@@ -586,8 +604,19 @@ export function useCheckoutView({
         // defaults, so the user's saved plan selections are preserved.
         if (savedFormState) {
             const { seatsValues, unitsValues, ...rest } = savedFormState;
-            const restoredSeats = restoreOnOrder(seatsValues, orderMeterValues.value.seatsValues);
-            const restoredUnits = restoreOnOrder(unitsValues, orderMeterValues.value.unitsValues);
+            const addonConfigIds = subscription.value
+                ? getAddonConfigIds(getAddonPricings(subscription.value))
+                : new Set<string>();
+            const restoredSeats = restoreWithAddons(
+                seatsValues,
+                orderMeterValues.value.seatsValues,
+                addonConfigIds,
+            );
+            const restoredUnits = restoreWithAddons(
+                unitsValues,
+                orderMeterValues.value.unitsValues,
+                addonConfigIds,
+            );
             checkoutForm.updateInitialState({
                 ...rest,
                 ...(restoredSeats ? { seatsValues: restoredSeats } : {}),

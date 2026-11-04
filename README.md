@@ -8,6 +8,9 @@ Solvimon's front-end SDK. Provides framework-agnostic web components and a set o
 npm install @solvimon/solvimon-web
 ```
 
+Vue is a peer dependency: the SDK uses the host's Vue, 3.5 or a later 3.x (`^3.5.0`), rather than
+bundling its own. npm installs it with the SDK when the host does not have it yet.
+
 The package is published as ES modules only. Bundlers load it as is, and so does `require()` on
 Node 20.19 or later. A Jest setup that does not transform ES modules needs
 `@solvimon/solvimon-web` added to its `transformIgnorePatterns` exceptions.

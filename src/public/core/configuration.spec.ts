@@ -57,7 +57,10 @@ describe('createSolvimonCore', () => {
     it('mounts under the name a host already registered the element as', async () => {
         mockEnsureDefined.mockResolvedValueOnce('acme-invoices-list');
 
-        createSolvimonCore().createComponent('invoices-list', { container, portalObject });
+        createSolvimonCore({ environment: 'TEST' }).createComponent('invoices-list', {
+            container,
+            portalObject,
+        });
         await Promise.resolve();
         await Promise.resolve();
 
@@ -65,13 +68,25 @@ describe('createSolvimonCore', () => {
     });
 
     it('loads only the entry being mounted', async () => {
-        createSolvimonCore().createComponent('invoices-list', {
+        createSolvimonCore({ environment: 'TEST' }).createComponent('invoices-list', {
             container,
             portalObject,
         });
 
         expect(mockEnsureDefined).toHaveBeenCalledTimes(1);
         expect(mockEnsureDefined).toHaveBeenCalledWith('invoices-list', 'component');
+    });
+
+    it('still mounts for a JavaScript host that leaves the configuration out', async () => {
+        const untyped = createSolvimonCore as unknown as () => ReturnType<
+            typeof createSolvimonCore
+        >;
+
+        untyped().createComponent('invoices-list', { container, portalObject });
+        await Promise.resolve();
+        await Promise.resolve();
+
+        expect(container.children).toHaveLength(1);
     });
 
     it('passes shared config and per-mount props to the element', async () => {
@@ -89,7 +104,7 @@ describe('createSolvimonCore', () => {
 
     it('throws at the call site for an unknown container', () => {
         expect(() =>
-            createSolvimonCore().createComponent('invoices-list', {
+            createSolvimonCore({ environment: 'TEST' }).createComponent('invoices-list', {
                 container: '#nothing-here',
                 portalObject,
             }),
@@ -103,7 +118,10 @@ describe('createSolvimonCore', () => {
 
         expect(() =>
             // @ts-expect-error - deliberately not a registered id
-            createSolvimonCore().createComponent('nope', { container, portalObject }),
+            createSolvimonCore({ environment: 'TEST' }).createComponent('nope', {
+                container,
+                portalObject,
+            }),
         ).toThrow(/unknown component id/);
     });
 
@@ -111,10 +129,13 @@ describe('createSolvimonCore', () => {
         const entry = deferred<string>();
         mockEnsureDefined.mockReturnValueOnce(entry.promise);
 
-        const unmount = createSolvimonCore().createComponent('invoices-list', {
-            container,
-            portalObject,
-        });
+        const unmount = createSolvimonCore({ environment: 'TEST' }).createComponent(
+            'invoices-list',
+            {
+                container,
+                portalObject,
+            },
+        );
 
         unmount();
         entry.resolve('solvimon-invoices-list');
@@ -125,10 +146,13 @@ describe('createSolvimonCore', () => {
     });
 
     it('removes the element when unmount is called after it has mounted', async () => {
-        const unmount = createSolvimonCore().createComponent('invoices-list', {
-            container,
-            portalObject,
-        });
+        const unmount = createSolvimonCore({ environment: 'TEST' }).createComponent(
+            'invoices-list',
+            {
+                container,
+                portalObject,
+            },
+        );
         await Promise.resolve();
         await Promise.resolve();
         expect(container.children).toHaveLength(1);
@@ -142,7 +166,7 @@ describe('createSolvimonCore', () => {
         const failure = new Error('chunk 404');
         mockEnsureDefined.mockReturnValueOnce(Promise.reject(failure));
 
-        createSolvimonCore({ onLog }).createComponent('invoices-list', {
+        createSolvimonCore({ environment: 'TEST', onLog }).createComponent('invoices-list', {
             container,
             portalObject,
         });

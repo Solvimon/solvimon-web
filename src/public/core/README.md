@@ -25,11 +25,11 @@ const unmount = solvimon.createScreen('customer-overview', {
 
 ## Options
 
-| Option                               | Description                                                                                                                                     |
-| ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| `createSolvimonCore(config)`         | Creates a reusable core instance with shared configuration such as `environment`, `locale`, `branding`, `experimentalFeatures`, and `logLevel`. |
-| `createScreen(id, configuration)`    | Mounts a registered screen into the provided container and returns an `unmount` function.                                                       |
-| `createComponent(id, configuration)` | Mounts a registered component into the provided container and returns an `unmount` function.                                                    |
+| Option                               | Description                                                                                                                                                                                       |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `createSolvimonCore(config)`         | Creates a reusable core instance with shared configuration. `environment` (`'TEST'` or `'LIVE'`) is required; `locale`, `branding`, `experimentalFeatures`, `logLevel` and the rest are optional. |
+| `createScreen(id, configuration)`    | Mounts a registered screen into the provided container and returns an `unmount` function.                                                                                                         |
+| `createComponent(id, configuration)` | Mounts a registered component into the provided container and returns an `unmount` function.                                                                                                      |
 
 ## Registered IDs
 

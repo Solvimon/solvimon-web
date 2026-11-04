@@ -28,7 +28,8 @@ import type { SolvimonPaymentMethodsManagementEntryProps } from '@/public/screen
  * Extends the base entry props (environment, locale, branding, etc.).
  */
 export interface SharedSolvimonMountConfig {
-    environment?: Environment;
+    /** The Solvimon environment the portal object belongs to. An element without one renders nothing. */
+    environment: Environment;
     locale?: string;
     dateLocale?: string;
     messages?: IntlMessages;

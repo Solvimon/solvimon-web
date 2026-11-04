@@ -27,10 +27,8 @@ const couponCode = computed(
     >
         <Checkout
             :configuration="{
-                avatar: branding?.emblem?.public_url,
-                email: configuration?.email,
-                countryCode: configuration?.countryCode,
-                enabledPricingIds: configuration?.enabledPricingIds,
+                ...configuration,
+                avatar: configuration?.avatar ?? branding?.emblem?.public_url,
                 couponCode,
             }"
             @ready="emit('ready')"

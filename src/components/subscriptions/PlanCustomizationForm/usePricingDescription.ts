@@ -11,6 +11,7 @@ import {
     usePricingItem,
 } from '@solvimon/solvimon-ui';
 import type { Ref } from 'vue';
+import { getMeterKind } from '@/utils/addonQuantity';
 
 /**
  * How a pricing reads in the plan editors: each of its items rendered for the currency and billing
@@ -34,11 +35,8 @@ export function usePricingDescription({
             billingPeriod: billingPeriod.value,
         });
         const amount = config?.details?.bands?.[0]?.amount;
-        const isOneOffFlat =
-            pricingItem.product_items?.[0]?.model_type === 'ONE_OFF' &&
-            config?.details?.pricing_type === 'FLAT';
 
-        return isOneOffFlat && amount
+        return getMeterKind(pricingItem, config) === 'units' && amount
             ? $t(
                   {
                       defaultMessage: '{amount} per unit, one-time',
@@ -78,7 +76,17 @@ export function usePricingDescription({
                       )
                     : describeItem(item);
             })
-            .join(' · ');
+            .reduce((list, item) =>
+                $t(
+                    {
+                        defaultMessage: '{list} · {item}',
+                        id: 'pricing_description.item_list',
+                        description:
+                            'Joins the items of a pricing with several items into one line',
+                    },
+                    { list, item },
+                ),
+            );
     };
 
     return { describePricing };

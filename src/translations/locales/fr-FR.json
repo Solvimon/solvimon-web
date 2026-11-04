@@ -299,6 +299,7 @@
     "portal.unverified.message": "Vérifiez votre connexion et réessayez.",
     "portal.unverified.retry_button.label": "Réessayer",
     "portal.unverified.title": "Nous n’avons pas pu ouvrir cette page",
+    "pricing_description.item_list": "{list} · {item}",
     "pricing_description.named_item": "{name} : {pricing}",
     "pricing_item_pricing.unsupported_pricing_error": "Tarification non prise en charge",
     "screens.payment_method_management.add_button": "Ajouter un moyen de paiement",

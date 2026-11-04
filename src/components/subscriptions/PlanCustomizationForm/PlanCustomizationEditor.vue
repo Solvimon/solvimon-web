@@ -11,7 +11,7 @@ import PricingGroupSingleEditor from './PricingGroupSingleEditor.vue';
 import { getFirstPricingPlanScheduleOfType } from '@/utils/pricingPlanSchedule';
 import { getPricingGroupsFromExtendedPricingPlanSubscription } from '@/utils/subscription';
 import { getPricingsFromScheduleInfo } from '@/utils/pricing';
-import { getAddonConfigIds, getAddonPricings } from '@/utils/addonQuantity';
+import { getAddonConfigIds, getQuantityAddons } from '@/utils/addonQuantity';
 
 const props = defineProps<PlanCustomizationEditorProps>();
 
@@ -41,7 +41,14 @@ const pricingGroups = computed(() =>
 );
 
 // An add-on's seats and units are set by its own editor, so the plan's steppers leave them out.
-const addonConfigIds = computed(() => getAddonConfigIds(getAddonPricings(props.subscription)));
+const quantityAddons = computed(() =>
+    getQuantityAddons(props.subscription, [
+        ...(props.initialSeatsValues ?? []),
+        ...(props.initialUnitsValues ?? []),
+    ]),
+);
+const quantityPricingIds = computed(() => quantityAddons.value.map(({ id }) => id));
+const addonConfigIds = computed(() => getAddonConfigIds(quantityAddons.value));
 const planValuesModel = (model: typeof seatsModel) =>
     computed({
         get: () =>
@@ -128,6 +135,7 @@ const planUnitsModel = planValuesModel(unitsModel);
                     v-model="enabledPricingIdsModel"
                     v-model:seats-values="seatsModel"
                     v-model:units-values="unitsModel"
+                    :quantity-pricing-ids="quantityPricingIds"
                     class="sv-plan-customization__group"
                     :pricings="pricingGroup.pricings"
                     :group-name="pricingGroup.name"
@@ -141,6 +149,7 @@ const planUnitsModel = planValuesModel(unitsModel);
                 v-model="enabledPricingIdsModel"
                 v-model:seats-values="seatsModel"
                 v-model:units-values="unitsModel"
+                :quantity-pricing-ids="quantityPricingIds"
                 class="sv-plan-customization__group"
                 :pricings="addonPricings"
                 :billing-period="billingPeriod"

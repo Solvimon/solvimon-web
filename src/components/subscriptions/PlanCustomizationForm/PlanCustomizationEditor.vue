@@ -11,6 +11,7 @@ import PricingGroupSingleEditor from './PricingGroupSingleEditor.vue';
 import { getFirstPricingPlanScheduleOfType } from '@/utils/pricingPlanSchedule';
 import { getPricingGroupsFromExtendedPricingPlanSubscription } from '@/utils/subscription';
 import { getPricingsFromScheduleInfo } from '@/utils/pricing';
+import { getAddonConfigIds, getAddonPricings } from '@/utils/addonQuantity';
 
 const props = defineProps<PlanCustomizationEditorProps>();
 
@@ -38,6 +39,26 @@ const addonPricings = computed(() =>
 const pricingGroups = computed(() =>
     getPricingGroupsFromExtendedPricingPlanSubscription(props.subscription),
 );
+
+// An add-on's seats and units are set by its own editor, so the plan's steppers leave them out.
+const addonConfigIds = computed(() => getAddonConfigIds(getAddonPricings(props.subscription)));
+const planValuesModel = (model: typeof seatsModel) =>
+    computed({
+        get: () =>
+            model.value.filter(
+                ({ pricing_item_config_id }) => !addonConfigIds.value.has(pricing_item_config_id),
+            ),
+        set: (value: ConfiguredMeterValue[]) => {
+            model.value = [
+                ...value,
+                ...model.value.filter(({ pricing_item_config_id }) =>
+                    addonConfigIds.value.has(pricing_item_config_id),
+                ),
+            ];
+        },
+    });
+const planSeatsModel = planValuesModel(seatsModel);
+const planUnitsModel = planValuesModel(unitsModel);
 </script>
 
 <template>
@@ -57,7 +78,7 @@ const pricingGroups = computed(() =>
         <div class="sv-plan-customization__body grid grid-cols-1 gap-1">
             <!-- seats-->
             <SeatsEditor
-                v-model="seatsModel"
+                v-model="planSeatsModel"
                 class="sv-plan-customization__seats"
                 :initial-seats-values="initialSeatsValues"
                 :pricings="pricings"
@@ -65,7 +86,7 @@ const pricingGroups = computed(() =>
 
             <!-- one-off flat item units -->
             <UnitsEditor
-                v-model="unitsModel"
+                v-model="planUnitsModel"
                 class="sv-plan-customization__units"
                 :initial-units-values="initialUnitsValues"
                 :pricings="pricings"
@@ -105,6 +126,8 @@ const pricingGroups = computed(() =>
                         pricingGroup.selection_constraint === 'ANY'
                     "
                     v-model="enabledPricingIdsModel"
+                    v-model:seats-values="seatsModel"
+                    v-model:units-values="unitsModel"
                     class="sv-plan-customization__group"
                     :pricings="pricingGroup.pricings"
                     :group-name="pricingGroup.name"
@@ -116,6 +139,8 @@ const pricingGroups = computed(() =>
             <!-- product level addons -->
             <AddonMultipleEditor
                 v-model="enabledPricingIdsModel"
+                v-model:seats-values="seatsModel"
+                v-model:units-values="unitsModel"
                 class="sv-plan-customization__group"
                 :pricings="addonPricings"
                 :billing-period="billingPeriod"

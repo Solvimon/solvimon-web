@@ -299,6 +299,7 @@
   "portal.unverified.message": "Check your connection and try again.",
   "portal.unverified.retry_button.label": "Try again",
   "portal.unverified.title": "We could not open this page",
+  "pricing_description.named_item": "{name}: {pricing}",
   "pricing_item_pricing.unsupported_pricing_error": "Unsupported pricing",
   "screens.payment_method_management.add_button": "Add payment method",
   "screens.payment_method_management.cancel_button": "Cancel",

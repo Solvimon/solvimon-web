@@ -1,17 +1,25 @@
 <script setup lang="ts">
-import type { Pricing } from '@solvimon/solvimon-types';
-import { Button, Section, useIntl } from '@solvimon/solvimon-ui';
+import type { ConfiguredMeterValue, Pricing, PricingExtended } from '@solvimon/solvimon-types';
+import { Button, Section, StepInput, useIntl } from '@solvimon/solvimon-ui';
 import { toRef } from 'vue';
 import PricingGroupTitle from './PricingGroupTitle.vue';
 import { usePricingDescription } from './usePricingDescription';
 import PricingGroupContent from './PricingGroupContent.vue';
 import type { PricingGroupEditorBaseProps } from './PricingGroupEditorBase.types';
 import { getNameFromPricing } from '@/utils/pricing';
+import {
+    getAddonMinimumQuantity,
+    getAddonQuantity,
+    isQuantityAddon,
+    setAddonQuantity,
+} from '@/utils/addonQuantity';
 
 const props = defineProps<
     Omit<PricingGroupEditorBaseProps, 'groupName'> & { groupName?: string }
 >();
 const model = defineModel<Pricing['id'][]>('modelValue', { required: true });
+const seatsModel = defineModel<ConfiguredMeterValue[]>('seatsValues', { default: () => [] });
+const unitsModel = defineModel<ConfiguredMeterValue[]>('unitsValues', { default: () => [] });
 
 const { $t } = useIntl();
 const { describePricing } = usePricingDescription({
@@ -21,6 +29,21 @@ const { describePricing } = usePricingDescription({
 
 const isSelected = (pricingId: Pricing['id']) => {
     return model.value.includes(pricingId);
+};
+
+const selection = () => ({
+    enabledPricingIds: model.value,
+    seatsValues: seatsModel.value,
+    unitsValues: unitsModel.value,
+});
+
+const quantityOf = (pricing: PricingExtended) => getAddonQuantity(pricing, selection());
+
+const handleQuantity = (pricing: PricingExtended, quantity: number) => {
+    const next = setAddonQuantity(pricing, quantity, selection());
+    model.value = next.enabledPricingIds;
+    seatsModel.value = next.seatsValues;
+    unitsModel.value = next.unitsValues;
 };
 
 const handleToggle = (pricingId: Pricing['id']) => {
@@ -57,8 +80,19 @@ const handleToggle = (pricingId: Pricing['id']) => {
                             :description="describePricing(pricing)"
                         >
                             <template #default>
+                                <div
+                                    v-if="isQuantityAddon(pricing) && isSelected(pricing.id)"
+                                    class="w-24 shrink-0 md:w-32"
+                                >
+                                    <StepInput
+                                        :model-value="quantityOf(pricing)"
+                                        size="sm"
+                                        :min="0"
+                                        @update:model-value="handleQuantity(pricing, $event)"
+                                    />
+                                </div>
                                 <Button
-                                    v-if="isSelected(pricing.id)"
+                                    v-else-if="isSelected(pricing.id)"
                                     intent="secondary"
                                     square
                                     size="sm"
@@ -70,7 +104,14 @@ const handleToggle = (pricingId: Pricing['id']) => {
                                     intent="primary"
                                     icon-prefix="add"
                                     size="sm"
-                                    @click="handleToggle(pricing.id)"
+                                    @click="
+                                        isQuantityAddon(pricing)
+                                            ? handleQuantity(
+                                                  pricing,
+                                                  getAddonMinimumQuantity(pricing),
+                                              )
+                                            : handleToggle(pricing.id)
+                                    "
                                     >{{
                                         $t({
                                             defaultMessage: 'Add to subscription',

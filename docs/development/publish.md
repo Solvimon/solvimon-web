@@ -22,9 +22,10 @@ that touches `package.json`.
 6. It checks no `v<version>` tag exists yet.
 7. The `Create release tag` job waits for a reviewer to approve the `npm`
    environment. Nothing is installed or uploaded before that.
-8. It publishes to npm. `prepublishOnly` runs the publish guard, the changelog
-   check, the unit tests, the build, and the bundle and type gates before
-   anything is uploaded.
+8. It publishes to npm, a prerelease such as `0.1.0-alpha.30` under the `next`
+   tag and a stable version under `latest`. `prepublishOnly` runs the publish
+   guard, the changelog check, the unit tests, the build, and the bundle and
+   type gates before anything is uploaded.
 9. Only once the publish has gone through does it create the `v<version>` tag,
    and then the GitHub release from the matching changelog section.
 
@@ -54,7 +55,7 @@ every `0.1.0-alpha.*` — **`prerelease` is the one you want**:
 
 | Bump         | `0.1.0-alpha.25` becomes | Note                                    |
 | ------------ | ------------------------ | --------------------------------------- |
-| `prerelease` | `0.1.0-alpha.26`         | stays in alpha                          |
+| `prerelease` | `0.1.0-alpha.26`         | stays in alpha, publishes as `next`     |
 | `patch`      | `0.1.0`                  | **leaves alpha**, publishes as `latest` |
 | `minor`      | `0.1.0`                  | **leaves alpha**, publishes as `latest` |
 | `major`      | `1.0.0`                  | **leaves alpha**, publishes as `latest` |
@@ -144,8 +145,10 @@ Tagging and the GitHub release use the workflow's own `GITHUB_TOKEN`, granted
 
 ## Node Version
 
-CI and the publish run on the version in `.nvmrc`. `package.json` declares the
-floor consumers need in `engines.node`.
+CI and the publish run on the version in `.nvmrc`, the latest Node LTS. Its npm
+refuses to publish a prerelease without a tag, which is why the workflow names
+one. `package.json` declares the floor consumers need in `engines.node`, which
+is independent of it.
 
 ## Consuming The SDK
 

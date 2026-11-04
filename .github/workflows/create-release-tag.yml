@@ -128,12 +128,19 @@ jobs:
               env:
                   NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+            # npm 11 refuses a prerelease without a tag, and `latest` is what a plain install gets, so
+            # only a stable version goes there.
             - name: Publish to npm
               if: steps.published.outputs.exists != 'true'
               run: |
                   npm config delete --location project @solvimon:registry
-                  npm publish
+                  case "$VERSION" in
+                      *-*) dist_tag=next ;;
+                      *) dist_tag=latest ;;
+                  esac
+                  npm publish --tag "$dist_tag"
               env:
+                  VERSION: ${{ needs.version.outputs.current }}
                   NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
                   NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 

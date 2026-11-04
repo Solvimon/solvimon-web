@@ -2,6 +2,23 @@
     "name": "@solvimon/solvimon-web",
     "version": "0.1.0-alpha.29",
     "description": "Solvimon's Front-end SDK provides you with the building blocks to create a billing self serve experience",
+    "license": "MIT",
+    "author": "Solvimon",
+    "homepage": "https://github.com/Solvimon/solvimon-web#readme",
+    "repository": "github:Solvimon/solvimon-web",
+    "bugs": {
+        "url": "https://github.com/Solvimon/solvimon-web/issues"
+    },
+    "keywords": [
+        "solvimon",
+        "billing",
+        "checkout",
+        "subscriptions",
+        "invoices",
+        "payments",
+        "web-components",
+        "vue"
+    ],
     "private": false,
     "engines": {
         "node": ">=20.19.0"

@@ -289,7 +289,8 @@ const handleCancel = () => {
         return;
     }
 
-    if (step.value === 'SUCCESS') {
+    // The top-up may have gone through, so the balance the customer is told to check is reloaded.
+    if (step.value === 'SUCCESS' || isTopUpUnconfirmed.value) {
         handleDone();
         return;
     }
@@ -404,7 +405,14 @@ watch(
             <TopUpModalSuccess v-if="chargedInvoice" :invoice="chargedInvoice" />
         </template>
 
-        <template v-if="step === 'SUCCESS' || isTopUpUnavailable || isTopUpUnconfirmed" #footer>
+        <template
+            v-if="
+                step === 'SUCCESS' ||
+                isTopUpUnavailable ||
+                (step === 'TOP_UP' && isTopUpUnconfirmed)
+            "
+            #footer
+        >
             <div class="flex flex-col gap-2">
                 <Button
                     v-if="step === 'SUCCESS'"

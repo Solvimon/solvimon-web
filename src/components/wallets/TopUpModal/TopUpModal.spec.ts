@@ -1104,6 +1104,39 @@ describe('TopUpModal — a charge that fails', () => {
         expect(mockCharge).toHaveBeenCalledTimes(1);
     });
 
+    it('reloads the balance when closed after a top-up that may still go through', async () => {
+        mockCharge.mockRejectedValue(new TypeError('Failed to fetch'));
+        const wrapper = await chargeTopUp(mountModal());
+
+        await wrapper.find('[data-testid="cancel"]').trigger('click');
+
+        expect(wrapper.emitted('confirm')).toHaveLength(1);
+        expect(wrapper.emitted('close')).toHaveLength(1);
+    });
+
+    it('reports no top-up when closed after one the API refused', async () => {
+        mockCharge.mockRejectedValue(new ApiError({ statusCode: 400 }));
+        const wrapper = await chargeTopUp(mountModal());
+
+        await wrapper.find('[data-testid="cancel"]').trigger('click');
+
+        expect(wrapper.emitted('confirm')).toBeUndefined();
+        expect(wrapper.emitted('close')).toHaveLength(1);
+    });
+
+    it('still saves a payment method added after a top-up that may still go through', async () => {
+        mockSubmitPaymentMethod.mockReset();
+        mockCharge.mockRejectedValue(new TypeError('Failed to fetch'));
+        const wrapper = await chargeTopUp(mountModal());
+        await startAddingPaymentMethod(wrapper);
+
+        await wrapper.find('[data-testid="confirm"]').trigger('click');
+        await nextTick();
+
+        expect(mockSubmitPaymentMethod).toHaveBeenCalledTimes(1);
+        expect(mockCharge).toHaveBeenCalledTimes(1);
+    });
+
     it('offers the top-up again once the modal is opened again', async () => {
         mockCharge.mockRejectedValue(new TypeError('Failed to fetch'));
         const wrapper = await chargeTopUp(mountModal());

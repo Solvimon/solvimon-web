@@ -97,11 +97,13 @@ function mountSolvimonElement(
     };
 }
 
-export function createSolvimonCore(): CoreConfiguration<SolvimonMountConfig>;
 export function createSolvimonCore<TConfig extends SolvimonMountConfig>(
     config: TConfig,
 ): CoreConfiguration<TConfig>;
-export function createSolvimonCore(config: SolvimonMountConfig = {}): CoreConfiguration {
+// A JavaScript host can still leave the configuration out. Its element then reports the missing
+// environment, as an element does, rather than this throwing on `undefined`.
+// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+export function createSolvimonCore(config = {} as SolvimonMountConfig): CoreConfiguration {
     const mount =
         (type: 'component' | 'screen') =>
         (

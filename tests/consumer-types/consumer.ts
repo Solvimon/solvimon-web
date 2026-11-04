@@ -61,6 +61,11 @@ export const componentIds: string[] = getRegisteredComponentIds();
 
 const core = createSolvimonCore({ environment, locale: 'en-US', branding, messages });
 
+// @ts-expect-error - a core needs the environment its portal objects belong to
+createSolvimonCore({ locale: 'en-US' });
+// @ts-expect-error - and so cannot be created without any configuration
+createSolvimonCore();
+
 /* Documented usage compiles. */
 export const unmountList = core.createComponent('invoices-list', {
     container: '#invoices',

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- The package is licensed under MIT, with a `LICENSE` file and `license`, `author`, `homepage`, `repository`, `bugs` and `keywords` in `package.json`. The licenses of the packages the SDK bundles, such as Adyen Web, Vuelidate and FormatJS, ship with it in `dist/THIRD_PARTY_LICENSES.md`, and the build fails on a bundled package whose license is not a permissive one (MIT, ISC, BSD, 0BSD or Apache-2.0) or that ships no license text.
+
 ## [0.1.0-alpha.29] - 2026-11-03
 
 ### Added

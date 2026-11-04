@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- The checkout runs the host's `configuration.onPaymentSuccess` after a successful payment, in place of the redirect configured in Solvimon Desk, and shows the host's `configuration.avatar` in the order summary, falling back to the branding emblem. The element used to drop both, so the customer was always redirected and the emblem always shown.
+
 ## [0.1.0-alpha.29] - 2026-11-03
 
 ### Added

@@ -40,7 +40,6 @@ import {
     getFirstPricingPlanScheduleOfType,
     getPricingItemConfigMetaById,
 } from '@/utils/pricingPlanSchedule';
-import { getPricingCurrencyForCountry } from '@/utils/countryCurrency';
 import { getModelTypesFromScheduleInfo } from '@/utils/pricing';
 import { ContentWithAsideLayout } from '@/layouts';
 import { useViewport } from '@/composables/useViewport';
@@ -117,6 +116,7 @@ const {
     trialInvoicePreview,
     trialPeriod,
     authorizationContext,
+    pricingCurrency,
     isPaid,
     amount,
     recurringAmount,
@@ -332,20 +332,6 @@ const scheduleInfo = computed(() =>
         : undefined,
 );
 
-// Use country → pricing currency mapping to decide which seat configs to show.
-const activePricingCurrency = computed(() => {
-    if (!subscription.value) {
-        return undefined;
-    }
-    const pricingCurrencySettings =
-        scheduleInfo.value?.pricing_plan_version?.pricing_currency_settings;
-    return getPricingCurrencyForCountry({
-        country: checkoutForm.form.value.country,
-        pricingCurrencySettings,
-        fallbackCurrency: subscription.value.billing_currency,
-    });
-});
-
 // Filter seat/units configs by the selected currency + billing period.
 const configIdsForSelection = computed(() => {
     if (!scheduleInfo.value || !subscription.value) {
@@ -355,7 +341,7 @@ const configIdsForSelection = computed(() => {
     const pricingItemConfigById = getPricingItemConfigMetaById({
         pricingPlanScheduleInfo: scheduleInfo.value,
     });
-    const targetCurrency = activePricingCurrency.value;
+    const targetCurrency = pricingCurrency.value;
     const targetPeriod = subscription.value.billing_period;
     const ids = new Set<string>();
 
@@ -797,7 +783,7 @@ onMounted(() => {
                     :initial-seats-values="orderMeterValues.seatsValues"
                     :initial-units-values="orderMeterValues.unitsValues"
                     :billing-period="subscription.billing_period"
-                    :currency="activePricingCurrency"
+                    :currency="pricingCurrency"
                 />
 
                 <!-- express payment methods -->

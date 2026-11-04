@@ -777,7 +777,7 @@ describe('useCheckoutView', () => {
         );
     });
 
-    it('includes pricingCurrency and billingPeriod in authorization customizations for multi settings', () => {
+    it('includes the pricingCurrency of the customer’s country and billingPeriod in authorization customizations for multi settings', () => {
         const subscriptionId = 'sub_123' as PricingPlanSubscription['id'];
 
         mockUseCheckoutForm.mockReturnValue(
@@ -819,7 +819,7 @@ describe('useCheckoutView', () => {
 
         expect(mockGetScheduleCustomizations).toHaveBeenCalledWith(
             expect.objectContaining({
-                pricingCurrency: 'AUD',
+                pricingCurrency: 'EUR',
                 billingPeriod: { type: 'YEAR', value: 1 },
             }),
         );
@@ -869,7 +869,7 @@ describe('useCheckoutView', () => {
         );
     });
 
-    it('sends the only billingPeriod alongside a multi pricingCurrency in authorization customizations', () => {
+    it('sends the only billingPeriod alongside the pricingCurrency of the customer’s country in authorization customizations', () => {
         const subscriptionId = 'sub_123' as PricingPlanSubscription['id'];
 
         mockUseCheckoutForm.mockReturnValue(
@@ -908,7 +908,7 @@ describe('useCheckoutView', () => {
 
         expect(mockGetScheduleCustomizations).toHaveBeenCalledWith(
             expect.objectContaining({
-                pricingCurrency: 'AUD',
+                pricingCurrency: 'EUR',
                 billingPeriod: { type: 'MONTH', value: 1 },
             }),
         );
@@ -1114,6 +1114,75 @@ describe('useCheckoutView', () => {
 
         // loadInvoicePreview should not be called because subscription is not loaded
         expect(mockLoadInvoicePreview).not.toHaveBeenCalled();
+    });
+
+    describe('the pricing currency of a version priced in more than one', () => {
+        const priceIn = (form: Partial<CheckoutFormState>, isShippingAddressRequired = false) => {
+            mockUseCheckoutForm.mockReturnValue(createMockCheckoutForm(form));
+            mockGetFirstPricingPlanScheduleOfType.mockReturnValue({
+                id: 'schedule_1',
+                pricing_plan_schedule: { type: 'DEFAULT' },
+                pricing_plan_version: {
+                    pricing_currency_settings: {
+                        default_pricing_currency: 'EUR',
+                        pricing_currencies: ['EUR', 'AUD'],
+                    },
+                },
+            });
+            mockGetScheduleCustomizations.mockReturnValue(undefined);
+
+            const result = useCheckoutView({
+                initialCountry: undefined,
+                initialEmail: undefined,
+                subscriptionId: 'sub_123' as PricingPlanSubscription['id'],
+                isShippingAddressRequired,
+            });
+            result.subscription.value = {
+                ...mockSubscription,
+                billing_currency: 'AUD',
+            } as unknown as PricingPlanSubscriptionExpanded;
+
+            void result.authorizationContext.value;
+
+            return {
+                priced: result.pricingCurrency.value,
+                created: mockGetScheduleCustomizations.mock.calls.at(-1)?.[0].pricingCurrency,
+            };
+        };
+
+        it('is the currency of the customer’s country, not the subscription’s', () => {
+            expect(priceIn({ country: 'NL' as CountryCode })).toEqual({
+                priced: 'EUR',
+                created: 'EUR',
+            });
+        });
+
+        it('follows a country priced in the other currency', () => {
+            expect(priceIn({ country: 'AU' as CountryCode })).toEqual({
+                priced: 'AUD',
+                created: 'AUD',
+            });
+        });
+
+        it('is the default currency for a country priced in neither', () => {
+            expect(priceIn({ country: 'US' as CountryCode })).toEqual({
+                priced: 'EUR',
+                created: 'EUR',
+            });
+        });
+
+        it('follows the country a shipped order goes to, as the invoice preview does', () => {
+            expect(
+                priceIn(
+                    {
+                        country: 'NL' as CountryCode,
+                        billingAddressSameAsShipping: false,
+                        shippingCountry: 'AU' as CountryCode,
+                    },
+                    true,
+                ),
+            ).toEqual({ priced: 'AUD', created: 'AUD' });
+        });
     });
 
     describe('shipping address in the authorization context', () => {

@@ -21,7 +21,8 @@ that touches `package.json`.
    that exact version.
 6. It checks no `v<version>` tag exists yet.
 7. It publishes to npm. `prepublishOnly` runs the publish guard, the changelog
-   check, the build, and the bundle and type gates before anything is uploaded.
+   check, the unit tests, the build, and the bundle and type gates before
+   anything is uploaded.
 8. Only once the publish has gone through does it create the `v<version>` tag,
    and then the GitHub release from the matching changelog section.
 
@@ -31,6 +32,10 @@ is the state a release has to be dug out of by hand.
 > **Merging a version bump publishes it.** There is no approval step between the
 > merge and npm, and npm versions are immutable — a wrong version cannot be
 > replaced, only deprecated and superseded.
+
+`main` only takes a pull request whose CI checks have passed, so what reaches the
+workflow has been through the full suite, e2e included. The publish runs the
+unit tests once more on the commit it releases.
 
 ## Bumping The Version
 
@@ -113,6 +118,7 @@ npm run changelog:check
 | ----------------------- | ------------------------------------------------------ |
 | `publish:guard`         | refuses to publish from anywhere but CI                |
 | `changelog:check`       | the version has release notes of its own               |
+| `test:unit -- --run`    | the unit tests pass on the commit being released       |
 | `build`                 | type-check and a clean production build                |
 | `bundle:check-contents` | no internal hostname reached the bundle                |
 | `types:check-published` | the published declarations resolve for a consumer      |

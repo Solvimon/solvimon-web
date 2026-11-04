@@ -17,11 +17,14 @@ permissions:
     contents: write
 
 jobs:
-    create-release-tag:
-        name: Create release tag
-        # A dispatch can name any ref, and this job publishes to npm irreversibly.
+    version:
+        name: Check version
+        # A dispatch can name any ref, and the release job publishes to npm irreversibly.
         if: github.ref == 'refs/heads/main'
         runs-on: ubuntu-latest
+        outputs:
+            changed: ${{ steps.version.outputs.changed }}
+            current: ${{ steps.version.outputs.current }}
         steps:
             - uses: actions/checkout@v6
               with:
@@ -83,19 +86,26 @@ jobs:
                       exit 1
                   fi
 
+    create-release-tag:
+        name: Create release tag
+        needs: version
+        if: needs.version.outputs.changed == 'true'
+        # Waits for a reviewer's approval before anything below runs.
+        environment: npm
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v6
+
             - uses: actions/setup-node@v6
-              if: steps.version.outputs.changed == 'true'
               with:
                   node-version-file: .nvmrc
                   cache: npm
                   registry-url: https://registry.npmjs.org/
 
             - name: Authenticate GitLab npm registry
-              if: steps.version.outputs.changed == 'true'
               run: npm config set //gitlab.com/api/v4/projects/38958827/packages/npm/:_authToken ${{ secrets.GITLAB_NPM_TOKEN }}
 
             - name: Install dependencies
-              if: steps.version.outputs.changed == 'true'
               run: npm ci
               env:
                   GITLAB_NPM_TOKEN: ${{ secrets.GITLAB_NPM_TOKEN }}
@@ -104,10 +114,9 @@ jobs:
             # publish that went through and a tag that did not, and npm answers a second publish of
             # the same version with a 403 that would stop the run before it tags.
             - name: Check whether the version is already published
-              if: steps.version.outputs.changed == 'true'
               id: published
               run: |
-                  version="${{ steps.version.outputs.current }}"
+                  version="${{ needs.version.outputs.current }}"
                   package=$(node -p "require('./package.json').name")
 
                   if npm view "$package@$version" version > /dev/null 2>&1; then
@@ -120,7 +129,7 @@ jobs:
                   NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
             - name: Publish to npm
-              if: steps.version.outputs.changed == 'true' && steps.published.outputs.exists != 'true'
+              if: steps.published.outputs.exists != 'true'
               run: |
                   npm config delete --location project @solvimon:registry
                   npm publish
@@ -132,9 +141,8 @@ jobs:
             # that never reached the registry is what the release has to be dug out of by
             # hand, and `gh release create --verify-tag` below would cut a release from it.
             - name: Create release tag
-              if: steps.version.outputs.changed == 'true'
               run: |
-                  tag_name="v${{ steps.version.outputs.current }}"
+                  tag_name="v${{ needs.version.outputs.current }}"
 
                   git config user.name "github-actions[bot]"
                   git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -142,22 +150,20 @@ jobs:
                   git push origin "refs/tags/$tag_name"
 
             - name: Extract changelog section
-              if: steps.version.outputs.changed == 'true'
               id: changelog
               run: |
-                  version="${{ steps.version.outputs.current }}"
+                  version="${{ needs.version.outputs.current }}"
                   notes=$(node ./scripts/ci/changelog-section.mjs "$version")
                   echo "notes<<EOF" >> "$GITHUB_OUTPUT"
                   echo "$notes" >> "$GITHUB_OUTPUT"
                   echo "EOF" >> "$GITHUB_OUTPUT"
 
             - name: Create GitHub Release
-              if: steps.version.outputs.changed == 'true'
               env:
                   GH_TOKEN: ${{ github.token }}
                   RELEASE_NOTES: ${{ steps.changelog.outputs.notes }}
               run: |
-                  gh release create "v${{ steps.version.outputs.current }}" \
-                    --title "v${{ steps.version.outputs.current }}" \
+                  gh release create "v${{ needs.version.outputs.current }}" \
+                    --title "v${{ needs.version.outputs.current }}" \
                     --notes "$RELEASE_NOTES" \
                     --verify-tag

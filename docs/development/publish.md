@@ -20,21 +20,25 @@ that touches `package.json`.
 5. It runs `npm run changelog:check`, which insists on a non-empty section for
    that exact version.
 6. It checks no `v<version>` tag exists yet.
-7. It publishes to npm. `prepublishOnly` runs the publish guard, the changelog
+7. The `Create release tag` job waits for a reviewer to approve the `npm`
+   environment. Nothing is installed or uploaded before that.
+8. It publishes to npm. `prepublishOnly` runs the publish guard, the changelog
    check, the unit tests, the build, and the bundle and type gates before
    anything is uploaded.
-8. Only once the publish has gone through does it create the `v<version>` tag,
+9. Only once the publish has gone through does it create the `v<version>` tag,
    and then the GitHub release from the matching changelog section.
 
 The order matters: a tag pointing at a version that never reached the registry
 is the state a release has to be dug out of by hand.
 
-> **Merging a version bump publishes it.** There is no approval step between the
-> merge and npm, and npm versions are immutable — a wrong version cannot be
-> replaced, only deprecated and superseded.
+> **Approving the `npm` environment publishes the version.** npm versions are
+> immutable — a wrong version cannot be replaced, only deprecated and
+> superseded.
 
-`main` only takes a pull request whose CI checks have passed, so what reaches the
-workflow has been through the full suite, e2e included. The publish runs the
+`main` only takes a pull request whose CI checks have passed, admins included, so
+what reaches the workflow has been through the full suite, e2e included. Only
+`main` can deploy to the `npm` environment, and its required reviewers are set
+under Settings → Environments. The publish runs the
 unit tests once more on the commit it releases.
 
 ## Bumping The Version
@@ -77,7 +81,8 @@ These update `package.json` and `package-lock.json`. They do not tag.
 2. Run `/create-release` in Claude Code — it bumps the version, drafts the
    changelog, and tells you the commit message and files to stage.
 3. Commit and open a pull request to `main`.
-4. Once it merges, watch the `Create Release Tag` workflow.
+4. Once it merges, approve the `npm` environment on the `Create Release Tag`
+   run, then watch it finish.
 5. Verify that the package is on npm and that a `v<version>` tag and GitHub
    release exist.
 

@@ -4,6 +4,7 @@ import type {
     RegisteredComponentId,
     RegisteredScreenId,
     SolvimonMountConfig,
+    SolvimonMountInstance,
 } from './types';
 import type { LogSink } from '@/components/providers/LoggerProvider/LoggerProvider.types';
 import { getSessionReference } from '@/utils/sessionReference';
@@ -67,7 +68,7 @@ function mountSolvimonElement(
     type: 'component' | 'screen',
     props: ElementProps,
     onLog?: LogSink,
-) {
+): SolvimonMountInstance {
     // Both resolved before the entry loads, so a bad container or an unknown id still throws at the
     // call site rather than inside a promise the caller never sees.
     const parent = resolveContainer(container);
@@ -110,8 +111,7 @@ export function createSolvimonCore(config = {} as SolvimonMountConfig): CoreConf
             id: RegisteredComponentId | RegisteredScreenId,
             { container, ...props }: { container: Element | string },
         ) =>
-            mountSolvimonElement(container, id, type, { ...config, ...props }, config.onLog)
-                .unmount;
+            mountSolvimonElement(container, id, type, { ...config, ...props }, config.onLog);
 
     return { config, createComponent: mount('component'), createScreen: mount('screen') };
 }

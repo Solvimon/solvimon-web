@@ -15,12 +15,12 @@ const solvimon = createSolvimonCore({
 
 // The portal URL your server created through the Solvimon API. It carries the token the element
 // signs in with, so there is no separate `token` option.
-const unmount = solvimon.createScreen('customer-overview', {
+const overview = solvimon.createScreen('customer-overview', {
     container: '#solvimon-app', // or document.querySelector('#solvimon-app')
     portalObject: customerPortalObject,
 });
 
-// Later: unmount();
+// Later: overview.unmount();
 ```
 
 ## Options
@@ -28,8 +28,8 @@ const unmount = solvimon.createScreen('customer-overview', {
 | Option                               | Description                                                                                                                                                                                       |
 | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `createSolvimonCore(config)`         | Creates a reusable core instance with shared configuration. `environment` (`'TEST'` or `'LIVE'`) is required; `locale`, `branding`, `experimentalFeatures`, `logLevel` and the rest are optional. |
-| `createScreen(id, configuration)`    | Mounts a registered screen into the provided container and returns an `unmount` function.                                                                                                         |
-| `createComponent(id, configuration)` | Mounts a registered component into the provided container and returns an `unmount` function.                                                                                                      |
+| `createScreen(id, configuration)`    | Mounts a registered screen into the provided container and returns an instance with `unmount()`.                                                                                                  |
+| `createComponent(id, configuration)` | Mounts a registered component into the provided container and returns an instance with `unmount()`.                                                                                               |
 
 ## Registered IDs
 
@@ -72,7 +72,7 @@ const solvimon = createSolvimonCore({
     locale: 'en-US',
 });
 
-const unmount = solvimon.createComponent('invoices-list', {
+const invoices = solvimon.createComponent('invoices-list', {
     container: '#invoices-section', // or an Element; getElementById can return null
     portalObject: customerPortalObject,
     configuration: {

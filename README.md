@@ -95,14 +95,19 @@ import { createSolvimonCore } from '@solvimon/solvimon-web/core';
 
 const solvimon = createSolvimonCore({ environment: 'TEST' });
 
-const unmount = solvimon.createScreen('checkout', {
+const checkout = solvimon.createScreen('checkout', {
     container: '#checkout',
     portalObject,
 });
+
+// Later, to remove it:
+checkout.unmount();
 ```
 
 `createScreen` and `createComponent` return synchronously; the element is appended once its entry
-has loaded. An unknown id or a container that matches nothing throws straight away.
+has loaded. An unknown id or a container that matches nothing throws straight away. They return an
+instance whose `unmount()` removes the element, or cancels the mount if the element has not loaded
+yet; `const { unmount } = solvimon.createScreen(…)` works too.
 
 ### When an element fails
 

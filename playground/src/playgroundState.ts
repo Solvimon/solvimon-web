@@ -1,4 +1,8 @@
-import type { CoreConfiguration, Environment as SdkEnvironment } from '@solvimon/solvimon-web/core';
+import type {
+    CoreConfiguration,
+    Environment as SdkEnvironment,
+    SolvimonMountInstance,
+} from '@solvimon/solvimon-web/core';
 
 /** Only what the switcher offers, which is also all `parseEnvironment` below ever returns. */
 export type Environment = 'LIVE' | 'TEST' | 'DEV';
@@ -77,8 +81,8 @@ export interface PlaygroundMountConfig {
  * what `any` here would give up.
  */
 export interface PlaygroundCore {
-    createScreen(id: string, configuration: PlaygroundMountConfig): () => void;
-    createComponent(id: string, configuration: PlaygroundMountConfig): () => void;
+    createScreen(id: string, configuration: PlaygroundMountConfig): SolvimonMountInstance;
+    createComponent(id: string, configuration: PlaygroundMountConfig): SolvimonMountInstance;
 }
 
 export function asPlaygroundCore(core: CoreConfiguration): PlaygroundCore {

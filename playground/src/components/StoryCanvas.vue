@@ -108,9 +108,9 @@ function mountEntry() {
     }
 
     if (props.entry.kind === 'screen') {
-        unmount = props.solvimon.createScreen(props.entry.id, mountConfig);
+        unmount = props.solvimon.createScreen(props.entry.id, mountConfig).unmount;
     } else {
-        unmount = props.solvimon.createComponent(props.entry.id, mountConfig);
+        unmount = props.solvimon.createComponent(props.entry.id, mountConfig).unmount;
     }
 }
 

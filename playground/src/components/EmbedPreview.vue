@@ -46,10 +46,11 @@ onMounted(() => {
         mountConfig.configuration = configuration;
     }
 
-    unmount =
+    unmount = (
         entry.kind === 'screen'
             ? solvimon.createScreen(entry.id, mountConfig)
-            : solvimon.createComponent(entry.id, mountConfig);
+            : solvimon.createComponent(entry.id, mountConfig)
+    ).unmount;
 });
 
 onUnmounted(() => unmount?.());

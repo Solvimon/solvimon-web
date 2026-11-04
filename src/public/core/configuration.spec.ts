@@ -133,7 +133,7 @@ describe('createSolvimonCore', () => {
         const entry = deferred<string>();
         mockEnsureDefined.mockReturnValueOnce(entry.promise);
 
-        const unmount = createSolvimonCore({ environment: 'TEST' }).createComponent(
+        const instance = createSolvimonCore({ environment: 'TEST' }).createComponent(
             'invoices-list',
             {
                 container,
@@ -141,7 +141,7 @@ describe('createSolvimonCore', () => {
             },
         );
 
-        unmount();
+        instance.unmount();
         entry.resolve('solvimon-invoices-list');
         await entry.promise;
         await Promise.resolve();
@@ -149,8 +149,8 @@ describe('createSolvimonCore', () => {
         expect(container.children).toHaveLength(0);
     });
 
-    it('removes the element when unmount is called after it has mounted', async () => {
-        const unmount = createSolvimonCore({ environment: 'TEST' }).createComponent(
+    it('removes the element when unmount is called after it has mounted, destructured', async () => {
+        const { unmount } = createSolvimonCore({ environment: 'TEST' }).createComponent(
             'invoices-list',
             {
                 container,

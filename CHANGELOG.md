@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- An add-on in the checkout's **Customize plan** block that has per-seat or one-off flat items is bought in a quantity. **Add to subscription** puts it in the order at the plan's default seats or units (`default_seats_value` / `default_units`, or else 1) and turns into a seats input. Lowering the seats below that default takes the add-on out of the order again and brings back the button. The quantity is sent as the add-on's `seats_values` or `units` in the invoice preview and in `/init`, so the subscription is created with it, and survives a reload of the form. Add-ons without such items stay a plain toggle.
+
 ### Changed
 
 - **Breaking:** the Vue peer dependency is `^3.5.0` instead of `>=3.5.0`, so it no longer accepts Vue 4 or a later major, which the SDK has not been built or tested against. Hosts on Vue 3.5 or a later 3.x are unaffected. The README now says that Vue is a peer dependency.
@@ -16,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- An add-on with several items lists each of them, by name, under its title in the checkout's **Customize plan** block, where only its first item was shown. A one-off flat item reads **€400.00 per unit, one-time**, where it read as charged every month.
 - The checkout runs the host's `configuration.onPaymentSuccess` after a successful payment, in place of the redirect configured in Solvimon Desk, and shows the host's `configuration.avatar` in the order summary, falling back to the branding emblem. The element used to drop both, so the customer was always redirected and the emblem always shown.
 - A wallet top-up or a subscription change whose request gets no clear answer, such as a network failure, a timeout or a 5xx, may still have gone through, and with it a charge. It used to say "Please try again" and offer the button again, so the customer could be charged twice. It now says the top-up or change may still go through and to check the wallet balance or the subscription first, and does not offer it again: the top-up modal until it is opened again, and closing it reloads the wallet balance, the manage subscription screen until it is reloaded. A request the API refuses still asks the customer to try again. The new messages are `topup_modal.error.charge_unconfirmed` and `subscription_management.update_unconfirmed`.
 

@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- An add-on in the checkout's **Customize plan** block that has per-seat or one-off flat items is bought in a quantity. **Add to subscription** puts it in the order at the plan's default seats or units (`default_seats_value` / `default_units`, or else 1) and turns into a seats input. Lowering the seats below that default takes the add-on out of the order again and brings back the button. The quantity is sent as the add-on's `seats_values` or `units` in the invoice preview and in `/init`, so the subscription is created with it, and survives a reload of the form. Add-ons without such items stay a plain toggle.
+- An add-on in the checkout's **Customize plan** block that has per-seat or one-off flat items, on its own or in a pick-any group, is bought in a quantity. **Add to subscription** puts it in the order at the plan's default seats or units for the currency and billing period on offer (`default_seats_value` / `default_units`, or else 1) and turns into a seats input. Stepping below that default, or leaving a lower number in the input, takes the add-on out of the order again and brings back the button; a lower number typed on the way to a higher one is not applied. The quantity is sent as the add-on's `seats_values` or `units` in the invoice preview and in `/init`, so the subscription is created with it, and survives a reload of the form. An add-on the order already gives seats or units of its own keeps the plan's steppers, which do not go below the order's quantity, and add-ons in a pick-at-most-one group and those without such items stay a toggle.
 
 ### Changed
 

@@ -86,7 +86,11 @@ describe('createSolvimonCore', () => {
         await Promise.resolve();
         await Promise.resolve();
 
+        // Left without one, so that the element reports it missing rather than guessing.
         expect(container.children).toHaveLength(1);
+        expect((container.children[0] as HTMLElement & Record<string, unknown>).environment).toBe(
+            undefined,
+        );
     });
 
     it('passes shared config and per-mount props to the element', async () => {

@@ -140,6 +140,7 @@ Common hooks:
 
 ```ts
 createSolvimonCore({
+    environment: 'TEST',
     cssOverrides: [
         '.sv-root { font-family: Inter, sans-serif; }',
         '.sv-checkout__submit { border-radius: 24px !important; }',

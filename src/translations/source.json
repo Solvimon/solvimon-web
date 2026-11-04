@@ -1199,6 +1199,10 @@
     "defaultMessage": "We could not open this page",
     "description": "Shown in place of an element when its portal link could not be checked for now"
   },
+  "pricing_description.item_list": {
+    "defaultMessage": "{list} · {item}",
+    "description": "Joins the items of a pricing with several items into one line"
+  },
   "pricing_description.named_item": {
     "defaultMessage": "{name}: {pricing}",
     "description": "One item of a pricing with several items, as its name and its price"

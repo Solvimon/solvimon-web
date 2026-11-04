@@ -8,7 +8,7 @@ import { getPricingItemConfigs } from './pricingItem';
 /** What a seat count or a one-off flat item's quantity falls back to when nothing names one. */
 export const FALLBACK_METER_NUMBER = '1';
 
-const METER_KEYS = {
+export const METER_KEYS = {
     seats: { schedule: 'seats_values', planDefault: 'default_seats_value' },
     units: { schedule: 'units', planDefault: 'default_units' },
 } as const;

@@ -39,6 +39,7 @@ const mountEditor = () => {
             currency: 'EUR',
             modelValue: [],
             seatsValues: [],
+            quantityPricingIds: ['pric_seats'],
             'onUpdate:modelValue': (value: string[]) => wrapper.setProps({ modelValue: value }),
             'onUpdate:seatsValues': (value) => wrapper.setProps({ seatsValues: value }),
         },
@@ -70,5 +71,18 @@ describe('AddonMultipleEditor', () => {
         expect(wrapper.props('seatsValues')).toEqual([]);
         expect(wrapper.findComponent(StepInput).exists()).toBe(false);
         expect(wrapper.findComponent(Button).exists()).toBe(true);
+    });
+
+    it('keeps the add-on while a number below its default seats is being typed', async () => {
+        const wrapper = mountEditor();
+        await wrapper.findComponent(Button).trigger('click');
+
+        wrapper.findComponent(StepInput).vm.$emit('update:modelValue', 1);
+        await wrapper.vm.$nextTick();
+
+        expect(wrapper.props('modelValue')).toEqual(['pric_seats']);
+        expect(wrapper.props('seatsValues')).toEqual([
+            { pricing_item_config_id: 'pico_seats', number: '3' },
+        ]);
     });
 });

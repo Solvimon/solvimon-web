@@ -1,67 +1,116 @@
-import type { PricingExtended } from '@solvimon/solvimon-types';
+import type { PricingExtended, PricingPlanSubscriptionExpanded } from '@solvimon/solvimon-types';
 import {
     getAddonConfigIds,
     getAddonMinimumQuantity,
     getAddonQuantity,
-    isQuantityAddon,
+    getQuantityAddons,
     setAddonQuantity,
     type AddonSelection,
 } from './addonQuantity';
 
-const item = (
-    modelType: string,
-    configs: { id: string; pricingType: string; defaultNumber?: string }[],
-) => ({
-    object_type: 'PRICING_ITEM',
-    id: `prii_${configs[0]!.id}`,
-    product_items: [{ model_type: modelType }],
-    configs: configs.map(({ id, pricingType, defaultNumber }) => ({
-        id,
-        details: { pricing_type: pricingType },
-        ...(defaultNumber && {
-            default_seats_value: { number: defaultNumber },
-            default_units: { number: defaultNumber },
-        }),
-    })),
+type ConfigSpec = { id: string; pricingType: string; defaultNumber?: string; currency?: string };
+
+const config = ({ id, pricingType, defaultNumber }: ConfigSpec) => ({
+    id,
+    details: { pricing_type: pricingType },
+    ...(defaultNumber && {
+        default_seats_value: { number: defaultNumber },
+        default_units: { number: defaultNumber },
+    }),
 });
 
-const terminalAddon = {
-    id: 'pric_terminal',
-    product_type: 'ADDON',
-    items: [
-        item('ONE_OFF', [{ id: 'pico_terminal', pricingType: 'FLAT' }]),
-        item('USAGE_BASED', [{ id: 'pico_service', pricingType: 'TOP_TIERED' }]),
-    ],
-} as unknown as PricingExtended;
+const item = (modelType: string, configs: ConfigSpec[]) => {
+    const perCurrency = configs.filter(({ currency }) => currency);
+    return {
+        object_type: 'PRICING_ITEM',
+        id: `prii_${configs[0]!.id}`,
+        product_items: [{ model_type: modelType }],
+        ...(perCurrency.length
+            ? {
+                  pricing_currency_configs: perCurrency.map((spec) => ({
+                      currency: spec.currency,
+                      configs: [config(spec)],
+                  })),
+              }
+            : { configs: configs.map(config) }),
+    };
+};
 
-const seatAddon = {
-    id: 'pric_seats',
-    product_type: 'ADDON',
-    items: [
-        item('PER_SEAT', [
-            { id: 'pico_seat_eur', pricingType: 'FLAT' },
-            { id: 'pico_seat_usd', pricingType: 'FLAT' },
-        ]),
-    ],
-} as unknown as PricingExtended;
+const addon = (id: string, items: ReturnType<typeof item>[]) =>
+    ({ id, product_type: 'ADDON', items }) as unknown as PricingExtended;
 
-const toggleAddon = {
-    id: 'pric_toggle',
-    product_type: 'ADDON',
-    items: [item('RECURRING', [{ id: 'pico_toggle', pricingType: 'FLAT' }])],
-} as unknown as PricingExtended;
+const terminalAddon = addon('pric_terminal', [
+    item('ONE_OFF', [{ id: 'pico_terminal', pricingType: 'FLAT' }]),
+    item('USAGE_BASED', [{ id: 'pico_service', pricingType: 'TOP_TIERED' }]),
+]);
+const seatAddon = addon('pric_seats', [
+    item('PER_SEAT', [
+        { id: 'pico_seat_eur', pricingType: 'FLAT' },
+        { id: 'pico_seat_usd', pricingType: 'FLAT' },
+    ]),
+]);
+const toggleAddon = addon('pric_toggle', [
+    item('RECURRING', [{ id: 'pico_toggle', pricingType: 'FLAT' }]),
+]);
 
 const planSeat = { pricing_item_config_id: 'pico_plan_seat', number: '3' };
 const empty: AddonSelection = { enabledPricingIds: [], seatsValues: [], unitsValues: [] };
 
-describe('isQuantityAddon', () => {
-    it('takes a quantity for a per-seat or a one-off flat item', () => {
-        expect(isQuantityAddon(seatAddon)).toBe(true);
-        expect(isQuantityAddon(terminalAddon)).toBe(true);
+const subscriptionWith = ({
+    pricings = [],
+    groups = [],
+}: {
+    pricings?: PricingExtended[];
+    groups?: { selection_constraint: string; pricings: PricingExtended[] }[];
+}) =>
+    ({
+        pricing_plan_schedule_infos: [
+            {
+                pricing_plan_version: {
+                    pricing_categories: [
+                        {
+                            pricings,
+                            pricing_groups: groups.map((group) => ({
+                                ...group,
+                                product_type: 'ADDON',
+                            })),
+                        },
+                    ],
+                },
+            },
+        ],
+    }) as unknown as PricingPlanSubscriptionExpanded;
+
+describe('getQuantityAddons', () => {
+    it('lists per-seat and one-off flat add-ons, but not a plain toggle', () => {
+        const subscription = subscriptionWith({
+            pricings: [terminalAddon, seatAddon, toggleAddon],
+        });
+
+        expect(getQuantityAddons(subscription).map(({ id }) => id)).toEqual([
+            'pric_terminal',
+            'pric_seats',
+        ]);
     });
 
-    it('is a plain toggle for a recurring add-on', () => {
-        expect(isQuantityAddon(toggleAddon)).toBe(false);
+    it('takes add-ons from a pick-any group, not from a pick-at-most-one group', () => {
+        const subscription = subscriptionWith({
+            groups: [
+                { selection_constraint: 'ANY', pricings: [seatAddon] },
+                { selection_constraint: 'AT_MOST_ONE', pricings: [terminalAddon] },
+            ],
+        });
+
+        expect(getQuantityAddons(subscription).map(({ id }) => id)).toEqual(['pric_seats']);
+    });
+
+    it('leaves an add-on the order gives seats of its own to the plan steppers', () => {
+        const subscription = subscriptionWith({ pricings: [seatAddon, terminalAddon] });
+        const orderValues = [{ pricing_item_config_id: 'pico_seat_eur', number: '10' }];
+
+        expect(getQuantityAddons(subscription, orderValues).map(({ id }) => id)).toEqual([
+            'pric_terminal',
+        ]);
     });
 });
 
@@ -110,34 +159,42 @@ describe('setAddonQuantity', () => {
 
 describe('getAddonQuantity', () => {
     it('is 0 while the add-on is not in the order', () => {
-        expect(getAddonQuantity(seatAddon, { ...empty, seatsValues: [planSeat] })).toBe(0);
+        expect(getAddonQuantity(seatAddon, { ...empty, seatsValues: [planSeat] }, 1)).toBe(0);
     });
 
     it('reads the quantity back from the add-on values', () => {
-        expect(getAddonQuantity(terminalAddon, setAddonQuantity(terminalAddon, 5, empty))).toBe(5);
+        const selection = setAddonQuantity(terminalAddon, 5, empty);
+        expect(getAddonQuantity(terminalAddon, selection, 1)).toBe(5);
+    });
+
+    it('falls back to the given minimum for an add-on in the order without a value', () => {
+        const selection = { ...empty, enabledPricingIds: ['pric_seats'] };
+        expect(getAddonQuantity(seatAddon, selection, 4)).toBe(4);
     });
 });
 
 describe('getAddonMinimumQuantity', () => {
-    const fiveSeatAddon = {
-        id: 'pric_five_seats',
-        items: [item('PER_SEAT', [{ id: 'pico_five', pricingType: 'FLAT', defaultNumber: '5' }])],
-    } as unknown as PricingExtended;
-
-    it("is the plan's default seats or units", () => {
-        expect(getAddonMinimumQuantity(fiveSeatAddon)).toBe(5);
+    it("is the plan's default seats", () => {
+        const fiveSeats = addon('pric_five', [
+            item('PER_SEAT', [{ id: 'pico_five', pricingType: 'FLAT', defaultNumber: '5' }]),
+        ]);
+        expect(getAddonMinimumQuantity(fiveSeats)).toBe(5);
     });
 
     it('is 1 when the plan names no default', () => {
         expect(getAddonMinimumQuantity(seatAddon)).toBe(1);
     });
 
-    it('takes the add-on out when stepped below the minimum', () => {
-        const added = setAddonQuantity(fiveSeatAddon, 5, empty);
-        const next = setAddonQuantity(fiveSeatAddon, 4, added);
+    it('reads the default of the currency on offer', () => {
+        const perCurrency = addon('pric_currency', [
+            item('PER_SEAT', [
+                { id: 'pico_eur', pricingType: 'FLAT', defaultNumber: '10', currency: 'EUR' },
+                { id: 'pico_usd', pricingType: 'FLAT', defaultNumber: '2', currency: 'USD' },
+            ]),
+        ]);
 
-        expect(next.enabledPricingIds).toEqual([]);
-        expect(next.seatsValues).toEqual([]);
+        expect(getAddonMinimumQuantity(perCurrency, { currency: 'USD' })).toBe(2);
+        expect(getAddonMinimumQuantity(perCurrency, { currency: 'EUR' })).toBe(10);
     });
 });
 

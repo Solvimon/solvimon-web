@@ -33,7 +33,7 @@ import {
     getScheduleCustomizations,
 } from '@/utils/pricingPlanSchedule';
 import { withPreselectedEnabledPricings } from '@/utils/enabledPricings';
-import { getAddonConfigIds, getAddonPricings } from '@/utils/addonQuantity';
+import { getAddonConfigIds, getQuantityAddons } from '@/utils/addonQuantity';
 import { splitInvoiceByRecurrence } from '@/utils/invoice';
 import { getInitialMeterValues } from '@/utils/meterValues';
 import { hasPaymentRedirectReturn } from '@/utils/paymentRedirect';
@@ -604,19 +604,17 @@ export function useCheckoutView({
         // defaults, so the user's saved plan selections are preserved.
         if (savedFormState) {
             const { seatsValues, unitsValues, ...rest } = savedFormState;
+            const { seatsValues: orderSeats, unitsValues: orderUnits } = orderMeterValues.value;
             const addonConfigIds = subscription.value
-                ? getAddonConfigIds(getAddonPricings(subscription.value))
+                ? getAddonConfigIds(
+                      getQuantityAddons(subscription.value, [
+                          ...(orderSeats ?? []),
+                          ...(orderUnits ?? []),
+                      ]),
+                  )
                 : new Set<string>();
-            const restoredSeats = restoreWithAddons(
-                seatsValues,
-                orderMeterValues.value.seatsValues,
-                addonConfigIds,
-            );
-            const restoredUnits = restoreWithAddons(
-                unitsValues,
-                orderMeterValues.value.unitsValues,
-                addonConfigIds,
-            );
+            const restoredSeats = restoreWithAddons(seatsValues, orderSeats, addonConfigIds);
+            const restoredUnits = restoreWithAddons(unitsValues, orderUnits, addonConfigIds);
             checkoutForm.updateInitialState({
                 ...rest,
                 ...(restoredSeats ? { seatsValues: restoredSeats } : {}),

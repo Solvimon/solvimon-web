@@ -1,21 +1,20 @@
 <script setup lang="ts">
 import type { ConfiguredMeterValue, Pricing, PricingExtended } from '@solvimon/solvimon-types';
 import { Button, Section, StepInput, useIntl } from '@solvimon/solvimon-ui';
-import { toRef } from 'vue';
+import { computed, toRef } from 'vue';
 import PricingGroupTitle from './PricingGroupTitle.vue';
 import { usePricingDescription } from './usePricingDescription';
 import PricingGroupContent from './PricingGroupContent.vue';
 import type { PricingGroupEditorBaseProps } from './PricingGroupEditorBase.types';
 import { getNameFromPricing } from '@/utils/pricing';
-import {
-    getAddonMinimumQuantity,
-    getAddonQuantity,
-    isQuantityAddon,
-    setAddonQuantity,
-} from '@/utils/addonQuantity';
+import { getAddonMinimumQuantity, getAddonQuantity, setAddonQuantity } from '@/utils/addonQuantity';
 
 const props = defineProps<
-    Omit<PricingGroupEditorBaseProps, 'groupName'> & { groupName?: string }
+    Omit<PricingGroupEditorBaseProps, 'groupName'> & {
+        groupName?: string;
+        /** The add-ons bought in a quantity; the others are a toggle. */
+        quantityPricingIds?: Pricing['id'][];
+    }
 >();
 const model = defineModel<Pricing['id'][]>('modelValue', { required: true });
 const seatsModel = defineModel<ConfiguredMeterValue[]>('seatsValues', { default: () => [] });
@@ -37,13 +36,40 @@ const selection = () => ({
     unitsValues: unitsModel.value,
 });
 
-const quantityOf = (pricing: PricingExtended) => getAddonQuantity(pricing, selection());
+const minimums = computed(
+    () =>
+        new Map(
+            props.pricings
+                .filter((pricing) => props.quantityPricingIds?.includes(pricing.id))
+                .map((pricing) => [
+                    pricing.id,
+                    getAddonMinimumQuantity(pricing, {
+                        currency: props.currency,
+                        billingPeriod: props.billingPeriod,
+                    }),
+                ]),
+        ),
+);
+
+const minimumOf = (pricing: PricingExtended) => minimums.value.get(pricing.id) ?? 1;
+
+const quantityOf = (pricing: PricingExtended) =>
+    getAddonQuantity(pricing, selection(), minimumOf(pricing));
 
 const handleQuantity = (pricing: PricingExtended, quantity: number) => {
     const next = setAddonQuantity(pricing, quantity, selection());
     model.value = next.enabledPricingIds;
     seatsModel.value = next.seatsValues;
     unitsModel.value = next.unitsValues;
+};
+
+// The stepper's min is one below the add-on's, and it emits on every keystroke and clamps to its
+// min on blur: one step down from the minimum, or leaving a lower number, takes the add-on out,
+// and a lower number typed on the way to a higher one is not applied yet.
+const handleStep = (pricing: PricingExtended, quantity: number) => {
+    const minimum = minimumOf(pricing);
+    if (quantity >= minimum) handleQuantity(pricing, quantity);
+    else if (quantity === minimum - 1) handleQuantity(pricing, 0);
 };
 
 const handleToggle = (pricingId: Pricing['id']) => {
@@ -81,14 +107,14 @@ const handleToggle = (pricingId: Pricing['id']) => {
                         >
                             <template #default>
                                 <div
-                                    v-if="isQuantityAddon(pricing) && isSelected(pricing.id)"
+                                    v-if="minimums.has(pricing.id) && isSelected(pricing.id)"
                                     class="w-24 shrink-0 md:w-32"
                                 >
                                     <StepInput
                                         :model-value="quantityOf(pricing)"
                                         size="sm"
-                                        :min="0"
-                                        @update:model-value="handleQuantity(pricing, $event)"
+                                        :min="minimumOf(pricing) - 1"
+                                        @update:model-value="handleStep(pricing, $event)"
                                     />
                                 </div>
                                 <Button
@@ -105,11 +131,8 @@ const handleToggle = (pricingId: Pricing['id']) => {
                                     icon-prefix="add"
                                     size="sm"
                                     @click="
-                                        isQuantityAddon(pricing)
-                                            ? handleQuantity(
-                                                  pricing,
-                                                  getAddonMinimumQuantity(pricing),
-                                              )
+                                        minimums.has(pricing.id)
+                                            ? handleQuantity(pricing, minimumOf(pricing))
                                             : handleToggle(pricing.id)
                                     "
                                     >{{

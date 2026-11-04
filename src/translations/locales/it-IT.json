@@ -299,6 +299,7 @@
     "portal.unverified.message": "Controlla la connessione e riprova.",
     "portal.unverified.retry_button.label": "Riprova",
     "portal.unverified.title": "Impossibile aprire questa pagina",
+    "pricing_description.item_list": "{list} · {item}",
     "pricing_description.named_item": "{name}: {pricing}",
     "pricing_item_pricing.unsupported_pricing_error": "Tariffa non supportata",
     "screens.payment_method_management.add_button": "Aggiungi metodo di pagamento",

@@ -42,7 +42,7 @@ import {
 } from '@/utils/pricingPlanSchedule';
 import { getPricingCurrencyForCountry } from '@/utils/countryCurrency';
 import { getModelTypesFromScheduleInfo } from '@/utils/pricing';
-import { getAddonConfigIds, getAddonPricings } from '@/utils/addonQuantity';
+import { getAddonConfigIds, getQuantityAddons } from '@/utils/addonQuantity';
 import { ContentWithAsideLayout } from '@/layouts';
 import { useViewport } from '@/composables/useViewport';
 import { usePaymentFormHold } from '@/composables/usePaymentFormHold';
@@ -323,7 +323,10 @@ const enabledPricingIdsModel = computed({
         // A removed add-on also loses the seats and units of the currencies not on offer.
         const removedConfigIds = getAddonConfigIds(
             subscription.value
-                ? getAddonPricings(subscription.value).filter(({ id }) => !value.includes(id))
+                ? getQuantityAddons(subscription.value, [
+                      ...(orderMeterValues.value.seatsValues ?? []),
+                      ...(orderMeterValues.value.unitsValues ?? []),
+                  ]).filter(({ id }) => !value.includes(id))
                 : [],
         );
         if (!removedConfigIds.size) return;

@@ -24,6 +24,11 @@ import type { TemplateChildNode, RootNode } from '@vue/compiler-core';
 import { selectorsMissingFrom } from './scripts/css-duplication.mjs';
 import { bundledUnscannedUiFiles, missingUiDirs } from './scripts/tailwind-content.mjs';
 import { ICON_SPRITE_MODULE, subsetIconSprite } from './scripts/icon-sprite.mjs';
+import {
+    collectBundledPackages,
+    licenseProblems,
+    renderThirdPartyLicenses,
+} from './scripts/third-party-licenses.mjs';
 
 function getLibEntries(
     basePath: string,
@@ -242,6 +247,34 @@ function subsetIconSpritePlugin(): Plugin {
     };
 }
 
+/**
+ * Writes `dist/THIRD_PARTY_LICENSES.md` with the license of every package the build bundles (see
+ * `scripts/third-party-licenses.mjs`), and fails the build on one it may not ship.
+ */
+function thirdPartyLicensesPlugin(): Plugin {
+    return {
+        name: 'solvimon:third-party-licenses',
+        generateBundle(_options, bundle) {
+            const packages = collectBundledPackages(
+                Object.values(bundle).flatMap((output) =>
+                    output.type === 'chunk' ? output.moduleIds : [],
+                ),
+            );
+            const problems = licenseProblems(packages);
+
+            if (problems.length > 0) {
+                this.error(`Bundled packages that cannot be shipped:\n${problems.join('\n')}`);
+            }
+
+            this.emitFile({
+                type: 'asset',
+                fileName: 'THIRD_PARTY_LICENSES.md',
+                source: renderThirdPartyLicenses(packages),
+            });
+        },
+    };
+}
+
 const coreEntry = resolve(__dirname, 'src/public/core/index.ts');
 const rootEntry = resolve(__dirname, 'src/index.ts');
 
@@ -296,6 +329,7 @@ export default defineConfig(({ mode }) => {
             dropRedundantStylesheet(),
             requireScannedUiFiles(),
             subsetIconSpritePlugin(),
+            thirdPartyLicensesPlugin(),
             dts({
                 bundleTypes: false,
                 outDirs: './dist',

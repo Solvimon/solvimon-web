@@ -45,8 +45,8 @@ const terminalAddon = addon('pric_terminal', [
 ]);
 const seatAddon = addon('pric_seats', [
     item('PER_SEAT', [
-        { id: 'pico_seat_eur', pricingType: 'FLAT' },
-        { id: 'pico_seat_usd', pricingType: 'FLAT' },
+        { id: 'pico_seat_eur', pricingType: 'FLAT', currency: 'EUR' },
+        { id: 'pico_seat_usd', pricingType: 'FLAT', currency: 'USD' },
     ]),
 ]);
 const toggleAddon = addon('pric_toggle', [
@@ -115,16 +115,26 @@ describe('getQuantityAddons', () => {
 });
 
 describe('setAddonQuantity', () => {
-    it('adds the add-on with a seat value for every one of its configs', () => {
-        const next = setAddonQuantity(seatAddon, 1, { ...empty, seatsValues: [planSeat] });
+    const eur = { currency: 'EUR' };
+
+    it('adds the add-on with a seat value on its config on offer', () => {
+        const next = setAddonQuantity(seatAddon, 1, { ...empty, seatsValues: [planSeat] }, eur);
 
         expect(next.enabledPricingIds).toEqual(['pric_seats']);
         expect(next.seatsValues).toEqual([
             planSeat,
             { pricing_item_config_id: 'pico_seat_eur', number: '1' },
-            { pricing_item_config_id: 'pico_seat_usd', number: '1' },
         ]);
         expect(next.unitsValues).toEqual([]);
+    });
+
+    it('moves the quantity to the config on offer when the currency changes', () => {
+        const added = setAddonQuantity(seatAddon, 2, empty, { currency: 'USD' });
+        const next = setAddonQuantity(seatAddon, 2, added, eur);
+
+        expect(next.seatsValues).toEqual([
+            { pricing_item_config_id: 'pico_seat_eur', number: '2' },
+        ]);
     });
 
     it('sets a one-off flat item as units and leaves the usage-based item alone', () => {
@@ -136,20 +146,36 @@ describe('setAddonQuantity', () => {
         expect(next.seatsValues).toEqual([]);
     });
 
-    it('changes the quantity without adding the add-on twice', () => {
-        const added = setAddonQuantity(seatAddon, 1, empty);
-        const next = setAddonQuantity(seatAddon, 4, added);
+    it('counts the seats of an add-on with seats and a one-off item, which keeps its default', () => {
+        const licence = addon('pric_licence', [
+            item('PER_SEAT', [{ id: 'pico_licence', pricingType: 'FLAT', defaultNumber: '5' }]),
+            item('ONE_OFF', [{ id: 'pico_hardware', pricingType: 'FLAT' }]),
+        ]);
 
-        expect(next.enabledPricingIds).toEqual(['pric_seats']);
-        expect(next.seatsValues.map(({ number }) => number)).toEqual(['4', '4']);
+        const next = setAddonQuantity(licence, 7, empty);
+
+        expect(getAddonMinimumQuantity(licence)).toBe(5);
+        expect(next.seatsValues).toEqual([{ pricing_item_config_id: 'pico_licence', number: '7' }]);
+        expect(next.unitsValues).toEqual([
+            { pricing_item_config_id: 'pico_hardware', number: '1' },
+        ]);
     });
 
-    it('takes the add-on and its values out at 0 and keeps the plan seats', () => {
-        const added = setAddonQuantity(seatAddon, 3, {
-            ...empty,
-            enabledPricingIds: ['pric_other'],
-            seatsValues: [planSeat],
-        });
+    it('changes the quantity without adding the add-on twice', () => {
+        const added = setAddonQuantity(seatAddon, 1, empty, eur);
+        const next = setAddonQuantity(seatAddon, 4, added, eur);
+
+        expect(next.enabledPricingIds).toEqual(['pric_seats']);
+        expect(next.seatsValues.map(({ number }) => number)).toEqual(['4']);
+    });
+
+    it('takes the add-on and all of its values out at 0 and keeps the plan seats', () => {
+        const added = setAddonQuantity(
+            seatAddon,
+            3,
+            { ...empty, enabledPricingIds: ['pric_other'], seatsValues: [planSeat] },
+            eur,
+        );
         const next = setAddonQuantity(seatAddon, 0, added);
 
         expect(next.enabledPricingIds).toEqual(['pric_other']);
@@ -159,17 +185,17 @@ describe('setAddonQuantity', () => {
 
 describe('getAddonQuantity', () => {
     it('is 0 while the add-on is not in the order', () => {
-        expect(getAddonQuantity(seatAddon, { ...empty, seatsValues: [planSeat] }, 1)).toBe(0);
+        expect(getAddonQuantity(seatAddon, { ...empty, seatsValues: [planSeat] })).toBe(0);
     });
 
     it('reads the quantity back from the add-on values', () => {
         const selection = setAddonQuantity(terminalAddon, 5, empty);
-        expect(getAddonQuantity(terminalAddon, selection, 1)).toBe(5);
+        expect(getAddonQuantity(terminalAddon, selection)).toBe(5);
     });
 
-    it('falls back to the given minimum for an add-on in the order without a value', () => {
+    it('is undefined for an add-on in the order without a value', () => {
         const selection = { ...empty, enabledPricingIds: ['pric_seats'] };
-        expect(getAddonQuantity(seatAddon, selection, 4)).toBe(4);
+        expect(getAddonQuantity(seatAddon, selection)).toBeUndefined();
     });
 });
 

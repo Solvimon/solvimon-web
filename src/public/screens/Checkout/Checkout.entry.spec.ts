@@ -30,6 +30,13 @@ const mountWithSearch = (search: string, couponCode?: string) => {
 const passedCouponCode = (wrapper: ReturnType<typeof mountWithSearch>) =>
     wrapper.findComponent({ name: 'CheckoutStub' }).props('configuration').couponCode;
 
+const passedConfiguration = (props: Record<string, unknown>) =>
+    mount(CheckoutEntry, { props: props as never })
+        .findComponent({ name: 'CheckoutStub' })
+        .props('configuration');
+
+const branding = { emblem: { public_url: 'https://cdn.example/emblem.png' } };
+
 describe('Checkout entry', () => {
     afterEach(() => {
         window.history.replaceState(null, '', '/');
@@ -56,5 +63,42 @@ describe('Checkout entry', () => {
         expect(passedCouponCode(mountWithSearch('?coupon_code=FROM_URL', 'FROM_HOST'))).toBe(
             'FROM_HOST',
         );
+    });
+
+    it('hands the checkout the payment success callback the host configured', () => {
+        const onPaymentSuccess = vi.fn();
+
+        expect(passedConfiguration({ configuration: { onPaymentSuccess } }).onPaymentSuccess).toBe(
+            onPaymentSuccess,
+        );
+    });
+
+    it('hands the checkout what the host configured for the form', () => {
+        expect(
+            passedConfiguration({
+                configuration: {
+                    email: 'ada@example.com',
+                    countryCode: 'NL',
+                    enabledPricingIds: ['pri_1'],
+                },
+            }),
+        ).toMatchObject({
+            email: 'ada@example.com',
+            countryCode: 'NL',
+            enabledPricingIds: ['pri_1'],
+        });
+    });
+
+    it('prefers the avatar the host configured to the branding emblem', () => {
+        expect(
+            passedConfiguration({
+                configuration: { avatar: 'https://cdn.example/host.png' },
+                branding,
+            }).avatar,
+        ).toBe('https://cdn.example/host.png');
+    });
+
+    it('shows the branding emblem when the host configured no avatar', () => {
+        expect(passedConfiguration({ branding }).avatar).toBe('https://cdn.example/emblem.png');
     });
 });

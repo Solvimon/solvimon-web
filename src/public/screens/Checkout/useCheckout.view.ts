@@ -17,6 +17,8 @@ import { toRestorableForm } from './savedFormState';
 import { useLogger } from '@/components/providers';
 import { createSubscriptionsService } from '@/services/subscriptions';
 import { useInvoicePreview } from '@/composables/useInvoicePreview';
+import { getCustomerAddress } from '@/composables/useInvoicePreview.lib';
+import { getPricingCurrencyForCountry } from '@/utils/countryCurrency';
 import { useCheckoutForm } from '@/components/customer/CheckoutForm/useCheckoutForm';
 import {
     DEFAULT_TAX_IDENTIFIER_TYPE,
@@ -281,6 +283,26 @@ export function useCheckoutView({
     let shippingAddressReference: string | undefined;
     const getShippingAddressReference = (): string => (shippingAddressReference ??= randomUuid());
 
+    /**
+     * The currency the order is priced in, worked out as the invoice preview works it out: from the
+     * country it prices at, the shipping one on a shipped order. The amount charged is the preview's,
+     * so the seats offered and the subscription created follow this too.
+     */
+    const pricingCurrency = computed(() => {
+        if (!subscription.value) return undefined;
+
+        return getPricingCurrencyForCountry({
+            country: getCustomerAddress(
+                toPreviewCustomer(checkoutForm.form.value, previewAddress()),
+            )?.country,
+            pricingCurrencySettings: getFirstPricingPlanScheduleOfType({
+                pricingPlanScheduleInfos: subscription.value.pricing_plan_schedule_infos ?? [],
+                type: 'DEFAULT',
+            })?.pricing_plan_version?.pricing_currency_settings,
+            fallbackCurrency: subscription.value.billing_currency,
+        });
+    });
+
     const authorizationContext = computed<CheckoutAuthorizationContext>(() => {
         const name: Name =
             checkoutForm.form.value.firstName ||
@@ -339,9 +361,7 @@ export function useCheckoutView({
             seatsValues: checkoutForm.form.value.seatsValues,
             unitsValues: checkoutForm.form.value.unitsValues,
             pricingPlanScheduleInfos: subscription.value?.pricing_plan_schedule_infos ?? [],
-            pricingCurrency: hasMultiplePricingCurrencies
-                ? subscription.value?.billing_currency
-                : undefined,
+            pricingCurrency: hasMultiplePricingCurrencies ? pricingCurrency.value : undefined,
             billingPeriod: hasBillingPeriodSettings
                 ? subscription.value?.billing_period
                 : undefined,
@@ -667,6 +687,7 @@ export function useCheckoutView({
         orderMeterValues,
         checkoutForm,
         authorizationContext,
+        pricingCurrency,
         isPaid,
         amount,
         recurringAmount,

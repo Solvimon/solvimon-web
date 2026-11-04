@@ -135,7 +135,7 @@ onMounted(() => {
             container: screenContainer.value,
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             portalObject: portalObject as never,
-        });
+        }).unmount;
         return;
     }
 
@@ -147,7 +147,7 @@ onMounted(() => {
         portalObject: portalObject as never,
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         configuration: configuration as never,
-    });
+    }).unmount;
 });
 
 onUnmounted(() => {

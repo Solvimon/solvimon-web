@@ -67,20 +67,29 @@ createSolvimonCore({ locale: 'en-US' });
 createSolvimonCore();
 
 /* Documented usage compiles. */
-export const unmountList = core.createComponent('invoices-list', {
+export const listInstance = core.createComponent('invoices-list', {
     container: '#invoices',
     portalObject,
     configuration: { showPayButton: false, pagination: { batchSize: 20 } },
 });
 
 /* A screen with no configuration of its own. */
-export const unmountOverview = core.createScreen('customer-overview', {
+export const overviewInstance = core.createScreen('customer-overview', {
     container: '#overview',
     portalObject,
 });
 
+/* A mount returns an instance whose unmount can be destructured. */
+export const { unmount } = core.createScreen('customer-overview', {
+    container: '#overview',
+    portalObject,
+});
+
+// @ts-expect-error A mount returns an instance, not a function to call.
+overviewInstance();
+
 /* Every option a configuration leaves out keeps its default, so a partial object is valid. */
-export const unmountPartial = core.createComponent('invoices-list', {
+export const partialInstance = core.createComponent('invoices-list', {
     container: '#invoices',
     portalObject,
     configuration: { pagination: { enabled: false } },

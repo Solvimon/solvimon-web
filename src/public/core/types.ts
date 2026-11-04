@@ -43,10 +43,14 @@ export interface SharedSolvimonMountConfig {
 export type SolvimonMountConfig = SharedSolvimonMountConfig;
 
 /**
- * Return type of the Solvimon core mount methods.
+ * What `createScreen` and `createComponent` return: the mounted element, to act on later. An object
+ * rather than a function, so it can gain members without breaking a host.
  */
 export interface SolvimonMountInstance {
-    /** Unmounts the Solvimon app from the container. */
+    /**
+     * Removes the element from the container. Called before the element has loaded, it cancels
+     * the mount instead. It does not use `this`, so it can be destructured.
+     */
     unmount: () => void;
 }
 
@@ -137,9 +141,9 @@ export interface CoreConfiguration<TConfig extends SolvimonMountConfig = Solvimo
     createComponent: <TId extends RegisteredComponentId>(
         id: TId,
         configuration: ComponentMountConfiguration<TId>,
-    ) => SolvimonMountInstance['unmount'];
+    ) => SolvimonMountInstance;
     createScreen: <TId extends RegisteredScreenId>(
         id: TId,
         configuration: ScreenMountConfiguration<TId>,
-    ) => SolvimonMountInstance['unmount'];
+    ) => SolvimonMountInstance;
 }

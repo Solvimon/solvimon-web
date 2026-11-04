@@ -1527,6 +1527,10 @@
     "defaultMessage": "Something went wrong. Please try again.",
     "description": "Error shown when committing a subscription change fails"
   },
+  "subscription_management.update_unconfirmed": {
+    "defaultMessage": "We couldn't confirm your change. It may still go through, so check your subscription before trying again.",
+    "description": "Error shown when committing a subscription change got no clear answer, so the change may still have been made"
+  },
   "subscription_payment_completed_card.thank_you_for_subscribing": {
     "defaultMessage": "Thank you for subscribing.",
     "description": "The text shown after a successful message before a redirect"
@@ -1602,6 +1606,10 @@
   "topup_modal.error.charge_failed": {
     "defaultMessage": "We couldn't top up your wallet. Please try again.",
     "description": "Error shown in the top-up modal when charging the top-up failed"
+  },
+  "topup_modal.error.charge_unconfirmed": {
+    "defaultMessage": "We couldn't confirm your top-up. It may still go through, so check your wallet balance before topping up again.",
+    "description": "Error shown in the top-up modal when charging the top-up got no clear answer, so the wallet may still have been topped up"
   },
   "topup_modal.error.payment_declined": {
     "defaultMessage": "Your payment was declined. Try another payment method.",

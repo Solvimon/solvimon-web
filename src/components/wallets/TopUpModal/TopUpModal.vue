@@ -26,6 +26,7 @@ import type { AutoTopUpRule } from '@/components/wallets/AutoTopUpConfig/AutoTop
 import { useAddPaymentMethodStep } from '@/composables/useAddPaymentMethodStep';
 import { useSaveAutoTopUpConfig } from '@/composables/useSaveAutoTopUpConfig';
 import { getChargeError } from '@/components/subscriptions/ChargeOnDemandModal/ChargeOnDemandModal.lib';
+import { isOutcomeUnknownAfterError } from '@/utils/paymentOutcome';
 
 const props = defineProps<TopUpModalProps>();
 const emit = defineEmits<TopUpModalEmits>();
@@ -165,6 +166,8 @@ const { title, subTitle, cancelButtonText, confirmButtonText } = useTopUpModalLa
 });
 
 const topUpError = ref<string>();
+/** The charge may have gone through, so the modal offers no second top-up until it is reopened. */
+const isTopUpUnconfirmed = ref(false);
 const hasAutoTopUpSaveFailed = ref(false);
 
 const autoTopUpSaveError = computed(() =>
@@ -185,11 +188,29 @@ const handleConfirm = () => {
         return;
     }
 
+    if (isTopUpUnconfirmed.value) {
+        return;
+    }
+
     topUpError.value = undefined;
     void topUpFormRef.value?.submit();
 };
 
 const handleTopUpFailure = (error: unknown) => {
+    emit('payment-failed', error);
+
+    if (isOutcomeUnknownAfterError(error)) {
+        isTopUpUnconfirmed.value = true;
+        topUpError.value = $t({
+            defaultMessage:
+                "We couldn't confirm your top-up. It may still go through, so check your wallet balance before topping up again.",
+            description:
+                'Error shown in the top-up modal when charging the top-up got no clear answer, so the wallet may still have been topped up',
+            id: 'topup_modal.error.charge_unconfirmed',
+        });
+        return;
+    }
+
     topUpError.value =
         getChargeError(error) === 'PAYMENT_FAILED'
             ? $t({
@@ -202,8 +223,6 @@ const handleTopUpFailure = (error: unknown) => {
                   description: 'Error shown in the top-up modal when charging the top-up failed',
                   id: 'topup_modal.error.charge_failed',
               });
-
-    emit('payment-failed', error);
 };
 
 /**
@@ -291,6 +310,7 @@ watch(
         step.value = 'TOP_UP';
         chargedInvoice.value = undefined;
         topUpError.value = undefined;
+        isTopUpUnconfirmed.value = false;
         hasAutoTopUpSaveFailed.value = false;
         topUpFormKey.value += 1;
     },
@@ -384,7 +404,7 @@ watch(
             <TopUpModalSuccess v-if="chargedInvoice" :invoice="chargedInvoice" />
         </template>
 
-        <template v-if="step === 'SUCCESS' || isTopUpUnavailable" #footer>
+        <template v-if="step === 'SUCCESS' || isTopUpUnavailable || isTopUpUnconfirmed" #footer>
             <div class="flex flex-col gap-2">
                 <Button
                     v-if="step === 'SUCCESS'"

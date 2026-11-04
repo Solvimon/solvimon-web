@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- For a pricing plan priced in more than one currency, the checkout creates the subscription in the currency it showed and charged. The price and the amount paid followed the customer's country, but the subscription was created in the currency of the subscription the checkout link was made from, so a customer in the Netherlands could pay in euros and then be billed in US dollars. The seats on offer now follow the same currency, which on a shipped order is the destination country's, as the price already was.
 - The checkout runs the host's `configuration.onPaymentSuccess` after a successful payment, in place of the redirect configured in Solvimon Desk, and shows the host's `configuration.avatar` in the order summary, falling back to the branding emblem. The element used to drop both, so the customer was always redirected and the emblem always shown.
 
 ## [0.1.0-alpha.29] - 2026-11-03

@@ -1,13 +1,18 @@
 <script setup lang="ts">
 import type { ConfiguredMeterValue, Pricing, PricingExtended } from '@solvimon/solvimon-types';
-import { Button, Section, StepInput, useIntl } from '@solvimon/solvimon-ui';
-import { computed, toRef } from 'vue';
+import { Button, isEqual, Section, StepInput, useIntl } from '@solvimon/solvimon-ui';
+import { computed, toRef, watch } from 'vue';
 import PricingGroupTitle from './PricingGroupTitle.vue';
 import { usePricingDescription } from './usePricingDescription';
 import PricingGroupContent from './PricingGroupContent.vue';
 import type { PricingGroupEditorBaseProps } from './PricingGroupEditorBase.types';
 import { getNameFromPricing } from '@/utils/pricing';
-import { getAddonMinimumQuantity, getAddonQuantity, setAddonQuantity } from '@/utils/addonQuantity';
+import {
+    getAddonMinimumQuantity,
+    getAddonQuantity,
+    setAddonQuantity,
+    type AddonSelection,
+} from '@/utils/addonQuantity';
 
 const props = defineProps<
     Omit<PricingGroupEditorBaseProps, 'groupName'> & {
@@ -36,41 +41,62 @@ const selection = () => ({
     unitsValues: unitsModel.value,
 });
 
+const offer = computed(() => ({ currency: props.currency, billingPeriod: props.billingPeriod }));
+
+const quantityAddons = computed(() =>
+    props.pricings.filter((pricing) => props.quantityPricingIds?.includes(pricing.id)),
+);
+
 const minimums = computed(
     () =>
         new Map(
-            props.pricings
-                .filter((pricing) => props.quantityPricingIds?.includes(pricing.id))
-                .map((pricing) => [
-                    pricing.id,
-                    getAddonMinimumQuantity(pricing, {
-                        currency: props.currency,
-                        billingPeriod: props.billingPeriod,
-                    }),
-                ]),
+            quantityAddons.value.map((pricing) => [
+                pricing.id,
+                getAddonMinimumQuantity(pricing, offer.value),
+            ]),
         ),
 );
 
 const minimumOf = (pricing: PricingExtended) => minimums.value.get(pricing.id) ?? 1;
 
 const quantityOf = (pricing: PricingExtended) =>
-    getAddonQuantity(pricing, selection(), minimumOf(pricing));
+    getAddonQuantity(pricing, selection()) ?? minimumOf(pricing);
 
-const handleQuantity = (pricing: PricingExtended, quantity: number) => {
-    const next = setAddonQuantity(pricing, quantity, selection());
-    model.value = next.enabledPricingIds;
-    seatsModel.value = next.seatsValues;
-    unitsModel.value = next.unitsValues;
+// Only what changed is written, so the fill-in below cannot keep triggering itself.
+const write = (next: AddonSelection) => {
+    if (!isEqual(model.value, next.enabledPricingIds)) model.value = next.enabledPricingIds;
+    if (!isEqual(seatsModel.value, next.seatsValues)) seatsModel.value = next.seatsValues;
+    if (!isEqual(unitsModel.value, next.unitsValues)) unitsModel.value = next.unitsValues;
 };
 
-// The stepper's min is one below the add-on's, and it emits on every keystroke and clamps to its
-// min on blur: one step down from the minimum, or leaving a lower number, takes the add-on out,
-// and a lower number typed on the way to a higher one is not applied yet.
+const handleQuantity = (pricing: PricingExtended, quantity: number) =>
+    write(setAddonQuantity(pricing, quantity, selection(), offer.value));
+
+// Typing emits every keystroke and falls back to the minimum on blur, so a number below it is one
+// still being typed; only the stepper's remove takes the add-on out.
 const handleStep = (pricing: PricingExtended, quantity: number) => {
-    const minimum = minimumOf(pricing);
-    if (quantity >= minimum) handleQuantity(pricing, quantity);
-    else if (quantity === minimum - 1) handleQuantity(pricing, 0);
+    if (quantity >= minimumOf(pricing)) handleQuantity(pricing, quantity);
 };
+
+// An add-on in the order without a quantity on offer, preselected by the host or after the
+// currency or billing period changed, is given its minimum, so what is shown is what is sent.
+watch(
+    () =>
+        quantityAddons.value.filter(
+            (pricing) => getAddonQuantity(pricing, selection()) === undefined,
+        ),
+    (missing) => {
+        if (!missing.length) return;
+        // The models take a write only once the parent re-renders, so all of them go in one.
+        write(
+            missing.reduce(
+                (next, pricing) => setAddonQuantity(pricing, minimumOf(pricing), next, offer.value),
+                selection(),
+            ),
+        );
+    },
+    { immediate: true },
+);
 
 const handleToggle = (pricingId: Pricing['id']) => {
     if (isSelected(pricingId)) {
@@ -113,8 +139,10 @@ const handleToggle = (pricingId: Pricing['id']) => {
                                     <StepInput
                                         :model-value="quantityOf(pricing)"
                                         size="sm"
-                                        :min="minimumOf(pricing) - 1"
+                                        :min="minimumOf(pricing)"
+                                        removable
                                         @update:model-value="handleStep(pricing, $event)"
+                                        @remove="handleQuantity(pricing, 0)"
                                     />
                                 </div>
                                 <Button

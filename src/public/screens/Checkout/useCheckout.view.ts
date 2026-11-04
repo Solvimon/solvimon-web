@@ -154,6 +154,18 @@ export function useCheckoutView({
         unitsValues?: ConfiguredMeterValue[];
     }>({});
 
+    // The add-ons bought in a quantity of their own, whose seats and units the add-on editor sets.
+    const quantityAddonConfigIds = computed(() =>
+        subscription.value
+            ? getAddonConfigIds(
+                  getQuantityAddons(subscription.value, [
+                      ...(orderMeterValues.value.seatsValues ?? []),
+                      ...(orderMeterValues.value.unitsValues ?? []),
+                  ]),
+              )
+            : new Set<string>(),
+    );
+
     const { getSubscription } = createSubscriptionsService();
 
     const invoicePreview = useInvoicePreview();
@@ -605,14 +617,7 @@ export function useCheckoutView({
         if (savedFormState) {
             const { seatsValues, unitsValues, ...rest } = savedFormState;
             const { seatsValues: orderSeats, unitsValues: orderUnits } = orderMeterValues.value;
-            const addonConfigIds = subscription.value
-                ? getAddonConfigIds(
-                      getQuantityAddons(subscription.value, [
-                          ...(orderSeats ?? []),
-                          ...(orderUnits ?? []),
-                      ]),
-                  )
-                : new Set<string>();
+            const addonConfigIds = quantityAddonConfigIds.value;
             const restoredSeats = restoreWithAddons(seatsValues, orderSeats, addonConfigIds);
             const restoredUnits = restoreWithAddons(unitsValues, orderUnits, addonConfigIds);
             checkoutForm.updateInitialState({
@@ -692,6 +697,7 @@ export function useCheckoutView({
         settleInvoicePreview,
         subscription,
         orderMeterValues,
+        quantityAddonConfigIds,
         checkoutForm,
         authorizationContext,
         isPaid,

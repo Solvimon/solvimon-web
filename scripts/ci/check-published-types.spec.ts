@@ -17,7 +17,7 @@ const UI_ALLOWLIST = {
 
 /** Stands in for this package's own manifest in the assertions below. */
 const PACKAGE_JSON = {
-    peerDependencies: { vue: '>=3.5.0' },
+    peerDependencies: { vue: '^3.5.0' },
 };
 
 const dirs: string[] = [];
@@ -53,7 +53,7 @@ describe('resolvablePackages', () => {
         expect(
             resolvablePackages({
                 dependencies: { 'some-dependency': '^1.0.0' },
-                peerDependencies: { vue: '>=3.5.0' },
+                peerDependencies: { vue: '^3.5.0' },
                 devDependencies: { vitest: '^4.0.0' },
             }),
         ).toEqual(new Set(['some-dependency', 'vue']));

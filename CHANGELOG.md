@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Breaking:** the Vue peer dependency is `^3.5.0` instead of `>=3.5.0`, so it no longer accepts Vue 4 or a later major, which the SDK has not been built or tested against. Hosts on Vue 3.5 or a later 3.x are unaffected. The README now says that Vue is a peer dependency.
+
 ### Fixed
 
 - The checkout runs the host's `configuration.onPaymentSuccess` after a successful payment, in place of the redirect configured in Solvimon Desk, and shows the host's `configuration.avatar` in the order summary, falling back to the branding emblem. The element used to drop both, so the customer was always redirected and the emblem always shown.

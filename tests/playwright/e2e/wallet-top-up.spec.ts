@@ -62,6 +62,7 @@ const declined: MockResponse = {
     status: 422,
     body: { message: 'Payment refused', resource_type: 'PAYMENT' },
 };
+const refused: MockResponse = { status: 400, body: { message: 'Boom' } };
 const serverError: MockResponse = { status: 500, body: { message: 'Boom' } };
 const charged: MockResponse = { body: anInvoiceRecord({ id: 'inv_charged', total: '50.00' }) };
 
@@ -108,10 +109,10 @@ test.describe('Wallet top-up from the customer overview', () => {
         await expect(wallets.getByRole('button', { name: /^enable$/i })).toBeVisible();
     });
 
-    test('tells a declined payment from a failed request, and Pay works again', async ({
+    test('tells a declined payment from a refused request, and Pay works again', async ({
         page,
     }) => {
-        api = await openTopUp(page, [declined, serverError]);
+        api = await openTopUp(page, [declined, refused]);
         await amountField(page).fill('50');
 
         await payButton(page).click();
@@ -125,11 +126,22 @@ test.describe('Wallet top-up from the customer overview', () => {
         expect(chargesSent(api)).toHaveLength(2);
     });
 
+    test('offers no second charge when the first may still go through', async ({ page }) => {
+        api = await openTopUp(page, [serverError]);
+        await amountField(page).fill('50');
+
+        await payButton(page).click();
+
+        await expect(page.getByText("We couldn't confirm your top-up")).toBeVisible();
+        await expect(payButton(page)).toBeDisabled();
+        expect(chargesSent(api)).toHaveLength(1);
+    });
+
     test('forgets the failure once the modal is closed and opened again', async ({ page }) => {
         api = await openTopUp(page, [serverError]);
         await amountField(page).fill('50');
         await payButton(page).click();
-        await expect(page.getByText("We couldn't top up your wallet")).toBeVisible();
+        await expect(page.getByText("We couldn't confirm your top-up")).toBeVisible();
 
         await page.getByRole('button', { name: /^cancel$/i }).click();
         await customerOverview(page)
@@ -137,7 +149,8 @@ test.describe('Wallet top-up from the customer overview', () => {
             .click();
 
         await expect(amountField(page)).toBeVisible();
-        await expect(page.getByText("We couldn't top up your wallet")).toHaveCount(0);
+        await expect(page.getByText("We couldn't confirm your top-up")).toHaveCount(0);
+        await expect(payButton(page)).toBeEnabled();
     });
 
     for (const [typed, message] of [

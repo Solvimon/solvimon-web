@@ -208,10 +208,10 @@ test.describe('Subscription management', () => {
                 .toContain('navigate-to-customer-overview');
         });
 
-        test('keeps the choice when the change cannot be committed', async ({ page }) => {
+        test('keeps the choice when the change is refused', async ({ page }) => {
             api = await mountLoaded(page, {
                 mocks: {
-                    createPricingPlanSchedule: { status: 500, body: { message: 'Boom' } },
+                    createPricingPlanSchedule: { status: 400, body: { message: 'Boom' } },
                 },
             });
             const ui = subscriptionManagement(page);
@@ -223,6 +223,22 @@ test.describe('Subscription management', () => {
             await expect(ui.updateError).toBeVisible();
             await expect(ui.form).toBeVisible();
             await expect(ui.updateButton).toBeEnabled();
+        });
+
+        test('does not offer the change again when it may still go through', async ({ page }) => {
+            api = await mountLoaded(page, {
+                mocks: {
+                    createPricingPlanSchedule: { status: 500, body: { message: 'Boom' } },
+                },
+            });
+            const ui = subscriptionManagement(page);
+
+            await chooseLargePack(page);
+            await ui.updateButton.click();
+            await api.waitForCall('createPricingPlanSchedule');
+
+            await expect(ui.updateError).toContainText("We couldn't confirm your change");
+            await expect(ui.updateButton).toBeDisabled();
         });
 
         test('reports a failed change to the host', async ({ page }) => {

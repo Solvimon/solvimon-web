@@ -134,7 +134,7 @@ jobs:
               if: steps.published.outputs.exists != 'true'
               run: |
                   npm config delete --location project @solvimon:registry
-                  case "$VERSION" in
+                  case "${VERSION%%+*}" in
                       *-*) dist_tag=next ;;
                       *) dist_tag=latest ;;
                   esac

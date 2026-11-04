@@ -153,8 +153,13 @@ is independent of it.
 ## Consuming The SDK
 
 ```bash
-npm install @solvimon/solvimon-web
+npm install @solvimon/solvimon-web@next
 ```
+
+While the SDK is in alpha, new versions are published under `next`. A plain
+`npm install @solvimon/solvimon-web` installs whatever `latest` points at, which
+stays on `0.1.0-alpha.29`, the last alpha published there, until a stable
+version is released. Pinning an exact version works either way.
 
 ## Troubleshooting
 

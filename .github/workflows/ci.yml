@@ -26,7 +26,7 @@ jobs:
             - uses: actions/cache/save@v5
               with:
                   path: node_modules
-                  key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json') }}
+                  key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json', '.nvmrc') }}
 
     test:
         name: Unit Tests
@@ -40,7 +40,7 @@ jobs:
             - uses: actions/cache/restore@v5
               with:
                   path: node_modules
-                  key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json') }}
+                  key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json', '.nvmrc') }}
             - run: npm run test:unit -- --run
 
     e2e:
@@ -55,7 +55,7 @@ jobs:
             - uses: actions/cache/restore@v5
               with:
                   path: node_modules
-                  key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json') }}
+                  key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json', '.nvmrc') }}
 
             # The test app imports the package rather than the sources, so the suite needs a build
             # to run against — and the one it runs against is what gets published, since a bug that
@@ -96,7 +96,7 @@ jobs:
             - uses: actions/cache/restore@v5
               with:
                   path: node_modules
-                  key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json') }}
+                  key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json', '.nvmrc') }}
             - run: npm run test:coverage
             - uses: actions/upload-artifact@v6
               with:
@@ -117,7 +117,7 @@ jobs:
             - uses: actions/cache/restore@v5
               with:
                   path: node_modules
-                  key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json') }}
+                  key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json', '.nvmrc') }}
             - name: Download PR coverage
               uses: actions/download-artifact@v7
               with:
@@ -186,7 +186,7 @@ jobs:
             - uses: actions/cache/restore@v5
               with:
                   path: node_modules
-                  key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json') }}
+                  key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json', '.nvmrc') }}
             - run: npm run type-check
 
     lint:
@@ -201,7 +201,7 @@ jobs:
             - uses: actions/cache/restore@v5
               with:
                   path: node_modules
-                  key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json') }}
+                  key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json', '.nvmrc') }}
             - run: npm run lint:ci
             - name: Check tests are named by what they test
               run: npm run tests:check-labels
@@ -218,7 +218,7 @@ jobs:
             - uses: actions/cache/restore@v5
               with:
                   path: node_modules
-                  key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json') }}
+                  key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json', '.nvmrc') }}
             - run: npm run format:check
 
     build:
@@ -233,7 +233,7 @@ jobs:
             - uses: actions/cache/restore@v5
               with:
                   path: node_modules
-                  key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json') }}
+                  key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json', '.nvmrc') }}
             - run: npm run build
             - name: Check the bundle names no internal infrastructure
               run: npm run bundle:check-contents
@@ -262,7 +262,7 @@ jobs:
             - uses: actions/cache/restore@v5
               with:
                   path: node_modules
-                  key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json') }}
+                  key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json', '.nvmrc') }}
             - name: Extract translations
               run: npm run translations:extract && npm run translations:compile
             - name: Generate translations report
@@ -321,7 +321,7 @@ jobs:
             - uses: actions/cache/restore@v5
               with:
                   path: node_modules
-                  key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json') }}
+                  key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json', '.nvmrc') }}
 
             - name: Download PR bundle sizes
               uses: actions/download-artifact@v7

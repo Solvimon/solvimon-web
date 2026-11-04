@@ -33,6 +33,7 @@ import {
     getPricingGroupByPricingId,
 } from '@/utils/pricingPlanSchedule';
 import { hasCustomizedPricings, withScheduleOverrides } from '@/utils/pricingPlanScheduleOverrides';
+import { isOutcomeUnknownAfterError } from '@/utils/paymentOutcome';
 
 const props = defineProps<SubscriptionManagementProps>();
 
@@ -245,6 +246,8 @@ watch(
 
 const isUpdating = ref(false);
 const updateError = ref<string | undefined>();
+/** The change may have gone through, and the charge for it with it, so it is not offered again. */
+const isUpdateUnconfirmed = ref(false);
 
 /**
  * The change is committed, so the screen stops offering it and confirms it instead. The customer
@@ -260,6 +263,7 @@ const canUpdate = computed(
     () =>
         !isLoading.value &&
         !isUpdating.value &&
+        !isUpdateUnconfirmed.value &&
         Boolean(subscription.value) &&
         Boolean(pricingGroup.value) &&
         !isCustomized.value &&
@@ -295,6 +299,19 @@ const handleUpdate = async () => {
             {},
             error,
         );
+
+        if (isOutcomeUnknownAfterError(error)) {
+            isUpdateUnconfirmed.value = true;
+            updateError.value = $t({
+                defaultMessage:
+                    "We couldn't confirm your change. It may still go through, so check your subscription before trying again.",
+                id: 'subscription_management.update_unconfirmed',
+                description:
+                    'Error shown when committing a subscription change got no clear answer, so the change may still have been made',
+            });
+            return;
+        }
+
         updateError.value = $t({
             defaultMessage: 'Something went wrong. Please try again.',
             id: 'subscription_management.update_error',
@@ -413,7 +430,7 @@ const submitButtonAttrs = computed(() => {
                 :has-expired-payment-method="hasExpiredPaymentMethod"
                 :billing-period="billingPeriod"
                 :currency="subscription?.billing_currency"
-                :disabled="isUpdating"
+                :disabled="isUpdating || isUpdateUnconfirmed"
                 @submit="handleUpdate"
             />
 

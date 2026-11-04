@@ -1035,8 +1035,8 @@ describe('TopUpModal — a charge that fails', () => {
     const error = (wrapper: ReturnType<typeof mountModal>) =>
         wrapper.find('.sv-topup-modal__error');
 
-    it('says the top-up failed', async () => {
-        mockCharge.mockRejectedValue(new Error('network'));
+    it('says the top-up failed when the API refuses it', async () => {
+        mockCharge.mockRejectedValue(new ApiError({ statusCode: 400 }));
         const wrapper = await chargeTopUp(mountModal());
 
         expect(error(wrapper).text()).toContain("We couldn't top up your wallet");
@@ -1059,7 +1059,7 @@ describe('TopUpModal — a charge that fails', () => {
     });
 
     it('clears the error when the customer tries again', async () => {
-        mockCharge.mockRejectedValueOnce(new Error('network'));
+        mockCharge.mockRejectedValueOnce(new ApiError({ statusCode: 400 }));
         mockCharge.mockReturnValueOnce(new Promise(() => {}));
         const wrapper = await chargeTopUp(mountModal());
         expect(error(wrapper).exists()).toBe(true);
@@ -1078,5 +1078,39 @@ describe('TopUpModal — a charge that fails', () => {
         await wrapper.setProps({ showModal: true });
 
         expect(error(wrapper).exists()).toBe(false);
+    });
+
+    it.each([
+        ['the request gets no answer', new TypeError('Failed to fetch')],
+        ['the API fails', new ApiError({ statusCode: 503 })],
+        ['the request times out', new ApiError({ statusCode: 408 })],
+    ])('says the top-up may still go through when %s', async (_, failure) => {
+        mockCharge.mockRejectedValue(failure);
+        const wrapper = await chargeTopUp(mountModal());
+
+        expect(error(wrapper).text()).toContain("We couldn't confirm your top-up");
+        expect(wrapper.emitted('payment-failed')).toEqual([[failure]]);
+    });
+
+    it('offers no second top-up when the first may still go through', async () => {
+        mockCharge.mockRejectedValue(new TypeError('Failed to fetch'));
+        const wrapper = await chargeTopUp(mountModal());
+
+        expect(wrapper.find('[data-testid="confirm"]').attributes('disabled')).toBeDefined();
+
+        await wrapper.findComponent({ name: 'OnDemandPaymentModalShell' }).vm.$emit('confirm');
+        await vi.runAllTimersAsync();
+
+        expect(mockCharge).toHaveBeenCalledTimes(1);
+    });
+
+    it('offers the top-up again once the modal is opened again', async () => {
+        mockCharge.mockRejectedValue(new TypeError('Failed to fetch'));
+        const wrapper = await chargeTopUp(mountModal());
+        await wrapper.setProps({ showModal: false });
+
+        await wrapper.setProps({ showModal: true });
+
+        expect(wrapper.find('[data-testid="confirm"]').attributes('disabled')).toBeUndefined();
     });
 });

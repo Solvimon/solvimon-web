@@ -3,6 +3,7 @@ import { defineComponent, h, onMounted, ref, type Ref } from 'vue';
 import type { PaymentMethod, PricingPlanSubscriptionExpanded } from '@solvimon/solvimon-types';
 import SubscriptionManagement from './SubscriptionManagement.vue';
 import { createTestPortalObject } from '@/test-utils/portalObjectFixture';
+import { ApiError } from '@/services/apiError';
 
 const {
     mockUseSubscription,
@@ -729,6 +730,37 @@ describe('SubscriptionManagement', () => {
             expect(wrapper.find('.sv-subscription-management__update-error').exists()).toBe(true);
             expect(mockDispatchAction).not.toHaveBeenCalled();
         });
+
+        it('offers the change again when the API refuses it', async () => {
+            mockCreatePricingPlanSchedule.mockRejectedValue(new ApiError({ statusCode: 400 }));
+
+            const wrapper = await update(mountComponent({ enabledPricingId: 'pri_5000' }));
+
+            expect(wrapper.find('.sv-subscription-management__update-error').text()).toContain(
+                'Please try again',
+            );
+            expect(isDisabled(wrapper)).toBe(false);
+        });
+
+        it.each([
+            ['the request gets no answer', new TypeError('Failed to fetch')],
+            ['the API fails', new ApiError({ statusCode: 503 })],
+        ])(
+            'says the change may still go through, and does not offer it again, when %s',
+            async (_, failure) => {
+                mockCreatePricingPlanSchedule.mockRejectedValue(failure);
+
+                const wrapper = await update(mountComponent({ enabledPricingId: 'pri_5000' }));
+
+                expect(wrapper.find('.sv-subscription-management__update-error').text()).toContain(
+                    "We couldn't confirm your change",
+                );
+                expect(isDisabled(wrapper)).toBe(true);
+                expect(
+                    wrapper.findComponent({ name: 'SubscriptionManagementForm' }).props('disabled'),
+                ).toBe(true);
+            },
+        );
 
         it('locks the form while the change is being committed', async () => {
             mockCreatePricingPlanSchedule.mockReturnValue(new Promise(() => {}));

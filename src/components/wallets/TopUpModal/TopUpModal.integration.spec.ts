@@ -394,7 +394,7 @@ describe('TopUpModal (integrated) — a charge that fails', () => {
     it('tells a declined payment from a failed request, and lets Pay through again', async () => {
         mockCharge
             .mockRejectedValueOnce(new ApiError({ statusCode: 422, resourceType: 'PAYMENT' }))
-            .mockRejectedValueOnce(new TypeError('Failed to fetch'));
+            .mockRejectedValueOnce(new ApiError({ statusCode: 400 }));
         const wrapper = mountModal();
         await settle();
         await typeAmount(wrapper, '50');
@@ -428,7 +428,7 @@ describe('TopUpModal (integrated) — a charge that fails', () => {
 
     it('drops the message while the retry is under way', async () => {
         mockCharge
-            .mockRejectedValueOnce(new TypeError('Failed to fetch'))
+            .mockRejectedValueOnce(new ApiError({ statusCode: 400 }))
             .mockReturnValueOnce(new Promise(() => {}));
         const wrapper = mountModal();
         await settle();
@@ -440,6 +440,21 @@ describe('TopUpModal (integrated) — a charge that fails', () => {
         await nextTick();
 
         expect(topUpError(wrapper).exists()).toBe(false);
+    });
+});
+
+describe('TopUpModal (integrated) — a charge with no answer', () => {
+    it('says it may still go through and does not let Pay through again', async () => {
+        mockCharge.mockRejectedValueOnce(new TypeError('Failed to fetch'));
+        const wrapper = mountModal();
+        await settle();
+        await typeAmount(wrapper, '50');
+
+        await pay(wrapper);
+        await pay(wrapper);
+
+        expect(mockCharge).toHaveBeenCalledTimes(1);
+        expect(topUpError(wrapper).text()).toContain("We couldn't confirm your top-up");
     });
 });
 

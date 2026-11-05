@@ -32,6 +32,16 @@ npm run build:css && SOLVIMON_INTERNAL_ENVIRONMENTS=1 npx vite build
 npm run test:e2e
 ```
 
+### Browsers
+
+The suite runs in Chromium and in WebKit, Safari's engine, which is where Apple Pay runs. CI runs each as its own job. WebKit takes several minutes longer, so run one browser while working:
+
+```sh
+npm run test:e2e -- --project=chromium
+```
+
+WebKit needs its browser installed once, with `npx playwright install webkit`. A test that cannot pass in one browser says why with `test.skip` or `test.fixme` on `browserName`, so the reason shows in the report.
+
 ### Port
 
 The test app listens on 5273. Set `PLAYWRIGHT_PORT` to move it, for example to run suites from two checkouts side by side:

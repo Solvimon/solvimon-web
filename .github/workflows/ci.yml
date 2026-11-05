@@ -71,7 +71,7 @@ jobs:
             - name: Install Playwright browsers
               run: npx playwright install --with-deps chromium
 
-            - run: npm run test:e2e:ci
+            - run: npm run test:e2e:ci -- --project=chromium
 
             # Kept for a pass too: with retries on, a test that failed and then succeeded is only
             # visible in the report.
@@ -79,6 +79,43 @@ jobs:
               uses: actions/upload-artifact@v6
               with:
                   name: playwright-report
+                  path: |
+                      tests/playwright/report
+                      tests/playwright/results.xml
+                  retention-days: 7
+
+    e2e-webkit:
+        name: E2E Tests (WebKit)
+        needs: install
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v6
+            - uses: actions/setup-node@v6
+              with:
+                  node-version-file: .nvmrc
+            - uses: actions/cache/restore@v5
+              with:
+                  path: node_modules
+                  key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json', '.nvmrc') }}
+
+            - name: Build the SDK
+              run: npm run build
+
+            # Its dependencies are its own, and the root install does not reach them.
+            - name: Install the test app
+              run: npm ci --prefix tests/app
+
+            - name: Install Playwright browsers
+              run: npx playwright install --with-deps webkit
+
+            - run: npm run test:e2e:ci -- --project=webkit
+
+            # Kept for a pass too: with retries on, a test that failed and then succeeded is only
+            # visible in the report.
+            - if: ${{ !cancelled() }}
+              uses: actions/upload-artifact@v6
+              with:
+                  name: playwright-report-webkit
                   path: |
                       tests/playwright/report
                       tests/playwright/results.xml

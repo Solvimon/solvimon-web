@@ -205,6 +205,11 @@ test.describe('Payment methods management', () => {
     // ─── Managing a method ────────────────────────────────────────────────────
 
     test.describe('managing a method', () => {
+        test.fixme(
+            ({ browserName }) => browserName === 'webkit',
+            "WebKit cannot reliably click a payment method's menu; under investigation",
+        );
+
         const TWO_METHODS = [
             aPaymentMethod({ id: 'pmet_a', lastFourDigits: '4242', isDefault: true }),
             aPaymentMethod({ id: 'pmet_b', lastFourDigits: '1881' }),

@@ -487,6 +487,10 @@
     "defaultMessage": "Order summary",
     "description": "The title of the order summary block that lists the subscription cost in the checkout"
   },
+  "checkout.order_summary_block.updating": {
+    "defaultMessage": "Updating the price",
+    "description": "Read out while the order summary is priced again after the customer changed the order"
+  },
   "checkout.page_title": {
     "defaultMessage": "Pay and subscribe",
     "description": "The title of the checkout page"

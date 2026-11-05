@@ -61,4 +61,8 @@ export interface OrderSummaryProps {
      * The variant of the order summary.
      */
     variant?: 'default' | 'products-inline';
+    /**
+     * Whether a change to the order is still being priced: the invoice shown no longer applies.
+     */
+    isUpdating?: boolean;
 }

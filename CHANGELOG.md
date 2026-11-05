@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- While a change to the order is priced again, the checkout's order summary dims the invoice and shows a small spinner next to its title (`.sv-order-summary__updating`, announced to screen readers), so it is clear the total will update. Both the checkout and the checkout-session screen show it, from the moment the customer changes the order (seats, units, add-ons, billing period or the details that set the tax) until the new price is in.
 - **Breaking:** the Vue peer dependency is `^3.5.0` instead of `>=3.5.0`, so it no longer accepts Vue 4 or a later major, which the SDK has not been built or tested against. Hosts on Vue 3.5 or a later 3.x are unaffected. The README now says that Vue is a peer dependency.
 - **Breaking:** `createSolvimonCore` requires an `environment` in its configuration, and can no longer be called without one. An element without an environment renders nothing, so `createSolvimonCore()` compiled and then left the container empty. Pass `'TEST'` or `'LIVE'`. JavaScript hosts are unaffected: the element still logs `MISSING_REQUIRED_PROPERTIES` when it has none.
 - New alpha versions are published under the npm `next` tag instead of `latest`, so install them with `npm install @solvimon/solvimon-web@next` or by their exact version. `latest` stays on `0.1.0-alpha.29` until the first stable version, which will be published under `latest`.

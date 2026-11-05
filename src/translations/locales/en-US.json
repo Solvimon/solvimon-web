@@ -121,6 +121,7 @@
   "checkout.order_summary_block.renews_at": "Then {amount} per {period}",
   "checkout.order_summary_block.subtotal": "Subtotal",
   "checkout.order_summary_block.title": "Order summary",
+  "checkout.order_summary_block.updating": "Updating the price",
   "checkout.page_title": "Pay and subscribe",
   "checkout.pay_and_subscribe_button.label": "Pay and subscribe",
   "checkout.pay_and_subscribe_button_trial.label": "Start trial",

@@ -121,6 +121,7 @@
     "checkout.order_summary_block.renews_at": "Puis {amount} par {period}",
     "checkout.order_summary_block.subtotal": "Sous-total",
     "checkout.order_summary_block.title": "Récapitulatif de la commande",
+    "checkout.order_summary_block.updating": "Mise à jour du prix en cours",
     "checkout.page_title": "Payer et s’abonner",
     "checkout.pay_and_subscribe_button.label": "Payer et s’abonner",
     "checkout.pay_and_subscribe_button_trial.label": "Commencer l’essai",

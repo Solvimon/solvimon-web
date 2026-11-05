@@ -121,6 +121,7 @@
     "checkout.order_summary_block.renews_at": "Danach {amount} pro {period}",
     "checkout.order_summary_block.subtotal": "Zwischensumme",
     "checkout.order_summary_block.title": "Bestellübersicht",
+    "checkout.order_summary_block.updating": "Der Preis wird aktualisiert",
     "checkout.page_title": "Bezahlen und abonnieren",
     "checkout.pay_and_subscribe_button.label": "Bezahlen und abonnieren",
     "checkout.pay_and_subscribe_button_trial.label": "Testphase starten",

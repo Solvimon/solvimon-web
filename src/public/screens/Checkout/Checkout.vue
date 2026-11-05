@@ -538,6 +538,7 @@ const orderSummaryProps = computed(() => ({
     avatar: configuration.value?.avatar,
     isPaid: isPaid.value,
     isUsageBased: isUsageBased.value,
+    isUpdating: isInvoicePreviewPending.value || isInvoicePreviewStale.value,
 }));
 
 const expressPaymentMethodBillingInformation = computed(() => {

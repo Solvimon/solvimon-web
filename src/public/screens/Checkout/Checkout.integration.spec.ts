@@ -423,6 +423,25 @@ describe('Checkout', () => {
         expect(wrapper.find('.sv-checkout__submit').attributes('disabled')).toBe('true');
     });
 
+    describe('the order summary while the order is priced', () => {
+        const isUpdating = (wrapper: Awaited<ReturnType<typeof mountCheckout>>) =>
+            wrapper.findComponent({ name: 'OrderSummary' }).props('isUpdating');
+
+        it('shows the summary as updating while a change waits to be priced', async () => {
+            isInvoicePreviewStale.value = true;
+            expect(isUpdating(await mountCheckout({ Skeleton: false }))).toBe(true);
+        });
+
+        it('shows the summary as updating while the invoice preview reloads', async () => {
+            isInvoicePreviewPending.value = true;
+            expect(isUpdating(await mountCheckout({ Skeleton: false }))).toBe(true);
+        });
+
+        it('shows the summary as current once the preview is in', async () => {
+            expect(isUpdating(await mountCheckout({ Skeleton: false }))).toBe(false);
+        });
+    });
+
     // Enter in a card field and an express sheet pay without the button, so the check that holds
     // a payment for the price sits where every one of them asks first.
     describe('before any payment is sent', () => {

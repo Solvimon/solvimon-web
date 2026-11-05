@@ -339,6 +339,10 @@
     "defaultMessage": "Cancel and return",
     "description": "The link under the pay button that leaves the checkout without paying and goes back to the shop"
   },
+  "checkout.cancel_link_to": {
+    "defaultMessage": "Cancel and return to {name}",
+    "description": "The link under the pay button that leaves the checkout without paying and goes back to the shop named by the seller"
+  },
   "checkout.company_purchase_toggle.sub_title": {
     "defaultMessage": "I am purchasing on behalf of a company",
     "description": "The subtitle of the company purchase toggle in the checkout"

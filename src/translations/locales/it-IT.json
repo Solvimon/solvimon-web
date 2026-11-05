@@ -84,6 +84,7 @@
     "checkout.billing_details.remove_billing_details_button.label": "Rimuovi dati di fatturazione",
     "checkout.billing_information_block.title": "Dati di fatturazione",
     "checkout.cancel_link": "Annulla e torna indietro",
+    "checkout.cancel_link_to": "Annulla e torna a {name}",
     "checkout.company_purchase_toggle.sub_title": "Sto acquistando per conto di un'azienda",
     "checkout.company_purchase_toggle.title": "Acquisto aziendale",
     "checkout.contact_information_block.title": "Dati del cliente",

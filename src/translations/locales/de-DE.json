@@ -84,6 +84,7 @@
     "checkout.billing_details.remove_billing_details_button.label": "Rechnungsdaten entfernen",
     "checkout.billing_information_block.title": "Rechnungsdaten",
     "checkout.cancel_link": "Abbrechen und zurückkehren",
+    "checkout.cancel_link_to": "Abbrechen und zurück zu {name}",
     "checkout.company_purchase_toggle.sub_title": "Ich kaufe im Namen eines Unternehmens",
     "checkout.company_purchase_toggle.title": "Firmenkauf",
     "checkout.contact_information_block.title": "Kundendaten",

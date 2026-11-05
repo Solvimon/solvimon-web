@@ -84,6 +84,7 @@
     "checkout.billing_details.remove_billing_details_button.label": "Factuurgegevens verwijderen",
     "checkout.billing_information_block.title": "Factuurgegevens",
     "checkout.cancel_link": "Annuleren en teruggaan",
+    "checkout.cancel_link_to": "Annuleren en teruggaan naar {name}",
     "checkout.company_purchase_toggle.sub_title": "Ik koop namens een bedrijf",
     "checkout.company_purchase_toggle.title": "Zakelijke aankoop",
     "checkout.contact_information_block.title": "Klantgegevens",

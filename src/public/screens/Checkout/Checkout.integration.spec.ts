@@ -1,6 +1,6 @@
 import { flushPromises, mount } from '@vue/test-utils';
 import { type Component, computed, defineComponent, h, ref, shallowRef } from 'vue';
-import type { PortalUrl } from '@solvimon/solvimon-types';
+import type { Invoice, PortalUrl, PricingPlanSubscriptionExpanded } from '@solvimon/solvimon-types';
 import LegacyCheckout from './LegacyCheckout.vue';
 import Checkout from './Checkout.vue';
 import type { CheckoutPlanCustomization, CheckoutSource } from './Checkout.source.types';
@@ -915,6 +915,55 @@ describe('Checkout', () => {
             expect(wrapper.find('.sv-checkout__cancel a').attributes('href')).toBe(
                 'https://shop.test/cancel',
             );
+        });
+
+        it('names the seller of the invoice in the way back', async () => {
+            const wrapper = await mountWithoutPayment(
+                {
+                    cancelUrl: ref('https://shop.test/cancel'),
+                    invoicePreview: ref({
+                        billing_entity: { legal_name: 'Solvimon' },
+                    } as unknown as Invoice),
+                    subscription: ref({
+                        billing_entity: { legal_name: 'Template seller' },
+                    } as unknown as PricingPlanSubscriptionExpanded),
+                },
+                { renderStubDefaultSlot: true },
+            );
+
+            expect(wrapper.find('.sv-checkout__cancel a').text()).toBe(
+                'Cancel and return to Solvimon',
+            );
+        });
+
+        it('names the subscription seller in the way back until the invoice is priced', async () => {
+            const wrapper = await mountWithoutPayment(
+                {
+                    cancelUrl: ref('https://shop.test/cancel'),
+                    invoicePreview: ref(undefined),
+                    subscription: ref({
+                        billing_entity: { legal_name: 'ACME B.V.' },
+                    } as unknown as PricingPlanSubscriptionExpanded),
+                },
+                { renderStubDefaultSlot: true },
+            );
+
+            expect(wrapper.find('.sv-checkout__cancel a').text()).toBe(
+                'Cancel and return to ACME B.V.',
+            );
+        });
+
+        it('offers a plain way back when no seller is known', async () => {
+            const wrapper = await mountWithoutPayment(
+                {
+                    cancelUrl: ref('https://shop.test/cancel'),
+                    invoicePreview: ref(undefined),
+                    subscription: ref(undefined),
+                },
+                { renderStubDefaultSlot: true },
+            );
+
+            expect(wrapper.find('.sv-checkout__cancel a').text()).toBe('Cancel and return');
         });
 
         it('offers no way back when the flow has no cancel URL', async () => {

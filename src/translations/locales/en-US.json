@@ -84,6 +84,7 @@
   "checkout.billing_details.remove_billing_details_button.label": "Remove billing details",
   "checkout.billing_information_block.title": "Billing details",
   "checkout.cancel_link": "Cancel and return",
+  "checkout.cancel_link_to": "Cancel and return to {name}",
   "checkout.company_purchase_toggle.sub_title": "I am purchasing on behalf of a company",
   "checkout.company_purchase_toggle.title": "Company purchase",
   "checkout.contact_information_block.title": "Customer information",

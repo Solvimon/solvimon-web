@@ -47,13 +47,15 @@ export default mergeConfig(
                 provider: 'v8',
                 reporter: ['text', 'json-summary'],
                 reportsDirectory: './coverage',
+                // A point below the coverage of 2026-11-05 (lines 88.2, statements 88.1, functions
+                // 84.2, branches 82.1), so a real drop fails the build and noise does not.
+                thresholds: { lines: 87, statements: 87, functions: 83, branches: 81 },
                 include: ['src/**/*.ts', 'src/**/*.vue'],
                 exclude: [
                     'src/**/*.d.ts',
                     'src/**/*.spec.ts',
                     'src/**/*.test.ts',
                     'src/types/**',
-                    'src/entries/**',
                     'src/index.ts',
                 ],
             },

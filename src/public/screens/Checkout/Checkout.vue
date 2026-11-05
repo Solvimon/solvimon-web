@@ -547,6 +547,14 @@ const agreement = computed(() => {
     );
 });
 
+// The invoice's own seller first: a session's billing entity can follow the customer's country.
+const sellerName = computed(
+    () =>
+        invoicePreview.value?.billing_entity?.legal_name ||
+        subscription.value?.billing_entity?.legal_name ||
+        undefined,
+);
+
 const orderSummaryProps = computed(() => ({
     subscriptions: planCustomizations?.value.map((entry) => entry.subscription),
     invoicePreviewByBillingPeriod: invoicePreviewByBillingPeriod.value,
@@ -1197,12 +1205,22 @@ const retryInvoicePreview = () => loadInvoicePreview().catch(() => {});
                         class="sv-checkout__cancel text-center"
                     >
                         <a :href="cancelUrl" class="text-primary-900 hover:underline">{{
-                            $t({
-                                defaultMessage: 'Cancel and return',
-                                id: 'checkout.cancel_link',
-                                description:
-                                    'The link under the pay button that leaves the checkout without paying and goes back to the shop',
-                            })
+                            sellerName
+                                ? $t(
+                                      {
+                                          defaultMessage: 'Cancel and return to {name}',
+                                          id: 'checkout.cancel_link_to',
+                                          description:
+                                              'The link under the pay button that leaves the checkout without paying and goes back to the shop named by the seller',
+                                      },
+                                      { name: sellerName },
+                                  )
+                                : $t({
+                                      defaultMessage: 'Cancel and return',
+                                      id: 'checkout.cancel_link',
+                                      description:
+                                          'The link under the pay button that leaves the checkout without paying and goes back to the shop',
+                                  })
                         }}</a>
                     </Typography>
 

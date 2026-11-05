@@ -910,4 +910,146 @@ describe('Checkout', () => {
             expect(wrapper.findComponent({ name: 'CheckoutForm' }).exists()).toBe(false);
         });
     });
+
+    describe('a flow that finishes the order itself once it is paid', () => {
+        const awaitCompletion = vi.fn();
+        const recoverPaymentFailure = vi.fn();
+
+        beforeEach(() => {
+            awaitCompletion.mockReset();
+            recoverPaymentFailure.mockReset();
+        });
+
+        afterEach(() => {
+            mockExperimentalFeatures.value['express-checkout'] = false;
+        });
+
+        const mountFlow = async (payment: Partial<NonNullable<CheckoutSource['payment']>> = {}) => {
+            paymentMethodOptions.value = [
+                { integration: { payment_gateway: { variant: 'ADYEN' } } },
+            ];
+            const view = useCheckoutView({} as never);
+            const source: CheckoutSource = {
+                ...view,
+                isShippingAddressRequired: false,
+                promotionCode: {
+                    code: ref(null),
+                    isPending: ref(false),
+                    errorMessage: ref(null),
+                    apply: vi.fn(),
+                    remove: vi.fn(),
+                },
+                payment: {
+                    paymentMethodOptions: view.paymentMethodOptions,
+                    isPaymentMethodsPending: ref(false),
+                    hasPaymentMethodOptionsError: ref(false),
+                    retryPaymentMethodOptions: vi.fn(),
+                    authorizationContext: ref(undefined),
+                    awaitCompletion,
+                    recoverPaymentFailure,
+                    ...payment,
+                },
+                canPay: ref(true),
+                successUrl: ref('https://shop.test/done'),
+                note: ref(undefined),
+                saveFormStateForRedirect: undefined,
+                clearSavedFormState: undefined,
+            };
+            const wrapper = mount(Checkout, {
+                props: { source },
+                global: {
+                    stubs: {
+                        ...Object.fromEntries(STUBBED_CHILDREN.map((name) => [name, true])),
+                        Skeleton: false,
+                    },
+                },
+            });
+            await flushPromises();
+            await vi.dynamicImportSettled();
+            const form = () => wrapper.findComponent({ name: 'PaymentIntegrationForm' });
+            const submit = () => wrapper.find('.sv-checkout__submit');
+            return { wrapper, form, submit };
+        };
+
+        it('offers its payment methods in the country the flow knows when the form has none', async () => {
+            const { wrapper, form } = await mountFlow({ countryCode: ref('BE') });
+            checkoutFormValue.current!.value.country = undefined;
+            await wrapper.vm.$nextTick();
+
+            expect(form().exists()).toBe(true);
+            expect(form().attributes('country-code')).toBe('BE');
+            expect(wrapper.find('.sv-checkout__payment-methods-empty').exists()).toBe(false);
+        });
+
+        it('asks for the billing country when neither the form nor the flow knows it', async () => {
+            const { wrapper, form } = await mountFlow();
+            checkoutFormValue.current!.value.country = undefined;
+            await wrapper.vm.$nextTick();
+
+            expect(form().exists()).toBe(false);
+            expect(wrapper.find('.sv-checkout__payment-methods-empty').exists()).toBe(true);
+        });
+
+        it('offers its payment methods, and no express payment when it gives no sheet pricing', async () => {
+            mockExperimentalFeatures.value['express-checkout'] = true;
+            const { wrapper, form, submit } = await mountFlow();
+
+            expect(form().exists()).toBe(true);
+            expect(wrapper.find('.sv-checkout__payment-unavailable').exists()).toBe(false);
+            expect(wrapper.findComponent({ name: 'ExpressPaymentMethods' }).exists()).toBe(false);
+            expect(submit().attributes('disabled')).toBe('false');
+        });
+
+        it('waits on the flow after the payment, rather than marking it paid and redirecting', async () => {
+            const { wrapper, form, submit } = await mountFlow();
+
+            form().vm.$emit('payment-success');
+            await wrapper.vm.$nextTick();
+
+            expect(awaitCompletion).toHaveBeenCalledTimes(1);
+            expect(isPaid.value).toBe(false);
+            expect(
+                wrapper.findComponent({ name: 'SubscriptionPaymentCompletedCard' }).exists(),
+            ).toBe(false);
+            expect(submit().attributes('loading')).toBe('true');
+        });
+
+        it('hands the failure to the flow before it shows it', async () => {
+            const { wrapper, form, submit } = await mountFlow();
+            const error = { code: 'AUTHORIZATION_FAILED', message: 'Payment failed', error: 400 };
+
+            form().vm.$emit('submitting');
+            form().vm.$emit('payment-failed', error);
+            await wrapper.vm.$nextTick();
+
+            expect(recoverPaymentFailure).toHaveBeenCalledWith(error);
+            expect(submit().attributes('loading')).toBe('false');
+        });
+
+        it('says the price changed when the flow priced the order again', async () => {
+            recoverPaymentFailure.mockReturnValue('PRICE_CHANGED');
+            const { wrapper, form, submit } = await mountFlow();
+
+            form().vm.$emit('submitting');
+            form().vm.$emit('payment-failed', { code: 'AUTHORIZATION_FAILED', message: 'x' });
+            await wrapper.vm.$nextTick();
+
+            expect(wrapper.find('.sv-checkout__payment-error').attributes('title')).toMatch(
+                /price changed/i,
+            );
+            expect(submit().attributes('loading')).toBe('false');
+        });
+
+        it('shows the failure as any other when the flow cannot recover it', async () => {
+            const { wrapper, form } = await mountFlow();
+
+            form().vm.$emit('submitting');
+            form().vm.$emit('payment-failed', { code: 'AUTHORIZATION_FAILED' });
+            await wrapper.vm.$nextTick();
+
+            expect(wrapper.find('.sv-checkout__payment-error').attributes('title')).toMatch(
+                /did not go through/i,
+            );
+        });
+    });
 });

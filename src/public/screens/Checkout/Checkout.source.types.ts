@@ -1,7 +1,6 @@
 import type { Ref } from 'vue';
 import type {
     Amount,
-    AuthorizePaymentPayload,
     BillingPeriod,
     ConfiguredMeterValue,
     CountryCode,
@@ -13,6 +12,7 @@ import type {
 import type { CheckoutFormState } from '@/components/customer/CheckoutForm/CheckoutForm.types';
 import type { CheckoutFormDisplay } from '@/components/customer/CheckoutForm/CheckoutForm.lib';
 import type { useCheckoutForm } from '@/components/customer/CheckoutForm/useCheckoutForm';
+import type { PaymentAuthorizationContext } from '@/components/payments/PaymentIntegrationForm/PaymentIntegrationForm.types';
 
 /** `CHANGED`: the customer changed the order while the payment waited for its price. */
 export type PriceSettlement = 'SETTLED' | 'CHANGED' | 'FAILED';
@@ -34,12 +34,34 @@ export interface CheckoutPayment {
     isPaymentMethodsPending: Readonly<Ref<boolean>>;
     hasPaymentMethodOptionsError: Readonly<Ref<boolean>>;
     retryPaymentMethodOptions: () => void;
-    authorizationContext: Readonly<Ref<AuthorizePaymentPayload['context'] | undefined>>;
-    /** What an express payment sheet asks for when the customer picks another address. */
-    updateInvoicePreviewOnBillingInformationChange: (
+    authorizationContext: Readonly<Ref<PaymentAuthorizationContext | undefined>>;
+    /**
+     * The country the payment methods are set up for when the flow knows it apart from the form,
+     * such as that of a customer who already exists. The form's own country goes first.
+     */
+    countryCode?: Readonly<Ref<string | undefined>>;
+    /**
+     * What an express payment sheet asks for when the customer picks another address. Left out by a
+     * flow that offers no express payment.
+     */
+    updateInvoicePreviewOnBillingInformationChange?: (
         formState: Partial<CheckoutFormState>,
     ) => Promise<{ trialInvoicePreview: Invoice; invoicePreview: Invoice }>;
+    /**
+     * Given by a flow that finishes the order itself once the payment is authorized: the screen
+     * keeps waiting on it rather than marking the order paid and redirecting.
+     */
+    awaitCompletion?: () => void;
+    /**
+     * What the flow makes of a failed payment: `PRICE_CHANGED` when it re-priced the order to be
+     * paid again.
+     */
+    recoverPaymentFailure?: (
+        failure: { error?: unknown; apiError?: unknown } | undefined,
+    ) => PaymentRecovery | undefined;
 }
+
+export type PaymentRecovery = 'PRICE_CHANGED';
 
 /** The form of one customer of the order. */
 export interface CheckoutCustomerForm {

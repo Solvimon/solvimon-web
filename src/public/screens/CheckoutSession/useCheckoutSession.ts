@@ -6,7 +6,17 @@ import type {
     PricingPlanSubscriptionExpanded,
 } from '@solvimon/solvimon-types';
 import { useIntl } from '@solvimon/solvimon-ui';
-import { type Ref, computed, effectScope, onMounted, reactive, ref, shallowRef, watch } from 'vue';
+import {
+    type Ref,
+    computed,
+    effectScope,
+    onMounted,
+    onScopeDispose,
+    reactive,
+    ref,
+    shallowRef,
+    watch,
+} from 'vue';
 import {
     type TextField,
     getCurrentMeterValues,
@@ -20,17 +30,21 @@ import {
 } from './checkoutSessionForm';
 import type {
     CheckoutCustomerForm,
+    CheckoutPayment,
     CheckoutPlanCustomization,
     CheckoutPromotionCode,
     CheckoutSource,
+    PaymentRecovery,
     PriceSettlement,
 } from '@/public/screens/Checkout/Checkout.source.types';
+import type { CheckoutSessionAuthorizationContext } from '@/components/payments/PaymentIntegrationForm/PaymentIntegrationForm.types';
 import { useLogger } from '@/components/providers';
 import { LINK_ENDINGS } from '@/components/providers/AuthProvider/AuthProvider.handle';
 import type { PortalLinkEnding } from '@/components/providers/AuthProvider/AuthProvider.lib';
 import { useCheckoutForm } from '@/components/customer/CheckoutForm/useCheckoutForm';
 import { getInitialState } from '@/components/customer/CheckoutForm/CheckoutForm.lib';
 import { useWatchDebounced } from '@/composables/useWatchDebounced';
+import { usePaymentMethodOptions } from '@/composables/usePaymentMethodOptions';
 import { isApiError } from '@/services/apiError';
 import {
     type CheckoutSessionEdit,
@@ -58,6 +72,10 @@ export const CHECKOUT_SESSION_EDIT_DEBOUNCE_MS = 400;
 /** A preview of an older version is asked again, a few times at most. */
 const MAX_PREVIEW_ATTEMPTS = 3;
 const SESSION_ID_PLACEHOLDER = '{CHECKOUT_SESSION_ID}';
+/** After a payment the session is read again, waiting twice as long each time, for about a minute. */
+export const COMPLETION_POLL_FIRST_DELAY_MS = 1_000;
+export const COMPLETION_POLL_MAX_DELAY_MS = 15_000;
+export const COMPLETION_POLL_LIMIT_MS = 60_000;
 
 const REFILLED_FIELDS: TextField[] = [
     'email',
@@ -150,6 +168,8 @@ export function useCheckoutSession({ portalUrlId }: { portalUrlId: string }) {
     const templates = shallowRef<(PricingPlanSubscriptionExpanded | undefined)[]>([]);
     const isSaving = ref(false);
     const isPaid = ref(false);
+    /** Paid, but the session was still not done when the wait for it ran out. */
+    const hasCompletionTimedOut = ref(false);
 
     const session = computed(() => portalUrl.value?.checkout_session);
     const isOpen = computed(
@@ -768,7 +788,8 @@ export function useCheckoutSession({ portalUrlId }: { portalUrlId: string }) {
     });
 
     const endState = computed<CheckoutSessionEndState | undefined>(() => {
-        if (!portalUrl.value || isOpen.value) return undefined;
+        if (!portalUrl.value) return undefined;
+        if (isOpen.value) return hasCompletionTimedOut.value ? 'PROCESSING' : undefined;
         const { status } = portalUrl.value.checkout_session;
         return status === 'OPEN' ? 'CLOSED' : status;
     });
@@ -796,6 +817,10 @@ export function useCheckoutSession({ portalUrlId }: { portalUrlId: string }) {
         ]);
         if (response.status !== 'PUBLISHED' || response.checkout_session.status !== 'OPEN') {
             portalUrl.value = response;
+            // Paid already, such as before a redirect back here: followed until it is done.
+            if (response.checkout_session.status === 'PROCESSING') {
+                void followSession({ isPaid: true, isRead: true });
+            }
             return;
         }
         await loadTemplates(response);
@@ -880,6 +905,185 @@ export function useCheckoutSession({ portalUrlId }: { portalUrlId: string }) {
         return isInvoicePreviewStale.value ? 'CHANGED' : 'SETTLED';
     };
 
+    const {
+        paymentMethodOptions,
+        get: getPaymentMethodOptions,
+        isPending: isPaymentMethodsPending,
+        error: paymentMethodOptionsError,
+    } = usePaymentMethodOptions();
+
+    // Fresh every time: the session decides the options, and a save may change what it decides.
+    const loadPaymentMethodOptions = () =>
+        getPaymentMethodOptions({ portalUrlId }, { fresh: true }).catch((error: unknown) => {
+            logger.error(
+                'PAYMENT_METHOD_OPTIONS_LOAD_FAILED',
+                'Failed to load the payment methods that can be offered',
+                { flow: 'CHECKOUT_SESSION' },
+                error,
+            );
+        });
+
+    watch([isLoaded, isOpen, () => session.value?.version], () => {
+        if (isLoaded.value && isOpen.value) void loadPaymentMethodOptions();
+    });
+
+    let isDisposed = false;
+    let pollTimer: ReturnType<typeof setTimeout> | undefined;
+    onScopeDispose(() => {
+        isDisposed = true;
+        clearTimeout(pollTimer);
+    });
+    const wait = (ms: number) =>
+        new Promise<void>((resolve) => {
+            pollTimer = setTimeout(resolve, ms);
+        });
+
+    /** Whether the session read has completed or failed. */
+    const readUntilDone = async (): Promise<boolean> => {
+        try {
+            const response = await service.getCheckoutSession(portalUrlId);
+            // An OPEN read is not taken on: the forms would be compared with it and saved.
+            if (response.status !== 'PUBLISHED' || response.checkout_session.status !== 'OPEN') {
+                portalUrl.value = response;
+            }
+            const { status } = response.checkout_session;
+            return status === 'COMPLETED' || status === 'FAILED';
+        } catch (error) {
+            logger.warn(
+                'CHECKOUT_SESSION_COMPLETION_CHECK_FAILED',
+                'Failed to read the checkout session while waiting for it to complete',
+                {},
+                error,
+            );
+            return false;
+        }
+    };
+
+    /** The latest follow of the session; a new one takes over from the one before. */
+    let follows = 0;
+
+    /**
+     * Reads the session until it completes or fails; a session that has left OPEN shows as such.
+     * `isPaid`: a payment went through, so a session still OPEN at the end shows as processing.
+     * `isRead`: the session was just read, so the first read waits like the others.
+     */
+    const followSession = async ({
+        isPaid: paid,
+        isRead = false,
+    }: {
+        isPaid: boolean;
+        isRead?: boolean;
+    }) => {
+        const follow = ++follows;
+        const isCurrent = () => !isDisposed && follow === follows;
+        let waited = 0;
+        for (let attempt = 0; isCurrent(); attempt++) {
+            if ((attempt > 0 || !isRead) && (await readUntilDone())) return;
+            const delay = Math.min(
+                COMPLETION_POLL_FIRST_DELAY_MS * 2 ** attempt,
+                COMPLETION_POLL_MAX_DELAY_MS,
+            );
+            if (!isCurrent() || waited + delay > COMPLETION_POLL_LIMIT_MS) break;
+            waited += delay;
+            await wait(delay);
+        }
+        if (paid && isCurrent()) hasCompletionTimedOut.value = true;
+    };
+
+    /** Shows what the session still misses, in the form and in the preview. */
+    const rereadSession = async () => {
+        try {
+            portalUrl.value = await service.getCheckoutSession(portalUrlId);
+        } catch (error) {
+            logger.error(
+                'CHECKOUT_SESSION_LOAD_FAILED',
+                'Failed to load the checkout session',
+                {},
+                error,
+            );
+        }
+        await refreshPreview();
+    };
+
+    const recoverPaymentFailure = (
+        failure: { error?: unknown; apiError?: unknown } | undefined,
+    ): PaymentRecovery | undefined => {
+        const error = [failure?.apiError, failure?.error].find(isApiError);
+        if (!error) return undefined;
+        // Another payment is in progress, or the session is no longer open: followed, so the screen
+        // ends once it does, while this payment shows as not gone through and may be tried again.
+        if (isBadRequestOn(error, 'checkout_session.status')) {
+            void followSession({ isPaid: false });
+            return undefined;
+        }
+        // The customer still has fields of the session to fill in.
+        if (error.statusCode === 409) {
+            void rereadSession();
+            return undefined;
+        }
+        if (isBadRequestOn(error, 'payment_acceptor_id')) {
+            void loadPaymentMethodOptions();
+            return undefined;
+        }
+        // Priced at a version the session has moved on from: priced again, for the customer to check.
+        if (error.statusCode === 400 && error.field === 'context.checkout_session.version') {
+            void refreshPreview();
+            return 'PRICE_CHANGED';
+        }
+        return undefined;
+    };
+
+    /** The customer who pays: the session's payer, else the customer of the invoice. */
+    const payingCustomer = computed(() => {
+        const invoice = preview.value?.invoices?.[0];
+        const reference = session.value?.payment?.customer_reference ?? invoice?.customer_reference;
+        const id = session.value?.payment?.customer_id ?? invoice?.customer_id;
+        return session.value?.customers.find(
+            (customer) =>
+                (!!reference && customer.customer?.reference === reference) ||
+                (!!id && customer.customer_id === id),
+        );
+    });
+
+    const paymentCountry = computed(() => {
+        const sessionCustomer = payingCustomer.value?.customer;
+        if (sessionCustomer) {
+            const address =
+                sessionCustomer.organization?.registered_address ??
+                sessionCustomer.individual?.residential_address;
+            return address?.country || undefined;
+        }
+        // shortcut: the preview's invoice customer is a stand-in (MD-5514); upgrade when the session exposes an existing customer's country.
+        const invoiceCustomer = invoicePreview.value?.customer;
+        if (!invoiceCustomer) return undefined;
+        const address =
+            'organization' in invoiceCustomer
+                ? invoiceCustomer.organization?.registered_address
+                : invoiceCustomer.individual?.residential_address;
+        return address?.country || undefined;
+    });
+
+    const payment: CheckoutPayment = {
+        paymentMethodOptions,
+        isPaymentMethodsPending,
+        hasPaymentMethodOptionsError: computed(() => paymentMethodOptionsError.value !== null),
+        retryPaymentMethodOptions: () => void loadPaymentMethodOptions(),
+        countryCode: paymentCountry,
+        authorizationContext: computed<CheckoutSessionAuthorizationContext | undefined>(() =>
+            preview.value
+                ? {
+                      type: 'CHECKOUT_SESSION',
+                      checkout_session: {
+                          portal_url_id: portalUrlId,
+                          version: preview.value.checkout_session.version,
+                      },
+                  }
+                : undefined,
+        ),
+        awaitCompletion: () => void followSession({ isPaid: true }),
+        recoverPaymentFailure,
+    };
+
     const source: CheckoutSource = {
         subscription: computed(() => templates.value[0]),
         orderMeterValues: computed(() => ({})),
@@ -916,6 +1120,7 @@ export function useCheckoutSession({ portalUrlId }: { portalUrlId: string }) {
         recurringAmount,
         hasOneOffCharges: computed(() => invoiceRecurrence.value?.hasOneOff ?? false),
         promotionCode: promotionCodeOf(() => orderPromotionCodeIndex.value),
+        payment,
         canPay,
         isPaid,
         successUrl,

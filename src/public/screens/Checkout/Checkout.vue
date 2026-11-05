@@ -9,10 +9,11 @@ import {
     useTimePeriod,
 } from '@solvimon/solvimon-ui';
 import { computed, defineAsyncComponent, nextTick, onMounted, ref, watch } from 'vue';
-import type { Amount, AuthorizePaymentPayload, CountryCode } from '@solvimon/solvimon-types';
+import type { Amount, CountryCode } from '@solvimon/solvimon-types';
 import type { CheckoutEmits, CheckoutProps } from './Checkout.types';
 import type { CheckoutPromotionCode, CheckoutSource } from './Checkout.source.types';
 import type { ExpressBillingInformation } from '@/components/payments/ExpressPaymentMethod/ExpressPaymentMethod.types';
+import type { PaymentAuthorizationContext } from '@/components/payments/PaymentIntegrationForm/PaymentIntegrationForm.types';
 import CheckoutForm from '@/components/customer/CheckoutForm/CheckoutForm.vue';
 import CheckoutTitle from '@/components/checkout/CheckoutTitle.vue';
 import { isInvoiceUsageBased } from '@/utils/invoice';
@@ -112,6 +113,10 @@ const hasPaymentMethodOptionsError = computed(
 );
 const authorizationContext = computed(() => payment?.authorizationContext.value);
 const retryPaymentMethodOptions = () => payment?.retryPaymentMethodOptions();
+const onExpressBillingInformationChange = payment?.updateInvoicePreviewOnBillingInformationChange;
+const paymentCountryCode = computed(
+    () => checkoutForm.form.value.country ?? payment?.countryCode?.value,
+);
 const canPay = computed(() => !!payment && (props.source.canPay?.value ?? true));
 
 const experimentalFeatures = useExperimentalFeature();
@@ -153,6 +158,14 @@ const handlePaymentSubmitting = () => {
 
 const paymentErrorMessage = ref<string | null>(null);
 
+const priceChangedMessage = () =>
+    $t({
+        defaultMessage: 'The price changed with your last edit. Check it and pay again.',
+        id: 'checkout.price_changed',
+        description:
+            'Shown when a payment is held back because the customer changed the order while it waited for the price',
+    });
+
 // Both kinds reach this: the card form reports the SDK's own `Error`, an express sheet a plain
 // one. Only the message is read, so the handler asks for no more than that.
 /** The gateway would not submit. It shows the customer what is missing, so nothing is said here. */
@@ -165,13 +178,24 @@ const handlePaymentNotSubmitted = () => {
 /** The payment may still go through, so paying again could charge the customer twice. */
 const isPaymentUnconfirmed = ref(false);
 
-const handlePaymentFailed = (error?: { message?: string; code?: string }) => {
+const handlePaymentFailed = (error?: {
+    message?: string;
+    code?: string;
+    error?: unknown;
+    apiError?: unknown;
+}) => {
+    const recovery = payment?.recoverPaymentFailure?.(error);
     isPaymentPending.value = false;
     paymentOrder.value = undefined;
     clearSavedFormState?.();
 
     if (error?.code === 'PAYMENT_OUTCOME_UNCONFIRMED') {
         isPaymentUnconfirmed.value = true;
+        return;
+    }
+
+    if (recovery === 'PRICE_CHANGED') {
+        paymentErrorMessage.value = priceChangedMessage();
         return;
     }
 
@@ -206,7 +230,7 @@ const handleExpressPaymentFailed = (error?: { message?: string; code?: string })
  * reads them when the gateway hands its token back, and the order stays locked until then, so the
  * two always come from the same moment.
  */
-const paymentOrder = ref<{ amount: Amount; context: AuthorizePaymentPayload['context'] }>();
+const paymentOrder = ref<{ amount: Amount; context: PaymentAuthorizationContext | undefined }>();
 const orderLockAttrs = computed(() => (paymentOrder.value ? { inert: true } : {}));
 
 // Every way to pay comes through here (the button, Enter in a card field, an express sheet), so
@@ -216,12 +240,7 @@ const handleValidateOnSubmit = async () => {
 
     const settlement = await settleInvoicePreview();
     if (settlement === 'CHANGED') {
-        paymentErrorMessage.value = $t({
-            defaultMessage: 'The price changed with your last edit. Check it and pay again.',
-            id: 'checkout.price_changed',
-            description:
-                'Shown when a payment is held back because the customer changed the order while it waited for the price',
-        });
+        paymentErrorMessage.value = priceChangedMessage();
         return false;
     }
     if (settlement === 'FAILED') {
@@ -666,6 +685,13 @@ const redirectsOnSuccess = computed(
 );
 
 const handlePaymentSuccess = () => {
+    if (payment?.awaitCompletion) {
+        isPaymentPending.value = true;
+        paymentErrorMessage.value = null;
+        payment.awaitCompletion();
+        return;
+    }
+
     isPaid.value = true;
     paymentOrder.value = undefined;
     clearSavedFormState?.();
@@ -796,7 +822,7 @@ onMounted(() => {
                 <!-- express payment methods -->
                 <ExpressPaymentMethods
                     v-if="
-                        payment &&
+                        onExpressBillingInformationChange &&
                         isExpressCheckoutEnabled &&
                         !isPaymentUnconfirmed &&
                         checkoutForm.form.value.country &&
@@ -809,9 +835,7 @@ onMounted(() => {
                     :locale="locale"
                     :payment-methods-options-response="paymentMethodOptions ?? []"
                     :billing-information="expressPaymentMethodBillingInformation"
-                    :on-billing-information-change="
-                        payment.updateInvoicePreviewOnBillingInformationChange
-                    "
+                    :on-billing-information-change="onExpressBillingInformationChange"
                     :context="authorizationContext"
                     :validate-on-submit="handleValidateOnSubmit"
                     @update-billing-information="handleUpdateBillingInformation"
@@ -895,7 +919,7 @@ onMounted(() => {
                                 </template>
                             </EmptyStatePlaceholder>
                             <EmptyStatePlaceholder
-                                v-else-if="!checkoutForm.form.value.country"
+                                v-else-if="!paymentCountryCode"
                                 class="sv-checkout__payment-methods-empty"
                                 icon="captive_portal"
                             >
@@ -982,13 +1006,13 @@ onMounted(() => {
                                 </template>
                             </EmptyStatePlaceholder>
                             <div
-                                v-else-if="amount && checkoutForm.form.value.country"
+                                v-else-if="amount && paymentCountryCode"
                                 class="sv-checkout__payment-form"
                             >
                                 <div :class="{ 'pointer-events-none opacity-60': isFormHeld }">
                                     <PaymentIntegrationForm
                                         ref="paymentIntegrationFormRef"
-                                        :country-code="checkoutForm.form.value.country"
+                                        :country-code="paymentCountryCode"
                                         :context="
                                             paymentOrder
                                                 ? paymentOrder.context

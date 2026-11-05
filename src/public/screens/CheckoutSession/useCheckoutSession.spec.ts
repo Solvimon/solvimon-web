@@ -1,7 +1,11 @@
 import { flushPromises, mount } from '@vue/test-utils';
 import { defineComponent, h } from 'vue';
 import type { PricingPlanSubscriptionExpanded } from '@solvimon/solvimon-types';
-import { CHECKOUT_SESSION_EDIT_DEBOUNCE_MS, useCheckoutSession } from './useCheckoutSession';
+import {
+    CHECKOUT_SESSION_EDIT_DEBOUNCE_MS,
+    COMPLETION_POLL_LIMIT_MS,
+    useCheckoutSession,
+} from './useCheckoutSession';
 import { ApiError } from '@/services/apiError';
 import type {
     CheckoutSession,
@@ -11,15 +15,27 @@ import type {
 } from '@/types/checkoutSession';
 import { providerMockLogger } from '@/test-utils/providerMock';
 
-const { mockGet, mockUpdate, mockPreview, mockGetSubscription, mockGetGeoLocation, mockRedirect } =
-    vi.hoisted(() => ({
-        mockGet: vi.fn(),
-        mockGetGeoLocation: vi.fn(),
-        mockUpdate: vi.fn(),
-        mockPreview: vi.fn(),
-        mockGetSubscription: vi.fn(),
-        mockRedirect: vi.fn(),
-    }));
+const {
+    mockGet,
+    mockUpdate,
+    mockPreview,
+    mockGetSubscription,
+    mockGetGeoLocation,
+    mockRedirect,
+    mockGetOptions,
+} = vi.hoisted(() => ({
+    mockGet: vi.fn(),
+    mockGetGeoLocation: vi.fn(),
+    mockUpdate: vi.fn(),
+    mockPreview: vi.fn(),
+    mockGetSubscription: vi.fn(),
+    mockRedirect: vi.fn(),
+    mockGetOptions: vi.fn(),
+}));
+
+vi.mock('@/services/paymentMethods', () => ({
+    createPaymentMethodsService: () => ({ getPaymentMethodOptions: mockGetOptions }),
+}));
 
 vi.mock('@/utils/url', async (importOriginal) => ({
     ...(await importOriginal<typeof import('@/utils/url')>()),
@@ -134,8 +150,12 @@ const template = {
 } as unknown as PricingPlanSubscriptionExpanded;
 
 function setup(portalUrlId = PORTAL_URL_ID) {
+    return mounted(portalUrlId).result;
+}
+
+function mounted(portalUrlId = PORTAL_URL_ID) {
     let result!: ReturnType<typeof useCheckoutSession>;
-    mount(
+    const wrapper = mount(
         defineComponent({
             setup() {
                 result = useCheckoutSession({ portalUrlId });
@@ -143,7 +163,7 @@ function setup(portalUrlId = PORTAL_URL_ID) {
             },
         }),
     );
-    return result;
+    return { result, wrapper };
 }
 
 async function loaded(portalUrlId?: string) {
@@ -169,6 +189,7 @@ describe('useCheckoutSession', () => {
         mockGetSubscription.mockReset().mockResolvedValue(template);
         mockGetGeoLocation.mockReset().mockRejectedValue(new Error('none'));
         mockRedirect.mockReset();
+        mockGetOptions.mockReset().mockResolvedValue([]);
     });
 
     afterEach(() => {
@@ -1037,11 +1058,362 @@ describe('useCheckoutSession', () => {
 
             expect(source.canPay?.value).toBe(false);
         });
+    });
 
-        it('has no payment step to offer', async () => {
+    describe('paying', () => {
+        const OPTIONS = [{ payment_acceptor: { id: 'paya_1' } }];
+        const failure = (error: unknown) => ({ error });
+
+        it('authorizes on the session at the version the price on screen was previewed at', async () => {
+            mockPreview.mockResolvedValue(previewOf(3));
+            mockGet.mockResolvedValue(portalUrl({ version: 3 }));
             const { source } = await loaded();
 
-            expect(source.payment).toBeUndefined();
+            expect(source.payment?.authorizationContext.value).toEqual({
+                type: 'CHECKOUT_SESSION',
+                checkout_session: { portal_url_id: PORTAL_URL_ID, version: 3 },
+            });
+        });
+
+        it('offers no express payment, which would change the customer from the sheet', async () => {
+            const { source } = await loaded();
+
+            expect(source.payment?.updateInvoicePreviewOnBillingInformationChange).toBeUndefined();
+            expect(source.saveFormStateForRedirect).toBeUndefined();
+        });
+
+        it('loads the payment methods of the session by its link alone once it is read', async () => {
+            mockGetOptions.mockResolvedValue(OPTIONS);
+            const { source } = await loaded();
+
+            expect(mockGetOptions).toHaveBeenCalledTimes(1);
+            expect(mockGetOptions).toHaveBeenCalledWith({ portalUrlId: PORTAL_URL_ID });
+            expect(source.payment?.paymentMethodOptions.value).toEqual(OPTIONS);
+        });
+
+        const previewWithInvoiceCustomer = (customer: {
+            customer_reference: string;
+            customer_id?: string;
+        }) => ({
+            ...previewOf(1),
+            invoices: [
+                {
+                    ...customer,
+                    invoice: {
+                        id: 'inv_1',
+                        customer: { organization: { registered_address: { country: 'BE' } } },
+                    } as never,
+                    pricing_plan_subscription_references: ['sub-ref'],
+                },
+            ],
+        });
+
+        it('sets the payment methods up for the country the session holds for the paying customer', async () => {
+            mockPreview.mockResolvedValue(
+                previewWithInvoiceCustomer({ customer_reference: 'cust-ref' }),
+            );
+            const { source } = await loaded();
+
+            expect(source.payment?.countryCode?.value).toBe('NL');
+        });
+
+        it('follows the payer the session names over the customer of the invoice', async () => {
+            mockGet.mockResolvedValue(
+                portalUrl({
+                    payment: { customer_reference: 'payer-ref' },
+                    customers: [
+                        createSession().customers[0],
+                        organizationCustomer({
+                            legal_name: 'Payer',
+                            registered_address: { country: 'DE' },
+                        }),
+                    ].map((customer, index) =>
+                        index === 1
+                            ? {
+                                  ...customer,
+                                  customer: { ...customer.customer!, reference: 'payer-ref' },
+                              }
+                            : customer,
+                    ),
+                }),
+            );
+            mockPreview.mockResolvedValue(
+                previewWithInvoiceCustomer({ customer_reference: 'cust-ref' }),
+            );
+            const { source } = await loaded();
+
+            expect(source.payment?.countryCode?.value).toBe('DE');
+        });
+
+        it('takes the country of the invoice customer for a customer that already exists', async () => {
+            mockGet.mockResolvedValue(
+                portalUrl({
+                    customers: [
+                        {
+                            ...createSession().customers[0],
+                            customer: undefined,
+                            customer_id: 'cust_1',
+                        },
+                    ],
+                }),
+            );
+            mockPreview.mockResolvedValue(
+                previewWithInvoiceCustomer({
+                    customer_reference: 'existing',
+                    customer_id: 'cust_1',
+                }),
+            );
+            const { source } = await loaded();
+
+            expect(source.payment?.countryCode?.value).toBe('BE');
+        });
+
+        it('shows no error while the session has no payment methods yet', async () => {
+            const { source } = await loaded();
+
+            expect(source.payment?.paymentMethodOptions.value).toEqual([]);
+            expect(source.payment?.hasPaymentMethodOptionsError.value).toBe(false);
+        });
+
+        it('loads no payment methods for a session that is not open', async () => {
+            mockGet.mockResolvedValue(portalUrl({ status: 'PROCESSING' }));
+            await loaded();
+
+            expect(mockGetOptions).not.toHaveBeenCalled();
+        });
+
+        it('loads the payment methods again after every save', async () => {
+            mockUpdate.mockResolvedValueOnce(portalUrl({ version: 2 }));
+            mockUpdate.mockResolvedValueOnce(portalUrl({ version: 3 }));
+            mockPreview.mockResolvedValue(previewOf(3));
+            const { source } = await loaded();
+
+            source.checkoutForm.form.value.email = 'finance@acme.test';
+            await settleEdits();
+            source.checkoutForm.form.value.companyLegalName = 'Acme BV';
+            await settleEdits();
+
+            expect(mockUpdate).toHaveBeenCalledTimes(2);
+            expect(mockGetOptions).toHaveBeenCalledTimes(3);
+        });
+
+        it('goes to the success URL once the paid session reads as completed', async () => {
+            const { source, endState } = await loaded();
+            mockGet.mockResolvedValue(portalUrl({ status: 'COMPLETED' }, 'CLOSED'));
+
+            source.payment?.awaitCompletion?.();
+            await flushPromises();
+
+            expect(endState.value).toBe('COMPLETED');
+            expect(mockRedirect).toHaveBeenCalledWith('https://shop.test/done?session=purl_1');
+        });
+
+        it('reads the paid session again, waiting longer each time, until it fails', async () => {
+            const { source, endState } = await loaded();
+            mockGet.mockReset();
+            mockGet
+                .mockResolvedValueOnce(portalUrl())
+                .mockResolvedValueOnce(portalUrl({ status: 'PROCESSING' }))
+                .mockResolvedValueOnce(portalUrl({ status: 'FAILED' }, 'CLOSED'));
+
+            source.payment?.awaitCompletion?.();
+            await flushPromises();
+            expect(mockGet).toHaveBeenCalledTimes(1);
+            expect(endState.value).toBeUndefined();
+
+            await vi.advanceTimersByTimeAsync(1_000);
+            expect(mockGet).toHaveBeenCalledTimes(2);
+            expect(endState.value).toBe('PROCESSING');
+
+            await vi.advanceTimersByTimeAsync(1_999);
+            expect(mockGet).toHaveBeenCalledTimes(2);
+            await vi.advanceTimersByTimeAsync(1);
+            expect(mockGet).toHaveBeenCalledTimes(3);
+            expect(endState.value).toBe('FAILED');
+
+            await vi.advanceTimersByTimeAsync(COMPLETION_POLL_LIMIT_MS);
+            expect(mockGet).toHaveBeenCalledTimes(3);
+            expect(mockRedirect).not.toHaveBeenCalled();
+        });
+
+        it('shows the payment as processing when the session is not done within the wait', async () => {
+            const { source, endState } = await loaded();
+            mockGet.mockReset().mockResolvedValue(portalUrl());
+
+            source.payment?.awaitCompletion?.();
+            await vi.advanceTimersByTimeAsync(COMPLETION_POLL_LIMIT_MS - 1);
+            expect(endState.value).toBeUndefined();
+            await vi.advanceTimersByTimeAsync(COMPLETION_POLL_LIMIT_MS);
+
+            expect(endState.value).toBe('PROCESSING');
+            expect(mockGet.mock.calls.length).toBeLessThanOrEqual(10);
+            const reads = mockGet.mock.calls.length;
+            await vi.advanceTimersByTimeAsync(COMPLETION_POLL_LIMIT_MS);
+            expect(mockGet).toHaveBeenCalledTimes(reads);
+        });
+
+        it('keeps waiting through a read that fails', async () => {
+            const { source, endState } = await loaded();
+            mockGet.mockReset();
+            mockGet
+                .mockRejectedValueOnce(new Error('offline'))
+                .mockResolvedValueOnce(portalUrl({ status: 'COMPLETED' }, 'CLOSED'));
+
+            source.payment?.awaitCompletion?.();
+            await vi.advanceTimersByTimeAsync(1_000);
+
+            expect(endState.value).toBe('COMPLETED');
+        });
+
+        it('stops reading the session once the screen is gone', async () => {
+            const { result, wrapper } = mounted();
+            await flushPromises();
+            mockGet.mockReset().mockResolvedValue(portalUrl());
+
+            result.source.payment?.awaitCompletion?.();
+            await flushPromises();
+            wrapper.unmount();
+            await vi.advanceTimersByTimeAsync(COMPLETION_POLL_LIMIT_MS * 2);
+
+            expect(mockGet).toHaveBeenCalledTimes(1);
+        });
+
+        it('follows a session that is already being paid when the screen opens, such as after a redirect', async () => {
+            mockGet.mockReset();
+            mockGet
+                .mockResolvedValueOnce(portalUrl({ status: 'PROCESSING' }))
+                .mockResolvedValueOnce(portalUrl({ status: 'COMPLETED' }, 'CLOSED'));
+            const { endState } = await loaded();
+            expect(endState.value).toBe('PROCESSING');
+            expect(mockGet).toHaveBeenCalledTimes(1);
+
+            await vi.advanceTimersByTimeAsync(1_000);
+
+            expect(mockGet).toHaveBeenCalledTimes(2);
+            expect(endState.value).toBe('COMPLETED');
+            expect(mockRedirect).toHaveBeenCalled();
+        });
+
+        const statusRefusal = () =>
+            new ApiError({ statusCode: 400, field: 'checkout_session.status' });
+
+        it('leaves a payment refused on the session status to be tried again, and goes on once the session completes', async () => {
+            const { source } = await loaded();
+            mockGet.mockReset().mockResolvedValue(portalUrl({ status: 'COMPLETED' }, 'CLOSED'));
+
+            const recovery = source.payment?.recoverPaymentFailure?.(failure(statusRefusal()));
+            await flushPromises();
+
+            expect(recovery).toBeUndefined();
+            expect(mockGet).toHaveBeenCalledTimes(1);
+            expect(mockRedirect).toHaveBeenCalled();
+        });
+
+        it('shows a session that left OPEN after a payment refused on its status', async () => {
+            const { source, endState } = await loaded();
+            mockGet.mockReset().mockResolvedValue(portalUrl({ status: 'PROCESSING' }));
+
+            source.payment?.recoverPaymentFailure?.({ apiError: statusRefusal() });
+            await flushPromises();
+
+            expect(endState.value).toBe('PROCESSING');
+        });
+
+        it('does not show a payment as processing when one refused on its status leaves the session open', async () => {
+            const { source, endState } = await loaded();
+            mockGet.mockReset().mockResolvedValue(portalUrl());
+
+            source.payment?.recoverPaymentFailure?.(failure(statusRefusal()));
+            await vi.advanceTimersByTimeAsync(COMPLETION_POLL_LIMIT_MS * 2);
+
+            expect(endState.value).toBeUndefined();
+            expect(mockGet.mock.calls.length).toBeLessThanOrEqual(10);
+        });
+
+        it('waits the full time on a payment that goes through while the session is followed', async () => {
+            const { source, endState } = await loaded();
+            mockGet.mockReset().mockResolvedValue(portalUrl());
+
+            source.payment?.recoverPaymentFailure?.(failure(statusRefusal()));
+            await vi.advanceTimersByTimeAsync(COMPLETION_POLL_LIMIT_MS - 5_000);
+            source.payment?.awaitCompletion?.();
+            await vi.advanceTimersByTimeAsync(COMPLETION_POLL_LIMIT_MS - 1_000);
+            expect(endState.value).toBeUndefined();
+            await vi.advanceTimersByTimeAsync(COMPLETION_POLL_LIMIT_MS);
+
+            expect(endState.value).toBe('PROCESSING');
+        });
+
+        it('reads the session and prices it again when it still misses fields, without waiting on it', async () => {
+            const { source, missingFields } = await loaded();
+            const missing =
+                'checkout_session.customers.0.customer.organization.registered_address.country';
+            mockGet.mockReset().mockResolvedValue(portalUrl({ missing_fields: [missing] }));
+            mockPreview.mockClear();
+
+            const recovery = source.payment?.recoverPaymentFailure?.(
+                failure(new ApiError({ statusCode: 409 })),
+            );
+            await flushPromises();
+            await vi.advanceTimersByTimeAsync(COMPLETION_POLL_LIMIT_MS);
+
+            expect(recovery).toBeUndefined();
+            expect(mockGet).toHaveBeenCalledTimes(1);
+            expect(mockPreview).toHaveBeenCalledTimes(1);
+            expect(missingFields.value).toEqual([missing]);
+            expect(source.canPay?.value).toBe(false);
+        });
+
+        it('prices the order again when it was paid at a version the session moved on from', async () => {
+            const { source } = await loaded();
+            mockPreview.mockClear().mockResolvedValue(previewOf(2));
+
+            const recovery = source.payment?.recoverPaymentFailure?.(
+                failure(
+                    new ApiError({ statusCode: 400, field: 'context.checkout_session.version' }),
+                ),
+            );
+            await flushPromises();
+
+            expect(recovery).toBe('PRICE_CHANGED');
+            expect(mockPreview).toHaveBeenCalledTimes(1);
+            expect(mockGet).toHaveBeenCalledTimes(1);
+            expect(source.payment?.authorizationContext.value).toMatchObject({
+                checkout_session: { version: 2 },
+            });
+        });
+
+        it('loads the payment methods again when the API refuses the payment acceptor', async () => {
+            const { source } = await loaded();
+            mockGetOptions.mockClear();
+
+            const recovery = source.payment?.recoverPaymentFailure?.(
+                failure(new ApiError({ statusCode: 400, field: 'payment_acceptor_id' })),
+            );
+            await flushPromises();
+
+            expect(recovery).toBeUndefined();
+            expect(mockGetOptions).toHaveBeenCalledTimes(1);
+        });
+
+        it('leaves any other failure to the screen', async () => {
+            const { source } = await loaded();
+            mockGetOptions.mockClear();
+            mockPreview.mockClear();
+
+            const recover = source.payment!.recoverPaymentFailure!;
+            expect(recover(failure(new ApiError({ statusCode: 400, field: 'amount' })))).toBe(
+                undefined,
+            );
+            expect(
+                recover(failure(new ApiError({ statusCode: 400, field: 'expected_version' }))),
+            ).toBeUndefined();
+            expect(recover(failure(new Error('declined')))).toBeUndefined();
+            expect(recover(undefined)).toBeUndefined();
+            await flushPromises();
+
+            expect(mockGetOptions).not.toHaveBeenCalled();
+            expect(mockPreview).not.toHaveBeenCalled();
         });
     });
 

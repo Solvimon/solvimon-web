@@ -85,6 +85,8 @@ let pendingRedirectResult: string | undefined;
 // No drop-in while the payment the customer came back from is being asked about, whatever asks for
 // one: it could take a second payment before the first is known.
 let isConfirmingRedirect = false;
+// The API's answer to a refused authorize, handed on with the failure the drop-in reports for it.
+let authorizeRefusal: unknown;
 
 const logger = useLogger();
 const { locale } = useIntl();
@@ -585,6 +587,7 @@ function handleOnSubmit(
 
     if (isSubmissionInFlight) return;
     isSubmissionInFlight = true;
+    authorizeRefusal = undefined;
 
     props
         .validateOnSubmit()
@@ -664,6 +667,7 @@ function handleOnSubmit(
                             return;
                         }
 
+                        authorizeRefusal = error;
                         actions.resolve({ resultCode: 'Error' });
                     });
                 return;
@@ -817,7 +821,14 @@ function handleOnPaymentFailed(
         }),
         data,
     );
-    emitError({ code: 'AUTHORIZATION_FAILED', message: 'Payment failed', error: data });
+    const apiError = authorizeRefusal;
+    authorizeRefusal = undefined;
+    emitError({
+        code: 'AUTHORIZATION_FAILED',
+        message: 'Payment failed',
+        error: data,
+        ...(apiError !== undefined && { apiError }),
+    });
 }
 
 function handleOnPaymentCompleted(

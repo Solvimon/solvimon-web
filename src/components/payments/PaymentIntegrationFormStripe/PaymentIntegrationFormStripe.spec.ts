@@ -335,6 +335,27 @@ describe('PaymentIntegrationFormStripe', () => {
             expect(wrapper.emitted('payment-success')).toHaveLength(1);
             expect(mockHandleNextAction).not.toHaveBeenCalled();
         });
+
+        it('pays a checkout session on its context alone, with no customer, method or reference', async () => {
+            mockAuthorizePayment.mockResolvedValue(successResponse);
+            const context = {
+                type: 'CHECKOUT_SESSION',
+                checkout_session: { portal_url_id: 'purl_1', version: 4 },
+            } as const;
+            const wrapper = mountComponent({ customerId: undefined, context });
+
+            await wrapper
+                .findComponent({ name: 'PaymentIntegrationFormStripeFrame' })
+                .vm.$emit('submit-success', 'ctok_test');
+            await nextTick();
+            await new Promise((r) => setTimeout(r, 0));
+
+            const body = mockAuthorizePayment.mock.calls[0]?.[0];
+            expect(body.context).toEqual(context);
+            expect(body).not.toHaveProperty('customer_id');
+            expect(body).not.toHaveProperty('payment_method_id');
+            expect(body).not.toHaveProperty('reference');
+        });
     });
 
     describe('handleRedirectReturn', () => {

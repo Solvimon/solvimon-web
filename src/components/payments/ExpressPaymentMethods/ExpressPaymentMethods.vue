@@ -7,12 +7,7 @@ import type {
     ExpressPaymentMethodsProps,
 } from './ExpressPaymentMethods.types';
 import ExpressPaymentMethodApplePay from '@/components/payments/ExpressPaymentMethod/ExpressPaymentMethodApplePay.vue';
-import ExpressPaymentMethodPaypal from '@/components/payments/ExpressPaymentMethod/ExpressPaymentMethodPaypal.vue';
-import ExpressPaymentMethodGooglePay from '@/components/payments/ExpressPaymentMethod/ExpressPaymentMethodGooglePay.vue';
 import Skeleton from '@/components/shared/Skeleton.vue';
-
-const DEFAULT_EXPRESS_PAYMENT_BUTTON_COUNT = 2;
-const ENABLED_EXPRESS_PAYMENT_METHOD_TYPES = ['applepay'];
 
 const props = defineProps<ExpressPaymentMethodsProps>();
 defineEmits<ExpressPaymentMethodsEmits>();
@@ -21,100 +16,28 @@ const { $t } = useIntl();
 
 const isApplePayReady = ref<boolean>(false);
 const isApplePayUnavailable = ref<boolean>(false);
-const isGooglePayReady = ref<boolean>(false);
-const isPayPalReady = ref<boolean>(false);
 
-const applePayEntry = computed<PaymentMethodOptionResponseEntry | undefined>(() => {
-    if (!ENABLED_EXPRESS_PAYMENT_METHOD_TYPES.includes('applepay')) {
-        return undefined;
-    }
-
-    return props.paymentMethodsOptionsResponse?.find((entry) =>
+const applePayEntry = computed<PaymentMethodOptionResponseEntry | undefined>(() =>
+    props.paymentMethodsOptionsResponse?.find((entry) =>
         entry.options?.some(
             (option) =>
                 option.name.toLowerCase() === 'apple pay' &&
                 option.payment_gateway_variant === 'ADYEN',
         ),
-    );
-});
+    ),
+);
 
 const paymentMethodOptionsResponseEntryIncludingApplePay = computed<
     PaymentMethodOptionResponseEntry | undefined
 >(() => (isApplePayUnavailable.value ? undefined : applePayEntry.value));
 
-const paymentMethodOptionsResponseEntryIncludingPayPal = computed<
-    PaymentMethodOptionResponseEntry | undefined
->(() => {
-    if (!ENABLED_EXPRESS_PAYMENT_METHOD_TYPES.includes('paypal')) {
-        return undefined;
-    }
-
-    return props.paymentMethodsOptionsResponse?.find((entry) =>
-        entry.options?.some(
-            (option) =>
-                option.name.toLowerCase() === 'paypal' &&
-                option.payment_gateway_variant === 'ADYEN',
-        ),
-    );
-});
-
-const paymentMethodOptionsResponseEntryIncludingGooglePay = computed<
-    PaymentMethodOptionResponseEntry | undefined
->(() => {
-    if (!ENABLED_EXPRESS_PAYMENT_METHOD_TYPES.includes('googlepay')) {
-        return undefined;
-    }
-
-    return props.paymentMethodsOptionsResponse?.find((entry) =>
-        entry.options?.some(
-            (option) =>
-                option.name.toLowerCase() === 'google pay' &&
-                option.payment_gateway_variant === 'ADYEN',
-        ),
-    );
-});
-
-const hasPaymentMethodOptions = computed(() => {
-    return !!(
-        paymentMethodOptionsResponseEntryIncludingApplePay.value ||
-        paymentMethodOptionsResponseEntryIncludingGooglePay.value ||
-        paymentMethodOptionsResponseEntryIncludingPayPal.value
-    );
-});
-
-const isReady = computed(() => {
-    if (props.paymentMethodsOptionsResponse?.length === 0) {
-        return false;
-    }
-
-    const applePayReady =
-        !paymentMethodOptionsResponseEntryIncludingApplePay.value || isApplePayReady.value;
-
-    const googlePayReady =
-        !paymentMethodOptionsResponseEntryIncludingGooglePay.value || isGooglePayReady.value;
-
-    const payPalReady =
-        !paymentMethodOptionsResponseEntryIncludingPayPal.value || isPayPalReady.value;
-
-    // All express payment methods must be ready
-    return applePayReady && googlePayReady && payPalReady;
-});
-
-const expressPaymentButtonCount = computed(() => {
-    if (!isReady.value) {
-        return DEFAULT_EXPRESS_PAYMENT_BUTTON_COUNT;
-    }
-
-    return (
-        (paymentMethodOptionsResponseEntryIncludingApplePay.value ? 1 : 0) +
-        (paymentMethodOptionsResponseEntryIncludingGooglePay.value ? 1 : 0) +
-        (paymentMethodOptionsResponseEntryIncludingPayPal.value ? 1 : 0)
-    );
-});
+const isReady = computed(
+    () => props.paymentMethodsOptionsResponse?.length !== 0 && isApplePayReady.value,
+);
 </script>
 
 <template>
-    <div v-if="hasPaymentMethodOptions" class="mt-4n">
+    <div v-if="paymentMethodOptionsResponseEntryIncludingApplePay" class="mt-4n">
         <div class="mb-2">
             <Skeleton v-if="!isReady" variant="title" />
             <Typography v-else variant="heading-3" tag="h2">{{
@@ -127,21 +50,9 @@ const expressPaymentButtonCount = computed(() => {
             }}</Typography>
         </div>
         <div class="grid grid-cols-6 gap-1 md:gap-2">
-            <template v-if="!isReady">
-                <Skeleton class="col-span-3 h-11" />
-                <Skeleton class="col-span-3 h-11" />
-            </template>
-            <div
-                class="col-span-3 md:col-span-2"
-                :class="{
-                    hidden: !paymentMethodOptionsResponseEntryIncludingApplePay,
-                    '!col-span-6': expressPaymentButtonCount === 1,
-                    'md:!col-span-3': expressPaymentButtonCount === 2,
-                    '!col-span-6 md:!col-span-2': expressPaymentButtonCount === 3,
-                }"
-            >
+            <Skeleton v-if="!isReady" class="col-span-6 h-11" />
+            <div class="col-span-6">
                 <ExpressPaymentMethodApplePay
-                    v-if="paymentMethodOptionsResponseEntryIncludingApplePay"
                     :amount="amount"
                     :billing-information="billingInformation"
                     :country-code="countryCode"
@@ -158,50 +69,6 @@ const expressPaymentButtonCount = computed(() => {
                     @update-billing-information="$emit('update-billing-information', $event)"
                     @payment-success="$emit('payment-success')"
                     @payment-failed="$emit('payment-failed', $event)"
-                />
-            </div>
-
-            <div
-                class="col-span-3 md:col-span-2"
-                :class="{
-                    hidden: !paymentMethodOptionsResponseEntryIncludingGooglePay,
-                    'col-span-6 md:col-span-6': expressPaymentButtonCount === 1,
-                    'md:!col-span-3': expressPaymentButtonCount === 2,
-                }"
-            >
-                <ExpressPaymentMethodGooglePay
-                    v-if="paymentMethodOptionsResponseEntryIncludingGooglePay"
-                    :amount="amount"
-                    :billing-information="billingInformation"
-                    :country-code="countryCode"
-                    :locale="locale"
-                    :is-visible="isReady"
-                    :payment-method-options-response="
-                        paymentMethodOptionsResponseEntryIncludingGooglePay
-                    "
-                    @ready="isGooglePayReady = true"
-                />
-            </div>
-
-            <div
-                class="col-span-3 md:col-span-2"
-                :class="{
-                    hidden: !paymentMethodOptionsResponseEntryIncludingPayPal,
-                    'col-span-6 md:col-span-6': expressPaymentButtonCount === 1,
-                    'md:!col-span-3': expressPaymentButtonCount === 2,
-                }"
-            >
-                <ExpressPaymentMethodPaypal
-                    v-if="paymentMethodOptionsResponseEntryIncludingPayPal"
-                    :amount="amount"
-                    :billing-information="billingInformation"
-                    :country-code="countryCode"
-                    :locale="locale"
-                    :is-visible="isReady"
-                    :payment-method-options-response="
-                        paymentMethodOptionsResponseEntryIncludingPayPal
-                    "
-                    @ready="isPayPalReady = true"
                 />
             </div>
         </div>

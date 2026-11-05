@@ -47,11 +47,9 @@ export function loadAdyenSdk() {
         }) => ({
             AdyenCheckout,
             Dropin,
-            // Named individually as well for the express buttons, which mount one on its own
-            // rather than through the drop-in.
+            // Named on its own as well for the Apple Pay express button, which mounts it outside the
+            // drop-in.
             ApplePay,
-            GooglePay,
-            PayPal,
             /** The payment methods the drop-in is built with, in the order it offers them. */
             dropInPaymentMethodComponents: [
                 Card,

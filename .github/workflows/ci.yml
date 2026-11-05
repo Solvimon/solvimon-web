@@ -243,6 +243,8 @@ jobs:
               run: npm run types:check-consumer
             - name: Measure bundle
               run: node scripts/ci/measure-bundle.mjs > bundle-sizes.json
+            - name: Check every entry fits its size budget
+              run: node scripts/ci/check-bundle-budget.mjs bundle-sizes.json
             - uses: actions/upload-artifact@v6
               with:
                   name: bundle-sizes

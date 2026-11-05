@@ -1,0 +1,20 @@
+{
+    "components/BillingInformation": 47900,
+    "components/BillingInformationForm": 82800,
+    "components/CustomerPaymentMethods": 62900,
+    "components/Invoice": 79100,
+    "components/InvoiceDetails": 44000,
+    "components/InvoiceHeader": 51800,
+    "components/InvoicesList": 53100,
+    "components/PaymentHistory": 57300,
+    "components/PaymentMethodForm": 50200,
+    "components/SubscriptionSchedules": 103900,
+    "components/SubscriptionsList": 59300,
+    "components/WalletBalances": 105500,
+    "screens/Checkout": 132700,
+    "screens/CustomerOverview": 118200,
+    "screens/PayInvoice": 81600,
+    "screens/PaymentMethodsManagement": 67800,
+    "screens/SubscriptionDetails": 117900,
+    "screens/SubscriptionManagement": 94600
+}

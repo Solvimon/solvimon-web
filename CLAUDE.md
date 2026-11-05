@@ -70,6 +70,8 @@ Each public screen and component is its own build entry, and `@solvimon/solvimon
 
 When a change touches the shared chunk, an entry's imports, styles, or dependencies, run `npm run build` before and after and compare the size of the affected entries and of `customElements-*.mjs` in `dist/`. `npm run analyze` shows what each chunk contains.
 
+CI fails when an entry's brotli size outgrows its cap in `scripts/ci/bundle-budget.json`. Raise a cap only on purpose: `node scripts/ci/measure-bundle.mjs > sizes.json && node scripts/ci/check-bundle-budget.mjs sizes.json --update`, and say why in the pull request.
+
 ## Testing
 
 - Unit tests live next to the file they test (`foo.spec.ts` beside `foo.ts`).

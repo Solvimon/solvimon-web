@@ -69,7 +69,6 @@ describe('publicEntryPoints', () => {
         const dist = tmpDist();
         write(dist, 'index.d.ts', '');
         write(dist, 'core/index.d.ts', '');
-        write(dist, 'core/action-request.types.d.ts', '');
         write(dist, 'components/InvoicesList/InvoicesList.ce.d.ts', '');
         write(dist, 'screens/Checkout/Checkout.ce.d.ts', '');
 
@@ -79,7 +78,6 @@ describe('publicEntryPoints', () => {
                 .sort(),
         ).toEqual([
             'components/InvoicesList/InvoicesList.ce.d.ts',
-            'core/action-request.types.d.ts',
             'core/index.d.ts',
             'index.d.ts',
             'screens/Checkout/Checkout.ce.d.ts',

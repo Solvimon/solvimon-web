@@ -76,7 +76,6 @@ describe('SubscriptionsList component', () => {
     }: {
         subscriptions?: PricingPlanSubscriptionExpanded[];
         configuration?: {
-            maxItems?: number;
             showViewAllButton?: boolean;
             showViewDetailsButton?: boolean;
         };
@@ -132,12 +131,11 @@ describe('SubscriptionsList component', () => {
         expect(wrapper.findAll('button')).toHaveLength(0);
     });
 
-    it('renders the view all button when showViewAllButton is true and there are more than maxItems subscriptions', () => {
+    it('renders the view all button when showViewAllButton is true', () => {
         const wrapper = mountComponent({
             subscriptions: [createSubscription(), createSubscription({ id: 'sub_456' })],
             configuration: {
                 showViewAllButton: true,
-                maxItems: 1,
             },
         });
 
@@ -192,24 +190,22 @@ describe('SubscriptionsList component', () => {
             expect(wrapper.text()).not.toContain('View all');
         });
 
-        it('is rendered when showViewAllButton is true but there are less than maxItems subscriptions', () => {
+        it('is rendered when showViewAllButton is true and there is one subscription', () => {
             const wrapper = mountComponent({
                 subscriptions: [createSubscription()],
                 configuration: {
                     showViewAllButton: true,
-                    maxItems: 2,
                 },
             });
 
             expect(wrapper.text()).toContain('View all');
         });
 
-        it('is rendered when showViewAllButton is true and there are more than maxItems subscriptions', () => {
+        it('is rendered when showViewAllButton is true and there are several subscriptions', () => {
             const wrapper = mountComponent({
                 subscriptions: [createSubscription(), createSubscription({ id: 'sub_456' })],
                 configuration: {
                     showViewAllButton: true,
-                    maxItems: 1,
                 },
             });
 

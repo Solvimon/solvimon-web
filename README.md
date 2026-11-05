@@ -392,56 +392,54 @@ The SDK emits structured log entries via the [`onLog`](#error-logging) callback.
 
 ### Error codes
 
-| Code                                        | Description                                                        |
-| :------------------------------------------ | :----------------------------------------------------------------- |
-| `ADYEN_PAYMENT_FAILED`                      | Adyen reported the payment as failed                               |
-| `ADYEN_SUBMIT_FAILED`                       | Failed to submit Adyen drop-in                                     |
-| `APPLE_PAY_AUTHORIZATION_FAILED`            | Payment authorization failed                                       |
-| `APPLE_PAY_ERROR`                           | Apple Pay error                                                    |
-| `AUTO_TOP_UP_CANCELLATION_FAILED`           | Failed to turn off a wallet                                        |
-| `AUTO_TOP_UP_SAVE_FAILED`                   | Failed to save the automatic top-up rule                           |
-| `EXPRESS_CHECKOUT_GOOGLE_PAY_ERROR`         | The Google Pay button reference is not found and cannot be mounted |
-| `EXPRESS_CHECKOUT_PAYPAL_ERROR`             | The PayPal button reference is not found and cannot be mounted     |
-| `INITIAL_DATA_LOAD_FAILED`                  | Failed to load initial data                                        |
-| `INTEGRATION_ERROR`                         | Unhandled error in payment submission flow                         |
-| `INVALID_COUNTRY_CODE`                      | invalid country code provided:…                                    |
-| `INVALID_EMAIL`                             | invalid email provided                                             |
-| `INVALID_REDIRECT_RESULT`                   | Redirect result is set but payment acceptor id is missing          |
-| `INVALID_TOKEN`                             | Failed to fetch access token                                       |
-| `INVOICE_PREVIEW_FAILED`                    | Failed to load the invoice preview                                 |
-| `NO_PAYMENT_METHODS_AVAILABLE`              | No payment method can be offered to the customer                   |
-| `ON_DEMAND_CHARGE_FAILED`                   | Failed to charge the on-demand order                               |
-| `ON_DEMAND_ITEMS_LOAD_FAILED`               | Failed to load the on-demand items of the subscription             |
-| `PAYMENT_ACCEPTOR_MISSING`                  | Additional details arrived without a payment acceptor id           |
-| `PAYMENT_AUTHORIZATION_FAILED`              | Failed payment authorization for payment acceptor with id…         |
-| `PAYMENT_DETAILS_CALL_FAILED`               | Failed fetching payment details                                    |
-| `PAYMENT_DETAILS_REJECTED`                  | Payment details returned a failed payment                          |
-| `PAYMENT_INTEGRATION_INITIALIZATION_FAILED` | Failed to mount Adyen web drop-in                                  |
-| `PAYMENT_METHOD_OPTIONS_LOAD_FAILED`        | Failed to load the payment methods that can be offered             |
-| `PORTAL_TOKEN_UNAVAILABLE`                  | Could not exchange the portal link handle for a token              |
-| `PORTAL_TYPE_NOT_ALLOWED`                   | Reserved — not currently emitted                                   |
-| `PORTAL_URL_EXPIRED`                        | The portal link has expired                                        |
-| `PORTAL_URL_REVOKED`                        | The portal link is revoked                                         |
-| `PROMOTION_CODE_APPLY_FAILED`               | Failed to apply promotion code                                     |
-| `PROMOTION_CODE_REMOVE_FAILED`              | Failed to remove promotion code                                    |
-| `REQUEST_FAILED`                            | Request failed                                                     |
-| `REQUEST_PARSE_FAILED`                      | Failed to parse JSON response                                      |
-| `RESOURCE_REVOKED`                          | The portal object is not published                                 |
-| `SESSION_EXPIRED`                           | Stopped refreshing the access token after repeated 401 responses   |
-| `SHIPPED_SUBSCRIPTIONS_LOAD_FAILED`         | Failed to find out whether the customer has shipped subscriptions  |
-| `SHIPPING_ADDRESSES_LOAD_FAILED`            | Failed to load the shipping addresses                              |
-| `SHIPPING_ADDRESS_DELETE_FAILED`            | Failed to delete the shipping address                              |
-| `SHIPPING_ADDRESS_SAVE_FAILED`              | Failed to save the shipping address                                |
-| `STRIPE_ACTION_FAILED`                      | Missing client_secret in Stripe ACTION_REQUIRED response           |
-| `STRIPE_CONFIRMATION_TOKEN_FAILED`          | Stripe submission failed                                           |
-| `STRIPE_REDIRECT_RETURN_FAILED`             | Could not retrieve the payment the Stripe redirect returned from   |
-| `STRIPE_SUBMIT_FAILED`                      | Unexpected error during Stripe submission                          |
-| `SUBSCRIPTION_CANCELLATION_FAILED`          | Failed to change the cancellation state of a subscription          |
-| `SUBSCRIPTION_LOAD_FAILED`                  | Failed to load the subscription the checkout prices                |
-| `SUBSCRIPTION_UPDATE_FAILED`                | Failed to start a new pricing plan schedule                        |
-| `TOKENIZATION_FAILED`                       | Missing customer id for payment acceptor with id…                  |
-| `TOP_UP_FAILED`                             | Failed to charge the wallet top-up                                 |
-| `UNHANDLED_ERROR`                           | An error that reached the SDK with no more specific code           |
+| Code                                        | Description                                                       |
+| :------------------------------------------ | :---------------------------------------------------------------- |
+| `ADYEN_PAYMENT_FAILED`                      | Adyen reported the payment as failed                              |
+| `ADYEN_SUBMIT_FAILED`                       | Failed to submit Adyen drop-in                                    |
+| `APPLE_PAY_AUTHORIZATION_FAILED`            | Payment authorization failed                                      |
+| `APPLE_PAY_ERROR`                           | Apple Pay error                                                   |
+| `AUTO_TOP_UP_CANCELLATION_FAILED`           | Failed to turn off a wallet                                       |
+| `AUTO_TOP_UP_SAVE_FAILED`                   | Failed to save the automatic top-up rule                          |
+| `INITIAL_DATA_LOAD_FAILED`                  | Failed to load initial data                                       |
+| `INTEGRATION_ERROR`                         | Unhandled error in payment submission flow                        |
+| `INVALID_COUNTRY_CODE`                      | invalid country code provided:…                                   |
+| `INVALID_EMAIL`                             | invalid email provided                                            |
+| `INVALID_REDIRECT_RESULT`                   | Redirect result is set but payment acceptor id is missing         |
+| `INVALID_TOKEN`                             | Failed to fetch access token                                      |
+| `INVOICE_PREVIEW_FAILED`                    | Failed to load the invoice preview                                |
+| `NO_PAYMENT_METHODS_AVAILABLE`              | No payment method can be offered to the customer                  |
+| `ON_DEMAND_CHARGE_FAILED`                   | Failed to charge the on-demand order                              |
+| `ON_DEMAND_ITEMS_LOAD_FAILED`               | Failed to load the on-demand items of the subscription            |
+| `PAYMENT_ACCEPTOR_MISSING`                  | Additional details arrived without a payment acceptor id          |
+| `PAYMENT_AUTHORIZATION_FAILED`              | Failed payment authorization for payment acceptor with id…        |
+| `PAYMENT_DETAILS_CALL_FAILED`               | Failed fetching payment details                                   |
+| `PAYMENT_DETAILS_REJECTED`                  | Payment details returned a failed payment                         |
+| `PAYMENT_INTEGRATION_INITIALIZATION_FAILED` | Failed to mount Adyen web drop-in                                 |
+| `PAYMENT_METHOD_OPTIONS_LOAD_FAILED`        | Failed to load the payment methods that can be offered            |
+| `PORTAL_TOKEN_UNAVAILABLE`                  | Could not exchange the portal link handle for a token             |
+| `PORTAL_TYPE_NOT_ALLOWED`                   | Reserved — not currently emitted                                  |
+| `PORTAL_URL_EXPIRED`                        | The portal link has expired                                       |
+| `PORTAL_URL_REVOKED`                        | The portal link is revoked                                        |
+| `PROMOTION_CODE_APPLY_FAILED`               | Failed to apply promotion code                                    |
+| `PROMOTION_CODE_REMOVE_FAILED`              | Failed to remove promotion code                                   |
+| `REQUEST_FAILED`                            | Request failed                                                    |
+| `REQUEST_PARSE_FAILED`                      | Failed to parse JSON response                                     |
+| `RESOURCE_REVOKED`                          | The portal object is not published                                |
+| `SESSION_EXPIRED`                           | Stopped refreshing the access token after repeated 401 responses  |
+| `SHIPPED_SUBSCRIPTIONS_LOAD_FAILED`         | Failed to find out whether the customer has shipped subscriptions |
+| `SHIPPING_ADDRESSES_LOAD_FAILED`            | Failed to load the shipping addresses                             |
+| `SHIPPING_ADDRESS_DELETE_FAILED`            | Failed to delete the shipping address                             |
+| `SHIPPING_ADDRESS_SAVE_FAILED`              | Failed to save the shipping address                               |
+| `STRIPE_ACTION_FAILED`                      | Missing client_secret in Stripe ACTION_REQUIRED response          |
+| `STRIPE_CONFIRMATION_TOKEN_FAILED`          | Stripe submission failed                                          |
+| `STRIPE_REDIRECT_RETURN_FAILED`             | Could not retrieve the payment the Stripe redirect returned from  |
+| `STRIPE_SUBMIT_FAILED`                      | Unexpected error during Stripe submission                         |
+| `SUBSCRIPTION_CANCELLATION_FAILED`          | Failed to change the cancellation state of a subscription         |
+| `SUBSCRIPTION_LOAD_FAILED`                  | Failed to load the subscription the checkout prices               |
+| `SUBSCRIPTION_UPDATE_FAILED`                | Failed to start a new pricing plan schedule                       |
+| `TOKENIZATION_FAILED`                       | Missing customer id for payment acceptor with id…                 |
+| `TOP_UP_FAILED`                             | Failed to charge the wallet top-up                                |
+| `UNHANDLED_ERROR`                           | An error that reached the SDK with no more specific code          |
 
 ### Warning codes
 
@@ -449,7 +447,6 @@ The SDK emits structured log entries via the [`onLog`](#error-logging) callback.
 | :----------------------------------- | :----------------------------------------------------------------------------------------------------------- |
 | `ACTIVE_SCHEDULE_NOT_FOUND`          | No schedule is currently being billed                                                                        |
 | `ADYEN_INVALID_CONFIGURATION`        | No environment set for adyen advanced flow, defaulted to live                                                |
-| `APPLE_PAY_ACTION_REQUIRED`          | Reserved — not currently emitted                                                                             |
 | `APPLE_PAY_FORM_INCOMPLETE`          | Apple Pay authorization stopped: the checkout form is incomplete                                             |
 | `CHECKOUT_FORM_STATE_NOT_SAVED`      | Could not keep the checkout form for a redirect return                                                       |
 | `CHECKOUT_SESSION_CLOSED`            | The checkout session of the portal link is closed                                                            |

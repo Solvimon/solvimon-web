@@ -1,6 +1,7 @@
-import { readFileSync, writeFileSync } from 'fs';
+import { existsSync, readFileSync, writeFileSync } from 'fs';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
+import { resolveSafePath } from '../safe-path.mjs';
 
 /**
  * Fails the build when a screen or component outgrows its budget.
@@ -8,7 +9,8 @@ import { fileURLToPath } from 'url';
  * `measure-bundle.mjs` reports, per entry, what a consumer downloads for it once bundled the way they
  * import it, in brotli bytes, shared chunks included. `bundle-budget.json` caps each one, so weight
  * added to every client has to raise a cap in the diff, where review sees it, rather than pass on a
- * report comment. `--update` rewrites the budget from the sizes given, with the same headroom.
+ * report comment. `--update` raises only the caps that are exceeded or missing, and drops those of
+ * entries that are gone, so one deliberate raise does not loosen every other cap with it.
  */
 
 /** Room above today's size, so a small change does not have to touch the budget. */
@@ -40,7 +42,7 @@ export function budgetProblems(sizes, budget) {
     for (const [entry, brotli] of Object.entries(measured)) {
         if (!(entry in budget)) {
             problems.push(`${entry} has no budget; add it to bundle-budget.json`);
-        } else if (typeof brotli !== 'number') {
+        } else if (!(brotli > 0)) {
             problems.push(`${entry} could not be measured`);
         } else if (brotli > budget[entry]) {
             problems.push(`${entry} is ${brotli} B brotli, over its budget of ${budget[entry]} B`);
@@ -54,37 +56,49 @@ export function budgetProblems(sizes, budget) {
     return problems;
 }
 
+/** `HEADROOM` above `brotli`, rounded up to the next 100 bytes. */
+const capFor = (brotli) => Math.ceil((brotli * (1 + HEADROOM)) / 100) * 100;
+
 /**
- * A budget with `HEADROOM` above each measured size, rounded up to the next 100 bytes.
+ * `budget` with a cap for every measured entry that exceeds or lacks one, and without the entries
+ * that are gone. Every other cap is kept as it is, and so is that of an entry not measured now.
  *
  * @param {{ entries: Record<string, { consumer?: { brotli?: number } | null }> }} sizes
+ * @param {Record<string, number>} [budget]
  * @returns {Record<string, number>}
  */
-export function budgetFor(sizes) {
+export function updatedBudget(sizes, budget = {}) {
     return Object.fromEntries(
         Object.entries(brotliByEntry(sizes))
-            .filter(([, brotli]) => typeof brotli === 'number')
-            .sort(([a], [b]) => a.localeCompare(b))
-            .map(([entry, brotli]) => [entry, Math.ceil((brotli * (1 + HEADROOM)) / 100) * 100]),
+            .flatMap(([entry, brotli]) => {
+                const current = budget[entry];
+                if (!(brotli > 0)) return current === undefined ? [] : [[entry, current]];
+                return [
+                    [entry, current !== undefined && brotli <= current ? current : capFor(brotli)],
+                ];
+            })
+            .sort(([a], [b]) => a.localeCompare(b)),
     );
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-    const [sizesPath, flag] = process.argv.slice(2);
+    const args = process.argv.slice(2);
+    const sizesPath = args.find((arg) => !arg.startsWith('--'));
     if (!sizesPath) {
         console.error('Usage: check-bundle-budget.mjs <bundle-sizes.json> [--update]');
         process.exit(2);
     }
 
-    const sizes = JSON.parse(readFileSync(sizesPath, 'utf-8'));
+    const sizes = JSON.parse(readFileSync(resolveSafePath(sizesPath, process.cwd()), 'utf-8'));
+    const budget = existsSync(BUDGET_PATH) ? JSON.parse(readFileSync(BUDGET_PATH, 'utf-8')) : {};
 
-    if (flag === '--update') {
-        writeFileSync(BUDGET_PATH, `${JSON.stringify(budgetFor(sizes), null, 4)}\n`);
+    if (args.includes('--update')) {
+        writeFileSync(BUDGET_PATH, `${JSON.stringify(updatedBudget(sizes, budget), null, 4)}\n`);
         console.log(`Wrote ${BUDGET_PATH}.`);
         process.exit(0);
     }
 
-    const problems = budgetProblems(sizes, JSON.parse(readFileSync(BUDGET_PATH, 'utf-8')));
+    const problems = budgetProblems(sizes, budget);
 
     if (problems.length > 0) {
         console.error(`Bundle budget exceeded:\n${problems.map((p) => `  - ${p}`).join('\n')}`);

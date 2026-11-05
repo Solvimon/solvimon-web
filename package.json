@@ -75,9 +75,6 @@
             "types": "./dist/core/index.d.ts",
             "default": "./dist/core/index.mjs"
         },
-        "./core/action-request-types": {
-            "types": "./dist/core/action-request.types.d.ts"
-        },
         "./screens/checkout": {
             "types": "./dist/screens/Checkout/Checkout.ce.d.ts",
             "default": "./dist/screens/Checkout/Checkout.mjs"

@@ -123,6 +123,13 @@ core.createComponent('customer-payment-methods', {
     configuration: { maxItems: 'three' },
 });
 
+core.createComponent('subscriptions-list', {
+    container: '#subscriptions',
+    portalObject,
+    // @ts-expect-error - the subscriptions list has no maxItems
+    configuration: { maxItems: 3 },
+});
+
 core.createComponent('invoice', {
     container: '#invoice',
     portalObject,

@@ -5,7 +5,6 @@ import type {
 } from '@solvimon/solvimon-types';
 
 export type SubscriptionsListConfiguration = {
-    maxItems?: number;
     showViewAllButton?: boolean;
     showViewDetailsButton?: boolean;
 };

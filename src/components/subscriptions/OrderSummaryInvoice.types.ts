@@ -14,6 +14,6 @@ export interface OrderSummaryInvoiceProps {
      * @default 'default'
      */
     variant?: 'default' | 'products-inline';
-    /** Dims the invoice while a change is priced again, so a total that no longer applies does not read as current. */
+    /** Blurs the invoice while a change is priced again, so a total that no longer applies does not read as current. */
     isUpdating?: boolean;
 }

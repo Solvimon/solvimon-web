@@ -244,7 +244,7 @@ describe('OrderSummary', () => {
         expect(wrapper.find('.sv-order-summary__updating[role="status"]').exists()).toBe(true);
         const totals = wrapper.find('.sv-order-summary__totals');
         expect(totals.attributes('aria-busy')).toBe('true');
-        expect(totals.classes()).toContain('opacity-60');
+        expect(totals.classes()).toContain('blur');
     });
 
     it('shows the invoice as current when nothing is being priced', () => {
@@ -253,6 +253,7 @@ describe('OrderSummary', () => {
         expect(wrapper.find('.sv-order-summary__updating').exists()).toBe(false);
         const totals = wrapper.find('.sv-order-summary__totals');
         expect(totals.attributes('aria-busy')).not.toBe('true');
-        expect(totals.classes()).not.toContain('opacity-60');
+        expect(totals.classes()).not.toContain('blur');
+        expect(totals.classes()).toContain('transition');
     });
 });

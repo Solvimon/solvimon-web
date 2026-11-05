@@ -44,8 +44,7 @@ jobs:
             - run: npm run test:unit -- --run
 
     e2e:
-        # The Chromium job keeps the name branch protection requires.
-        name: ${{ matrix.browser == 'chromium' && 'E2E Tests' || 'E2E Tests (WebKit)' }}
+        name: E2E Tests (${{ matrix.browser == 'chromium' && 'Chromium' || 'WebKit' }})
         needs: install
         strategy:
             fail-fast: false

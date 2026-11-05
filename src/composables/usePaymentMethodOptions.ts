@@ -4,8 +4,15 @@ import { useService } from './useService';
 import { createPaymentMethodsService } from '@/services/paymentMethods';
 import type {
     GetPaymentMethodOptionsByCustomerIdPayload,
+    GetPaymentMethodOptionsByPortalUrlIdPayload,
     GetPaymentMethodOptionsPayload,
 } from '@/services/paymentMethods.types';
+
+function hasPortalUrlId(
+    payload: GetPaymentMethodOptionsPayload,
+): payload is GetPaymentMethodOptionsByPortalUrlIdPayload {
+    return payload.portalUrlId !== undefined;
+}
 
 function hasCustomerId(
     payload: GetPaymentMethodOptionsPayload,
@@ -16,19 +23,21 @@ function hasCustomerId(
 export function usePaymentMethodOptions() {
     const { getPaymentMethodOptions } = createPaymentMethodsService();
     const request = (payload: GetPaymentMethodOptionsPayload) =>
-        hasCustomerId(payload)
-            ? getPaymentMethodOptions({
-                  customerId: payload.customerId,
-                  subscriptionId: payload.subscriptionId,
-                  invoiceId: payload.invoiceId,
-                  amount: payload.amount,
-                  country: payload.country,
-              })
-            : getPaymentMethodOptions({
-                  subscriptionId: payload.subscriptionId,
-                  amount: payload.amount,
-                  country: payload.country,
-              });
+        hasPortalUrlId(payload)
+            ? getPaymentMethodOptions({ portalUrlId: payload.portalUrlId })
+            : hasCustomerId(payload)
+              ? getPaymentMethodOptions({
+                    customerId: payload.customerId,
+                    subscriptionId: payload.subscriptionId,
+                    invoiceId: payload.invoiceId,
+                    amount: payload.amount,
+                    country: payload.country,
+                })
+              : getPaymentMethodOptions({
+                    subscriptionId: payload.subscriptionId,
+                    amount: payload.amount,
+                    country: payload.country,
+                });
 
     /** The options on screen and what they answer. Only successes are held, so a failure is asked again. */
     let held:
@@ -50,8 +59,14 @@ export function usePaymentMethodOptions() {
      * Joining goes through `execute` like any other lookup, so a payload asked again after the
      * caller left it is once more the one whose answer is shown.
      */
-    const service = (payload: GetPaymentMethodOptionsPayload) => {
-        if (inFlight && isEqual(payload, inFlight.payload)) {
+    const service = ({
+        payload,
+        fresh,
+    }: {
+        payload: GetPaymentMethodOptionsPayload;
+        fresh: boolean;
+    }) => {
+        if (!fresh && inFlight && isEqual(payload, inFlight.payload)) {
             return inFlight.options;
         }
 
@@ -80,17 +95,19 @@ export function usePaymentMethodOptions() {
      */
     let latestPayload: GetPaymentMethodOptionsPayload | undefined;
 
+    /** `fresh` asks the API again, for options that changed with something the payload does not hold. */
     const get = async (
         payload: GetPaymentMethodOptionsPayload,
+        { fresh = false }: { fresh?: boolean } = {},
     ): Promise<PaymentMethodOptionsResponse> => {
         latestPayload = payload;
 
-        if (held && isEqual(payload, held.payload)) {
+        if (!fresh && held && isEqual(payload, held.payload)) {
             settle(held.options);
             return held.options;
         }
 
-        const options = await execute(payload);
+        const options = await execute({ payload, fresh });
         // An answer the caller moved on from is not shown, so it does not take the place of one that is.
         if (latestPayload === payload) {
             held = { payload, options };

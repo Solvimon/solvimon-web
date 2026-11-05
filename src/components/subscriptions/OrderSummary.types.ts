@@ -10,6 +10,8 @@ export interface OrderSummaryProps {
      * The subscription to display.
      */
     subscription: PricingPlanSubscriptionExpanded;
+    /** Every subscription of an order of several, each summarised in place of `subscription`. */
+    subscriptions?: PricingPlanSubscriptionExpanded[];
     /**
      * The invoice to display.
      */
@@ -59,4 +61,8 @@ export interface OrderSummaryProps {
      * The variant of the order summary.
      */
     variant?: 'default' | 'products-inline';
+    /**
+     * Whether a change to the order is still being priced: the invoice shown no longer applies.
+     */
+    isUpdating?: boolean;
 }

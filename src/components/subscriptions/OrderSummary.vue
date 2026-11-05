@@ -2,6 +2,7 @@
 import {
     Section,
     SelectExtended,
+    Spinner,
     Toggle,
     Typography,
     Chip,
@@ -338,13 +339,31 @@ const handleBinaryBillingToggle = (checked: boolean) => {
                   })
         "
     >
+        <template v-if="isUpdating" #right>
+            <span class="sv-order-summary__updating" role="status">
+                <Spinner size="4" color="gray" />
+                <span class="sr-only">{{
+                    $t({
+                        defaultMessage: 'Updating the price',
+                        id: 'checkout.order_summary_block.updating',
+                        description:
+                            'Read out while the order summary is priced again after the customer changed the order',
+                    })
+                }}</span>
+            </span>
+        </template>
         <div class="sv-order-summary__body grid grid-cols-1 gap-1">
             <!-- subscription summary -->
-            <Section no-spacing class="sv-order-summary__subscription">
+            <Section
+                v-for="(summarised, index) in subscriptions ?? [subscription]"
+                :key="index"
+                no-spacing
+                class="sv-order-summary__subscription"
+            >
                 <SubscriptionSummary
-                    v-if="subscription"
+                    v-if="summarised"
                     :avatar="avatar"
-                    :subscription="subscription"
+                    :subscription="summarised"
                     :enabled-pricing-ids="enabledPricingIds"
                 />
             </Section>
@@ -417,6 +436,7 @@ const handleBinaryBillingToggle = (checked: boolean) => {
 
             <OrderSummaryInvoice
                 v-if="invoice"
+                :is-updating="isUpdating"
                 :invoice="invoice"
                 :trial-invoice="trialInvoice"
                 :is-paid="isPaid"

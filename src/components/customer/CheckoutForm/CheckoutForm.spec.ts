@@ -5,6 +5,7 @@ import { ErrorHandlingProvider, IntlProvider } from '@solvimon/solvimon-ui';
 import CheckoutForm from './CheckoutForm.vue';
 import type { CheckoutFormState } from './CheckoutForm.types';
 import { useCheckoutForm } from './useCheckoutForm';
+import type { CheckoutFormDisplay } from './CheckoutForm.lib';
 
 const { mockCheckTaxID } = vi.hoisted(() => ({ mockCheckTaxID: vi.fn() }));
 
@@ -22,6 +23,9 @@ const mountForm = (
         isShippingAddressRequired = false,
         isBillingInformationMandatory = true,
         readOnly = false,
+        display = undefined as CheckoutFormDisplay | undefined,
+        isTypeLocked = false,
+        alsoRequired = [] as (keyof CheckoutFormState)[],
     } = {},
 ) => {
     let checkoutForm!: ReturnType<typeof useCheckoutForm>;
@@ -33,6 +37,8 @@ const mountForm = (
                     initialState,
                     onRequiredFieldChange: vi.fn(),
                     isShippingAddressRequired,
+                    display,
+                    alsoRequired,
                 });
                 // The phone input reads the ui's own intl, which the SDK's providers set up.
                 return () =>
@@ -48,6 +54,8 @@ const mountForm = (
                                 isShippingAddressRequired,
                                 isBillingInformationMandatory,
                                 readOnly,
+                                display,
+                                isTypeLocked,
                             }),
                         ),
                     );
@@ -383,6 +391,155 @@ describe('CheckoutForm', () => {
             expect(autocomplete('shipping_address_line_1')).toBe('shipping address-line1');
             expect(autocomplete('shipping_postal_code')).toBe('shipping postal-code');
             expect(autocomplete('address_line_1')).toBe('billing address-line1');
+        });
+    });
+
+    describe('display of each group', () => {
+        const organization = {
+            type: 'ORGANIZATION' as const,
+            email: 'jane@example.com',
+            country: 'NL' as CountryCode,
+            companyLegalName: 'Acme BV',
+            companyVatNumber: 'NL863950310B01',
+            addressLine1: 'Main Street 1',
+            city: 'Utrecht',
+        };
+
+        it('offers every input and the type switch without a display', () => {
+            const { wrapper } = mountForm(organization);
+
+            for (const name of ['email', 'address_line_1', 'legal_name', 'vat_number']) {
+                expect(fieldRoot(wrapper, name).exists()).toBe(true);
+            }
+            expect(wrapper.find('[name="country"]').exists()).toBe(true);
+            expect(wrapper.text()).toContain('Company purchase');
+        });
+
+        it('shows a read-only group as its value, without an input', () => {
+            const { wrapper } = mountForm(organization, {
+                display: {
+                    email: 'READ_ONLY',
+                    address: 'READ_ONLY',
+                    customer_details: 'READ_ONLY',
+                },
+            });
+
+            for (const name of ['email', 'address_line_1', 'legal_name']) {
+                expect(fieldRoot(wrapper, name).exists()).toBe(false);
+            }
+            expect(wrapper.find('[name="country"]').exists()).toBe(false);
+            expect(wrapper.text()).toContain('jane@example.com');
+            expect(wrapper.text()).toContain('Main Street 1');
+            expect(wrapper.text()).toContain('Utrecht');
+            expect(wrapper.text()).toContain('Netherlands');
+            expect(wrapper.text()).toContain('Acme BV');
+            expect(fieldRoot(wrapper, 'vat_number').exists()).toBe(true);
+        });
+
+        it('renders nothing of a hidden group', () => {
+            const { wrapper } = mountForm(organization, {
+                display: { email: 'HIDDEN', tax_ids: 'HIDDEN' },
+            });
+
+            expect(fieldRoot(wrapper, 'email').exists()).toBe(false);
+            expect(fieldRoot(wrapper, 'vat_number').exists()).toBe(false);
+            expect(wrapper.text()).not.toContain('jane@example.com');
+            expect(wrapper.text()).not.toContain('NL863950310B01');
+            expect(fieldRoot(wrapper, 'legal_name').exists()).toBe(true);
+        });
+
+        it('does not require a field the customer cannot edit', async () => {
+            const { checkoutForm } = mountForm(
+                { type: 'ORGANIZATION' },
+                {
+                    display: {
+                        email: 'HIDDEN',
+                        address: 'READ_ONLY',
+                        customer_details: 'READ_ONLY',
+                    },
+                },
+            );
+
+            expect(await checkoutForm.validation.value.$validate()).toBe(true);
+        });
+
+        it('still requires an editable field', async () => {
+            const { checkoutForm } = mountForm(
+                { type: 'ORGANIZATION' },
+                { display: { email: 'EDITABLE', address: 'HIDDEN', customer_details: 'HIDDEN' } },
+            );
+
+            expect(await checkoutForm.validation.value.$validate()).toBe(false);
+            expect(checkoutForm.validation.value.email.$invalid).toBe(true);
+            expect(checkoutForm.validation.value.country.$invalid).toBe(false);
+        });
+
+        it('asks an individual for their name once told how to show customer details', () => {
+            const individual = { email: 'jane@example.com', country: 'NL' as CountryCode };
+
+            expect(fieldRoot(mountForm(individual).wrapper, 'first_name').exists()).toBe(false);
+
+            const { wrapper } = mountForm(individual, {
+                display: { customer_details: 'EDITABLE' },
+            });
+            expect(fieldRoot(wrapper, 'first_name').exists()).toBe(true);
+            expect(fieldRoot(wrapper, 'last_name').exists()).toBe(true);
+        });
+
+        it('marks a name part as required when it is asked for', () => {
+            const { wrapper } = mountForm(
+                { email: 'jane@example.com', country: 'NL' as CountryCode },
+                { display: { customer_details: 'EDITABLE' }, alsoRequired: ['lastName'] },
+            );
+            const isRequired = (name: string) =>
+                wrapper
+                    .findAllComponents({ name: 'Input' })
+                    .find((input) => input.props('name') === name)
+                    ?.props('required');
+
+            expect(isRequired('last_name')).toBe(true);
+            expect(isRequired('first_name')).toBe(false);
+        });
+
+        it('opens the billing address when its city is required', () => {
+            const { wrapper } = mountForm(
+                { email: 'jane@example.com', country: 'NL' as CountryCode },
+                { isBillingInformationMandatory: false, alsoRequired: ['city'] },
+            );
+
+            expect(fieldRoot(wrapper, 'city').exists()).toBe(true);
+        });
+
+        it('opens the billing address when a part of it is required', () => {
+            const { wrapper } = mountForm(
+                { email: 'jane@example.com', country: 'NL' as CountryCode },
+                { isBillingInformationMandatory: false, alsoRequired: ['addressLine1'] },
+            );
+
+            expect(fieldRoot(wrapper, 'address_line_1').exists()).toBe(true);
+            expect(wrapper.text()).not.toContain('More billing details');
+        });
+    });
+
+    describe('with the type locked', () => {
+        it('hides the switch and keeps the company fields of an organization', () => {
+            const { wrapper } = mountForm(
+                { type: 'ORGANIZATION', email: 'jane@example.com', country: 'NL' as CountryCode },
+                { isTypeLocked: true },
+            );
+
+            expect(wrapper.text()).not.toContain('Company purchase');
+            expect(fieldRoot(wrapper, 'legal_name').exists()).toBe(true);
+        });
+
+        it('shows no empty section for an individual with nothing to show', () => {
+            const { wrapper } = mountForm(
+                { email: 'jane@example.com', country: 'NL' as CountryCode },
+                { isTypeLocked: true },
+            );
+
+            expect(wrapper.text()).not.toContain('Company purchase');
+            expect(wrapper.findAll('section')).toHaveLength(1);
         });
     });
 });

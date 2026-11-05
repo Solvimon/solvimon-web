@@ -39,10 +39,20 @@ export interface CheckoutAuthorizationContext extends AuthorizePaymentInitPricin
     };
 }
 
+/**
+ * Not in `@solvimon/solvimon-types` yet. The session decides the payer, the amount and the payment
+ * method; `version` is the one the price on screen was previewed at.
+ */
+export interface CheckoutSessionAuthorizationContext {
+    type: 'CHECKOUT_SESSION';
+    checkout_session: { portal_url_id: string; version: number };
+}
+
 export type PaymentAuthorizationContext =
     | AuthorizePaymentPayload['context']
     | CheckoutAuthorizationContext
-    | ChargeOnDemandAuthorizationContext;
+    | ChargeOnDemandAuthorizationContext
+    | CheckoutSessionAuthorizationContext;
 
 interface BasePaymentIntegrationFormProps {
     paymentMethodOptions: PaymentMethodOptionsResponse;

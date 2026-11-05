@@ -127,6 +127,7 @@
   "checkout.order_summary_block.renews_at": "Then {amount} per {period}",
   "checkout.order_summary_block.subtotal": "Subtotal",
   "checkout.order_summary_block.title": "Order summary",
+  "checkout.order_summary_block.updating": "Updating the price",
   "checkout.order_summary_block.usage.billed_period": "Billed {period}",
   "checkout.order_summary_block.usage.rate_per_unit": "{amount} / {unit}",
   "checkout.order_summary_block.usage.rate_percentage": "{percentage} of {unit} value",

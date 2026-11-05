@@ -42,6 +42,14 @@ export default defineConfig({
                 headless: true,
             },
         },
+        // Safari's engine: Apple Pay, the only express payment method, only runs there.
+        {
+            name: 'webkit',
+            use: {
+                ...devices['Desktop Safari'],
+                headless: true,
+            },
+        },
     ],
     // Web server configuration - Playwright will start the test app automatically
     webServer: {

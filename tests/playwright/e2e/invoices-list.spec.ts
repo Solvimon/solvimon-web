@@ -58,7 +58,14 @@ test.describe('Invoices list', () => {
         await expect(invoices.getByText('Paid', { exact: true })).toHaveCount(2);
     });
 
-    test('lets the keyboard reach each row by the invoice it opens', async ({ page }) => {
+    test('lets the keyboard reach each row by the invoice it opens', async ({
+        page,
+        browserName,
+    }) => {
+        test.skip(
+            browserName === 'webkit',
+            "Safari's Tab skips buttons unless Full Keyboard Access is turned on",
+        );
         api = await mountLoaded(page, {
             invoices: [
                 anInvoiceRecord({ id: 'inv_1', number: 'INV-1' }),

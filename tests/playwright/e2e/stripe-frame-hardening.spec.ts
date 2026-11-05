@@ -193,10 +193,11 @@ test.describe('Stripe frame hardening', () => {
             });
         });
 
-        // Known limitation, expected to fail until it is decided on: an email typed after the card
-        // changes the fields the Payment Element hides, which it is set up anew for, so the card is
-        // dropped.
-        test.fail('keeps the card when the email is typed after it', async ({ page }) => {
+        // Known limitation in Chromium, expected to fail there until it is decided on: an email typed
+        // after the card changes the fields the Payment Element hides, which it is set up anew for,
+        // so the card is dropped. WebKit keeps it.
+        test('keeps the card when the email is typed after it', async ({ page, browserName }) => {
+            test.fail(browserName === 'chromium', 'The Payment Element drops the card in Chromium');
             api = await mountCheckout(page, {
                 configuration: { countryCode: 'NL' },
                 portalObject: aPortalObject({ successUrl: '' }),

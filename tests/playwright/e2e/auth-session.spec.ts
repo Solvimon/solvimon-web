@@ -105,9 +105,11 @@ test.describe('Auth session', () => {
         });
 
         expect(api.calls('refreshToken')).toHaveLength(1);
-        DATA_ENDPOINTS.forEach((endpoint) =>
-            expect(api.calls(endpoint)).toHaveLength(CALLS_PER_LOAD[endpoint] ?? 1),
-        );
+        // Waited for, not read once: the overview asks for every subscription after it shows,
+        // so on a slower browser that call is still to come when the billing information appears.
+        for (const endpoint of DATA_ENDPOINTS) {
+            await expect.poll(() => api.calls(endpoint).length).toBe(CALLS_PER_LOAD[endpoint] ?? 1);
+        }
     });
 
     test('refreshes once when the tab comes back after the laptop slept', async ({ page }) => {

@@ -35,11 +35,7 @@ export function resolvablePackages(packageJson) {
 
 /** The declaration files `package.json` points a consumer at. */
 export function publicEntryPoints(distDir) {
-    const entries = [
-        join(distDir, 'index.d.ts'),
-        join(distDir, 'core/index.d.ts'),
-        join(distDir, 'core/action-request.types.d.ts'),
-    ];
+    const entries = [join(distDir, 'index.d.ts'), join(distDir, 'core/index.d.ts')];
 
     for (const group of ['screens', 'components']) {
         const groupDir = join(distDir, group);

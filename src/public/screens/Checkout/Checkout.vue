@@ -557,6 +557,7 @@ const orderSummaryProps = computed(() => ({
     isPaid: isPaid.value,
     isUsageBased: isUsageBased.value,
     usagePriceGroups: usagePriceGroups.value,
+    isUpdating: isInvoicePreviewPending.value || isInvoicePreviewStale.value,
 }));
 
 const expressPaymentMethodBillingInformation = computed(() => {

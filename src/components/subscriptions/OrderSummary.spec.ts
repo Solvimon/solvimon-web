@@ -53,9 +53,9 @@ const invoiceOf = (...groups: ReturnType<typeof group>[]) =>
         periods: [{ groups }],
     }) as unknown as Invoice;
 
-const mountSummary = (invoice: Invoice) =>
+const mountSummary = (invoice: Invoice, isUpdating?: boolean) =>
     mount(OrderSummary, {
-        props: { subscription, invoice, countryCode: 'NL' },
+        props: { subscription, invoice, countryCode: 'NL', isUpdating },
         global: { stubs: { SubscriptionSummary: true } },
     });
 const countsOf = (wrapper: ReturnType<typeof mount>) =>
@@ -236,5 +236,23 @@ describe('OrderSummary', () => {
                 '+ Usage',
             );
         });
+    });
+
+    it('says the price is being updated and marks the invoice busy while a change is priced', () => {
+        const wrapper = mountSummary(invoiceOf(), true);
+
+        expect(wrapper.find('.sv-order-summary__updating[role="status"]').exists()).toBe(true);
+        const totals = wrapper.find('.sv-order-summary__totals');
+        expect(totals.attributes('aria-busy')).toBe('true');
+        expect(totals.classes()).toContain('opacity-60');
+    });
+
+    it('shows the invoice as current when nothing is being priced', () => {
+        const wrapper = mountSummary(invoiceOf());
+
+        expect(wrapper.find('.sv-order-summary__updating').exists()).toBe(false);
+        const totals = wrapper.find('.sv-order-summary__totals');
+        expect(totals.attributes('aria-busy')).not.toBe('true');
+        expect(totals.classes()).not.toContain('opacity-60');
     });
 });

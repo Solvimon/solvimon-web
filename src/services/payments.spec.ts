@@ -104,6 +104,46 @@ describe('payments service', () => {
             expect(mockRequest.mock.calls[0][0].data.context).toEqual(context);
         });
 
+        it('sends the amount along for an order it does not price itself', async () => {
+            mockRequest.mockResolvedValue({});
+            const amount = { quantity: '10.00', currency: 'EUR' };
+
+            const { authorizePayment } = createPaymentsService();
+            await authorizePayment({
+                payment_acceptor_id: 'pacc_1',
+                amount,
+                context: { type: 'INIT_PRICING_PLAN_SUBSCRIPTION' },
+            } as unknown as AuthorizePaymentData);
+
+            expect(mockRequest.mock.calls[0][0].data.amount).toEqual(amount);
+        });
+
+        it('leaves the amount to a checkout session, which charges its own previewed total', async () => {
+            mockRequest.mockResolvedValue({});
+            const context = {
+                type: 'CHECKOUT_SESSION',
+                checkout_session: { portal_url_id: 'purl_1', version: 3 },
+            } as const;
+
+            const { authorizePayment } = createPaymentsService();
+            await authorizePayment({
+                payment_acceptor_id: 'pacc_1',
+                payment_gateway_variant: 'ADYEN',
+                adyen: { payment_method: {} },
+                amount: { quantity: '10.00', currency: 'EUR' },
+                context,
+                return_url: 'https://shop.test/return',
+            } as unknown as AuthorizePaymentData);
+
+            expect(mockRequest.mock.calls[0][0].data).toEqual({
+                payment_acceptor_id: 'pacc_1',
+                payment_gateway_variant: 'ADYEN',
+                adyen: { payment_method: {} },
+                context,
+                return_url: 'https://shop.test/return',
+            });
+        });
+
         it('passes a failed request on to the caller', async () => {
             const error = new Error('declined');
             mockRequest.mockRejectedValue(error);

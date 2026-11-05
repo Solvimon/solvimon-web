@@ -437,6 +437,67 @@ describe('PaymentIntegrationFormAdyen', () => {
             expect(actions.resolve).toHaveBeenCalledWith({ resultCode: 'Error' });
         });
 
+        it('hands the refusal the API answered with on beside the failure the drop-in reports', async () => {
+            const apiError = new ApiError({ statusCode: 400, field: 'checkout_session.status' });
+            const data = { resultCode: 'Error' };
+            mockAuthorizePayment.mockRejectedValue(apiError);
+
+            const wrapper = await mountComponent();
+            await submitThroughDropIn();
+            captured.checkoutConfig?.onPaymentFailed?.(data);
+
+            const failure = wrapper.emitted('payment-failed')?.[0]?.[0];
+            expect(failure).toMatchObject({ code: 'AUTHORIZATION_FAILED', apiError });
+            expect((failure as { error: unknown }).error).toBe(data);
+        });
+
+        it('does not hand an earlier refusal on with the failure of a later payment', async () => {
+            mockAuthorizePayment.mockRejectedValueOnce(new ApiError({ statusCode: 400 }));
+            mockAuthorizePayment.mockResolvedValueOnce(refusedResponse);
+
+            const wrapper = await mountComponent();
+            await submitThroughDropIn();
+            // The drop-in never reported the refused one: the customer closed a wallet sheet instead.
+            captured.checkoutConfig?.onError?.({ name: 'CANCEL' });
+            await submitThroughDropIn();
+            captured.checkoutConfig?.onPaymentFailed?.({ resultCode: 'Refused' });
+
+            expect(mockAuthorizePayment).toHaveBeenCalledTimes(2);
+            expect(wrapper.emitted('payment-failed')?.[0]?.[0]).not.toHaveProperty('apiError');
+        });
+
+        it('reports a failure the API did not refuse with the gateway data alone', async () => {
+            const data = { resultCode: 'Refused' };
+
+            const wrapper = await mountComponent();
+            captured.checkoutConfig?.onPaymentFailed?.(data);
+
+            const failure = wrapper.emitted('payment-failed')?.[0]?.[0];
+            expect(failure).toEqual({
+                code: 'AUTHORIZATION_FAILED',
+                message: 'Payment failed',
+                error: data,
+                reference: expect.stringMatching(/^SV-/),
+            });
+        });
+
+        it('pays a checkout session on its context alone, with no customer, method or reference', async () => {
+            mockAuthorizePayment.mockResolvedValue(authorizedResponse);
+            const context = {
+                type: 'CHECKOUT_SESSION',
+                checkout_session: { portal_url_id: 'purl_1', version: 4 },
+            } as const;
+
+            await mountComponent({ customerId: undefined, context });
+            await submitThroughDropIn();
+
+            const body = mockAuthorizePayment.mock.calls[0]?.[0];
+            expect(body.context).toEqual(context);
+            expect(body).not.toHaveProperty('customer_id');
+            expect(body).not.toHaveProperty('payment_method_id');
+            expect(body).not.toHaveProperty('reference');
+        });
+
         describe('storing the payment method', () => {
             const cardConfig = () => captured.dropInConfig?.paymentMethodsConfiguration?.card;
 

@@ -133,6 +133,40 @@ describe('usePaymentMethodOptions', () => {
         expect(paymentMethodOptions.paymentMethodOptions.value).toEqual(response);
     });
 
+    it('looks up a checkout session by its link alone', async () => {
+        mockGetPaymentMethodOptions.mockResolvedValue([]);
+
+        await usePaymentMethodOptions().get({ portalUrlId: 'purl_1' });
+
+        expect(mockGetPaymentMethodOptions).toHaveBeenCalledWith({ portalUrlId: 'purl_1' });
+    });
+
+    it('asks again for a held payload when asked for a fresh answer', async () => {
+        mockGetPaymentMethodOptions.mockResolvedValueOnce(optionsFor('NL'));
+        mockGetPaymentMethodOptions.mockResolvedValueOnce(optionsFor('DE'));
+        const options = usePaymentMethodOptions();
+
+        await options.get({ portalUrlId: 'purl_1' });
+        await options.get({ portalUrlId: 'purl_1' }, { fresh: true });
+
+        expect(mockGetPaymentMethodOptions).toHaveBeenCalledTimes(2);
+        expect(options.paymentMethodOptions.value).toEqual(optionsFor('DE'));
+    });
+
+    it('does not join a lookup in flight when asked for a fresh answer', async () => {
+        const lookups = controlledLookups();
+        const options = usePaymentMethodOptions();
+
+        const first = options.get({ portalUrlId: 'purl_1' });
+        const fresh = options.get({ portalUrlId: 'purl_1' }, { fresh: true });
+        lookups[1]!.resolve(optionsFor('DE'));
+        lookups[0]!.resolve(optionsFor('NL'));
+        await Promise.all([first, fresh]);
+
+        expect(mockGetPaymentMethodOptions).toHaveBeenCalledTimes(2);
+        expect(options.paymentMethodOptions.value).toEqual(optionsFor('DE'));
+    });
+
     it('requests again when the payload changes', async () => {
         mockGetPaymentMethodOptions.mockResolvedValue(
             [] as unknown as PaymentMethodOptionsResponse,

@@ -14,6 +14,8 @@ export interface SdkError {
     code: ErrorCode;
     message: string;
     error?: unknown;
+    /** The API's answer when it refused the payment, where `error` holds the gateway's own. */
+    apiError?: unknown;
     /**
      * The reference for this visit, shown to the customer so they can quote it when they report
      * the failure. The same value is on every `LogEntry` the session emitted.

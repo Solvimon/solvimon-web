@@ -16,6 +16,7 @@ import { buildUrl } from './requests.lib';
 import type {
     ArchivePaymentMethodPayload,
     GetPaymentMethodOptionsByCustomerIdPayload,
+    GetPaymentMethodOptionsByPortalUrlIdPayload,
     GetPaymentMethodOptionsBySubscriptionIdPayload,
     GetPaymentMethodOptionsPayload,
     GetPaymentMethodsPayload,
@@ -85,23 +86,29 @@ export function createPaymentMethodsService() {
     function getPaymentMethodOptions(
         params: GetPaymentMethodOptionsBySubscriptionIdPayload,
     ): Promise<PaymentMethodOptionsResponse>;
+    function getPaymentMethodOptions(
+        params: GetPaymentMethodOptionsByPortalUrlIdPayload,
+    ): Promise<PaymentMethodOptionsResponse>;
     function getPaymentMethodOptions({
         customerId,
         country,
         subscriptionId,
         invoiceId,
         amount,
+        portalUrlId,
     }: GetPaymentMethodOptionsPayload): Promise<PaymentMethodOptionsResponse> {
         return request<PaymentMethodOptionsResponse>({
             url: buildUrl(config.apiUrls.config, 'portal', 'payment-method-options'),
             options: { method: 'POST' },
-            data: {
-                ...(customerId && { customer_id: customerId }),
-                ...(country && { country }),
-                ...(subscriptionId && { pricing_plan_subscription_id: subscriptionId }),
-                ...(invoiceId && { invoice_id: invoiceId }),
-                amount,
-            },
+            data: portalUrlId
+                ? { portal_url_id: portalUrlId, shopper_interaction: 'ECOMMERCE' }
+                : {
+                      ...(customerId && { customer_id: customerId }),
+                      ...(country && { country }),
+                      ...(subscriptionId && { pricing_plan_subscription_id: subscriptionId }),
+                      ...(invoiceId && { invoice_id: invoiceId }),
+                      amount,
+                  },
         });
     }
 

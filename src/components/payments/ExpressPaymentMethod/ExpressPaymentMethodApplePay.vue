@@ -434,7 +434,7 @@ onBeforeUnmount(unmountApplePay);
 </script>
 
 <template>
-    <ExpressPaymentMethodButton v-if="isVisible" type="applepay" @click="handleClick" />
+    <ExpressPaymentMethodButton v-if="isVisible" @click="handleClick" />
     <div class="absolute h-[1px] w-[1px] overflow-hidden opacity-0">
         <div ref="applePayButtonRef"></div>
     </div>

@@ -1,12 +1,12 @@
 import type {
     Address,
     Amount,
-    AuthorizePaymentPayload,
     Invoice,
     PaymentMethodOptionsResponse,
 } from '@solvimon/solvimon-types';
 import type { ExpressPaymentMethodProps } from '@/components/payments/ExpressPaymentMethod/ExpressPaymentMethod.types';
 import type { CheckoutFormState } from '@/components/customer/CheckoutForm/CheckoutForm.types';
+import type { PaymentAuthorizationContext } from '@/components/payments/PaymentIntegrationForm/PaymentIntegrationForm.types';
 
 export interface ExpressPaymentMethodsProps {
     amount: Amount;
@@ -22,7 +22,7 @@ export interface ExpressPaymentMethodsProps {
         trialInvoicePreview: Invoice;
         invoicePreview: Invoice;
     }>;
-    context?: AuthorizePaymentPayload['context'];
+    context?: PaymentAuthorizationContext;
     validateOnSubmit?: () => Promise<boolean>;
 }
 

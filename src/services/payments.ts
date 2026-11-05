@@ -77,12 +77,14 @@ export const createPaymentsService = () => {
      * Authorize a payment.
      */
     function authorizePayment(data: AuthorizePaymentRequestPayload) {
+        const { amount: _amount, ...withoutAmount } = data;
         return request<AuthorizePaymentResponse>({
             url: buildUrl(config.apiUrls.transaction, ...BASE_PATH, 'authorize'),
             options: {
                 method: 'POST',
             },
-            data,
+            // A checkout session charges its own previewed total and refuses an amount sent along.
+            data: data.context?.type === 'CHECKOUT_SESSION' ? withoutAmount : data,
         });
     }
 

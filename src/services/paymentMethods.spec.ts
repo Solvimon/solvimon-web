@@ -136,5 +136,16 @@ describe('paymentMethods service', () => {
                 country: 'NL',
             });
         });
+
+        it('asks for a checkout session by its link alone, as the session decides the rest', async () => {
+            const { getPaymentMethodOptions } = createPaymentMethodsService();
+            await getPaymentMethodOptions({ portalUrlId: 'purl_1' });
+
+            expect(mockRequest).toHaveBeenCalledWith({
+                url: 'https://api.test/portal/payment-method-options',
+                options: { method: 'POST' },
+                data: { portal_url_id: 'purl_1', shopper_interaction: 'ECOMMERCE' },
+            });
+        });
     });
 });

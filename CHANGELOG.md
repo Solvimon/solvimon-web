@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0-alpha.30] - 2026-11-06
+
 ### Added
 
 - An add-on in the checkout's **Customize plan** block that has per-seat or one-off flat items, on its own or in a pick-any group, is bought in a quantity. **Add to subscription** puts it in the order at the plan's default for what it counts, for the currency and billing period on offer (`default_seats_value` / `default_units`, or else 1), and turns into a seats input that does not go below that default. Pressing minus at the default takes the add-on out of the order again and brings back the button; a lower number typed into the input is not applied, and falls back to the default on blur. An add-on with per-seat items counts its seats, and a one-off flat item next to them is bought in its own default units. The quantity is sent as the add-on's `seats_values` or `units` for the prices on offer only, in the invoice preview and in `/init`, so the subscription is created with it; it moves to the new prices when the country or billing period changes, and survives a reload of the form. An add-on in the order without a quantity, such as one the host preselects, starts at its default. An add-on the order already gives seats or units of its own keeps the plan's steppers, which do not go below the order's quantity, and add-ons in a pick-at-most-one group and those without such items stay a toggle. This needs `@solvimon/solvimon-ui` 1.24.1, the first release whose `StepInput` takes `removable`.

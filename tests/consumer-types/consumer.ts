@@ -10,6 +10,7 @@ import type {
     IntlMessages,
     LogEntry,
     PlatformBranding,
+    SolvimonBranding,
     PortalUrl,
     ExperimentalFeature,
     ScreenConfigurationById,
@@ -22,7 +23,11 @@ declare const portalObject: CustomerPortalUrl;
 
 /* The types a host writes against resolve to something real, not `any`. */
 export const environment: Environment = 'TEST';
-export const branding: PlatformBranding = { colors: { primary: '#0066cc' } };
+export const branding: SolvimonBranding = { colors: { primary: '#0066cc' } };
+/* An emblem needs only its URL, and the branding the API returns can be passed on as it is. */
+export const emblemOnly: SolvimonBranding = { emblem: { public_url: 'https://cdn.example/e.png' } };
+declare const fromApi: PlatformBranding;
+export const passedOn: SolvimonBranding = fromApi;
 export const messages: IntlMessages = { 'invoices_list.title': 'Bills' };
 export const country: CountryCode = 'NL';
 export const amount: Amount = { quantity: '1000', currency: 'EUR' };
@@ -42,7 +47,7 @@ export const notAnEnvironment: Environment = 'PRODUCTION';
 export const notAPublishedEnvironment: Environment = 'DEV';
 // @ts-expect-error - only ISO 3166-1 alpha-2 codes are accepted
 export const notACountry: CountryCode = 'Netherlands';
-export const brandingColour: PlatformBranding = {
+export const brandingColour: SolvimonBranding = {
     // @ts-expect-error - brand colours are strings
     colors: { primary: 0x0066cc },
 };

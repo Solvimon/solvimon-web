@@ -10,6 +10,8 @@ import { createSolvimonCore } from '@solvimon/solvimon-web/core';
 const solvimon = createSolvimonCore({
     environment: 'TEST',
     locale: 'en-US',
+    // The platform branding the API returns can be passed as it is. Its emblem is the avatar
+    // the checkout and a subscription's details show.
     branding: { colors: { primary: '#0066cc', secondary: '#004499' } },
 });
 
@@ -48,7 +50,7 @@ import type {
     CheckoutPagePortalUrl,
     PortalUrl,
     Environment,
-    PlatformBranding,
+    SolvimonBranding,
     IntlMessages,
     CountryCode,
     Amount,

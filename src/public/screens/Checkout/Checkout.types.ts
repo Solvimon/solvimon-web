@@ -3,10 +3,6 @@ import type { SdkError } from '@/types/errors';
 
 export interface CheckoutConfiguration {
     /**
-     * The avatar for the checkout.
-     */
-    avatar?: string;
-    /**
      * Optional two letter country code for the customer. When supplied, the correct
      * payment method options and tax will be shown.
      */
@@ -35,6 +31,12 @@ export interface CheckoutConfiguration {
 
 export interface CheckoutProps {
     configuration?: CheckoutConfiguration;
+}
+
+/** What the entry hands the checkout screen on top of the host's configuration. */
+export interface CheckoutViewProps extends CheckoutProps {
+    /** The branding emblem, shown in the order summary. */
+    avatar?: string;
 }
 
 export interface CheckoutEmits {

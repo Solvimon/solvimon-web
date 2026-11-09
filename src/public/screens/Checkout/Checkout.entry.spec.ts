@@ -15,7 +15,7 @@ vi.mock('@/components/providers', () => ({
 vi.mock('@/public/screens/Checkout/Checkout.vue', () => ({
     default: defineComponent({
         name: 'CheckoutStub',
-        props: { configuration: { type: Object, required: true } },
+        props: { configuration: { type: Object, required: true }, avatar: String },
         setup: () => () => h('div'),
     }),
 }));
@@ -34,6 +34,11 @@ const passedConfiguration = (props: Record<string, unknown>) =>
     mount(CheckoutEntry, { props: props as never })
         .findComponent({ name: 'CheckoutStub' })
         .props('configuration');
+
+const passedAvatar = (props: Record<string, unknown>) =>
+    mount(CheckoutEntry, { props: props as never })
+        .findComponent({ name: 'CheckoutStub' })
+        .props('avatar');
 
 const branding = { emblem: { public_url: 'https://cdn.example/emblem.png' } };
 
@@ -89,16 +94,11 @@ describe('Checkout entry', () => {
         });
     });
 
-    it('prefers the avatar the host configured to the branding emblem', () => {
-        expect(
-            passedConfiguration({
-                configuration: { avatar: 'https://cdn.example/host.png' },
-                branding,
-            }).avatar,
-        ).toBe('https://cdn.example/host.png');
+    it('shows the branding emblem as the avatar', () => {
+        expect(passedAvatar({ branding })).toBe('https://cdn.example/emblem.png');
     });
 
-    it('shows the branding emblem when the host configured no avatar', () => {
-        expect(passedConfiguration({ branding }).avatar).toBe('https://cdn.example/emblem.png');
+    it('shows no avatar without a branding emblem', () => {
+        expect(passedAvatar({})).toBeUndefined();
     });
 });

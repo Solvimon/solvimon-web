@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+- **Breaking:** the element properties `allowedPortalTypes`, `primaryColor`, `secondaryColor` and `isShadowRoot`. Every element declared them, carried over from its internal providers, but none read them: each element fixes the portal types it accepts, and takes its colours from `branding.colors`. Setting one did nothing and still does nothing; it is just no longer a property of the element.
+
 ## [0.1.0-alpha.30] - 2026-11-06
 
 ### Added

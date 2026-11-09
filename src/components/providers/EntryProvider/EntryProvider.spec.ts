@@ -6,10 +6,15 @@ import type { EntryProviderProps } from './EntryProvider.types';
 import type { LogEntry } from '@/components/providers/LoggerProvider/LoggerProvider.types';
 import { createTestPortalObject } from '@/test-utils/portalObjectFixture';
 
+const { linkEnding } = vi.hoisted(() => ({
+    linkEnding: { current: undefined as object | undefined },
+}));
+
 vi.mock('@/components/providers/AuthProvider/AuthProvider.lib', async (importOriginal) => ({
     ...(await importOriginal<object>()),
     getAuth: () => ({
-        accessToken: ref('access-token'),
+        accessToken: ref(linkEnding.current ? undefined : 'access-token'),
+        status: ref(linkEnding.current ?? { state: 'ready' }),
         getFreshAccessToken: async () => 'access-token',
         renewAccessToken: async () => undefined,
     }),
@@ -73,6 +78,7 @@ describe('EntryProvider', () => {
     afterEach(() => {
         vi.useRealTimers();
         vi.restoreAllMocks();
+        linkEnding.current = undefined;
     });
 
     describe('required properties', () => {
@@ -184,6 +190,31 @@ describe('EntryProvider', () => {
 
             expect(wrapper.find('.own-notice').exists()).toBe(true);
             expect(wrapper.find('.sv-portal-unavailable').exists()).toBe(false);
+        });
+
+        it('tells the notice an entry gives why the link ended', async () => {
+            linkEnding.current = {
+                state: 'ended',
+                reason: 'closed',
+                checkoutSessionStatus: 'FAILED',
+            };
+            const notice = vi.fn(() => h('p', { class: 'own-notice' }));
+            mount(EntryProvider, {
+                props: {
+                    entry: {
+                        environment: 'TEST',
+                        portalObject: createTestPortalObject(),
+                    } as EntryProviderProps['entry'],
+                    componentName: 'solvimon-test',
+                    allowedPortalTypes: ['CUSTOMER'],
+                },
+                slots: { default: () => h(Content), 'portal-unavailable': notice },
+            });
+            await settle();
+
+            expect(notice).toHaveBeenCalledWith({
+                ending: { state: 'ended', reason: 'closed', checkoutSessionStatus: 'FAILED' },
+            });
         });
 
         it('shows no notice for a portal of a type the element does not accept', async () => {

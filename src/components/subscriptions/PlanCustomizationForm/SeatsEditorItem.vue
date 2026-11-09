@@ -22,13 +22,18 @@ const { $t } = useIntl();
 const { formatTimePeriod } = useTimePeriod();
 
 const isExpanded = ref(false);
+const clampCount = ref(0);
 
 const seatsNumber = computed<number>({
     get: () => +(model.value.number || FALLBACK_METER_NUMBER),
     set(number: number) {
+        const max = props.maxValue?.number ? +props.maxValue.number : undefined;
+        // Remounted so the field shows the maximum it was lowered to, not what was typed.
+        if (max !== undefined && number > max) clampCount.value++;
+        const value = max !== undefined ? Math.min(number, max) : number;
         model.value = {
             ...model.value,
-            number: number !== undefined ? number.toString() : undefined,
+            number: value !== undefined ? value.toString() : undefined,
         };
     },
 });
@@ -46,9 +51,12 @@ const isCollapsible = computed(() => !!seats.value.pricing?.tiered?.bands);
         <div class="flex flex-row-reverse gap-4 md:flex-row">
             <div class="w-24 shrink-0 justify-start md:w-32">
                 <StepInput
+                    :key="clampCount"
                     v-model="seatsNumber"
                     size="sm"
                     :min="defaultValue?.number ? +defaultValue.number : undefined"
+                    :max="maxValue?.number ? +maxValue.number : undefined"
+                    :disabled="disabled"
                 />
             </div>
             <div

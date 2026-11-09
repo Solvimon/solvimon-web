@@ -82,6 +82,10 @@
             "types": "./dist/screens/Checkout/Checkout.ce.d.ts",
             "default": "./dist/screens/Checkout/Checkout.mjs"
         },
+        "./screens/checkout-session": {
+            "types": "./dist/screens/CheckoutSession/CheckoutSession.ce.d.ts",
+            "default": "./dist/screens/CheckoutSession/CheckoutSession.mjs"
+        },
         "./screens/customer-overview": {
             "types": "./dist/screens/CustomerOverview/CustomerOverview.ce.d.ts",
             "default": "./dist/screens/CustomerOverview/CustomerOverview.mjs"

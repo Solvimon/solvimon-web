@@ -9,18 +9,11 @@ import {
     useTimePeriod,
 } from '@solvimon/solvimon-ui';
 import { computed, defineAsyncComponent, nextTick, onMounted, ref, watch } from 'vue';
-import type {
-    Amount,
-    AuthorizePaymentPayload,
-    BillingPeriod,
-    CountryCode,
-} from '@solvimon/solvimon-types';
+import type { Amount, CountryCode } from '@solvimon/solvimon-types';
 import type { CheckoutEmits, CheckoutProps } from './Checkout.types';
-import { useCheckoutView } from './useCheckout.view';
+import type { CheckoutPromotionCode, CheckoutSource } from './Checkout.source.types';
 import type { ExpressBillingInformation } from '@/components/payments/ExpressPaymentMethod/ExpressPaymentMethod.types';
-import { usePromotionCode } from '@/composables/usePromotionCode';
-import { useAutoApplyPromotionCode } from '@/composables/useAutoApplyPromotionCode';
-import { usePortal } from '@/components/providers/PortalProvider/composables/usePortal';
+import type { PaymentAuthorizationContext } from '@/components/payments/PaymentIntegrationForm/PaymentIntegrationForm.types';
 import CheckoutForm from '@/components/customer/CheckoutForm/CheckoutForm.vue';
 import CheckoutTitle from '@/components/checkout/CheckoutTitle.vue';
 import { isInvoiceUsageBased } from '@/utils/invoice';
@@ -52,7 +45,6 @@ import {
 } from '@/utils/subscription';
 import SecurePaymentsKPI from '@/components/payments/SecurePaymentsKPI/SecurePaymentsKPI.vue';
 import { safeUrlRedirect } from '@/utils/url';
-import { CodedError } from '@/utils/error';
 
 const PaymentIntegrationForm = defineAsyncComponent(
     () => import('@/components/payments/PaymentIntegrationForm/PaymentIntegrationForm.vue'),
@@ -71,7 +63,7 @@ const PlanCustomizationEditor = defineAsyncComponent(
     () => import('@/components/subscriptions/PlanCustomizationForm/PlanCustomizationEditor.vue'),
 );
 
-const props = defineProps<CheckoutProps>();
+const props = defineProps<CheckoutProps & { source: CheckoutSource }>();
 const emit = defineEmits<CheckoutEmits>();
 const configuration = computed(() => props.configuration);
 
@@ -80,58 +72,52 @@ const paymentIntegrationFormRef = ref();
 const logger = useLogger();
 const { $t, locale } = useIntl();
 const { formatTimePeriod } = useTimePeriod();
-const portal = usePortal();
 const { isMobileViewport } = useViewport();
 
-logger.info('COMPONENT_INITIALIZED', 'Checkout component initialized');
-
-// Nothing below works with another portal object, so the setup stops here. The error boundary
-// reports it, once, under this code.
-if (portal.value?.type !== 'INIT_PRICING_PLAN_SUBSCRIPTION') {
-    throw new CodedError('INVALID_TOKEN', 'Invalid token');
-}
-
-const subscriptionId = portal.value?.init_pricing_plan_subscription?.pricing_plan_subscription_id;
-const successRedirectUrl = portal.value?.init_pricing_plan_subscription?.success_url;
 // Trimmed so a note of only whitespace renders nothing rather than an empty gap in the column.
-const termsAndConditions = portal.value?.init_pricing_plan_subscription?.note?.trim() || undefined;
-const isShippingAddressRequired =
-    portal.value?.init_pricing_plan_subscription?.use_shipping_addresses === true;
+const termsAndConditions = computed(() => props.source.note.value?.trim() || undefined);
 
 const {
     validatedEmail,
     validatedCountry,
-    paymentMethodOptions,
-    hasPaymentMethodOptionsError,
-    retryPaymentMethodOptions,
     subscription,
     orderMeterValues,
     quantityAddonConfigIds,
-    isPaymentMethodsPending,
     isInvoicePreviewPending,
     isInvoicePreviewStale,
     settleInvoicePreview,
     checkoutForm,
+    customerForms,
+    planCustomizations,
     invoicePreview,
     invoicePreviewByBillingPeriod,
     trialInvoicePreview,
     trialPeriod,
-    authorizationContext,
+    payment,
     isPaid,
     amount,
     recurringAmount,
     hasOneOffCharges,
-    loadInvoicePreview,
-    updateInvoicePreviewOnBillingInformationChange,
+    changeBillingPeriod,
     saveFormStateForRedirect,
     clearSavedFormState,
-} = useCheckoutView({
-    initialCountry: props.configuration?.countryCode,
-    initialEmail: props.configuration?.email,
-    subscriptionId,
-    enabledPricingIds: props.configuration?.enabledPricingIds,
+    successUrl: successRedirectUrl,
+    cancelUrl,
     isShippingAddressRequired,
-});
+} = props.source;
+
+const paymentMethodOptions = computed(() => payment?.paymentMethodOptions.value ?? []);
+const isPaymentMethodsPending = computed(() => payment?.isPaymentMethodsPending.value ?? false);
+const hasPaymentMethodOptionsError = computed(
+    () => payment?.hasPaymentMethodOptionsError.value ?? false,
+);
+const authorizationContext = computed(() => payment?.authorizationContext.value);
+const retryPaymentMethodOptions = () => payment?.retryPaymentMethodOptions();
+const onExpressBillingInformationChange = payment?.updateInvoicePreviewOnBillingInformationChange;
+const paymentCountryCode = computed(
+    () => checkoutForm.form.value.country ?? payment?.countryCode?.value,
+);
+const canPay = computed(() => !!payment && (props.source.canPay?.value ?? true));
 
 const experimentalFeatures = useExperimentalFeature();
 const isExpressCheckoutEnabled = computed(
@@ -141,11 +127,21 @@ const isExpressCheckoutEnabled = computed(
 const isPaymentPending = ref(false);
 const { isFormHeld, handleActionRequired } = usePaymentFormHold(isPaymentPending);
 
+const validatedForms = computed(
+    () => customerForms?.value.map(({ form }) => form) ?? [checkoutForm],
+);
+
+/** Validates every form, so each one shows what it misses. */
+const validateForms = async (): Promise<boolean> => {
+    await Promise.all(validatedForms.value.map((form) => form.validation.value.$validate()));
+    return validatedForms.value.every((form) => !form.validation.value.$invalid);
+};
+
 const handleSubmit = async () => {
-    await checkoutForm.validation.value.$validate();
+    const isValid = await validateForms();
 
     // Without a mounted form nothing would ever answer the submit and end the pending state.
-    if (checkoutForm.validation.value.$invalid || !paymentIntegrationFormRef.value) {
+    if (!isValid || !paymentIntegrationFormRef.value) {
         return;
     }
 
@@ -157,10 +153,18 @@ const handleSubmit = async () => {
 const handlePaymentSubmitting = () => {
     isPaymentPending.value = true;
     paymentErrorMessage.value = null;
-    saveFormStateForRedirect();
+    saveFormStateForRedirect?.();
 };
 
 const paymentErrorMessage = ref<string | null>(null);
+
+const priceChangedMessage = () =>
+    $t({
+        defaultMessage: 'The price changed with your last edit. Check it and pay again.',
+        id: 'checkout.price_changed',
+        description:
+            'Shown when a payment is held back because the customer changed the order while it waited for the price',
+    });
 
 // Both kinds reach this: the card form reports the SDK's own `Error`, an express sheet a plain
 // one. Only the message is read, so the handler asks for no more than that.
@@ -168,19 +172,30 @@ const paymentErrorMessage = ref<string | null>(null);
 const handlePaymentNotSubmitted = () => {
     isPaymentPending.value = false;
     paymentOrder.value = undefined;
-    clearSavedFormState();
+    clearSavedFormState?.();
 };
 
 /** The payment may still go through, so paying again could charge the customer twice. */
 const isPaymentUnconfirmed = ref(false);
 
-const handlePaymentFailed = (error?: { message?: string; code?: string }) => {
+const handlePaymentFailed = (error?: {
+    message?: string;
+    code?: string;
+    error?: unknown;
+    apiError?: unknown;
+}) => {
+    const recovery = payment?.recoverPaymentFailure?.(error);
     isPaymentPending.value = false;
     paymentOrder.value = undefined;
-    clearSavedFormState();
+    clearSavedFormState?.();
 
     if (error?.code === 'PAYMENT_OUTCOME_UNCONFIRMED') {
         isPaymentUnconfirmed.value = true;
+        return;
+    }
+
+    if (recovery === 'PRICE_CHANGED') {
+        paymentErrorMessage.value = priceChangedMessage();
         return;
     }
 
@@ -215,23 +230,17 @@ const handleExpressPaymentFailed = (error?: { message?: string; code?: string })
  * reads them when the gateway hands its token back, and the order stays locked until then, so the
  * two always come from the same moment.
  */
-const paymentOrder = ref<{ amount: Amount; context: AuthorizePaymentPayload['context'] }>();
+const paymentOrder = ref<{ amount: Amount; context: PaymentAuthorizationContext | undefined }>();
 const orderLockAttrs = computed(() => (paymentOrder.value ? { inert: true } : {}));
 
 // Every way to pay comes through here (the button, Enter in a card field, an express sheet), so
 // none of them authorizes an amount the preview is about to replace.
 const handleValidateOnSubmit = async () => {
-    await checkoutForm.validation.value.$validate();
-    if (checkoutForm.validation.value.$invalid) return false;
+    if (!(await validateForms())) return false;
 
     const settlement = await settleInvoicePreview();
     if (settlement === 'CHANGED') {
-        paymentErrorMessage.value = $t({
-            defaultMessage: 'The price changed with your last edit. Check it and pay again.',
-            id: 'checkout.price_changed',
-            description:
-                'Shown when a payment is held back because the customer changed the order while it waited for the price',
-        });
+        paymentErrorMessage.value = priceChangedMessage();
         return false;
     }
     if (settlement === 'FAILED') {
@@ -308,11 +317,11 @@ const titleRecurringAmount = computed(() =>
     hasOneOffCharges.value ? recurringAmount.value : undefined,
 );
 
-const isBillingInformationMandatory = computed(
-    () =>
-        (checkoutForm.form.value.country &&
-            ['US', 'CA'].includes(checkoutForm.form.value.country)) ||
-        false,
+const isBillingInformationMandatoryIn = (country: CountryCode | undefined) =>
+    !!country && ['US', 'CA'].includes(country);
+
+const isBillingInformationMandatory = computed(() =>
+    isBillingInformationMandatoryIn(checkoutForm.form.value.country),
 );
 
 const enabledPricingIdsModel = computed({
@@ -400,7 +409,7 @@ const meterValuesModel = (key: 'seatsValues' | 'unitsValues') =>
             const filtered = current.filter(
                 ({ pricing_item_config_id }) =>
                     !ids.has(pricing_item_config_id) &&
-                    !quantityAddonConfigIds.value.has(pricing_item_config_id),
+                    !quantityAddonConfigIds?.value.has(pricing_item_config_id),
             );
             checkoutForm.form.value[key] = filtered.concat(value);
         },
@@ -520,7 +529,16 @@ const agreement = computed(() => {
     );
 });
 
+// The invoice's own seller first: a session's billing entity can follow the customer's country.
+const sellerName = computed(
+    () =>
+        invoicePreview.value?.billing_entity?.legal_name ||
+        subscription.value?.billing_entity?.legal_name ||
+        undefined,
+);
+
 const orderSummaryProps = computed(() => ({
+    subscriptions: planCustomizations?.value.map((entry) => entry.subscription),
     invoicePreviewByBillingPeriod: invoicePreviewByBillingPeriod.value,
     trialInvoice: trialInvoicePreview.value,
     enabledPricingIds: enabledPricingIdsModel.value,
@@ -528,6 +546,7 @@ const orderSummaryProps = computed(() => ({
     avatar: configuration.value?.avatar,
     isPaid: isPaid.value,
     isUsageBased: isUsageBased.value,
+    isUpdating: isInvoicePreviewPending.value || isInvoicePreviewStale.value,
 }));
 
 const expressPaymentMethodBillingInformation = computed(() => {
@@ -642,54 +661,27 @@ const showPlanCustomizationEditor = computed(() => {
     return false;
 });
 
-const promotionCode = ref<string | null>(null);
-
-// The code the preview and the payment are priced with can also come from a redirect return.
-watch(
-    () => checkoutForm.form.value.promotionCode,
-    (code) => {
-        promotionCode.value = code ?? null;
-    },
-);
-
 const {
-    applyPromotionCode,
-    removePromotionCode,
-    isPromotionCodePending,
-    promotionCodeErrorMessage,
-} = usePromotionCode({
-    checkoutForm,
-    updateInvoicePreviewOnBillingInformationChange,
-    formatErrorMessage: ({ action }) =>
-        action === 'apply'
-            ? $t({
-                  defaultMessage: 'Promotion code could not be applied. Please try again.',
-                  id: 'checkout.promotion_code.apply_failed',
-                  description: 'Error message when applying a promotion code in checkout failed',
-              })
-            : $t({
-                  defaultMessage: 'Promotion code could not be removed. Please try again.',
-                  id: 'checkout.promotion_code.remove_failed',
-                  description: 'Error message when removing a promotion code in checkout failed',
-              }),
-    onInvalidPromotionCode: () => {
-        promotionCode.value = null;
-    },
-    onApplyError: () => {
-        promotionCode.value = null;
-    },
-});
-
-useAutoApplyPromotionCode({
-    subscription,
-    promotionCode: () => props.configuration?.couponCode,
-    appliedPromotionCode: promotionCode,
-    applyPromotionCode,
-});
+    code: promotionCode,
+    isPending: isPromotionCodePending,
+    errorMessage: promotionCodeErrorMessage,
+    apply: applyPromotionCode,
+    remove: removePromotionCode,
+} = props.source.promotionCode;
+const isPromotionCodeAllowed = computed(() => props.source.promotionCode.isAllowed?.value ?? true);
+const setPromotionCode = (code: string | null) => {
+    promotionCode.value = code;
+};
+const setPromotionCodeOf = (
+    sectionCode: CheckoutPromotionCode | undefined,
+    code: string | null,
+) => {
+    if (sectionCode) sectionCode.code.value = code;
+};
 
 const handleRedirect = () => {
-    if (!successRedirectUrl) return;
-    safeUrlRedirect(successRedirectUrl);
+    if (!successRedirectUrl.value) return;
+    safeUrlRedirect(successRedirectUrl.value);
 };
 
 /**
@@ -698,13 +690,20 @@ const handleRedirect = () => {
  * theirs to announce — all the success card can honestly promise is the redirect this screen does.
  */
 const redirectsOnSuccess = computed(
-    () => !props.configuration?.onPaymentSuccess && !!successRedirectUrl,
+    () => !props.configuration?.onPaymentSuccess && !!successRedirectUrl.value,
 );
 
 const handlePaymentSuccess = () => {
+    if (payment?.awaitCompletion) {
+        isPaymentPending.value = true;
+        paymentErrorMessage.value = null;
+        payment.awaitCompletion();
+        return;
+    }
+
     isPaid.value = true;
     paymentOrder.value = undefined;
-    clearSavedFormState();
+    clearSavedFormState?.();
     promotionCodeErrorMessage.value = null;
     paymentErrorMessage.value = null;
 
@@ -713,24 +712,10 @@ const handlePaymentSuccess = () => {
         return;
     }
 
-    if (successRedirectUrl) {
+    if (successRedirectUrl.value) {
         handleRedirect();
         return;
     }
-};
-
-const handleBillingPeriodChange = (billingPeriod: BillingPeriod) => {
-    if (!subscription.value) {
-        return;
-    }
-
-    subscription.value = {
-        ...subscription.value,
-        billing_period: billingPeriod,
-    };
-
-    // Already logged as INVOICE_PREVIEW_FAILED, and the next change loads it again.
-    loadInvoicePreview().catch(() => {});
 };
 
 onMounted(() => {
@@ -782,12 +767,55 @@ onMounted(() => {
                     :invoice="invoicePreview"
                     collapsible="collapsed"
                     variant="products-inline"
-                    @billing-period-change="handleBillingPeriodChange"
+                    @billing-period-change="changeBillingPeriod"
                 />
 
                 <!-- plan customization -->
+                <template v-if="planCustomizations">
+                    <template v-for="entry in planCustomizations" :key="entry.key">
+                        <PlanCustomizationEditor
+                            v-if="
+                                entry.seatsValues.value.length ||
+                                entry.unitsValues.value.length ||
+                                entry.promotionCode
+                            "
+                            v-bind="orderLockAttrs"
+                            v-model:seats-values="entry.seatsValues.value"
+                            v-model:units-values="entry.unitsValues.value"
+                            class="sv-checkout__plan-customization"
+                            :title="entry.title"
+                            :subscription="entry.subscription"
+                            :enabled-pricing-ids="[]"
+                            hide-pricing-choices
+                            :initial-seats-values="entry.minimums.seatsValues"
+                            :initial-units-values="entry.minimums.unitsValues"
+                            :max-seats-values="entry.maximums.seatsValues"
+                            :max-units-values="entry.maximums.unitsValues"
+                            :editable-config-ids="entry.editableConfigIds"
+                            :billing-period="entry.subscription.billing_period"
+                        >
+                            <template v-if="entry.promotionCode?.isAllowed?.value">
+                                <PromotionCodeSection
+                                    class="sv-checkout__promotion-code"
+                                    :promotion-code="entry.promotionCode.code.value"
+                                    :is-pending="entry.promotionCode.isPending.value"
+                                    @update:applied-code="
+                                        (code) => setPromotionCodeOf(entry.promotionCode, code)
+                                    "
+                                    @remove="entry.promotionCode.remove"
+                                    @apply="entry.promotionCode.apply"
+                                />
+                                <ErrorNotification
+                                    v-if="entry.promotionCode.errorMessage.value"
+                                    class="sv-checkout__promotion-error"
+                                    :title="entry.promotionCode.errorMessage.value"
+                                />
+                            </template>
+                        </PlanCustomizationEditor>
+                    </template>
+                </template>
                 <PlanCustomizationEditor
-                    v-if="showPlanCustomizationEditor && subscription"
+                    v-else-if="showPlanCustomizationEditor && subscription"
                     v-bind="orderLockAttrs"
                     v-model:seats-values="seatsValuesModel"
                     v-model:units-values="unitsValuesModel"
@@ -803,6 +831,7 @@ onMounted(() => {
                 <!-- express payment methods -->
                 <ExpressPaymentMethods
                     v-if="
+                        onExpressBillingInformationChange &&
                         isExpressCheckoutEnabled &&
                         !isPaymentUnconfirmed &&
                         checkoutForm.form.value.country &&
@@ -815,7 +844,7 @@ onMounted(() => {
                     :locale="locale"
                     :payment-methods-options-response="paymentMethodOptions ?? []"
                     :billing-information="expressPaymentMethodBillingInformation"
-                    :on-billing-information-change="updateInvoicePreviewOnBillingInformationChange"
+                    :on-billing-information-change="onExpressBillingInformationChange"
                     :context="authorizationContext"
                     :validate-on-submit="handleValidateOnSubmit"
                     @update-billing-information="handleUpdateBillingInformation"
@@ -824,7 +853,28 @@ onMounted(() => {
                 />
 
                 <!-- customer information form -->
+                <template v-if="customerForms">
+                    <CheckoutForm
+                        v-for="customerForm in customerForms"
+                        :key="customerForm.key"
+                        v-model="customerForm.form.form.value"
+                        class="sv-checkout__customer-form"
+                        :validation="customerForm.form.validation"
+                        :display="customerForm.display"
+                        :is-type-locked="customerForm.isTypeLocked"
+                        :title="customerForm.title"
+                        :show-customer-info-on-top="showCustomerInfoOnTop || isPaid"
+                        :is-billing-information-mandatory="
+                            isBillingInformationMandatoryIn(customerForm.form.form.value.country)
+                        "
+                        :get-is-field-required="customerForm.form.getIsFieldRequired"
+                        :shipping-address-format="customerForm.form.shippingAddressFormat.value"
+                        :read-only="isPaid"
+                        v-bind="orderLockAttrs"
+                    />
+                </template>
                 <CheckoutForm
+                    v-else
                     v-model="checkoutForm.form.value"
                     class="sv-checkout__customer-form"
                     :validation="checkoutForm.validation"
@@ -862,7 +912,23 @@ onMounted(() => {
                                 }}</Typography
                             >
                             <EmptyStatePlaceholder
-                                v-if="!checkoutForm.form.value.country"
+                                v-if="!payment"
+                                class="sv-checkout__payment-unavailable"
+                                icon="credit_card_off"
+                            >
+                                <template #title>
+                                    {{
+                                        $t({
+                                            defaultMessage: 'Payment is not available yet',
+                                            id: 'checkout.payment_method_block.payment_unavailable_title',
+                                            description:
+                                                'The title shown where the payment methods go when this checkout cannot take a payment yet',
+                                        })
+                                    }}
+                                </template>
+                            </EmptyStatePlaceholder>
+                            <EmptyStatePlaceholder
+                                v-else-if="!paymentCountryCode"
                                 class="sv-checkout__payment-methods-empty"
                                 icon="captive_portal"
                             >
@@ -949,13 +1015,13 @@ onMounted(() => {
                                 </template>
                             </EmptyStatePlaceholder>
                             <div
-                                v-else-if="amount && checkoutForm.form.value.country"
+                                v-else-if="amount && paymentCountryCode"
                                 class="sv-checkout__payment-form"
                             >
                                 <div :class="{ 'pointer-events-none opacity-60': isFormHeld }">
                                     <PaymentIntegrationForm
                                         ref="paymentIntegrationFormRef"
-                                        :country-code="checkoutForm.form.value.country"
+                                        :country-code="paymentCountryCode"
                                         :context="
                                             paymentOrder
                                                 ? paymentOrder.context
@@ -995,7 +1061,7 @@ onMounted(() => {
                         v-bind="orderSummaryProps"
                         :subscription="subscription"
                         :invoice="invoicePreview"
-                        @billing-period-change="handleBillingPeriodChange"
+                        @billing-period-change="changeBillingPeriod"
                     />
                 </Skeleton>
             </div>
@@ -1003,11 +1069,12 @@ onMounted(() => {
             <template v-if="!isPaid">
                 <!-- promotion code -->
                 <PromotionCodeSection
+                    v-if="isPromotionCodeAllowed"
                     class="sv-checkout__promotion-code"
                     v-bind="orderLockAttrs"
                     :promotion-code="promotionCode"
                     :is-pending="isPromotionCodePending"
-                    @update:applied-code="promotionCode = $event"
+                    @update:applied-code="setPromotionCode"
                     @remove="removePromotionCode"
                     @apply="applyPromotionCode"
                 />
@@ -1032,6 +1099,7 @@ onMounted(() => {
                             size="md"
                             class="sv-action sv-action--primary sv-action--full-width sv-checkout__submit w-full"
                             :disabled="
+                                !canPay ||
                                 isPromotionCodePending ||
                                 isInvoicePreviewPending ||
                                 isInvoicePreviewStale ||
@@ -1060,6 +1128,32 @@ onMounted(() => {
                             }}
                         </Button>
                     </Skeleton>
+
+                    <Typography
+                        v-if="cancelUrl"
+                        tag="div"
+                        variant="body-xs"
+                        class="sv-checkout__cancel text-center"
+                    >
+                        <a :href="cancelUrl" class="text-primary-900 hover:underline">{{
+                            sellerName
+                                ? $t(
+                                      {
+                                          defaultMessage: 'Cancel and return to {name}',
+                                          id: 'checkout.cancel_link_to',
+                                          description:
+                                              'The link under the pay button that leaves the checkout without paying and goes back to the shop named by the seller',
+                                      },
+                                      { name: sellerName },
+                                  )
+                                : $t({
+                                      defaultMessage: 'Cancel and return',
+                                      id: 'checkout.cancel_link',
+                                      description:
+                                          'The link under the pay button that leaves the checkout without paying and goes back to the shop',
+                                  })
+                        }}</a>
+                    </Typography>
 
                     <!-- kpis-->
                     <SecurePaymentsKPI :payment-method-options="paymentMethodOptions" />

@@ -1,7 +1,10 @@
 import { flushPromises, mount } from '@vue/test-utils';
-import { computed, ref } from 'vue';
-import type { PortalUrl } from '@solvimon/solvimon-types';
+import { type Component, computed, defineComponent, h, ref, shallowRef } from 'vue';
+import type { Invoice, PortalUrl, PricingPlanSubscriptionExpanded } from '@solvimon/solvimon-types';
+import LegacyCheckout from './LegacyCheckout.vue';
 import Checkout from './Checkout.vue';
+import type { CheckoutPlanCustomization, CheckoutSource } from './Checkout.source.types';
+import { useCheckoutView } from './useCheckout.view';
 
 // ─── Mocks ────────────────────────────────────────────────────────────────────
 
@@ -189,7 +192,7 @@ const STUBBED_CHILDREN = [
 ];
 
 const mountCheckout = async (stubOverrides: Record<string, boolean> = {}) => {
-    const wrapper = mount(Checkout, {
+    const wrapper = mount(LegacyCheckout, {
         global: {
             stubs: {
                 ...Object.fromEntries(STUBBED_CHILDREN.map((name) => [name, true])),
@@ -418,6 +421,25 @@ describe('Checkout', () => {
         const wrapper = await mountCheckout({ Skeleton: false });
 
         expect(wrapper.find('.sv-checkout__submit').attributes('disabled')).toBe('true');
+    });
+
+    describe('the order summary while the order is priced', () => {
+        const isUpdating = (wrapper: Awaited<ReturnType<typeof mountCheckout>>) =>
+            wrapper.findComponent({ name: 'OrderSummary' }).props('isUpdating');
+
+        it('shows the summary as updating while a change waits to be priced', async () => {
+            isInvoicePreviewStale.value = true;
+            expect(isUpdating(await mountCheckout({ Skeleton: false }))).toBe(true);
+        });
+
+        it('shows the summary as updating while the invoice preview reloads', async () => {
+            isInvoicePreviewPending.value = true;
+            expect(isUpdating(await mountCheckout({ Skeleton: false }))).toBe(true);
+        });
+
+        it('shows the summary as current once the preview is in', async () => {
+            expect(isUpdating(await mountCheckout({ Skeleton: false }))).toBe(false);
+        });
     });
 
     // Enter in a card field and an express sheet pay without the button, so the check that holds
@@ -686,6 +708,416 @@ describe('Checkout', () => {
             await flushPromises();
 
             expect(wrapper.find('.sv-checkout__submit').attributes('disabled')).toBe('true');
+        });
+    });
+
+    describe('a flow that cannot take a payment yet', () => {
+        afterEach(() => {
+            mockExperimentalFeatures.value['express-checkout'] = false;
+        });
+
+        const mountWithoutPayment = async (
+            overrides: Partial<CheckoutSource> = {},
+            {
+                renderStubDefaultSlot = false,
+                stubs = {},
+            }: { renderStubDefaultSlot?: boolean; stubs?: Record<string, Component> } = {},
+        ) => {
+            const view = useCheckoutView({} as never);
+            const source: CheckoutSource = {
+                ...view,
+                isShippingAddressRequired: false,
+                promotionCode: {
+                    code: ref(null),
+                    isPending: ref(false),
+                    errorMessage: ref(null),
+                    apply: vi.fn(),
+                    remove: vi.fn(),
+                },
+                canPay: ref(true),
+                successUrl: ref(undefined),
+                note: ref(undefined),
+                ...overrides,
+            };
+            const wrapper = mount(Checkout, {
+                props: { source },
+                global: {
+                    renderStubDefaultSlot,
+                    stubs: {
+                        ...Object.fromEntries(STUBBED_CHILDREN.map((name) => [name, true])),
+                        Skeleton: false,
+                        ...stubs,
+                    },
+                },
+            });
+            await flushPromises();
+            await vi.dynamicImportSettled();
+            return wrapper;
+        };
+
+        /** The editor is loaded on demand, and a plain stub of it would not know its props. */
+        const PlanCustomizationEditorStub = defineComponent({
+            name: 'PlanCustomizationEditor',
+            props: {
+                title: String,
+                subscription: Object,
+                seatsValues: Array,
+                initialSeatsValues: Array,
+                maxSeatsValues: Array,
+                editableConfigIds: Array,
+                hidePricingChoices: Boolean,
+            },
+            setup:
+                (_props, { slots }) =>
+                () =>
+                    h('div', slots.default?.()),
+        });
+
+        const planCustomization = (
+            key: string,
+            overrides: Partial<CheckoutPlanCustomization> = {},
+        ): CheckoutPlanCustomization => ({
+            key,
+            subscription: { id: `sub_${key}`, billing_period: 'MONTHLY' } as never,
+            seatsValues: ref([{ pricing_item_config_id: `pic_${key}`, number: '3' }]),
+            unitsValues: ref([]),
+            minimums: {
+                seatsValues: [{ pricing_item_config_id: `pic_${key}`, number: '2' }],
+                unitsValues: [],
+            },
+            maximums: {
+                seatsValues: [{ pricing_item_config_id: `pic_${key}`, number: '9' }],
+                unitsValues: [],
+            },
+            editableConfigIds: [`pic_${key}`],
+            ...overrides,
+        });
+
+        const promotionCodeOf = (code: string | null, errorMessage: string | null = null) => ({
+            isAllowed: ref(true),
+            code: ref(code),
+            isPending: ref(false),
+            errorMessage: ref(errorMessage),
+            apply: vi.fn(),
+            remove: vi.fn(),
+        });
+
+        it('says payment is not available, offers no way to pay and keeps Pay off', async () => {
+            paymentMethodOptions.value = [
+                { integration: { payment_gateway: { variant: 'ADYEN' } } },
+            ];
+            mockExperimentalFeatures.value['express-checkout'] = true;
+            const wrapper = await mountWithoutPayment();
+
+            expect(wrapper.find('.sv-checkout__payment-unavailable').exists()).toBe(true);
+            expect(wrapper.find('.sv-checkout__payment-methods-empty').exists()).toBe(false);
+            expect(wrapper.findComponent({ name: 'PaymentIntegrationForm' }).exists()).toBe(false);
+            expect(wrapper.findComponent({ name: 'ExpressPaymentMethods' }).exists()).toBe(false);
+            expect(wrapper.find('.sv-checkout__submit').attributes('disabled')).toBe('true');
+        });
+
+        it('shows a form per customer the flow lists, in its order, in place of its own form', async () => {
+            const view = useCheckoutView({} as never);
+            const display = { email: 'READ_ONLY' as const };
+            const wrapper = await mountWithoutPayment({
+                customerForms: shallowRef([
+                    { key: '0', form: view.checkoutForm, title: 'Acme', isTypeLocked: true },
+                    { key: '1', form: view.checkoutForm, title: 'Jane Doe', display },
+                ]),
+            });
+            const forms = wrapper.findAllComponents({ name: 'CheckoutForm' });
+
+            expect(forms.map((form) => form.props('title'))).toStrictEqual(['Acme', 'Jane Doe']);
+            expect(forms[0].props('isTypeLocked')).toBe(true);
+            expect(forms[1].props('display')).toStrictEqual(display);
+        });
+
+        it('shows a section per subscription the flow lists, bounded and without pricing choices', async () => {
+            const wrapper = await mountWithoutPayment(
+                {
+                    planCustomizations: shallowRef([
+                        planCustomization('0', { title: 'Platform' }),
+                        planCustomization('1', { title: 'Hardware' }),
+                    ]),
+                },
+                { stubs: { PlanCustomizationEditor: PlanCustomizationEditorStub } },
+            );
+            const editors = wrapper.findAllComponents({ name: 'PlanCustomizationEditor' });
+
+            expect(editors.map((section) => section.props('title'))).toStrictEqual([
+                'Platform',
+                'Hardware',
+            ]);
+            expect(editors[1].props()).toMatchObject({
+                subscription: { id: 'sub_1' },
+                seatsValues: [{ pricing_item_config_id: 'pic_1', number: '3' }],
+                initialSeatsValues: [{ pricing_item_config_id: 'pic_1', number: '2' }],
+                maxSeatsValues: [{ pricing_item_config_id: 'pic_1', number: '9' }],
+                editableConfigIds: ['pic_1'],
+                hidePricingChoices: true,
+            });
+            expect(
+                wrapper.findComponent({ name: 'OrderSummary' }).props('subscriptions'),
+            ).toStrictEqual([
+                { id: 'sub_0', billing_period: 'MONTHLY' },
+                { id: 'sub_1', billing_period: 'MONTHLY' },
+            ]);
+        });
+
+        it('leaves out the section of a subscription with nothing to change', async () => {
+            const wrapper = await mountWithoutPayment({
+                planCustomizations: shallowRef([planCustomization('0', { seatsValues: ref([]) })]),
+            });
+
+            expect(wrapper.findComponent({ name: 'PlanCustomizationEditor' }).exists()).toBe(false);
+        });
+
+        it('shows the promotion code of each subscription, and its error, in its own section', async () => {
+            const wrapper = await mountWithoutPayment(
+                {
+                    promotionCode: { ...promotionCodeOf(null), isAllowed: ref(false) },
+                    planCustomizations: shallowRef([
+                        planCustomization('0', { promotionCode: promotionCodeOf('SPRING') }),
+                        planCustomization('1', {
+                            promotionCode: promotionCodeOf(
+                                null,
+                                'This promotion code is not valid.',
+                            ),
+                        }),
+                    ]),
+                },
+                {
+                    renderStubDefaultSlot: true,
+                    stubs: { PlanCustomizationEditor: PlanCustomizationEditorStub },
+                },
+            );
+            const sections = wrapper.findAllComponents({ name: 'PlanCustomizationEditor' });
+
+            expect(
+                sections.map((section) =>
+                    section.findComponent({ name: 'PromotionCodeSection' }).props('promotionCode'),
+                ),
+            ).toStrictEqual(['SPRING', null]);
+            expect(sections[0].findComponent({ name: 'ErrorNotification' }).exists()).toBe(false);
+            expect(sections[1].findComponent({ name: 'ErrorNotification' }).props('title')).toBe(
+                'This promotion code is not valid.',
+            );
+            expect(wrapper.find('.sv-checkout__promotion-code').exists()).toBe(true);
+            expect(wrapper.findAllComponents({ name: 'PromotionCodeSection' })).toHaveLength(2);
+        });
+
+        it('links back to where the customer came from without paying', async () => {
+            const wrapper = await mountWithoutPayment(
+                { cancelUrl: ref('https://shop.test/cancel') },
+                { renderStubDefaultSlot: true },
+            );
+
+            expect(wrapper.find('.sv-checkout__cancel a').attributes('href')).toBe(
+                'https://shop.test/cancel',
+            );
+        });
+
+        it('names the seller of the invoice in the way back', async () => {
+            const wrapper = await mountWithoutPayment(
+                {
+                    cancelUrl: ref('https://shop.test/cancel'),
+                    invoicePreview: ref({
+                        billing_entity: { legal_name: 'Solvimon' },
+                    } as unknown as Invoice),
+                    subscription: ref({
+                        billing_entity: { legal_name: 'Template seller' },
+                    } as unknown as PricingPlanSubscriptionExpanded),
+                },
+                { renderStubDefaultSlot: true },
+            );
+
+            expect(wrapper.find('.sv-checkout__cancel a').text()).toBe(
+                'Cancel and return to Solvimon',
+            );
+        });
+
+        it('names the subscription seller in the way back until the invoice is priced', async () => {
+            const wrapper = await mountWithoutPayment(
+                {
+                    cancelUrl: ref('https://shop.test/cancel'),
+                    invoicePreview: ref(undefined),
+                    subscription: ref({
+                        billing_entity: { legal_name: 'ACME B.V.' },
+                    } as unknown as PricingPlanSubscriptionExpanded),
+                },
+                { renderStubDefaultSlot: true },
+            );
+
+            expect(wrapper.find('.sv-checkout__cancel a').text()).toBe(
+                'Cancel and return to ACME B.V.',
+            );
+        });
+
+        it('offers a plain way back when no seller is known', async () => {
+            const wrapper = await mountWithoutPayment(
+                {
+                    cancelUrl: ref('https://shop.test/cancel'),
+                    invoicePreview: ref(undefined),
+                    subscription: ref(undefined),
+                },
+                { renderStubDefaultSlot: true },
+            );
+
+            expect(wrapper.find('.sv-checkout__cancel a').text()).toBe('Cancel and return');
+        });
+
+        it('offers no way back when the flow has no cancel URL', async () => {
+            const wrapper = await mountWithoutPayment({}, { renderStubDefaultSlot: true });
+
+            expect(wrapper.find('.sv-checkout__cancel').exists()).toBe(false);
+        });
+
+        it('shows no customer form when the flow lists none', async () => {
+            const wrapper = await mountWithoutPayment({ customerForms: ref([]) });
+
+            expect(wrapper.findComponent({ name: 'CheckoutForm' }).exists()).toBe(false);
+        });
+    });
+
+    describe('a flow that finishes the order itself once it is paid', () => {
+        const awaitCompletion = vi.fn();
+        const recoverPaymentFailure = vi.fn();
+
+        beforeEach(() => {
+            awaitCompletion.mockReset();
+            recoverPaymentFailure.mockReset();
+        });
+
+        afterEach(() => {
+            mockExperimentalFeatures.value['express-checkout'] = false;
+        });
+
+        const mountFlow = async (payment: Partial<NonNullable<CheckoutSource['payment']>> = {}) => {
+            paymentMethodOptions.value = [
+                { integration: { payment_gateway: { variant: 'ADYEN' } } },
+            ];
+            const view = useCheckoutView({} as never);
+            const source: CheckoutSource = {
+                ...view,
+                isShippingAddressRequired: false,
+                promotionCode: {
+                    code: ref(null),
+                    isPending: ref(false),
+                    errorMessage: ref(null),
+                    apply: vi.fn(),
+                    remove: vi.fn(),
+                },
+                payment: {
+                    paymentMethodOptions: view.paymentMethodOptions,
+                    isPaymentMethodsPending: ref(false),
+                    hasPaymentMethodOptionsError: ref(false),
+                    retryPaymentMethodOptions: vi.fn(),
+                    authorizationContext: ref(undefined),
+                    awaitCompletion,
+                    recoverPaymentFailure,
+                    ...payment,
+                },
+                canPay: ref(true),
+                successUrl: ref('https://shop.test/done'),
+                note: ref(undefined),
+                saveFormStateForRedirect: undefined,
+                clearSavedFormState: undefined,
+            };
+            const wrapper = mount(Checkout, {
+                props: { source },
+                global: {
+                    stubs: {
+                        ...Object.fromEntries(STUBBED_CHILDREN.map((name) => [name, true])),
+                        Skeleton: false,
+                    },
+                },
+            });
+            await flushPromises();
+            await vi.dynamicImportSettled();
+            const form = () => wrapper.findComponent({ name: 'PaymentIntegrationForm' });
+            const submit = () => wrapper.find('.sv-checkout__submit');
+            return { wrapper, form, submit };
+        };
+
+        it('offers its payment methods in the country the flow knows when the form has none', async () => {
+            const { wrapper, form } = await mountFlow({ countryCode: ref('BE') });
+            checkoutFormValue.current!.value.country = undefined;
+            await wrapper.vm.$nextTick();
+
+            expect(form().exists()).toBe(true);
+            expect(form().attributes('country-code')).toBe('BE');
+            expect(wrapper.find('.sv-checkout__payment-methods-empty').exists()).toBe(false);
+        });
+
+        it('asks for the billing country when neither the form nor the flow knows it', async () => {
+            const { wrapper, form } = await mountFlow();
+            checkoutFormValue.current!.value.country = undefined;
+            await wrapper.vm.$nextTick();
+
+            expect(form().exists()).toBe(false);
+            expect(wrapper.find('.sv-checkout__payment-methods-empty').exists()).toBe(true);
+        });
+
+        it('offers its payment methods, and no express payment when it gives no sheet pricing', async () => {
+            mockExperimentalFeatures.value['express-checkout'] = true;
+            const { wrapper, form, submit } = await mountFlow();
+
+            expect(form().exists()).toBe(true);
+            expect(wrapper.find('.sv-checkout__payment-unavailable').exists()).toBe(false);
+            expect(wrapper.findComponent({ name: 'ExpressPaymentMethods' }).exists()).toBe(false);
+            expect(submit().attributes('disabled')).toBe('false');
+        });
+
+        it('waits on the flow after the payment, rather than marking it paid and redirecting', async () => {
+            const { wrapper, form, submit } = await mountFlow();
+
+            form().vm.$emit('payment-success');
+            await wrapper.vm.$nextTick();
+
+            expect(awaitCompletion).toHaveBeenCalledTimes(1);
+            expect(isPaid.value).toBe(false);
+            expect(
+                wrapper.findComponent({ name: 'SubscriptionPaymentCompletedCard' }).exists(),
+            ).toBe(false);
+            expect(submit().attributes('loading')).toBe('true');
+        });
+
+        it('hands the failure to the flow before it shows it', async () => {
+            const { wrapper, form, submit } = await mountFlow();
+            const error = { code: 'AUTHORIZATION_FAILED', message: 'Payment failed', error: 400 };
+
+            form().vm.$emit('submitting');
+            form().vm.$emit('payment-failed', error);
+            await wrapper.vm.$nextTick();
+
+            expect(recoverPaymentFailure).toHaveBeenCalledWith(error);
+            expect(submit().attributes('loading')).toBe('false');
+        });
+
+        it('says the price changed when the flow priced the order again', async () => {
+            recoverPaymentFailure.mockReturnValue('PRICE_CHANGED');
+            const { wrapper, form, submit } = await mountFlow();
+
+            form().vm.$emit('submitting');
+            form().vm.$emit('payment-failed', { code: 'AUTHORIZATION_FAILED', message: 'x' });
+            await wrapper.vm.$nextTick();
+
+            expect(wrapper.find('.sv-checkout__payment-error').attributes('title')).toMatch(
+                /price changed/i,
+            );
+            expect(submit().attributes('loading')).toBe('false');
+        });
+
+        it('shows the failure as any other when the flow cannot recover it', async () => {
+            const { wrapper, form } = await mountFlow();
+
+            form().vm.$emit('submitting');
+            form().vm.$emit('payment-failed', { code: 'AUTHORIZATION_FAILED' });
+            await wrapper.vm.$nextTick();
+
+            expect(wrapper.find('.sv-checkout__payment-error').attributes('title')).toMatch(
+                /did not go through/i,
+            );
         });
     });
 });

@@ -30,7 +30,8 @@ Every component requires at minimum:
 carries the portal token the element signs in with; there is no separate `token` property.
 
 An element renders only for a published portal of the type it accepts: `checkout` takes an
-`INIT_PRICING_PLAN_SUBSCRIPTION` portal, every other element a `CUSTOMER` one. Any other type logs
+`INIT_PRICING_PLAN_SUBSCRIPTION` portal, `checkout-session` a `CHECKOUT_SESSION` one (also once it
+is `CLOSED`, to show how the session ended), every other element a `CUSTOMER` one. Any other type logs
 `PORTAL_TYPE_NOT_ALLOWED`, dispatches an `error` event and renders nothing. A revoked portal logs `RESOURCE_REVOKED`; the
 checkout shows its "Checkout not available" notice, and the other elements say that they are no longer
 available (`sv-portal-unavailable`).
@@ -251,6 +252,7 @@ Full-page experiences.
 | Export path                                                 | Custom element                          |
 | ----------------------------------------------------------- | --------------------------------------- |
 | `@solvimon/solvimon-web/screens/checkout`                   | `<solvimon-checkout>`                   |
+| `@solvimon/solvimon-web/screens/checkout-session`           | `<solvimon-checkout-session>`           |
 | `@solvimon/solvimon-web/screens/customer-overview`          | `<solvimon-customer-overview>`          |
 | `@solvimon/solvimon-web/screens/pay-invoice`                | `<solvimon-pay-invoice>`                |
 | `@solvimon/solvimon-web/screens/payment-methods-management` | `<solvimon-payment-methods-management>` |
@@ -400,6 +402,8 @@ The SDK emits structured log entries via the [`onLog`](#error-logging) callback.
 | `APPLE_PAY_ERROR`                           | Apple Pay error                                                    |
 | `AUTO_TOP_UP_CANCELLATION_FAILED`           | Failed to turn off a wallet                                        |
 | `AUTO_TOP_UP_SAVE_FAILED`                   | Failed to save the automatic top-up rule                           |
+| `CHECKOUT_SESSION_LOAD_FAILED`              | Failed to load the checkout session                                |
+| `CHECKOUT_SESSION_UPDATE_FAILED`            | Failed to save the checkout session                                |
 | `EXPRESS_CHECKOUT_GOOGLE_PAY_ERROR`         | The Google Pay button reference is not found and cannot be mounted |
 | `EXPRESS_CHECKOUT_PAYPAL_ERROR`             | The PayPal button reference is not found and cannot be mounted     |
 | `INITIAL_DATA_LOAD_FAILED`                  | Failed to load initial data                                        |
@@ -445,24 +449,28 @@ The SDK emits structured log entries via the [`onLog`](#error-logging) callback.
 
 ### Warning codes
 
-| Code                                 | Description                                                                                                  |
-| :----------------------------------- | :----------------------------------------------------------------------------------------------------------- |
-| `ACTIVE_SCHEDULE_NOT_FOUND`          | No schedule is currently being billed                                                                        |
-| `ADYEN_INVALID_CONFIGURATION`        | No environment set for adyen advanced flow, defaulted to live                                                |
-| `APPLE_PAY_ACTION_REQUIRED`          | Reserved — not currently emitted                                                                             |
-| `APPLE_PAY_FORM_INCOMPLETE`          | Apple Pay authorization stopped: the checkout form is incomplete                                             |
-| `CHECKOUT_FORM_STATE_NOT_SAVED`      | Could not keep the checkout form for a redirect return                                                       |
-| `CHECKOUT_SESSION_CLOSED`            | The checkout session of the portal link is closed                                                            |
-| `INVOICE_PREVIEW_SKIPPED`            | Skipped the on-demand charge invoice preview: no schedule to charge it on                                    |
-| `MISSING_REQUIRED_PROPERTIES`        | Not rendering until these properties are set:…                                                               |
-| `ON_DEMAND_CHARGE_REFUSED`           | The on-demand order was refused or its payment did not go through                                            |
-| `PAYMENT_INTEGRATION_NOT_RENDERABLE` | No Adyen payment methods to offer                                                                            |
-| `PAYMENT_OUTCOME_UNCONFIRMED`        | The payment outcome could not be confirmed yet                                                               |
-| `PROMOTION_CODE_REJECTED`            | The promotion code was not accepted                                                                          |
-| `RECURRING_AMOUNT_UNRESOLVED`        | Could not tell the recurring part of the invoice from the one-off part; the mandate states the invoice total |
-| `REQUEST_FAILED`                     | Request failed with an expected status                                                                       |
-| `TRANSLATION_LOAD_FAILED`            | Failed to load translations for locale…                                                                      |
-| `UI_COMPONENT_RECOVERED`             | A UI component recovered from an error and carried on                                                        |
-| `UNSUPPORTED_LOCALE`                 | The locale is not supported, showing en-US instead                                                           |
+| Code                                       | Description                                                                                                  |
+| :----------------------------------------- | :----------------------------------------------------------------------------------------------------------- |
+| `ACTIVE_SCHEDULE_NOT_FOUND`                | No schedule is currently being billed                                                                        |
+| `ADYEN_INVALID_CONFIGURATION`              | No environment set for adyen advanced flow, defaulted to live                                                |
+| `APPLE_PAY_ACTION_REQUIRED`                | Reserved — not currently emitted                                                                             |
+| `APPLE_PAY_FORM_INCOMPLETE`                | Apple Pay authorization stopped: the checkout form is incomplete                                             |
+| `CHECKOUT_FORM_STATE_NOT_SAVED`            | Could not keep the checkout form for a redirect return                                                       |
+| `CHECKOUT_SESSION_CLOSED`                  | The checkout session of the portal link is closed                                                            |
+| `CHECKOUT_SESSION_COMPLETION_CHECK_FAILED` | Failed to read the checkout session while waiting for it to complete                                         |
+| `CHECKOUT_SESSION_EDIT_NOT_APPLIED`        | The checkout session was saved but kept a value the customer changed                                         |
+| `CHECKOUT_SESSION_SEVERAL_INVOICES`        | The checkout session previewed several invoices; only the first is shown                                     |
+| `CHECKOUT_SESSION_UPDATE_REFUSED`          | The API refused a change to the checkout session                                                             |
+| `INVOICE_PREVIEW_SKIPPED`                  | Skipped the on-demand charge invoice preview: no schedule to charge it on                                    |
+| `MISSING_REQUIRED_PROPERTIES`              | Not rendering until these properties are set:…                                                               |
+| `ON_DEMAND_CHARGE_REFUSED`                 | The on-demand order was refused or its payment did not go through                                            |
+| `PAYMENT_INTEGRATION_NOT_RENDERABLE`       | No Adyen payment methods to offer                                                                            |
+| `PAYMENT_OUTCOME_UNCONFIRMED`              | The payment outcome could not be confirmed yet                                                               |
+| `PROMOTION_CODE_REJECTED`                  | The promotion code was not accepted                                                                          |
+| `RECURRING_AMOUNT_UNRESOLVED`              | Could not tell the recurring part of the invoice from the one-off part; the mandate states the invoice total |
+| `REQUEST_FAILED`                           | Request failed with an expected status                                                                       |
+| `TRANSLATION_LOAD_FAILED`                  | Failed to load translations for locale…                                                                      |
+| `UI_COMPONENT_RECOVERED`                   | A UI component recovered from an error and carried on                                                        |
+| `UNSUPPORTED_LOCALE`                       | The locale is not supported, showing en-US instead                                                           |
 
 <!-- log-codes:end — DO NOT EDIT: auto-generated by `npm run logs:list` -->

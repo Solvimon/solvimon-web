@@ -49,6 +49,11 @@ const subtotalOf = (groups: InvoiceGroup[]): Amount | undefined =>
     <!-- invoice groups preview -->
     <div
         v-if="variant !== 'products-inline'"
+        :class="[
+            'transition duration-200 ease-out motion-reduce:transition-none',
+            { blur: isUpdating },
+        ]"
+        :aria-busy="isUpdating"
         class="sv-order-summary__items grid grid-cols-1 gap-1"
     >
         <template v-if="hasBothRecurrences">
@@ -174,7 +179,14 @@ const subtotalOf = (groups: InvoiceGroup[]): Amount | undefined =>
     </div>
 
     <!-- invoice totals preview -->
-    <Section class="sv-order-summary__totals">
+    <Section
+        :class="[
+            'transition duration-200 ease-out motion-reduce:transition-none',
+            { blur: isUpdating },
+        ]"
+        v-bind="{ 'aria-busy': isUpdating }"
+        class="sv-order-summary__totals"
+    >
         <InvoicePreview
             class="sv-order-summary__invoice-preview"
             :variant="variant === 'products-inline' ? 'default' : 'without-products'"

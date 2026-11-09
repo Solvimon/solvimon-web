@@ -26,6 +26,12 @@ const defaultValueFor = (item: ConfiguredMeterValue) =>
     props.initialUnitsValues?.find(
         (value) => value.pricing_item_config_id === item.pricing_item_config_id,
     );
+
+const maxValueFor = (item: ConfiguredMeterValue) =>
+    props.maxValues?.find((value) => value.pricing_item_config_id === item.pricing_item_config_id);
+
+const isFixed = (item: ConfiguredMeterValue) =>
+    !!props.editableConfigIds && !props.editableConfigIds.includes(item.pricing_item_config_id);
 </script>
 
 <template>
@@ -59,6 +65,8 @@ const defaultValueFor = (item: ConfiguredMeterValue) =>
                         :key="item.pricing_item_config_id"
                         v-model="itemModel(index).value"
                         :default-value="defaultValueFor(item)"
+                        :max-value="maxValueFor(item)"
+                        :disabled="isFixed(item)"
                         :pricings="pricings"
                     />
                 </Section>

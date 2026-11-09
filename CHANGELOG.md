@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Breaking:** public surface that nothing used, so it is not frozen into 1.0:
     - The error codes `EXPRESS_CHECKOUT_GOOGLE_PAY_ERROR` and `EXPRESS_CHECKOUT_PAYPAL_ERROR`, and the warning code `APPLE_PAY_ACTION_REQUIRED`, from `ErrorCode` and `WarnCode`. None was emitted: Apple Pay is the only express payment method. A `switch` with a case for one of them needs that case removed. Google Pay and PayPal are still offered in the payment form.
     - `configuration.maxItems` of `subscriptions-list`, which the list never read. The `maxItems` of `customer-payment-methods` and `customer-overview` is unchanged.
-    - The `@solvimon/solvimon-web/core/action-request-types` subpath. Import `ActionRequestDetail` and `RequestActionEvent` from `@solvimon/solvimon-web/core`, which exports both.
+    - The `@solvimon/solvimon-web/core/action-request-types` subpath. Import `ActionRequestDetail`, `RequestActionEvent` and each action's own detail type, such as `ActionRequestDetailPayInvoice`, from `@solvimon/solvimon-web/core`, which now exports them all.
 
 ### Fixed
 

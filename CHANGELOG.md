@@ -7,9 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- While the express payment methods load, the checkout draws one placeholder button for Apple Pay instead of two.
+
 ### Removed
 
 - **Breaking:** the element properties `allowedPortalTypes`, `primaryColor`, `secondaryColor` and `isShadowRoot`. Every element declared them, carried over from its internal providers, but none read them: each element fixes the portal types it accepts, and takes its colours from `branding.colors`. Setting one did nothing and still does nothing; it is just no longer a property of the element.
+- **Breaking:** public surface that nothing used, so it is not frozen into 1.0:
+    - The error codes `EXPRESS_CHECKOUT_GOOGLE_PAY_ERROR` and `EXPRESS_CHECKOUT_PAYPAL_ERROR`, and the warning code `APPLE_PAY_ACTION_REQUIRED`, from `ErrorCode` and `WarnCode`. None was emitted: Apple Pay is the only express payment method. A `switch` with a case for one of them needs that case removed. Google Pay and PayPal are still offered in the payment form.
+    - `configuration.maxItems` of `subscriptions-list`, which the list never read. The `maxItems` of `customer-payment-methods` and `customer-overview` is unchanged.
+    - The `@solvimon/solvimon-web/core/action-request-types` subpath. Import `ActionRequestDetail` and `RequestActionEvent` from `@solvimon/solvimon-web/core`, which exports both.
 
 ### Fixed
 
@@ -27,14 +35,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Breaking:** `createSolvimonCore` requires an `environment` in its configuration, and can no longer be called without one. An element without an environment renders nothing, so `createSolvimonCore()` compiled and then left the container empty. Pass `'TEST'` or `'LIVE'`. JavaScript hosts are unaffected: the element still logs `MISSING_REQUIRED_PROPERTIES` when it has none.
 - New alpha versions are published under the npm `next` tag instead of `latest`, so install them with `npm install @solvimon/solvimon-web@next` or by their exact version. `latest` stays on `0.1.0-alpha.29` until the first stable version, which will be published under `latest`.
 - **Breaking:** `createScreen` and `createComponent` return an instance, `SolvimonMountInstance`, instead of a function. Unmount with `instance.unmount()`; `const unmount = core.createScreen(…)` becomes `const { unmount } = core.createScreen(…)`. `unmount` behaves as before: it removes the element, or cancels the mount if the element has not loaded yet. An object can gain members later, such as one to change the configuration after mounting, without another breaking change.
-- While the express payment methods load, the checkout draws one placeholder button for Apple Pay instead of two.
-
-### Removed
-
-- **Breaking:** public surface that nothing used, so it is not frozen into 1.0:
-    - The error codes `EXPRESS_CHECKOUT_GOOGLE_PAY_ERROR` and `EXPRESS_CHECKOUT_PAYPAL_ERROR`, and the warning code `APPLE_PAY_ACTION_REQUIRED`, from `ErrorCode` and `WarnCode`. None was emitted: Apple Pay is the only express payment method. A `switch` with a case for one of them needs that case removed. Google Pay and PayPal are still offered in the payment form.
-    - `configuration.maxItems` of `subscriptions-list`, which the list never read. The `maxItems` of `customer-payment-methods` and `customer-overview` is unchanged.
-    - The `@solvimon/solvimon-web/core/action-request-types` subpath. Import `ActionRequestDetail` and `RequestActionEvent` from `@solvimon/solvimon-web/core`, which exports both.
 
 ### Fixed
 

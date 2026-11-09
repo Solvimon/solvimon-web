@@ -15,7 +15,7 @@ import type {
 } from '@adyen/adyen-web';
 import type { ExpressPaymentMethodEmits } from './ExpressPaymentMethod.types';
 import type { ExpressPaymentMethodApplePayProps } from './ExpressPaymentMethodApplePay.types';
-import { createExpressCheckout } from './useExpressPaymentMethod';
+import { createExpressCheckout } from './expressCheckout';
 import ExpressPaymentMethodButton from '@/components/payments/ExpressPaymentMethodButton/ExpressPaymentMethodButton.vue';
 import { createReturnUrl, transformObjectToAdyenObject } from '@/utils/adyen';
 import { useLogger } from '@/components/providers';

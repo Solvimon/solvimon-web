@@ -1,4 +1,5 @@
-import type { PlatformBranding, PortalUrl } from '@solvimon/solvimon-types';
+import type { PortalUrl } from '@solvimon/solvimon-types';
+import type { SolvimonBranding } from '@/types/branding';
 import type { ProviderEmits, ProviderProps } from '@/components/providers/Provider/Provider.types';
 
 /**
@@ -20,7 +21,7 @@ export type EntryBaseProps<PortalObjectType extends PortalUrl> = Pick<
     /**
      * The branding for the checkout.
      */
-    branding?: PlatformBranding;
+    branding?: SolvimonBranding;
     portalObject: PortalObjectType;
 };
 

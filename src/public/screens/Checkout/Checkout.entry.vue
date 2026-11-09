@@ -26,11 +26,8 @@ const couponCode = computed(
         @error="(error) => $emit('error', error)"
     >
         <Checkout
-            :configuration="{
-                ...configuration,
-                avatar: configuration?.avatar ?? branding?.emblem?.public_url,
-                couponCode,
-            }"
+            :configuration="{ ...configuration, couponCode }"
+            :avatar="branding?.emblem?.public_url"
             @ready="emit('ready')"
         >
             <template v-if="$slots['terms-and-conditions']" #terms-and-conditions

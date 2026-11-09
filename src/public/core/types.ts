@@ -1,5 +1,5 @@
-import type { PlatformBranding } from '@solvimon/solvimon-types';
 import type { PortalToken } from '@/types/portalToken';
+import type { SolvimonBranding } from '@/types/branding';
 import type { Environment } from '@/public/types';
 import type { IntlMessages } from '@/public/types';
 import type { LogLevel, LogSink } from '@/components/providers/LoggerProvider/LoggerProvider.types';
@@ -36,7 +36,7 @@ export interface SharedSolvimonMountConfig {
     experimentalFeatures?: ExperimentalFeature[];
     logLevel?: LogLevel;
     onLog?: LogSink;
-    branding?: PlatformBranding;
+    branding?: SolvimonBranding;
     cssOverrides?: string | string[];
 }
 

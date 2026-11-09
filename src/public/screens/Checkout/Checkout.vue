@@ -15,7 +15,7 @@ import type {
     BillingPeriod,
     CountryCode,
 } from '@solvimon/solvimon-types';
-import type { CheckoutEmits, CheckoutProps } from './Checkout.types';
+import type { CheckoutEmits, CheckoutViewProps } from './Checkout.types';
 import { useCheckoutView } from './useCheckout.view';
 import type { ExpressBillingInformation } from '@/components/payments/ExpressPaymentMethod/ExpressPaymentMethod.types';
 import { usePromotionCode } from '@/composables/usePromotionCode';
@@ -70,9 +70,8 @@ const PlanCustomizationEditor = defineAsyncComponent(
     () => import('@/components/subscriptions/PlanCustomizationForm/PlanCustomizationEditor.vue'),
 );
 
-const props = defineProps<CheckoutProps>();
+const props = defineProps<CheckoutViewProps>();
 const emit = defineEmits<CheckoutEmits>();
-const configuration = computed(() => props.configuration);
 
 const paymentIntegrationFormRef = ref();
 
@@ -511,7 +510,7 @@ const orderSummaryProps = computed(() => ({
     trialInvoice: trialInvoicePreview.value,
     enabledPricingIds: enabledPricingIdsModel.value,
     countryCode: checkoutForm.form.value.country,
-    avatar: configuration.value?.avatar,
+    avatar: props.avatar,
     isPaid: isPaid.value,
     isUsageBased: isUsageBased.value,
 }));

@@ -43,6 +43,7 @@ export type {
     PortalUrl,
 } from '@solvimon/solvimon-types';
 export type { IntlMessages, Environment } from '@/public/types';
+export type { SolvimonBranding } from '@/types/branding';
 export type { ExperimentalFeature } from '@/components/providers/ExperimentalFeatureProvider/ExperimentalFeatureProvider.lib';
 
 export type {

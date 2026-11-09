@@ -30,15 +30,13 @@ const mountWithSearch = (search: string, couponCode?: string) => {
 const passedCouponCode = (wrapper: ReturnType<typeof mountWithSearch>) =>
     wrapper.findComponent({ name: 'CheckoutStub' }).props('configuration').couponCode;
 
-const passedConfiguration = (props: Record<string, unknown>) =>
-    mount(CheckoutEntry, { props: props as never })
-        .findComponent({ name: 'CheckoutStub' })
-        .props('configuration');
+const checkoutStub = (props: Record<string, unknown>) =>
+    mount(CheckoutEntry, { props: props as never }).findComponent({ name: 'CheckoutStub' });
 
-const passedAvatar = (props: Record<string, unknown>) =>
-    mount(CheckoutEntry, { props: props as never })
-        .findComponent({ name: 'CheckoutStub' })
-        .props('avatar');
+const passedConfiguration = (props: Record<string, unknown>) =>
+    checkoutStub(props).props('configuration');
+
+const passedAvatar = (props: Record<string, unknown>) => checkoutStub(props).props('avatar');
 
 const branding = { emblem: { public_url: 'https://cdn.example/emblem.png' } };
 
@@ -100,5 +98,9 @@ describe('Checkout entry', () => {
 
     it('shows no avatar without a branding emblem', () => {
         expect(passedAvatar({})).toBeUndefined();
+    });
+
+    it('shows no avatar for an emblem the API returned as null', () => {
+        expect(passedAvatar({ branding: { emblem: { public_url: null } } })).toBeUndefined();
     });
 });

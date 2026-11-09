@@ -28,6 +28,11 @@ export const branding: SolvimonBranding = { colors: { primary: '#0066cc' } };
 export const emblemOnly: SolvimonBranding = { emblem: { public_url: 'https://cdn.example/e.png' } };
 declare const fromApi: PlatformBranding;
 export const passedOn: SolvimonBranding = fromApi;
+/* The API returns null for an unset colour or emblem URL. */
+export const withNulls: SolvimonBranding = {
+    colors: { primary: null, secondary: '#004499' },
+    emblem: { public_url: null },
+};
 export const messages: IntlMessages = { 'invoices_list.title': 'Bills' };
 export const country: CountryCode = 'NL';
 export const amount: Amount = { quantity: '1000', currency: 'EUR' };

@@ -19,7 +19,7 @@ export type EntryBaseProps<PortalObjectType extends PortalUrl> = Pick<
     | 'cssOverrides'
 > & {
     /**
-     * The branding for the checkout.
+     * The colours every element is drawn in, and the emblem screens show as their avatar.
      */
     branding?: SolvimonBranding;
     portalObject: PortalObjectType;

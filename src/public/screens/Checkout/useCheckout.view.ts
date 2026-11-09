@@ -17,8 +17,7 @@ import { toRestorableForm } from './savedFormState';
 import { useLogger } from '@/components/providers';
 import { createSubscriptionsService } from '@/services/subscriptions';
 import { useInvoicePreview } from '@/composables/useInvoicePreview';
-import { getCustomerAddress } from '@/composables/useInvoicePreview.lib';
-import { getPricingCurrencyForCountry } from '@/utils/countryCurrency';
+import { getOrderPricingCurrency } from '@/composables/useInvoicePreview.lib';
 import { useCheckoutForm } from '@/components/customer/CheckoutForm/useCheckoutForm';
 import {
     DEFAULT_TAX_IDENTIFIER_TYPE,
@@ -318,20 +317,14 @@ export function useCheckoutView({
      * country it prices at, the shipping one on a shipped order. The amount charged is the preview's,
      * so the seats offered and the subscription created follow this too.
      */
-    const pricingCurrency = computed(() => {
-        if (!subscription.value) return undefined;
-
-        return getPricingCurrencyForCountry({
-            country: getCustomerAddress(
-                toPreviewCustomer(checkoutForm.form.value, previewAddress()),
-            )?.country,
-            pricingCurrencySettings: getFirstPricingPlanScheduleOfType({
-                pricingPlanScheduleInfos: subscription.value.pricing_plan_schedule_infos ?? [],
-                type: 'DEFAULT',
-            })?.pricing_plan_version?.pricing_currency_settings,
-            fallbackCurrency: subscription.value.billing_currency,
-        });
-    });
+    const pricingCurrency = computed(() =>
+        subscription.value
+            ? getOrderPricingCurrency(
+                  subscription.value,
+                  toPreviewCustomer(checkoutForm.form.value, previewAddress()),
+              )
+            : undefined,
+    );
 
     const authorizationContext = computed<CheckoutAuthorizationContext>(() => {
         const name: Name =

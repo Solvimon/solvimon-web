@@ -1,6 +1,8 @@
-import type { Address, Customer } from '@solvimon/solvimon-types';
+import type { Address, Customer, PricingPlanSubscriptionExpanded } from '@solvimon/solvimon-types';
 import { taxId } from '@solvimon/solvimon-ui/validators';
 import type { GetInvoicePreviewCustomer } from '@/services/invoices.types';
+import { getPricingCurrencyForCountry } from '@/utils/countryCurrency';
+import { getFirstPricingPlanScheduleOfType } from '@/utils/pricingPlanSchedule';
 
 const EMPTY_LEGAL_ENTITY_NAME = 'preview';
 const EMPTY_COUNTRY = 'NL';
@@ -72,3 +74,21 @@ export const buildCustomerPayload = (customer: Partial<Customer>): GetInvoicePre
         },
     };
 };
+
+/**
+ * The currency an order is priced in for `customer`: their country's own if the plan version offers
+ * it, else the version's default. The one rule for the invoice preview, and so the amount charged,
+ * and for the seats offered and the subscription the checkout creates, which must all agree.
+ */
+export const getOrderPricingCurrency = (
+    subscription: PricingPlanSubscriptionExpanded,
+    customer: Partial<Customer>,
+): string | undefined =>
+    getPricingCurrencyForCountry({
+        country: getCustomerAddress(customer)?.country,
+        pricingCurrencySettings: getFirstPricingPlanScheduleOfType({
+            pricingPlanScheduleInfos: subscription.pricing_plan_schedule_infos ?? [],
+            type: 'DEFAULT',
+        })?.pricing_plan_version?.pricing_currency_settings,
+        fallbackCurrency: subscription.billing_currency,
+    });

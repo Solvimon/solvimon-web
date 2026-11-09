@@ -3,7 +3,7 @@ import type { TimePeriod } from '@solvimon/solvimon-types';
 import { computed, ref } from 'vue';
 import { convertDateRangeToTimePeriod } from '@solvimon/solvimon-ui';
 import { isEqual } from '@solvimon/solvimon-ui';
-import { buildCustomerPayload, getCustomerAddress } from './useInvoicePreview.lib';
+import { buildCustomerPayload, getOrderPricingCurrency } from './useInvoicePreview.lib';
 import type { LoadInvoicePreviewParams } from './useInvoicePreview.types';
 import { useLogger } from '@/components/providers/LoggerProvider/composables/useLogger';
 import { createInvoicesService } from '@/services/invoices';
@@ -11,7 +11,6 @@ import {
     getFirstPricingPlanScheduleOfType,
     getScheduleCustomizations,
 } from '@/utils/pricingPlanSchedule';
-import { getPricingCurrencyForCountry } from '@/utils/countryCurrency';
 import type { GetInvoicePreviewPayload } from '@/services/invoices.types';
 
 export const useInvoicePreview = () => {
@@ -99,11 +98,7 @@ export const useInvoicePreview = () => {
                   ? [subscription.billing_period]
                   : [];
 
-        const pricingCurrency = getPricingCurrencyForCountry({
-            country: getCustomerAddress(customer)?.country,
-            pricingCurrencySettings,
-            fallbackCurrency: subscription.billing_currency,
-        });
+        const pricingCurrency = getOrderPricingCurrency(subscription, customer);
 
         // Nothing to price against: the plan version lists no billing periods and the subscription
         // carries none either. Reported, since otherwise no request is made and no error is raised.

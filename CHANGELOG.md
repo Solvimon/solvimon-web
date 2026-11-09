@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **Breaking:** `branding` is typed as the SDK's own `SolvimonBranding`, `{ colors?: { primary?, secondary? }, emblem?: { public_url? } }`, exported from `@solvimon/solvimon-web/core` and the package root. The platform branding the API returns still fits it, so it can be passed on as it is; an emblem no longer needs a `content_type` and `file_name`, which nothing read.
+- **Breaking:** `branding` is typed as the SDK's own `SolvimonBranding`, `{ colors?: { primary?, secondary? }, emblem?: { public_url? } }`, exported from `@solvimon/solvimon-web/core` and the package root. The platform branding the API returns still fits it, `null` for an unset colour or emblem URL included, so it can be passed on as it is; an emblem no longer needs a `content_type` and `file_name`, which nothing read.
 - **Breaking:** the branding emblem is the one avatar source. The checkout and a subscription's details show `branding.emblem.public_url`, and their `configuration.avatar` is gone. Subscription details used to ignore the emblem. A host that set `configuration.avatar` sets the emblem instead.
 - While the express payment methods load, the checkout draws one placeholder button for Apple Pay instead of two.
 

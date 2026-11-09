@@ -14,13 +14,12 @@ function handleClick() {
     <Button
         size="lg"
         aria-label="Apple Pay"
-        class="!block h-11 w-full !bg-black bg-center bg-no-repeat !py-0"
+        class="!block h-11 w-full !bg-black !py-0"
         @click="handleClick"
     >
-        <svg id="svg-logo" viewBox="0 0 35 15" class="h-[44px]">
+        <svg viewBox="0 0 35 15" class="h-[44px]">
             <!--?xml version="1.0" encoding="UTF-8"?-->
             <svg
-                id="svg-logo"
                 x="0"
                 y="3.85"
                 height="7.3"

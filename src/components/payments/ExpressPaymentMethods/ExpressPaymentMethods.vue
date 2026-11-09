@@ -14,7 +14,7 @@ defineEmits<ExpressPaymentMethodsEmits>();
 
 const { $t } = useIntl();
 
-const isApplePayReady = ref<boolean>(false);
+const isReady = ref<boolean>(false);
 const isApplePayUnavailable = ref<boolean>(false);
 
 const applePayEntry = computed<PaymentMethodOptionResponseEntry | undefined>(() =>
@@ -30,10 +30,6 @@ const applePayEntry = computed<PaymentMethodOptionResponseEntry | undefined>(() 
 const paymentMethodOptionsResponseEntryIncludingApplePay = computed<
     PaymentMethodOptionResponseEntry | undefined
 >(() => (isApplePayUnavailable.value ? undefined : applePayEntry.value));
-
-const isReady = computed(
-    () => props.paymentMethodsOptionsResponse?.length !== 0 && isApplePayReady.value,
-);
 </script>
 
 <template>
@@ -49,28 +45,27 @@ const isReady = computed(
                 })
             }}</Typography>
         </div>
-        <div class="grid grid-cols-6 gap-1 md:gap-2">
-            <Skeleton v-if="!isReady" class="col-span-6 h-11" />
-            <div class="col-span-6">
-                <ExpressPaymentMethodApplePay
-                    :amount="amount"
-                    :billing-information="billingInformation"
-                    :country-code="countryCode"
-                    :locale="locale"
-                    :is-visible="isReady"
-                    :payment-method-options-response="
-                        paymentMethodOptionsResponseEntryIncludingApplePay
-                    "
-                    :on-billing-information-change="onBillingInformationChange"
-                    :context="context"
-                    :validate-on-submit="validateOnSubmit"
-                    @ready="isApplePayReady = true"
-                    @unavailable="isApplePayUnavailable = true"
-                    @update-billing-information="$emit('update-billing-information', $event)"
-                    @payment-success="$emit('payment-success')"
-                    @payment-failed="$emit('payment-failed', $event)"
-                />
-            </div>
+        <!-- The button takes the placeholder's place, in the same row, so nothing below moves. -->
+        <div>
+            <Skeleton v-if="!isReady" class="h-11" />
+            <ExpressPaymentMethodApplePay
+                :amount="amount"
+                :billing-information="billingInformation"
+                :country-code="countryCode"
+                :locale="locale"
+                :is-visible="isReady"
+                :payment-method-options-response="
+                    paymentMethodOptionsResponseEntryIncludingApplePay
+                "
+                :on-billing-information-change="onBillingInformationChange"
+                :context="context"
+                :validate-on-submit="validateOnSubmit"
+                @ready="isReady = true"
+                @unavailable="isApplePayUnavailable = true"
+                @update-billing-information="$emit('update-billing-information', $event)"
+                @payment-success="$emit('payment-success')"
+                @payment-failed="$emit('payment-failed', $event)"
+            />
         </div>
         <div class="mt-4 h-4">
             <Skeleton v-if="!isReady" variant="divider-text" />

@@ -33,12 +33,6 @@ export interface CheckoutProps {
     configuration?: CheckoutConfiguration;
 }
 
-/** What the entry hands the checkout screen on top of the host's configuration. */
-export interface CheckoutViewProps extends CheckoutProps {
-    /** The branding emblem, shown in the order summary. */
-    avatar?: string;
-}
-
 export interface CheckoutEmits {
     /**
      * Emitted when an error occurs.

@@ -15,7 +15,7 @@ import type {
     BillingPeriod,
     CountryCode,
 } from '@solvimon/solvimon-types';
-import type { CheckoutEmits, CheckoutViewProps } from './Checkout.types';
+import type { CheckoutEmits, CheckoutProps } from './Checkout.types';
 import { useCheckoutView } from './useCheckout.view';
 import type { ExpressBillingInformation } from '@/components/payments/ExpressPaymentMethod/ExpressPaymentMethod.types';
 import { usePromotionCode } from '@/composables/usePromotionCode';
@@ -70,7 +70,8 @@ const PlanCustomizationEditor = defineAsyncComponent(
     () => import('@/components/subscriptions/PlanCustomizationForm/PlanCustomizationEditor.vue'),
 );
 
-const props = defineProps<CheckoutViewProps>();
+// `avatar` is the branding emblem, which the entry passes on; it is not a host option.
+const props = defineProps<CheckoutProps & { avatar?: string }>();
 const emit = defineEmits<CheckoutEmits>();
 
 const paymentIntegrationFormRef = ref();

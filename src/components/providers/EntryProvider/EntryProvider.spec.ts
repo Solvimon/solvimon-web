@@ -3,6 +3,7 @@ import { defineComponent, h, ref } from 'vue';
 import type { CustomerPortalUrl, Environment } from '@solvimon/solvimon-types';
 import EntryProvider from './EntryProvider.vue';
 import type { EntryProviderProps } from './EntryProvider.types';
+import Provider from '@/components/providers/Provider/Provider.vue';
 import type { LogEntry } from '@/components/providers/LoggerProvider/LoggerProvider.types';
 import { createTestPortalObject } from '@/test-utils/portalObjectFixture';
 
@@ -73,6 +74,28 @@ describe('EntryProvider', () => {
     afterEach(() => {
         vi.useRealTimers();
         vi.restoreAllMocks();
+    });
+
+    describe('branding colours', () => {
+        it('hands the branding colours to the provider', () => {
+            const { wrapper } = mountEntryProvider({
+                branding: { colors: { primary: '#0066cc', secondary: '#004499' } },
+            });
+
+            expect(wrapper.findComponent(Provider).props()).toMatchObject({
+                primaryColor: '#0066cc',
+                secondaryColor: '#004499',
+            });
+        });
+
+        it('leaves a colour the API returned as null unset, so the default applies', () => {
+            const { wrapper } = mountEntryProvider({
+                branding: { colors: { primary: null, secondary: null } },
+            });
+
+            expect(wrapper.findComponent(Provider).props('primaryColor')).toBeUndefined();
+            expect(wrapper.findComponent(Provider).props('secondaryColor')).toBeUndefined();
+        });
     });
 
     describe('required properties', () => {

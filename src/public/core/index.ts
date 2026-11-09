@@ -18,7 +18,20 @@ export type {
     RegisteredScreenId,
     RegisteredComponentId,
 } from './types';
-export type { ActionRequestDetail, RequestActionEvent } from './action-request.types';
+export type {
+    ActionRequestDetail,
+    ActionRequestDetailAddPaymentMethod,
+    ActionRequestDetailBase,
+    ActionRequestDetailEditBillingInformation,
+    ActionRequestDetailManageSubscription,
+    ActionRequestDetailNavigateToCustomerOverview,
+    ActionRequestDetailPayInvoice,
+    ActionRequestDetailViewAllPaymentMethods,
+    ActionRequestDetailViewAllSubscriptions,
+    ActionRequestDetailViewInvoice,
+    ActionRequestDetailViewSubscriptionDetails,
+    RequestActionEvent,
+} from './action-request.types';
 export type {
     Amount,
     CheckoutPagePortalUrl,

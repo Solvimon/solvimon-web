@@ -1,5 +1,7 @@
 import { createSolvimonCore, getRegisteredComponentIds } from '@solvimon/solvimon-web/core';
 import type {
+    ActionRequestDetail,
+    ActionRequestDetailPayInvoice,
     Amount,
     ComponentConfigurationById,
     CountryCode,
@@ -154,3 +156,9 @@ export const listTypo: ComponentConfigurationById['invoices-list'] = {
     // @ts-expect-error - showPayButtn is a typo for showPayButton
     showPayButtn: true,
 };
+
+/* Each action's own detail type comes from the core subpath, and narrows the union. */
+export const payInvoice = (
+    detail: ActionRequestDetail,
+): ActionRequestDetailPayInvoice | undefined =>
+    detail.action === 'pay-invoice' ? detail : undefined;

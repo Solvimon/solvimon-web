@@ -39,6 +39,11 @@
     -webkit-font-smoothing: antialiased;
 }
 
+/* WebKit hit-tests an icon's <use> as the shadow host, so a pointer check would miss the button. */
+use {
+    pointer-events: none;
+}
+
 .font-regular {
     font-family: 'regular';
 }

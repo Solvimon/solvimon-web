@@ -103,12 +103,7 @@ test.describe('Pay waiting for the price of the form', () => {
 
     test('holds the payment back when the form changes while it waits, then pays the latest', async ({
         page,
-        browserName,
     }) => {
-        test.fixme(
-            browserName === 'webkit',
-            'The seats input does not appear in WebKit; under investigation',
-        );
         api = await mountSeats(page, (request) => ({
             delayMs: seatsOf(request) === '5' ? 1500 : 0,
             body: anInvoicePreview({ total: priceFor(seatsOf(request)) }),
@@ -116,10 +111,19 @@ test.describe('Pay waiting for the price of the form', () => {
 
         await checkout(page).seats.fill('5');
         await payPastTheButton(page);
-        await page.waitForTimeout(300);
-        // Still typing when the preview of five lands: each keystroke keeps the change unasked.
-        await checkout(page).seats.press('End');
-        await checkout(page).seats.pressSequentially('1111111111', { delay: 100 });
+        // Still typing when the preview of five lands: each change comes within the debounce, so
+        // none is asked for yet. Typed from the page, as driving each key from here is too slow in
+        // WebKit to stay within the debounce.
+        const typing = await checkout(page).seats.evaluate((input) => {
+            if (!(input instanceof HTMLInputElement)) return 0;
+            let seats = 50;
+            return window.setInterval(() => {
+                input.value = String((seats = seats === 50 ? 51 : 50));
+                input.dispatchEvent(new Event('input', { bubbles: true }));
+            }, 50);
+        });
+        await page.waitForTimeout(1_800);
+        await page.evaluate((id) => window.clearInterval(id), typing);
         await checkout(page).seats.fill('7');
 
         // Nothing failed: the customer changed the order, so the message says that instead.

@@ -26,3 +26,21 @@ export function getCustomElementHost(
 
     return host instanceof HTMLElement ? host : null;
 }
+
+/**
+ * Dispatches an SDK event on `host`. Every SDK event bubbles and crosses the shadow root, so one
+ * listener on a container hears every element inside it. Returns `false` when a listener cancelled
+ * a cancelable event; without a host there is no one to tell, and it dispatches nothing.
+ */
+export function dispatchHostEvent(
+    host: HTMLElement | null | undefined,
+    name: string,
+    detail?: unknown,
+    { cancelable = false }: { cancelable?: boolean } = {},
+): boolean {
+    return (
+        host?.dispatchEvent(
+            new CustomEvent(name, { detail, bubbles: true, composed: true, cancelable }),
+        ) ?? true
+    );
+}

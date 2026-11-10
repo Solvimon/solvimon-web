@@ -1,12 +1,16 @@
 <script setup lang="ts">
-import { onErrorCaptured } from 'vue';
+import { inject, onErrorCaptured } from 'vue';
 import { ErrorHandlingProvider } from '@solvimon/solvimon-ui';
+import type { SolvimonErrorDetail } from './ErrorBoundary.types';
 import { useLogger } from '@/components/providers/LoggerProvider/composables/useLogger';
 import { useHostEvent } from '@/components/providers/HostElementProvider/composables/useHostEvent';
+import { HOST_ELEMENT_PROVIDER_INJECTION_KEY } from '@/components/providers/HostElementProvider/HostElementProvider.lib';
+import { getSessionReference } from '@/utils/sessionReference';
 import { CodedError } from '@/utils/error';
 
 const logger = useLogger();
 const dispatch = useHostEvent();
+const componentName = inject(HOST_ELEMENT_PROVIDER_INJECTION_KEY, null)?.customElementName ?? '';
 
 // The UI library reports here what it recovered from itself, such as a date it could only format
 // in the browser's own time zone, so the host is not told the element failed.
@@ -28,8 +32,15 @@ onErrorCaptured((err, _instance, info) => {
             ? { ...err.context, code: err.code, message: err.message }
             : {}),
     });
-    // The element's `error` event: the error itself as `detail`, bubbling like every SDK event.
-    dispatch('error', err instanceof Error ? err : new Error('Unhandled error', { cause: err }));
+    // Named apart from the platform's `error`, which window error handlers and TypeScript treat as
+    // a script error; carries what its log entry does, so a container can tell elements apart.
+    const detail: SolvimonErrorDetail = {
+        error: err instanceof Error ? err : new Error('Unhandled error', { cause: err }),
+        code: err instanceof CodedError ? err.code : 'UNHANDLED_ERROR',
+        componentName,
+        reference: getSessionReference(),
+    };
+    dispatch('solvimon-error', detail);
 
     return false;
 });

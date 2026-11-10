@@ -43,6 +43,10 @@ export type {
 } from '@solvimon/solvimon-types';
 export type { IntlMessages, Environment } from '@/public/types';
 export type { SolvimonBranding } from '@/types/branding';
+export type {
+    SolvimonErrorDetail,
+    SolvimonErrorEvent,
+} from '@/components/providers/ErrorBoundary/ErrorBoundary.types';
 export type { ExperimentalFeature } from '@/components/providers/ExperimentalFeatureProvider/ExperimentalFeatureProvider.lib';
 
 export type {

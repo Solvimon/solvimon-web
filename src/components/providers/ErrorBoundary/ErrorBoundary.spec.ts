@@ -20,7 +20,7 @@ const mountBoundary = (child: ReturnType<typeof defineComponent>) => {
     const logger = createLogger();
     const host = document.createElement('div');
     const events: CustomEvent[] = [];
-    host.addEventListener('error', (event) => events.push(event as Event as CustomEvent));
+    host.addEventListener('solvimon-error', (event) => events.push(event as CustomEvent));
     const wrapper = mount(ErrorBoundary, {
         slots: { default: () => h(child) },
         global: {
@@ -33,7 +33,7 @@ const mountBoundary = (child: ReturnType<typeof defineComponent>) => {
             },
         },
     });
-    const errors = () => events.map((event) => event.detail as unknown);
+    const errors = () => events.map((event) => (event.detail as { error: unknown }).error);
 
     return { wrapper, logger, events, errors };
 };
@@ -175,7 +175,7 @@ describe('ErrorBoundary', () => {
         expect(emitted?.cause).toBe('a string');
     });
 
-    it('dispatches error as every SDK event: bubbling, across the shadow root, with the Error as detail', () => {
+    it('dispatches solvimon-error as every SDK event, with the error, its code, element and reference', () => {
         const failure = new Error('setup broke');
         const { events } = mountBoundary(
             defineComponent({
@@ -186,6 +186,11 @@ describe('ErrorBoundary', () => {
         );
 
         expect(events).toHaveLength(1);
-        expect(events[0]).toMatchObject({ bubbles: true, composed: true, detail: failure });
+        expect(events[0]).toMatchObject({
+            bubbles: true,
+            composed: true,
+            detail: { error: failure, code: 'UNHANDLED_ERROR', componentName: 'solvimon-test' },
+        });
+        expect(events[0].detail.reference).toEqual(expect.any(String));
     });
 });

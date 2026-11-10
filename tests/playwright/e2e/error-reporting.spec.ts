@@ -13,7 +13,14 @@ const TAG = 'solvimon-customer-overview';
 interface Recorded {
     /** Each `log` event's detail, which is the log entry. */
     logs: unknown[];
-    errors: { isError: boolean; message: string; detailLength: number }[];
+    /** Each `solvimon-error` event, as what it carries. */
+    errors: {
+        isError: boolean;
+        message: string;
+        code?: string;
+        componentName?: string;
+        bubbles: boolean;
+    }[];
 }
 
 /** Appends a second element, built by hand with listeners of its own, then sets its properties. */
@@ -28,13 +35,14 @@ function appendElement(page: Page, properties: Record<string, unknown>): Promise
             element.addEventListener('log', (event) => {
                 recorded.logs.push('detail' in event ? event.detail : undefined);
             });
-            element.addEventListener('error', (event) => {
-                const detail = 'detail' in event ? event.detail : undefined;
-                const [error] = Array.isArray(detail) ? detail : [];
+            element.addEventListener('solvimon-error', (event) => {
+                const { error, code, componentName } = (event as CustomEvent).detail ?? {};
                 recorded.errors.push({
                     isError: error instanceof Error,
                     message: error instanceof Error ? error.message : String(error),
-                    detailLength: Array.isArray(detail) ? detail.length : -1,
+                    code,
+                    componentName,
+                    bubbles: event.bubbles,
                 });
             });
 
@@ -88,7 +96,12 @@ test.describe('Error reporting', () => {
 
         await expect.poll(async () => (await handBuiltEvents(page)).errors).toHaveLength(1);
         const [received] = (await handBuiltEvents(page)).errors;
-        expect(received).toMatchObject({ isError: true, detailLength: 1 });
+        expect(received).toMatchObject({
+            isError: true,
+            code: 'UNHANDLED_ERROR',
+            componentName: TAG,
+            bubbles: true,
+        });
         expect(received.message).toContain('Unknown Solvimon environment "STAGING"');
         expect(received.message).not.toContain(String(portalObject.token));
     });

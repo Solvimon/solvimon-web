@@ -64,7 +64,7 @@ const createElement = (tag: string): Recorded => {
     const element = document.createElement(tag);
     const recorded: Recorded = { element, logEvents: [], errorEvents: [] };
     element.addEventListener('log', (event) => recorded.logEvents.push(event as CustomEvent));
-    element.addEventListener('error', (event) =>
+    element.addEventListener('solvimon-error', (event) =>
         recorded.errorEvents.push(event as unknown as CustomEvent),
     );
 
@@ -218,7 +218,7 @@ describe('EntryProvider logging seen from the host', () => {
                 environment: 'TEST',
             });
             expect(recorded.errorEvents).toHaveLength(1);
-            expect(recorded.errorEvents[0].detail).toBeInstanceOf(CodedError);
+            expect(recorded.errorEvents[0].detail.error).toBeInstanceOf(CodedError);
         });
 
         it('keeps the message it was thrown with in the log entry', async () => {

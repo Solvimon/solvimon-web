@@ -1,17 +1,16 @@
 import { inject } from 'vue';
-import { HOST_ELEMENT_PROVIDER_INJECTION_KEY } from '@/components/providers/HostElementProvider/HostElementProvider.lib';
+import {
+    dispatchHostEvent,
+    HOST_ELEMENT_PROVIDER_INJECTION_KEY,
+} from '@/components/providers/HostElementProvider/HostElementProvider.lib';
 
 /**
- * Dispatches an SDK event on the element the tree renders into. Every SDK event bubbles and
- * crosses the shadow root, so one listener on a container hears every element inside it. Returns
- * `false` when a listener cancelled a cancelable event. Outside an element there is no one to
- * tell, so it dispatches nothing.
+ * Dispatches SDK events on the element the tree renders into (see `dispatchHostEvent`). Outside an
+ * element, as a screen mounted on its own in a spec is, it dispatches nothing.
  */
 export function useHostEvent() {
     const hostRef = inject(HOST_ELEMENT_PROVIDER_INJECTION_KEY, null)?.hostRef;
 
-    return (name: string, detail?: unknown, { cancelable = false } = {}): boolean =>
-        hostRef?.value?.dispatchEvent(
-            new CustomEvent(name, { detail, bubbles: true, composed: true, cancelable }),
-        ) ?? true;
+    return (name: string, detail?: unknown, options?: { cancelable?: boolean }): boolean =>
+        dispatchHostEvent(hostRef?.value, name, detail, options);
 }

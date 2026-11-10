@@ -2,6 +2,7 @@ import type { InjectionKey, Ref } from 'vue';
 import type { Environment } from '@solvimon/solvimon-types';
 import type { LogEntry, Logger, LogLevel, LogSink, SerializedError } from './LoggerProvider.types';
 import { getSessionReference } from '@/utils/sessionReference';
+import { dispatchHostEvent } from '@/components/providers/HostElementProvider/HostElementProvider.lib';
 
 export const LOGGER_PROVIDER_INJECTION_KEY: InjectionKey<Logger> = Symbol('sdkLogger');
 
@@ -60,14 +61,7 @@ export function createCustomElementLogSink(
             return;
         }
 
-        hostRef.value.dispatchEvent(
-            new CustomEvent('log', {
-                detail: entry,
-                bubbles: true,
-                cancelable: true,
-                composed: true,
-            }),
-        );
+        dispatchHostEvent(hostRef.value, 'log', entry, { cancelable: true });
     };
 }
 

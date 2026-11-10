@@ -11,6 +11,7 @@ import type {
     LogEntry,
     PlatformBranding,
     SolvimonBranding,
+    SolvimonErrorEvent,
     PortalUrl,
     ExperimentalFeature,
     ScreenConfigurationById,
@@ -172,3 +173,7 @@ export const payInvoice = (
     detail: ActionRequestDetail,
 ): ActionRequestDetailPayInvoice | undefined =>
     detail.action === 'pay-invoice' ? detail : undefined;
+
+/* A solvimon-error listener reads what failed, where, and the reference support finds it by. */
+export const describeError = (event: SolvimonErrorEvent): string =>
+    `${event.detail.componentName}: ${event.detail.code} (${event.detail.reference}) ${event.detail.error.message}`;

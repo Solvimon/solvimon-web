@@ -87,15 +87,19 @@ const solvimon = createSolvimonCore({
 let unmountScreen: (() => void) | null = null;
 
 /**
- * `ready` and `error` are dispatched on the custom element, which the SDK appends asynchronously.
+ * `ready` and `solvimon-error` are dispatched on the custom element, which the SDK appends asynchronously.
  * Listening on the container in the capture phase catches them either way: capture reaches an
  * ancestor even for events that do not bubble.
  */
 const getErrorMessage = (event: Event): string => {
     if (!('detail' in event)) return 'unknown error';
 
-    // A Vue custom element dispatches an emit's arguments as the detail, so the Error is the first.
-    const [error] = Array.isArray(event.detail) ? event.detail : [];
+    // `solvimon-error` carries the Error with its code, element and reference.
+    const { detail } = event;
+    const error =
+        typeof detail === 'object' && detail !== null && 'error' in detail
+            ? detail.error
+            : undefined;
     return error instanceof Error ? error.message : 'unknown error';
 };
 
@@ -119,7 +123,7 @@ const recordScreenEvents = (container: HTMLElement) => {
         true,
     );
     container.addEventListener(
-        'error',
+        'solvimon-error',
         (event) => events.errors.push(getErrorMessage(event)),
         true,
     );

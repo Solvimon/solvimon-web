@@ -110,8 +110,8 @@ export const components: StoryEntry[] = [
         kind: 'component',
         id: 'payment-method-form',
         label: 'Payment Method Form',
-        description: 'Form to add or tokenize a payment method.',
-        defaultConfiguration: { variant: 'TOKENIZE' },
+        description: 'Form to save a payment method, or pay an invoice with one.',
+        defaultConfiguration: { mode: 'setup' },
     },
     {
         kind: 'component',

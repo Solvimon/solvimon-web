@@ -570,7 +570,7 @@ describe('SubscriptionDetails', () => {
 
             expect(mockDispatchAction).toHaveBeenCalledWith({
                 action: 'manage-subscription',
-                data: { subscriptionId: 'ppsu_1', enabledPricingId: 'pri_1' },
+                data: { subscriptionId: 'ppsu_1', currentPricingId: 'pri_1' },
             });
         });
     });

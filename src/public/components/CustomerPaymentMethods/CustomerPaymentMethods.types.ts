@@ -7,11 +7,15 @@ export interface CustomerPaymentMethodsConfiguration {
      */
     maxItems?: number;
     /**
-     * Whether to show the view all button when there are more than maxItems payment methods.
+     * Whether to show the "View all" button when the customer has more payment methods than
+     * `maxItems`, which sends a `view-all-payment-methods` action request.
+     * @default true
      */
     showViewAllButton?: boolean;
     /**
-     * Whether to show the add button when there are less than maxItems payment methods.
+     * Whether to show the button that adds a payment method, which sends an `add-payment-method`
+     * action request.
+     * @default true
      */
     showAddButton?: boolean;
 }

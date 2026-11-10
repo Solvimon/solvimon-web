@@ -150,8 +150,8 @@ const pricingGroup = computed(() => {
         return undefined;
     }
 
-    const { enabledPricingId } = props.configuration;
-    const pricingIds = enabledPricingId ? [enabledPricingId] : scheduledPricingIds.value;
+    const { currentPricingId } = props.configuration;
+    const pricingIds = currentPricingId ? [currentPricingId] : scheduledPricingIds.value;
 
     return pricingIds
         .map((pricingId) =>
@@ -191,18 +191,18 @@ const paymentMethodId = ref<PaymentMethod['id'] | undefined>();
 /**
  * The form starts on what the schedule already has enabled, so the ids of the groups that are not
  * being changed survive being submitted back. Within the group being managed the host's
- * `enabledPricingId` wins, so the screen opens on the pricing the customer came in on even when the
+ * `currentPricingId` wins, so the screen opens on the pricing the customer came in on even when the
  * schedule has since moved on.
  */
 watch(
     [scheduledPricingIds, pricingGroup],
     ([scheduled, group]) => {
-        const { enabledPricingId } = props.configuration;
+        const { currentPricingId } = props.configuration;
         const groupPricingIds = (group?.pricings ?? []).map(({ id }) => id);
 
         enabledPricingIds.value =
-            enabledPricingId && groupPricingIds.includes(enabledPricingId)
-                ? [...scheduled.filter((id) => !groupPricingIds.includes(id)), enabledPricingId]
+            currentPricingId && groupPricingIds.includes(currentPricingId)
+                ? [...scheduled.filter((id) => !groupPricingIds.includes(id)), currentPricingId]
                 : scheduled;
     },
     { immediate: true },

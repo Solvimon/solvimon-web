@@ -3,7 +3,7 @@ import type { Invoice, Payment } from '@solvimon/solvimon-types';
 export interface InvoiceHeaderConfiguration {
     invoiceId: Invoice['id'];
     /**
-     * Optionally show the PDF invoice download button
+     * Whether to show the button that downloads the invoice as a PDF.
      * @default true
      */
     showDownloadButton?: boolean;

@@ -183,11 +183,11 @@ const deferred = <T>() => {
 };
 
 const mountComponent = ({
-    enabledPricingId,
+    currentPricingId,
     sub = subscription,
     paymentMethods = [activeMethod],
 }: {
-    enabledPricingId?: string;
+    currentPricingId?: string;
     sub?: PricingPlanSubscriptionExpanded;
     paymentMethods?: PaymentMethod[];
 } = {}) => {
@@ -200,7 +200,7 @@ const mountComponent = ({
     mockUseLoadInitialData.mockReturnValue({ isLoading: ref(false) });
 
     return mount(SubscriptionManagement, {
-        props: { configuration: { subscriptionId: 'ppsu_1', enabledPricingId } },
+        props: { configuration: { subscriptionId: 'ppsu_1', currentPricingId } },
         attachTo: document.body,
     });
 };
@@ -299,7 +299,7 @@ describe('SubscriptionManagement committing a change', () => {
 
         it('commits once when the form is submitted twice in a row', async () => {
             mockCreatePricingPlanSchedule.mockReturnValue(new Promise(() => {}));
-            const wrapper = mountComponent({ enabledPricingId: 'pri_5000' });
+            const wrapper = mountComponent({ currentPricingId: 'pri_5000' });
             await flushPromises();
 
             const formElement = wrapper.find('.sv-subscription-management__form');
@@ -311,7 +311,7 @@ describe('SubscriptionManagement committing a change', () => {
         });
 
         it('commits through the aside button, which names the form', async () => {
-            const wrapper = mountComponent({ enabledPricingId: 'pri_5000' });
+            const wrapper = mountComponent({ currentPricingId: 'pri_5000' });
             await flushPromises();
 
             const button = wrapper.find('.sv-subscription-management__update');
@@ -368,7 +368,7 @@ describe('SubscriptionManagement committing a change', () => {
         it('does not commit a change that drops a customized pricing of another group', async () => {
             const wrapper = mountComponent({
                 sub: customizedSubscription,
-                enabledPricingId: 'pri_support_plus',
+                currentPricingId: 'pri_support_plus',
             });
             await flushPromises();
 
@@ -391,7 +391,7 @@ describe('SubscriptionManagement committing a change', () => {
         });
 
         it('does not price a change it cannot commit', async () => {
-            mountComponent({ sub: customizedSubscription, enabledPricingId: 'pri_support_plus' });
+            mountComponent({ sub: customizedSubscription, currentPricingId: 'pri_support_plus' });
             await flushPromises();
 
             expect(mockGetInvoicePreview).not.toHaveBeenCalled();
@@ -418,7 +418,7 @@ describe('SubscriptionManagement committing a change', () => {
          */
         it('cannot be committed when the subscription method is not active', async () => {
             const wrapper = mountComponent({
-                enabledPricingId: 'pri_5000',
+                currentPricingId: 'pri_5000',
                 paymentMethods: [
                     {
                         id: 'pm_saved',
@@ -452,7 +452,7 @@ describe('SubscriptionManagement committing a change', () => {
         it('does not lock a schedule whose override list is empty', async () => {
             const wrapper = mountComponent({
                 sub: withSchedule({ override_pricings: [] }),
-                enabledPricingId: 'pri_5000',
+                currentPricingId: 'pri_5000',
             });
             await flushPromises();
 
@@ -479,7 +479,7 @@ describe('SubscriptionManagement committing a change', () => {
                         ],
                     },
                 ),
-                enabledPricingId: 'pri_5000',
+                currentPricingId: 'pri_5000',
             });
             await flushPromises();
 
@@ -520,7 +520,7 @@ describe('SubscriptionManagement committing a change', () => {
             'offers an active %s method',
             async (type) => {
                 const wrapper = mountComponent({
-                    enabledPricingId: 'pri_5000',
+                    currentPricingId: 'pri_5000',
                     paymentMethods: [{ ...activeMethod, type } as unknown as PaymentMethod],
                 });
                 await flushPromises();
@@ -538,7 +538,7 @@ describe('SubscriptionManagement committing a change', () => {
             ["another customer's method", { customer_id: 'cus_other' }],
         ])('does not offer %s', async (_label, patch) => {
             const wrapper = mountComponent({
-                enabledPricingId: 'pri_5000',
+                currentPricingId: 'pri_5000',
                 sub: { ...subscription, customer_id: 'cus_1' } as PricingPlanSubscriptionExpanded,
                 paymentMethods: [
                     { ...activeMethod, customer_id: 'cus_1', ...patch } as unknown as PaymentMethod,

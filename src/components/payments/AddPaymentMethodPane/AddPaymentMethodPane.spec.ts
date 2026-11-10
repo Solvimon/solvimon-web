@@ -101,7 +101,7 @@ describe('AddPaymentMethodPane', () => {
     it('runs the tokenization flow', async () => {
         const wrapper = await mountPane({ isActive: true });
 
-        expect(formStub(wrapper).props('configuration')).toEqual({ variant: 'TOKENIZE' });
+        expect(formStub(wrapper).props('configuration')).toEqual({ mode: 'setup' });
         expect(formStub(wrapper).props('hideSubmitButton')).toBe(true);
     });
 

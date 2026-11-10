@@ -1,15 +1,12 @@
 import type {
     Amount,
-    AuthorizePaymentPayload,
     CountryCode,
     Customer,
+    Invoice,
     PaymentMethodOptionsResponse,
 } from '@solvimon/solvimon-types';
-import type { PaymentIntegrationFormProps } from '@/components/payments/PaymentIntegrationForm/PaymentIntegrationForm.types';
 
 interface PaymentMethodFormBaseConfiguration {
-    invoiceId?: PaymentIntegrationFormProps['invoiceId'];
-    amount?: Amount;
     /**
      * The customer's two-letter country, which decides the payment methods on offer. Defaults to the
      * country of the customer's address.
@@ -25,22 +22,26 @@ interface PaymentMethodFormBaseConfiguration {
     successRedirectLabel?: string;
 }
 
-export interface TokenizePaymentMethodFormConfiguration extends PaymentMethodFormBaseConfiguration {
-    variant?: 'TOKENIZE';
+/** Saves a payment method for later, without charging it. The default. */
+export interface PaymentMethodFormSetupConfiguration extends PaymentMethodFormBaseConfiguration {
+    mode?: 'setup';
+    /** The invoice the method is saved for, so the methods on offer are the ones it can be paid with. */
+    invoiceId?: Invoice['id'];
+    /** An amount to offer the methods for, when there is no invoice. */
+    amount?: Amount;
 }
 
-export interface AuthorizePaymentMethodFormConfiguration extends Omit<
-    PaymentMethodFormBaseConfiguration,
-    'amount'
-> {
-    variant: 'AUTHORIZE';
+/** Pays an invoice, and lets the customer save the method while doing so. */
+export interface PaymentMethodFormPaymentConfiguration extends PaymentMethodFormBaseConfiguration {
+    mode: 'payment';
+    invoiceId: Invoice['id'];
+    /** The amount to charge, in the invoice's currency. */
     amount: Amount;
-    context: Exclude<AuthorizePaymentPayload['context'], undefined>;
 }
 
 export type PaymentMethodFormConfiguration =
-    | TokenizePaymentMethodFormConfiguration
-    | AuthorizePaymentMethodFormConfiguration;
+    | PaymentMethodFormSetupConfiguration
+    | PaymentMethodFormPaymentConfiguration;
 
 export interface PaymentMethodFormProps {
     customer: Customer;

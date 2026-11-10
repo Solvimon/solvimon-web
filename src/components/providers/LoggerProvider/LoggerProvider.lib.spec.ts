@@ -305,14 +305,14 @@ describe('createCustomElementLogSink', () => {
         expect(inner).toHaveBeenCalledTimes(1);
     });
 
-    it('dispatches a composed log event on the host element', () => {
+    it('dispatches a composed solvimon-log event on the host element', () => {
         const inner = vi.fn();
         const host = document.createElement('div');
         const hostRef = ref<HTMLElement | null>(host);
         const sink = createCustomElementLogSink(inner, hostRef);
 
         const received: CustomEvent[] = [];
-        host.addEventListener('log', (e) => received.push(e as CustomEvent));
+        host.addEventListener('solvimon-log', (e) => received.push(e as CustomEvent));
 
         const entry = { schemaVersion: 1, level: 'error' } as LogEntry;
         sink(entry);
@@ -327,7 +327,7 @@ describe('createCustomElementLogSink', () => {
         vi.useFakeTimers();
         const host = document.createElement('div');
         const listener = vi.fn();
-        host.addEventListener('log', listener);
+        host.addEventListener('solvimon-log', listener);
         const sink = createCustomElementLogSink(() => {
             throw new Error('onLog broke');
         }, ref(host));

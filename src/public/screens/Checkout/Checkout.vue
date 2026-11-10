@@ -75,7 +75,7 @@ const PlanCustomizationEditor = defineAsyncComponent(
 const props = defineProps<CheckoutProps & { avatar?: string }>();
 // The element's `ready` event, sent once its payment form is ready and the customer can pay.
 const dispatch = useHostEvent();
-const emitReady = () => dispatch('ready');
+const emitReady = () => dispatch('solvimon-ready', undefined);
 
 const paymentIntegrationFormRef = ref();
 

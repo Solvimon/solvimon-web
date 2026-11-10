@@ -32,6 +32,7 @@ export type {
     SolvimonErrorDetail,
     SolvimonErrorEvent,
 } from '@/components/providers/ErrorBoundary/ErrorBoundary.types';
+export type { SolvimonEventMap } from '@/public/core/events.types';
 export type { ExperimentalFeature } from '@/components/providers/ExperimentalFeatureProvider/ExperimentalFeatureProvider.lib';
 
 export { defineSolvimonCheckout } from './public/screens/Checkout/Checkout.entry.ce';

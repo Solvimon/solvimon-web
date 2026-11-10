@@ -3,6 +3,7 @@ import {
     dispatchHostEvent,
     HOST_ELEMENT_PROVIDER_INJECTION_KEY,
 } from '@/components/providers/HostElementProvider/HostElementProvider.lib';
+import type { SolvimonEventMap } from '@/public/core/events.types';
 
 /**
  * Dispatches SDK events on the element the tree renders into (see `dispatchHostEvent`). Outside an
@@ -11,6 +12,6 @@ import {
 export function useHostEvent() {
     const hostRef = inject(HOST_ELEMENT_PROVIDER_INJECTION_KEY, null)?.hostRef;
 
-    return (name: string, detail?: unknown, options?: { cancelable?: boolean }): boolean =>
-        dispatchHostEvent(hostRef?.value, name, detail, options);
+    return <K extends keyof SolvimonEventMap>(name: K, detail: SolvimonEventMap[K]['detail']) =>
+        dispatchHostEvent(hostRef?.value, name, detail);
 }

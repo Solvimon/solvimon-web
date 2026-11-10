@@ -116,25 +116,27 @@ another element, or a bug in the SDK — is logged once and dispatched as a `sol
 on the element. It is logged as `UNHANDLED_ERROR` unless it has a code of its own, such as
 `PORTAL_TYPE_NOT_ALLOWED` for a portal object meant for another element. The event's `detail` holds
 what that log entry does: the `error`, its `code`, the `componentName` of the element that failed and
-the session `reference`. Like every event the SDK dispatches — `solvimon-error`, `ready`, `log` and
-`action-request` — it bubbles and crosses the shadow root, so one listener on a container hears every
-element in it, and `componentName` says which one failed:
+the session `reference`. Like every event the SDK dispatches — `solvimon-error`, `solvimon-ready`,
+`solvimon-log` and `solvimon-action-request` — it bubbles and crosses the shadow root, so one
+listener on a container hears every element in it, and `componentName` says which one failed:
 
 ```ts
-import type { SolvimonErrorEvent } from '@solvimon/solvimon-web/core';
-
 container.addEventListener('solvimon-error', (event) => {
-    const { error, code, componentName, reference } = (event as SolvimonErrorEvent).detail;
+    const { error, code, componentName, reference } = event.detail;
 });
 ```
 
-It is named apart from the platform's `error` so that it never reaches `window.onerror` and the
-global handlers of error monitoring tools.
+Importing anything from `@solvimon/solvimon-web/core`, a type included, adds the SDK's events to
+TypeScript's element and document event maps, so a listener knows its `detail` without a cast;
+`SolvimonEventMap` lists them. Every event carries the `solvimon-` prefix, so none collides with
+the platform's own, such as `error`, which `window.onerror` and error monitoring tools listen for,
+or with another library's on the same page. None is cancelable.
 
-The checkout dispatches `ready` once, when its payment form is ready and the customer can pay.
+The checkout dispatches `solvimon-ready` once, when its payment form is ready and the customer can
+pay.
 
 A failure the element handles — a refused payment, a subscription the checkout cannot load, a date
-it can only format in the browser's own time zone — reaches `onLog` and the `log` event under its
+it can only format in the browser's own time zone — reaches `onLog` and the `solvimon-log` event under its
 own code, and is never reported again as `UNHANDLED_ERROR` or a `solvimon-error` event.
 An element missing `environment`, `portalObject` or the id in its `configuration` renders
 nothing until they are set, and logs `MISSING_REQUIRED_PROPERTIES` if they are still missing just
@@ -200,16 +202,12 @@ The supported locales are `en-US`, `nl-NL`, `de-DE`, `it-IT` and `fr-FR`. Any ot
 ### Navigation requests
 
 The SDK does not navigate for you. Where a customer asks to go somewhere — open an invoice, manage a
-subscription — the element dispatches an `action-request` event, and your page decides what that
+subscription — the element dispatches a `solvimon-action-request` event, and your page decides what that
 means. The event bubbles and crosses the shadow root, so one listener on a container catches every
 element in it:
 
 ```ts
-import type { ActionRequestEvent } from '@solvimon/solvimon-web/core';
-
-container.addEventListener('action-request', (event) => {
-    const { detail } = event as ActionRequestEvent;
-
+container.addEventListener('solvimon-action-request', ({ detail }) => {
     if (detail.action === 'view-invoice') {
         router.push(`/invoices/${detail.data.invoiceId}`);
     }
@@ -219,8 +217,7 @@ container.addEventListener('action-request', (event) => {
 `detail.action` is one of `view-invoice`, `pay-invoice`, `view-subscription-details`,
 `view-all-subscriptions`, `manage-subscription`, `edit-billing-information`,
 `view-all-payment-methods`, `add-payment-method` and `view-customer-overview`. None of them
-does anything unless you handle it. The event is cancelable so that an action the SDK gives a
-default later can be taken over with `preventDefault()`; today that call has no effect.
+does anything unless you handle it.
 
 ## CSS overrides
 

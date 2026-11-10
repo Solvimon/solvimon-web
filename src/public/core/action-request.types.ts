@@ -1,5 +1,5 @@
 /**
- * Action-request event types for the 'action-request' custom event.
+ * Action request types for the 'solvimon-action-request' event.
  * Kept in a separate file with no internal dependencies so dist/core declarations resolve for consumers.
  */
 
@@ -59,8 +59,7 @@ export type ActionRequestDetail =
     | ActionRequestDetailViewCustomerOverview;
 
 /**
- * The `action-request` event. It bubbles and crosses the shadow root, so a listener on the document
- * or a container hears every element. It is cancelable, but calling `preventDefault()` does not
- * change anything the SDK does yet.
+ * The `solvimon-action-request` event. It bubbles and crosses the shadow root, so a listener on the
+ * document or a container hears every element.
  */
 export type ActionRequestEvent = CustomEvent<ActionRequestDetail>;

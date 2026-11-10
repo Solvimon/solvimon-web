@@ -63,7 +63,9 @@ interface Recorded {
 const createElement = (tag: string): Recorded => {
     const element = document.createElement(tag);
     const recorded: Recorded = { element, logEvents: [], errorEvents: [] };
-    element.addEventListener('log', (event) => recorded.logEvents.push(event as CustomEvent));
+    element.addEventListener('solvimon-log', (event) =>
+        recorded.logEvents.push(event as CustomEvent),
+    );
     element.addEventListener('solvimon-error', (event) =>
         recorded.errorEvents.push(event as unknown as CustomEvent),
     );

@@ -7,14 +7,12 @@ import {
     getCountryNameByCode,
     Input,
     isEUCountry,
-    isValidCountryCode,
     Label,
     Section,
     Typography,
     useIntl,
 } from '@solvimon/solvimon-ui';
 import { computed, reactive, ref } from 'vue';
-import type { CountryCode } from '@solvimon/solvimon-types';
 import type { CheckoutFormState, CheckoutFormProps, CheckoutFormEmits } from './CheckoutForm.types';
 import TaxIDCheckNotice from './TaxIDCheckNotice.vue';
 import CheckoutAddressFields from './CheckoutAddressFields.vue';
@@ -24,11 +22,9 @@ import HiddenLabelInput from '@/components/customer/HiddenLabelInput.vue';
 import { useCustomerFormLabels } from '@/components/customer/useCustomerFormLabels';
 import { useTaxIDValidationCheck } from '@/composables/useTaxIDValidationCheck';
 import { asOptionalText, formControlModel, type SelectControlValue } from '@/utils/formControl';
+import { isCountryCode } from '@/utils/countryCode';
 
 const FORM_ID = 'checkout-form';
-
-// `isValidCountryCode` answers with a plain boolean, so the narrowing is ours to state.
-const isCountryCode = (value: string): value is CountryCode => isValidCountryCode(value);
 
 const props = defineProps<CheckoutFormProps>();
 defineEmits<CheckoutFormEmits>();

@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed, reactive } from 'vue';
-import { CountrySelect, isValidCountryCode, PhoneInput, useIntl } from '@solvimon/solvimon-ui';
-import type { CountryCode } from '@solvimon/solvimon-types';
+import { CountrySelect, PhoneInput, useIntl } from '@solvimon/solvimon-ui';
 import type { ErrorObject } from '@vuelidate/core';
 import type { CheckoutAddressFieldsProps } from './CheckoutAddressFields.types';
 import type { CheckoutFormState } from './CheckoutForm.types';
@@ -9,9 +8,7 @@ import { ADDRESS_KEYS, getAddressParts, type AddressPart } from './CheckoutForm.
 import HiddenLabelInput from '@/components/customer/HiddenLabelInput.vue';
 import { useCustomerFormLabels } from '@/components/customer/useCustomerFormLabels';
 import { asOptionalText, formControlModel, type SelectControlValue } from '@/utils/formControl';
-
-// `isValidCountryCode` answers with a plain boolean, so the narrowing is ours to state.
-const isCountryCode = (value: string): value is CountryCode => isValidCountryCode(value);
+import { isCountryCode } from '@/utils/countryCode';
 
 const GRID_COLUMNS: Record<number, string> = {
     1: 'grid-cols-1',

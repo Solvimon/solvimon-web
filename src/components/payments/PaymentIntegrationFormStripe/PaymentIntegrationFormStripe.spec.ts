@@ -877,6 +877,66 @@ describe('PaymentIntegrationFormStripe', () => {
             expect(wrapper.emitted('payment-failed')).toBeUndefined();
         });
 
+        describe('one submit at a time', () => {
+            const submit = (wrapper: ReturnType<typeof mountComponent>) =>
+                (wrapper.vm as unknown as { submit: () => void }).submit();
+
+            it('ignores a second submit while the first is out', async () => {
+                const wrapper = mountComponent();
+
+                submit(wrapper);
+                submit(wrapper);
+                await flushPromises();
+                submit(wrapper);
+                await flushPromises();
+
+                expect(mockTriggerSubmit).toHaveBeenCalledTimes(1);
+            });
+
+            it('takes a submit again once Stripe has answered the first', async () => {
+                const wrapper = mountComponent();
+                submit(wrapper);
+                await flushPromises();
+
+                await findFrame(wrapper).vm.$emit('submit-error', {
+                    type: 'validation_error',
+                    message: 'Your card number is incomplete.',
+                });
+                submit(wrapper);
+                await flushPromises();
+
+                expect(mockTriggerSubmit).toHaveBeenCalledTimes(2);
+            });
+
+            it('takes a submit again once the screen rejected the first', async () => {
+                const validateOnSubmit = vi
+                    .fn()
+                    .mockResolvedValueOnce(false)
+                    .mockResolvedValue(true);
+                const wrapper = mountComponent({ validateOnSubmit });
+                submit(wrapper);
+                await flushPromises();
+
+                submit(wrapper);
+                await flushPromises();
+
+                expect(mockTriggerSubmit).toHaveBeenCalledTimes(1);
+            });
+
+            // A frame set up anew has dropped the submit it had, so no answer to it will come.
+            it('takes a submit again once the frame is set up anew', async () => {
+                const wrapper = mountComponent();
+                submit(wrapper);
+                await flushPromises();
+
+                await findFrame(wrapper).vm.$emit('ready');
+                submit(wrapper);
+                await flushPromises();
+
+                expect(mockTriggerSubmit).toHaveBeenCalledTimes(2);
+            });
+        });
+
         it('fails the payment on any other Stripe submit error', async () => {
             const wrapper = mountComponent();
 

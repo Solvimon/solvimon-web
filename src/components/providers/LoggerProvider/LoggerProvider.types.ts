@@ -16,9 +16,10 @@ export type LogEntry = {
      * What happened, as a stable identifier. Filter and branch on this rather than on `message`:
      * codes are part of the SDK's contract and are listed in the README, messages are not and are
      * reworded freely. A `string` is accepted alongside the known codes because `debug` and `info`
-     * entries carry ad-hoc ones.
+     * entries carry ad-hoc ones. `string & Record<never, never>` keeps that from swallowing the
+     * known codes, so an editor still offers them.
      */
-    code: ErrorCode | WarnCode | string;
+    code: ErrorCode | WarnCode | (string & Record<never, never>);
     /** A human-readable line for a person reading logs. Not stable — never match on it. */
     message: string;
     /** When the entry was created, as an ISO 8601 string. */

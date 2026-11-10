@@ -75,6 +75,24 @@ describe('scanLogCodes', () => {
         });
     });
 
+    it('extracts a code thrown as a CodedError, which the error boundary logs', () => {
+        const dir = tmpDir();
+        writeFile(
+            dir,
+            'Provider.vue',
+            `throw new CodedError(\n    'PORTAL_TYPE_NOT_ALLOWED',\n    \`This element does not accept a portal object of type \${type}\`,\n);`,
+        );
+
+        const entries = scanLogCodes(dir, dir);
+        expect(entries).toEqual([
+            expect.objectContaining({
+                level: 'error',
+                code: 'PORTAL_TYPE_NOT_ALLOWED',
+                message: 'This element does not accept a portal object of type…',
+            }),
+        ]);
+    });
+
     it('extracts codes from a .vue file', () => {
         const dir = tmpDir();
         writeFile(dir, 'Component.vue', `logger.error('COMPONENT_ERROR', 'Component failed');`);

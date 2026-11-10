@@ -1,8 +1,8 @@
-import { isIndividual, isOrganization, isValidCountryCode } from '@solvimon/solvimon-ui';
+import { isIndividual, isOrganization } from '@solvimon/solvimon-ui';
 import { taxId } from '@solvimon/solvimon-ui/validators';
 import type { ValidatorFn } from '@vuelidate/core';
 import { email, required, requiredIf } from '@vuelidate/validators';
-import type { CountryCode, Customer, TaxIdentifier } from '@solvimon/solvimon-types';
+import type { Customer, TaxIdentifier } from '@solvimon/solvimon-types';
 import { ref } from 'vue';
 import type { BillingInformationFormState } from './BillingInformationForm.types';
 import useForm from '@/composables/useForm';
@@ -10,8 +10,7 @@ import {
     DEFAULT_TAX_IDENTIFIER_TYPE,
     getRequiredFieldsForCountry,
 } from '@/components/customer/CheckoutForm/CheckoutForm.lib';
-
-const isCountryCode = (value: string): value is CountryCode => isValidCountryCode(value);
+import { isCountryCode } from '@/utils/countryCode';
 
 const DEFAULT_FORM_STATE: BillingInformationFormState = {
     type: 'INDIVIDUAL',

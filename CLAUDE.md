@@ -72,6 +72,13 @@ When a change touches the shared chunk, an entry's imports, styles, or dependenc
 
 CI fails when an entry's brotli size outgrows its cap in `scripts/ci/bundle-budget.json`. Raise a cap only on purpose: `node scripts/ci/measure-bundle.mjs > sizes.json && node scripts/ci/check-bundle-budget.mjs sizes.json --update`, and say why in the pull request.
 
+## Public API
+
+CI fails when the public type surface — every declaration a consumer can reach — differs from
+`api/public-api.snap`. Change it only on purpose: `npm run build && npm run api:update`, commit the
+snapshot, and say in the pull request what changed for hosts. See
+[docs/development/public-types.md](docs/development/public-types.md).
+
 ## Testing
 
 - Unit tests live next to the file they test (`foo.spec.ts` beside `foo.ts`).

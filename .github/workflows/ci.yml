@@ -255,6 +255,8 @@ jobs:
               run: npm run types:check-published
             - name: Check what a consumer of the packed package gets
               run: npm run types:check-consumer
+            - name: Check the public type surface against its snapshot
+              run: npm run api:check
             - name: Measure bundle
               run: node scripts/ci/measure-bundle.mjs > bundle-sizes.json
             # Uploaded before the budget check, so the size report still explains a failed check.

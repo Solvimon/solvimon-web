@@ -39,6 +39,8 @@
         "tests:check-labels": "node ./scripts/check-test-labels.mjs",
         "types:check-published": "node ./scripts/ci/check-published-types.mjs",
         "types:check-consumer": "node ./scripts/ci/check-consumer-types.mjs",
+        "api:check": "node ./scripts/ci/api-snapshot.mjs",
+        "api:update": "node ./scripts/ci/api-snapshot.mjs --update",
         "bundle:check-contents": "node ./scripts/ci/check-bundle-contents.mjs",
         "logs:list": "node ./scripts/list-log-codes.mjs",
         "test:e2e:run-app": "node scripts/generate-ssl-cert.mjs && node scripts/start-test-app.mjs",

@@ -35,7 +35,7 @@ Nothing special is needed for a type from `@solvimon/solvimon-types` — import 
 build vendors it. Reach for `src/public/types/` only when a type has to come from somewhere that
 cannot be vendored, and add an assertion next to it when you do.
 
-## The three checks
+## The four checks
 
 Nothing here is upheld by convention alone.
 
@@ -44,6 +44,7 @@ Nothing here is upheld by convention alone.
 | `npm run type-check`            | CI, every PR    | A declared type drifting from the one it copies                    |
 | `npm run types:check-published` | CI, after build | A published declaration naming something a consumer cannot resolve |
 | `npm run types:check-consumer`  | CI, after build | Anything a consumer would actually hit, packaging included         |
+| `npm run api:check`             | CI, after build | Any change to the public type surface, intended or not             |
 
 **`type-check`** covers `publicContract.spec.ts`, whose assertions are compile-time only.
 `expectTypeOf` rejects a comparison against `any`, so if the private packages ever fail to resolve
@@ -65,6 +66,14 @@ is.
 The fixture lives outside the repo on purpose. Node resolves from a file's real path, so a fixture
 inside the repository walks up into the repository's own `node_modules`, finds the private packages,
 and proves nothing.
+
+**`api:check`** compares every declaration `types:check-published` walks — the SDK's own and the
+vendored `@solvimon/solvimon-types` ones — with
+[`api/public-api.snap`](../../api/public-api.snap), and fails on any difference, naming the files
+that changed. The other three catch a surface that is broken; this one catches a surface that
+changed, which after 1.0 can break a host even when everything still resolves. A JSDoc edit counts
+too: it is what a host reads in their editor. To accept a change, run
+`npm run build && npm run api:update` and commit the snapshot, so review sees the diff.
 
 ## When a check fails
 

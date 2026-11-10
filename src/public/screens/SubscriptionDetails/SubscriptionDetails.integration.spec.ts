@@ -1,11 +1,12 @@
 import { flushPromises, mount } from '@vue/test-utils';
-import { defineComponent, h } from 'vue';
+import { defineComponent, h, ref } from 'vue';
 import type {
     CustomerWalletBalanceItem,
     PaymentMethod,
     PricingPlanSubscriptionExpanded,
 } from '@solvimon/solvimon-types';
 import SubscriptionDetails from './SubscriptionDetails.vue';
+import { HOST_ELEMENT_PROVIDER_INJECTION_KEY } from '@/components/providers/HostElementProvider/HostElementProvider.lib';
 
 const { mockDispatchAction } = vi.hoisted(() => ({
     mockDispatchAction: vi.fn(),
@@ -232,9 +233,19 @@ const subscriptionWithPaymentMethod = {
     payment_method_id: 'pmet_subscription',
 } as unknown as PricingPlanSubscriptionExpanded;
 
-const mountComponent = (props: Record<string, unknown> = {}) =>
+const mountComponent = (props: Record<string, unknown> = {}, host?: HTMLElement) =>
     mount(SubscriptionDetails, {
         props: { isLoading: false, subscription: mockSubscription, ...props },
+        global: {
+            provide: host
+                ? {
+                      [HOST_ELEMENT_PROVIDER_INJECTION_KEY as symbol]: {
+                          hostRef: ref(host),
+                          customElementName: 'solvimon-subscription-details',
+                      },
+                  }
+                : {},
+        },
     });
 
 describe('SubscriptionDetails', () => {
@@ -408,8 +419,11 @@ describe('SubscriptionDetails', () => {
             );
         });
 
-        it('reports the invoice a placed order created', async () => {
-            const wrapper = mountComponent({ onDemandItems, onDemandScheduleId: 'ppsc_1' });
+        it('tells the host about the invoice a placed order created', async () => {
+            const host = document.createElement('div');
+            const invoicesCreated = vi.fn();
+            host.addEventListener('solvimon-invoice-created', invoicesCreated);
+            const wrapper = mountComponent({ onDemandItems, onDemandScheduleId: 'ppsc_1' }, host);
             await wrapper.find('.sv-on-demand-items-card__order').trigger('click');
             await flushPromises();
             const invoice = { id: 'inv_1', payment_status: 'UNPAID' };
@@ -418,7 +432,12 @@ describe('SubscriptionDetails', () => {
                 .findComponent({ name: 'ChargeOnDemandModalStub' })
                 .vm.$emit('invoice-created', invoice);
 
-            expect(wrapper.emitted('invoice-created')).toEqual([[invoice]]);
+            expect(invoicesCreated).toHaveBeenCalledOnce();
+            expect(invoicesCreated.mock.calls[0][0]).toMatchObject({
+                detail: { invoiceId: 'inv_1', paymentStatus: 'UNPAID' },
+                bubbles: true,
+                composed: true,
+            });
         });
 
         it('lets the order offer its invoice only when the host can open it', async () => {

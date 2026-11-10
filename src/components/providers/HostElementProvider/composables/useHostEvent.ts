@@ -7,12 +7,12 @@ import type { SolvimonEventMap } from '@/public/core/events.types';
 
 /**
  * Dispatches SDK events on the element the tree renders into (see `dispatchHostEvent`). Outside an
- * element, as a screen mounted on its own in a spec is, it dispatches nothing.
+ * element, as a screen mounted on its own in a spec is, it dispatches nothing and returns `true`.
  */
 export function useHostEvent(): <K extends keyof SolvimonEventMap>(
     name: K,
     detail: SolvimonEventMap[K]['detail'],
-) => void {
+) => boolean {
     const hostRef = inject(HOST_ELEMENT_PROVIDER_INJECTION_KEY, null)?.hostRef;
 
     return <K extends keyof SolvimonEventMap>(name: K, detail: SolvimonEventMap[K]['detail']) =>

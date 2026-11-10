@@ -12,12 +12,6 @@ export interface PayInvoiceConfiguration {
      * The ID of the invoice to render.
      */
     invoiceId: Invoice['id'];
-    /**
-     * An optional callback that is executed whenever a payment is successful.
-     * It can be used to execute some follow up actions and/or to do a redirect
-     * if needed.
-     */
-    onPaymentSuccess?: () => void;
 }
 
 export interface PayInvoiceProps extends BaseScreenProps {

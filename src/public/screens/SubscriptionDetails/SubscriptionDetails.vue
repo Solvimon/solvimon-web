@@ -7,6 +7,7 @@ import type {
 } from './SubscriptionDetails.types';
 import { ContentWithAsideLayout } from '@/layouts';
 import { useActionDispatchProvider } from '@/components/providers';
+import { useHostEvent } from '@/components/providers/HostElementProvider/composables/useHostEvent';
 import { useSubscriptionActions } from '@/composables/useSubscriptionActions';
 import { getSubscriptionName } from '@/utils/subscription';
 import { getActiveDefaultScheduleInfo } from '@/utils/pricingPlanSchedule';
@@ -38,6 +39,7 @@ const props = withDefaults(defineProps<SubscriptionDetailsProps>(), {
     onDemandItems: () => [],
 });
 const emit = defineEmits<SubscriptionDetailsEmits>();
+const dispatch = useHostEvent();
 const { dispatchAction } = useActionDispatchProvider();
 
 const { $t } = useIntl();
@@ -280,7 +282,13 @@ const title = computed<string>(() =>
                 :can-view-created-invoice="canViewCreatedInvoice"
                 @close="isOnDemandOrderOpen = false"
                 @payment-method-stored="$emit('payment-method-stored')"
-                @invoice-created="(invoice) => $emit('invoice-created', invoice)"
+                @invoice-created="
+                    (invoice) =>
+                        dispatch('solvimon-invoice-created', {
+                            invoiceId: invoice.id,
+                            paymentStatus: invoice.payment_status,
+                        })
+                "
                 @view-invoice="
                     (invoiceId) => dispatchAction({ action: 'view-invoice', data: { invoiceId } })
                 "

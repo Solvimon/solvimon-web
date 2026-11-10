@@ -186,6 +186,15 @@ someContainer.addEventListener('solvimon-error', (event) => {
     // @ts-expect-error - the detail of solvimon-error has no such field
     void event.detail.unknownField;
 });
+someContainer.addEventListener('solvimon-payment-succeeded', (event) => {
+    event.preventDefault();
+    const subscriptionId: string | undefined = event.detail.subscriptionId;
+    void subscriptionId;
+});
+document.addEventListener('solvimon-invoice-created', (event) => {
+    const invoiceId: string = event.detail.invoiceId;
+    void invoiceId;
+});
 document.addEventListener('solvimon-action-request', (event) => {
     if (event.detail.action === 'pay-invoice') {
         const invoiceId: string = event.detail.data.invoiceId;

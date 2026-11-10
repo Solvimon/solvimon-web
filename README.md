@@ -116,8 +116,7 @@ another element, or a bug in the SDK — is logged once and dispatched as a `sol
 on the element. It is logged as `UNHANDLED_ERROR` unless it has a code of its own, such as
 `PORTAL_TYPE_NOT_ALLOWED` for a portal object meant for another element. The event's `detail` holds
 what that log entry does: the `error`, its `code`, the `componentName` of the element that failed and
-the session `reference`. Like every event the SDK dispatches — `solvimon-error`, `solvimon-ready`,
-`solvimon-log` and `solvimon-action-request` — it bubbles and crosses the shadow root, so one
+the session `reference`. Like every event the SDK dispatches — see [Events](#events) — it bubbles and crosses the shadow root, so one
 listener on a container hears every element in it, and `componentName` says which one failed:
 
 ```ts
@@ -130,11 +129,37 @@ Importing anything from `@solvimon/solvimon-web/core`, a type included, adds the
 TypeScript's element and document event maps, so a listener knows its `detail` without a cast;
 `SolvimonEventMap` lists them. Every event carries the `solvimon-` prefix, so none collides with
 the platform's own, such as `error`, which `window.onerror` and error monitoring tools listen for,
-or with another library's on the same page. None is cancelable.
+or with another library's on the same page.
 
-The checkout dispatches `solvimon-ready` once, when its content has loaded — its subscription and
-first price — whether the customer can pay yet, has paid already or has nothing to pay with. It is
-not sent again when the price or the payment form reloads.
+### Events
+
+| Event                           | Sent by                                                                                             | `detail`                                    |
+| ------------------------------- | --------------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| `solvimon-error`                | any element that fails                                                                              | `{ error, code, componentName, reference }` |
+| `solvimon-log`                  | any element, for each log entry                                                                     | the `LogEntry`, as `onLog` receives it      |
+| `solvimon-action-request`       | any element, when the customer asks to go somewhere the host decides on                             | `{ action, data }`                          |
+| `solvimon-ready`                | the checkout, once its subscription and first price have loaded                                     | none                                        |
+| `solvimon-payment-succeeded`    | the checkout, pay-invoice, and `payment-method-form` with the `AUTHORIZE` variant                   | `{ subscriptionId?, invoiceId? }`           |
+| `solvimon-invoice-created`      | subscription details, when an on-demand order creates an invoice                                    | `{ invoiceId, paymentStatus }`              |
+| `solvimon-payment-method-added` | `payment-method-form`, `payment-methods-management` and an on-demand order, once a method is stored | none                                        |
+
+`solvimon-ready` is sent whether the customer can pay yet, has paid already or has nothing to pay
+with, and not again when the price or the payment form reloads.
+
+`solvimon-invoice-created` is sent whether or not the order's payment went through, so
+`paymentStatus` says which: `PAID` and `OVERPAID` are settled, `UNPAID`, `PARTIALLY_PAID` and a
+missing status are an invoice still to be paid. A failed order is logged instead, as
+`ON_DEMAND_CHARGE_REFUSED`, or `ON_DEMAND_CHARGE_FAILED` when its outcome is unknown.
+
+`solvimon-payment-succeeded` is the only cancelable event. After a paid checkout the customer is
+sent to the success URL set in Solvimon Desk; a host that takes over from there cancels the event:
+
+```ts
+checkout.addEventListener('solvimon-payment-succeeded', (event) => {
+    event.preventDefault();
+    router.push(`/welcome?subscription=${event.detail.subscriptionId}`);
+});
+```
 
 A failure the element handles — a refused payment, a subscription the checkout cannot load, a date
 it can only format in the browser's own time zone — reaches `onLog` and the `solvimon-log` event under its

@@ -162,13 +162,16 @@ const canPay = computed(
         !isPaymentUnconfirmed.value,
 );
 
-const dispatch = useHostEvent();
+const { dispatch, componentName } = useHostEvent();
 
 const handlePaymentSuccess = () => {
     isPaid.value = true;
     isPaymentPending.value = false;
     void props.refresh?.();
-    dispatch('solvimon-payment-succeeded', { invoiceId: props.configuration.invoiceId });
+    dispatch('solvimon-payment-succeeded', {
+        componentName,
+        invoiceId: props.configuration.invoiceId,
+    });
 };
 
 const handlePaymentNotSubmitted = () => {

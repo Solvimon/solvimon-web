@@ -160,6 +160,7 @@ describe('PaymentMethodForm', () => {
                 expect(heard).toHaveLength(1);
                 expect(heard[0]).toMatchObject({
                     type: 'solvimon-payment-method-added',
+                    detail: { componentName: 'solvimon-payment-method-form' },
                     bubbles: true,
                     composed: true,
                 });
@@ -176,7 +177,7 @@ describe('PaymentMethodForm', () => {
                 expect(heard).toHaveLength(1);
                 expect(heard[0]).toMatchObject({
                     type: 'solvimon-payment-succeeded',
-                    detail: { invoiceId: 'inv_1' },
+                    detail: { componentName: 'solvimon-payment-method-form', invoiceId: 'inv_1' },
                 });
             });
         });

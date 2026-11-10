@@ -98,6 +98,10 @@ const solvimon = createSolvimonCore({ environment: 'TEST' });
 const checkout = solvimon.createScreen('checkout', {
     container: '#checkout',
     portalObject,
+    // Optional: listeners for the element's events, added before it is in the page.
+    on: {
+        'solvimon-payment-succeeded': (event) => console.log('paid', event.detail),
+    },
 });
 
 // Later, to remove it:
@@ -133,15 +137,23 @@ or with another library's on the same page.
 
 ### Events
 
-| Event                           | Sent by                                                                                             | `detail`                                    |
-| ------------------------------- | --------------------------------------------------------------------------------------------------- | ------------------------------------------- |
-| `solvimon-error`                | any element that fails                                                                              | `{ error, code, componentName, reference }` |
-| `solvimon-log`                  | any element, for each log entry                                                                     | the `LogEntry`, as `onLog` receives it      |
-| `solvimon-action-request`       | any element, when the customer asks to go somewhere the host decides on                             | `{ action, data }`                          |
-| `solvimon-ready`                | the checkout, once its subscription and first price have loaded                                     | none                                        |
-| `solvimon-payment-succeeded`    | the checkout, pay-invoice, and `payment-method-form` with the `AUTHORIZE` variant                   | `{ subscriptionId?, invoiceId? }`           |
-| `solvimon-invoice-created`      | subscription details, when an on-demand order creates an invoice                                    | `{ invoiceId, paymentStatus }`              |
-| `solvimon-payment-method-added` | `payment-method-form`, `payment-methods-management` and an on-demand order, once a method is stored | none                                        |
+| Event                           | Sent by                                                                                                                                                                                           | `detail`                                         |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
+| `solvimon-error`                | any element that fails                                                                                                                                                                            | `{ error, code, componentName, reference }`      |
+| `solvimon-log`                  | any element, for each log entry                                                                                                                                                                   | the `LogEntry`, as `onLog` receives it           |
+| `solvimon-action-request`       | any element, when the customer asks to go somewhere the host decides on                                                                                                                           | `{ action, data }`                               |
+| `solvimon-ready`                | the checkout, once its subscription and first price have loaded                                                                                                                                   | none                                             |
+| `solvimon-payment-succeeded`    | the checkout, pay-invoice, and `payment-method-form` with the `AUTHORIZE` variant                                                                                                                 | `{ componentName, subscriptionId?, invoiceId? }` |
+| `solvimon-invoice-created`      | subscription details, when an on-demand order creates an invoice                                                                                                                                  | `{ invoiceId, paymentStatus }`                   |
+| `solvimon-payment-method-added` | `payment-method-form`, `payment-methods-management`, and the add-method step of an on-demand order, a top-up or an auto top-up (in subscription details, customer overview and `wallet-balances`) | `{ componentName }`                              |
+
+`componentName` is the tag name of the element the event came from. A nested element's event reaches
+a listener as if the outer element sent it, so `detail.componentName` is the way to tell them apart.
+
+Add listeners before the element is in the page — on the element before it is appended, on a
+container or `document`, or through the core's `on` option — or an event dispatched as the element
+starts can be missed. A checkout that comes back from a 3-D Secure or bank redirect, for one, may
+send `solvimon-payment-succeeded` soon after it loads.
 
 `solvimon-ready` is sent whether the customer can pay yet, has paid already or has nothing to pay
 with, and not again when the price or the payment form reloads.

@@ -27,11 +27,12 @@ const overview = solvimon.createScreen('customer-overview', {
 
 ## Options
 
-| Option                               | Description                                                                                                                                                                                       |
-| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `createSolvimonCore(config)`         | Creates a reusable core instance with shared configuration. `environment` (`'TEST'` or `'LIVE'`) is required; `locale`, `branding`, `experimentalFeatures`, `logLevel` and the rest are optional. |
-| `createScreen(id, configuration)`    | Mounts a registered screen into the provided container and returns an instance with `unmount()`.                                                                                                  |
-| `createComponent(id, configuration)` | Mounts a registered component into the provided container and returns an instance with `unmount()`.                                                                                               |
+| Option                               | Description                                                                                                                                                                                                                 |
+| ------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `createSolvimonCore(config)`         | Creates a reusable core instance with shared configuration. `environment` (`'TEST'` or `'LIVE'`) is required; `locale`, `branding`, `experimentalFeatures`, `logLevel` and the rest are optional.                           |
+| `createScreen(id, configuration)`    | Mounts a registered screen into the provided container and returns an instance with `unmount()`.                                                                                                                            |
+| `createComponent(id, configuration)` | Mounts a registered component into the provided container and returns an instance with `unmount()`.                                                                                                                         |
+| `on` (in `configuration`)            | Listeners for the element's events by name, such as `{ 'solvimon-payment-succeeded': (event) => … }`, typed as `SolvimonEventListeners`. They are added before the element is in the page, so none of its events is missed. |
 
 ## Registered IDs
 

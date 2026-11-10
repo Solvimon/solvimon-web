@@ -39,7 +39,7 @@ const props = withDefaults(defineProps<SubscriptionDetailsProps>(), {
     onDemandItems: () => [],
 });
 const emit = defineEmits<SubscriptionDetailsEmits>();
-const dispatch = useHostEvent();
+const { dispatch } = useHostEvent();
 const { dispatchAction } = useActionDispatchProvider();
 
 const { $t } = useIntl();

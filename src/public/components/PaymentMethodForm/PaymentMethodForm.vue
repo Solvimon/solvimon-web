@@ -37,7 +37,7 @@ const props = withDefaults(defineProps<PaymentMethodFormProps>(), {
 });
 
 const emit = defineEmits<PaymentMethodFormEmits>();
-const dispatch = useHostEvent();
+const { dispatch, componentName } = useHostEvent();
 
 const { $t } = useIntl();
 
@@ -80,9 +80,12 @@ function handlePaymentSuccess() {
     isPaymentPending.value = false;
     isCompleted.value = true;
     if (configuration.value.variant === 'AUTHORIZE') {
-        dispatch('solvimon-payment-succeeded', { invoiceId: configuration.value.invoiceId });
+        dispatch('solvimon-payment-succeeded', {
+            componentName,
+            invoiceId: configuration.value.invoiceId,
+        });
     } else {
-        dispatch('solvimon-payment-method-added', undefined);
+        dispatch('solvimon-payment-method-added', { componentName });
     }
     emit('success');
 }

@@ -6,6 +6,7 @@ import type {
     SolvimonMountConfig,
     SolvimonMountInstance,
 } from './types';
+import type { SolvimonEventListeners } from './events.types';
 import type { LogSink } from '@/components/providers/LoggerProvider/LoggerProvider.types';
 import { getSessionReference } from '@/utils/sessionReference';
 
@@ -67,6 +68,7 @@ function mountSolvimonElement(
     id: RegisteredComponentId | RegisteredScreenId,
     type: 'component' | 'screen',
     props: ElementProps,
+    on: SolvimonEventListeners = {},
     onLog?: LogSink,
 ): SolvimonMountInstance {
     // Both resolved before the entry loads, so a bad container or an unknown id still throws at the
@@ -85,6 +87,12 @@ function mountSolvimonElement(
 
             element = document.createElement(tagName);
             setElementProps(element, props);
+            // Before the append, so even an event dispatched as the element connects is heard.
+            for (const [name, listener] of Object.entries(on)) {
+                // `Object.entries` loses which listener belongs to which event; `on` is typed by name.
+                // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+                element.addEventListener(name, listener as EventListener);
+            }
             parent.appendChild(element);
         })
         .catch((error: unknown) => reportLoadFailure(id, type, error, onLog));
@@ -109,9 +117,13 @@ export function createSolvimonCore(config = {} as SolvimonMountConfig): CoreConf
         (type: 'component' | 'screen') =>
         (
             id: RegisteredComponentId | RegisteredScreenId,
-            { container, ...props }: { container: Element | string },
+            {
+                container,
+                on,
+                ...props
+            }: { container: Element | string; on?: SolvimonEventListeners },
         ) =>
-            mountSolvimonElement(container, id, type, { ...config, ...props }, config.onLog);
+            mountSolvimonElement(container, id, type, { ...config, ...props }, on, config.onLog);
 
     return { config, createComponent: mount('component'), createScreen: mount('screen') };
 }

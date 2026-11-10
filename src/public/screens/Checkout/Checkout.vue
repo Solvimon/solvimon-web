@@ -15,8 +15,9 @@ import type {
     BillingPeriod,
     CountryCode,
 } from '@solvimon/solvimon-types';
-import type { CheckoutEmits, CheckoutProps } from './Checkout.types';
+import type { CheckoutProps } from './Checkout.types';
 import { useCheckoutView } from './useCheckout.view';
+import { useHostEvent } from '@/components/providers/HostElementProvider/composables/useHostEvent';
 import type { ExpressBillingInformation } from '@/components/payments/ExpressPaymentMethod/ExpressPaymentMethod.types';
 import { usePromotionCode } from '@/composables/usePromotionCode';
 import { useAutoApplyPromotionCode } from '@/composables/useAutoApplyPromotionCode';
@@ -72,7 +73,9 @@ const PlanCustomizationEditor = defineAsyncComponent(
 
 // `avatar` is the branding emblem, which the entry passes on; it is not a host option.
 const props = defineProps<CheckoutProps & { avatar?: string }>();
-const emit = defineEmits<CheckoutEmits>();
+// The element's `ready` event, sent when the checkout mounts and again when its payment form is.
+const dispatch = useHostEvent();
+const emitReady = () => dispatch('ready');
 
 const paymentIntegrationFormRef = ref();
 
@@ -720,7 +723,7 @@ const handleBillingPeriodChange = (billingPeriod: BillingPeriod) => {
 };
 
 onMounted(() => {
-    emit('ready');
+    emitReady();
 });
 </script>
 
@@ -962,7 +965,7 @@ onMounted(() => {
                                         @invalid="handlePaymentNotSubmitted"
                                         @submitting="handlePaymentSubmitting"
                                         @action-required="handleActionRequired"
-                                        @ready="emit('ready')"
+                                        @ready="emitReady"
                                     />
                                 </div>
                             </div>

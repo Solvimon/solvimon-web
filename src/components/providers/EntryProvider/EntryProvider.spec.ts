@@ -223,8 +223,10 @@ describe('EntryProvider', () => {
     });
 
     describe('errors', () => {
-        it('logs an error thrown below it and emits it as the public error event', async () => {
-            const { wrapper, onLog } = mountEntryProvider({}, { slot: Throwing });
+        // The `error` event this also dispatches needs a custom element as host; see
+        // EntryProvider.customElement.spec.ts.
+        it('logs an error thrown below it', async () => {
+            const { onLog } = mountEntryProvider({}, { slot: Throwing });
             await settle();
 
             expect(onLog).toHaveBeenCalledWith(
@@ -234,20 +236,22 @@ describe('EntryProvider', () => {
                     error: expect.objectContaining({ message: 'setup broke' }),
                 }),
             );
-            const [[emitted]] = wrapper.emitted<[Error]>('error') ?? [[]];
-            expect(emitted).toBeInstanceOf(Error);
-            expect(emitted?.message).toBe('setup broke');
         });
 
         it('reports an environment it does not know rather than failing silently', async () => {
-            const { wrapper, onLog } = mountEntryProvider({
+            const { onLog } = mountEntryProvider({
                 environment: 'STAGING' as Environment,
             });
             await settle();
 
-            expect(codesLogged(onLog)).toContain('UNHANDLED_ERROR');
-            const [[emitted]] = wrapper.emitted<[Error]>('error') ?? [[]];
-            expect(emitted?.message).toMatch(/Unknown Solvimon environment "STAGING"/);
+            expect(onLog).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    code: 'UNHANDLED_ERROR',
+                    error: expect.objectContaining({
+                        message: expect.stringMatching(/Unknown Solvimon environment "STAGING"/),
+                    }),
+                }),
+            );
         });
     });
 });

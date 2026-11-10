@@ -19,8 +19,4 @@ export interface RequiredProviderProps
         Pick<PortalProviderProps, 'allowedPortalTypes' | 'portalObject'>,
         HostElementProviderProps,
         CssOverridesProviderProps {}
-export interface ProviderEmits {
-    (e: 'error', error: Error): void;
-}
-
 export type ProviderProps = RequiredProviderProps;

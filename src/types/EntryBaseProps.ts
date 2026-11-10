@@ -1,6 +1,6 @@
 import type { PortalUrl } from '@solvimon/solvimon-types';
 import type { SolvimonBranding } from '@/types/branding';
-import type { ProviderEmits, ProviderProps } from '@/components/providers/Provider/Provider.types';
+import type { ProviderProps } from '@/components/providers/Provider/Provider.types';
 
 /**
  * The properties every element takes: those `EntryProvider` reads from it. Picked rather than
@@ -24,5 +24,3 @@ export type EntryBaseProps<PortalObjectType extends PortalUrl> = Pick<
     branding?: SolvimonBranding;
     portalObject: PortalObjectType;
 };
-
-export type EntryBaseEmits = ProviderEmits;

@@ -2,6 +2,7 @@ import { flushPromises, mount } from '@vue/test-utils';
 import { defineComponent, h, nextTick, ref, watch } from 'vue';
 import { useErrorHandling } from '@solvimon/solvimon-ui';
 import ErrorBoundary from './ErrorBoundary.vue';
+import { HOST_ELEMENT_PROVIDER_INJECTION_KEY } from '@/components/providers/HostElementProvider/HostElementProvider.lib';
 import { LOGGER_PROVIDER_INJECTION_KEY } from '@/components/providers/LoggerProvider/LoggerProvider.lib';
 import type { Logger } from '@/components/providers/LoggerProvider/LoggerProvider.types';
 import { CodedError } from '@/utils/error';
@@ -14,20 +15,33 @@ const createLogger = (): Logger => ({
     capture: vi.fn(),
 });
 
+/** Mounts the boundary into a host element, recording the `error` events dispatched on it. */
 const mountBoundary = (child: ReturnType<typeof defineComponent>) => {
     const logger = createLogger();
+    const host = document.createElement('div');
+    const events: CustomEvent[] = [];
+    host.addEventListener('error', (event) => events.push(event as Event as CustomEvent));
     const wrapper = mount(ErrorBoundary, {
         slots: { default: () => h(child) },
-        global: { provide: { [LOGGER_PROVIDER_INJECTION_KEY as symbol]: logger } },
+        global: {
+            provide: {
+                [LOGGER_PROVIDER_INJECTION_KEY as symbol]: logger,
+                [HOST_ELEMENT_PROVIDER_INJECTION_KEY as symbol]: {
+                    hostRef: ref(host),
+                    customElementName: 'solvimon-test',
+                },
+            },
+        },
     });
+    const errors = () => events.map((event) => event.detail as unknown);
 
-    return { wrapper, logger };
+    return { wrapper, logger, events, errors };
 };
 
 describe('ErrorBoundary', () => {
     it('captures an error thrown while a component below sets up', () => {
         const failure = new Error('setup broke');
-        const { wrapper, logger } = mountBoundary(
+        const { logger, errors } = mountBoundary(
             defineComponent({
                 setup() {
                     throw failure;
@@ -36,12 +50,12 @@ describe('ErrorBoundary', () => {
         );
 
         expect(logger.capture).toHaveBeenCalledWith(failure, expect.any(Object));
-        expect(wrapper.emitted('error')).toEqual([[failure]]);
+        expect(errors()).toEqual([failure]);
     });
 
     it('reports an error that names its own code under that code, once', () => {
         const failure = new CodedError('INVALID_TOKEN', 'Invalid token');
-        const { wrapper, logger } = mountBoundary(
+        const { logger, errors } = mountBoundary(
             defineComponent({
                 setup() {
                     throw failure;
@@ -54,7 +68,7 @@ describe('ErrorBoundary', () => {
             failure,
             expect.objectContaining({ code: 'INVALID_TOKEN', message: 'Invalid token' }),
         );
-        expect(wrapper.emitted('error')).toEqual([[failure]]);
+        expect(errors()).toEqual([failure]);
     });
 
     it('keeps the context a coded error carries on its log entry', () => {
@@ -80,7 +94,7 @@ describe('ErrorBoundary', () => {
     });
 
     it('captures an error thrown while rendering', () => {
-        const { wrapper, logger } = mountBoundary(
+        const { logger, errors } = mountBoundary(
             defineComponent({
                 setup: () => () => {
                     throw new Error('render broke');
@@ -89,12 +103,12 @@ describe('ErrorBoundary', () => {
         );
 
         expect(logger.capture).toHaveBeenCalledOnce();
-        expect(wrapper.emitted('error')).toHaveLength(1);
+        expect(errors()).toHaveLength(1);
     });
 
     it('captures an error thrown by a watcher', async () => {
         const trigger = ref(0);
-        const { wrapper } = mountBoundary(
+        const { errors } = mountBoundary(
             defineComponent({
                 setup() {
                     watch(trigger, () => {
@@ -108,11 +122,11 @@ describe('ErrorBoundary', () => {
         trigger.value++;
         await nextTick();
 
-        expect(wrapper.emitted('error')).toHaveLength(1);
+        expect(errors()).toHaveLength(1);
     });
 
     it('captures a rejection from an async lifecycle hook', async () => {
-        const { wrapper } = mountBoundary(
+        const { errors } = mountBoundary(
             defineComponent({
                 async mounted() {
                     await Promise.resolve();
@@ -123,12 +137,12 @@ describe('ErrorBoundary', () => {
         );
         await flushPromises();
 
-        expect(wrapper.emitted('error')).toHaveLength(1);
+        expect(errors()).toHaveLength(1);
     });
 
     it('logs what the UI library recovered from as a warning, without the error event', () => {
         const recovered = new Error('Failed to format date');
-        const { wrapper, logger } = mountBoundary(
+        const { logger, errors } = mountBoundary(
             defineComponent({
                 setup() {
                     useErrorHandling().onError?.(recovered);
@@ -144,11 +158,11 @@ describe('ErrorBoundary', () => {
             recovered,
         );
         expect(logger.capture).not.toHaveBeenCalled();
-        expect(wrapper.emitted('error')).toBeUndefined();
+        expect(errors()).toEqual([]);
     });
 
-    it('emits an Error even when something else was thrown, keeping it as the cause', () => {
-        const { wrapper } = mountBoundary(
+    it('dispatches an Error even when something else was thrown, keeping it as the cause', () => {
+        const { errors } = mountBoundary(
             defineComponent({
                 setup() {
                     throw 'a string';
@@ -156,8 +170,22 @@ describe('ErrorBoundary', () => {
             }),
         );
 
-        const [[emitted]] = wrapper.emitted<[Error]>('error') ?? [[]];
+        const [emitted] = errors() as Error[];
         expect(emitted).toBeInstanceOf(Error);
         expect(emitted?.cause).toBe('a string');
+    });
+
+    it('dispatches error as every SDK event: bubbling, across the shadow root, with the Error as detail', () => {
+        const failure = new Error('setup broke');
+        const { events } = mountBoundary(
+            defineComponent({
+                setup() {
+                    throw failure;
+                },
+            }),
+        );
+
+        expect(events).toHaveLength(1);
+        expect(events[0]).toMatchObject({ bubbles: true, composed: true, detail: failure });
     });
 });

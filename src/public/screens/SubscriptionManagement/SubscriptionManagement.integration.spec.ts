@@ -718,7 +718,7 @@ describe('SubscriptionManagement', () => {
             await wrapper.find('.sv-subscription-management__done').trigger('click');
 
             expect(mockDispatchAction).toHaveBeenCalledWith({
-                action: 'navigate-to-customer-overview',
+                action: 'view-customer-overview',
             });
         });
 

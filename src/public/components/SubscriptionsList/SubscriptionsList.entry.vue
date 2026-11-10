@@ -15,7 +15,6 @@ defineProps<SolvimonSubscriptionsListEntryProps>();
         :entry="$props"
         :component-name="componentName"
         :allowed-portal-types="['CUSTOMER']"
-        @error="(error) => $emit('error', error)"
     >
         <SubscriptionsListView v-bind="$props">
             <template

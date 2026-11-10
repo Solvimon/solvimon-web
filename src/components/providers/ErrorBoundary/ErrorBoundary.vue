@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { onErrorCaptured } from 'vue';
 import { ErrorHandlingProvider } from '@solvimon/solvimon-ui';
-import type { ProviderEmits } from '@/components/providers/Provider/Provider.types';
 import { useLogger } from '@/components/providers/LoggerProvider/composables/useLogger';
+import { useHostEvent } from '@/components/providers/HostElementProvider/composables/useHostEvent';
 import { CodedError } from '@/utils/error';
 
-const emit = defineEmits<ProviderEmits>();
 const logger = useLogger();
+const dispatch = useHostEvent();
 
 // The UI library reports here what it recovered from itself, such as a date it could only format
 // in the browser's own time zone, so the host is not told the element failed.
@@ -28,7 +28,8 @@ onErrorCaptured((err, _instance, info) => {
             ? { ...err.context, code: err.code, message: err.message }
             : {}),
     });
-    emit('error', err instanceof Error ? err : new Error('Unhandled error', { cause: err }));
+    // The element's `error` event: the error itself as `detail`, bubbling like every SDK event.
+    dispatch('error', err instanceof Error ? err : new Error('Unhandled error', { cause: err }));
 
     return false;
 });

@@ -15,7 +15,6 @@ defineProps<SolvimonBillingInformationEntryProps>();
         :entry="$props"
         :component-name="componentName"
         :allowed-portal-types="['CUSTOMER']"
-        @error="(error) => $emit('error', error)"
     >
         <BillingInformationView v-bind="$props">
             <template #default="{ customer, isLoading }">

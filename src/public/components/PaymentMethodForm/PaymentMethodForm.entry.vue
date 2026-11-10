@@ -15,7 +15,6 @@ const props = defineProps<SolvimonPaymentMethodFormEntryProps>();
         :entry="$props"
         :component-name="componentName"
         :allowed-portal-types="['CUSTOMER']"
-        @error="(error: Error) => $emit('error', error)"
     >
         <PaymentMethodFormEntryView v-bind="props">
             <template #default="{ customer, paymentMethodOptions, isLoading }">

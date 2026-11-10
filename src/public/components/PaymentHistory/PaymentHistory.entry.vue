@@ -16,7 +16,6 @@ defineProps<SolvimonPaymentHistoryEntryProps>();
         :component-name="componentName"
         :allowed-portal-types="['CUSTOMER']"
         :required-configuration="{ invoiceId: configuration?.invoiceId }"
-        @error="(error) => $emit('error', error)"
     >
         <PaymentHistoryEntryView :key="configuration.invoiceId" v-bind="$props">
             <template #default="{ invoice, paymentAttempts }">

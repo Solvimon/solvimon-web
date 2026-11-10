@@ -471,7 +471,7 @@ const submitButtonAttrs = computed(() => {
                 size="lg"
                 class="sv-action sv-action--primary sv-action--full-width sv-subscription-management__done w-full"
                 type="button"
-                @click="dispatchAction({ action: 'navigate-to-customer-overview' })"
+                @click="dispatchAction({ action: 'view-customer-overview' })"
             >
                 {{
                     $t({

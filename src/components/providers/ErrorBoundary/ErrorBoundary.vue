@@ -1,16 +1,17 @@
 <script setup lang="ts">
 import { inject, onErrorCaptured } from 'vue';
 import { ErrorHandlingProvider } from '@solvimon/solvimon-ui';
-import type { SolvimonErrorDetail } from './ErrorBoundary.types';
 import { useLogger } from '@/components/providers/LoggerProvider/composables/useLogger';
-import { useHostEvent } from '@/components/providers/HostElementProvider/composables/useHostEvent';
-import { HOST_ELEMENT_PROVIDER_INJECTION_KEY } from '@/components/providers/HostElementProvider/HostElementProvider.lib';
+import {
+    dispatchHostEvent,
+    HOST_ELEMENT_PROVIDER_INJECTION_KEY,
+} from '@/components/providers/HostElementProvider/HostElementProvider.lib';
+import type { SolvimonErrorDetail } from '@/public/core/events.types';
 import { getSessionReference } from '@/utils/sessionReference';
 import { CodedError } from '@/utils/error';
 
 const logger = useLogger();
-const dispatch = useHostEvent();
-const componentName = inject(HOST_ELEMENT_PROVIDER_INJECTION_KEY, null)?.customElementName ?? '';
+const host = inject(HOST_ELEMENT_PROVIDER_INJECTION_KEY, null);
 
 // The UI library reports here what it recovered from itself, such as a date it could only format
 // in the browser's own time zone, so the host is not told the element failed.
@@ -37,10 +38,10 @@ onErrorCaptured((err, _instance, info) => {
     const detail: SolvimonErrorDetail = {
         error: err instanceof Error ? err : new Error('Unhandled error', { cause: err }),
         code: err instanceof CodedError ? err.code : 'UNHANDLED_ERROR',
-        componentName,
+        componentName: host?.customElementName ?? '',
         reference: getSessionReference(),
     };
-    dispatch('solvimon-error', detail);
+    dispatchHostEvent(host?.hostRef.value, 'solvimon-error', detail);
 
     return false;
 });

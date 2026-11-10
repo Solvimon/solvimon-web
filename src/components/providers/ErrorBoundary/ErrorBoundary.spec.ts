@@ -15,7 +15,7 @@ const createLogger = (): Logger => ({
     capture: vi.fn(),
 });
 
-/** Mounts the boundary into a host element, recording the `error` events dispatched on it. */
+/** Mounts the boundary into a host element, recording the `solvimon-error` events dispatched on it. */
 const mountBoundary = (child: ReturnType<typeof defineComponent>) => {
     const logger = createLogger();
     const host = document.createElement('div');

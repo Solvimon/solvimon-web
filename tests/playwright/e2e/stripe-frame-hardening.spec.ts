@@ -73,7 +73,7 @@ async function recordEverything(page: Page): Promise<() => Promise<string>> {
                 details.push(String((event as CustomEvent).detail));
             }
         };
-        ['error', 'solvimon-error', 'payment-failed', 'log'].forEach((type) =>
+        ['error', 'solvimon-error', 'payment-failed', 'solvimon-log'].forEach((type) =>
             window.addEventListener(type, keep, true),
         );
     });

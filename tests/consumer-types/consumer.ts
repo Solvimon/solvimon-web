@@ -177,3 +177,18 @@ export const payInvoice = (
 /* A solvimon-error listener reads what failed, where, and the reference support finds it by. */
 export const describeError = (event: SolvimonErrorEvent): string =>
     `${event.detail.componentName}: ${event.detail.code} (${event.detail.reference}) ${event.detail.error.message}`;
+
+/* The SDK's events are in the element and document event maps, so listeners know their detail. */
+declare const someContainer: HTMLElement;
+someContainer.addEventListener('solvimon-error', (event) => {
+    const failed: string = event.detail.componentName;
+    void failed;
+    // @ts-expect-error - the detail of solvimon-error has no such field
+    void event.detail.unknownField;
+});
+document.addEventListener('solvimon-action-request', (event) => {
+    if (event.detail.action === 'pay-invoice') {
+        const invoiceId: string = event.detail.data.invoiceId;
+        void invoiceId;
+    }
+});

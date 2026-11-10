@@ -61,7 +61,7 @@ export function createCustomElementLogSink(
             return;
         }
 
-        dispatchHostEvent(hostRef.value, 'log', entry, { cancelable: true });
+        dispatchHostEvent(hostRef.value, 'solvimon-log', entry);
     };
 }
 

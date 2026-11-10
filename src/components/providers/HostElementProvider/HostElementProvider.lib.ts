@@ -1,4 +1,5 @@
 import type { ComponentInternalInstance, InjectionKey, Ref } from 'vue';
+import type { SolvimonEventMap } from '@/public/core/events.types';
 
 export interface HostElementContext {
     /**
@@ -28,19 +29,15 @@ export function getCustomElementHost(
 }
 
 /**
- * Dispatches an SDK event on `host`. Every SDK event bubbles and crosses the shadow root, so one
- * listener on a container hears every element inside it. Returns `false` when a listener cancelled
- * a cancelable event; without a host there is no one to tell, and it dispatches nothing.
+ * Dispatches an SDK event on `host`: one of `SolvimonEventMap`, with the detail it declares. Every
+ * SDK event bubbles and crosses the shadow root, so one listener on a container hears every element
+ * inside it. None is cancelable, since none has a default action a host could stop. Without a host
+ * there is no one to tell, and it dispatches nothing.
  */
-export function dispatchHostEvent(
+export function dispatchHostEvent<K extends keyof SolvimonEventMap>(
     host: HTMLElement | null | undefined,
-    name: string,
-    detail?: unknown,
-    { cancelable = false }: { cancelable?: boolean } = {},
-): boolean {
-    return (
-        host?.dispatchEvent(
-            new CustomEvent(name, { detail, bubbles: true, composed: true, cancelable }),
-        ) ?? true
-    );
+    name: K,
+    detail: SolvimonEventMap[K]['detail'],
+): void {
+    host?.dispatchEvent(new CustomEvent(name, { detail, bubbles: true, composed: true }));
 }

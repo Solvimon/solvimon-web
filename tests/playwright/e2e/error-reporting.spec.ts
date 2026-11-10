@@ -32,7 +32,7 @@ function appendElement(page: Page, properties: Record<string, unknown>): Promise
 
             const element = document.createElement(tag);
             element.id = 'hand-built';
-            element.addEventListener('log', (event) => {
+            element.addEventListener('solvimon-log', (event) => {
                 recorded.logs.push('detail' in event ? event.detail : undefined);
             });
             element.addEventListener('solvimon-error', (event) => {

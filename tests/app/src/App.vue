@@ -87,7 +87,7 @@ const solvimon = createSolvimonCore({
 let unmountScreen: (() => void) | null = null;
 
 /**
- * `ready` and `solvimon-error` are dispatched on the custom element, which the SDK appends asynchronously.
+ * `solvimon-ready` and `solvimon-error` are dispatched on the custom element, which the SDK appends asynchronously.
  * Listening on the container in the capture phase catches them either way: capture reaches an
  * ancestor even for events that do not bubble.
  */
@@ -116,9 +116,9 @@ const getActionDetail = (event: Event): { action: string; detail: Record<string,
 };
 
 const recordScreenEvents = (container: HTMLElement) => {
-    container.addEventListener('ready', () => (events.ready += 1), true);
+    container.addEventListener('solvimon-ready', () => (events.ready += 1), true);
     container.addEventListener(
-        'action-request',
+        'solvimon-action-request',
         (event) => events.actions.push(getActionDetail(event)),
         true,
     );

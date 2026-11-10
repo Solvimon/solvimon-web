@@ -152,8 +152,8 @@ function handleActionRequest(event: Event) {
     if (actionLog.value.length > 20) actionLog.value.pop();
 }
 
-onMounted(() => document.addEventListener('action-request', handleActionRequest));
-onUnmounted(() => document.removeEventListener('action-request', handleActionRequest));
+onMounted(() => document.addEventListener('solvimon-action-request', handleActionRequest));
+onUnmounted(() => document.removeEventListener('solvimon-action-request', handleActionRequest));
 </script>
 
 <template>

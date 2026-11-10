@@ -21,58 +21,33 @@ describe('createActionDispatcher', () => {
         vi.clearAllMocks();
     });
 
-    it('returns true when no host element is available', () => {
+    it('dispatches nothing when no host element is available', () => {
         const dispatchAction = createActionDispatcher();
 
-        const result = dispatchAction(
-            { action: 'view-all-subscriptions' } as ActionRequestDetail,
-            undefined,
-        );
-
-        expect(result).toBe(true);
+        expect(() =>
+            dispatchAction({ action: 'view-all-subscriptions' } as ActionRequestDetail),
+        ).not.toThrow();
         expect(mockUseHostElementProvider).toHaveBeenCalledTimes(1);
     });
 
-    it('dispatches an action-request event on the host element and returns dispatch result', () => {
+    it('dispatches solvimon-action-request on the host, bubbling across the shadow root', () => {
         const dispatchEvent = vi.fn().mockReturnValue(true);
-        const hostElement = { dispatchEvent } as unknown as HTMLElement;
-        mockHostRef.value = hostElement;
-
-        const dispatchAction = createActionDispatcher();
+        mockHostRef.value = { dispatchEvent } as unknown as HTMLElement;
         const detail: ActionRequestDetail = {
             action: 'view-invoice',
             data: { invoiceId: 'inv_123' },
         };
 
-        const result = dispatchAction(detail, undefined);
+        createActionDispatcher()(detail);
 
         expect(dispatchEvent).toHaveBeenCalledTimes(1);
-        const [eventArg] = dispatchEvent.mock.calls[0] as [CustomEvent<ActionRequestDetail>];
-        expect(eventArg.type).toBe('action-request');
-        expect(eventArg.detail).toEqual(detail);
-        expect(eventArg.bubbles).toBe(true);
-        expect(eventArg.composed).toBe(true);
-        expect(eventArg.cancelable).toBe(true);
-        expect(result).toBe(true);
-    });
-
-    it('prevents the original event when dispatch is not allowed', () => {
-        const dispatchEvent = vi.fn().mockReturnValue(false);
-        const hostElement = { dispatchEvent } as unknown as HTMLElement;
-        mockHostRef.value = hostElement;
-
-        const dispatchAction = createActionDispatcher();
-        const preventDefault = vi.fn();
-        const originalEvent = { preventDefault } as unknown as Event;
-        const detail: ActionRequestDetail = {
-            action: 'view-invoice',
-            data: { invoiceId: 'inv_456' },
-        };
-
-        const result = dispatchAction(detail, originalEvent);
-
-        expect(dispatchEvent).toHaveBeenCalledTimes(1);
-        expect(preventDefault).toHaveBeenCalledTimes(1);
-        expect(result).toBe(false);
+        const [event] = dispatchEvent.mock.calls[0] as [CustomEvent<ActionRequestDetail>];
+        expect(event).toMatchObject({
+            type: 'solvimon-action-request',
+            detail,
+            bubbles: true,
+            composed: true,
+            cancelable: false,
+        });
     });
 });

@@ -10,16 +10,5 @@ export const ACTION_DISPATCHER_PROVIDER_INJECTION_KEY: InjectionKey<
 export function createActionDispatcher(): RequestAction {
     const { hostRef } = useHostElementProvider();
 
-    return (detail, originalEvent) => {
-        const host = hostRef.value;
-        if (!host) return true;
-
-        const allowed = dispatchHostEvent(host, 'action-request', detail, { cancelable: true });
-
-        if (!allowed && originalEvent) {
-            originalEvent.preventDefault();
-        }
-
-        return allowed;
-    };
+    return (detail) => dispatchHostEvent(hostRef.value, 'solvimon-action-request', detail);
 }

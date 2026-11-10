@@ -139,8 +139,9 @@ test.describe('Checkout', () => {
 
             // The identity side of the same rule, asserted so that this test cannot pass for the
             // wrong reason: a harness that never surfaced `cookie` would satisfy the checks above.
-            // WebKit sends no refresh cookie with the identity token call, which is under
-            // investigation, so only the checks above hold there.
+            // Not in WebKit: like Safari, it blocks third-party cookies, and from this page the
+            // identity cookie is one. Safari does the same to any host not on solvimon.com, so an
+            // identity-token link cannot refresh there; a signed-token link needs no cookie.
             if (browserName !== 'webkit') {
                 expect(api.lastCall('accessToken')?.headers['cookie']).toContain('refresh-token=');
             }

@@ -52,6 +52,12 @@ is read only when the element signs in, and only for a `SIGNED_TOKEN` portal obj
 JavaScript property, like `portalObject`: it is an object so that the token never becomes an HTML
 attribute, which a string property of a custom element does.
 
+Use `SIGNED_TOKEN` portal objects on a page outside `solvimon.com`. Any other portal object signs
+in through Solvimon identity, which keeps the session with a cookie on `identity.solvimon.com`. On
+another site that cookie is a third-party cookie, which Safari blocks, so in Safari the session
+cannot be renewed and ends, with `SESSION_EXPIRED`, once its first token expires. A handle needs no
+cookie.
+
 ## Usage
 
 The SDK ships web components (Custom Elements), and there are two ways to put one on a page.

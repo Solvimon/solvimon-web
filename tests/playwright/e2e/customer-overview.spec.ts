@@ -516,11 +516,7 @@ test.describe('Customer overview', () => {
             expect(api.calls('createShippingAddress')).toEqual([]);
         });
 
-        test('deletes an address once the customer confirms', async ({ page, browserName }) => {
-            test.fixme(
-                browserName === 'webkit',
-                "WebKit cannot click the address card's menu; under investigation",
-            );
+        test('deletes an address once the customer confirms', async ({ page }) => {
             api = await mountLoaded(page, {
                 ...withShipping,
                 shippingAddresses: [HOME, OFFICE],
@@ -551,14 +547,7 @@ test.describe('Customer overview', () => {
                 .click();
         };
 
-        test('stores an edit as a new address and retires the old one', async ({
-            page,
-            browserName,
-        }) => {
-            test.fixme(
-                browserName === 'webkit',
-                "WebKit cannot click the address card's menu; under investigation",
-            );
+        test('stores an edit as a new address and retires the old one', async ({ page }) => {
             const REPLACEMENT = aShippingAddress({ id: 'shad_new', line1: 'Herengracht 12' });
             api = await mountLoaded(page, {
                 ...withShipping,
@@ -589,14 +578,7 @@ test.describe('Customer overview', () => {
             );
         });
 
-        test("edits an address from the block's menu and closes once saved", async ({
-            page,
-            browserName,
-        }) => {
-            test.fixme(
-                browserName === 'webkit',
-                "WebKit cannot click the address card's menu; under investigation",
-            );
+        test("edits an address from the block's menu and closes once saved", async ({ page }) => {
             api = await mountLoaded(page, {
                 ...withShipping,
                 shippingAddresses: [HOME, OFFICE],

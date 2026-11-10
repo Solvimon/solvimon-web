@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- `LogEntry.code` keeps the known codes visible to an editor: it is `ErrorCode | WarnCode | (string & Record<never, never>)` instead of `ErrorCode | WarnCode | string`, which TypeScript collapsed to `string`. Ad-hoc codes are still accepted.
+
 - **Breaking:** element options follow one naming scheme, `show*` for what an element shows, before 1.0 freezes them:
     - `invoice` and `invoice-header`: `enableDownloadButton` is `showDownloadButton`, `enableCustomerBillingInformation` is `showCustomerBillingInformation` and `enablePaymentAttempts` is `showPaymentAttempts`.
     - Subscription details: `canViewCreatedInvoice` is `showViewInvoiceButton`.
@@ -44,6 +46,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - The `@solvimon/solvimon-web/core/action-request-types` subpath. Import `ActionRequestDetail`, `RequestActionEvent` and each action's own detail type, such as `ActionRequestDetailPayInvoice`, from `@solvimon/solvimon-web/core`, which now exports them all.
 
 ### Fixed
+
+- A Stripe card payment is submitted once, however often it is set off while one is out. Pressing Pay twice, or Enter in the card field and then Pay, could send a second confirmation token and authorize the payment twice.
+- The README's table of log codes describes `PORTAL_TYPE_NOT_ALLOWED`, which it listed as reserved and not emitted. It is logged when an element is given a portal object meant for another element.
 
 - The README says to use `SIGNED_TOKEN` portal objects on a page outside `solvimon.com`: Safari blocks the identity cookie an identity-token portal object renews its session with there, so the session ends once its first token expires.
 - An icon inside a button is no longer the target of a click, its button is. WebKit hit-tested an icon's SVG `<use>` inside an element as the element itself, so the end-to-end tests could not click a card's "⋯" menu in WebKit. Customers in Safari were not affected: the click reached the button.

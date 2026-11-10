@@ -40,7 +40,7 @@ The suite runs in Chromium and in WebKit, Safari's engine, which is where Apple 
 npm run test:e2e -- --project=chromium
 ```
 
-WebKit needs its browser installed once, with `npx playwright install webkit`. A test that cannot pass in one browser says why with `test.skip` or `test.fixme` on `browserName`, so the reason shows in the report.
+WebKit needs its browser installed once, with `npx playwright install webkit`. CI runs both browsers in the `mcr.microsoft.com/playwright` image instead; when Playwright is bumped, bump that tag in `.github/workflows/ci.yml` to the same version (`ci-layout.spec.ts` fails until you do). A test that cannot pass in one browser says why with `test.skip` or `test.fixme` on `browserName`, so the reason shows in the report.
 
 ### Port
 

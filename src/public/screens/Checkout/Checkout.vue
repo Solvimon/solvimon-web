@@ -3,18 +3,12 @@ import {
     Button,
     ErrorNotification,
     formatAmount,
-    isValidCountryCode,
     Typography,
     useIntl,
     useTimePeriod,
 } from '@solvimon/solvimon-ui';
 import { computed, defineAsyncComponent, nextTick, ref, watch } from 'vue';
-import type {
-    Amount,
-    AuthorizePaymentPayload,
-    BillingPeriod,
-    CountryCode,
-} from '@solvimon/solvimon-types';
+import type { Amount, AuthorizePaymentPayload, BillingPeriod } from '@solvimon/solvimon-types';
 import type { CheckoutProps } from './Checkout.types';
 import { useCheckoutView } from './useCheckout.view';
 import { useHostEvent } from '@/components/providers/HostElementProvider/composables/useHostEvent';
@@ -53,6 +47,7 @@ import {
 import SecurePaymentsKPI from '@/components/payments/SecurePaymentsKPI/SecurePaymentsKPI.vue';
 import { safeUrlRedirect } from '@/utils/url';
 import { CodedError } from '@/utils/error';
+import { isCountryCode } from '@/utils/countryCode';
 
 const PaymentIntegrationForm = defineAsyncComponent(
     () => import('@/components/payments/PaymentIntegrationForm/PaymentIntegrationForm.vue'),
@@ -576,8 +571,6 @@ const expressPaymentMethodBillingInformation = computed(() => {
             }),
     };
 });
-
-const isCountryCode = (country: string): country is CountryCode => isValidCountryCode(country);
 
 const handleUpdateBillingInformation = (billingInformation: ExpressBillingInformation) => {
     const { line1, line2, postal_code, city, state, country, email } = billingInformation;

@@ -23,6 +23,10 @@ const LOG_CALL_RE = /logger\.(error|warn)\(\s*['"]([A-Z_]+)['"]\s*,\s*['"`]([^'"
 const CAPTURE_CALL_RE =
     /logger\.capture\([^;]*?code:\s*['"]([A-Z_]+)['"]\s*,\s*message:\s*['"`]([^'"`$\n]+)/gs;
 
+// `throw new CodedError('CODE', 'message')`: the error boundary logs it at error level under its own
+// code, so a thrown code reaches a consumer too.
+const CODED_ERROR_RE = /new CodedError\(\s*['"]([A-Z_]+)['"]\s*,\s*['"`]([^'"`$\n]+)/gs;
+
 function* walkSrc(dir) {
     for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
         const full = resolveSafePath(entry.name, dir);
@@ -55,11 +59,9 @@ export function scanLogCodes(srcDir, baseDir = ROOT) {
                 code,
                 message,
             })),
-            ...[...content.matchAll(CAPTURE_CALL_RE)].map(([, code, message]) => ({
-                level: 'error',
-                code,
-                message,
-            })),
+            ...[...content.matchAll(CAPTURE_CALL_RE), ...content.matchAll(CODED_ERROR_RE)].map(
+                ([, code, message]) => ({ level: 'error', code, message }),
+            ),
         ];
 
         for (const { level, code, message } of matches) {

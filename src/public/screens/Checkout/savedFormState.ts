@@ -1,7 +1,7 @@
-import type { ConfiguredMeterValue, CountryCode } from '@solvimon/solvimon-types';
-import { isValidCountryCode } from '@solvimon/solvimon-ui';
+import type { ConfiguredMeterValue } from '@solvimon/solvimon-types';
 import { email } from '@vuelidate/validators';
 import type { CheckoutFormState } from '@/components/customer/CheckoutForm/CheckoutForm.types';
+import { isCountryCode } from '@/utils/countryCode';
 
 const TEXT_FIELDS = [
     'companyLegalName',
@@ -28,8 +28,6 @@ const TEXT_FIELDS = [
 
 /** The API takes a count as a string, and the seats editor reads it back with `+number`. */
 const COUNT_PATTERN = /^\d{1,9}$/;
-
-const isCountryCode = (country: string): country is CountryCode => isValidCountryCode(country);
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
     typeof value === 'object' && value !== null && !Array.isArray(value);

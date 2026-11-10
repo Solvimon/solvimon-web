@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
-import { isValidCountryCode } from '@solvimon/solvimon-ui';
 import type {
     BillingPeriod,
     AuthorizePaymentResponse,
@@ -23,6 +22,7 @@ import { createPaymentsService } from '@/services/payments';
 import { loadAdyenSdk } from '@/utils/adyenSdk';
 import { createPaymentFailureContext, type PaymentFailureParams } from '@/utils/paymentFailure';
 import { getAuthorizeOutcome, isOutcomeUnknownAfterError } from '@/utils/paymentOutcome';
+import { isCountryCode } from '@/utils/countryCode';
 
 const PAYMENT_GATEWAY_VARIANT_ADYEN = 'ADYEN';
 
@@ -377,10 +377,6 @@ const getBillingInformationFromAddress = (address: Partial<AddressData>): Partia
 
 const getCountryCode = (countryCode: string | undefined): CountryCode | undefined => {
     return countryCode && isCountryCode(countryCode) ? countryCode : undefined;
-};
-
-const isCountryCode = (countryCode: string): countryCode is CountryCode => {
-    return isValidCountryCode(countryCode);
 };
 
 const handleClick = () => {

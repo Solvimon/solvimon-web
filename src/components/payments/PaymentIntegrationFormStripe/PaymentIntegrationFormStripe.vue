@@ -97,8 +97,17 @@ function failureContext(params: Omit<PaymentFailureParams, 'gateway'>): Record<s
     });
 }
 
+/**
+ * One submit at a time, from the press until its payment has an answer: a second while one is out
+ * would make a second confirmation token, and charge it. A frame set up anew has no submit out.
+ */
+let isSubmitPending = false;
+
 function submit() {
+    if (isSubmitPending) return;
+    isSubmitPending = true;
     handleSubmit().catch((error) => {
+        isSubmitPending = false;
         logger.error(
             'STRIPE_SUBMIT_FAILED',
             'Unexpected error during Stripe submission',
@@ -114,11 +123,13 @@ async function handleSubmit() {
     const isValid = await props.validateOnSubmit();
 
     if (!isValid || !frameRef.value?.triggerSubmit()) {
+        isSubmitPending = false;
         emit('invalid');
     }
 }
 
 function handleSubmitError(error: StripeSubmitError) {
+    isSubmitPending = false;
     if (error.type === 'validation_error') {
         emit('invalid');
         return;
@@ -173,6 +184,14 @@ async function getStripeInstance(): Promise<Stripe> {
 }
 
 async function handleConfirmationToken(confirmationTokenId: string) {
+    try {
+        await confirmWithToken(confirmationTokenId);
+    } finally {
+        isSubmitPending = false;
+    }
+}
+
+async function confirmWithToken(confirmationTokenId: string) {
     emit('submitting');
 
     const paymentAcceptorId = props.paymentMethodOptionResponseEntry.payment_acceptor.id;
@@ -470,6 +489,7 @@ function handleChange(type: string, isEmpty: boolean, isCollapsed: boolean) {
 }
 
 function handleReady() {
+    isSubmitPending = false;
     emit('select', {
         paymentMethodType: 'card',
         paymentGatewayVariant: PAYMENT_GATEWAY_VARIANT_STRIPE,
@@ -479,6 +499,7 @@ function handleReady() {
 }
 
 function handleLoadError(error: StripeLoadError) {
+    isSubmitPending = false;
     logger.error(
         'PAYMENT_INTEGRATION_INITIALIZATION_FAILED',
         'Failed to load the Stripe payment form',

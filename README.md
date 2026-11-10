@@ -468,7 +468,7 @@ The SDK emits structured log entries via the [`onLog`](#error-logging) callback.
 | `PAYMENT_INTEGRATION_INITIALIZATION_FAILED` | Failed to mount Adyen web drop-in                                 |
 | `PAYMENT_METHOD_OPTIONS_LOAD_FAILED`        | Failed to load the payment methods that can be offered            |
 | `PORTAL_TOKEN_UNAVAILABLE`                  | Could not exchange the portal link handle for a token             |
-| `PORTAL_TYPE_NOT_ALLOWED`                   | Reserved — not currently emitted                                  |
+| `PORTAL_TYPE_NOT_ALLOWED`                   | This element does not accept a portal object of type…             |
 | `PORTAL_URL_EXPIRED`                        | The portal link has expired                                       |
 | `PORTAL_URL_REVOKED`                        | The portal link is revoked                                        |
 | `PROMOTION_CODE_APPLY_FAILED`               | Failed to apply promotion code                                    |

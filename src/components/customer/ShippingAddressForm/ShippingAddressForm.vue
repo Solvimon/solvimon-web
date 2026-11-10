@@ -4,12 +4,10 @@ import {
     getCustomerCountry,
     isIndividual,
     isOrganization,
-    isValidCountryCode,
     useIntl,
     useValidation,
 } from '@solvimon/solvimon-ui';
 import { requiredIf } from '@vuelidate/validators';
-import type { CountryCode } from '@solvimon/solvimon-types';
 import type { ShippingAddressFormProps } from './ShippingAddressForm.types';
 import CheckoutAddressFields from '@/components/customer/CheckoutForm/CheckoutAddressFields.vue';
 import type { CheckoutFormState } from '@/components/customer/CheckoutForm/CheckoutForm.types';
@@ -28,6 +26,7 @@ import { asOptionalText, formControlModel } from '@/utils/formControl';
 import { randomUuid } from '@/utils/randomUuid';
 import { toAddress } from '@/utils/shippingAddress';
 import type { CreateShippingAddressPayload, ShippingAddress } from '@/types/shippingAddress';
+import { isCountryCode } from '@/utils/countryCode';
 
 const props = defineProps<ShippingAddressFormProps>();
 
@@ -38,9 +37,6 @@ const { $t } = useIntl();
  * part is filled in by the customer; the rest describes them for the recipient.
  */
 const customer = props.customer;
-
-// `isValidCountryCode` answers with a plain boolean, so the narrowing is ours to state.
-const isCountryCode = (value: string): value is CountryCode => isValidCountryCode(value);
 
 /** Where the customer is, which is where most of them ship to. */
 const customerCountry = ((country) => (country && isCountryCode(country) ? country : undefined))(

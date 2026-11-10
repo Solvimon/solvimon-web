@@ -200,6 +200,7 @@ describe('PaymentMethodForm', () => {
                 ).toMatchObject({
                     variant: 'AUTHORIZE',
                     invoiceId: 'inv_1',
+                    customerId: CUSTOMER.id,
                     context: {
                         type: 'INVOICE',
                         related_resource_ids: [{ type: 'INVOICE', id: 'inv_1' }],

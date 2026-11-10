@@ -250,7 +250,7 @@ describe('useSubscriptionActions', () => {
 
             expect(mockDispatchAction).toHaveBeenCalledWith({
                 action: 'manage-subscription',
-                data: { subscriptionId: 'ppsu_1', enabledPricingId: 'pri_credits_1000' },
+                data: { subscriptionId: 'ppsu_1', currentPricingId: 'pri_credits_1000' },
             });
         });
 

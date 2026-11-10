@@ -168,9 +168,8 @@ describe('PaymentMethodForm', () => {
 
             it('is solvimon-payment-succeeded once a payment is authorized', async () => {
                 const heard = await completeInHost({
-                    variant: 'AUTHORIZE',
+                    mode: 'payment',
                     amount: { currency: 'EUR', quantity: '10.00' },
-                    context: 'INVOICE',
                     invoiceId: 'inv_1',
                 });
 
@@ -178,6 +177,33 @@ describe('PaymentMethodForm', () => {
                 expect(heard[0]).toMatchObject({
                     type: 'solvimon-payment-succeeded',
                     detail: { componentName: 'solvimon-payment-method-form', invoiceId: 'inv_1' },
+                });
+            });
+        });
+
+        describe('the mode', () => {
+            const gatewayAttrs = (configuration?: Record<string, unknown>) =>
+                mountForm({ configuration }).findComponent({ name: 'PaymentIntegrationFormStub' })
+                    .vm.$attrs;
+
+            it('saves a method by default', () => {
+                expect(gatewayAttrs()).toMatchObject({ variant: 'TOKENIZE' });
+            });
+
+            it('pays the invoice it is given in payment mode', () => {
+                expect(
+                    gatewayAttrs({
+                        mode: 'payment',
+                        invoiceId: 'inv_1',
+                        amount: { currency: 'EUR', quantity: '10.00' },
+                    }),
+                ).toMatchObject({
+                    variant: 'AUTHORIZE',
+                    invoiceId: 'inv_1',
+                    context: {
+                        type: 'INVOICE',
+                        related_resource_ids: [{ type: 'INVOICE', id: 'inv_1' }],
+                    },
                 });
             });
         });
@@ -193,7 +219,7 @@ describe('PaymentMethodForm', () => {
 
         it('offers the way onward the host configured', async () => {
             const wrapper = mountForm({
-                configuration: { variant: 'TOKENIZE', successRedirectUrl: SUCCESS_REDIRECT_URL },
+                configuration: { mode: 'setup', successRedirectUrl: SUCCESS_REDIRECT_URL },
             });
 
             await completeForm(wrapper);
@@ -204,7 +230,7 @@ describe('PaymentMethodForm', () => {
         it("takes the host's own wording for that button", async () => {
             const wrapper = mountForm({
                 configuration: {
-                    variant: 'TOKENIZE',
+                    mode: 'setup',
                     successRedirectUrl: SUCCESS_REDIRECT_URL,
                     successRedirectLabel: 'Back to payment methods',
                 },
@@ -218,7 +244,7 @@ describe('PaymentMethodForm', () => {
         // Leaving on its own would take away the confirmation before it has been read.
         it('stays put until the customer asks to leave', async () => {
             const wrapper = mountForm({
-                configuration: { variant: 'TOKENIZE', successRedirectUrl: SUCCESS_REDIRECT_URL },
+                configuration: { mode: 'setup', successRedirectUrl: SUCCESS_REDIRECT_URL },
             });
 
             await completeForm(wrapper);
@@ -234,7 +260,7 @@ describe('PaymentMethodForm', () => {
         it('draws no button of its own for a host that hid the submit button', async () => {
             const wrapper = mountForm({
                 hideSubmitButton: true,
-                configuration: { variant: 'TOKENIZE', successRedirectUrl: SUCCESS_REDIRECT_URL },
+                configuration: { mode: 'setup', successRedirectUrl: SUCCESS_REDIRECT_URL },
             });
 
             await completeForm(wrapper);

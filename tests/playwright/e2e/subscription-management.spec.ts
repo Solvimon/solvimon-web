@@ -107,7 +107,7 @@ test.describe('Subscription management', () => {
 
         test('opens on the pricing the host named', async ({ page }) => {
             api = await mountLoaded(page, {
-                configuration: { subscriptionId: SUBSCRIPTION_ID, enabledPricingId: 'pri_large' },
+                configuration: { subscriptionId: SUBSCRIPTION_ID, currentPricingId: 'pri_large' },
             });
 
             await expect(page.getByRole('radio', { name: /large pack/i })).toBeChecked();

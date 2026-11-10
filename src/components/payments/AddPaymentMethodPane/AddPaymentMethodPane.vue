@@ -5,7 +5,7 @@ import type {
     AddPaymentMethodPaneProps,
 } from './AddPaymentMethodPane.types';
 import type PaymentMethodFormComponent from '@/public/components/PaymentMethodForm/PaymentMethodForm.vue';
-import type { TokenizePaymentMethodFormConfiguration } from '@/public/components/PaymentMethodForm/PaymentMethodForm.types';
+import type { PaymentMethodFormSetupConfiguration } from '@/public/components/PaymentMethodForm/PaymentMethodForm.types';
 
 const PaymentMethodForm = defineAsyncComponent(() =>
     import('@/public/components/PaymentMethodForm/PaymentMethodForm.vue').then((m) => m.default),
@@ -18,9 +18,7 @@ defineEmits<AddPaymentMethodPaneEmits>();
  * Adding a method here only stores it — whatever the host is charging is charged separately, against
  * the method chosen afterwards — so the form runs the tokenization flow rather than taking a payment.
  */
-const configuration = computed<TokenizePaymentMethodFormConfiguration>(() => ({
-    variant: 'TOKENIZE',
-}));
+const configuration = computed<PaymentMethodFormSetupConfiguration>(() => ({ mode: 'setup' }));
 
 /**
  * Built the first time the pane is shown and kept from then on. A host that slides between panes keeps

@@ -243,3 +243,32 @@ document.addEventListener('solvimon-action-request', (event) => {
         void invoiceId;
     }
 });
+
+/* The payment method form saves a method by default, and pays an invoice in payment mode. */
+core.createComponent('payment-method-form', {
+    container: '#form',
+    portalObject,
+    configuration: { mode: 'setup', countryCode: 'NL' },
+});
+core.createComponent('payment-method-form', {
+    container: '#form',
+    portalObject,
+    configuration: {
+        mode: 'payment',
+        invoiceId: 'inv_1',
+        amount: { currency: 'EUR', quantity: '10.00' },
+    },
+});
+core.createComponent('payment-method-form', {
+    container: '#form',
+    portalObject,
+    // @ts-expect-error - payment mode needs the invoice it pays
+    configuration: { mode: 'payment', amount: { currency: 'EUR', quantity: '10.00' } },
+});
+
+/* Subscription management opens on the pricing the customer came to change. */
+core.createScreen('subscription-management', {
+    container: '#manage',
+    portalObject,
+    configuration: { subscriptionId: 'ppsu_1', currentPricingId: 'pri_1' },
+});

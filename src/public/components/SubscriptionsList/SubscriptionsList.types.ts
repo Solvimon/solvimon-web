@@ -5,7 +5,16 @@ import type {
 } from '@solvimon/solvimon-types';
 
 export type SubscriptionsListConfiguration = {
+    /**
+     * Whether to show the "View all" button, which sends a `view-all-subscriptions` action request.
+     * @default true
+     */
     showViewAllButton?: boolean;
+    /**
+     * Whether to show each subscription's details button, which sends a `view-subscription-details` action
+     * request.
+     * @default true
+     */
     showViewDetailsButton?: boolean;
 };
 

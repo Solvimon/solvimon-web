@@ -27,7 +27,7 @@ export function useSubscriptionActions({
     cancel: () => void;
     renew: () => void;
     dismiss: () => void;
-    manage: (enabledPricingId?: Pricing['id']) => void;
+    manage: (currentPricingId?: Pricing['id']) => void;
 } {
     const { dispatchAction } = useActionDispatchProvider();
 
@@ -61,14 +61,14 @@ export function useSubscriptionActions({
     };
 
     /** Names the pricing the customer came from, so the host opens the group it belongs to. */
-    const manage = (enabledPricingId?: Pricing['id']) => {
+    const manage = (currentPricingId?: Pricing['id']) => {
         if (!subscription.value) return;
 
         dispatchAction({
             action: 'manage-subscription',
             data: {
                 subscriptionId: subscription.value.id,
-                ...(enabledPricingId && { enabledPricingId }),
+                ...(currentPricingId && { currentPricingId }),
             },
         });
     };

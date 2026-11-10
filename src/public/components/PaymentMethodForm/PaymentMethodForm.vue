@@ -8,11 +8,7 @@ import {
 } from '@solvimon/solvimon-ui';
 import { computed, ref } from 'vue';
 import type { Amount } from '@solvimon/solvimon-types';
-import type {
-    PaymentMethodFormConfiguration,
-    PaymentMethodFormEmits,
-    PaymentMethodFormProps,
-} from './PaymentMethodForm.types';
+import type { PaymentMethodFormEmits, PaymentMethodFormProps } from './PaymentMethodForm.types';
 import Skeleton from '@/components/shared/Skeleton.vue';
 import PaymentIntegrationForm from '@/components/payments/PaymentIntegrationForm/PaymentIntegrationForm.vue';
 import PaymentMethodsUnavailableCard from '@/components/payments/PaymentMethodsUnavailableCard/PaymentMethodsUnavailableCard.vue';
@@ -79,7 +75,7 @@ defineExpose({ submit: handleSubmit, isPaymentPending, isCompleted });
 function handlePaymentSuccess() {
     isPaymentPending.value = false;
     isCompleted.value = true;
-    if (configuration.value.variant === 'AUTHORIZE') {
+    if (configuration.value.mode === 'payment') {
         dispatch('solvimon-payment-succeeded', {
             componentName,
             invoiceId: configuration.value.invoiceId,
@@ -99,22 +95,9 @@ function handleInvalid() {
     isPaymentPending.value = false;
 }
 
-const resolveConfiguration = (
-    configuration?: PaymentMethodFormConfiguration,
-): PaymentMethodFormConfiguration => {
-    if (configuration?.variant === 'AUTHORIZE') {
-        return configuration;
-    }
-
-    return {
-        ...configuration,
-        variant: 'TOKENIZE',
-    };
-};
-
-const configuration = computed<PaymentMethodFormConfiguration>(() =>
-    resolveConfiguration(props.configuration),
-);
+const configuration = computed(() => props.configuration ?? {});
+/** The gateway's name for the mode: a payment is authorized, a saved method tokenized. */
+const variant = computed(() => (configuration.value.mode === 'payment' ? 'AUTHORIZE' : 'TOKENIZE'));
 
 /**
  * Where the customer goes from the confirmation. Only the host knows — the breadcrumb around this
@@ -151,7 +134,6 @@ const countryCode = computed<string>(
 );
 
 const paymentIntegrationProps = computed<PaymentIntegrationFormProps>(() => {
-    const variant = configuration.value.variant;
     const customerName = getCustomerName(props.customer);
 
     const commonProps = {
@@ -163,11 +145,16 @@ const paymentIntegrationProps = computed<PaymentIntegrationFormProps>(() => {
         invoiceId: configuration.value.invoiceId,
     };
 
-    if (variant === 'AUTHORIZE') {
+    if (configuration.value.mode === 'payment') {
+        const { invoiceId } = configuration.value;
+
         return {
             ...commonProps,
-            variant,
-            context: configuration.value.context,
+            variant: 'AUTHORIZE',
+            context: {
+                type: 'INVOICE',
+                related_resource_ids: [{ type: 'INVOICE', id: invoiceId }],
+            },
         } satisfies AuthorizePaymentIntegrationFormProps;
     }
 
@@ -189,7 +176,7 @@ const paymentIntegrationProps = computed<PaymentIntegrationFormProps>(() => {
     <PaymentMethodsUnavailableCard
         v-else-if="availability === 'UNAVAILABLE'"
         class="sv-payment-method-form sv-root sv-component"
-        :variant="configuration.variant ?? 'TOKENIZE'"
+        :variant="variant"
     />
     <Section
         v-else

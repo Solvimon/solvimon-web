@@ -7,7 +7,7 @@ export interface SubscriptionManagementConfiguration {
      * schedule. Names the screen after the group it was chosen from. Left out when the host opens
      * the screen without a particular upgrade in mind.
      */
-    enabledPricingId?: Pricing['id'];
+    currentPricingId?: Pricing['id'];
 }
 
 export interface SubscriptionManagementProps {

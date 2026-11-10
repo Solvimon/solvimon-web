@@ -25,10 +25,10 @@ export interface ActionRequestDetailViewAllSubscriptions {
 export interface ActionRequestDetailManageSubscription {
     action: 'manage-subscription';
     /**
-     * `enabledPricingId` is the pricing the customer chose to change, when they came from one. Hand
-     * it to `SubscriptionManagement` as `configuration.enabledPricingId` to open on its group.
+     * `currentPricingId` is the pricing the customer chose to change, when they came from one. Hand
+     * it to `SubscriptionManagement` as `configuration.currentPricingId` to open on its group.
      */
-    data: { subscriptionId: string; enabledPricingId?: string };
+    data: { subscriptionId: string; currentPricingId?: string };
 }
 
 export interface ActionRequestDetailEditBillingInformation {

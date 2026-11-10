@@ -2,26 +2,25 @@ import type { Invoice } from '@solvimon/solvimon-types';
 
 export interface InvoicesListConfiguration {
     /**
-     * Whether to show the pay button when an invoice is not paid.
+     * Whether to show the pay button on an invoice that can be paid, which sends a `pay-invoice`
+     * action request.
      * @default true
      */
     showPayButton?: boolean;
     /**
-     * Whether to show the view button when an invoice is not paid.
+     * Whether to link each invoice to its page, which sends a `view-invoice` action request.
      * @default true
      */
     showViewButton?: boolean;
-    /**
-     * Optionally configure pagination.
-     */
+    /** How the list loads more invoices. */
     pagination?: {
         /**
-         * Wether or not pagination should be enabled
+         * Whether the list offers to load more invoices than the first batch.
          * @default true
          */
         enabled?: boolean;
         /**
-         * Optionally set a custom batch size. Maximum is 50.
+         * How many invoices the list loads at a time, at most 50.
          * @default 15
          */
         batchSize?: number;

@@ -3,17 +3,17 @@ import type { Invoice, Payment } from '@solvimon/solvimon-types';
 export interface InvoiceConfiguration {
     invoiceId: Invoice['id'];
     /**
-     * Optionally show the PDF invoice download button
+     * Whether to show the button that downloads the invoice as a PDF.
      * @default true
      */
     showDownloadButton?: boolean;
     /**
-     * Optionally show customer billing information
-     * @default true,
+     * Whether to show the customer's billing information.
+     * @default true
      */
     showCustomerBillingInformation?: boolean;
     /**
-     * Optionally show payment attempts
+     * Whether to show the invoice's payment attempts, when it has any.
      * @default true
      */
     showPaymentAttempts?: boolean;

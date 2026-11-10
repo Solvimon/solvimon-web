@@ -23,7 +23,6 @@ const props = defineProps<SolvimonPaymentMethodFormEntryProps>();
                     :customer="customer"
                     :payment-method-options="paymentMethodOptions.paymentMethodOptions.value"
                     :configuration="configuration"
-                    :country-code="countryCode"
                     :is-loading="isLoading"
                 />
             </template>

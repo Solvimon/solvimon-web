@@ -1,3 +1,10 @@
-import type { CustomerPaymentMethodsProps } from '@/public/components/CustomerPaymentMethods/CustomerPaymentMethods.types';
+import type { CustomerPaymentMethodsConfiguration } from '@/public/components/CustomerPaymentMethods/CustomerPaymentMethods.types';
 
-export type CustomerOverviewProps = Pick<CustomerPaymentMethodsProps, 'configuration'>;
+export interface CustomerOverviewConfiguration {
+    /** The payment methods block, configured as the `customer-payment-methods` element is. */
+    paymentMethods?: CustomerPaymentMethodsConfiguration;
+}
+
+export interface CustomerOverviewProps {
+    configuration?: CustomerOverviewConfiguration;
+}

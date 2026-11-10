@@ -144,7 +144,10 @@ function handleContinue() {
 }
 
 const countryCode = computed<string>(
-    () => props.countryCode || getCustomerCountry(props.customer) || FALLBACK_COUNTRY_CODE,
+    () =>
+        configuration.value.countryCode ||
+        getCustomerCountry(props.customer) ||
+        FALLBACK_COUNTRY_CODE,
 );
 
 const paymentIntegrationProps = computed<PaymentIntegrationFormProps>(() => {
@@ -157,9 +160,6 @@ const paymentIntegrationProps = computed<PaymentIntegrationFormProps>(() => {
         countryCode: countryCode.value,
         ...(props.customer.email ? { email: props.customer.email } : {}),
         ...(customerName ? { name: customerName } : {}),
-        validateOnSubmit: configuration.value.validateOnSubmit,
-        forceStorePaymentMethod: configuration.value.forceStorePaymentMethod,
-        selectedOption: configuration.value.selectedOption,
         invoiceId: configuration.value.invoiceId,
     };
 

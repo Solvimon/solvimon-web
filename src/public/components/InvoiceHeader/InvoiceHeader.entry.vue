@@ -13,7 +13,7 @@ const props = defineProps<SolvimonInvoiceHeaderEntryProps>();
 const resolvedProps = computed<SolvimonInvoiceHeaderEntryProps>(() => ({
     ...props,
     configuration: {
-        enableDownloadButton: true,
+        showDownloadButton: true,
         ...props.configuration,
     },
 }));

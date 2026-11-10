@@ -31,7 +31,7 @@ describe('Invoice dates across the header and the details', () => {
                                     invoiceDownloadService: async () => {},
                                     configuration: {
                                         invoiceId: 'inv_1',
-                                        enableDownloadButton: false,
+                                        showDownloadButton: false,
                                     },
                                 }),
                             ]),

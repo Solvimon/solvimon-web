@@ -279,7 +279,7 @@ const title = computed<string>(() =>
                 :items="onDemandItems"
                 :customer="customer"
                 :payment-methods="paymentMethods"
-                :can-view-created-invoice="canViewCreatedInvoice"
+                :show-view-invoice-button="showViewInvoiceButton"
                 @close="isOnDemandOrderOpen = false"
                 @payment-method-stored="$emit('payment-method-stored')"
                 @invoice-created="

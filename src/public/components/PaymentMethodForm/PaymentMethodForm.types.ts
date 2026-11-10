@@ -1,6 +1,7 @@
 import type {
     Amount,
     AuthorizePaymentPayload,
+    CountryCode,
     Customer,
     PaymentMethodOptionsResponse,
 } from '@solvimon/solvimon-types';
@@ -9,7 +10,11 @@ import type { PaymentIntegrationFormProps } from '@/components/payments/PaymentI
 interface PaymentMethodFormBaseConfiguration {
     invoiceId?: PaymentIntegrationFormProps['invoiceId'];
     amount?: Amount;
-    selectedOption?: string;
+    /**
+     * The customer's two-letter country, which decides the payment methods on offer. Defaults to the
+     * country of the customer's address.
+     */
+    countryCode?: CountryCode;
     /**
      * Where the customer goes once the form is through. Given one, the completed form offers a
      * button rather than leaving on its own: an instant redirect takes away the confirmation the
@@ -18,8 +23,6 @@ interface PaymentMethodFormBaseConfiguration {
     successRedirectUrl?: string;
     /** Label for that button, for a host whose own wording says where it leads. */
     successRedirectLabel?: string;
-    validateOnSubmit?: PaymentIntegrationFormProps['validateOnSubmit'];
-    forceStorePaymentMethod?: PaymentIntegrationFormProps['forceStorePaymentMethod'];
 }
 
 export interface TokenizePaymentMethodFormConfiguration extends PaymentMethodFormBaseConfiguration {
@@ -44,7 +47,6 @@ export interface PaymentMethodFormProps {
     paymentMethodOptions: PaymentMethodOptionsResponse;
     configuration?: PaymentMethodFormConfiguration;
     isLoading?: boolean;
-    countryCode?: string;
     title?: string;
     /**
      * Hides the form's own submit button, for hosts that submit it from their own chrome — a modal

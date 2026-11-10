@@ -130,14 +130,16 @@ describe('PaymentMethodForm entry component', () => {
         );
     });
 
-    it('uses the countryCode the host passes over the customer country', async () => {
-        const wrapper = mountComponent({ props: { countryCode: 'DE' } });
+    it('uses the configured countryCode over the customer country', async () => {
+        const wrapper = mountComponent({ props: { configuration: { countryCode: 'DE' } } });
         await flushPromises();
 
         expect(mockPaymentMethodOptionsGet).toHaveBeenCalledWith(
             expect.objectContaining({ country: 'DE' }),
         );
-        expect(wrapper.getComponent(PaymentMethodForm).props('countryCode')).toBe('DE');
+        expect(wrapper.getComponent(PaymentMethodForm).props('configuration')?.countryCode).toBe(
+            'DE',
+        );
     });
 
     it('renders the available payment methods section when data is loaded', () => {

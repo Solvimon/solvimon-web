@@ -394,7 +394,7 @@ describe('ChargeOnDemandModal', () => {
 
         it('takes the customer to the invoice of the paid order on the way out', async () => {
             mockCharge.mockResolvedValue(chargedInvoice);
-            const wrapper = mountModal({ canViewCreatedInvoice: true });
+            const wrapper = mountModal({ showViewInvoiceButton: true });
             await addItemAndWaitForTotal(wrapper);
             await findConfirm(wrapper).trigger('click');
             await flushPromises();
@@ -434,7 +434,7 @@ describe('ChargeOnDemandModal', () => {
             });
 
             it('leads with the invoice, where the order can be followed up', async () => {
-                const wrapper = await placeUnpaidOrder({ canViewCreatedInvoice: true });
+                const wrapper = await placeUnpaidOrder({ showViewInvoiceButton: true });
 
                 const buttons = wrapper.findAll('button[data-testid^="charge-on-demand-"]');
                 expect(buttons[0]?.attributes('data-testid')).toBe('charge-on-demand-view-invoice');
@@ -650,7 +650,7 @@ describe('ChargeOnDemandModal', () => {
 
                 it('takes the customer to the unpaid invoice when the host can open it', async () => {
                     const wrapper = await failCharge(refusedPayment, {
-                        canViewCreatedInvoice: true,
+                        showViewInvoiceButton: true,
                     });
 
                     await findViewInvoice(wrapper).trigger('click');
@@ -668,7 +668,7 @@ describe('ChargeOnDemandModal', () => {
                 it('offers no invoice when the API did not name one', async () => {
                     const wrapper = await failCharge(
                         new ApiError({ statusCode: 422, resourceType: 'PAYMENT' }),
-                        { canViewCreatedInvoice: true },
+                        { showViewInvoiceButton: true },
                     );
 
                     expect(findViewInvoice(wrapper).exists()).toBe(false);

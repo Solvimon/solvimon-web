@@ -15,7 +15,7 @@ const datedInvoice = computed(() => withInvoiceTimezone(props.invoice));
         :payment-attempts="payments ?? []"
         :invoice="datedInvoice"
         :download-service="() => invoiceDownloadService(invoice)"
-        :show-download-button="configuration.enableDownloadButton"
+        :show-download-button="configuration.showDownloadButton"
         variant="external"
     />
 </template>

@@ -135,7 +135,7 @@ vi.mock('@/components/subscriptions/ChargeOnDemandModal/ChargeOnDemandModal.vue'
             showModal: Boolean,
             scheduleId: String,
             items: Array,
-            canViewCreatedInvoice: Boolean,
+            showViewInvoiceButton: Boolean,
         },
         emits: [
             'close',
@@ -452,9 +452,9 @@ describe('SubscriptionDetails', () => {
                 return wrapper.findComponent({ name: 'ChargeOnDemandModalStub' });
             };
 
-            expect((await findModal({})).props('canViewCreatedInvoice')).toBe(false);
+            expect((await findModal({})).props('showViewInvoiceButton')).toBe(false);
             expect(
-                (await findModal({ canViewCreatedInvoice: true })).props('canViewCreatedInvoice'),
+                (await findModal({ showViewInvoiceButton: true })).props('showViewInvoiceButton'),
             ).toBe(true);
         });
 

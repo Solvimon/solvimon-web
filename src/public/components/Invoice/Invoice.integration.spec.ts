@@ -83,9 +83,9 @@ describe('Invoice entry component', () => {
 
     const defaultConfiguration: SolvimonInvoiceEntryProps['configuration'] = {
         invoiceId,
-        enableDownloadButton: true,
-        enableCustomerBillingInformation: true,
-        enablePaymentAttempts: true,
+        showDownloadButton: true,
+        showCustomerBillingInformation: true,
+        showPaymentAttempts: true,
     };
 
     const defaultProps: SolvimonInvoiceEntryProps = {
@@ -219,16 +219,16 @@ describe('Invoice entry component', () => {
         expect(wrapper.text()).toContain('15/01/2024');
     });
 
-    it('renders the payment history section when enablePaymentAttempts is true and payments exist', async () => {
+    it('renders the payment history section when showPaymentAttempts is true and payments exist', async () => {
         const wrapper = await mountComponent();
 
         expect(wrapper.text()).toContain('Payment history');
         expect(wrapper.text()).toContain('Payment attempt');
     });
 
-    it('hides the payment history section when enablePaymentAttempts is false', async () => {
+    it('hides the payment history section when showPaymentAttempts is false', async () => {
         const wrapper = await mountComponent({
-            configuration: { ...defaultConfiguration, enablePaymentAttempts: false },
+            configuration: { ...defaultConfiguration, showPaymentAttempts: false },
         });
 
         expect(wrapper.text()).not.toContain('Payment history');
@@ -240,15 +240,15 @@ describe('Invoice entry component', () => {
         expect(wrapper.text()).not.toContain('Payment history');
     });
 
-    it('renders the customer billing information when enableCustomerBillingInformation is true', async () => {
+    it('renders the customer billing information when showCustomerBillingInformation is true', async () => {
         const wrapper = await mountComponent();
 
         expect(wrapper.text()).toContain('Your billing information');
     });
 
-    it('hides the customer billing information when enableCustomerBillingInformation is false', async () => {
+    it('hides the customer billing information when showCustomerBillingInformation is false', async () => {
         const wrapper = await mountComponent({
-            configuration: { ...defaultConfiguration, enableCustomerBillingInformation: false },
+            configuration: { ...defaultConfiguration, showCustomerBillingInformation: false },
         });
 
         expect(wrapper.text()).not.toContain('Your billing information');

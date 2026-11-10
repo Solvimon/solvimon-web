@@ -2,7 +2,7 @@ import { flushPromises, mount } from '@vue/test-utils';
 import { defineComponent, h, ref } from 'vue';
 import type { PaymentMethod, PricingPlanSubscriptionExpanded } from '@solvimon/solvimon-types';
 import CustomerOverview from './CustomerOverview.vue';
-import type { CustomerPaymentMethodsConfiguration } from '@/public/components/CustomerPaymentMethods/CustomerPaymentMethods.types';
+import type { CustomerOverviewConfiguration } from './CustomerOverview.types';
 
 const {
     subscriptionsState,
@@ -169,7 +169,7 @@ const paymentMethodsOf = (count: number) =>
         (_, index) => ({ id: `pm_${index + 1}` }) as unknown as PaymentMethod,
     );
 
-const mountOverview = async (configuration?: CustomerPaymentMethodsConfiguration) => {
+const mountOverview = async (configuration?: CustomerOverviewConfiguration) => {
     const wrapper = mount(CustomerOverview, { props: { configuration } });
     await flushPromises();
 
@@ -247,8 +247,8 @@ describe('CustomerOverview — payment methods', () => {
         paymentMethodsState.items.value = paymentMethodsOf(5);
     });
 
-    it('hands its configuration to the payment methods block', async () => {
-        const wrapper = await mountOverview({ showAddButton: false });
+    it('hands its paymentMethods configuration to the payment methods block', async () => {
+        const wrapper = await mountOverview({ paymentMethods: { showAddButton: false } });
 
         expect(
             wrapper.findComponent({ name: 'CustomerPaymentMethodsStub' }).props('configuration'),
@@ -262,7 +262,7 @@ describe('CustomerOverview — payment methods', () => {
     });
 
     it('shows as many as maxItems asks for', async () => {
-        const wrapper = await mountOverview({ maxItems: 1 });
+        const wrapper = await mountOverview({ paymentMethods: { maxItems: 1 } });
 
         expect(shownPaymentMethods(wrapper).map(({ id }) => id)).toEqual(['pm_1']);
     });

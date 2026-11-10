@@ -50,7 +50,10 @@ const shownSubscriptions = computed(() => subscriptions.items.value.slice(0, SUB
 
 /** The payment methods block is a summary here too, so it caps at what its own configuration asks for. */
 const shownPaymentMethods = computed(() =>
-    paymentMethods.items.value.slice(0, props.configuration?.maxItems ?? DEFAULT_MAX_ITEMS),
+    paymentMethods.items.value.slice(
+        0,
+        props.configuration?.paymentMethods?.maxItems ?? DEFAULT_MAX_ITEMS,
+    ),
 );
 
 /** Shipping addresses are only shown to a customer with a subscription, of any status, that ships. */
@@ -120,7 +123,7 @@ useActiveScheduleWarning(subscriptions.items);
 
             <CustomerPaymentMethods
                 class="sv-customer-overview__payment-methods"
-                :configuration="configuration"
+                :configuration="configuration?.paymentMethods"
                 :is-loading="isLoading"
                 :payment-methods="shownPaymentMethods"
             />

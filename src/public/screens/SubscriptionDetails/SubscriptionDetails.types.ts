@@ -19,7 +19,7 @@ export interface SubscriptionDetailsProps extends BaseScreenProps {
     onDemandScheduleId?: PricingPlanSchedule['id'];
     hasWalletBalancesError?: boolean;
     avatar?: string;
-    canViewCreatedInvoice?: boolean;
+    showViewInvoiceButton?: boolean;
 }
 
 export interface SubscriptionDetailsEmits {

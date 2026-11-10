@@ -247,7 +247,7 @@ const pay = async (wrapper: Wrapper) => {
 
 const chargedItems = () => mockCharge.mock.calls.at(-1)?.[0];
 
-const topUpError = (wrapper: Wrapper) => wrapper.find('.sv-topup-modal__error');
+const topUpError = (wrapper: Wrapper) => wrapper.find('.sv-top-up-modal__error');
 
 beforeEach(() => {
     vi.useFakeTimers();
@@ -516,7 +516,7 @@ describe('TopUpModal (integrated) — an auto top-up rule switched off again', (
 
         await pay(wrapper);
 
-        expect(wrapper.find('.sv-topup-modal__auto-top-up-error').exists()).toBe(false);
+        expect(wrapper.find('.sv-top-up-modal__auto-top-up-error').exists()).toBe(false);
     });
 });
 

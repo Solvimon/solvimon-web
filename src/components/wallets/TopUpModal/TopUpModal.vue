@@ -342,7 +342,7 @@ watch(
             <div v-if="hasSubscriptionChoice" class="mb-4">
                 <RadioGroupExtended
                     v-model="selectedSubscriptionId"
-                    class="sv-topup-modal__subscription"
+                    class="sv-top-up-modal__subscription"
                     name="top-up-subscription"
                     direction="column"
                     required
@@ -360,7 +360,7 @@ watch(
                     <template #prefix="{ optionValue }">
                         <SubscriptionSummary
                             v-if="summaryById[String(optionValue)]"
-                            class="sv-topup-modal__subscription-option grow"
+                            class="sv-top-up-modal__subscription-option grow"
                             no-spacing
                             :subscription="summaryById[String(optionValue)].subscription"
                             :enabled-pricing-ids="
@@ -390,7 +390,7 @@ watch(
 
             <ErrorNotification
                 v-if="topUpError"
-                class="sv-topup-modal__error sv-error mt-4"
+                class="sv-top-up-modal__error sv-error mt-4"
                 :title="topUpError"
             />
         </template>
@@ -398,7 +398,7 @@ watch(
         <template #SUCCESS>
             <ErrorNotification
                 v-if="autoTopUpSaveError"
-                class="sv-topup-modal__auto-top-up-error sv-error mb-4"
+                class="sv-top-up-modal__auto-top-up-error sv-error mb-4"
                 :title="autoTopUpSaveError"
             />
 

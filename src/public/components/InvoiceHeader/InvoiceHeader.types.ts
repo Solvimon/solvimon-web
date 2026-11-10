@@ -6,7 +6,7 @@ export interface InvoiceHeaderConfiguration {
      * Optionally show the PDF invoice download button
      * @default true
      */
-    enableDownloadButton?: boolean;
+    showDownloadButton?: boolean;
 }
 
 export interface InvoiceHeaderProps {

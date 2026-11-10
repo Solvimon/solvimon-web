@@ -6,17 +6,17 @@ export interface InvoiceConfiguration {
      * Optionally show the PDF invoice download button
      * @default true
      */
-    enableDownloadButton?: boolean;
+    showDownloadButton?: boolean;
     /**
      * Optionally show customer billing information
      * @default true,
      */
-    enableCustomerBillingInformation?: boolean;
+    showCustomerBillingInformation?: boolean;
     /**
      * Optionally show payment attempts
      * @default true
      */
-    enablePaymentAttempts?: boolean;
+    showPaymentAttempts?: boolean;
 }
 
 export interface InvoiceProps {

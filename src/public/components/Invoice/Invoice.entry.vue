@@ -13,9 +13,9 @@ const props = defineProps<SolvimonInvoiceEntryProps>();
 const resolvedProps = computed<SolvimonInvoiceEntryProps>(() => ({
     ...props,
     configuration: {
-        enableCustomerBillingInformation: true,
-        enableDownloadButton: true,
-        enablePaymentAttempts: true,
+        showCustomerBillingInformation: true,
+        showDownloadButton: true,
+        showPaymentAttempts: true,
         ...props.configuration,
     },
 }));

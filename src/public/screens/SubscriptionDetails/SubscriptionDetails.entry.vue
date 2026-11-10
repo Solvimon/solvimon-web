@@ -40,7 +40,7 @@ defineProps<SolvimonSubscriptionDetailsEntryProps>();
                     :schedules-data="schedulesData"
                     :customer="customer"
                     :avatar="branding?.emblem?.public_url ?? undefined"
-                    :can-view-created-invoice="configuration.canViewCreatedInvoice"
+                    :show-view-invoice-button="configuration.showViewInvoiceButton"
                     :payment-methods="paymentMethods"
                     :wallet-balances="walletBalances"
                     :on-demand-items="onDemandItems"

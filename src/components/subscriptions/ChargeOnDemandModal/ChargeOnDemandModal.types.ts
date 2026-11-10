@@ -24,7 +24,7 @@ export interface ChargeOnDemandModalProps {
     items: ChargeOnDemandItem[];
     customer?: Customer;
     paymentMethods?: PaymentMethod[];
-    canViewCreatedInvoice?: boolean;
+    showViewInvoiceButton?: boolean;
 }
 
 export interface ChargeOnDemandModalEmits {

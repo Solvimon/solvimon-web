@@ -150,6 +150,32 @@ core.createComponent('invoice', {
     configuration: { invoiceId: 42 },
 });
 
+/* What an element shows is a show* option; the old enable* names are gone. */
+core.createComponent('invoice', {
+    container: '#invoice',
+    portalObject,
+    configuration: { invoiceId: 'inv_1', showDownloadButton: false, showPaymentAttempts: false },
+});
+core.createComponent('invoice', {
+    container: '#invoice',
+    portalObject,
+    // @ts-expect-error - renamed to showCustomerBillingInformation
+    configuration: { invoiceId: 'inv_1', enableCustomerBillingInformation: false },
+});
+
+/* The customer overview configures its payment methods block under paymentMethods. */
+core.createScreen('customer-overview', {
+    container: '#overview',
+    portalObject,
+    configuration: { paymentMethods: { maxItems: 2, showAddButton: false } },
+});
+core.createScreen('customer-overview', {
+    container: '#overview',
+    portalObject,
+    // @ts-expect-error - maxItems belongs under paymentMethods
+    configuration: { maxItems: 2 },
+});
+
 core.createComponent('invoices-list', {
     container: '#invoices',
     // @ts-expect-error - a portal object is more than a customer id

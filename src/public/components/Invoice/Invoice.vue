@@ -31,13 +31,13 @@ const { $t } = useIntl();
             <div class="sv-invoice__aside flex shrink-0 flex-col gap-8 lg:w-72 lg:gap-6">
                 <InvoiceDetailsBlock class="sv-invoice__details" :invoice="invoice" />
                 <PaymentHistoryBlock
-                    v-if="configuration?.enablePaymentAttempts && payments?.length"
+                    v-if="configuration?.showPaymentAttempts && payments?.length"
                     class="sv-invoice__payment-history"
                     :payment-attempts="payments"
                     :customer="invoice.customer"
                 />
                 <CustomerBillingInformation
-                    v-if="configuration.enableCustomerBillingInformation"
+                    v-if="configuration.showCustomerBillingInformation"
                     class="sv-invoice__billing-information"
                     :customer="invoice.customer"
                     :title="

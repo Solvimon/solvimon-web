@@ -529,11 +529,11 @@ const handleDone = () => {
 };
 
 const leadsWithInvoice = computed(
-    () => isOrderPlaced.value && !isOrderPaid.value && props.canViewCreatedInvoice,
+    () => isOrderPlaced.value && !isOrderPaid.value && props.showViewInvoiceButton,
 );
 
 const canViewUnpaidInvoice = computed(
-    () => step.value === 'PAYMENT_FAILED' && !!unpaidInvoiceId.value && props.canViewCreatedInvoice,
+    () => step.value === 'PAYMENT_FAILED' && !!unpaidInvoiceId.value && props.showViewInvoiceButton,
 );
 
 const viewInvoiceButtonText = computed(() =>
@@ -690,7 +690,7 @@ watch(
                     >{{ confirmButtonText }}</Button
                 >
                 <Button
-                    v-if="isOrderPaid && canViewCreatedInvoice"
+                    v-if="isOrderPaid && showViewInvoiceButton"
                     size="lg"
                     intent="subtle"
                     class="sv-action sv-action--secondary"

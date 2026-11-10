@@ -861,7 +861,7 @@ describe('TopUpModal — a rule set alongside the top-up', () => {
 
         await saveRule(wrapper);
 
-        expect(wrapper.find('.sv-topup-modal__auto-top-up-error').text()).toContain(
+        expect(wrapper.find('.sv-top-up-modal__auto-top-up-error').text()).toContain(
             "we couldn't save your automatic top-up",
         );
     });
@@ -871,7 +871,7 @@ describe('TopUpModal — a rule set alongside the top-up', () => {
 
         await saveRule(wrapper);
 
-        expect(wrapper.find('.sv-topup-modal__auto-top-up-error').exists()).toBe(false);
+        expect(wrapper.find('.sv-top-up-modal__auto-top-up-error').exists()).toBe(false);
     });
 
     it('bills the rule on the schedule the top-up was charged on', async () => {
@@ -954,7 +954,7 @@ describe('TopUpModal — a rule set alongside the top-up', () => {
             settleSave({ fail: true });
             await vi.runAllTimersAsync();
 
-            expect(wrapper.find('.sv-topup-modal__auto-top-up-error').exists()).toBe(false);
+            expect(wrapper.find('.sv-top-up-modal__auto-top-up-error').exists()).toBe(false);
         });
     });
 
@@ -1033,7 +1033,7 @@ describe('TopUpModal — a charge that fails', () => {
     });
 
     const error = (wrapper: ReturnType<typeof mountModal>) =>
-        wrapper.find('.sv-topup-modal__error');
+        wrapper.find('.sv-top-up-modal__error');
 
     it('says the top-up failed when the API refuses it', async () => {
         mockCharge.mockRejectedValue(new ApiError({ statusCode: 400 }));

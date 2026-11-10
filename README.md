@@ -115,11 +115,14 @@ An error the element cannot carry on from — an unknown `environment`, a portal
 another element, or a bug in the SDK — is logged once and dispatched as an `error` event on the
 element. It is logged as `UNHANDLED_ERROR` unless it has a code of its own, such as
 `PORTAL_TYPE_NOT_ALLOWED` for a portal object meant for another element. Its context names the
-element in `componentName`, so a page with several can tell which one failed. The event does not bubble, and its `detail` is an array whose first item is the `Error`:
+element in `componentName`, so a page with several can tell which one failed. Its `detail` is the
+`Error`. Like every event the SDK dispatches — `error`, `ready`, `log` and `action-request` — it
+bubbles and crosses the shadow root, so one listener on a container hears every element in it:
 
 ```ts
-element.addEventListener('error', (event) => {
-    const [error] = (event as CustomEvent<[Error]>).detail;
+container.addEventListener('error', (event) => {
+    // TypeScript types an `error` listener's event as a script `ErrorEvent`, hence the cast via `Event`.
+    const error = (event as Event as CustomEvent<Error>).detail;
 });
 ```
 
@@ -195,10 +198,10 @@ means. The event bubbles and crosses the shadow root, so one listener on a conta
 element in it:
 
 ```ts
-import type { RequestActionEvent } from '@solvimon/solvimon-web/core';
+import type { ActionRequestEvent } from '@solvimon/solvimon-web/core';
 
 container.addEventListener('action-request', (event) => {
-    const { detail } = event as RequestActionEvent;
+    const { detail } = event as ActionRequestEvent;
 
     if (detail.action === 'view-invoice') {
         router.push(`/invoices/${detail.data.invoiceId}`);
@@ -208,7 +211,7 @@ container.addEventListener('action-request', (event) => {
 
 `detail.action` is one of `view-invoice`, `pay-invoice`, `view-subscription-details`,
 `view-all-subscriptions`, `manage-subscription`, `edit-billing-information`,
-`view-all-payment-methods`, `add-payment-method` and `navigate-to-customer-overview`. None of them
+`view-all-payment-methods`, `add-payment-method` and `view-customer-overview`. None of them
 does anything unless you handle it. The event is cancelable so that an action the SDK gives a
 default later can be taken over with `preventDefault()`; today that call has no effect.
 

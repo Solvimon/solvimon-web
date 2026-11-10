@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import type { SolvimonCheckoutEmits, SolvimonCheckoutEntryProps } from './Checkout.entry.types';
+import type { SolvimonCheckoutEntryProps } from './Checkout.entry.types';
 import CheckoutNotAvailable from '@/components/checkout/CheckoutNotAvailable.vue';
 import { EntryProvider } from '@/components/providers';
 import Checkout from '@/public/screens/Checkout/Checkout.vue';
@@ -11,7 +11,6 @@ import { getComponentName } from '@/utils/component';
 const componentName = getComponentName('checkout');
 
 const props = defineProps<SolvimonCheckoutEntryProps>();
-const emit = defineEmits<SolvimonCheckoutEmits>();
 
 const couponCode = computed(
     () => props.configuration?.couponCode ?? sanitizeCouponCode(getQueryParam('coupon_code')),
@@ -23,12 +22,10 @@ const couponCode = computed(
         :entry="$props"
         :component-name="componentName"
         :allowed-portal-types="['INIT_PRICING_PLAN_SUBSCRIPTION']"
-        @error="(error) => $emit('error', error)"
     >
         <Checkout
             :configuration="{ ...configuration, couponCode }"
             :avatar="branding?.emblem?.public_url ?? undefined"
-            @ready="emit('ready')"
         >
             <template v-if="$slots['terms-and-conditions']" #terms-and-conditions
                 ><slot name="terms-and-conditions"

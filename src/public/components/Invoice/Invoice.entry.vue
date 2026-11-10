@@ -27,7 +27,6 @@ const resolvedProps = computed<SolvimonInvoiceEntryProps>(() => ({
         :component-name="componentName"
         :allowed-portal-types="['CUSTOMER']"
         :required-configuration="{ invoiceId: configuration?.invoiceId }"
-        @error="(error) => $emit('error', error)"
     >
         <InvoiceEntryView
             :key="resolvedProps.configuration.invoiceId"

@@ -21,16 +21,15 @@ export type {
 export type {
     ActionRequestDetail,
     ActionRequestDetailAddPaymentMethod,
-    ActionRequestDetailBase,
     ActionRequestDetailEditBillingInformation,
     ActionRequestDetailManageSubscription,
-    ActionRequestDetailNavigateToCustomerOverview,
     ActionRequestDetailPayInvoice,
     ActionRequestDetailViewAllPaymentMethods,
+    ActionRequestDetailViewCustomerOverview,
     ActionRequestDetailViewAllSubscriptions,
     ActionRequestDetailViewInvoice,
     ActionRequestDetailViewSubscriptionDetails,
-    RequestActionEvent,
+    ActionRequestEvent,
 } from './action-request.types';
 export type {
     Amount,

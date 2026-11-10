@@ -36,8 +36,7 @@ const defineEntryElement = (child: Component) => {
     const tag = `solvimon-logging-${++tagCount}`;
     const Entry = defineComponent({
         props: ENTRY_PROPS,
-        emits: ['error'],
-        setup(props, { emit }) {
+        setup(props) {
             return () =>
                 h(
                     EntryProvider,
@@ -45,7 +44,6 @@ const defineEntryElement = (child: Component) => {
                         entry: props as never,
                         componentName: tag,
                         allowedPortalTypes: ['CUSTOMER'],
-                        onError: (error: Error) => emit('error', error),
                     },
                     () => h(child),
                 );
@@ -220,7 +218,7 @@ describe('EntryProvider logging seen from the host', () => {
                 environment: 'TEST',
             });
             expect(recorded.errorEvents).toHaveLength(1);
-            expect(recorded.errorEvents[0].detail[0]).toBeInstanceOf(CodedError);
+            expect(recorded.errorEvents[0].detail).toBeInstanceOf(CodedError);
         });
 
         it('keeps the message it was thrown with in the log entry', async () => {

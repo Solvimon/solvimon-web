@@ -205,7 +205,7 @@ test.describe('Subscription management', () => {
 
             await expect
                 .poll(async () => (await hostEvents(page)).actions.map(({ action }) => action))
-                .toContain('navigate-to-customer-overview');
+                .toContain('view-customer-overview');
         });
 
         test('keeps the choice when the change is refused', async ({ page }) => {

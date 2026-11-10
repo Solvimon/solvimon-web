@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { BrandProvider, IconSpriteProvider } from '@solvimon/solvimon-ui';
-import type { ProviderEmits, ProviderProps } from './Provider.types';
+import type { ProviderProps } from './Provider.types';
 import CssOverridesProvider from '@/components/providers/CssOverridesProvider/CssOverridesProvider.vue';
 import ActionDispatchProvider from '@/components/providers/ActionDispatchProvider/ActionDispatchProvider.vue';
 import LoggerProvider from '@/components/providers/LoggerProvider/LoggerProvider.vue';
@@ -23,7 +23,6 @@ const props = defineProps<
     }
 >();
 const authentication = computed(() => getPortalAuthentication(props.portalObject));
-const emit = defineEmits<ProviderEmits>();
 </script>
 
 <template>
@@ -41,7 +40,7 @@ const emit = defineEmits<ProviderEmits>();
                         :log-level="props.logLevel"
                         :on-log="props.onLog"
                     >
-                        <ErrorBoundary @error="(error: Error) => emit('error', error)">
+                        <ErrorBoundary>
                             <RequiredPropertiesGuard :missing="missingProperties ?? []">
                                 <!-- Keyed, so that a new environment or portal token starts the tree
                                 below over rather than leaving it on the API and session it was

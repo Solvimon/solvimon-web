@@ -14,7 +14,7 @@ export type {
     RegisteredScreenId,
     RegisteredComponentId,
     ActionRequestDetail,
-    RequestActionEvent,
+    ActionRequestEvent,
 } from './public/core';
 export type {
     Amount,

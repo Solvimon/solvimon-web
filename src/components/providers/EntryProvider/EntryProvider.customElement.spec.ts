@@ -46,8 +46,7 @@ const defineEntryElement = (
     const tag = `solvimon-entry-${++tagCount}`;
     const Entry = defineComponent({
         props: ENTRY_PROPS,
-        emits: ['error'],
-        setup(props, { emit }) {
+        setup(props) {
             return () =>
                 h(
                     EntryProvider,
@@ -56,7 +55,6 @@ const defineEntryElement = (
                         componentName: tag,
                         allowedPortalTypes: ['CUSTOMER'],
                         requiredConfiguration: required?.(props),
-                        onError: (error: Error) => emit('error', error),
                     },
                     () => h(child),
                 );
@@ -134,10 +132,9 @@ describe('EntryProvider inside a custom element', () => {
         expect(unhandled(onLog)).toHaveLength(1);
         expect(errorEvents).toHaveLength(1);
         const [event] = errorEvents;
-        expect(Array.isArray(event.detail)).toBe(true);
-        expect(event.detail[0]).toBeInstanceOf(Error);
-        expect(event.detail[0].message).toBe(message);
-        expect(event.bubbles).toBe(false);
+        expect(event.detail).toBeInstanceOf(Error);
+        expect(event.detail.message).toBe(message);
+        expect(event).toMatchObject({ bubbles: true, composed: true });
     };
 
     describe('every kind of unhandled failure reaches onLog and the error event exactly once', () => {
@@ -237,7 +234,7 @@ describe('EntryProvider inside a custom element', () => {
         expect(serialised).not.toContain(token);
     });
 
-    it('dispatches `error` with an array detail, unlike `log`, whose detail is the entry itself', async () => {
+    it('dispatches `error` with the Error as detail, as `log` has its entry', async () => {
         const recorded = await mountWith(
             defineComponent({
                 setup() {
@@ -250,7 +247,7 @@ describe('EntryProvider inside a custom element', () => {
             (event) => (event.detail as LogEntry).code === 'UNHANDLED_ERROR',
         );
         expect(unhandledLog?.detail).toMatchObject({ code: 'UNHANDLED_ERROR' });
-        expect(Array.isArray(recorded.errorEvents[0].detail)).toBe(true);
+        expect(recorded.errorEvents[0].detail).toBeInstanceOf(Error);
     });
 
     it('dispatches a log entry written while the tree first sets up as a `log` event', async () => {
@@ -287,7 +284,7 @@ describe('EntryProvider inside a custom element', () => {
         const codes = recorded.logEvents.map((event) => (event.detail as LogEntry).code);
         expect(codes).toEqual(['UNHANDLED_ERROR']);
         expect(recorded.errorEvents).toHaveLength(1);
-        expect(recorded.errorEvents[0].detail[0].message).toMatch(/Unknown Solvimon environment/);
+        expect(recorded.errorEvents[0].detail.message).toMatch(/Unknown Solvimon environment/);
     });
 
     it('has the css overrides in the shadow root by the time the tree below mounts', async () => {
@@ -387,10 +384,12 @@ describe('EntryProvider inside a custom element', () => {
         const inner = outerRecorded.element.shadowRoot?.querySelector(innerTag);
 
         expect(inner).toBeTruthy();
-        expect(outerRecorded.errorEvents).toHaveLength(0);
         expect(unhandled(outerRecorded.onLog)).toHaveLength(0);
-        // The inner element's `log` event bubbles and is composed, so the outer host hears it as a
-        // `log` event too; that is the event's design, not a second report.
+        // The inner element's `error` and `log` events bubble and are composed, so the outer host
+        // hears them too; that is the events' design, not a second report. Seen from outside, the
+        // shadow root retargets them to the outer host, so the error itself says where it came from.
+        expect(outerRecorded.errorEvents).toHaveLength(1);
+        expect(outerRecorded.errorEvents[0].detail.message).toBe('inner broke');
         const innerEntries = outerRecorded.logEvents
             .map((event) => event.detail as LogEntry)
             .filter((entry) => entry.code === 'UNHANDLED_ERROR');

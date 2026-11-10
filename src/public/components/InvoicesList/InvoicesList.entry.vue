@@ -15,7 +15,6 @@ defineProps<SolvimonInvoicesListEntryProps>();
         :entry="$props"
         :component-name="componentName"
         :allowed-portal-types="['CUSTOMER']"
-        @error="(error) => $emit('error', error)"
     >
         <InvoicesListView v-bind="$props">
             <template #default="{ invoices, isLoading }">

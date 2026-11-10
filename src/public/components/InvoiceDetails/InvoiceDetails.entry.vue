@@ -16,7 +16,6 @@ defineProps<SolvimonInvoiceDetailsEntryProps>();
         :component-name="componentName"
         :allowed-portal-types="['CUSTOMER']"
         :required-configuration="{ invoiceId: configuration?.invoiceId }"
-        @error="(error) => $emit('error', error)"
     >
         <InvoiceDetailsEntryView :key="configuration.invoiceId" v-bind="$props">
             <template #default="{ invoice }">

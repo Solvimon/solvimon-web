@@ -3,34 +3,26 @@
  * Kept in a separate file with no internal dependencies so dist/core declarations resolve for consumers.
  */
 
-export type ActionRequestDetailBase = {
-    action: string;
-    entity?: string;
-    data?: Record<string, unknown>;
-    href?: string;
-    meta?: Record<string, unknown>;
-};
-
-export interface ActionRequestDetailViewInvoice extends ActionRequestDetailBase {
+export interface ActionRequestDetailViewInvoice {
     action: 'view-invoice';
     data: { invoiceId: string };
 }
 
-export interface ActionRequestDetailPayInvoice extends ActionRequestDetailBase {
+export interface ActionRequestDetailPayInvoice {
     action: 'pay-invoice';
     data: { invoiceId: string };
 }
 
-export interface ActionRequestDetailViewSubscriptionDetails extends ActionRequestDetailBase {
+export interface ActionRequestDetailViewSubscriptionDetails {
     action: 'view-subscription-details';
     data: { subscriptionId: string };
 }
 
-export interface ActionRequestDetailViewAllSubscriptions extends ActionRequestDetailBase {
+export interface ActionRequestDetailViewAllSubscriptions {
     action: 'view-all-subscriptions';
 }
 
-export interface ActionRequestDetailManageSubscription extends ActionRequestDetailBase {
+export interface ActionRequestDetailManageSubscription {
     action: 'manage-subscription';
     /**
      * `enabledPricingId` is the pricing the customer chose to change, when they came from one. Hand
@@ -39,20 +31,20 @@ export interface ActionRequestDetailManageSubscription extends ActionRequestDeta
     data: { subscriptionId: string; enabledPricingId?: string };
 }
 
-export interface ActionRequestDetailEditBillingInformation extends ActionRequestDetailBase {
+export interface ActionRequestDetailEditBillingInformation {
     action: 'edit-billing-information';
 }
 
-export interface ActionRequestDetailViewAllPaymentMethods extends ActionRequestDetailBase {
+export interface ActionRequestDetailViewAllPaymentMethods {
     action: 'view-all-payment-methods';
 }
 
-export interface ActionRequestDetailAddPaymentMethod extends ActionRequestDetailBase {
+export interface ActionRequestDetailAddPaymentMethod {
     action: 'add-payment-method';
 }
 
-export interface ActionRequestDetailNavigateToCustomerOverview extends ActionRequestDetailBase {
-    action: 'navigate-to-customer-overview';
+export interface ActionRequestDetailViewCustomerOverview {
+    action: 'view-customer-overview';
 }
 
 export type ActionRequestDetail =
@@ -64,9 +56,10 @@ export type ActionRequestDetail =
     | ActionRequestDetailEditBillingInformation
     | ActionRequestDetailViewAllPaymentMethods
     | ActionRequestDetailAddPaymentMethod
-    | ActionRequestDetailNavigateToCustomerOverview;
+    | ActionRequestDetailViewCustomerOverview;
 
 /**
- * Type for the 'action-request' custom event. Use when listening for action-request on document or container.
+ * The `action-request` event. It bubbles and crosses the shadow root, so a listener on the document
+ * or a container hears every element; call `preventDefault()` to say the host handled it.
  */
-export type RequestActionEvent = CustomEvent<ActionRequestDetail>;
+export type ActionRequestEvent = CustomEvent<ActionRequestDetail>;

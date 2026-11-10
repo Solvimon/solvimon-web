@@ -15,7 +15,6 @@ defineProps<SolvimonPaymentMethodsManagementEntryProps>();
         :entry="$props"
         :component-name="componentName"
         :allowed-portal-types="['CUSTOMER']"
-        @error="(error) => $emit('error', error)"
     >
         <PaymentMethodsManagementEntryView v-bind="$props">
             <template

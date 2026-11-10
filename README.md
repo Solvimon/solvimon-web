@@ -132,8 +132,9 @@ TypeScript's element and document event maps, so a listener knows its `detail` w
 the platform's own, such as `error`, which `window.onerror` and error monitoring tools listen for,
 or with another library's on the same page. None is cancelable.
 
-The checkout dispatches `solvimon-ready` once, when its payment form is ready and the customer can
-pay.
+The checkout dispatches `solvimon-ready` once, when its content has loaded — its subscription and
+first price — whether the customer can pay yet, has paid already or has nothing to pay with. It is
+not sent again when the price or the payment form reloads.
 
 A failure the element handles — a refused payment, a subscription the checkout cannot load, a date
 it can only format in the browser's own time zone — reaches `onLog` and the `solvimon-log` event under its

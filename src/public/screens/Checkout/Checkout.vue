@@ -73,9 +73,6 @@ const PlanCustomizationEditor = defineAsyncComponent(
 
 // `avatar` is the branding emblem, which the entry passes on; it is not a host option.
 const props = defineProps<CheckoutProps & { avatar?: string }>();
-// The element's `ready` event, sent once its payment form is ready and the customer can pay.
-const dispatch = useHostEvent();
-const emitReady = () => dispatch('solvimon-ready', undefined);
 
 const paymentIntegrationFormRef = ref();
 
@@ -135,6 +132,21 @@ const {
     enabledPricingIds: props.configuration?.enabledPricingIds,
     isShippingAddressRequired,
 });
+
+// `solvimon-ready`, sent once, when the checkout's content has loaded — its subscription and first
+// price — whether the customer can pay yet, has paid already or has nothing to pay with. Later
+// reloads, and a payment form set up again, do not send it again.
+const dispatch = useHostEvent();
+let isReadySent = false;
+watch(
+    () => Boolean(subscription.value && invoicePreview.value),
+    (isLoaded) => {
+        if (!isLoaded || isReadySent) return;
+        isReadySent = true;
+        dispatch('solvimon-ready', undefined);
+    },
+    { immediate: true },
+);
 
 const experimentalFeatures = useExperimentalFeature();
 const isExpressCheckoutEnabled = computed(
@@ -961,7 +973,6 @@ const handleBillingPeriodChange = (billingPeriod: BillingPeriod) => {
                                         @invalid="handlePaymentNotSubmitted"
                                         @submitting="handlePaymentSubmitting"
                                         @action-required="handleActionRequired"
-                                        @ready="emitReady"
                                     />
                                 </div>
                             </div>

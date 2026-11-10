@@ -56,11 +56,6 @@ export function createCustomElementLogSink(
 ): LogSink {
     return (entry) => {
         runSink(sink, entry);
-
-        if (!hostRef.value) {
-            return;
-        }
-
         dispatchHostEvent(hostRef.value, 'solvimon-log', entry);
     };
 }

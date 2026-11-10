@@ -2,6 +2,7 @@ import { flushPromises, mount } from '@vue/test-utils';
 import { computed, ref } from 'vue';
 import type { PortalUrl } from '@solvimon/solvimon-types';
 import Checkout from './Checkout.vue';
+import { HOST_ELEMENT_PROVIDER_INJECTION_KEY } from '@/components/providers/HostElementProvider/HostElementProvider.lib';
 
 // ─── Mocks ────────────────────────────────────────────────────────────────────
 
@@ -687,5 +688,57 @@ describe('Checkout', () => {
 
             expect(wrapper.find('.sv-checkout__submit').attributes('disabled')).toBe('true');
         });
+    });
+});
+
+describe('Checkout — solvimon-ready', () => {
+    const PREVIEW = {
+        id: 'inv_preview',
+        periods: [{ start_at: '2026-10-09T00:00:00.000Z' }],
+        tax_summary: { total_amount: { currency: 'EUR', quantity: '10.00' } },
+    };
+
+    const mountInHost = async () => {
+        const host = document.createElement('div');
+        const readies = vi.fn();
+        host.addEventListener('solvimon-ready', readies);
+        mount(Checkout, {
+            global: {
+                stubs: Object.fromEntries(STUBBED_CHILDREN.map((name) => [name, true])),
+                provide: {
+                    [HOST_ELEMENT_PROVIDER_INJECTION_KEY as symbol]: {
+                        hostRef: ref(host),
+                        customElementName: 'solvimon-checkout',
+                    },
+                },
+            },
+        });
+        await flushPromises();
+        await vi.dynamicImportSettled();
+
+        return readies;
+    };
+
+    beforeEach(() => {
+        isPaid.value = false;
+        subscription.value = undefined;
+        invoicePreview.value = undefined;
+    });
+
+    // The view's values are plain objects in this spec, so each case sets them before mounting.
+    it('is not sent while the first price is still loading', async () => {
+        subscription.value = CUSTOMISABLE_SUBSCRIPTION;
+
+        expect(await mountInHost()).not.toHaveBeenCalled();
+    });
+
+    it('is sent once the subscription and the first price have loaded, bubbling', async () => {
+        subscription.value = CUSTOMISABLE_SUBSCRIPTION;
+        invoicePreview.value = PREVIEW;
+
+        const readies = await mountInHost();
+
+        expect(readies).toHaveBeenCalledOnce();
+        expect(readies.mock.calls[0][0]).toMatchObject({ bubbles: true, composed: true });
     });
 });

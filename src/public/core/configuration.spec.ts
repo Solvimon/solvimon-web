@@ -54,6 +54,30 @@ describe('createSolvimonCore', () => {
         expect(container.children[0].tagName.toLowerCase()).toBe('solvimon-invoices-list');
     });
 
+    it('adds the on listeners before the element is in the page', async () => {
+        customElements.define(
+            'solvimon-test-ready-on-connect',
+            class extends HTMLElement {
+                connectedCallback() {
+                    this.dispatchEvent(new CustomEvent('solvimon-ready', { bubbles: true }));
+                }
+            },
+        );
+        mockEnsureDefined.mockResolvedValueOnce('solvimon-test-ready-on-connect');
+        const ready = vi.fn();
+
+        createSolvimonCore({ environment: 'TEST' }).createComponent('invoices-list', {
+            container,
+            portalObject,
+            on: { 'solvimon-ready': ready },
+        });
+        await Promise.resolve();
+        await Promise.resolve();
+
+        expect(ready).toHaveBeenCalledOnce();
+        expect(container.children[0]).not.toHaveProperty('on');
+    });
+
     it('mounts under the name a host already registered the element as', async () => {
         mockEnsureDefined.mockResolvedValueOnce('acme-invoices-list');
 

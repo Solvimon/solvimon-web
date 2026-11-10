@@ -136,7 +136,7 @@ const {
 // `solvimon-ready`, sent once, when the checkout's content has loaded — its subscription and first
 // price — whether the customer can pay yet, has paid already or has nothing to pay with. Later
 // reloads, and a payment form set up again, do not send it again.
-const dispatch = useHostEvent();
+const { dispatch, componentName } = useHostEvent();
 let isReadySent = false;
 watch(
     () => Boolean(subscription.value && invoicePreview.value),
@@ -707,7 +707,7 @@ const handlePaymentSuccess = () => {
     promotionCodeErrorMessage.value = null;
     paymentErrorMessage.value = null;
 
-    if (!dispatch('solvimon-payment-succeeded', { subscriptionId })) {
+    if (!dispatch('solvimon-payment-succeeded', { componentName, subscriptionId })) {
         redirectsOnSuccess.value = false;
         return;
     }

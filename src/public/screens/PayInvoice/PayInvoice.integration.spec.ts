@@ -492,7 +492,10 @@ describe('PayInvoice', () => {
         checkoutConfig.onPaymentCompleted({}, { unmount: vi.fn() });
         await nextTick();
 
-        expect(paymentSucceeded).toHaveBeenCalledExactlyOnceWith({ invoiceId: 'inv_123' });
+        expect(paymentSucceeded).toHaveBeenCalledExactlyOnceWith({
+            componentName: 'solvimon-pay-invoice',
+            invoiceId: 'inv_123',
+        });
     });
 
     // A redirect return emitted success without the screen noticing, so "Pay" stayed enabled on an
@@ -546,7 +549,10 @@ describe('PayInvoice', () => {
             const wrapper = mountComponent({ refresh });
             await waitForAdyenMount();
 
-            expect(paymentSucceeded).toHaveBeenCalledExactlyOnceWith({ invoiceId: 'inv_123' });
+            expect(paymentSucceeded).toHaveBeenCalledExactlyOnceWith({
+                componentName: 'solvimon-pay-invoice',
+                invoiceId: 'inv_123',
+            });
             expect(refresh).toHaveBeenCalledOnce();
             expect(MockDropIn).not.toHaveBeenCalled();
             expect(wrapper.text()).toContain('Thank you for your payment!');
@@ -833,7 +839,10 @@ describe('PayInvoice with stored payment methods', () => {
             amount,
         });
         expect(mockAuthorizePayment).not.toHaveBeenCalled();
-        expect(paymentSucceeded).toHaveBeenCalledExactlyOnceWith({ invoiceId: 'inv_123' });
+        expect(paymentSucceeded).toHaveBeenCalledExactlyOnceWith({
+            componentName: 'solvimon-pay-invoice',
+            invoiceId: 'inv_123',
+        });
         expect(refresh).toHaveBeenCalledOnce();
         expect(wrapper.text()).toContain('Thank you for your payment!');
     });

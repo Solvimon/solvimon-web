@@ -552,7 +552,7 @@ describe('Checkout', () => {
 
             expect(listener).toHaveBeenCalledOnce();
             expect(listener.mock.calls[0][0]).toMatchObject({
-                detail: { subscriptionId: 'sub_1' },
+                detail: { componentName: 'solvimon-checkout', subscriptionId: 'sub_1' },
                 bubbles: true,
                 composed: true,
                 cancelable: true,

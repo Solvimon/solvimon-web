@@ -189,8 +189,24 @@ someContainer.addEventListener('solvimon-error', (event) => {
 someContainer.addEventListener('solvimon-payment-succeeded', (event) => {
     event.preventDefault();
     const subscriptionId: string | undefined = event.detail.subscriptionId;
+    const paidIn: string = event.detail.componentName;
     void subscriptionId;
+    void paidIn;
 });
+
+/* The core adds the on listeners before the element is in the page; each knows its event's detail. */
+export const mountWithListeners = (portalObject: never) =>
+    createSolvimonCore({ environment: 'TEST' }).createScreen('checkout', {
+        container: '#checkout',
+        portalObject,
+        on: {
+            'solvimon-payment-succeeded': (event) => {
+                event.preventDefault();
+                void event.detail.subscriptionId;
+            },
+            'solvimon-payment-method-added': (event) => void event.detail.componentName,
+        },
+    });
 document.addEventListener('solvimon-invoice-created', (event) => {
     const invoiceId: string = event.detail.invoiceId;
     void invoiceId;

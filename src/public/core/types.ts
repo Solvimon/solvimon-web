@@ -1,3 +1,4 @@
+import type { SolvimonEventListeners } from './events.types';
 import type { PortalToken } from '@/types/portalToken';
 import type { SolvimonBranding } from '@/types/branding';
 import type { Environment } from '@/public/types';
@@ -127,6 +128,8 @@ export type ComponentMountConfiguration<TId extends RegisteredComponentId> = {
     portalObject: InferPortalObject<RegisteredComponentEntryPropsById[TId]>;
     /** See `portalToken` on the element: the response of an exchange of the handle, as it is. */
     portalToken?: PortalToken;
+    /** Listeners for the element's events, added before it is in the page. */
+    on?: SolvimonEventListeners;
 } & ConfigurationProp<ComponentConfigurationById[TId]>;
 
 export type ScreenMountConfiguration<TId extends RegisteredScreenId> = {
@@ -134,6 +137,8 @@ export type ScreenMountConfiguration<TId extends RegisteredScreenId> = {
     portalObject: InferPortalObject<RegisteredScreenEntryPropsById[TId]>;
     /** See `portalToken` on the element: the response of an exchange of the handle, as it is. */
     portalToken?: PortalToken;
+    /** Listeners for the element's events, added before it is in the page. */
+    on?: SolvimonEventListeners;
 } & ConfigurationProp<ScreenConfigurationById[TId]>;
 
 export interface CoreConfiguration<TConfig extends SolvimonMountConfig = SolvimonMountConfig> {

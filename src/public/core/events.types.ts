@@ -24,6 +24,8 @@ export type SolvimonErrorEvent = CustomEvent<SolvimonErrorDetail>;
 
 /** The `detail` of `solvimon-payment-succeeded`: what the payment was for, as far as the element knows. */
 export interface SolvimonPaymentSucceededDetail {
+    /** The tag name of the element the customer paid in. */
+    componentName: string;
     /** The subscription the checkout sold. */
     subscriptionId?: PricingPlanSubscription['id'];
     /** The invoice that was paid. */
@@ -44,6 +46,12 @@ export type SolvimonPaymentSucceededEvent = CustomEvent<SolvimonPaymentSucceeded
 export interface SolvimonInvoiceCreatedDetail {
     invoiceId: Invoice['id'];
     paymentStatus: Invoice['payment_status'];
+}
+
+/** The `detail` of `solvimon-payment-method-added`. */
+export interface SolvimonPaymentMethodAddedDetail {
+    /** The tag name of the element the customer stored the method in. */
+    componentName: string;
 }
 
 /**
@@ -71,8 +79,16 @@ export interface SolvimonEventMap {
      */
     'solvimon-invoice-created': CustomEvent<SolvimonInvoiceCreatedDetail>;
     /** The customer stored a new payment method. */
-    'solvimon-payment-method-added': CustomEvent<undefined>;
+    'solvimon-payment-method-added': CustomEvent<SolvimonPaymentMethodAddedDetail>;
 }
+
+/**
+ * Listeners for the `on` option of `createScreen` and `createComponent`, by event name. They are
+ * added before the element is in the page, so they hear everything it dispatches.
+ */
+export type SolvimonEventListeners = {
+    [K in keyof SolvimonEventMap]?: (event: SolvimonEventMap[K]) => void;
+};
 
 // Lets `addEventListener('solvimon-error', …)` on an element or the document type its event.
 declare global {

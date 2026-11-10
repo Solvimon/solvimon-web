@@ -1,7 +1,6 @@
 import type {
     Customer,
     CustomerWalletBalanceItem,
-    Invoice,
     PaymentMethod,
     PricingPlanSchedule,
     PricingPlanScheduleWithPlanData,
@@ -29,5 +28,4 @@ export interface SubscriptionDetailsEmits {
     (e: 'auto-top-up-cancelled'): void;
     (e: 'payment-method-stored'): void;
     (e: 'subscription-changed'): void;
-    (e: 'invoice-created', invoice: Invoice): void;
 }

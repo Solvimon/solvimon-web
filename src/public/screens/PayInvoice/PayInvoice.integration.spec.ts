@@ -3,6 +3,7 @@ import { defineComponent, nextTick, ref } from 'vue';
 import type { Invoice, PaymentMethodOptionsResponse } from '@solvimon/solvimon-types';
 import PayInvoice from './PayInvoice.vue';
 import { ApiError } from '@/services/apiError';
+import { HOST_ELEMENT_PROVIDER_INJECTION_KEY } from '@/components/providers/HostElementProvider/HostElementProvider.lib';
 import {
     createPaymentMethodOptionEntry,
     createPaymentMethodOptionsResponseWithoutOptions,
@@ -194,8 +195,14 @@ async function submitThroughDropIn() {
     await flushPromises();
 }
 
-const mountComponent = (props: Record<string, unknown> = {}) =>
-    mount(PayInvoice, {
+/** Hears the `solvimon-payment-succeeded` of every mounted screen. */
+const paymentSucceeded = vi.fn();
+
+const mountComponent = (props: Record<string, unknown> = {}) => {
+    const host = document.createElement('div');
+    host.addEventListener('solvimon-payment-succeeded', (event) => paymentSucceeded(event.detail));
+
+    return mount(PayInvoice, {
         props: {
             isLoading: false,
             invoice: mockInvoice,
@@ -206,8 +213,17 @@ const mountComponent = (props: Record<string, unknown> = {}) =>
             handleSuccessRedirect: vi.fn(),
             ...props,
         },
-        global: { stubs: { teleport: true } },
+        global: {
+            stubs: { teleport: true },
+            provide: {
+                [HOST_ELEMENT_PROVIDER_INJECTION_KEY as symbol]: {
+                    hostRef: ref(host),
+                    customElementName: 'solvimon-pay-invoice',
+                },
+            },
+        },
     });
+};
 
 const challenge = {
     status: 'ACTION_REQUIRED',
@@ -468,16 +484,15 @@ describe('PayInvoice', () => {
         });
     });
 
-    it('calls onPaymentSuccess when the Adyen drop-in completes a payment', async () => {
-        const onPaymentSuccess = vi.fn();
-        mountComponent({ configuration: { invoiceId: 'inv_123', onPaymentSuccess } });
+    it('tells the host the invoice is paid when the Adyen drop-in completes a payment', async () => {
+        mountComponent();
         await waitForAdyenMount();
 
         const [checkoutConfig] = mockAdyenCheckout.mock.calls[0];
         checkoutConfig.onPaymentCompleted({}, { unmount: vi.fn() });
         await nextTick();
 
-        expect(onPaymentSuccess).toHaveBeenCalledOnce();
+        expect(paymentSucceeded).toHaveBeenCalledExactlyOnceWith({ invoiceId: 'inv_123' });
     });
 
     // A redirect return emitted success without the screen noticing, so "Pay" stayed enabled on an
@@ -526,16 +541,12 @@ describe('PayInvoice', () => {
 
         it('settles a successful return once and stops offering payment', async () => {
             mockGetPaymentDetails.mockResolvedValue({ payment_status: 'SUCCESS' });
-            const onPaymentSuccess = vi.fn();
             const refresh = vi.fn().mockResolvedValue(undefined);
 
-            const wrapper = mountComponent({
-                refresh,
-                configuration: { invoiceId: 'inv_123', onPaymentSuccess },
-            });
+            const wrapper = mountComponent({ refresh });
             await waitForAdyenMount();
 
-            expect(onPaymentSuccess).toHaveBeenCalledOnce();
+            expect(paymentSucceeded).toHaveBeenCalledExactlyOnceWith({ invoiceId: 'inv_123' });
             expect(refresh).toHaveBeenCalledOnce();
             expect(MockDropIn).not.toHaveBeenCalled();
             expect(wrapper.text()).toContain('Thank you for your payment!');
@@ -808,13 +819,8 @@ describe('PayInvoice with stored payment methods', () => {
     });
 
     it('charges the invoice to the selected stored method', async () => {
-        const onPaymentSuccess = vi.fn();
         const refresh = vi.fn().mockResolvedValue(undefined);
-        const wrapper = mountComponent({
-            paymentMethods: [storedCard()],
-            refresh,
-            configuration: { invoiceId: 'inv_123', onPaymentSuccess },
-        });
+        const wrapper = mountComponent({ paymentMethods: [storedCard()], refresh });
 
         await payButton(wrapper).trigger('click');
         await flushPromises();
@@ -827,7 +833,7 @@ describe('PayInvoice with stored payment methods', () => {
             amount,
         });
         expect(mockAuthorizePayment).not.toHaveBeenCalled();
-        expect(onPaymentSuccess).toHaveBeenCalledOnce();
+        expect(paymentSucceeded).toHaveBeenCalledExactlyOnceWith({ invoiceId: 'inv_123' });
         expect(refresh).toHaveBeenCalledOnce();
         expect(wrapper.text()).toContain('Thank you for your payment!');
     });

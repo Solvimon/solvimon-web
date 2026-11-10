@@ -19,6 +19,7 @@ import PaymentMethodsUnavailableCard from '@/components/payments/PaymentMethodsU
 import { usePaymentMethodAvailability } from '@/composables/usePaymentMethodAvailability';
 import { usePaymentFormHold } from '@/composables/usePaymentFormHold';
 import { safeUrlRedirect } from '@/utils/url';
+import { useHostEvent } from '@/components/providers/HostElementProvider/composables/useHostEvent';
 import type {
     AuthorizePaymentIntegrationFormProps,
     PaymentIntegrationFormProps,
@@ -36,6 +37,7 @@ const props = withDefaults(defineProps<PaymentMethodFormProps>(), {
 });
 
 const emit = defineEmits<PaymentMethodFormEmits>();
+const dispatch = useHostEvent();
 
 const { $t } = useIntl();
 
@@ -77,6 +79,11 @@ defineExpose({ submit: handleSubmit, isPaymentPending, isCompleted });
 function handlePaymentSuccess() {
     isPaymentPending.value = false;
     isCompleted.value = true;
+    if (configuration.value.variant === 'AUTHORIZE') {
+        dispatch('solvimon-payment-succeeded', { invoiceId: configuration.value.invoiceId });
+    } else {
+        dispatch('solvimon-payment-method-added', undefined);
+    }
     emit('success');
 }
 

@@ -20,6 +20,7 @@ import {
     getStoredPaymentMethodLabel,
 } from './PayInvoice.lib';
 import { ContentWithAsideLayout } from '@/layouts';
+import { useHostEvent } from '@/components/providers/HostElementProvider/composables/useHostEvent';
 import PaymentIntegrationForm from '@/components/payments/PaymentIntegrationForm/PaymentIntegrationForm.vue';
 import Skeleton from '@/components/shared/Skeleton.vue';
 import PaymentFeedbackCard from '@/components/payments/PaymentFeedbackCard/PaymentFeedbackCard.vue';
@@ -161,14 +162,13 @@ const canPay = computed(
         !isPaymentUnconfirmed.value,
 );
 
+const dispatch = useHostEvent();
+
 const handlePaymentSuccess = () => {
     isPaid.value = true;
     isPaymentPending.value = false;
     void props.refresh?.();
-
-    if (props.configuration.onPaymentSuccess) {
-        props.configuration.onPaymentSuccess();
-    }
+    dispatch('solvimon-payment-succeeded', { invoiceId: props.configuration.invoiceId });
 };
 
 const handlePaymentNotSubmitted = () => {

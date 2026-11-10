@@ -30,6 +30,9 @@ export type { IntlMessages, Environment } from './public/types';
 export type { SolvimonBranding } from '@/types/branding';
 export type {
     SolvimonErrorDetail,
+    SolvimonInvoiceCreatedDetail,
+    SolvimonPaymentSucceededDetail,
+    SolvimonPaymentSucceededEvent,
     SolvimonErrorEvent,
     SolvimonEventMap,
 } from '@/public/core/events.types';

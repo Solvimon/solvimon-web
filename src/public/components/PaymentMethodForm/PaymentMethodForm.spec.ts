@@ -1,8 +1,9 @@
 import { mount } from '@vue/test-utils';
-import { nextTick } from 'vue';
+import { nextTick, ref } from 'vue';
 import type { Customer } from '@solvimon/solvimon-types';
 import PaymentMethodForm from './PaymentMethodForm.vue';
 import { createPaymentMethodOptionEntry } from '@/test-utils/paymentMethodOptionsFixture';
+import { HOST_ELEMENT_PROVIDER_INJECTION_KEY } from '@/components/providers/HostElementProvider/HostElementProvider.lib';
 
 // ─── Mocks ────────────────────────────────────────────────────────────────────
 
@@ -123,6 +124,61 @@ describe('PaymentMethodForm', () => {
             await completeForm(wrapper);
 
             expect(wrapper.emitted('success')).toHaveLength(1);
+        });
+
+        describe('the event the element dispatches', () => {
+            const completeInHost = async (configuration?: Record<string, unknown>) => {
+                const host = document.createElement('div');
+                const heard: Event[] = [];
+                host.addEventListener('solvimon-payment-method-added', (event) =>
+                    heard.push(event),
+                );
+                host.addEventListener('solvimon-payment-succeeded', (event) => heard.push(event));
+                const wrapper = mount(PaymentMethodForm, {
+                    props: {
+                        customer: CUSTOMER,
+                        paymentMethodOptions: [createPaymentMethodOptionEntry()],
+                        configuration,
+                    },
+                    global: {
+                        provide: {
+                            [HOST_ELEMENT_PROVIDER_INJECTION_KEY as symbol]: {
+                                hostRef: ref(host),
+                                customElementName: 'solvimon-payment-method-form',
+                            },
+                        },
+                    },
+                });
+                await completeForm(wrapper);
+
+                return heard;
+            };
+
+            it('is solvimon-payment-method-added once a method is stored', async () => {
+                const heard = await completeInHost();
+
+                expect(heard).toHaveLength(1);
+                expect(heard[0]).toMatchObject({
+                    type: 'solvimon-payment-method-added',
+                    bubbles: true,
+                    composed: true,
+                });
+            });
+
+            it('is solvimon-payment-succeeded once a payment is authorized', async () => {
+                const heard = await completeInHost({
+                    variant: 'AUTHORIZE',
+                    amount: { currency: 'EUR', quantity: '10.00' },
+                    context: 'INVOICE',
+                    invoiceId: 'inv_1',
+                });
+
+                expect(heard).toHaveLength(1);
+                expect(heard[0]).toMatchObject({
+                    type: 'solvimon-payment-succeeded',
+                    detail: { invoiceId: 'inv_1' },
+                });
+            });
         });
 
         // Where "back" leads is the host's to know, so the form ends on the confirmation alone.

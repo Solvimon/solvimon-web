@@ -68,14 +68,6 @@ describe('Checkout entry', () => {
         );
     });
 
-    it('hands the checkout the payment success callback the host configured', () => {
-        const onPaymentSuccess = vi.fn();
-
-        expect(passedConfiguration({ configuration: { onPaymentSuccess } }).onPaymentSuccess).toBe(
-            onPaymentSuccess,
-        );
-    });
-
     it('hands the checkout what the host configured for the form', () => {
         expect(
             passedConfiguration({

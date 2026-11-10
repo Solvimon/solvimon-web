@@ -45,14 +45,14 @@ describe('configuration utils', () => {
         });
 
         it('replaces arrays and functions rather than merging them', () => {
-            const onPaymentSuccess = () => undefined;
+            const onLog = () => undefined;
 
             expect(
                 resolveConfiguration(
-                    { enabledPricingIds: ['a', 'b'], onPaymentSuccess: undefined },
-                    { enabledPricingIds: ['c'], onPaymentSuccess },
+                    { enabledPricingIds: ['a', 'b'], onLog: undefined },
+                    { enabledPricingIds: ['c'], onLog },
                 ),
-            ).toEqual({ enabledPricingIds: ['c'], onPaymentSuccess });
+            ).toEqual({ enabledPricingIds: ['c'], onLog });
         });
 
         it('does not mutate the defaults', () => {

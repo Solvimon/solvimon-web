@@ -695,12 +695,10 @@ const handleRedirect = () => {
 
 /**
  * Whether a paid checkout leaves this page, which is what `handlePaymentSuccess` goes on to do.
- * A host that supplies `onPaymentSuccess` takes the flow over and may navigate itself, but that is
- * theirs to announce — all the success card can honestly promise is the redirect this screen does.
+ * A host that cancels `solvimon-payment-succeeded` takes the flow over and may navigate itself, but
+ * that is theirs to announce — all the success card can honestly promise is this screen's redirect.
  */
-const redirectsOnSuccess = computed(
-    () => !props.configuration?.onPaymentSuccess && !!successRedirectUrl,
-);
+const redirectsOnSuccess = ref(!!successRedirectUrl);
 
 const handlePaymentSuccess = () => {
     isPaid.value = true;
@@ -709,15 +707,12 @@ const handlePaymentSuccess = () => {
     promotionCodeErrorMessage.value = null;
     paymentErrorMessage.value = null;
 
-    if (props.configuration?.onPaymentSuccess) {
-        props.configuration.onPaymentSuccess();
+    if (!dispatch('solvimon-payment-succeeded', { subscriptionId })) {
+        redirectsOnSuccess.value = false;
         return;
     }
 
-    if (successRedirectUrl) {
-        handleRedirect();
-        return;
-    }
+    handleRedirect();
 };
 
 const handleBillingPeriodChange = (billingPeriod: BillingPeriod) => {

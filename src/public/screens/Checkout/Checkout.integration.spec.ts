@@ -39,6 +39,13 @@ const {
     SEATS_VALUES: [{ pricingItemConfigId: 'pic_1', value: 1 }],
 }));
 
+const { safeUrlRedirect } = vi.hoisted(() => ({ safeUrlRedirect: vi.fn() }));
+
+vi.mock('@/utils/url', async (importOriginal) => ({
+    ...(await importOriginal<object>()),
+    safeUrlRedirect,
+}));
+
 vi.mock('@solvimon/solvimon-ui', async () => {
     const { createSolvimonUiMock } = await import('@/test-utils/solvimonUiMock');
     // `useTimePeriod` reaches for the intl provider, which a bare mount does not set up.
@@ -147,8 +154,9 @@ const PORTAL = {
     },
 } as unknown as PortalUrl;
 
-const portalNote = (PORTAL as unknown as { init_pricing_plan_subscription: { note?: string } })
-    .init_pricing_plan_subscription;
+const portalNote = (
+    PORTAL as unknown as { init_pricing_plan_subscription: { note?: string; success_url?: string } }
+).init_pricing_plan_subscription;
 
 vi.mock('@/components/providers/PortalProvider/composables/usePortal', () => ({
     usePortal: () => ref(PORTAL),
@@ -189,13 +197,21 @@ const STUBBED_CHILDREN = [
     'Typography',
 ];
 
-const mountCheckout = async (stubOverrides: Record<string, boolean> = {}) => {
+const mountCheckout = async (stubOverrides: Record<string, boolean> = {}, host?: HTMLElement) => {
     const wrapper = mount(Checkout, {
         global: {
             stubs: {
                 ...Object.fromEntries(STUBBED_CHILDREN.map((name) => [name, true])),
                 ...stubOverrides,
             },
+            provide: host
+                ? {
+                      [HOST_ELEMENT_PROVIDER_INJECTION_KEY as symbol]: {
+                          hostRef: ref(host),
+                          customElementName: 'solvimon-checkout',
+                      },
+                  }
+                : {},
         },
     });
     await flushPromises();
@@ -224,6 +240,8 @@ describe('Checkout', () => {
         hasPaymentMethodOptionsError.value = false;
         paymentMethodOptions.value = [];
         portalNote.note = undefined;
+        portalNote.success_url = undefined;
+        safeUrlRedirect.mockClear();
         subscription.value = CUSTOMISABLE_SUBSCRIPTION;
         // A preview without a period leaves the express agreement no start date to state.
         invoicePreview.value = {
@@ -512,6 +530,53 @@ describe('Checkout', () => {
         await wrapper.vm.$nextTick();
 
         expect(clearSavedFormState).toHaveBeenCalledTimes(1);
+    });
+
+    describe('solvimon-payment-succeeded', () => {
+        const payInHost = async (listener: (event: Event) => void) => {
+            paymentMethodOptions.value = [
+                { integration: { payment_gateway: { variant: 'ADYEN' } } },
+            ];
+            const host = document.createElement('div');
+            host.addEventListener('solvimon-payment-succeeded', listener);
+            const wrapper = await mountCheckout({ Skeleton: false }, host);
+            wrapper.findComponent({ name: 'PaymentIntegrationForm' }).vm.$emit('payment-success');
+            await wrapper.vm.$nextTick();
+
+            return wrapper;
+        };
+
+        it('is sent once with the subscription, bubbling, and can be cancelled', async () => {
+            const listener = vi.fn();
+            await payInHost(listener);
+
+            expect(listener).toHaveBeenCalledOnce();
+            expect(listener.mock.calls[0][0]).toMatchObject({
+                detail: { subscriptionId: 'sub_1' },
+                bubbles: true,
+                composed: true,
+                cancelable: true,
+            });
+        });
+
+        it('is followed by the redirect to the success URL', async () => {
+            portalNote.success_url = 'https://example.com/thanks';
+            await payInHost(() => {});
+
+            expect(safeUrlRedirect).toHaveBeenCalledWith('https://example.com/thanks');
+        });
+
+        it('keeps the customer on the page when a listener cancels it', async () => {
+            portalNote.success_url = 'https://example.com/thanks';
+            const wrapper = await payInHost((event) => event.preventDefault());
+
+            expect(safeUrlRedirect).not.toHaveBeenCalled();
+            expect(
+                wrapper
+                    .findComponent({ name: 'PaymentIntegrationForm' })
+                    .attributes('redirects-on-success'),
+            ).toBe('false');
+        });
     });
 
     // A code restored with the form from a redirect is priced and sent, so it has to be on screen

@@ -51,6 +51,11 @@ jobs:
             matrix:
                 browser: [chromium, webkit]
         runs-on: ubuntu-latest
+        # Ships the browsers and their system libraries, which `playwright install --with-deps`
+        # otherwise fetches from an Ubuntu mirror whose speed varies by minutes. The tag must match
+        # `@playwright/test` in package-lock.json; ci-layout.spec.ts checks it.
+        container:
+            image: mcr.microsoft.com/playwright:v1.64.1-noble
         steps:
             - uses: actions/checkout@v6
             - uses: actions/setup-node@v6
@@ -71,9 +76,6 @@ jobs:
             # Its dependencies are its own, and the root install does not reach them.
             - name: Install the test app
               run: npm ci --prefix tests/app
-
-            - name: Install Playwright browsers
-              run: npx playwright install --with-deps ${{ matrix.browser }}
 
             - run: npm run test:e2e:ci -- --project=${{ matrix.browser }}
 

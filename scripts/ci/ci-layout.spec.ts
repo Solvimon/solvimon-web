@@ -1,5 +1,13 @@
 import { execFileSync } from 'child_process';
-import { cpSync, mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from 'fs';
+import {
+    cpSync,
+    mkdirSync,
+    mkdtempSync,
+    readFileSync,
+    realpathSync,
+    rmSync,
+    writeFileSync,
+} from 'fs';
 import { tmpdir } from 'os';
 import path from 'path';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
@@ -120,5 +128,19 @@ describe('CI layout', () => {
 
         expect(stderr).toBe('');
         expect(status).toBe(0);
+    });
+
+    // Dependabot bumps `@playwright/test` but not a workflow's container tag, and a Playwright run
+    // against another release's browsers fails to launch them.
+    it('runs E2E in the Playwright image of the installed Playwright version', () => {
+        const root = path.join(SCRIPTS, '..');
+        const workflow = readFileSync(path.join(root, '.github', 'workflows', 'ci.yml'), 'utf8');
+        const lock = JSON.parse(readFileSync(path.join(root, 'package-lock.json'), 'utf8')) as {
+            packages: Record<string, { version: string }>;
+        };
+
+        const tag = workflow.match(/mcr\.microsoft\.com\/playwright:v([\d.]+)-/)?.[1];
+
+        expect(tag).toBe(lock.packages['node_modules/@playwright/test'].version);
     });
 });

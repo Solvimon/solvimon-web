@@ -13,6 +13,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Breaking:** element options follow one naming scheme, `show*` for what an element shows, before 1.0 freezes them:
+    - `invoice` and `invoice-header`: `enableDownloadButton` is `showDownloadButton`, `enableCustomerBillingInformation` is `showCustomerBillingInformation` and `enablePaymentAttempts` is `showPaymentAttempts`.
+    - Subscription details: `canViewCreatedInvoice` is `showViewInvoiceButton`.
+    - `payment-method-form` takes `countryCode` in its `configuration`, typed `CountryCode`, like the checkout, instead of as a property of its own.
+    - `customer-overview` has a configuration of its own, `{ paymentMethods }`. The options it took before, `maxItems`, `showViewAllButton` and `showAddButton`, only ever applied to its payment methods block, and now go under `configuration.paymentMethods`.
+    - The top-up modal's styling hooks are `sv-top-up-modal__*` instead of `sv-topup-modal__*`, like the `sv-top-up-*` hooks around them.
+
 - **Breaking:** an element tells the host about a result with an event, like everything else it reports, instead of a callback in `configuration`. `configuration.onPaymentSuccess` of the checkout and pay-invoice is replaced by the `solvimon-payment-succeeded` event, with `detail: { componentName, subscriptionId?, invoiceId? }`, and `configuration.onInvoiceCreated` of subscription details by `solvimon-invoice-created`, with the same `{ invoiceId, paymentStatus }` as its `detail`. `payment-method-form` now says when it is done, which it did not before: `solvimon-payment-method-added`, with `detail: { componentName }`, once it stored a method, or `solvimon-payment-succeeded` with the `AUTHORIZE` variant. `payment-methods-management` and the add-method step of an on-demand order, a top-up or an auto top-up send `solvimon-payment-method-added` too. `componentName` tells which element the customer paid or stored the method in, since a nested element's event reaches a listener as if the outer element sent it. `solvimon-payment-succeeded` is the one cancelable event: a checkout host that supplied `onPaymentSuccess` to navigate itself calls `event.preventDefault()` instead, which keeps the customer from being sent to the success URL set in Solvimon Desk.
 
 - **Breaking:** every event an element dispatches carries the `solvimon-` prefix and bubbles across the shadow root, so one listener on a container hears every element in it, and none collides with the platform's events or another library's: `solvimon-error` (was `error`), `solvimon-ready` (was `ready`), `solvimon-log` (was `log`) and `solvimon-action-request` (was `action-request`). None is cancelable any more, since none has a default action to cancel.
@@ -24,6 +31,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - While the express payment methods load, the checkout draws one placeholder button for Apple Pay instead of two.
 
 ### Removed
+
+- **Breaking:** `validateOnSubmit`, `forceStorePaymentMethod` and `selectedOption` from the `configuration` of `payment-method-form`. They were internals of its payment form that no caller set: a host could not supply the first, and the third took any string. With the `AUTHORIZE` variant the card form now always offers its own "save" checkbox, which `forceStorePaymentMethod` used to hide while storing the card regardless; with `TOKENIZE` nothing changes.
 
 - **Breaking:** the element properties `allowedPortalTypes`, `primaryColor`, `secondaryColor` and `isShadowRoot`. Every element declared them, carried over from its internal providers, but none read them: each element fixes the portal types it accepts, and takes its colours from `branding.colors`. Setting one did nothing and still does nothing; it is just no longer a property of the element.
 - **Breaking:** public surface that nothing used, so it is not frozen into 1.0:

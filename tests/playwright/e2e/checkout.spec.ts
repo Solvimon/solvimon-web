@@ -204,10 +204,10 @@ test.describe('Checkout', () => {
             expect(api.calls('paymentMethodOptions')).toHaveLength(1);
         });
 
-        test('tells the host when the screen is ready', async ({ page }) => {
+        test('tells the host once that the screen is ready to pay', async ({ page }) => {
             api = await mountLoaded(page);
 
-            expect((await hostEvents(page)).ready).toBeGreaterThan(0);
+            await expect.poll(async () => (await hostEvents(page)).ready).toBe(1);
         });
     });
 

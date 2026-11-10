@@ -31,7 +31,7 @@ carries the portal token the element signs in with; there is no separate `token`
 
 An element renders only for a published portal of the type it accepts: `checkout` takes an
 `INIT_PRICING_PLAN_SUBSCRIPTION` portal, every other element a `CUSTOMER` one. Any other type logs
-`PORTAL_TYPE_NOT_ALLOWED`, dispatches an `error` event and renders nothing. A revoked portal logs `RESOURCE_REVOKED`; the
+`PORTAL_TYPE_NOT_ALLOWED`, dispatches a `solvimon-error` event and renders nothing. A revoked portal logs `RESOURCE_REVOKED`; the
 checkout shows its "Checkout not available" notice, and the other elements say that they are no longer
 available (`sv-portal-unavailable`).
 
@@ -112,23 +112,30 @@ yet; `const { unmount } = solvimon.createScreen(…)` works too.
 ### When an element fails
 
 An error the element cannot carry on from — an unknown `environment`, a portal object meant for
-another element, or a bug in the SDK — is logged once and dispatched as an `error` event on the
-element. It is logged as `UNHANDLED_ERROR` unless it has a code of its own, such as
-`PORTAL_TYPE_NOT_ALLOWED` for a portal object meant for another element. Its context names the
-element in `componentName`, so a page with several can tell which one failed. Its `detail` is the
-`Error`. Like every event the SDK dispatches — `error`, `ready`, `log` and `action-request` — it
-bubbles and crosses the shadow root, so one listener on a container hears every element in it:
+another element, or a bug in the SDK — is logged once and dispatched as a `solvimon-error` event
+on the element. It is logged as `UNHANDLED_ERROR` unless it has a code of its own, such as
+`PORTAL_TYPE_NOT_ALLOWED` for a portal object meant for another element. The event's `detail` holds
+what that log entry does: the `error`, its `code`, the `componentName` of the element that failed and
+the session `reference`. Like every event the SDK dispatches — `solvimon-error`, `ready`, `log` and
+`action-request` — it bubbles and crosses the shadow root, so one listener on a container hears every
+element in it, and `componentName` says which one failed:
 
 ```ts
-container.addEventListener('error', (event) => {
-    // TypeScript types an `error` listener's event as a script `ErrorEvent`, hence the cast via `Event`.
-    const error = (event as Event as CustomEvent<Error>).detail;
+import type { SolvimonErrorEvent } from '@solvimon/solvimon-web/core';
+
+container.addEventListener('solvimon-error', (event) => {
+    const { error, code, componentName, reference } = (event as SolvimonErrorEvent).detail;
 });
 ```
 
+It is named apart from the platform's `error` so that it never reaches `window.onerror` and the
+global handlers of error monitoring tools.
+
+The checkout dispatches `ready` once, when its payment form is ready and the customer can pay.
+
 A failure the element handles — a refused payment, a subscription the checkout cannot load, a date
 it can only format in the browser's own time zone — reaches `onLog` and the `log` event under its
-own code, and is never reported again as `UNHANDLED_ERROR` or an `error` event.
+own code, and is never reported again as `UNHANDLED_ERROR` or a `solvimon-error` event.
 An element missing `environment`, `portalObject` or the id in its `configuration` renders
 nothing until they are set, and logs `MISSING_REQUIRED_PROPERTIES` if they are still missing just
 after it mounts.

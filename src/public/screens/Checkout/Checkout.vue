@@ -8,7 +8,7 @@ import {
     useIntl,
     useTimePeriod,
 } from '@solvimon/solvimon-ui';
-import { computed, defineAsyncComponent, nextTick, onMounted, ref, watch } from 'vue';
+import { computed, defineAsyncComponent, nextTick, ref, watch } from 'vue';
 import type {
     Amount,
     AuthorizePaymentPayload,
@@ -73,7 +73,7 @@ const PlanCustomizationEditor = defineAsyncComponent(
 
 // `avatar` is the branding emblem, which the entry passes on; it is not a host option.
 const props = defineProps<CheckoutProps & { avatar?: string }>();
-// The element's `ready` event, sent when the checkout mounts and again when its payment form is.
+// The element's `ready` event, sent once its payment form is ready and the customer can pay.
 const dispatch = useHostEvent();
 const emitReady = () => dispatch('ready');
 
@@ -721,10 +721,6 @@ const handleBillingPeriodChange = (billingPeriod: BillingPeriod) => {
     // Already logged as INVOICE_PREVIEW_FAILED, and the next change loads it again.
     loadInvoicePreview().catch(() => {});
 };
-
-onMounted(() => {
-    emitReady();
-});
 </script>
 
 <template>

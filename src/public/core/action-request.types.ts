@@ -60,6 +60,7 @@ export type ActionRequestDetail =
 
 /**
  * The `action-request` event. It bubbles and crosses the shadow root, so a listener on the document
- * or a container hears every element; call `preventDefault()` to say the host handled it.
+ * or a container hears every element. It is cancelable, but calling `preventDefault()` does not
+ * change anything the SDK does yet.
  */
 export type ActionRequestEvent = CustomEvent<ActionRequestDetail>;

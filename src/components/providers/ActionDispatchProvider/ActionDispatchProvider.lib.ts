@@ -1,6 +1,7 @@
 import type { InjectionKey } from 'vue';
-import type { ActionRequestDetail, RequestAction } from './ActionDispatchProvider.lib.types';
+import type { RequestAction } from './ActionDispatchProvider.lib.types';
 import { useHostElementProvider } from '@/components/providers/HostElementProvider/composables/useHostElementProvider';
+import { dispatchHostEvent } from '@/components/providers/HostElementProvider/HostElementProvider.lib';
 
 export const ACTION_DISPATCHER_PROVIDER_INJECTION_KEY: InjectionKey<
     ReturnType<typeof createActionDispatcher>
@@ -13,14 +14,7 @@ export function createActionDispatcher(): RequestAction {
         const host = hostRef.value;
         if (!host) return true;
 
-        const ev = new CustomEvent<ActionRequestDetail>('action-request', {
-            detail,
-            bubbles: true,
-            composed: true,
-            cancelable: true,
-        });
-
-        const allowed = host.dispatchEvent(ev);
+        const allowed = dispatchHostEvent(host, 'action-request', detail, { cancelable: true });
 
         if (!allowed && originalEvent) {
             originalEvent.preventDefault();

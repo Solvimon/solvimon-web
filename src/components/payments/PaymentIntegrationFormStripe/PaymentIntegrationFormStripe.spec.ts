@@ -923,6 +923,31 @@ describe('PaymentIntegrationFormStripe', () => {
                 expect(mockTriggerSubmit).toHaveBeenCalledTimes(1);
             });
 
+            // Declined, the form shows its error card, so the next submit goes no further than the
+            // screen's check; what matters here is that it is let through rather than ignored.
+            it('holds a submit while the payment is out, and lets one through once it is declined', async () => {
+                let decline: (error: unknown) => void = () => {};
+                mockAuthorizePayment.mockReturnValue(
+                    new Promise((_, reject) => (decline = reject)),
+                );
+                const validateOnSubmit = vi.fn().mockResolvedValue(true);
+                const wrapper = mountComponent({ validateOnSubmit });
+                submit(wrapper);
+                await flushPromises();
+                await findFrame(wrapper).vm.$emit('submit-success', 'ctok_test');
+                await flushPromises();
+
+                submit(wrapper);
+                await flushPromises();
+                expect(validateOnSubmit).toHaveBeenCalledTimes(1);
+
+                decline(new ApiError({ statusCode: 402 }));
+                await flushPromises();
+                submit(wrapper);
+                await flushPromises();
+                expect(validateOnSubmit).toHaveBeenCalledTimes(2);
+            });
+
             // A frame set up anew has dropped the submit it had, so no answer to it will come.
             it('takes a submit again once the frame is set up anew', async () => {
                 const wrapper = mountComponent();

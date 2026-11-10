@@ -143,6 +143,8 @@ const paymentIntegrationProps = computed<PaymentIntegrationFormProps>(() => {
         ...(props.customer.email ? { email: props.customer.email } : {}),
         ...(customerName ? { name: customerName } : {}),
         invoiceId: configuration.value.invoiceId,
+        // A payment names its customer too, as pay-invoice's does, so a card saved with it is theirs.
+        customerId: props.customer.id,
     };
 
     if (configuration.value.mode === 'payment') {
@@ -161,7 +163,6 @@ const paymentIntegrationProps = computed<PaymentIntegrationFormProps>(() => {
     return {
         ...commonProps,
         variant: 'TOKENIZE',
-        customerId: props.customer.id,
     } satisfies TokenizePaymentIntegrationFormProps;
 });
 </script>

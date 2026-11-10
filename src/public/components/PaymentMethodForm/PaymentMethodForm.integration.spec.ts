@@ -4,6 +4,7 @@ import type { Customer, PaymentMethodOptionsResponse } from '@solvimon/solvimon-
 import PaymentMethodFormEntry from './PaymentMethodForm.entry.vue';
 import PaymentMethodForm from './PaymentMethodForm.vue';
 import type { SolvimonPaymentMethodFormEntryProps } from './PaymentMethodForm.entry.types';
+import { EntryProvider } from '@/components/providers';
 import { createTestPortalObject } from '@/test-utils/portalObjectFixture';
 import {
     createPaymentMethodOptionEntry,
@@ -119,6 +120,23 @@ describe('PaymentMethodForm entry component', () => {
 
         expect(wrapper.get('[data-testid="payment-method-form-skeleton"]')).toBeTruthy();
         expect(wrapper.text()).toBe('');
+    });
+
+    it('waits for the invoice and amount of a payment instead of paying without them', () => {
+        const wrapper = mountComponent({
+            props: { configuration: { mode: 'payment' } as never },
+        });
+
+        expect(wrapper.getComponent(EntryProvider).vm.$attrs['required-configuration']).toEqual({
+            invoiceId: undefined,
+            amount: undefined,
+        });
+    });
+
+    it('requires nothing extra to save a method', () => {
+        const wrapper = mountComponent();
+
+        expect(wrapper.getComponent(EntryProvider).vm.$attrs['required-configuration']).toEqual({});
     });
 
     it("offers the payment methods for the customer's own country by default", async () => {

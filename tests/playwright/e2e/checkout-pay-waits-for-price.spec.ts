@@ -110,6 +110,9 @@ test.describe('Pay waiting for the price of the form', () => {
         }));
 
         await checkout(page).seats.fill('5');
+        const fiveSeatsPriced = page.waitForResponse((response) =>
+            /"pico_seats","number":"5"/.test(response.request().postData() ?? ''),
+        );
         await payPastTheButton(page);
         // Still typing when the preview of five lands: each change comes within the debounce, so
         // none is asked for yet. Typed from the page, as driving each key from here is too slow in
@@ -122,7 +125,8 @@ test.describe('Pay waiting for the price of the form', () => {
                 input.dispatchEvent(new Event('input', { bubbles: true }));
             }, 50);
         });
-        await page.waitForTimeout(1_800);
+        await fiveSeatsPriced;
+        await page.waitForTimeout(300);
         await page.evaluate((id) => window.clearInterval(id), typing);
         await checkout(page).seats.fill('7');
 

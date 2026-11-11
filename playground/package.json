@@ -23,5 +23,8 @@
         "vite": "^6.4.5",
         "vite-plugin-vue-devtools": "^7.7.0",
         "vue-tsc": "^2.2.0"
+    },
+    "overrides": {
+        "minimatch@>=7": "^11.0.1"
     }
 }

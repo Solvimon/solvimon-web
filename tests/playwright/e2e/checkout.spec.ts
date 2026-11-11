@@ -10,6 +10,7 @@ import {
 } from '../support/checkout';
 import {
     aFailedAuthorization,
+    anAccessTokenResponse,
     anActionRequiredAuthorization,
     anInvoicePreview,
     aPortalObject,
@@ -1276,6 +1277,8 @@ test.describe('Checkout', () => {
                 .poll(async () => (await hostEvents(page)).logs.map(({ code }) => code))
                 .toContain('SUBSCRIPTION_LOAD_FAILED');
             await expect(checkout(page).submit).toHaveCount(0);
+            // Nothing can be priced without it, so the screen says so rather than stay a skeleton.
+            await expect(checkout(page).unavailable).toBeVisible();
         });
 
         test('renders the unavailable screen for a revoked portal object', async ({ page }) => {
@@ -1311,7 +1314,9 @@ test.describe('Checkout', () => {
             ]);
         });
 
-        test('renders nothing and reports when the token exchange fails', async ({ page }) => {
+        test('says the checkout is not available when identity refuses the token', async ({
+            page,
+        }) => {
             api = await mountCheckout(page, {
                 configuration: { email: 'customer@example.com', countryCode: 'NL' },
                 mocks: { accessToken: { status: 401, body: { message: 'Unauthorized' } } },
@@ -1320,9 +1325,54 @@ test.describe('Checkout', () => {
             await expect
                 .poll(async () => (await hostEvents(page)).logs.map(({ code }) => code))
                 .toContain('INVALID_TOKEN');
+            await expect(checkout(page).unavailable).toBeVisible();
             // Nothing is rendered without a token, so nothing is requested with one either.
             await expect(checkout(page).form).toHaveCount(0);
             expect(api.calls('subscription')).toEqual([]);
+        });
+
+        test('offers to try again when identity does not answer, and signs in when it does', async ({
+            page,
+        }) => {
+            api = await mountCheckout(page, {
+                configuration: { email: 'customer@example.com', countryCode: 'NL' },
+                mocks: {
+                    accessToken: [
+                        { status: 503, body: { message: 'Unavailable' } },
+                        { body: anAccessTokenResponse() },
+                    ],
+                },
+            });
+
+            await expect
+                .poll(async () => (await hostEvents(page)).logs.map(({ code }) => code))
+                .toContain('PORTAL_TOKEN_UNAVAILABLE');
+            await page.locator('.sv-portal-unverified').getByRole('button').click();
+
+            await expect(checkout(page).form).toBeVisible();
+            expect(api.calls('accessToken')).toHaveLength(2);
+        });
+
+        test('offers to price the order again when its first price fails', async ({ page }) => {
+            // Failing until the retry, however often the form asks: it may ask again on its own.
+            let isUp = false;
+            api = await mountCheckout(page, {
+                configuration: { email: 'customer@example.com', countryCode: 'NL' },
+                mocks: {
+                    invoicePreview: () =>
+                        isUp
+                            ? { body: anInvoicePreview({ total: '20.00' }) }
+                            : { status: 500, body: { message: 'Boom' } },
+                },
+            });
+
+            const retry = page.locator('.sv-checkout__order-summary-retry');
+            await expect(retry).toBeVisible();
+            isUp = true;
+            await retry.click();
+
+            await expect(checkout(page).orderSummary).toContainText('20.00');
+            await expect(checkout(page).submit).toBeVisible();
         });
 
         test('keeps the screen usable when the first preview fails', async ({ page }) => {

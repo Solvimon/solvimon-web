@@ -4,6 +4,7 @@ import PaymentMethodsManagement from './PaymentMethodsManagement.vue';
 import PaymentMethodsManagementEntryView from './PaymentMethodsManagement.entry.view.vue';
 import { EntryProvider } from '@/components/providers';
 import { getComponentName } from '@/utils/component';
+import LoadFailedNotice from '@/components/shared/LoadFailedNotice.vue';
 
 const componentName = getComponentName('payment-methods-management');
 
@@ -26,8 +27,13 @@ defineProps<SolvimonPaymentMethodsManagementEntryProps>();
                     refreshPaymentMethods,
                 }"
             >
+                <!-- The screen manages the customer's methods, so it has nothing to show without them. -->
+                <LoadFailedNotice
+                    v-if="!isLoading && !customer"
+                    class="sv-payment-methods-management"
+                />
                 <PaymentMethodsManagement
-                    v-if="customer"
+                    v-else-if="customer"
                     :is-loading="isLoading"
                     :payment-methods="paymentMethods"
                     :payment-method-options="paymentMethodOptions"

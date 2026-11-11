@@ -18,6 +18,7 @@ import { useCustomerWalletBalances } from '@/composables/useCustomerWalletBalanc
 import CustomerWalletBalances from '@/public/components/CustomerWalletBalances/CustomerWalletBalances.vue';
 import { useActiveScheduleWarning } from '@/composables/useActiveScheduleWarning';
 import { useHasShippedSubscription } from '@/composables/useHasShippedSubscription';
+import LoadFailedNotice from '@/components/shared/LoadFailedNotice.vue';
 
 /** Only customers with an order that ships see it, so the rest never download it. */
 const CustomerShippingAddresses = defineAsyncComponent(
@@ -133,6 +134,10 @@ useActiveScheduleWarning(subscriptions.items);
                 class="sv-customer-overview__billing-information"
                 :is-loading="isLoading"
                 :customer="customer.customer.value"
+            />
+            <LoadFailedNotice
+                v-else-if="!isLoading"
+                class="sv-customer-overview__billing-information"
             />
 
             <CustomerShippingAddresses

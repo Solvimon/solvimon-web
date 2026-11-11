@@ -282,7 +282,7 @@ test.describe('Payment methods management', () => {
     // ─── Failure modes ────────────────────────────────────────────────────────
 
     test.describe('failure modes', () => {
-        test('renders nothing and reports when the customer cannot be loaded', async ({ page }) => {
+        test('says so and reports when the customer cannot be loaded', async ({ page }) => {
             api = await mountPaymentMethodsManagement(page, {
                 mocks: { customer: { status: 404, body: { message: 'Not found' } } },
             });
@@ -292,6 +292,7 @@ test.describe('Payment methods management', () => {
                 .toContain('INITIAL_DATA_LOAD_FAILED');
             // The screen renders on the customer, so there is nothing to manage without one.
             await expect(paymentMethodsManagement(page).addButton).toHaveCount(0);
+            await expect(page.getByText('This could not be loaded')).toBeVisible();
         });
 
         test('reports methods that cannot be loaded', async ({ page }) => {

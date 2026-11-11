@@ -147,6 +147,8 @@ export function useCheckoutView({
     })();
 
     const isPaid = ref<boolean>(false);
+    /** Nothing can be priced or paid without the subscription, so the screen says so instead. */
+    const hasSubscriptionLoadFailed = ref(false);
     const subscription = ref<PricingPlanSubscriptionExpanded>();
     // Kept apart from the form's initial state, which a restored form overwrites with the
     // customer's own choice: the editor's steppers may not go below the order's quantities.
@@ -609,6 +611,7 @@ export function useCheckoutView({
         try {
             await loadSubscription();
         } catch (error) {
+            hasSubscriptionLoadFailed.value = true;
             logger.error(
                 'SUBSCRIPTION_LOAD_FAILED',
                 'Failed to load the subscription the checkout prices',
@@ -707,6 +710,8 @@ export function useCheckoutView({
         isPaymentMethodsPending: isPaymentMethodsPending,
         isInvoicePreviewPending: invoicePreview.isPending,
         isInvoicePreviewStale: checkoutForm.isPreviewStale,
+        isInvoicePreviewFailed: invoicePreview.isFailed,
+        hasSubscriptionLoadFailed,
         settleInvoicePreview,
         subscription,
         orderMeterValues,

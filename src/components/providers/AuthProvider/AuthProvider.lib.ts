@@ -52,6 +52,8 @@ interface SharedTokenState {
     consecutiveRefresh401s: number;
     isSessionExpired: boolean;
     onVisibilityChange: () => void;
+    /** Fetches an identity token again, after the first attempt got no answer. */
+    retrySignIn?: () => void;
 }
 
 interface Subscriber {
@@ -61,6 +63,13 @@ interface Subscriber {
 function isUnauthorizedError(err: unknown): boolean {
     if (typeof err !== 'object' || err === null || !('statusCode' in err)) return false;
     return err.statusCode === 401;
+}
+
+/** No answer from the API, or none it meant: a network failure, a timeout or a 5xx. */
+function isTransientError(err: unknown): boolean {
+    if (typeof err !== 'object' || err === null || !('statusCode' in err)) return true;
+    const { statusCode } = err;
+    return typeof statusCode !== 'number' || statusCode >= 500 || statusCode === 408;
 }
 
 // One shared state per unique token value so N components on the same page
@@ -247,6 +256,20 @@ function startSession(
         try {
             applyToken(state, await state.tokens.getAccessToken(tokenUserName));
         } catch (err) {
+            // An identity that could not be reached may answer later, so the element offers to try
+            // again, as it does for a handle; one the API refused will not.
+            if (isTransientError(err)) {
+                state.status.value = { state: 'unavailable' };
+                forEachLogger(state, (logger) =>
+                    logger.error(
+                        'PORTAL_TOKEN_UNAVAILABLE',
+                        'Could not fetch an access token for the portal link',
+                        {},
+                        err,
+                    ),
+                );
+                return;
+            }
             state.status.value = { state: 'invalid' };
             forEachLogger(state, (logger) =>
                 logger.error('INVALID_TOKEN', 'Failed to fetch access token', {}, err),
@@ -254,6 +277,7 @@ function startSession(
         }
     };
 
+    state.retrySignIn = () => void fetchToken();
     void fetchToken();
 
     state.refreshInterval = setInterval(() => {
@@ -342,9 +366,10 @@ export const getAuth = (
         },
         status: shared.status,
         retry: () => {
-            if (credential.kind !== 'handle' || shared.status.value.state !== 'unavailable') return;
+            if (shared.status.value.state !== 'unavailable') return;
             shared.status.value = { state: 'pending' };
-            void exchange(shared, credential.handle);
+            if (credential.kind === 'handle') void exchange(shared, credential.handle);
+            else shared.retrySignIn?.();
         },
     };
 };

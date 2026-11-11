@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Subscription details lets the customer order an on-demand item priced FLEXIBLE, at an amount they choose within its minimum and maximum. Before, only FIXED and FLAT items could be ordered. Items that grant to a wallet are still offered as wallet top-ups. Needs `@solvimon/solvimon-ui` with FLEXIBLE support in `ChargeOnDemandEditor`.
+
 - `createScreen` and `createComponent` take an `on` option, listeners for the element's events by name, typed as `SolvimonEventListeners`. The core adds them before the element is in the page, so they hear even an event dispatched as it starts, such as a checkout's `solvimon-payment-succeeded` after a return from 3-D Secure.
 
 ### Changed

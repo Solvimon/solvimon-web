@@ -11,6 +11,7 @@ import { describe, expect, it } from 'vitest';
 import {
     getChargeableOnDemandItems,
     getPayablePaymentMethods,
+    isOrderableAmount,
     isOrderableUnits,
     toChargePricingItems,
 } from './chargeOnDemand';
@@ -152,7 +153,52 @@ describe('getChargeableOnDemandItems', () => {
         ]);
     });
 
-    it('leaves out FLEXIBLE items', () => {
+    it('lists a FLEXIBLE item with the bounds and currency its amount is entered in', () => {
+        const flexibleConfig = buildOnDemandConfig({
+            id: 'config-flexible',
+            details: {
+                pricing_type: 'FLEXIBLE',
+                bands: [
+                    {
+                        minimum_amount: { quantity: '5', currency: 'EUR' },
+                        maximum_amount: { quantity: '500', currency: 'EUR' },
+                    },
+                ],
+            },
+        });
+
+        expect(
+            getChargeableOnDemandItems({
+                pricing_categories: [
+                    {
+                        product_category_id: 'category',
+                        pricings: [
+                            buildPricing({ id: 'pricing', name: 'Donation' }, [
+                                buildPricingItem('item-flexible', [flexibleConfig]),
+                            ]),
+                        ],
+                    },
+                ],
+            }),
+        ).toEqual([
+            {
+                pricingItemId: 'item-flexible',
+                pricingItemConfigId: 'config-flexible',
+                name: 'Donation',
+                priceType: 'FLEXIBLE',
+                defaultUnits: 1,
+                flexiblePricing: {
+                    config: {
+                        minimum_amount: { quantity: '5', currency: 'EUR' },
+                        maximum_amount: { quantity: '500', currency: 'EUR' },
+                    },
+                    currency: 'EUR',
+                },
+            },
+        ]);
+    });
+
+    it('leaves out a FLEXIBLE item whose band names no currency to enter an amount in', () => {
         const flexibleConfig = buildOnDemandConfig({
             id: 'config-flexible',
             details: { pricing_type: 'FLEXIBLE', bands: [{}] },
@@ -365,7 +411,68 @@ describe('isOrderableUnits', () => {
     });
 });
 
+describe('isOrderableAmount', () => {
+    const flexiblePricing = {
+        config: {
+            minimum_amount: { quantity: '5', currency: 'EUR' },
+            maximum_amount: { quantity: '500', currency: 'EUR' },
+        },
+        currency: 'EUR',
+    };
+
+    it.each(['5', '42.50', '500'])('accepts %s EUR within the bounds', (quantity) => {
+        expect(isOrderableAmount({ quantity, currency: 'EUR' }, flexiblePricing)).toBe(true);
+    });
+
+    it.each(['4.99', '500.01', 'abc', ''])('rejects %s EUR', (quantity) => {
+        expect(isOrderableAmount({ quantity, currency: 'EUR' }, flexiblePricing)).toBe(false);
+    });
+
+    it('rejects an amount in another currency', () => {
+        expect(isOrderableAmount({ quantity: '10', currency: 'USD' }, flexiblePricing)).toBe(false);
+    });
+
+    it('rejects a missing amount', () => {
+        expect(isOrderableAmount(undefined, flexiblePricing)).toBe(false);
+    });
+
+    it('accepts any amount above zero when the band sets no bounds', () => {
+        const unbounded = { config: {}, currency: 'EUR' };
+
+        expect(isOrderableAmount({ quantity: '0.01', currency: 'EUR' }, unbounded)).toBe(true);
+        expect(isOrderableAmount({ quantity: '0', currency: 'EUR' }, unbounded)).toBe(false);
+    });
+});
+
 describe('toChargePricingItems', () => {
+    it('sends the amount entered for a FLEXIBLE item', () => {
+        const flexibleItem: ChargeOnDemandItem = {
+            pricingItemId: 'pricing-item-donation',
+            pricingItemConfigId: 'config-donation',
+            name: 'Donation',
+            priceType: 'FLEXIBLE',
+            defaultUnits: 1,
+            flexiblePricing: { config: {}, currency: 'EUR' },
+        };
+
+        expect(
+            toChargePricingItems(
+                [
+                    {
+                        pricingItemId: 'pricing-item-donation',
+                        amount: { quantity: '42', currency: 'EUR' },
+                    },
+                ],
+                [flexibleItem],
+            ),
+        ).toEqual([
+            {
+                pricing_item_id: 'pricing-item-donation',
+                flexible_amount: { quantity: '42', currency: 'EUR' },
+            },
+        ]);
+    });
+
     it('sends units for FLAT items only, in the order they were added', () => {
         expect(
             toChargePricingItems(

@@ -23,6 +23,7 @@ import { useChargeOnDemandOrder } from './useChargeOnDemandOrder';
 import { isInvoicePaid } from '@/utils/invoiceState';
 import {
     getPayablePaymentMethods,
+    isOrderableAmount,
     isOrderableUnits,
     toChargePricingItems,
 } from '@/utils/chargeOnDemand';
@@ -183,6 +184,14 @@ const validation = useValidation(
 
 const hasInvalidUnits = computed(() => validation.value.lines.$invalid);
 
+/** The amount input says what is wrong with an amount, so it only holds the order back. */
+const hasInvalidAmount = computed(() =>
+    selection.value.some(({ pricingItemId, amount }) => {
+        const item = props.items.find((candidate) => candidate.pricingItemId === pricingItemId);
+        return item?.priceType === 'FLEXIBLE' && !isOrderableAmount(amount, item.flexiblePricing);
+    }),
+);
+
 /** Shown as the customer types, since invalid units also hold back the total. */
 const itemErrors = computed(() => {
     const { $errors = [] }: { $errors?: { units?: { $message: unknown }[] }[] } =
@@ -197,7 +206,7 @@ const itemErrors = computed(() => {
 });
 
 const pricingItems = computed(() =>
-    selection.value.length > 0 && !hasInvalidUnits.value
+    selection.value.length > 0 && !hasInvalidUnits.value && !hasInvalidAmount.value
         ? toChargePricingItems(selection.value, props.items)
         : undefined,
 );
@@ -303,6 +312,7 @@ const canSubmit = computed(
         !isOrderingBlocked.value &&
         selection.value.length > 0 &&
         !hasInvalidUnits.value &&
+        !hasInvalidAmount.value &&
         !!paymentMethodId.value &&
         !!total.value &&
         !isPreviewPending.value,
@@ -461,6 +471,15 @@ const confirmButtonText = computed(() => {
             description:
                 'Disabled pay button of the on-demand order while an item has a quantity that cannot be ordered',
             id: 'charge_on_demand_modal.confirm_button.invalid_units',
+        });
+    }
+
+    if (hasInvalidAmount.value) {
+        return $t({
+            defaultMessage: 'Check the amount to continue',
+            description:
+                'Disabled pay button of the on-demand order while an item paid at a chosen amount has no amount it can be ordered at',
+            id: 'charge_on_demand_modal.confirm_button.invalid_amount',
         });
     }
 

@@ -40,6 +40,7 @@
   "charge_on_demand_modal.charge_error.pricing_items": "Some items in your order can't be ordered as entered. Check your order and try again.",
   "charge_on_demand_modal.charge_error.subscription_inactive": "This subscription can't take orders right now.",
   "charge_on_demand_modal.close_button.label": "Close",
+  "charge_on_demand_modal.confirm_button.invalid_amount": "Check the amount to continue",
   "charge_on_demand_modal.confirm_button.invalid_units": "Check the quantities to continue",
   "charge_on_demand_modal.confirm_button.no_items": "Add an item to continue",
   "charge_on_demand_modal.confirm_button.pay": "Pay {total}",

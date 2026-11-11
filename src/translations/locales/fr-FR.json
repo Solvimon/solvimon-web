@@ -40,6 +40,7 @@
     "charge_on_demand_modal.charge_error.pricing_items": "Certains articles de votre commande ne peuvent pas être commandés tels quels. Vérifiez votre commande et réessayez.",
     "charge_on_demand_modal.charge_error.subscription_inactive": "Cet abonnement ne peut pas recevoir de commandes pour le moment.",
     "charge_on_demand_modal.close_button.label": "Fermer",
+    "charge_on_demand_modal.confirm_button.invalid_amount": "Vérifiez le montant pour continuer",
     "charge_on_demand_modal.confirm_button.invalid_units": "Vérifiez les quantités pour continuer",
     "charge_on_demand_modal.confirm_button.no_items": "Ajoutez un article pour continuer",
     "charge_on_demand_modal.confirm_button.pay": "Payer {total}",

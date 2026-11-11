@@ -3,6 +3,7 @@
  * saved payment methods can pay, and the charge request's `pricing_items`.
  */
 import type {
+    Amount,
     ChargeOnDemandPricingItemsPricingItemConfig,
     OnDemandPricingItemsResponse,
     PaymentAcceptor,
@@ -23,7 +24,7 @@ import {
 } from '@solvimon/solvimon-ui';
 import { isPayablePaymentMethod } from '@/utils/paymentMethods';
 
-const CHARGEABLE_PRICE_TYPES: ChargeOnDemandPriceType[] = ['FIXED', 'FLAT'];
+const CHARGEABLE_PRICE_TYPES: ChargeOnDemandPriceType[] = ['FIXED', 'FLAT', 'FLEXIBLE'];
 
 const getConfigPrice = (config: PricingItemConfig, priceType: ChargeOnDemandPriceType) => {
     const band = config.details.bands?.[0];
@@ -33,6 +34,42 @@ const getConfigPrice = (config: PricingItemConfig, priceType: ChargeOnDemandPric
 /** Whether `units` is a quantity a FLAT item can be ordered in: a whole number of 1 or more. */
 export const isOrderableUnits = (units: number | undefined): units is number =>
     typeof units === 'number' && Number.isInteger(units) && units >= 1;
+
+/**
+ * Whether `amount` is one a FLEXIBLE item can be ordered at: in its currency, above zero and
+ * within its bounds, the checks the charge makes too.
+ */
+export const isOrderableAmount = (
+    amount: Amount | undefined,
+    flexiblePricing: ChargeOnDemandItem['flexiblePricing'],
+): amount is Amount => {
+    const quantity = Number(amount?.quantity);
+    const { minimum_amount, maximum_amount } = flexiblePricing?.config ?? {};
+
+    return (
+        !!amount &&
+        amount.currency === flexiblePricing?.currency &&
+        Number.isFinite(quantity) &&
+        quantity > 0 &&
+        (!minimum_amount || quantity >= Number(minimum_amount.quantity)) &&
+        (!maximum_amount || quantity <= Number(maximum_amount.quantity))
+    );
+};
+
+const getFlexiblePricing = (config: PricingItemConfig): ChargeOnDemandItem['flexiblePricing'] => {
+    const { minimum_amount, maximum_amount } = config.details.bands?.[0] ?? {};
+    const currency = minimum_amount?.currency ?? maximum_amount?.currency;
+
+    return currency
+        ? {
+              config: {
+                  ...(minimum_amount && { minimum_amount }),
+                  ...(maximum_amount && { maximum_amount }),
+              },
+              currency,
+          }
+        : undefined;
+};
 
 const getDefaultUnits = (config: PricingItemConfig): number => {
     const defaultUnits = Number(config.default_units?.number);
@@ -91,6 +128,22 @@ const toChargeOnDemandItem = (
         return undefined;
     }
 
+    if (config.details.pricing_type === 'FLEXIBLE') {
+        const flexiblePricing = getFlexiblePricing(config);
+
+        // An amount can only be entered in a currency the band names.
+        return flexiblePricing
+            ? {
+                  pricingItemId: item.id,
+                  pricingItemConfigId: config.id,
+                  name: getOnDemandItemName(pricing, item, namesById),
+                  priceType: 'FLEXIBLE',
+                  defaultUnits: 1,
+                  flexiblePricing,
+              }
+            : undefined;
+    }
+
     const priceType: ChargeOnDemandPriceType =
         config.details.pricing_type === 'FIXED' ? 'FIXED' : 'FLAT';
 
@@ -106,7 +159,8 @@ const toChargeOnDemandItem = (
 
 /**
  * The items of an on-demand pricing items response that can be ordered: items whose on-demand
- * config is priced FIXED or FLAT and grants no wallet credits.
+ * config is priced FIXED, FLAT or FLEXIBLE and grants no wallet credits. A FLEXIBLE item is
+ * paid an amount the customer chooses.
  *
  * Items are named from `pricingPlanVersions`, expanded versions of the same subscription, because
  * the response does not expand products or product items. They are matched by product and product
@@ -167,18 +221,23 @@ export const getPayablePaymentMethods = (
 
 /**
  * The `pricing_items` of a charge on demand request, in the order the items were added. The
- * backend reports an item's errors by its index here, and rejects `units` on anything but FLAT.
- * Units are sent as entered: the order validates them with `isOrderableUnits` before it previews
- * or charges, so a quantity the customer did not choose is never charged.
+ * backend reports an item's errors by its index here, rejects `units` on anything but FLAT, and
+ * requires `flexible_amount` on FLEXIBLE. Units and amounts are sent as entered: the order
+ * validates them with `isOrderableUnits` and `isOrderableAmount` before it previews or charges, so
+ * a quantity or amount the customer did not choose is never charged.
  */
 export const toChargePricingItems = (
     selection: ChargeOnDemandSelectionItem[],
     items: ChargeOnDemandItem[],
 ): ChargeOnDemandPricingItemsPricingItemConfig[] =>
-    selection.flatMap(({ pricingItemId, units }) => {
+    selection.flatMap(({ pricingItemId, units, amount }) => {
         const item = items.find((candidate) => candidate.pricingItemId === pricingItemId);
         if (!item) {
             return [];
+        }
+
+        if (item.priceType === 'FLEXIBLE' && amount) {
+            return [{ pricing_item_id: pricingItemId, flexible_amount: amount }];
         }
 
         return item.priceType === 'FLAT' && units !== undefined

@@ -40,6 +40,7 @@
     "charge_on_demand_modal.charge_error.pricing_items": "Alcuni articoli del tuo ordine non possono essere ordinati così. Controlla il tuo ordine e riprova.",
     "charge_on_demand_modal.charge_error.subscription_inactive": "Al momento non è possibile effettuare ordini su questo abbonamento.",
     "charge_on_demand_modal.close_button.label": "Chiudi",
+    "charge_on_demand_modal.confirm_button.invalid_amount": "Controlla l'importo per continuare",
     "charge_on_demand_modal.confirm_button.invalid_units": "Controlla le quantità per continuare",
     "charge_on_demand_modal.confirm_button.no_items": "Aggiungi un articolo per continuare",
     "charge_on_demand_modal.confirm_button.pay": "Paga {total}",

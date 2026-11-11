@@ -40,6 +40,7 @@
     "charge_on_demand_modal.charge_error.pricing_items": "Sommige artikelen in je bestelling kunnen zo niet besteld worden. Controleer je bestelling en probeer het opnieuw.",
     "charge_on_demand_modal.charge_error.subscription_inactive": "Op dit abonnement kan nu niet besteld worden.",
     "charge_on_demand_modal.close_button.label": "Sluiten",
+    "charge_on_demand_modal.confirm_button.invalid_amount": "Controleer het bedrag om verder te gaan",
     "charge_on_demand_modal.confirm_button.invalid_units": "Controleer de aantallen om door te gaan",
     "charge_on_demand_modal.confirm_button.no_items": "Voeg een item toe om verder te gaan",
     "charge_on_demand_modal.confirm_button.pay": "{total} betalen",

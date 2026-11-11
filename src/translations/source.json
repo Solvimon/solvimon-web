@@ -163,6 +163,10 @@
     "defaultMessage": "Close",
     "description": "Closes the on-demand order modal when the order did not go through"
   },
+  "charge_on_demand_modal.confirm_button.invalid_amount": {
+    "defaultMessage": "Check the amount to continue",
+    "description": "Disabled pay button of the on-demand order while an item paid at a chosen amount has no amount it can be ordered at"
+  },
   "charge_on_demand_modal.confirm_button.invalid_units": {
     "defaultMessage": "Check the quantities to continue",
     "description": "Disabled pay button of the on-demand order while an item has a quantity that cannot be ordered"

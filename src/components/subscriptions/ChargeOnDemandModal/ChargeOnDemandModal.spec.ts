@@ -124,6 +124,20 @@ const items: ChargeOnDemandItem[] = [
         price: { quantity: '120', currency: 'EUR' },
         defaultUnits: 2,
     },
+    {
+        pricingItemId: 'prii_donation',
+        pricingItemConfigId: 'pric_donation',
+        name: 'Donation',
+        priceType: 'FLEXIBLE',
+        defaultUnits: 1,
+        flexiblePricing: {
+            config: {
+                minimum_amount: { quantity: '5', currency: 'EUR' },
+                maximum_amount: { quantity: '500', currency: 'EUR' },
+            },
+            currency: 'EUR',
+        },
+    },
 ];
 
 const card = (id: string, integrationId = 'int_stripe') =>
@@ -264,6 +278,42 @@ describe('ChargeOnDemandModal', () => {
             expect(mockPreview).toHaveBeenCalledWith({
                 pricingPlanScheduleId: 'ppsc_1',
                 pricingItems: [{ pricing_item_id: 'prii_consulting', units: { number: '3' } }],
+            });
+        },
+    );
+
+    it.each([undefined, '2', '600'])(
+        'holds an order at an amount of %s until the amount can be ordered',
+        async (quantity) => {
+            const wrapper = mountModal();
+
+            findForm(wrapper).vm.$emit('update:selection', [
+                {
+                    pricingItemId: 'prii_donation',
+                    ...(quantity && { amount: { quantity, currency: 'EUR' } }),
+                },
+            ]);
+            await vi.runAllTimersAsync();
+            await flushPromises();
+
+            expect(mockPreview).not.toHaveBeenCalled();
+            expect(findConfirm(wrapper).text()).toBe('Check the amount to continue');
+            expect(findConfirm(wrapper).attributes()).toHaveProperty('disabled');
+
+            findForm(wrapper).vm.$emit('update:selection', [
+                { pricingItemId: 'prii_donation', amount: { quantity: '42', currency: 'EUR' } },
+            ]);
+            await vi.runAllTimersAsync();
+            await flushPromises();
+
+            expect(mockPreview).toHaveBeenCalledWith({
+                pricingPlanScheduleId: 'ppsc_1',
+                pricingItems: [
+                    {
+                        pricing_item_id: 'prii_donation',
+                        flexible_amount: { quantity: '42', currency: 'EUR' },
+                    },
+                ],
             });
         },
     );

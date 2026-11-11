@@ -47,6 +47,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The tiered price of a seat in the checkout opens with the keyboard and tells a screen reader whether it is open: it is a button with `aria-expanded`, where it was a focusable div only a click opened.
+- A payment's outcome is announced to a screen reader when it appears: the card that says a payment went through is a `status`, and one that says it failed an `alert`.
+
 - An element that cannot load says so instead of staying empty or showing a skeleton for good:
     - A portal link identity refuses shows the element's "no longer available" notice, as an expired or revoked one does. When identity does not answer, or answers with a 5xx, the element offers to try again, as it already did for a `SIGNED_TOKEN` link, and logs `PORTAL_TOKEN_UNAVAILABLE` instead of `INVALID_TOKEN`.
     - The checkout shows "Checkout not available" when its subscription cannot be loaded, and offers "Try again" in the order summary when its first price cannot be, instead of waiting for the customer to change a field.

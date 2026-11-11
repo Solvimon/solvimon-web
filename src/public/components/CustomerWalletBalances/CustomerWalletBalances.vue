@@ -47,6 +47,14 @@ const autoTopUpWallet = computed(() =>
     getWalletBalanceForTopUpItem(shownWalletBalances.value, selectedAutoTopUpItem.value),
 );
 
+/**
+ * shortcut: the ui shows auto top-up for all rows or none, so a wallet not bought yet hides it on
+ * every row; move to a per-row flag once `WalletBalances` has one.
+ */
+const hasOnlyExistingWallets = computed(() =>
+    shownWalletBalances.value.every(({ wallet_id }) => !!wallet_id),
+);
+
 const cancellingAutoTopUpConfig = ref<WalletAutoTopUpConfig | undefined>();
 
 const showAutoTopUpCancellation = computed(() => !!cancellingAutoTopUpConfig.value);
@@ -77,7 +85,7 @@ const showAutoTopUpCancellation = computed(() => !!cancellingAutoTopUpConfig.val
         v-bind="$attrs"
         class="sv-wallet-balances sv-root sv-component"
         :customer-wallet-balances="shownWalletBalances"
-        :show-auto-top-up="showTopUpButton"
+        :show-auto-top-up="showTopUpButton && hasOnlyExistingWallets"
         :show-manual-top-up="showTopUpButton"
         :title="
             $t(

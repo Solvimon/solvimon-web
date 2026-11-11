@@ -44,7 +44,11 @@ vi.mock('@/composables/useLoadInitialData', () => ({
 }));
 
 vi.mock('@/composables/useChargeableOnDemandItems', () => ({
-    useChargeableOnDemandItems: () => ({ items: ref([]), scheduleId: ref(undefined) }),
+    useChargeableOnDemandItems: () => ({
+        items: ref([]),
+        scheduleId: ref(undefined),
+        response: ref(undefined),
+    }),
 }));
 
 vi.mock('@/components/providers', () => ({

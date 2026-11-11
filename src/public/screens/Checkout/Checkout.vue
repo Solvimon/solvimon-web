@@ -23,6 +23,7 @@ import SubscriptionPaymentCompletedCard from '@/components/payments/Subscription
 import OrderSummary from '@/components/subscriptions/OrderSummary.vue';
 import MarkdownText from '@/components/shared/MarkdownText/MarkdownText.vue';
 import EmptyStatePlaceholder from '@/components/checkout/EmptyStatePlaceholder.vue';
+import CheckoutNotAvailable from '@/components/checkout/CheckoutNotAvailable.vue';
 import Skeleton from '@/components/shared/Skeleton.vue';
 import ExpressPaymentMethods from '@/components/payments/ExpressPaymentMethods/ExpressPaymentMethods.vue';
 import { useLogger } from '@/components/providers';
@@ -104,6 +105,8 @@ const {
     isPaymentMethodsPending,
     isInvoicePreviewPending,
     isInvoicePreviewStale,
+    isInvoicePreviewFailed,
+    hasSubscriptionLoadFailed,
     settleInvoicePreview,
     checkoutForm,
     invoicePreview,
@@ -708,6 +711,9 @@ const handlePaymentSuccess = () => {
     handleRedirect();
 };
 
+// Already logged as INVOICE_PREVIEW_FAILED, and the placeholder stays up while it fails again.
+const retryInvoicePreview = () => loadInvoicePreview().catch(() => {});
+
 const handleBillingPeriodChange = (billingPeriod: BillingPeriod) => {
     if (!subscription.value) {
         return;
@@ -724,7 +730,12 @@ const handleBillingPeriodChange = (billingPeriod: BillingPeriod) => {
 </script>
 
 <template>
+    <CheckoutNotAvailable
+        v-if="hasSubscriptionLoadFailed"
+        class="sv-checkout sv-root sv-screen sv-checkout--error"
+    />
     <ContentWithAsideLayout
+        v-else
         class="sv-checkout sv-root sv-screen"
         :class="{ 'sv-checkout--paid': isPaid }"
     >
@@ -973,7 +984,53 @@ const handleBillingPeriodChange = (billingPeriod: BillingPeriod) => {
         <template #aside>
             <!-- order summary -->
             <div class="sv-checkout__order-summary">
-                <Skeleton variant="section" class="min-h-[220px]">
+                <!-- The form prices again on every change, but a customer with nothing to change
+                would otherwise wait on this for good. -->
+                <EmptyStatePlaceholder
+                    v-if="isInvoicePreviewFailed && !invoicePreview"
+                    class="sv-checkout__order-summary-error"
+                    icon="error"
+                >
+                    <template #title>
+                        {{
+                            $t({
+                                defaultMessage: 'Could not load the price',
+                                id: 'checkout.order_summary.load_failed_title',
+                                description:
+                                    'The title shown in the order summary when the price of the order failed to load',
+                            })
+                        }}
+                    </template>
+                    <template #message>
+                        {{
+                            $t({
+                                defaultMessage: 'Check your connection and try again.',
+                                id: 'checkout.order_summary.load_failed_message',
+                                description:
+                                    'The message shown in the order summary when the price of the order failed to load',
+                            })
+                        }}
+                    </template>
+                    <template #action>
+                        <Button
+                            type="button"
+                            intent="secondary"
+                            size="sm"
+                            class="sv-action sv-action--secondary sv-checkout__order-summary-retry"
+                            @click="retryInvoicePreview"
+                        >
+                            {{
+                                $t({
+                                    defaultMessage: 'Try again',
+                                    id: 'checkout.order_summary.load_failed_retry_button.label',
+                                    description:
+                                        'The label of the button that loads the price of the order again',
+                                })
+                            }}
+                        </Button>
+                    </template>
+                </EmptyStatePlaceholder>
+                <Skeleton v-else variant="section" class="min-h-[220px]">
                     <OrderSummary
                         v-if="subscription && invoicePreview"
                         v-bind="orderSummaryProps"

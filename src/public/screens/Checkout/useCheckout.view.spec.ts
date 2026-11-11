@@ -1517,11 +1517,12 @@ describe('useCheckoutView', () => {
         it('stops at a subscription it cannot load without throwing it into the tree', async () => {
             mockGetSubscription.mockRejectedValueOnce(new Error('Request failed with status 404'));
             const errorHandler = vi.fn();
+            let view: ReturnType<typeof useCheckoutView> | undefined;
 
             const wrapper = mount(
                 defineComponent({
                     setup() {
-                        useCheckoutView({
+                        view = useCheckoutView({
                             initialCountry: undefined,
                             initialEmail: undefined,
                             subscriptionId: 'sub_123' as PricingPlanSubscription['id'],
@@ -1531,10 +1532,13 @@ describe('useCheckoutView', () => {
                 }),
                 { global: { config: { errorHandler } } },
             );
+            expect(view?.hasSubscriptionLoadFailed.value).toBe(false);
             await flushPromises();
 
             expect(errorHandler).not.toHaveBeenCalled();
             expect(mockLoadInvoicePreview).not.toHaveBeenCalled();
+            // The screen says so instead of waiting on a subscription that is not coming.
+            expect(view?.hasSubscriptionLoadFailed.value).toBe(true);
             wrapper.unmount();
         });
 

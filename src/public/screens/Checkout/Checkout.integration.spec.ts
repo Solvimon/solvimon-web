@@ -15,6 +15,9 @@ const {
     hasPaymentMethodOptionsError,
     isInvoicePreviewPending,
     isInvoicePreviewStale,
+    isInvoicePreviewFailed,
+    hasSubscriptionLoadFailed,
+    loadInvoicePreview,
     settleInvoicePreview,
     checkoutFormValue,
     amountValue,
@@ -27,6 +30,9 @@ const {
     isPaid: { value: false },
     isInvoicePreviewPending: { value: false },
     isInvoicePreviewStale: { value: false },
+    isInvoicePreviewFailed: { value: false },
+    hasSubscriptionLoadFailed: { value: false },
+    loadInvoicePreview: vi.fn(() => Promise.resolve()),
     settleInvoicePreview: vi.fn(() => Promise.resolve('SETTLED')),
     /** The form the screen was last handed, to change it from a spec. */
     checkoutFormValue: { current: undefined as { value: Record<string, unknown> } | undefined },
@@ -70,6 +76,8 @@ vi.mock('./useCheckout.view', async () => {
             isPaymentMethodsPending: r(false),
             isInvoicePreviewPending: c(() => isInvoicePreviewPending.value),
             isInvoicePreviewStale: c(() => isInvoicePreviewStale.value),
+            isInvoicePreviewFailed: c(() => isInvoicePreviewFailed.value),
+            hasSubscriptionLoadFailed: c(() => hasSubscriptionLoadFailed.value),
             settleInvoicePreview,
             checkoutForm: {
                 form: (checkoutFormValue.current = r<Record<string, unknown>>({
@@ -94,7 +102,7 @@ vi.mock('./useCheckout.view', async () => {
             amount: (amountValue.current = r({ currency: 'EUR', quantity: '10.00' })),
             recurringAmount: c(() => recurringAmount.value),
             hasOneOffCharges: c(() => hasOneOffCharges.value),
-            loadInvoicePreview: vi.fn(),
+            loadInvoicePreview,
             updateInvoicePreviewOnBillingInformationChange: vi.fn(),
             saveFormStateForRedirect,
             clearSavedFormState,
@@ -235,6 +243,9 @@ describe('Checkout', () => {
         isPaid.value = false;
         isInvoicePreviewPending.value = false;
         isInvoicePreviewStale.value = false;
+        isInvoicePreviewFailed.value = false;
+        hasSubscriptionLoadFailed.value = false;
+        loadInvoicePreview.mockClear();
         settleInvoicePreview.mockReset();
         settleInvoicePreview.mockResolvedValue('SETTLED');
         hasPaymentMethodOptionsError.value = false;
@@ -530,6 +541,45 @@ describe('Checkout', () => {
         await wrapper.vm.$nextTick();
 
         expect(clearSavedFormState).toHaveBeenCalledTimes(1);
+    });
+
+    describe('when it cannot load', () => {
+        const summaryRetry = (wrapper: Awaited<ReturnType<typeof mountCheckout>>) =>
+            wrapper
+                .findAllComponents({ name: 'Button' })
+                .find((button) => button.classes('sv-checkout__order-summary-retry'));
+
+        it('says the checkout is not available when the subscription cannot be loaded', async () => {
+            subscription.value = undefined;
+            invoicePreview.value = undefined;
+            hasSubscriptionLoadFailed.value = true;
+
+            const wrapper = await mountCheckout();
+
+            expect(wrapper.findComponent({ name: 'CheckoutNotAvailable' }).exists()).toBe(true);
+            expect(wrapper.find('.sv-skeleton').exists()).toBe(false);
+        });
+
+        it('offers to price the order again when its first price fails, and asks again', async () => {
+            invoicePreview.value = undefined;
+            isInvoicePreviewFailed.value = true;
+
+            const wrapper = await mountCheckout({ EmptyStatePlaceholder: false });
+            const retry = summaryRetry(wrapper);
+            expect(retry).toBeDefined();
+
+            retry?.vm.$emit('click');
+
+            expect(loadInvoicePreview).toHaveBeenCalledTimes(1);
+        });
+
+        it('shows the price, not the retry, once a preview is there', async () => {
+            isInvoicePreviewFailed.value = true;
+
+            const wrapper = await mountCheckout({ EmptyStatePlaceholder: false });
+
+            expect(summaryRetry(wrapper)).toBeUndefined();
+        });
     });
 
     describe('solvimon-payment-succeeded', () => {

@@ -16,7 +16,11 @@ provide(AUTH_INJECTION_KEY, auth);
 
 <template>
     <slot v-if="auth.accessToken.value" />
-    <slot v-else-if="auth.status.value.state === 'ended'" name="ended" />
+    <!-- A link the API refused is as unusable as one that has ended, and is shown the same way. -->
+    <slot
+        v-else-if="auth.status.value.state === 'ended' || auth.status.value.state === 'invalid'"
+        name="ended"
+    />
     <PortalLinkUnverified
         v-else-if="auth.status.value.state === 'unavailable'"
         @retry="auth.retry"

@@ -334,14 +334,16 @@ test.describe('Customer overview', () => {
             await expect(error).toHaveCount(0);
         });
 
-        test('renders nothing that needs the customer when it cannot be loaded', async ({
+        test('says the billing information could not be loaded when the customer cannot be', async ({
             page,
         }) => {
             api = await mountCustomerOverview(page, {
                 mocks: { customer: { status: 404, body: { message: 'Not found' } } },
             });
 
-            await expect(customerOverview(page).billingInformation).toHaveCount(0);
+            await expect(customerOverview(page).billingInformation).toContainText(
+                'This could not be loaded',
+            );
             await expect(customerOverview(page).subscriptions).toHaveCount(0);
         });
 

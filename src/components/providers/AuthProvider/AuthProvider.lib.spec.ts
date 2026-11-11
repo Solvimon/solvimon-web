@@ -105,7 +105,8 @@ describe('getAuth', () => {
             wrapper.unmount();
         });
 
-        it('logs INVALID_TOKEN and leaves accessToken undefined when the fetch fails', async () => {
+        // No answer is not a refusal: the element offers to try again, as it does for a handle.
+        it('offers to try again when the token fetch gets no answer', async () => {
             const networkError = new Error('network failure');
             mockGetAccessToken.mockRejectedValueOnce(networkError);
 
@@ -113,11 +114,49 @@ describe('getAuth', () => {
             await Promise.resolve();
 
             expect(auth.accessToken.value).toBeUndefined();
+            expect(auth.status.value).toEqual({ state: 'unavailable' });
+            expect(mockLogError).toHaveBeenCalledWith(
+                'PORTAL_TOKEN_UNAVAILABLE',
+                'Could not fetch an access token for the portal link',
+                {},
+                networkError,
+            );
+            wrapper.unmount();
+        });
+
+        it('fetches the token again on retry, and signs in once it arrives', async () => {
+            mockGetAccessToken
+                .mockRejectedValueOnce(new Error('network failure'))
+                .mockResolvedValueOnce(tokenResponse('access-token-123'));
+
+            const { auth, wrapper } = withSetup(uniqueToken());
+            await Promise.resolve();
+            auth.retry();
+            await Promise.resolve();
+            await Promise.resolve();
+
+            expect(mockGetAccessToken).toHaveBeenCalledTimes(2);
+            expect(auth.accessToken.value).toBe('access-token-123');
+            expect(auth.status.value).toEqual({ state: 'ready' });
+            wrapper.unmount();
+        });
+
+        it('logs INVALID_TOKEN and offers nothing to retry when the API refuses the token', async () => {
+            const refused = Object.assign(new Error('Unauthorized'), { statusCode: 401 });
+            mockGetAccessToken.mockRejectedValueOnce(refused);
+
+            const { auth, wrapper } = withSetup(uniqueToken());
+            await Promise.resolve();
+            auth.retry();
+            await Promise.resolve();
+
+            expect(auth.status.value).toEqual({ state: 'invalid' });
+            expect(mockGetAccessToken).toHaveBeenCalledTimes(1);
             expect(mockLogError).toHaveBeenCalledWith(
                 'INVALID_TOKEN',
                 'Failed to fetch access token',
                 {},
-                networkError,
+                refused,
             );
             wrapper.unmount();
         });

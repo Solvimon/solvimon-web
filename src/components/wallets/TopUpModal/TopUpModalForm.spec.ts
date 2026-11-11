@@ -962,6 +962,12 @@ describe('TopUpModalForm — what a charge requires', () => {
             expect(editor(wrapper).exists()).toBe(false);
         });
 
+        it('leaves out a wallet not bought yet, having none to save a rule against', () => {
+            const wrapper = mountForm([createFlexibleItem()], { isNewWallet: true });
+
+            expect(editor(wrapper).exists()).toBe(false);
+        });
+
         it('leaves out a wallet with no choose-your-amount top-up', () => {
             const wrapper = mountForm([createFixedItem()]);
 

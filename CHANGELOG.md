@@ -47,6 +47,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Subscription details offers a top-up when the plan sells one with a choose-your-amount price, even if the customer has no wallet yet. Before, it offered one only on a wallet the customer already had. Until the first top-up creates the wallet, the block offers no automatic top-up, and the top-up modal does not offer to set one up.
+
 - An element that cannot load says so instead of staying empty or showing a skeleton for good:
     - A portal link identity refuses shows the element's "no longer available" notice, as an expired or revoked one does. When identity does not answer, or answers with a 5xx, the element offers to try again, as it already did for a `SIGNED_TOKEN` link, and logs `PORTAL_TOKEN_UNAVAILABLE` instead of `INVALID_TOKEN`.
     - The checkout shows "Checkout not available" when its subscription cannot be loaded, and offers "Try again" in the order summary when its first price cannot be, instead of waiting for the customer to change a field.

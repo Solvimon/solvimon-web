@@ -10,6 +10,7 @@ import { useLoadInitialData } from '@/composables/useLoadInitialData';
 import { useChargeableOnDemandItems } from '@/composables/useChargeableOnDemandItems';
 import { useLogger } from '@/components/providers';
 import { getSchedulesWithPlanData } from '@/utils/pricingPlanScheduleOverrides';
+import { withTopUpWalletsFromPlan } from '@/public/components/CustomerWalletBalances/CustomerWalletBalances.lib';
 
 const props = defineProps<SolvimonSubscriptionDetailsEntryProps>();
 
@@ -53,7 +54,11 @@ const { isLoading } = useLoadInitialData(
     fetchWalletBalances(),
 );
 
-const { items: onDemandItems, scheduleId: onDemandScheduleId } = useChargeableOnDemandItems({
+const {
+    items: onDemandItems,
+    scheduleId: onDemandScheduleId,
+    response: onDemandResponse,
+} = useChargeableOnDemandItems({
     subscription,
 });
 
@@ -61,7 +66,9 @@ const schedulesData = computed(() =>
     subscription.value ? getSchedulesWithPlanData(subscription.value) : [],
 );
 
-const walletBalanceItems = computed(() => walletBalances.value?.wallet_balances ?? []);
+const walletBalanceItems = computed(() =>
+    withTopUpWalletsFromPlan(walletBalances.value?.wallet_balances ?? [], onDemandResponse.value),
+);
 
 const hasWalletBalancesError = computed(() => walletBalancesApiStatus.value === ApiStatus.Failed);
 </script>

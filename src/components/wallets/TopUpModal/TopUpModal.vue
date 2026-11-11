@@ -381,6 +381,7 @@ watch(
                 :top-up-pricing-items="topUpPricingItems"
                 :payment-methods="paymentMethods"
                 :auto-top-up-config="savedAutoTopUpRule"
+                :is-new-wallet="!!selectedBalanceItem && !selectedBalanceItem.wallet_id"
                 :payment-method-options="settledOptions"
                 @add-payment-method="openAddPaymentMethod"
                 @success="handleTopUpSuccess"

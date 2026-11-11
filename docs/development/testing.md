@@ -42,6 +42,8 @@ npm run test:e2e -- --project=chromium
 
 WebKit needs its browser installed once, with `npx playwright install webkit`. A test that cannot pass in one browser says why with `test.skip` or `test.fixme` on `browserName`, so the reason shows in the report.
 
+`accessibility.spec.ts` runs axe on every screen once it has loaded, for the WCAG 2.1 A and AA rules, inside the elements' shadow roots too. A violation that sits in `@solvimon/solvimon-ui` is listed in `KNOWN_IN_UI_LIBRARY` there, by rule and element, so the same rule still fails anywhere else; remove the entry once the library version that fixes it is installed.
+
 ### Port
 
 The test app listens on 5273. Set `PLAYWRIGHT_PORT` to move it, for example to run suites from two checkouts side by side:

@@ -51,10 +51,13 @@ const isCollapsible = computed(() => !!seats.value.pricing?.tiered?.bands);
                     :min="defaultValue?.number ? +defaultValue.number : undefined"
                 />
             </div>
-            <div
-                class="flex grow flex-col"
+            <!-- A button when it opens the tiers, so the keyboard and a screen reader can use it. -->
+            <component
+                :is="isCollapsible ? 'button' : 'div'"
+                :type="isCollapsible ? 'button' : undefined"
+                :aria-expanded="isCollapsible ? isExpanded : undefined"
+                class="flex grow flex-col text-left"
                 :class="{ 'hover:cursor-pointer': isCollapsible }"
-                :tabindex="isCollapsible ? 0 : undefined"
                 @click="isCollapsible ? (isExpanded = !isExpanded) : undefined"
             >
                 <Typography tag="span" variant="body-sm" weight="semibold">{{
@@ -109,7 +112,7 @@ const isCollapsible = computed(() => !!seats.value.pricing?.tiered?.bands);
                         />
                     </Typography>
                 </template>
-            </div>
+            </component>
         </div>
 
         <!-- content-->

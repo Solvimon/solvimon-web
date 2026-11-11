@@ -139,6 +139,8 @@ const payWithStoredPaymentMethod = async () => {
     }
 
     storedPaymentError.value = true;
+    // A charge turned down because the invoice was paid elsewhere then reads as paid.
+    void props.refresh?.();
 };
 
 function handleSubmit() {

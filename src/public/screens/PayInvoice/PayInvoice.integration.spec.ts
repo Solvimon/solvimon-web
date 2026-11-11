@@ -858,6 +858,25 @@ describe('PayInvoice with stored payment methods', () => {
         expect(payButton(wrapper).props('disabled')).toBe(false);
     });
 
+    it('reads as paid when the charge is turned down because the invoice was paid elsewhere', async () => {
+        mockChargeStoredPaymentMethod.mockRejectedValue(
+            new ApiError({ statusCode: 422, message: 'Invoice invo_123 has already been paid' }),
+        );
+        const refresh = vi.fn().mockResolvedValue(undefined);
+        const wrapper = mountComponent({ paymentMethods: [storedCard()], refresh });
+
+        await payButton(wrapper).trigger('click');
+        await flushPromises();
+        expect(refresh).toHaveBeenCalledOnce();
+
+        await wrapper.setProps({ invoice: { ...wrapper.props('invoice')!, paid: true } });
+
+        expect(wrapper.findComponent({ name: 'PaymentFeedbackCard' }).props('status')).toBe(
+            'success',
+        );
+        expect(storedSelector(wrapper).exists()).toBe(false);
+    });
+
     it('leaves nothing to pay with while a stored charge may still go through', async () => {
         mockChargeStoredPaymentMethod.mockRejectedValue(new ApiError({ statusCode: 503 }));
         const wrapper = mountComponent({ paymentMethods: [storedCard()] });

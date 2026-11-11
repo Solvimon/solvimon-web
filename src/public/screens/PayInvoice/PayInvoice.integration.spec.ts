@@ -281,8 +281,8 @@ describe('PayInvoice', () => {
         expect(wrapper.text()).toContain('EUR 99.00');
     });
 
-    it('shows an error card when the error prop is set', () => {
-        const wrapper = mountComponent({ error: new Error('Network error') });
+    it('shows an error card when the invoice fails to load', () => {
+        const wrapper = mountComponent({ invoice: undefined, error: new Error('Network error') });
 
         expect(wrapper.text()).toContain('Something went wrong');
     });
@@ -875,6 +875,35 @@ describe('PayInvoice with stored payment methods', () => {
             'success',
         );
         expect(storedSelector(wrapper).exists()).toBe(false);
+    });
+
+    it('says nothing about a decline until the reloaded invoice can tell it was paid elsewhere', async () => {
+        mockChargeStoredPaymentMethod.mockRejectedValue(new ApiError({ statusCode: 422 }));
+        const wrapper = mountComponent({
+            paymentMethods: [storedCard()],
+            refresh: () => new Promise(() => {}),
+        });
+
+        await payButton(wrapper).trigger('click');
+        await flushPromises();
+
+        expect(wrapper.find('.sv-pay-invoice__stored-payment-error').exists()).toBe(false);
+    });
+
+    it('keeps the payment methods on screen when reloading the invoice after a decline fails', async () => {
+        mockChargeStoredPaymentMethod.mockRejectedValue(new ApiError({ statusCode: 400 }));
+        const wrapper = mountComponent({
+            paymentMethods: [storedCard()],
+            refresh: vi.fn().mockResolvedValue(undefined),
+        });
+
+        await payButton(wrapper).trigger('click');
+        await flushPromises();
+        await wrapper.setProps({ error: new Error('Network error') });
+
+        expect(wrapper.text()).not.toContain('Something went wrong');
+        expect(wrapper.find('.sv-pay-invoice__stored-payment-error').exists()).toBe(true);
+        expect(payButton(wrapper).props('disabled')).toBe(false);
     });
 
     it('leaves nothing to pay with while a stored charge may still go through', async () => {

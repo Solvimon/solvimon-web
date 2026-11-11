@@ -127,9 +127,8 @@ const payWithStoredPaymentMethod = async () => {
         return;
     }
 
-    isPaymentPending.value = false;
-
     if (outcome === 'UNCONFIRMED') {
+        isPaymentPending.value = false;
         isPaymentUnconfirmed.value = true;
         storedPaymentUnconfirmed.value = createPaymentFailureError({
             code: 'PAYMENT_OUTCOME_UNCONFIRMED',
@@ -138,9 +137,10 @@ const payWithStoredPaymentMethod = async () => {
         return;
     }
 
-    storedPaymentError.value = true;
     // A charge turned down because the invoice was paid elsewhere then reads as paid.
-    void props.refresh?.();
+    await props.refresh?.();
+    isPaymentPending.value = false;
+    storedPaymentError.value = true;
 };
 
 function handleSubmit() {
@@ -225,7 +225,7 @@ const handlePaymentFailed = (error?: { code?: string }) => {
 
             <!-- error -->
             <PaymentFeedbackCard
-                v-else-if="error"
+                v-else-if="error && !invoice"
                 status="error"
                 :title="
                     $t({

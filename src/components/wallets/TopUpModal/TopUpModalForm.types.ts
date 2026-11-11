@@ -17,6 +17,8 @@ export interface TopUpModalFormProps {
     paymentMethods?: PaymentMethod[];
     paymentMethodOptions?: PaymentMethodOptionsResponse;
     autoTopUpConfig?: AutoTopUpRule;
+    /** A wallet not bought yet has nothing to save an auto top-up rule against. */
+    isNewWallet?: boolean;
 }
 
 export interface TopUpModalFormEmits {

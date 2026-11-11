@@ -41,9 +41,15 @@ export function useChargeableOnDemandItems({
         { immediate: true },
     );
 
-    const items = computed(() =>
+    const response = computed(() =>
         scheduleId.value && data.value?.pricing_plan_schedule_id === scheduleId.value
-            ? getChargeableOnDemandItems(data.value, {
+            ? data.value
+            : undefined,
+    );
+
+    const items = computed(() =>
+        response.value
+            ? getChargeableOnDemandItems(response.value, {
                   pricingPlanVersions: subscription.value?.pricing_plan_schedule_infos.map(
                       (info) => info.pricing_plan_version,
                   ),
@@ -51,5 +57,5 @@ export function useChargeableOnDemandItems({
             : [],
     );
 
-    return { items, scheduleId };
+    return { items, scheduleId, response };
 }

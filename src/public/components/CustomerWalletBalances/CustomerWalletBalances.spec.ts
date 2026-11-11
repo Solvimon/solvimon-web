@@ -170,6 +170,20 @@ describe('CustomerWalletBalances', () => {
     });
 
     describe('automatic top-up', () => {
+        it('is offered on wallets the customer has', () => {
+            expect(rows(mountBlock()).props('showAutoTopUp')).toBe(true);
+        });
+
+        it('is held back while a wallet not bought yet is listed', () => {
+            const newWallet = { ...walletBalance, wallet_id: '' };
+
+            expect(
+                rows(mountBlock({ walletBalances: [walletBalance, newWallet] })).props(
+                    'showAutoTopUp',
+                ),
+            ).toBe(false);
+        });
+
         it('opens the auto top-up modal for the top-up that asked', async () => {
             const wrapper = mountBlock();
 

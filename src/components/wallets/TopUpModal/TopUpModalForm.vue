@@ -248,6 +248,7 @@ const pricingItems = computed(() => {
  */
 const autoTopUpEditor = computed(() => {
     const canSetUpAutoTopUp =
+        !props.isNewWallet &&
         !props.autoTopUpConfig &&
         chargeableItems.value.some(({ flexiblePricing }) => flexiblePricing);
 

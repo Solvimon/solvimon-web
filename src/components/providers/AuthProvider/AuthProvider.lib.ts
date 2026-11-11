@@ -102,8 +102,10 @@ function applyToken(state: SharedTokenState, { access_token, expires_in }: Token
 const isDue = (state: SharedTokenState) =>
     state.expiresAt === undefined || state.expiresAt - Date.now() < REFRESH_MARGIN_MS;
 
-// A failed refresh may have left a token the API already rejects, however far from expiry.
-const shouldRetry = (state: SharedTokenState) => state.lastRefreshFailed || isDue(state);
+// A failed refresh may have left a token the API already rejects, however far from expiry. Before
+// the first token there is nothing to refresh, and asking would only end the session.
+const shouldRetry = (state: SharedTokenState) =>
+    state.accessToken.value !== undefined && (state.lastRefreshFailed || isDue(state));
 
 function expireSession(state: SharedTokenState, err: unknown) {
     state.isSessionExpired = true;

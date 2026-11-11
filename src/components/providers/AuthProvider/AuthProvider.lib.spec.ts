@@ -141,6 +141,22 @@ describe('getAuth', () => {
             wrapper.unmount();
         });
 
+        // Nothing has been issued to refresh: asking would end in a 401 that expires the session,
+        // so a "Try again" that then signs in could never refresh its token.
+        it('asks for no refresh before a token was ever issued', async () => {
+            vi.useFakeTimers();
+            mockGetAccessToken.mockRejectedValue(new Error('network failure'));
+
+            const { wrapper } = withSetup(uniqueToken());
+            await vi.advanceTimersByTimeAsync(5 * 60_000);
+            document.dispatchEvent(new Event('visibilitychange'));
+            await vi.advanceTimersByTimeAsync(0);
+
+            expect(mockRefreshAccessToken).not.toHaveBeenCalled();
+            wrapper.unmount();
+            vi.useRealTimers();
+        });
+
         it('logs INVALID_TOKEN and offers nothing to retry when the API refuses the token', async () => {
             const refused = Object.assign(new Error('Unauthorized'), { statusCode: 401 });
             mockGetAccessToken.mockRejectedValueOnce(refused);

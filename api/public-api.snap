@@ -46,6 +46,9 @@ export * from './types/index';
 // screens/Checkout/Checkout.ce.d.ts
 export * from '../../types/public/screens/Checkout/Checkout.entry.ce';
 
+// screens/CheckoutSession/CheckoutSession.ce.d.ts
+export * from '../../types/public/screens/CheckoutSession/CheckoutSession.entry.ce';
+
 // screens/CustomerOverview/CustomerOverview.ce.d.ts
 export * from '../../types/public/screens/CustomerOverview/CustomerOverview.entry.ce';
 
@@ -119,7 +122,13 @@ export type Auth = ReturnType<typeof getAuth>;
 
 // types/components/providers/AuthProvider/AuthProvider.vue.d.ts
 import { AuthProviderProps } from './AuthProvider.types';
-declare var __VLS_1: {}, __VLS_3: {};
+declare var __VLS_1: {}, __VLS_3: {
+    ending: {
+        state: "ended";
+        reason: import('./AuthProvider.lib').PortalLinkEnding;
+        checkoutSessionStatus?: string;
+    } | undefined;
+};
 type __VLS_Slots = {} & {
     default?: (props: typeof __VLS_1) => any;
 } & {
@@ -258,20 +267,20 @@ export interface LoggerProviderProps {
 }
 export type WarnCode =
 /** Also an `ErrorCode`: the level separates a failure the SDK absorbed from one it did not. */
-'REQUEST_FAILED' | 'ACTIVE_SCHEDULE_NOT_FOUND' | 'MISSING_REQUIRED_PROPERTIES' | 'UI_COMPONENT_RECOVERED' | 'ADYEN_INVALID_CONFIGURATION' | 'PAYMENT_INTEGRATION_NOT_RENDERABLE' | 'APPLE_PAY_FORM_INCOMPLETE' | 'CHECKOUT_FORM_STATE_NOT_SAVED' | 'CHECKOUT_SESSION_CLOSED' | 'INVOICE_PREVIEW_SKIPPED' | 'RECURRING_AMOUNT_UNRESOLVED' | 'ON_DEMAND_CHARGE_REFUSED' | 'PAYMENT_OUTCOME_UNCONFIRMED' | 'PROMOTION_CODE_REJECTED' | 'TRANSLATION_LOAD_FAILED' | 'UNSUPPORTED_LOCALE';
-export type ErrorCode = 'REQUEST_FAILED' | 'UNHANDLED_ERROR' | 'RESOURCE_REVOKED' | 'PORTAL_TYPE_NOT_ALLOWED' | 'INVALID_EMAIL' | 'INVALID_COUNTRY_CODE' | 'PAYMENT_INTEGRATION_INITIALIZATION_FAILED' | 'PAYMENT_AUTHORIZATION_FAILED' | 'TOKENIZATION_FAILED' | 'INVALID_TOKEN' | 'SESSION_EXPIRED' | 'PORTAL_URL_EXPIRED' | 'PORTAL_URL_REVOKED' | 'PORTAL_TOKEN_UNAVAILABLE' | 'INVALID_REDIRECT_RESULT' | 'PAYMENT_DETAILS_CALL_FAILED' | 'PAYMENT_METHOD_OPTIONS_LOAD_FAILED' | 'NO_PAYMENT_METHODS_AVAILABLE' | 'INTEGRATION_ERROR' | 'APPLE_PAY_ERROR' | 'APPLE_PAY_AUTHORIZATION_FAILED' | 'PROMOTION_CODE_APPLY_FAILED' | 'PROMOTION_CODE_REMOVE_FAILED' | 'SUBSCRIPTION_UPDATE_FAILED' | 'SHIPPED_SUBSCRIPTIONS_LOAD_FAILED' | 'SHIPPING_ADDRESSES_LOAD_FAILED' | 'SHIPPING_ADDRESS_SAVE_FAILED' | 'SHIPPING_ADDRESS_DELETE_FAILED' | 'SUBSCRIPTION_CANCELLATION_FAILED' | 'INITIAL_DATA_LOAD_FAILED' | 'SUBSCRIPTION_LOAD_FAILED' | 'INVOICE_PREVIEW_FAILED' | 'TOP_UP_FAILED' | 'ON_DEMAND_ITEMS_LOAD_FAILED' | 'ON_DEMAND_CHARGE_FAILED' | 'AUTO_TOP_UP_SAVE_FAILED' | 'AUTO_TOP_UP_CANCELLATION_FAILED' | 'REQUEST_PARSE_FAILED' | 'ADYEN_SUBMIT_FAILED' | 'STRIPE_SUBMIT_FAILED' | 'STRIPE_CONFIRMATION_TOKEN_FAILED' | 'STRIPE_ACTION_FAILED' | 'STRIPE_REDIRECT_RETURN_FAILED' | 'ADYEN_PAYMENT_FAILED' | 'PAYMENT_DETAILS_REJECTED' | 'PAYMENT_ACCEPTOR_MISSING';
+'REQUEST_FAILED' | 'ACTIVE_SCHEDULE_NOT_FOUND' | 'MISSING_REQUIRED_PROPERTIES' | 'UI_COMPONENT_RECOVERED' | 'ADYEN_INVALID_CONFIGURATION' | 'PAYMENT_INTEGRATION_NOT_RENDERABLE' | 'APPLE_PAY_FORM_INCOMPLETE' | 'CHECKOUT_FORM_STATE_NOT_SAVED' | 'CHECKOUT_SESSION_CLOSED' | 'CHECKOUT_SESSION_UPDATE_REFUSED' | 'CHECKOUT_SESSION_EDIT_NOT_APPLIED' | 'CHECKOUT_SESSION_SEVERAL_INVOICES' | 'CHECKOUT_SESSION_COMPLETION_CHECK_FAILED' | 'INVOICE_PREVIEW_SKIPPED' | 'RECURRING_AMOUNT_UNRESOLVED' | 'ON_DEMAND_CHARGE_REFUSED' | 'PAYMENT_OUTCOME_UNCONFIRMED' | 'PROMOTION_CODE_REJECTED' | 'TRANSLATION_LOAD_FAILED' | 'UNSUPPORTED_LOCALE';
+export type ErrorCode = 'REQUEST_FAILED' | 'UNHANDLED_ERROR' | 'RESOURCE_REVOKED' | 'PORTAL_TYPE_NOT_ALLOWED' | 'INVALID_EMAIL' | 'INVALID_COUNTRY_CODE' | 'PAYMENT_INTEGRATION_INITIALIZATION_FAILED' | 'PAYMENT_AUTHORIZATION_FAILED' | 'TOKENIZATION_FAILED' | 'INVALID_TOKEN' | 'SESSION_EXPIRED' | 'PORTAL_URL_EXPIRED' | 'PORTAL_URL_REVOKED' | 'PORTAL_TOKEN_UNAVAILABLE' | 'INVALID_REDIRECT_RESULT' | 'PAYMENT_DETAILS_CALL_FAILED' | 'PAYMENT_METHOD_OPTIONS_LOAD_FAILED' | 'NO_PAYMENT_METHODS_AVAILABLE' | 'INTEGRATION_ERROR' | 'APPLE_PAY_ERROR' | 'APPLE_PAY_AUTHORIZATION_FAILED' | 'PROMOTION_CODE_APPLY_FAILED' | 'PROMOTION_CODE_REMOVE_FAILED' | 'SUBSCRIPTION_UPDATE_FAILED' | 'SHIPPED_SUBSCRIPTIONS_LOAD_FAILED' | 'SHIPPING_ADDRESSES_LOAD_FAILED' | 'SHIPPING_ADDRESS_SAVE_FAILED' | 'SHIPPING_ADDRESS_DELETE_FAILED' | 'SUBSCRIPTION_CANCELLATION_FAILED' | 'INITIAL_DATA_LOAD_FAILED' | 'SUBSCRIPTION_LOAD_FAILED' | 'CHECKOUT_SESSION_LOAD_FAILED' | 'CHECKOUT_SESSION_UPDATE_FAILED' | 'INVOICE_PREVIEW_FAILED' | 'TOP_UP_FAILED' | 'ON_DEMAND_ITEMS_LOAD_FAILED' | 'ON_DEMAND_CHARGE_FAILED' | 'AUTO_TOP_UP_SAVE_FAILED' | 'AUTO_TOP_UP_CANCELLATION_FAILED' | 'REQUEST_PARSE_FAILED' | 'ADYEN_SUBMIT_FAILED' | 'STRIPE_SUBMIT_FAILED' | 'STRIPE_CONFIRMATION_TOKEN_FAILED' | 'STRIPE_ACTION_FAILED' | 'STRIPE_REDIRECT_RETURN_FAILED' | 'ADYEN_PAYMENT_FAILED' | 'PAYMENT_DETAILS_REJECTED' | 'PAYMENT_ACCEPTOR_MISSING';
 
 // types/components/providers/PortalProvider/PortalProvider.types.d.ts
-import { PortalUrl } from '../../../vendor/@solvimon/solvimon-types/index';
+import { PortalObject } from '../../../types/checkoutSession';
 export type PortalProviderProps = {
     /**
      * The portal object to be used for the portal.
      */
-    portalObject: PortalUrl;
+    portalObject: PortalObject;
     /**
      * The allowed portal types.
      */
-    allowedPortalTypes?: PortalUrl['type'][];
+    allowedPortalTypes?: PortalObject['type'][];
 };
 
 // types/components/providers/Provider/Provider.types.d.ts
@@ -281,12 +290,22 @@ import { LoggerProviderProps } from '../LoggerProvider/LoggerProvider.types';
 import { ExperimentalFeatureProviderProps } from '../ExperimentalFeatureProvider/ExperimentalFeatureProvider.types';
 import { PortalProviderProps } from '../PortalProvider/PortalProvider.types';
 import { AuthProviderProps } from '../AuthProvider';
+import { AuthStatus } from '../AuthProvider/AuthProvider.lib';
 import { ConfigProviderProps } from '../ConfigProvider/ConfigProvider.types';
 import { TranslationProviderProps } from '../TranslationProvider/TranslationProvider.types';
 import { CssOverridesProviderProps } from '../CssOverridesProvider/CssOverridesProvider.types';
 export interface RequiredProviderProps extends Omit<AuthProviderProps, 'token' | 'authentication'>, ConfigProviderProps, TranslationProviderProps, BrandProviderProps, ExperimentalFeatureProviderProps, LoggerProviderProps, Pick<PortalProviderProps, 'allowedPortalTypes' | 'portalObject'>, HostElementProviderProps, CssOverridesProviderProps {
 }
 export type ProviderProps = RequiredProviderProps;
+export interface ProviderSlots {
+    default?: () => unknown;
+    /** `ending` is set when the exchange found the link expired, revoked or closed. */
+    'portal-unavailable'?: (props: {
+        ending?: Extract<AuthStatus, {
+            state: 'ended';
+        }>;
+    }) => unknown;
+}
 
 // types/components/providers/TranslationProvider/TranslationProvider.types.d.ts
 import { IntlMessages, IntlProviderProps } from '../../../vendor/@solvimon/solvimon-ui/index';
@@ -344,6 +363,7 @@ export type { SolvimonBranding } from './types/branding';
 export type { SolvimonErrorDetail, SolvimonEventListeners, SolvimonPaymentMethodAddedDetail, SolvimonInvoiceCreatedDetail, SolvimonPaymentSucceededDetail, SolvimonPaymentSucceededEvent, SolvimonErrorEvent, SolvimonEventMap, } from './public/core/events.types';
 export type { ExperimentalFeature } from './components/providers/ExperimentalFeatureProvider/ExperimentalFeatureProvider.lib';
 export { defineSolvimonCheckout } from './public/screens/Checkout/Checkout.entry.ce';
+export { defineSolvimonCheckoutSession } from './public/screens/CheckoutSession/CheckoutSession.entry.ce';
 export { defineSolvimonCustomerOverview } from './public/screens/CustomerOverview/CustomerOverview.entry.ce';
 export { defineSolvimonSubscriptionManagement } from './public/screens/SubscriptionManagement/SubscriptionManagement.entry.ce';
 export { defineSolvimonSubscriptionDetails } from './public/screens/SubscriptionDetails/SubscriptionDetails.entry.ce';
@@ -940,6 +960,7 @@ import { SolvimonSubscriptionSchedulesEntryProps } from '../components/Subscript
 import { SolvimonSubscriptionsListEntryProps } from '../components/SubscriptionsList/SubscriptionsList.entry.types';
 import { SolvimonWalletBalancesEntryProps } from '../components/WalletBalances/WalletBalances.entry.types';
 import { SolvimonCheckoutEntryProps } from '../screens/Checkout/Checkout.entry.types';
+import { SolvimonCheckoutSessionEntryProps } from '../screens/CheckoutSession/CheckoutSession.entry.types';
 import { SolvimonCustomerOverviewEntryProps } from '../screens/CustomerOverview/CustomerOverview.entry.types';
 import { SolvimonSubscriptionManagementEntryProps } from '../screens/SubscriptionManagement/SubscriptionManagement.entry.types';
 import { SolvimonPayInvoiceEntryProps } from '../screens/PayInvoice/PayInvoice.entry.types';
@@ -990,6 +1011,7 @@ interface RegisteredComponentEntryPropsById {
 }
 interface RegisteredScreenEntryPropsById {
     checkout: SolvimonCheckoutEntryProps;
+    'checkout-session': SolvimonCheckoutSessionEntryProps;
     'customer-overview': SolvimonCustomerOverviewEntryProps;
     'subscription-management': SolvimonSubscriptionManagementEntryProps;
     'subscription-details': SolvimonSubscriptionDetailsEntryProps;
@@ -1092,6 +1114,14 @@ export interface CheckoutConfiguration {
 export interface CheckoutProps {
     configuration?: CheckoutConfiguration;
 }
+
+// types/public/screens/CheckoutSession/CheckoutSession.entry.ce.d.ts
+export declare const defineSolvimonCheckoutSession: (tagName?: string) => string;
+
+// types/public/screens/CheckoutSession/CheckoutSession.entry.types.d.ts
+import { EntryBaseProps } from '../../../types/EntryBaseProps';
+import { CheckoutSessionPortalUrl } from '../../../types/checkoutSession';
+export type SolvimonCheckoutSessionEntryProps = EntryBaseProps<CheckoutSessionPortalUrl>;
 
 // types/public/screens/CustomerOverview/CustomerOverview.entry.ce.d.ts
 export declare const defineSolvimonCustomerOverview: (tagName?: string) => string;
@@ -1236,14 +1266,14 @@ export type { PublicEnvironment as Environment } from '../../config/types';
 export const SUPPORTED_LOCALES: readonly ["en-US", "nl-NL", "de-DE", "it-IT", "fr-FR"];
 
 // types/types/EntryBaseProps.d.ts
-import { PortalUrl } from '../vendor/@solvimon/solvimon-types/index';
+import { PortalObject } from './checkoutSession';
 import { SolvimonBranding } from './branding';
 import { ProviderProps } from '../components/providers/Provider/Provider.types';
 /**
  * The properties every element takes: those `EntryProvider` reads from it. Picked rather than
  * omitted, so a prop added to the provider stack does not become element surface by accident.
  */
-export type EntryBaseProps<PortalObjectType extends PortalUrl> = Pick<ProviderProps, 'environment' | 'locale' | 'dateLocale' | 'messages' | 'portalToken' | 'experimentalFeatures' | 'logLevel' | 'onLog' | 'cssOverrides'> & {
+export type EntryBaseProps<PortalObjectType extends PortalObject> = Pick<ProviderProps, 'environment' | 'locale' | 'dateLocale' | 'messages' | 'portalToken' | 'experimentalFeatures' | 'logLevel' | 'onLog' | 'cssOverrides'> & {
     /**
      * The colours every element is drawn in, and the emblem screens show as their avatar.
      */
@@ -1267,6 +1297,192 @@ export interface SolvimonBranding {
         public_url?: string | null;
     };
 }
+
+// types/types/checkoutSession.d.ts
+import { Address, CheckoutSessionNewCustomerType, CheckoutSessionStatus, ConfiguredMeterValue, CreatedCheckoutSessionPortalUrl, Invoice, Name, PortalUrl, PricingPlanSubscription, TaxIdentifier } from '../vendor/@solvimon/solvimon-types/index';
+/** A `CLOSED` link (its session COMPLETED or FAILED) can still be read. */
+export type CheckoutSessionPortalUrlStatus = 'PUBLISHED' | 'REVOKED' | 'CLOSED';
+/** The portal object a host passes for a checkout session link; `token` is the handle. */
+export interface CheckoutSessionPortalUrl extends Omit<CreatedCheckoutSessionPortalUrl, 'status' | 'expires_at' | 'url'> {
+    status: CheckoutSessionPortalUrlStatus;
+    expires_at?: string;
+    url?: string;
+}
+export type CheckoutSessionFieldDisplay = 'EDITABLE' | 'READ_ONLY' | 'HIDDEN';
+export interface CheckoutSessionEffectiveDisplay {
+    customer_details: CheckoutSessionFieldDisplay;
+    address: CheckoutSessionFieldDisplay;
+    tax_ids: CheckoutSessionFieldDisplay;
+    email: CheckoutSessionFieldDisplay;
+    custom_fields: CheckoutSessionFieldDisplay;
+}
+/** A customer the session creates when it completes. */
+export interface CheckoutSessionNewCustomer {
+    reference: string;
+    type: CheckoutSessionNewCustomerType;
+    email?: string;
+    locale?: string;
+    timezone?: string;
+    roles?: string[];
+    custom_fields?: Record<string, unknown>[];
+    individual?: {
+        name?: Partial<Pick<Name, 'first_name' | 'last_name' | 'infix'>>;
+        residential_address?: Address;
+    };
+    organization?: {
+        legal_name?: string;
+        tax_id?: string;
+        tax_ids?: TaxIdentifier[];
+        registration_number?: string;
+        tax_exempt?: boolean;
+        tax_exempt_note?: string;
+        registered_address?: Address;
+        tax_registrations?: Record<string, unknown>[];
+    };
+}
+export interface CheckoutSessionReadableCustomer {
+    customer_id?: string;
+    customer?: CheckoutSessionNewCustomer;
+    parent_customer?: unknown;
+    display?: Partial<CheckoutSessionEffectiveDisplay>;
+    effective_display: CheckoutSessionEffectiveDisplay;
+}
+export interface CheckoutSessionMeterBound {
+    pricing_item_config_id: string;
+    min: {
+        number: string;
+    };
+    max: {
+        number: string;
+    };
+}
+export interface CheckoutSessionScheduleCustomization {
+    pricing_plan_schedule_id: string;
+    seats_values?: ConfiguredMeterValue[];
+    units?: ConfiguredMeterValue[];
+    coupons?: unknown[];
+    promotion_codes?: string[];
+}
+export interface CheckoutSessionSubscription {
+    template_pricing_plan_subscription_id: PricingPlanSubscription['id'];
+    pricing_plan_subscription: {
+        reference: string;
+        customer_id?: string;
+        customer_reference?: string;
+        variant?: string;
+        forward_customer_id?: string;
+        forward_customer_reference?: string;
+    };
+    pricing_plan_schedule_customizations?: CheckoutSessionScheduleCustomization[];
+    options?: {
+        edit_seats?: CheckoutSessionMeterBound[];
+        edit_units?: CheckoutSessionMeterBound[];
+        allow_promotion_codes?: 'NONE' | 'SINGLE';
+    };
+    starting_values?: {
+        pricing_plan_schedule_id: string;
+        seats_values?: ConfiguredMeterValue[];
+        units?: ConfiguredMeterValue[];
+    }[];
+}
+export interface CheckoutSession {
+    status: CheckoutSessionStatus;
+    payment_status: 'UNPAID' | 'PAID';
+    version: number;
+    completed_at?: string;
+    success_url?: string;
+    cancel_url?: string;
+    locale?: string;
+    /** Markdown. */
+    note?: string;
+    display?: Partial<CheckoutSessionEffectiveDisplay>;
+    customers: CheckoutSessionReadableCustomer[];
+    pricing_plan_subscriptions: CheckoutSessionSubscription[];
+    payment?: {
+        customer_id?: string;
+        customer_reference?: string;
+        payment_acceptor_ids?: string[];
+        store_payment_method?: boolean;
+    };
+    result?: unknown;
+    /** Paths such as `checkout_session.customers.0.customer.email`; absent when nothing is missing. */
+    missing_fields?: string[];
+}
+/** `GET` and `PATCH {transaction}/portal/portal-urls/{id}`. */
+export interface CheckoutSessionPortalUrlResponse {
+    object_type: 'PORTAL_URL';
+    id: string;
+    type: 'CHECKOUT_SESSION';
+    status: CheckoutSessionPortalUrlStatus;
+    checkout_session: CheckoutSession;
+}
+export type CheckoutSessionAddressPatch = Partial<Address>;
+/**
+ * The customer keys a buyer may send: the rest (`type`, `reference`, `locale`, …) is refused, and
+ * `null` only clears the lists that take it.
+ */
+export interface CheckoutSessionCustomerPatch {
+    email?: string;
+    custom_fields?: Record<string, unknown>[] | null;
+    individual?: {
+        name?: Partial<Pick<Name, 'first_name' | 'last_name' | 'infix'>>;
+        residential_address?: CheckoutSessionAddressPatch;
+    };
+    organization?: {
+        legal_name?: string;
+        tax_id?: string;
+        tax_ids?: Pick<TaxIdentifier, 'id' | 'type'>[] | null;
+        registration_number?: string;
+        tax_exempt?: boolean;
+        tax_exempt_note?: string;
+        registered_address?: CheckoutSessionAddressPatch;
+        tax_registrations?: Record<string, unknown>[] | null;
+    };
+}
+export interface CheckoutSessionCustomizationPatch {
+    pricing_plan_schedule_id: string;
+    seats_values?: ConfiguredMeterValue[];
+    units?: ConfiguredMeterValue[];
+    promotion_codes?: string[] | null;
+}
+/** Positional: entry i edits entry i, and `{}` leaves it alone. */
+export interface CheckoutSessionPatchBody {
+    checkout_session: {
+        expected_version: number;
+        customers?: ({
+            customer: CheckoutSessionCustomerPatch;
+        } | Record<string, never>)[];
+        pricing_plan_subscriptions?: ({
+            pricing_plan_schedule_customizations: CheckoutSessionCustomizationPatch[];
+        } | Record<string, never>)[];
+    };
+}
+/** `POST {transaction}/portal/portal-urls/{id}/preview`. */
+export interface CheckoutSessionPreview {
+    invoices?: {
+        customer_reference: string;
+        customer_id?: string;
+        invoice: Invoice;
+        pricing_plan_subscription_references: string[];
+    }[];
+    /** Decimal strings such as `"268.00"`. */
+    total?: {
+        currency: string;
+        amount_excl_tax: string;
+        tax: string;
+        amount_incl_tax: string;
+    };
+    per_subscription?: {
+        pricing_plan_subscription_reference: string;
+        invoice_infos: unknown[];
+    }[];
+    checkout_session: {
+        version: number;
+        missing_fields?: string[];
+    };
+}
+/** Every portal object an element can be given; the types package lacks the checkout session. */
+export type PortalObject = PortalUrl | CheckoutSessionPortalUrl;
 
 // types/types/portalAuthentication.d.ts
 /** How a portal object signs in: an identity token, or the handle a `SIGNED_TOKEN` link carries. */

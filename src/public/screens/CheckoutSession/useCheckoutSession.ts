@@ -736,9 +736,14 @@ export function useCheckoutSession({ portalUrlId }: { portalUrlId: string }) {
         const current = session.value;
         const subscriptions = current?.pricing_plan_subscriptions ?? [];
         customizations.value = subscriptions.map((subscription, index) => {
-            const template = templates.value[index];
+            const loaded = templates.value[index];
             const scheduleId = scheduleIdOf(index);
-            if (!template) return undefined;
+            if (!loaded) return undefined;
+            // The template's own name is the merchant's, such as "Pro template"; the session names its copy.
+            const template = {
+                ...loaded,
+                name: subscription.pricing_plan_subscription.name ?? loaded.name,
+            };
             const meters = (key: 'seats_values' | 'units', bounds: 'edit_seats' | 'edit_units') =>
                 getMeterValues(
                     subscription.options?.[bounds],

@@ -817,6 +817,42 @@ describe('useCheckoutSession', () => {
         const formsOf = (result: ReturnType<typeof useCheckoutSession>) =>
             result.source.customerForms?.value ?? [];
 
+        it('shows only the parent, read-only, and fixes the order, when the session has a parent and its children', async () => {
+            const parent = createSession().customers[0];
+            const child = (reference: string) => ({
+                ...individualCustomer,
+                customer: { ...individualCustomer.customer!, reference },
+                parent_customer: { reference: parent.customer!.reference },
+            });
+            mockGet.mockResolvedValue(
+                portalUrl({ customers: [parent, child('child-1'), child('child-2')] }),
+            );
+            const result = await loaded();
+
+            expect(formsOf(result)).toHaveLength(1);
+            expect(formsOf(result)[0].form).toBe(result.source.checkoutForm);
+            expect(formsOf(result)[0]).toMatchObject({
+                display: {
+                    customer_details: 'READ_ONLY',
+                    address: 'READ_ONLY',
+                    tax_ids: 'READ_ONLY',
+                    email: 'READ_ONLY',
+                    custom_fields: 'HIDDEN',
+                },
+            });
+            expect(formsOf(result)[0].title).toBeUndefined();
+            expect(result.source.isOrderFixed!.value).toBe(true);
+        });
+
+        it('lets the order be changed when no customer of the session is the parent of another', async () => {
+            mockGet.mockResolvedValue(
+                portalUrl({ customers: [createSession().customers[0], individualCustomer] }),
+            );
+            const result = await loaded();
+
+            expect(result.source.isOrderFixed!.value).toBe(false);
+        });
+
         it('gives each customer a form of its own, in session order, named after the customer', async () => {
             mockGet.mockResolvedValue(
                 portalUrl({ customers: [createSession().customers[0], individualCustomer] }),

@@ -109,6 +109,8 @@ export interface CheckoutSource {
      * its pricing choices. Held shallowly, like `customerForms`.
      */
     planCustomizations?: Readonly<Ref<CheckoutPlanCustomization[]>>;
+    /** The order is shown as it is, without `planCustomizations`' editors. */
+    isOrderFixed?: Readonly<Ref<boolean>>;
     checkoutForm: ReturnType<typeof useCheckoutForm>;
     /**
      * A section per customer, shown and validated in place of `checkoutForm`'s own. Held shallowly

@@ -12,6 +12,7 @@ import type {
 import type { CheckoutFormState } from '@/components/customer/CheckoutForm/CheckoutForm.types';
 import type { CheckoutFormDisplay } from '@/components/customer/CheckoutForm/CheckoutForm.lib';
 import type { useCheckoutForm } from '@/components/customer/CheckoutForm/useCheckoutForm';
+import type { OrderSummaryInvoiceSection } from '@/components/subscriptions/OrderSummaryInvoice.types';
 import type { PaymentAuthorizationContext } from '@/components/payments/PaymentIntegrationForm/PaymentIntegrationForm.types';
 
 /** `CHANGED`: the customer changed the order while the payment waited for its price. */
@@ -117,6 +118,8 @@ export interface CheckoutSource {
     isShippingAddressRequired: boolean;
 
     invoicePreview: Readonly<Ref<Invoice | undefined>>;
+    /** The invoice's lines per customer; left out by a flow with one customer. */
+    invoiceSections?: Readonly<Ref<OrderSummaryInvoiceSection[] | undefined>>;
     invoicePreviewByBillingPeriod: Readonly<Ref<Record<string, Invoice>>>;
     trialInvoicePreview: Readonly<Ref<Invoice | undefined>>;
     trialPeriod: Readonly<Ref<TimePeriod | undefined>>;

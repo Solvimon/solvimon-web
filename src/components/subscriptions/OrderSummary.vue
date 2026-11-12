@@ -317,6 +317,11 @@ const toggleSaveText = computed(() => {
     return getSaveBadgeText(getSavingsAmount(selectedAnnual, biggestAnnual)) ?? '';
 });
 
+// The products-inline variant lists no lines, so it keeps the summaries above.
+const hasSections = computed(
+    () => !!props.invoiceSections?.length && props.variant !== 'products-inline',
+);
+
 const handleBinaryBillingToggle = (checked: boolean) => {
     const { smallestPeriod, biggestPeriod } = periodBounds.value;
     selectedBillingPeriodKey.value = checked ? biggestPeriod : smallestPeriod;
@@ -354,9 +359,9 @@ const handleBinaryBillingToggle = (checked: boolean) => {
             </span>
         </template>
         <div class="sv-order-summary__body grid grid-cols-1 gap-1">
-            <!-- subscription summary -->
+            <!-- subscription summary; a summary split into sections names them in its sections -->
             <Section
-                v-for="(summarised, index) in subscriptions ?? [subscription]"
+                v-for="(summarised, index) in hasSections ? [] : (subscriptions ?? [subscription])"
                 :key="index"
                 no-spacing
                 class="sv-order-summary__subscription"
@@ -423,6 +428,7 @@ const handleBinaryBillingToggle = (checked: boolean) => {
                 v-if="invoice"
                 :is-updating="isUpdating"
                 :invoice="invoice"
+                :sections="invoiceSections"
                 :trial-invoice="trialInvoice"
                 :is-paid="isPaid"
                 :collapsible="collapsible"

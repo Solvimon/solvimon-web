@@ -58,6 +58,7 @@ import { splitInvoiceByRecurrence } from '@/utils/invoice';
 import { getSubscriptionName } from '@/utils/subscription';
 import { safeUrlRedirect, sanitizeUrl } from '@/utils/url';
 import type { CheckoutFormState } from '@/components/customer/CheckoutForm/CheckoutForm.types';
+import type { OrderSummaryInvoiceSection } from '@/components/subscriptions/OrderSummaryInvoice.types';
 import type {
     CheckoutSessionCustomerPatch,
     CheckoutSessionCustomizationPatch,
@@ -870,6 +871,46 @@ export function useCheckoutSession({ portalUrlId }: { portalUrlId: string }) {
     const invoicePreview = computed<Invoice | undefined>(
         () => preview.value?.invoices?.[0]?.invoice,
     );
+
+    /**
+     * The shown invoice's lines per customer, from each subscription's own preview: the shared
+     * invoice's lines name only the template, which subscriptions of one plan have in common.
+     */
+    const invoiceSections = computed<OrderSummaryInvoiceSection[] | undefined>(() => {
+        const references = preview.value?.invoices?.[0]?.pricing_plan_subscription_references;
+        if (!references || references.length < 2) return undefined;
+
+        const sections = new Map<string, OrderSummaryInvoiceSection>();
+        for (const reference of references) {
+            const invoices = preview.value?.per_subscription
+                ?.find((entry) => entry.pricing_plan_subscription_reference === reference)
+                ?.invoice_infos.flatMap((info) => info.invoices.slice(0, 1));
+            const index =
+                session.value?.pricing_plan_subscriptions.findIndex(
+                    (entry) => entry.pricing_plan_subscription.reference === reference,
+                ) ?? -1;
+            const subscription =
+                session.value?.pricing_plan_subscriptions[index]?.pricing_plan_subscription;
+            // Without every part the lines would no longer add up to the invoice.
+            if (!invoices?.length || !subscription) return undefined;
+
+            const key = subscription.customer_reference ?? subscription.customer_id ?? reference;
+            const customer = session.value?.customers.find(
+                (entry) => entry.customer?.reference === key || entry.customer_id === key,
+            )?.customer;
+            const section: OrderSummaryInvoiceSection = sections.get(key) ?? {
+                key,
+                title: customer ? titleOf(customer) : (subscription.name ?? reference),
+                invoices: [],
+                subscriptions: [],
+            };
+            section.invoices.push(...invoices);
+            const summarised = customizations.value[index]?.subscription;
+            if (summarised) section.subscriptions!.push(summarised);
+            sections.set(key, section);
+        }
+        return sections.size > 1 ? [...sections.values()] : undefined;
+    });
     const stopInvoiceCountWatch = watch(preview, (current) => {
         if ((current?.invoices?.length ?? 0) <= 1) return;
         logger.warn(
@@ -1119,6 +1160,7 @@ export function useCheckoutSession({ portalUrlId }: { portalUrlId: string }) {
         }),
         isShippingAddressRequired: false,
         invoicePreview,
+        invoiceSections,
         invoicePreviewByBillingPeriod: computed(() => ({})),
         trialInvoicePreview: computed(() => undefined),
         trialPeriod: computed(() => undefined),

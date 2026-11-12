@@ -4,6 +4,7 @@ import type {
     Pricing,
     PricingPlanSubscriptionExpanded,
 } from '@solvimon/solvimon-types';
+import type { OrderSummaryInvoiceSection } from './OrderSummaryInvoice.types';
 import type { UsagePriceGroup } from './OrderSummaryUsage.lib';
 
 export interface OrderSummaryProps {
@@ -17,6 +18,8 @@ export interface OrderSummaryProps {
      * The invoice to display.
      */
     invoice?: Invoice;
+    /** Lists the invoice's lines in these parts, such as one per customer of the order. */
+    invoiceSections?: OrderSummaryInvoiceSection[];
     /**
      * The invoice previews per billing period.
      */

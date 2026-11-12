@@ -1299,7 +1299,7 @@ export interface SolvimonBranding {
 }
 
 // types/types/checkoutSession.d.ts
-import { Address, CheckoutSessionNewCustomerType, CheckoutSessionStatus, ConfiguredMeterValue, CreatedCheckoutSessionPortalUrl, Invoice, Name, PortalUrl, PricingPlanSubscription, TaxIdentifier } from '../vendor/@solvimon/solvimon-types/index';
+import { Address, CheckoutSessionNewCustomerType, CheckoutSessionStatus, ConfiguredMeterValue, CreatedCheckoutSessionPortalUrl, Invoice, InvoiceInfo, Name, PortalUrl, PricingPlanSubscription, TaxIdentifier } from '../vendor/@solvimon/solvimon-types/index';
 /** A `CLOSED` link (its session COMPLETED or FAILED) can still be read. */
 export type CheckoutSessionPortalUrlStatus = 'PUBLISHED' | 'REVOKED' | 'CLOSED';
 /** The portal object a host passes for a checkout session link; `token` is the handle. */
@@ -1475,7 +1475,7 @@ export interface CheckoutSessionPreview {
     };
     per_subscription?: {
         pricing_plan_subscription_reference: string;
-        invoice_infos: unknown[];
+        invoice_infos: InvoiceInfo[];
     }[];
     checkout_session: {
         version: number;

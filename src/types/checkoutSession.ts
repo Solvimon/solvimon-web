@@ -5,6 +5,7 @@ import type {
     ConfiguredMeterValue,
     CreatedCheckoutSessionPortalUrl,
     Invoice,
+    InvoiceInfo,
     Name,
     PortalUrl,
     PricingPlanSubscription,
@@ -199,7 +200,7 @@ export interface CheckoutSessionPreview {
     };
     per_subscription?: {
         pricing_plan_subscription_reference: string;
-        invoice_infos: unknown[];
+        invoice_infos: InvoiceInfo[];
     }[];
     checkout_session: { version: number; missing_fields?: string[] };
 }

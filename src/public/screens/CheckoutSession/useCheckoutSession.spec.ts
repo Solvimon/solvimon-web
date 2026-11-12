@@ -982,6 +982,101 @@ describe('useCheckoutSession', () => {
         });
     });
 
+    describe('order summary per customer', () => {
+        const location = (reference: string, legalName: string) =>
+            organizationCustomer(
+                { legal_name: legalName, registered_address: { country: 'NL' } },
+                `${reference}@shop.test`,
+            );
+        const withReference = (customer: ReturnType<typeof location>, reference: string) => ({
+            ...customer,
+            customer: { ...customer.customer!, reference },
+        });
+        const subscriptionOf = (reference: string, customerReference: string) => ({
+            ...createSession().pricing_plan_subscriptions[0],
+            pricing_plan_subscription: {
+                reference,
+                name: `Name of ${reference}`,
+                customer_reference: customerReference,
+            },
+        });
+        const part = (id: string) => ({
+            pricing_plan_schedule_id: 'pps_1',
+            invoices: [{ id } as never, { id: `${id}_next` } as never],
+        });
+        const previewFor = (references: string[], parts: Record<string, string>) => ({
+            ...previewOf(1),
+            invoices: [
+                { ...previewOf(1).invoices![0], pricing_plan_subscription_references: references },
+            ],
+            per_subscription: Object.entries(parts).map(([reference, id]) => ({
+                pricing_plan_subscription_reference: reference,
+                invoice_infos: [part(id)],
+            })),
+        });
+        const session = {
+            customers: [
+                withReference(location('a', "Domino's Amsterdam"), 'amsterdam'),
+                withReference(location('u', "Domino's Utrecht"), 'utrecht'),
+            ],
+            pricing_plan_subscriptions: [
+                subscriptionOf('amsterdam-premium', 'amsterdam'),
+                subscriptionOf('utrecht-pro', 'utrecht'),
+                subscriptionOf('utrecht-extra', 'utrecht'),
+            ],
+        };
+
+        it("lists each customer's first invoices under its name, its subscriptions together", async () => {
+            mockGet.mockResolvedValue(portalUrl(session));
+            mockPreview.mockResolvedValue(
+                previewFor(['amsterdam-premium', 'utrecht-pro', 'utrecht-extra'], {
+                    'amsterdam-premium': 'inv_a',
+                    'utrecht-pro': 'inv_u1',
+                    'utrecht-extra': 'inv_u2',
+                }),
+            );
+            const { source } = await loaded();
+
+            expect(
+                source.invoiceSections!.value!.map(({ key, title, invoices, subscriptions }) => ({
+                    key,
+                    title,
+                    ids: invoices.map(({ id }) => id),
+                    names: subscriptions?.map(({ name }) => name),
+                })),
+            ).toEqual([
+                {
+                    key: 'amsterdam',
+                    title: "Domino's Amsterdam",
+                    ids: ['inv_a'],
+                    names: ['Name of amsterdam-premium'],
+                },
+                {
+                    key: 'utrecht',
+                    title: "Domino's Utrecht",
+                    ids: ['inv_u1', 'inv_u2'],
+                    names: ['Name of utrecht-pro', 'Name of utrecht-extra'],
+                },
+            ]);
+        });
+
+        it('lists nothing per customer when a subscription of the invoice has no part of its own', async () => {
+            mockGet.mockResolvedValue(portalUrl(session));
+            mockPreview.mockResolvedValue(
+                previewFor(['amsterdam-premium', 'utrecht-pro'], { 'amsterdam-premium': 'inv_a' }),
+            );
+            const { source } = await loaded();
+
+            expect(source.invoiceSections!.value).toBeUndefined();
+        });
+
+        it('lists nothing per customer for an invoice of one customer', async () => {
+            const { source } = await loaded();
+
+            expect(source.invoiceSections!.value).toBeUndefined();
+        });
+    });
+
     describe('previewing', () => {
         it('flags a failed preview until a retry answers', async () => {
             mockPreview.mockRejectedValue(new Error('down'));

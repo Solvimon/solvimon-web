@@ -36,17 +36,33 @@ const quantityOf = (group: InvoiceGroup) => {
     return quantity === undefined ? undefined : getCompactQuantity(quantity, formatNumber);
 };
 
-// Every count takes the widest one's width, so the names after them line up.
-const quantityWidth = computed(() => {
-    const widest = Math.max(
-        0,
-        ...groupsWithDiscounts.value.flat().map((group) => quantityOf(group)?.label.length ?? 0),
-    );
+// Every count of a block takes the widest one's width, so the names after them line up.
+const quantityWidthOf = (groups: InvoiceGroup[]): string | undefined => {
+    const widest = Math.max(0, ...groups.map((group) => quantityOf(group)?.label.length ?? 0));
     return widest ? `${widest}ch` : undefined;
-});
+};
 
+const quantityWidth = computed(() => quantityWidthOf(groupsWithDiscounts.value.flat()));
+const sectionRows = computed(() =>
+    (props.sections ?? []).map((section) => {
+        const clusters = section.invoices.flatMap(getInvoiceGroupsWithDiscounts);
+        const names = (section.subscriptions ?? []).flatMap(({ name }) => (name ? [name] : []));
+        return {
+            ...section,
+            clusters,
+            subscriptionNames: names.join(', '),
+            quantityWidth: quantityWidthOf(clusters.flat()),
+        };
+    }),
+);
 const discountsUnderAProduct = computed(
-    () => new Set(groupsWithDiscounts.value.flatMap(([, ...discounts]) => discounts)),
+    () =>
+        new Set(
+            [
+                ...groupsWithDiscounts.value,
+                ...sectionRows.value.flatMap(({ clusters }) => clusters),
+            ].flatMap(([, ...discounts]) => discounts),
+        ),
 );
 
 const getDiscountBand = (group: InvoiceGroup) =>
@@ -80,7 +96,82 @@ const subtotalOf = (groups: InvoiceGroup[]): Amount | undefined =>
         :aria-busy="isUpdating"
         class="sv-order-summary__items grid grid-cols-1 gap-1"
     >
-        <template v-if="hasBothRecurrences">
+        <template v-if="sectionRows.length">
+            <Section
+                v-for="section in sectionRows"
+                :key="section.key"
+                no-spacing
+                class="sv-order-summary__section"
+            >
+                <div
+                    class="sv-order-summary__section-header flex flex-row items-center gap-2 px-3 py-2"
+                >
+                    <Typography
+                        variant="body-xs"
+                        weight="semibold"
+                        no-spacing
+                        class="sv-order-summary__section-title shrink-0"
+                        >{{ section.title }}</Typography
+                    >
+                    <div
+                        v-if="section.subscriptionNames"
+                        class="min-w-0"
+                        :title="section.subscriptionNames"
+                    >
+                        <Typography
+                            variant="body-xs"
+                            no-spacing
+                            class="sv-order-summary__section-subscriptions truncate"
+                            >{{ section.subscriptionNames }}</Typography
+                        >
+                    </div>
+                </div>
+                <Divider spacing="none" />
+                <div class="px-3 py-2">
+                    <template
+                        v-for="(cluster, clusterIndex) in section.clusters"
+                        :key="clusterIndex"
+                    >
+                        <div
+                            v-for="(group, index) in cluster"
+                            :key="index"
+                            class="flex flex-row items-center gap-2 py-1.5"
+                        >
+                            <div class="flex grow flex-row items-center gap-2">
+                                <OrderSummaryQuantity
+                                    v-if="section.quantityWidth"
+                                    :quantity="quantityOf(group)"
+                                    :width="section.quantityWidth"
+                                />
+                                <Typography
+                                    v-if="!showsDiscountChip(group)"
+                                    tag="span"
+                                    variant="body-xs"
+                                    weight="semibold"
+                                    >{{ getInvoiceGroupName(group) }}</Typography
+                                >
+                                <InvoicePricingClauseChip
+                                    v-else
+                                    class="sv-order-summary__discount"
+                                    clause-type="DISCOUNT"
+                                    :price-details-band="getDiscountBand(group)"
+                                />
+                            </div>
+                            <Typography
+                                tag="span"
+                                variant="body-xs"
+                                weight="medium"
+                                color="subtle"
+                                class="tabular-nums"
+                            >
+                                <AmountDisplay :value="group.amount_excluding_tax" />
+                            </Typography>
+                        </div>
+                    </template>
+                </div>
+            </Section>
+        </template>
+        <template v-else-if="hasBothRecurrences">
             <div
                 v-for="section in [
                     {
@@ -169,7 +260,9 @@ const subtotalOf = (groups: InvoiceGroup[]): Amount | undefined =>
                 </Section>
             </div>
         </template>
-        <Section v-if="hasBothRecurrences && groupsByRecurrence.other.length">
+        <Section
+            v-if="!sectionRows.length && hasBothRecurrences && groupsByRecurrence.other.length"
+        >
             <div
                 v-for="(group, index) in groupsByRecurrence.other"
                 :key="index"
@@ -196,7 +289,7 @@ const subtotalOf = (groups: InvoiceGroup[]): Amount | undefined =>
         </Section>
         <!-- every line in one card, each discount under the product it is on -->
         <Section
-            v-if="!hasBothRecurrences && groupsWithDiscounts.length"
+            v-if="!sectionRows.length && !hasBothRecurrences && groupsWithDiscounts.length"
             class="sv-order-summary__lines"
         >
             <template v-for="(cluster, clusterIndex) in groupsWithDiscounts" :key="clusterIndex">

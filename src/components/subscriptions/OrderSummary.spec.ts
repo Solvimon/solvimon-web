@@ -256,4 +256,54 @@ describe('OrderSummary', () => {
         expect(totals.classes()).not.toContain('blur');
         expect(totals.classes()).toContain('transition');
     });
+
+    it('lists the lines per section under its title and subscriptions, above the totals of the whole invoice', () => {
+        const charge = (name: string, quantity: string) => ({
+            type: 'REVENUE',
+            pricing: { name },
+            amount_excluding_tax: { quantity, currency: 'EUR' },
+            lines: [{ type: 'REVENUE' }],
+        });
+        const partInvoice = (...groups: ReturnType<typeof charge>[]) =>
+            ({ ...invoiceOf(), periods: [{ groups }] }) as unknown as Invoice;
+
+        const wrapper = mount(OrderSummary, {
+            props: {
+                subscription,
+                invoice: invoiceOf(),
+                countryCode: 'NL',
+                invoiceSections: [
+                    {
+                        key: 'amsterdam',
+                        title: "Domino's Amsterdam",
+                        invoices: [
+                            partInvoice(
+                                charge('Premium platform', '126.03'),
+                                charge('Staff seats', '22.16'),
+                            ),
+                        ],
+                    },
+                    {
+                        key: 'nijmegen',
+                        title: "Domino's Nijmegen",
+                        invoices: [partInvoice(charge('Basic platform', '31.03'))],
+                        subscriptions: [subscription],
+                    },
+                ],
+            },
+            global: { stubs: { SubscriptionSummary: true } },
+        });
+
+        const sections = wrapper.findAll('.sv-order-summary__section');
+        expect(
+            sections.map((section) => section.find('.sv-order-summary__section-title').text()),
+        ).toEqual(["Domino's Amsterdam", "Domino's Nijmegen"]);
+        expect(sections[0].text()).toContain('Premium platform');
+        expect(sections[0].text()).toContain('Staff seats');
+        expect(sections[0].find('.sv-order-summary__section-subscriptions').exists()).toBe(false);
+        expect(sections[1].find('.sv-order-summary__section-subscriptions').text()).toBe('Pro');
+        expect(wrapper.find('.sv-order-summary__totals').exists()).toBe(true);
+        // The sections name the subscriptions, so no list of them stands above.
+        expect(wrapper.find('.sv-order-summary__subscription').exists()).toBe(false);
+    });
 });

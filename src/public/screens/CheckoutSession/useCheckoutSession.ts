@@ -63,6 +63,7 @@ import type {
     CheckoutSessionCustomerPatch,
     CheckoutSessionCustomizationPatch,
     CheckoutSessionEffectiveDisplay,
+    CheckoutSessionFieldDisplay,
     CheckoutSessionNewCustomer,
     CheckoutSessionPortalUrlResponse,
     CheckoutSessionPreview,
@@ -127,6 +128,17 @@ const fieldValidation = (form: CheckoutForm, field: TextField) => {
     const result: unknown = Reflect.get(form.validation.value, field);
     return typeof result === 'object' && result !== null ? result : undefined;
 };
+
+const lock = (shown: CheckoutSessionFieldDisplay): CheckoutSessionFieldDisplay =>
+    shown === 'EDITABLE' ? 'READ_ONLY' : shown;
+
+const readOnly = (display: CheckoutSessionEffectiveDisplay): CheckoutSessionEffectiveDisplay => ({
+    customer_details: lock(display.customer_details),
+    address: lock(display.address),
+    tax_ids: lock(display.tax_ids),
+    email: lock(display.email),
+    custom_fields: lock(display.custom_fields),
+});
 
 const titleOf = (customer: CheckoutSessionNewCustomer) => {
     const name = customer.individual?.name;
@@ -872,6 +884,22 @@ export function useCheckoutSession({ portalUrlId }: { portalUrlId: string }) {
         () => preview.value?.invoices?.[0]?.invoice,
     );
 
+    /** The customers of the session that another customer of it has as its parent. */
+    const parentIndexes = computed(() => {
+        const customers = session.value?.customers ?? [];
+        return new Set(
+            customers.flatMap(({ parent_customer: parent }) => {
+                if (!parent) return [];
+                const index = customers.findIndex(
+                    ({ customer, customer_id: id }) =>
+                        (!!parent.reference && customer?.reference === parent.reference) ||
+                        (!!parent.id && id === parent.id),
+                );
+                return index === -1 ? [] : [index];
+            }),
+        );
+    });
+
     /**
      * The shown invoice's lines per customer, from each subscription's own preview: the shared
      * invoice's lines name only the template, which subscriptions of one plan have in common.
@@ -1143,7 +1171,12 @@ export function useCheckoutSession({ portalUrlId }: { portalUrlId: string }) {
         checkoutForm,
         customerForms: computed(() => {
             const customers = session.value?.customers ?? [];
-            return customers.flatMap((customer, index): CheckoutCustomerForm[] => {
+            // A parent ordering for its children shows only its own details, as they are.
+            const shown = parentIndexes.value.size
+                ? customers.filter((_, index) => parentIndexes.value.has(index))
+                : customers;
+            return shown.flatMap((customer): CheckoutCustomerForm[] => {
+                const index = customers.indexOf(customer);
                 const form = forms.value[index];
                 // An existing customer cannot be edited, and the session gives nothing to show of it.
                 if (!customer.customer || !form) return [];
@@ -1151,13 +1184,16 @@ export function useCheckoutSession({ portalUrlId }: { portalUrlId: string }) {
                     {
                         key: `${index}`,
                         form,
-                        display: customer.effective_display,
+                        display: parentIndexes.value.size
+                            ? readOnly(customer.effective_display)
+                            : customer.effective_display,
                         isTypeLocked: true,
-                        ...(customers.length > 1 && { title: titleOf(customer.customer) }),
+                        ...(shown.length > 1 && { title: titleOf(customer.customer) }),
                     },
                 ];
             });
         }),
+        isOrderFixed: computed(() => parentIndexes.value.size > 0),
         isShippingAddressRequired: false,
         invoicePreview,
         invoiceSections,

@@ -1578,6 +1578,27 @@ describe('useCheckoutSession', () => {
             );
         });
 
+        it('names a subscription as the session does, else as its template', async () => {
+            mockGet.mockResolvedValue(
+                twoSubscriptions([
+                    createSession().pricing_plan_subscriptions[0],
+                    {
+                        ...second,
+                        pricing_plan_subscription: {
+                            ...second.pricing_plan_subscription,
+                            name: 'Office hardware',
+                        },
+                    },
+                ]),
+            );
+            const { source } = await loaded();
+            const [first, other] = source.planCustomizations!.value;
+
+            expect(first.title).toBe('Subscription');
+            expect(other.title).toBe('Office hardware');
+            expect(other.subscription.name).toBe('Office hardware');
+        });
+
         it('gives each subscription a section of its own, named after its plan', async () => {
             const { source } = await loaded();
             const [first, other] = source.planCustomizations!.value;

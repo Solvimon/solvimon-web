@@ -85,6 +85,7 @@ export interface CheckoutSessionSubscription {
     template_pricing_plan_subscription_id: PricingPlanSubscription['id'];
     pricing_plan_subscription: {
         reference: string;
+        name?: string;
         customer_id?: string;
         customer_reference?: string;
         variant?: string;

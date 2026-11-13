@@ -16,6 +16,7 @@ export type SubscriptionsListConfiguration = {
      * @default true
      */
     showViewDetailsButton?: boolean;
+    showManageButton?: boolean;
 };
 
 export interface SubscriptionsListProps {

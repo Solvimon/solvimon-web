@@ -28,6 +28,7 @@ const { dispatchAction } = useActionDispatchProvider();
         :is-loading-more="isLoadingMore"
         :show-view-all-button="configuration?.showViewAllButton"
         :show-view-details-button="configuration?.showViewDetailsButton"
+        :show-manage-button="configuration?.showManageButton"
         @view-subscription-details="
             dispatchAction({
                 action: 'view-subscription-details',

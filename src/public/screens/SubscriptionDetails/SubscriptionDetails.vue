@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed, defineAsyncComponent, ref, toRef, watch } from 'vue';
-import { Alert, Button, Typography, useIntl, ErrorNotification } from '@solvimon/solvimon-ui';
+import { computed, defineAsyncComponent, ref, toRef } from 'vue';
+import { Button, Typography, useIntl, ErrorNotification } from '@solvimon/solvimon-ui';
 import type {
     SubscriptionDetailsEmits,
     SubscriptionDetailsProps,
@@ -18,7 +18,7 @@ import Skeleton from '@/components/shared/Skeleton.vue';
 import EnabledPricingsList from '@/components/subscriptions/EnabledPricingsList/EnabledPricingsList.vue';
 import OnDemandItemsCard from '@/components/subscriptions/OnDemandItemsCard/OnDemandItemsCard.vue';
 import SubscriptionCancellationModal from '@/components/subscriptions/SubscriptionCancellationModal/SubscriptionCancellationModal.vue';
-import type { SubscriptionCancellationVariant } from '@/services/subscriptions';
+import SubscriptionCancellationSuccess from '@/components/subscriptions/SubscriptionCancellationSuccess/SubscriptionCancellationSuccess.vue';
 
 /**
  * Loaded on demand: the schedules are the heaviest thing this screen renders, and they sit behind
@@ -48,6 +48,8 @@ const {
     isCancellable,
     isRenewable,
     pendingVariant,
+    confirmedVariant,
+    confirm: confirmCancellation,
     cancel: handleCancel,
     renew: handleRenew,
     dismiss: handleDismissCancellation,
@@ -55,40 +57,13 @@ const {
 } = useSubscriptionActions({ subscription: toRef(props, 'subscription') });
 
 /**
- * What the customer just did, kept after the modal closes so the screen can confirm it. Cleared when
- * either button is used again, so a second confirmation replaces the first rather than stacking.
- */
-const confirmedVariant = ref<SubscriptionCancellationVariant | undefined>();
-
-watch(pendingVariant, (variant) => {
-    if (variant) confirmedVariant.value = undefined;
-});
-
-/**
  * The change landed, so the subscription on screen is stale — the host refetches it, which is what
  * flips the header between Cancel and Renew.
  */
 const handleCancellationConfirmed = () => {
-    confirmedVariant.value = pendingVariant.value;
+    confirmCancellation();
     emit('subscription-changed');
 };
-
-const cancellationSuccessMessage = computed<string | undefined>(() => {
-    if (!confirmedVariant.value) return undefined;
-
-    return confirmedVariant.value === 'RENEW'
-        ? $t({
-              defaultMessage: 'Your subscription has been renewed.',
-              id: 'subscription_details.renew_success',
-              description: 'Confirmation shown after a cancellation has been undone',
-          })
-        : $t({
-              defaultMessage:
-                  'Your subscription has been cancelled. You keep access until the end of the billing period.',
-              id: 'subscription_details.cancel_success',
-              description: 'Confirmation shown after a subscription has been cancelled',
-          });
-});
 
 /**
  * The upgrades on offer are the ones enabled on the schedule the subscription is billed on now — not
@@ -176,11 +151,10 @@ const title = computed<string>(() =>
         </template>
 
         <template #content>
-            <Alert
-                v-if="cancellationSuccessMessage"
+            <SubscriptionCancellationSuccess
+                v-if="confirmedVariant"
                 class="sv-subscription-details__cancellation-success"
-                type="success"
-                :title="cancellationSuccessMessage"
+                :variant="confirmedVariant"
             />
 
             <ErrorNotification

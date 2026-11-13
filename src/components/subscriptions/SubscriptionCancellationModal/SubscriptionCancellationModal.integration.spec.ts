@@ -83,6 +83,7 @@ vi.mock('@/services/subscriptions', () => ({
 
 vi.mock('@/components/providers', () => ({
     useLogger: () => ({ error: mockLogError }),
+    useActionDispatchProvider: () => ({ dispatchAction: vi.fn() }),
 }));
 
 const mockSubscription = {
@@ -229,6 +230,17 @@ describe('SubscriptionCancellationModal', () => {
             expect(wrapper.find('.sv-subscription-cancellation-modal__payment-method').text()).toBe(
                 '4242',
             );
+        });
+
+        it('names the payment method without saying whether it is the default', () => {
+            const wrapper = mountComponent({
+                subscription: subscriptionWithPaymentMethod,
+                paymentMethod: { ...mockPaymentMethod, is_default: true },
+            });
+
+            const shown = wrapper.findComponent({ name: 'PaymentMethodStub' });
+
+            expect(shown.props('paymentMethod')).toMatchObject({ id: 'pmet_1', is_default: false });
         });
 
         it('still lets the customer cancel without a payment method to show', () => {

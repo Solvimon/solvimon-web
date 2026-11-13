@@ -9,6 +9,7 @@ export interface SubscriptionsListItemProps {
     paymentMethod?: PaymentMethod;
     customer: Customer;
     showViewSubscriptionDetailsButton?: boolean;
+    showManageButton?: boolean;
 }
 
 export interface SubscriptionsListItemEmits {

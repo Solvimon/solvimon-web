@@ -16,6 +16,10 @@ export const CUSTOMER_ID = 'cus_test_customer';
 export const DEFAULT_SCHEDULE_ID = 'ppsi_default';
 export const TRIAL_SCHEDULE_ID = 'ppsi_trial';
 export const PAYMENT_ACCEPTOR_ID = 'paya_test_acceptor';
+export const PRICING_PLAN_ID = 'ppla_pro';
+export const PRICING_PLAN_GROUP_ID = 'ppgr_plans';
+/** The plan a step up from the one the subscription runs on. */
+export const UPGRADE_PRICING_PLAN_ID = 'ppla_scale';
 export const SUCCESS_URL = 'https://merchant.example.com/welcome';
 
 const PLATFORM_ID = 'plat_test';
@@ -179,6 +183,63 @@ const aPricing = ({
  * schedule's own `seats_values`, add-ons off the plan version's pricing groups. A plan with neither
  * renders no editor at all.
  */
+export function aPricingPlan({
+    id = PRICING_PLAN_ID,
+    name = 'Pro plan',
+    description,
+}: {
+    id?: string;
+    name?: string;
+    description?: string;
+} = {}): Json {
+    return {
+        object_type: 'PRICING_PLAN',
+        id,
+        name,
+        reference: id,
+        type: 'STANDARD',
+        variant: 'DEFAULT',
+        ...(description ? { description } : {}),
+    };
+}
+
+export function aPricingPlanGroup({
+    id = PRICING_PLAN_GROUP_ID,
+    name = 'Workspace plans',
+    status = 'ACTIVE',
+    upgradeType = 'IMMEDIATE_PRO_RATA',
+    downgradeType = 'NEXT_BILLING_PERIOD',
+    members = [
+        { pricing_plan_id: PRICING_PLAN_ID, order: 1 },
+        { pricing_plan_id: UPGRADE_PRICING_PLAN_ID, order: 2 },
+    ],
+}: {
+    id?: string;
+    name?: string;
+    status?: 'DRAFT' | 'ACTIVE' | 'DEPRECATED' | 'ARCHIVED';
+    upgradeType?: string;
+    downgradeType?: string;
+    members?: { pricing_plan_id: string; order: number }[];
+} = {}): Json {
+    return {
+        object_type: 'PRICING_PLAN_GROUP',
+        id,
+        reference: id,
+        name,
+        status,
+        upgrade_type: upgradeType,
+        downgrade_type: downgradeType,
+        cancellation_type: 'NEXT_BILLING_PERIOD',
+        pricing_plans: members.map((member) => ({
+            ...member,
+            pricing_plan: aPricingPlan({
+                id: member.pricing_plan_id,
+                name: member.pricing_plan_id === PRICING_PLAN_ID ? 'Pro plan' : 'Scale plan',
+            }),
+        })),
+    };
+}
+
 export function aSubscription({
     id = SUBSCRIPTION_ID,
     name = 'Pro plan',
@@ -234,6 +295,8 @@ export function aSubscription({
     const pricingPlanVersion: Json = {
         id: 'pplv_test',
         name,
+        pricing_plan_id: PRICING_PLAN_ID,
+        pricing_plan: aPricingPlan({ id: PRICING_PLAN_ID, name }),
         billing_period_settings: {
             billing_periods: billingPeriods.map((period) => ({ period })),
         },
@@ -325,7 +388,7 @@ interface InvoiceOptions {
     description?: string;
 }
 
-function anInvoice({
+export function anInvoice({
     total = '20.00',
     tax = '0.00',
     currency = 'EUR',

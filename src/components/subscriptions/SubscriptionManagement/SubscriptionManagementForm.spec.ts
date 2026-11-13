@@ -2,6 +2,7 @@ import { mount } from '@vue/test-utils';
 import { defineComponent, h } from 'vue';
 import type { BillingPeriod, PaymentMethod, PricingGroupExtended } from '@solvimon/solvimon-types';
 import SubscriptionManagementForm from './SubscriptionManagementForm.vue';
+import type { SubscriptionPlanOption } from '@/composables/useSubscriptionPlanGroup';
 
 vi.mock('@solvimon/solvimon-ui', async () => {
     const { createSolvimonUiMock } = await import('@/test-utils/solvimonUiMock');
@@ -45,27 +46,48 @@ const createPaymentMethod = (overrides: Partial<PaymentMethod> = {}) =>
         ...overrides,
     }) as unknown as PaymentMethod;
 
+const planOptions: SubscriptionPlanOption[] = [
+    { pricingPlanId: 'ppla_starter', name: 'Starter', isCurrent: true },
+    {
+        pricingPlanId: 'ppla_pro',
+        name: 'Pro',
+
+        isCurrent: false,
+        direction: 'UPGRADE',
+        changeType: 'IMMEDIATE',
+    },
+];
+
 const mountComponent = ({
     enabledPricingIds = ['pric_basic'],
     paymentMethods = [createPaymentMethod()],
     paymentMethodId,
     hasExpiredPaymentMethod,
+    planOptions: planOptionsProp,
+    pricingPlanId,
+    withPricingGroup = true,
 }: {
     enabledPricingIds?: string[];
     paymentMethods?: PaymentMethod[];
     paymentMethodId?: string;
     hasExpiredPaymentMethod?: boolean;
+    planOptions?: SubscriptionPlanOption[];
+    pricingPlanId?: string;
+    withPricingGroup?: boolean;
 } = {}) =>
     mount(SubscriptionManagementForm, {
         props: {
-            pricingGroup,
+            ...(withPricingGroup ? { pricingGroup } : {}),
             paymentMethods,
             hasExpiredPaymentMethod,
             billingPeriod,
             enabledPricingIds,
             paymentMethodId,
+            planOptions: planOptionsProp,
+            pricingPlanId,
             'onUpdate:enabledPricingIds': (value: string[]) => value,
             'onUpdate:paymentMethodId': (value?: string) => value,
+            'onUpdate:pricingPlanId': (value?: string) => value,
         },
         global: { stubs: { teleport: true } },
     });
@@ -90,7 +112,7 @@ describe('SubscriptionManagementForm', () => {
         expect(wrapper.find('.sv-subscription-management-form__payment-methods').exists()).toBe(
             true,
         );
-        expect(wrapper.text()).toContain('Payment method');
+        expect(wrapper.text()).toContain('Saved payment methods');
     });
 
     describe('payment method default', () => {
@@ -135,44 +157,44 @@ describe('SubscriptionManagementForm', () => {
         });
     });
 
-    it('offers no other payment method, since the change is charged to the subscription', () => {
+    it('offers to add a payment method, for the screen to store in a modal', async () => {
+        const wrapper = mountComponent();
+
+        await wrapper.find('.sv-payment-method-selector__add').trigger('click');
+
+        expect(wrapper.emitted('add-payment-method')).toHaveLength(1);
+    });
+
+    // A subscription without a method the API can charge gets one by adding it.
+    it('still offers to add one when there is no stored method to pick', () => {
+        const wrapper = mountComponent({ paymentMethods: [] });
+
+        expect(wrapper.find('.sv-payment-method-selector__add').exists()).toBe(true);
+    });
+
+    it("says the subscription's card has expired, under a choice that can replace it", () => {
+        const wrapper = mountComponent({ hasExpiredPaymentMethod: true });
+        const note = wrapper.find('.sv-subscription-management-form__expired-payment-method');
+
+        expect(note.text()).toContain('has expired');
+        expect(note.text()).toContain('add a new one');
+        expect(wrapper.findComponent({ name: 'PaymentMethodSelector' }).exists()).toBe(true);
+    });
+
+    it('says nothing about an expired card when the subscription is paid with a valid one', () => {
         const wrapper = mountComponent();
 
         expect(
-            wrapper.findComponent({ name: 'PaymentMethodSelector' }).props('showAddOption'),
+            wrapper.find('.sv-subscription-management-form__expired-payment-method').exists(),
         ).toBe(false);
-        expect(wrapper.find('.sv-payment-method-selector__add').exists()).toBe(false);
     });
 
-    it('says so when there is no payment method to charge the change to', () => {
-        const wrapper = mountComponent({ paymentMethods: [] });
-
-        expect(wrapper.find('.sv-subscription-management-form__payment-methods').exists()).toBe(
-            false,
-        );
-        expect(wrapper.find('.sv-subscription-management-form__no-payment-method').exists()).toBe(
-            true,
-        );
-    });
-
-    it("says to replace the subscription's card when that has expired", () => {
-        const message = mountComponent({ paymentMethods: [], hasExpiredPaymentMethod: true }).find(
-            '.sv-subscription-management-form__no-payment-method',
-        );
-
-        expect(message.text()).toContain('has expired');
-        expect(message.text()).not.toContain('contact support');
-    });
-
-    it('names the message after the form, so a button outside it can point at it', async () => {
-        const wrapper = mountComponent({ paymentMethods: [] });
+    it('names itself, so a submit button outside it can point at it', async () => {
+        const wrapper = mountComponent();
 
         await wrapper.setProps({ id: 'sv-form' });
 
         expect(wrapper.find('form').attributes('id')).toBe('sv-form');
-        expect(
-            wrapper.find('.sv-subscription-management-form__no-payment-method').attributes('id'),
-        ).toBe('sv-form__no-payment-method');
     });
 
     it('reports being submitted, so Enter commits the change too', async () => {
@@ -196,5 +218,65 @@ describe('SubscriptionManagementForm', () => {
         });
 
         expect(wrapper.emitted('update:paymentMethodId')?.at(-1)).toEqual(['pm_added']);
+    });
+
+    describe('plan choice', () => {
+        it('offers the plans of the group above what the plan can be customised with', () => {
+            const wrapper = mountComponent({
+                planOptions,
+                pricingPlanId: 'ppla_starter',
+            });
+
+            expect(wrapper.find('.sv-subscription-management-form__plan').exists()).toBe(true);
+            expect(wrapper.text()).toContain('Pick your plan');
+            expect(wrapper.text()).toContain('Pro');
+        });
+
+        it('leaves the plan choice out when the subscription has nowhere to move to', () => {
+            const wrapper = mountComponent({ planOptions: [planOptions[0]] });
+
+            expect(wrapper.find('.sv-subscription-management-form__plan').exists()).toBe(false);
+        });
+
+        it('leaves the plan choice out for a plan that belongs to no group', () => {
+            const wrapper = mountComponent();
+
+            expect(wrapper.find('.sv-subscription-management-form__plan').exists()).toBe(false);
+        });
+
+        it('keeps offering what the current plan can be customised with while it is kept', () => {
+            const wrapper = mountComponent({ planOptions, pricingPlanId: 'ppla_starter' });
+
+            expect(wrapper.find('.sv-subscription-management-form__pricing-group').exists()).toBe(
+                true,
+            );
+        });
+
+        // The pricings on offer belong to the plan being left, so they have nothing to say about
+        // the one being moved to.
+        it('reports the plan the customer picks', async () => {
+            const wrapper = mountComponent({ planOptions, pricingPlanId: 'ppla_starter' });
+
+            await wrapper
+                .find('.sv-subscription-management-form__plan')
+                .findAll('input[type="radio"]')
+                .at(-1)
+                ?.setValue();
+
+            expect(wrapper.emitted('update:pricingPlanId')?.at(-1)).toEqual(['ppla_pro']);
+        });
+
+        it('renders for a plan that offers nothing to customise', () => {
+            const wrapper = mountComponent({
+                withPricingGroup: false,
+                planOptions,
+                pricingPlanId: 'ppla_starter',
+            });
+
+            expect(wrapper.find('.sv-subscription-management-form__plan').exists()).toBe(true);
+            expect(wrapper.find('.sv-subscription-management-form__payment-methods').exists()).toBe(
+                true,
+            );
+        });
     });
 });

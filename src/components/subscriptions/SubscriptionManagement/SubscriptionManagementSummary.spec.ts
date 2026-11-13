@@ -40,6 +40,17 @@ const mountComponent = (props: Record<string, unknown> = {}) =>
     mount(SubscriptionManagementSummary, { props });
 
 describe('SubscriptionManagementSummary', () => {
+    it('names the plan the change is for, and leaves the row out without one', () => {
+        expect(
+            mountComponent({ planName: 'Pro' })
+                .find('.sv-subscription-management-summary__plan')
+                .text(),
+        ).toBe('Pro');
+        expect(mountComponent().find('.sv-subscription-management-summary__plan').exists()).toBe(
+            false,
+        );
+    });
+
     it('renders the previewed invoice', () => {
         const wrapper = mountComponent({ invoice });
 

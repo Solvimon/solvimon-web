@@ -32,6 +32,48 @@ vi.mock('@/services/invoices', () => ({
     createInvoicesService: () => ({ getInvoicePreview: mockGetInvoicePreview }),
 }));
 
+vi.mock('@/services/subscriptions', () => ({
+    createSubscriptionsService: () => ({ changeSubscriptionPlan: vi.fn() }),
+}));
+
+// A plan in no group, so the screen offers what the plan can be customised with and nothing else.
+vi.mock('@/composables/useSubscriptionPlanGroup', async () => {
+    const { ref } = await import('vue');
+
+    return {
+        useSubscriptionPlanGroup: () => ({
+            group: ref(undefined),
+            options: ref([]),
+            currentPricingPlanId: ref(undefined),
+            isPending: ref(false),
+            error: ref(undefined),
+            load: vi.fn(),
+        }),
+    };
+});
+
+// Only reached by a move to another plan, which a plan in no group never makes.
+vi.mock('@/composables/useSubscriptionPlanChangePreview', async () => {
+    const { ref } = await import('vue');
+
+    return {
+        useSubscriptionPlanChangePreview: () => ({
+            invoice: ref(undefined),
+            isPending: ref(false),
+            error: ref(undefined),
+            load: vi.fn(),
+            reset: vi.fn(),
+        }),
+    };
+});
+
+// The customer only dates the cancellation modal, which these tests do not open.
+vi.mock('@/composables/useCustomer', async () => {
+    const { ref } = await import('vue');
+
+    return { useCustomer: () => ({ customer: ref(undefined), get: { execute: vi.fn() } }) };
+});
+
 vi.mock('@/composables/usePaymentMethodOptions', () => ({
     usePaymentMethodOptions: () => ({ paymentMethodOptions: ref([]), get: vi.fn() }),
 }));

@@ -86,6 +86,7 @@ describe('BillingInformationModal', () => {
         );
 
         expect(wrapper.find('button[type="submit"]').exists()).toBe(false);
+        expect(wrapper.text()).not.toContain('Customer information');
         await wrapper.find('input[type="email"]').setValue('edited@example.com');
         await wrapper.find('[data-testid="confirm"]').trigger('click');
         await flushPromises();

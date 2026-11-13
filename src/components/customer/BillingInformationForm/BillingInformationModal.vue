@@ -67,6 +67,7 @@ const handleClose = () => {
                 ref="formRef"
                 class="sv-billing-information-modal pb-4"
                 hide-submit-button
+                hide-contact-heading
                 :customer="customer"
                 :is-loading="update.isPending.value"
                 :api-error="apiError"

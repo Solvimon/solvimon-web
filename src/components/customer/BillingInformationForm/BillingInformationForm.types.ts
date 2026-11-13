@@ -16,6 +16,8 @@ export interface BillingInformationFormProps {
      * modal footer. Pair it with the exposed `submit()`.
      */
     hideSubmitButton?: boolean;
+    /** Leaves out the heading above the contact details, for a host whose own title says it. */
+    hideContactHeading?: boolean;
 }
 
 export interface BillingInformationFormEmits {

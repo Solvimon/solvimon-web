@@ -6,7 +6,6 @@ import {
     Expand,
     getCountryNameByCode,
     Input,
-    isEUCountry,
     Label,
     Section,
     Typography,
@@ -14,13 +13,12 @@ import {
 } from '@solvimon/solvimon-ui';
 import { computed, reactive, ref } from 'vue';
 import type { CheckoutFormState, CheckoutFormProps, CheckoutFormEmits } from './CheckoutForm.types';
-import TaxIDCheckNotice from './TaxIDCheckNotice.vue';
 import CheckoutAddressFields from './CheckoutAddressFields.vue';
-import { isVatNumberShown, toShippingAddressDetails } from './CheckoutForm.lib';
+import { toShippingAddressDetails } from './CheckoutForm.lib';
+import CompanyDetailsFields from '@/components/customer/CompanyDetailsFields.vue';
 import CompanyPurchaseToggle from '@/components/customer/CompanyPurchaseToggle.vue';
 import HiddenLabelInput from '@/components/customer/HiddenLabelInput.vue';
 import { useCustomerFormLabels } from '@/components/customer/useCustomerFormLabels';
-import { useTaxIDValidationCheck } from '@/composables/useTaxIDValidationCheck';
 import { asOptionalText, formControlModel, type SelectControlValue } from '@/utils/formControl';
 import { isCountryCode } from '@/utils/countryCode';
 
@@ -48,8 +46,6 @@ const fields = reactive({
     postalCode: formControlModel(model, 'postalCode', asOptionalText),
     city: formControlModel(model, 'city', asOptionalText),
     state: formControlModel(model, 'state', asOptionalText),
-    companyLegalName: formControlModel(model, 'companyLegalName', asOptionalText),
-    companyVatNumber: formControlModel(model, 'companyVatNumber', asOptionalText),
 });
 
 const country = computed<SelectControlValue>({
@@ -67,11 +63,6 @@ const shippingCountry = computed<SelectControlValue>({
         model.value.shippingCountry = code !== undefined && isCountryCode(code) ? code : undefined;
     },
 });
-
-const showVatIdInput = computed(() => isVatNumberShown(model.value));
-
-const { isTaxIDCheckEnabled, isTaxIDCheckPending, taxIdCheckStatus, runTaxIDCheck } =
-    useTaxIDValidationCheck(model);
 
 const { $t } = useIntl();
 const labels = useCustomerFormLabels();
@@ -401,59 +392,15 @@ const shippingCountryPlaceholder = computed(() =>
 
                 <Expand :is-open="isCompanyPurchase">
                     <div v-if="isCompanyPurchase">
-                        <div class="mt-2 flex flex-col gap-2">
-                            <Input
-                                v-model="fields.companyLegalName"
-                                required
-                                name="legal_name"
-                                autocomplete="billing organization"
-                                :label="labels.legalNameLabel"
-                                :placeholder="labels.legalNamePlaceholder"
-                                :error="validation.value.companyLegalName.$errors"
-                            />
-
-                            <Input
-                                v-if="showVatIdInput"
-                                v-model="fields.companyVatNumber"
-                                name="vat_number"
-                                autocomplete="off"
-                                input-class="focus:outline-none focus:ring-0"
-                                :label="labels.vatNumberLabel"
-                                :placeholder="labels.vatNumberPlaceholder"
-                                :error="validation.value.companyVatNumber.$errors"
-                                suffix-class="px-2 border-l-0"
-                            >
-                                <template v-if="isEUCountry(model.country ?? '')" #suffix>
-                                    <Button
-                                        type="button"
-                                        size="sm"
-                                        intent="secondary"
-                                        :disabled="
-                                            !isTaxIDCheckEnabled ||
-                                            isTaxIDCheckPending ||
-                                            validation.value.companyVatNumber.$invalid
-                                        "
-                                        @click="runTaxIDCheck"
-                                    >
-                                        {{
-                                            $t({
-                                                defaultMessage: 'Check',
-                                                id: 'checkout.vat_number.check_button.label',
-                                                description:
-                                                    'The label for the check button in the checkout form',
-                                            })
-                                        }}
-                                    </Button>
-                                </template>
-                            </Input>
-
-                            <div
-                                v-if="taxIdCheckStatus"
-                                :class="{ 'opacity-75': isTaxIDCheckPending }"
-                            >
-                                <TaxIDCheckNotice :status="taxIdCheckStatus" />
-                            </div>
-                        </div>
+                        <CompanyDetailsFields
+                            v-model="model"
+                            class="mt-2"
+                            :errors="{
+                                companyLegalName: validation.value.companyLegalName.$errors,
+                                companyVatNumber: validation.value.companyVatNumber.$errors,
+                            }"
+                            :is-vat-number-invalid="validation.value.companyVatNumber.$invalid"
+                        />
                     </div>
                 </Expand>
             </Section>

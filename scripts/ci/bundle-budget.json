@@ -16,5 +16,5 @@
     "screens/PayInvoice": 81600,
     "screens/PaymentMethodsManagement": 67800,
     "screens/SubscriptionDetails": 117900,
-    "screens/SubscriptionManagement": 94600
+    "screens/SubscriptionManagement": 100200
 }

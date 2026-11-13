@@ -711,6 +711,18 @@
     "defaultMessage": "Save payment method",
     "description": "Label of the button that stores the entered payment method"
   },
+  "components.shipping_address_form.add.title": {
+    "defaultMessage": "Add shipping address",
+    "description": "Title of the shipping address form while a new address is added"
+  },
+  "components.shipping_address_form.edit.title": {
+    "defaultMessage": "Edit shipping address",
+    "description": "Title of the shipping address form while a stored address is edited"
+  },
+  "components.shipping_address_form.not_found": {
+    "defaultMessage": "We could not find this shipping address.",
+    "description": "Shown instead of the shipping address form when the address to edit is not among the customer’s"
+  },
   "converted_amount_input.bounds.maximum": {
     "defaultMessage": "Up to {maximum} {unit}",
     "description": "Largest amount a flexible top-up may be charged for, beside its label"

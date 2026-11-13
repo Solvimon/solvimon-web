@@ -13,6 +13,7 @@ import type { SolvimonInvoiceHeaderEntryProps } from '@/public/components/Invoic
 import type { SolvimonInvoiceDetailsEntryProps } from '@/public/components/InvoiceDetails/InvoiceDetails.entry.types';
 import type { SolvimonInvoicesListEntryProps } from '@/public/components/InvoicesList/InvoicesList.entry.types';
 import type { SolvimonPaymentMethodFormEntryProps } from '@/public/components/PaymentMethodForm/PaymentMethodForm.entry.types';
+import type { SolvimonShippingAddressFormEntryProps } from '@/public/components/ShippingAddressForm/ShippingAddressForm.entry.types';
 import type { SolvimonPaymentHistoryEntryProps } from '@/public/components/PaymentHistory/PaymentHistory.entry.types';
 import type { SolvimonSubscriptionSchedulesEntryProps } from '@/public/components/SubscriptionSchedules/SubscriptionSchedules.entry.types';
 import type { SolvimonSubscriptionsListEntryProps } from '@/public/components/SubscriptionsList/SubscriptionsList.entry.types';
@@ -68,6 +69,7 @@ interface RegisteredComponentEntryPropsById {
     'billing-information': SolvimonBillingInformationEntryProps;
     'billing-information-form': SolvimonBillingInformationFormEntryProps;
     'payment-method-form': SolvimonPaymentMethodFormEntryProps;
+    'shipping-address-form': SolvimonShippingAddressFormEntryProps;
 }
 
 interface RegisteredScreenEntryPropsById {

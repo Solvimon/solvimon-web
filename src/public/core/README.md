@@ -37,7 +37,7 @@ const overview = solvimon.createScreen('customer-overview', {
 ## Registered IDs
 
 - **Screens**: `customer-overview`, `checkout`, `subscription-management`, `subscription-details`, `pay-invoice`, `payment-methods-management`
-- **Components**: `invoice`, `invoice-header`, `invoice-details`, `invoices-list`, `payment-history`, `subscriptions-list`, `subscription-schedules`, `customer-payment-methods`, `wallet-balances`, `billing-information`, `billing-information-form`, `payment-method-form`
+- **Components**: `invoice`, `invoice-header`, `invoice-details`, `invoices-list`, `payment-history`, `subscriptions-list`, `subscription-schedules`, `customer-payment-methods`, `wallet-balances`, `billing-information`, `billing-information-form`, `payment-method-form`, `shipping-address-form`
 
 Use `getRegisteredScreenIds()` and `getRegisteredComponentIds()` from `@solvimon/solvimon-web/core` to get the list at runtime.
 
@@ -125,19 +125,20 @@ Use the public `sv-*` classes as styling hooks. Do not rely on internal Tailwind
 
 Common hooks:
 
-| Hook                      | Description                                                            |
-| ------------------------- | ---------------------------------------------------------------------- |
-| `.sv-root`                | Root element for a mounted SDK screen or component.                    |
-| `.sv-screen`              | Full screen SDK entries, such as checkout or customer overview.        |
-| `.sv-component`           | Standalone SDK component entries, such as invoices or payment methods. |
-| `.sv-action`              | SDK action buttons.                                                    |
-| `.sv-loading`             | Loading state wrapper.                                                 |
-| `.sv-error`               | Error state wrapper.                                                   |
-| `.sv-checkout`            | Checkout screen root.                                                  |
-| `.sv-checkout__submit`    | Checkout submit button.                                                |
-| `.sv-order-summary`       | Order summary block.                                                   |
-| `.sv-payment-methods`     | Payment methods component root.                                        |
-| `.sv-payment-method-form` | Payment method form component root.                                    |
+| Hook                        | Description                                                            |
+| --------------------------- | ---------------------------------------------------------------------- |
+| `.sv-root`                  | Root element for a mounted SDK screen or component.                    |
+| `.sv-screen`                | Full screen SDK entries, such as checkout or customer overview.        |
+| `.sv-component`             | Standalone SDK component entries, such as invoices or payment methods. |
+| `.sv-action`                | SDK action buttons.                                                    |
+| `.sv-loading`               | Loading state wrapper.                                                 |
+| `.sv-error`                 | Error state wrapper.                                                   |
+| `.sv-checkout`              | Checkout screen root.                                                  |
+| `.sv-checkout__submit`      | Checkout submit button.                                                |
+| `.sv-order-summary`         | Order summary block.                                                   |
+| `.sv-payment-methods`       | Payment methods component root.                                        |
+| `.sv-payment-method-form`   | Payment method form component root.                                    |
+| `.sv-shipping-address-form` | Shipping address form component root.                                  |
 
 `cssOverrides` accepts a single CSS string or an array of CSS strings:
 

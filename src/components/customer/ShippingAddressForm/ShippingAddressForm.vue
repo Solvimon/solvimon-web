@@ -148,7 +148,7 @@ defineExpose({
 </script>
 
 <template>
-    <fieldset class="sv-shipping-address-form grid grid-cols-1 gap-2" :disabled="disabled">
+    <fieldset class="sv-shipping-address-form__fields grid grid-cols-1 gap-2" :disabled="disabled">
         <HiddenLabelInput
             v-if="isOrganizationRecipient"
             v-model="companyName"

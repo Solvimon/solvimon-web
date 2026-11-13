@@ -121,6 +121,10 @@
             "types": "./dist/components/BillingInformationForm/BillingInformationForm.ce.d.ts",
             "default": "./dist/components/BillingInformationForm/BillingInformationForm.mjs"
         },
+        "./components/shipping-address-form": {
+            "types": "./dist/components/ShippingAddressForm/ShippingAddressForm.ce.d.ts",
+            "default": "./dist/components/ShippingAddressForm/ShippingAddressForm.mjs"
+        },
         "./components/invoice": {
             "types": "./dist/components/Invoice/Invoice.ce.d.ts",
             "default": "./dist/components/Invoice/Invoice.mjs"

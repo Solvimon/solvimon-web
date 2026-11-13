@@ -59,3 +59,4 @@ export { defineSolvimonPaymentHistory } from './public/components/PaymentHistory
 export { defineSolvimonSubscriptionSchedules } from './public/components/SubscriptionSchedules/SubscriptionSchedules.entry.ce';
 export { defineSolvimonSubscriptionsList } from './public/components/SubscriptionsList/SubscriptionsList.entry.ce';
 export { defineSolvimonPaymentMethodForm } from './public/components/PaymentMethodForm/PaymentMethodForm.entry.ce';
+export { defineSolvimonShippingAddressForm } from './public/components/ShippingAddressForm/ShippingAddressForm.entry.ce';

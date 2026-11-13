@@ -67,6 +67,13 @@ export const components: StoryEntry[] = [
     },
     {
         kind: 'component',
+        id: 'shipping-address-form',
+        label: 'Shipping Address Form',
+        description: 'Adds a shipping address, or edits one given configuration.shippingAddressId.',
+        defaultConfiguration: { shippingAddressId: '' },
+    },
+    {
+        kind: 'component',
         id: 'customer-payment-methods',
         label: 'Customer Payment Methods',
         description: 'Lists and manages saved payment methods for a customer.',

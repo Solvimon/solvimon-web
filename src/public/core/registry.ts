@@ -26,6 +26,7 @@ const COMPONENT_IDS: Record<RegisteredComponentId, true> = {
     'billing-information': true,
     'billing-information-form': true,
     'payment-method-form': true,
+    'shipping-address-form': true,
 };
 
 const isScreenId = (id: string): id is RegisteredScreenId => Object.hasOwn(SCREEN_IDS, id);

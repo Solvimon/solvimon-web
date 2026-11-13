@@ -54,6 +54,17 @@ export interface SolvimonPaymentMethodAddedDetail {
     componentName: string;
 }
 
+/** The `detail` of `solvimon-shipping-address-saved`. */
+export interface SolvimonShippingAddressSavedDetail {
+    /** The tag name of the element the customer saved the address in. */
+    componentName: string;
+    /**
+     * The address as stored. An edit is stored as a new address that replaces the old one, so this
+     * id differs from the one the form was opened with.
+     */
+    shippingAddressId: string;
+}
+
 /**
  * Every event an SDK element dispatches, by name. Each one bubbles and crosses the shadow root,
  * so a listener on the document or a container hears every element inside it.
@@ -80,6 +91,8 @@ export interface SolvimonEventMap {
     'solvimon-invoice-created': CustomEvent<SolvimonInvoiceCreatedDetail>;
     /** The customer stored a new payment method. */
     'solvimon-payment-method-added': CustomEvent<SolvimonPaymentMethodAddedDetail>;
+    /** The customer added or changed a shipping address in `shipping-address-form`. */
+    'solvimon-shipping-address-saved': CustomEvent<SolvimonShippingAddressSavedDetail>;
 }
 
 /**

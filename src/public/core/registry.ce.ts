@@ -87,6 +87,10 @@ const COMPONENT_LOADERS: Record<RegisteredComponentId, DefineLoader> = {
         import('@/public/components/PaymentMethodForm/PaymentMethodForm.entry.ce').then(
             (module) => module.defineSolvimonPaymentMethodForm,
         ),
+    'shipping-address-form': () =>
+        import('@/public/components/ShippingAddressForm/ShippingAddressForm.entry.ce').then(
+            (module) => module.defineSolvimonShippingAddressForm,
+        ),
 };
 
 function isRegisteredScreenId(id: string): id is RegisteredScreenId {

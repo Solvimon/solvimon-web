@@ -143,15 +143,16 @@ or with another library's on the same page.
 
 ### Events
 
-| Event                           | Sent by                                                                                                                                                                                           | `detail`                                         |
-| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
-| `solvimon-error`                | any element that fails                                                                                                                                                                            | `{ error, code, componentName, reference }`      |
-| `solvimon-log`                  | any element, for each log entry                                                                                                                                                                   | the `LogEntry`, as `onLog` receives it           |
-| `solvimon-action-request`       | any element, when the customer asks to go somewhere the host decides on                                                                                                                           | `{ action, data }`                               |
-| `solvimon-ready`                | the checkout, once its subscription and first price have loaded                                                                                                                                   | none                                             |
-| `solvimon-payment-succeeded`    | the checkout, pay-invoice, and `payment-method-form` in `payment` mode                                                                                                                            | `{ componentName, subscriptionId?, invoiceId? }` |
-| `solvimon-invoice-created`      | subscription details, when an on-demand order creates an invoice                                                                                                                                  | `{ invoiceId, paymentStatus }`                   |
-| `solvimon-payment-method-added` | `payment-method-form`, `payment-methods-management`, and the add-method step of an on-demand order, a top-up or an auto top-up (in subscription details, customer overview and `wallet-balances`) | `{ componentName }`                              |
+| Event                             | Sent by                                                                                                                                                                                           | `detail`                                         |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
+| `solvimon-error`                  | any element that fails                                                                                                                                                                            | `{ error, code, componentName, reference }`      |
+| `solvimon-log`                    | any element, for each log entry                                                                                                                                                                   | the `LogEntry`, as `onLog` receives it           |
+| `solvimon-action-request`         | any element, when the customer asks to go somewhere the host decides on                                                                                                                           | `{ action, data }`                               |
+| `solvimon-ready`                  | the checkout, once its subscription and first price have loaded                                                                                                                                   | none                                             |
+| `solvimon-payment-succeeded`      | the checkout, pay-invoice, and `payment-method-form` in `payment` mode                                                                                                                            | `{ componentName, subscriptionId?, invoiceId? }` |
+| `solvimon-invoice-created`        | subscription details, when an on-demand order creates an invoice                                                                                                                                  | `{ invoiceId, paymentStatus }`                   |
+| `solvimon-payment-method-added`   | `payment-method-form`, `payment-methods-management`, and the add-method step of an on-demand order, a top-up or an auto top-up (in subscription details, customer overview and `wallet-balances`) | `{ componentName }`                              |
+| `solvimon-shipping-address-saved` | `shipping-address-form`, once the address is stored                                                                                                                                               | `{ componentName, shippingAddressId }`           |
 
 `componentName` is the tag name of the element the event came from. A nested element's event reaches
 a listener as if the outer element sent it, so `detail.componentName` is the way to tell them apart.
@@ -323,6 +324,7 @@ Embeddable building blocks.
 | `@solvimon/solvimon-web/components/invoices-list`            | `<solvimon-invoices-list>`            |
 | `@solvimon/solvimon-web/components/payment-history`          | `<solvimon-payment-history>`          |
 | `@solvimon/solvimon-web/components/payment-method-form`      | `<solvimon-payment-method-form>`      |
+| `@solvimon/solvimon-web/components/shipping-address-form`    | `<solvimon-shipping-address-form>`    |
 | `@solvimon/solvimon-web/components/subscription-schedules`   | `<solvimon-subscription-schedules>`   |
 | `@solvimon/solvimon-web/components/subscriptions-list`       | `<solvimon-subscriptions-list>`       |
 | `@solvimon/solvimon-web/components/wallet-balances`          | `<solvimon-wallet-balances>`          |

@@ -22,6 +22,12 @@ const isPostalCodeValidFor =
         );
     };
 
+/** Rejects a postal code that does not match the country's format, once that format is known. */
+export const postalCodeFormat = (format: () => AddressFormat | undefined) => ({
+    $validator: isPostalCodeValidFor(format),
+    $message: 'The postal code does not match the country',
+});
+
 export const addressRules = (
     variant: AddressVariant,
     format: () => AddressFormat | undefined,
@@ -35,10 +41,7 @@ export const addressRules = (
         [keys.country]: requiredWhenAsked(isRequired, keys.country),
         [keys.postalCode]: {
             ...requiredWhenAsked(isRequired, keys.postalCode),
-            postalCodeFormat: {
-                $validator: isPostalCodeValidFor(format),
-                $message: 'The postal code does not match the country',
-            },
+            postalCodeFormat: postalCodeFormat(format),
         },
     };
 };

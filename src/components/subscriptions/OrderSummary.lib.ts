@@ -81,3 +81,44 @@ export const getGroupsSubtotal = (groups: InvoiceGroup[], currency: string): Amo
         groups.map(({ amount_excluding_tax }) => amount_excluding_tax),
         currency,
     );
+
+/**
+ * How many of a product the group charges: the meter values its lines bill, summed over tiers, or 1
+ * for a fee without one. `undefined` for a discount, and for a group of several prices, whose sum
+ * would mix seats with units.
+ */
+export const getInvoiceGroupQuantity = (group: InvoiceGroup): number | undefined => {
+    const lines = (group.lines ?? []).filter(({ type }) => type === 'REVENUE');
+    if (!lines.length || new Set(lines.map((line) => line.pricing_item_config_id)).size > 1) {
+        return undefined;
+    }
+
+    const metered = lines.flatMap(({ details }) =>
+        details?.meter_value?.number === undefined ? [] : [Number(details.meter_value.number)],
+    );
+    return metered.length ? metered.reduce((sum, number) => sum + number, 0) : 1;
+};
+
+const COMPACT_UNITS = [
+    { size: 1e9, suffix: 'B' },
+    { size: 1e6, suffix: 'M' },
+    { size: 1e3, suffix: 'K' },
+];
+
+/**
+ * A count of at most three digits, without decimals: from a thousand on it is cut down to whole
+ * thousands (K), millions (M) or billions (B), with a + when anything was cut off, so 9,592,920 is
+ * 9M+. `exact` is set only when `label` is not the whole number, for a tooltip.
+ */
+export const getCompactQuantity = (
+    quantity: number,
+    formatNumber: (value: number) => string,
+): { label: string; exact?: string } => {
+    const exact = formatNumber(quantity);
+    const unit = COMPACT_UNITS.find(({ size }) => quantity >= size);
+    if (!unit) return { label: exact };
+
+    const whole = Math.floor(quantity / unit.size);
+    const label = `${formatNumber(whole)}${unit.suffix}${whole * unit.size < quantity ? '+' : ''}`;
+    return { label, exact };
+};

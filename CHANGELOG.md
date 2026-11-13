@@ -9,9 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Each line of the checkout's order summary starts with how many of the product it charges (`.sv-order-summary__quantity`): the seats or units its invoice lines bill, summed over the tiers of its price, or 1 for a fee. A count of a thousand or more is cut down to whole thousands, millions or billions, with a + when anything was cut off (9,592,920 is 9M+), and shows the whole number on hover. A discount, and a line of several prices, show none. The counts share the width of the widest, so the product names line up. The collapsed summary on a small screen shows no counts.
 - `createScreen` and `createComponent` take an `on` option, listeners for the element's events by name, typed as `SolvimonEventListeners`. The core adds them before the element is in the page, so they hear even an event dispatched as it starts, such as a checkout's `solvimon-payment-succeeded` after a return from 3-D Secure.
 
 ### Changed
+
+- The checkout's order summary lists all its lines in one card (`.sv-order-summary__lines`) instead of a card per product, each discount still under the product it is on, and its amounts in medium-weight tabular figures so they line up.
 
 - `LogEntry.code` keeps the known codes visible to an editor: it is `ErrorCode | WarnCode | (string & Record<never, never>)` instead of `ErrorCode | WarnCode | string`, which TypeScript collapsed to `string`. Ad-hoc codes are still accepted.
 

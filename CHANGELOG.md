@@ -18,6 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `billing-information-form` uses the checkout's billing address and company fields. The address fields follow the customer's country, the postal code is checked against the country's format, and a company's EU VAT number can be checked with VIES, as in the checkout. The country moved from the contact details to the address, and optional fields say so. Individuals still edit their first and last name there.
 
+- The customer overview edits the billing information in a modal (`.sv-billing-information-modal`) instead of sending the `edit-billing-information` action request, and shows the stored details once they are saved. The `billing-information` component on its own still sends the action request.
+
 - When pay-invoice fails to charge a stored payment method, its `PAYMENT_AUTHORIZATION_FAILED` log entry also lists the invoice's payment acceptors (`invoicePaymentAcceptorIds`) and those its payment method options offered (`offeredPaymentAcceptorIds`), so a refused acceptor can be traced to the one that does not match.
 
 - The checkout's order summary lists all its lines in one card (`.sv-order-summary__lines`) instead of a card per product, each discount still under the product it is on, and its amounts in medium-weight tabular figures so they line up. The totals below it use tabular figures too, with their amounts in medium weight and the total due in semibold. This needs `@solvimon/solvimon-ui` 1.27.1, whose `InvoicePreview` draws them so.

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ApiStatus } from '@solvimon/solvimon-types';
-import { computed, defineAsyncComponent } from 'vue';
+import { computed, defineAsyncComponent, ref } from 'vue';
 import type { CustomerOverviewProps } from './CustomerOverview.types';
 import { ContentWithAsideLayout } from '@/layouts';
 import InvoicesList from '@/public/components/InvoicesList/InvoicesList.vue';
@@ -23,6 +23,11 @@ import LoadFailedNotice from '@/components/shared/LoadFailedNotice.vue';
 /** Only customers with an order that ships see it, so the rest never download it. */
 const CustomerShippingAddresses = defineAsyncComponent(
     () => import('@/public/components/CustomerShippingAddresses/CustomerShippingAddresses.vue'),
+);
+
+/** Most customers never open it, so it is not part of the overview until one does. */
+const BillingInformationModal = defineAsyncComponent(
+    () => import('@/components/customer/BillingInformationForm/BillingInformationModal.vue'),
 );
 
 const props = defineProps<CustomerOverviewProps>();
@@ -71,6 +76,20 @@ const { isLoading } = useLoadInitialData(
     paymentMethods.fetchAll(),
     customerWalletBalances.fetch(),
 );
+
+const hasOpenedBillingInformationModal = ref(false);
+const isBillingInformationModalShown = ref(false);
+
+const openBillingInformationModal = () => {
+    hasOpenedBillingInformationModal.value = true;
+    isBillingInformationModalShown.value = true;
+};
+
+const closeBillingInformationModal = () => {
+    isBillingInformationModalShown.value = false;
+    // An error from a save given up on would greet the customer when the modal opens again.
+    customer.update.error.value = null;
+};
 
 const handlePaymentMethodStored = () => {
     void paymentMethods.fetchAll();
@@ -134,10 +153,18 @@ useActiveScheduleWarning(subscriptions.items);
                 class="sv-customer-overview__billing-information"
                 :is-loading="isLoading"
                 :customer="customer.customer.value"
+                :on-edit="openBillingInformationModal"
             />
             <LoadFailedNotice
                 v-else-if="!isLoading"
                 class="sv-customer-overview__billing-information"
+            />
+            <BillingInformationModal
+                v-if="hasOpenedBillingInformationModal && customer.customer.value"
+                :show-modal="isBillingInformationModalShown"
+                :customer="customer.customer.value"
+                :update="customer.update"
+                @close="closeBillingInformationModal"
             />
 
             <CustomerShippingAddresses

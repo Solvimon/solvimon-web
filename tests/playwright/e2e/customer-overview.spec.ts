@@ -245,18 +245,36 @@ test.describe('Customer overview', () => {
                 .toContain('view-all-subscriptions');
         });
 
-        test('asks the host to edit the billing information', async ({ page }) => {
-            api = await mountLoaded(page);
+        test('edits the billing information in a modal, without asking the host', async ({
+            page,
+        }) => {
+            const customer = aCustomer();
+            api = await mountLoaded(page, {
+                customer,
+                mocks: {
+                    updateCustomer: (request) => ({
+                        body: { ...customer, ...(request.postDataJSON() as object) },
+                    }),
+                },
+            });
 
             await customerOverview(page)
                 .billingInformation.getByRole('button', { name: /edit/i })
                 .click();
+            const modal = page.getByRole('dialog', { name: 'Edit billing information' });
+            await modal.locator('input[type="email"]').fill('edited@example.com');
+            await modal.getByRole('button', { name: 'Save changes' }).click();
 
-            await expect
-                .poll(async () => (await hostEvents(page)).actions.map(({ action }) => action))
-                .toContain('edit-billing-information');
-            // The screen changes nothing itself.
-            expect(api.calls('updateCustomer')).toEqual([]);
+            await expect(modal).toBeHidden();
+            expect(api.lastCall('updateCustomer')!.body).toMatchObject({
+                email: 'edited@example.com',
+            });
+            await expect(customerOverview(page).billingInformation).toContainText(
+                'edited@example.com',
+            );
+            expect((await hostEvents(page)).actions.map(({ action }) => action)).not.toContain(
+                'edit-billing-information',
+            );
         });
     });
 

@@ -109,7 +109,9 @@ watch(
 
 <template>
     <form @submit.prevent="handleSubmit">
-        <Typography variant="heading-3" tag="h2">{{ labels.contactInformationTitle }}</Typography>
+        <Typography v-if="!hideContactHeading" variant="heading-3" tag="h2">{{
+            labels.contactInformationTitle
+        }}</Typography>
 
         <div class="grid grid-cols-1 gap-2">
             <Input

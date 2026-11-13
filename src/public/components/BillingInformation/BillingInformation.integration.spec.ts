@@ -58,15 +58,18 @@ describe('BillingInformation component', () => {
     const mountComponent = ({
         isLoading = false,
         configuration,
+        onEdit,
     }: {
         isLoading?: boolean;
         configuration?: BillingInformationConfiguration;
+        onEdit?: () => void;
     } = {}) =>
         mount(BillingInformation, {
             props: {
                 customer,
                 isLoading,
                 configuration,
+                onEdit,
             },
             global: {
                 stubs: {
@@ -136,6 +139,16 @@ describe('BillingInformation component', () => {
         expect(mockDispatchAction).toHaveBeenCalledWith({
             action: 'edit-billing-information',
         });
+    });
+
+    it('edits in place instead of asking the host, when the screen around it does', async () => {
+        const onEdit = vi.fn();
+        const wrapper = mountComponent({ onEdit });
+
+        await getButtonByText(wrapper, 'Edit').trigger('click');
+
+        expect(onEdit).toHaveBeenCalledOnce();
+        expect(mockDispatchAction).not.toHaveBeenCalled();
     });
 
     it('keeps the options a partial configuration leaves out at their default', () => {

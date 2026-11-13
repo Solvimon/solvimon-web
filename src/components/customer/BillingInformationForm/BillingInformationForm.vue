@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import { Button, ErrorNotification, Input, Typography, useIntl } from '@solvimon/solvimon-ui';
 import { computed, reactive, ref, watch } from 'vue';
-import type { BillingInformationFormProps } from './BillingInformationForm.types';
+import type {
+    BillingInformationFormEmits,
+    BillingInformationFormProps,
+} from './BillingInformationForm.types';
 import { getBillingInformationFormApiErrors } from './BillingInformationForm.lib';
 import { useBillingInformationForm } from './useBillingInformationForm';
 import CheckoutAddressFields from '@/components/customer/CheckoutForm/CheckoutAddressFields.vue';
@@ -11,6 +14,7 @@ import { useCustomerFormLabels } from '@/components/customer/useCustomerFormLabe
 import { asOptionalText, formControlModel } from '@/utils/formControl';
 
 const props = defineProps<BillingInformationFormProps>();
+const emit = defineEmits<BillingInformationFormEmits>();
 
 const { $t } = useIntl();
 const labels = useCustomerFormLabels();
@@ -69,22 +73,28 @@ const getOptionalSuffix = (field: keyof CheckoutFormState): string =>
 
 const isSubmitting = ref(false);
 
-const handleSubmit = async (): Promise<void> => {
-    if (isSubmitting.value || !props.customer?.id) return;
+/** Whether the changes were stored. */
+const handleSubmit = async (): Promise<boolean> => {
+    if (isSubmitting.value || !props.customer?.id) return false;
 
     isSubmitting.value = true;
 
     try {
-        if (!(await validation.value.$validate())) return;
+        if (!(await validation.value.$validate())) return false;
 
         updateInitialState(await submit(props.customer.id));
         validation.value.$reset();
+        emit('saved');
+        return true;
     } catch {
         // Shown through `apiError`.
+        return false;
     } finally {
         isSubmitting.value = false;
     }
 };
+
+defineExpose({ submit: handleSubmit, isSubmitting, hasChanges });
 
 watch(
     () => props.customer,
@@ -195,6 +205,7 @@ watch(
         <ErrorNotification v-if="apiErrors.generic" class="mt-4" :title="apiErrors.generic" />
 
         <Button
+            v-if="!hideSubmitButton"
             type="submit"
             intent="primary"
             :disabled="!hasChanges"

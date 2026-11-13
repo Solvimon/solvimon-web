@@ -10,7 +10,12 @@ const DEFAULT_CONFIGURATION = {
     showEditButton: true,
 };
 
-const props = defineProps<BillingInformationProps>();
+const props = defineProps<
+    BillingInformationProps & {
+        /** Edits in place, as the customer overview does; without it the host is asked to. */
+        onEdit?: () => void;
+    }
+>();
 
 const configuration = computed(() =>
     resolveConfiguration(DEFAULT_CONFIGURATION, props.configuration),
@@ -39,7 +44,7 @@ const { dispatchAction } = useActionDispatchProvider();
                 intent="subtle"
                 icon-prefix="edit"
                 class="sv-action sv-action--ghost sv-billing-information__edit"
-                @click="dispatchAction({ action: 'edit-billing-information' })"
+                @click="onEdit ? onEdit() : dispatchAction({ action: 'edit-billing-information' })"
                 >{{
                     $t({
                         defaultMessage: 'Edit',

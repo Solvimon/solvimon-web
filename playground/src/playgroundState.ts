@@ -109,11 +109,12 @@ export const BRANDING = {
 /** Where a fresh session starts once it leaves the desktop: a phone, under the SDK's 640px breakpoint. */
 export const DEFAULT_VIEWPORT_SIZE: ViewportSize = { width: 393, height: 852 };
 
+/** The local backend, which the playground is used against most. */
 export function parseEnvironment(value: string | null): Environment {
     if (value === 'LIVE' || value === 'TEST' || value === 'DEV') {
         return value;
     }
-    return 'TEST';
+    return 'DEV';
 }
 
 export function parseViewportSelection(value: string | null): ViewportSelection {

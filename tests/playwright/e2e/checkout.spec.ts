@@ -382,7 +382,7 @@ test.describe('Checkout', () => {
             });
 
             await expect(page.locator('.sv-order-summary__items')).toHaveText(
-                /^PAX A35\s*€40\.00\s*100% discount\s*[-−]€40\.00\s*Standard Shipping\s*€15\.00$/,
+                /^1\s*PAX A35\s*€40\.00\s*100% discount\s*[-−]€40\.00\s*1\s*Standard Shipping\s*€15\.00$/,
             );
             await expect(page.locator('.sv-order-summary__discount')).toHaveText('100% discount');
         });
@@ -393,7 +393,7 @@ test.describe('Checkout', () => {
             });
 
             await expect(page.locator('.sv-order-summary__items')).toHaveText(
-                /^PAX A35\s*€40\.00\s*PAX A35\s*[-−]€40\.00\s*Standard Shipping\s*€15\.00$/,
+                /^1\s*PAX A35\s*€40\.00\s*PAX A35\s*[-−]€40\.00\s*1\s*Standard Shipping\s*€15\.00$/,
             );
             await expect(page.locator('.sv-order-summary__discount')).toHaveCount(0);
         });

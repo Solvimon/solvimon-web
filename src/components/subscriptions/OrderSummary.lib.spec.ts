@@ -1,7 +1,9 @@
 import type { Amount, BillingPeriod, Invoice, InvoiceGroup } from '@solvimon/solvimon-types';
 import {
     getAnnualizedAmount,
+    getCompactQuantity,
     getGroupsSubtotal,
+    getInvoiceGroupQuantity,
     getInvoiceGroupName,
     getPeriodRecurringAmount,
     getSavingsAmount,
@@ -195,5 +197,64 @@ describe('getGroupsSubtotal', () => {
 
     it('reports zero in the given currency for no groups at all', () => {
         expect(getGroupsSubtotal([], 'GBP')).toEqual({ quantity: '0.00', currency: 'GBP' });
+    });
+});
+
+describe('getInvoiceGroupQuantity', () => {
+    const line = (number?: string, pricingItemConfigId = 'pico_1', type = 'REVENUE') => ({
+        type,
+        pricing_item_config_id: pricingItemConfigId,
+        details: number === undefined ? {} : { meter_value: { number } },
+    });
+    const group = (...lines: ReturnType<typeof line>[]) => ({ lines }) as unknown as InvoiceGroup;
+
+    it('counts a fee without a meter value once', () => {
+        expect(getInvoiceGroupQuantity(group(line()))).toBe(1);
+    });
+
+    it('adds up the seats of every tier the group bills', () => {
+        expect(getInvoiceGroupQuantity(group(line('1'), line('4')))).toBe(5);
+    });
+
+    it('keeps a fractional quantity', () => {
+        expect(getInvoiceGroupQuantity(group(line('2.5')))).toBe(2.5);
+    });
+
+    it('gives no quantity for a discount', () => {
+        expect(
+            getInvoiceGroupQuantity(group(line(undefined, 'pico_1', 'DISCOUNT'))),
+        ).toBeUndefined();
+    });
+
+    it('gives no quantity for a group of several prices', () => {
+        expect(getInvoiceGroupQuantity(group(line(), line('3', 'pico_2')))).toBeUndefined();
+    });
+});
+
+describe('getCompactQuantity', () => {
+    const format = (value: number) => new Intl.NumberFormat('en-US').format(value);
+    const compact = (quantity: number) => getCompactQuantity(quantity, format);
+
+    it('shows a count below a thousand as it is, with nothing more to tell', () => {
+        expect(compact(1)).toEqual({ label: '1' });
+        expect(compact(999)).toEqual({ label: '999' });
+        expect(compact(2.5)).toEqual({ label: '2.5' });
+    });
+
+    it('cuts thousands and millions down to whole units, marking what was cut off', () => {
+        expect(compact(7228)).toEqual({ label: '7K+', exact: '7,228' });
+        expect(compact(15787)).toEqual({ label: '15K+', exact: '15,787' });
+        expect(compact(521293)).toEqual({ label: '521K+', exact: '521,293' });
+        expect(compact(9592920)).toEqual({ label: '9M+', exact: '9,592,920' });
+        expect(compact(999950)).toEqual({ label: '999K+', exact: '999,950' });
+    });
+
+    it('marks nothing as cut off from an exact thousand or million', () => {
+        expect(compact(1000)).toEqual({ label: '1K', exact: '1,000' });
+        expect(compact(13000000)).toEqual({ label: '13M', exact: '13,000,000' });
+    });
+
+    it('uses B from a billion on, so a count never takes more than three digits', () => {
+        expect(compact(1234567890)).toEqual({ label: '1B+', exact: '1,234,567,890' });
     });
 });

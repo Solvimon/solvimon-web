@@ -114,13 +114,24 @@ const payWithStoredPaymentMethod = async () => {
     isPaymentPending.value = true;
     storedPaymentError.value = false;
 
-    const outcome = await chargeStoredPaymentMethod({
-        paymentAcceptorId: stored.paymentAcceptorId,
-        customerId: props.invoice.customer.id,
-        paymentMethodId: stored.paymentMethod.id,
-        invoiceId: props.invoice.id,
-        amount: props.amount,
-    });
+    const outcome = await chargeStoredPaymentMethod(
+        {
+            paymentAcceptorId: stored.paymentAcceptorId,
+            customerId: props.invoice.customer.id,
+            paymentMethodId: stored.paymentMethod.id,
+            invoiceId: props.invoice.id,
+            amount: props.amount,
+        },
+        // The API refuses an acceptor the invoice does not have, so a refusal shows the mismatch.
+        {
+            invoicePaymentAcceptorIds: props.invoice.payment_acceptor_ids,
+            offeredPaymentAcceptorIds: [
+                ...new Set(
+                    props.paymentMethodOptions?.map(({ payment_acceptor }) => payment_acceptor?.id),
+                ),
+            ],
+        },
+    );
 
     if (outcome === 'SUCCEEDED') {
         handlePaymentSuccess();

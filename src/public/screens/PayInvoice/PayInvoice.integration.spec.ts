@@ -847,6 +847,29 @@ describe('PayInvoice with stored payment methods', () => {
         expect(wrapper.text()).toContain('Thank you for your payment!');
     });
 
+    it('logs which acceptors the invoice has and which were offered when a charge fails', async () => {
+        const declined = new ApiError({ statusCode: 400 });
+        mockChargeStoredPaymentMethod.mockRejectedValue(declined);
+        const wrapper = mountComponent({
+            paymentMethods: [storedCard()],
+            invoice: { ...mockInvoice, payment_acceptor_ids: ['pa_other'] },
+        });
+
+        await payButton(wrapper).trigger('click');
+        await flushPromises();
+
+        expect(mockLogger.error).toHaveBeenCalledWith(
+            'PAYMENT_AUTHORIZATION_FAILED',
+            expect.any(String),
+            expect.objectContaining({
+                paymentAcceptorId: 'pa_123',
+                invoicePaymentAcceptorIds: ['pa_other'],
+                offeredPaymentAcceptorIds: ['pa_123'],
+            }),
+            declined,
+        );
+    });
+
     it('says so when the charge fails, and lets the customer try again', async () => {
         mockChargeStoredPaymentMethod.mockRejectedValue(new ApiError({ statusCode: 400 }));
         const wrapper = mountComponent({ paymentMethods: [storedCard()] });

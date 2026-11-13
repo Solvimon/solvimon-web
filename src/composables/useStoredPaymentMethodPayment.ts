@@ -14,18 +14,25 @@ import {
  */
 export function useStoredPaymentMethodPayment(): {
     isPending: Ref<boolean>;
-    charge: (payload: ChargeStoredPaymentMethodPayload) => Promise<PaymentOutcome>;
+    charge: (
+        payload: ChargeStoredPaymentMethodPayload,
+        logContext?: Record<string, unknown>,
+    ) => Promise<PaymentOutcome>;
 } {
     const { chargeStoredPaymentMethod } = createPaymentsService();
     const logger = useLogger();
 
     const isPending = ref(false);
 
-    const charge = async (payload: ChargeStoredPaymentMethodPayload): Promise<PaymentOutcome> => {
+    const charge = async (
+        payload: ChargeStoredPaymentMethodPayload,
+        logContext?: Record<string, unknown>,
+    ): Promise<PaymentOutcome> => {
         if (isPending.value) return 'UNCONFIRMED';
 
         isPending.value = true;
         const context = {
+            ...logContext,
             paymentAcceptorId: payload.paymentAcceptorId,
             invoiceId: payload.invoiceId,
         };

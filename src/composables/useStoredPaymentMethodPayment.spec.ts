@@ -48,17 +48,21 @@ describe('useStoredPaymentMethodPayment', () => {
         expect(mockCharge).toHaveBeenCalledWith(payload);
     });
 
-    it('reports a charge the gateway declines as failed, and logs it', async () => {
+    it("reports a charge the gateway declines as failed, and logs it with the caller's context", async () => {
         const declined = new ApiError({ statusCode: 400 });
         mockCharge.mockRejectedValue(declined);
 
         const { charge } = useStoredPaymentMethodPayment();
 
-        expect(await charge(payload)).toBe('FAILED');
+        expect(await charge(payload, { offeredPaymentAcceptorIds: ['paya_1'] })).toBe('FAILED');
         expect(mockError).toHaveBeenCalledWith(
             'PAYMENT_AUTHORIZATION_FAILED',
             expect.any(String),
-            expect.objectContaining({ invoiceId: 'invo_1', paymentAcceptorId: 'paya_1' }),
+            expect.objectContaining({
+                invoiceId: 'invo_1',
+                paymentAcceptorId: 'paya_1',
+                offeredPaymentAcceptorIds: ['paya_1'],
+            }),
             declined,
         );
     });

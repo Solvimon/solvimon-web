@@ -1,7 +1,16 @@
 import type { FormFieldError } from '@solvimon/solvimon-types';
-import type { BillingInformationFormState } from './BillingInformationForm.types';
-
-type BillingInformationFormField = Exclude<keyof BillingInformationFormState, 'type'>;
+type BillingInformationFormField =
+    | 'email'
+    | 'country'
+    | 'companyLegalName'
+    | 'companyVatNumber'
+    | 'firstName'
+    | 'lastName'
+    | 'addressLine1'
+    | 'addressLine2'
+    | 'postalCode'
+    | 'city'
+    | 'state';
 
 export type BillingInformationFormApiErrors = {
     fields: Partial<Record<BillingInformationFormField, string>>;

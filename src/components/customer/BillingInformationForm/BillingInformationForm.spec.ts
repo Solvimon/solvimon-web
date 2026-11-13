@@ -3,6 +3,12 @@ import { defineComponent } from 'vue';
 import type { Customer, FormFieldError } from '@solvimon/solvimon-types';
 import BillingInformationForm from './BillingInformationForm.vue';
 
+const { mockCheckTaxID } = vi.hoisted(() => ({ mockCheckTaxID: vi.fn() }));
+
+vi.mock('@/services/customer', () => ({
+    createCustomerService: () => ({ checkTaxID: mockCheckTaxID }),
+}));
+
 vi.mock('@solvimon/solvimon-ui', async () => {
     const { createSolvimonUiMock } = await import('@/test-utils/solvimonUiMock');
     return createSolvimonUiMock({
@@ -36,6 +42,13 @@ const individual = {
     },
 } as unknown as Customer;
 
+const POSTAL_CODES: Record<string, string> = {
+    NL: '1000 AA',
+    CA: 'K1A 0B1',
+    US: '12345',
+    AU: '2000',
+};
+
 const organization = (taxIds: { id: string; type: string }[], country = 'NL') =>
     ({
         id: 'cus_123',
@@ -46,7 +59,7 @@ const organization = (taxIds: { id: string; type: string }[], country = 'NL') =>
             tax_ids: taxIds,
             registered_address: {
                 line1: 'Main street 1',
-                postal_code: '12345',
+                postal_code: POSTAL_CODES[country],
                 city: 'Somewhere',
                 state: 'ON',
                 country,
@@ -119,10 +132,21 @@ describe('BillingInformationForm', () => {
             expect(updateCustomer).not.toHaveBeenCalled();
         });
 
+        it('does not save a postal code in another format than the country uses', async () => {
+            const { wrapper, updateCustomer } = mountForm(individual);
+
+            await wrapper.find('input[name="postal_code"]').setValue('12345');
+            await submit(wrapper);
+
+            expect(updateCustomer).not.toHaveBeenCalled();
+            expect(wrapper.text()).toContain('Enter a postal code in the format of this country');
+        });
+
         it('saves a Canadian address once the state is filled in', async () => {
             const { wrapper, updateCustomer } = mountForm(individual);
 
             await wrapper.find('[data-testid="country"]').setValue('CA');
+            await wrapper.find('input[name="postal_code"]').setValue('K1A 0B1');
             await wrapper.find('input[name="state"]').setValue('ON');
             await submit(wrapper);
 
@@ -140,6 +164,20 @@ describe('BillingInformationForm', () => {
             await submit(wrapper);
 
             expect(updateCustomer).not.toHaveBeenCalled();
+        });
+
+        it('checks the VAT number with VIES on request', async () => {
+            mockCheckTaxID.mockResolvedValue({
+                data: [{ validation_date: '', source: 'VIES', valid: 'VALID' }],
+            });
+            const { wrapper } = mountForm(
+                organization([{ id: 'NL863950310B01', type: 'GENERIC_TAX_ID' }]),
+            );
+
+            await wrapper.find('[data-testid="input-vat_number"] button').trigger('click');
+            await flushPromises();
+
+            expect(mockCheckTaxID).toHaveBeenCalledOnce();
         });
 
         it('does not save VAT number NL123', async () => {

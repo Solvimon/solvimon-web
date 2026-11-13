@@ -70,32 +70,34 @@ const isCompany = computed(() => model.value.type === 'ORGANIZATION');
 
 const suffix = (part: AddressPart) => props.getOptionalSuffix(keys[part]);
 
-const localize = (errors?: ErrorObject[]): ErrorObject[] | undefined =>
-    errors?.map((error) => {
-        if (error.$validator === 'postalCodeFormat') {
-            return {
-                ...error,
-                $message: $t({
-                    defaultMessage: 'Enter a postal code in the format of this country',
-                    id: 'checkout.postal_code.invalid',
-                    description:
-                        "Error under a shipping or billing postal code that does not match its country's format",
-                }),
-            };
-        }
-        if (error.$validator === 'phoneNumberFormat') {
-            return {
-                ...error,
-                $message: $t({
-                    defaultMessage: 'Enter a phone number of 7 to 15 digits',
-                    id: 'checkout.shipping_phone_number.invalid',
-                    description:
-                        'Error under a shipping phone number with characters other than digits and separators, or too few or many digits',
-                }),
-            };
-        }
-        return error;
-    });
+const localize = (errors?: ErrorObject[] | string): ErrorObject[] | string | undefined =>
+    typeof errors === 'string'
+        ? errors
+        : errors?.map((error) => {
+              if (error.$validator === 'postalCodeFormat') {
+                  return {
+                      ...error,
+                      $message: $t({
+                          defaultMessage: 'Enter a postal code in the format of this country',
+                          id: 'checkout.postal_code.invalid',
+                          description:
+                              "Error under a shipping or billing postal code that does not match its country's format",
+                      }),
+                  };
+              }
+              if (error.$validator === 'phoneNumberFormat') {
+                  return {
+                      ...error,
+                      $message: $t({
+                          defaultMessage: 'Enter a phone number of 7 to 15 digits',
+                          id: 'checkout.shipping_phone_number.invalid',
+                          description:
+                              'Error under a shipping phone number with characters other than digits and separators, or too few or many digits',
+                      }),
+                  };
+              }
+              return error;
+          });
 </script>
 
 <template>

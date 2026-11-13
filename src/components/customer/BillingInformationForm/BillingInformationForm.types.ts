@@ -1,20 +1,5 @@
 import type { Customer, FormFieldError } from '@solvimon/solvimon-types';
 
-export type BillingInformationFormState = {
-    type: 'INDIVIDUAL' | 'ORGANIZATION';
-    email: string;
-    country: string;
-    companyLegalName?: string;
-    companyVatNumber?: string;
-    firstName?: string;
-    lastName?: string;
-    addressLine1: string;
-    addressLine2?: string;
-    postalCode: string;
-    city: string;
-    state?: string;
-};
-
 export interface BillingInformationFormProps {
     customer?: Customer;
     isLoading: boolean;

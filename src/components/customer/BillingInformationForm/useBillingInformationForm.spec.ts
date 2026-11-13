@@ -2,7 +2,8 @@ import { defineComponent, h, nextTick } from 'vue';
 import { mount } from '@vue/test-utils';
 import type { Customer } from '@solvimon/solvimon-types';
 import { useBillingInformationForm } from './useBillingInformationForm';
-import type { BillingInformationFormState } from './BillingInformationForm.types';
+import type { CheckoutFormState } from '@/components/customer/CheckoutForm/CheckoutForm.types';
+import { getInitialState } from '@/components/customer/CheckoutForm/CheckoutForm.lib';
 
 const organizationWith = (taxIds: { id: string; type: string; display_name?: string }[]) =>
     ({
@@ -73,7 +74,7 @@ const organizationWithAddress = {
     },
 } as unknown as Customer;
 
-const setup = (initialState?: Partial<BillingInformationFormState>) => {
+const setup = (initialState?: Partial<CheckoutFormState>) => {
     const onSubmit = vi.fn(() => Promise.resolve());
     return { ...useBillingInformationForm({ initialState, onSubmit }), onSubmit };
 };
@@ -83,22 +84,14 @@ describe('useBillingInformationForm', () => {
         it('starts as an empty individual', () => {
             const { form, hasChanges } = setup();
 
-            expect(form.value).toEqual({
-                type: 'INDIVIDUAL',
-                email: '',
-                country: '',
-                addressLine1: '',
-                postalCode: '',
-                city: '',
-                state: '',
-            });
+            expect(form.value).toEqual(getInitialState());
             expect(hasChanges.value).toBe(false);
         });
 
         it('layers the given initial state over the defaults', () => {
             const { form } = setup({ type: 'ORGANIZATION', country: 'DE' });
 
-            expect(form.value).toMatchObject({ type: 'ORGANIZATION', country: 'DE', email: '' });
+            expect(form.value).toEqual(getInitialState({ type: 'ORGANIZATION', country: 'DE' }));
         });
     });
 
@@ -108,7 +101,7 @@ describe('useBillingInformationForm', () => {
 
             updateInitialState(individual);
 
-            expect(form.value).toEqual({
+            expect(form.value).toMatchObject({
                 type: 'INDIVIDUAL',
                 email: 'jane@example.com',
                 country: 'NL',
@@ -129,14 +122,13 @@ describe('useBillingInformationForm', () => {
             updateInitialState(organizationWithAddress);
 
             expect(form.value).toEqual({
+                ...getInitialState(),
                 type: 'ORGANIZATION',
                 email: 'billing@acme.example',
                 country: 'NL',
                 addressLine1: 'Dam 1',
-                addressLine2: '',
                 postalCode: '1012JS',
                 city: 'Amsterdam',
-                state: '',
                 companyLegalName: 'Acme B.V.',
                 companyVatNumber: 'NL123456789B01',
             });
@@ -159,23 +151,12 @@ describe('useBillingInformationForm', () => {
             expect(form.value.companyVatNumber).toBe('NL123456789B01');
         });
 
-        it('uses empty strings for whatever the customer is missing', () => {
+        it('leaves whatever the customer is missing unset', () => {
             const { form, updateInitialState } = setup();
 
             updateInitialState({ id: 'cus_bare', type: 'INDIVIDUAL', individual: {} } as Customer);
 
-            expect(form.value).toEqual({
-                type: 'INDIVIDUAL',
-                email: '',
-                country: '',
-                addressLine1: '',
-                addressLine2: '',
-                postalCode: '',
-                city: '',
-                state: '',
-                firstName: '',
-                lastName: '',
-            });
+            expect(form.value).toEqual(getInitialState());
         });
 
         it('compares edits against the loaded customer', () => {
@@ -239,7 +220,7 @@ describe('useBillingInformationForm', () => {
         it('requires a country', async () => {
             const { form } = mountForm();
             form.updateInitialState(organization);
-            form.form.value.country = '';
+            form.form.value.country = undefined;
 
             expect(await getInvalidFields(form)).toEqual(['country']);
         });
@@ -384,14 +365,17 @@ describe('useBillingInformationForm', () => {
         it('submits explicitly given data instead of the form', async () => {
             const { submit, onSubmit } = setup({ email: 'form@example.com' });
 
-            await submit('cus_1', {
-                type: 'INDIVIDUAL',
-                email: 'given@example.com',
-                country: 'BE',
-                addressLine1: 'Grote Markt 1',
-                postalCode: '1000',
-                city: 'Brussels',
-            });
+            await submit(
+                'cus_1',
+                getInitialState({
+                    type: 'INDIVIDUAL',
+                    email: 'given@example.com',
+                    country: 'BE',
+                    addressLine1: 'Grote Markt 1',
+                    postalCode: '1000',
+                    city: 'Brussels',
+                }),
+            );
 
             expect(onSubmit).toHaveBeenCalledExactlyOnceWith({
                 customerId: 'cus_1',

@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- The checkout's order summary lists all its lines in one card (`.sv-order-summary__lines`) instead of a card per product, each discount still under the product it is on, and its amounts in medium-weight tabular figures so they line up.
+- The checkout's order summary lists all its lines in one card (`.sv-order-summary__lines`) instead of a card per product, each discount still under the product it is on, and its amounts in medium-weight tabular figures so they line up. The totals below it use tabular figures too, with their amounts in medium weight and the total due in semibold. This needs `@solvimon/solvimon-ui` 1.27.1, whose `InvoicePreview` draws them so.
 
 - `LogEntry.code` keeps the known codes visible to an editor: it is `ErrorCode | WarnCode | (string & Record<never, never>)` instead of `ErrorCode | WarnCode | string`, which TypeScript collapsed to `string`. Ad-hoc codes are still accepted.
 

@@ -58,4 +58,16 @@ describe('CheckoutAddressFields', () => {
         expect(country).toBeGreaterThan(lastName);
         expect(country).toBeLessThan(addressLine1);
     });
+
+    it('stacks postal code, city and state while the fields are as narrow as a phone', () => {
+        const wrapper = mountFields();
+        const row = wrapper.find('[name="shipping_postal_code"]').element.closest('.grid')!;
+
+        expect(wrapper.find('.sv-checkout-address-fields').classes()).toContain(
+            '[container-type:inline-size]',
+        );
+        expect([...row.classList]).toEqual(
+            expect.arrayContaining(['grid-cols-1', '[@container(min-width:24rem)]:grid-cols-3']),
+        );
+    });
 });

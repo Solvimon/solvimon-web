@@ -10,10 +10,11 @@ import { useCustomerFormLabels } from '@/components/customer/useCustomerFormLabe
 import { asOptionalText, formControlModel, type SelectControlValue } from '@/utils/formControl';
 import { isCountryCode } from '@/utils/countryCode';
 
+/** One field a row while the fields are as narrow as a phone, whatever the screen around them. */
 const GRID_COLUMNS: Record<number, string> = {
     1: 'grid-cols-1',
-    2: 'grid-cols-2',
-    3: 'grid-cols-3',
+    2: 'grid-cols-1 [@container(min-width:24rem)]:grid-cols-2',
+    3: 'grid-cols-1 [@container(min-width:24rem)]:grid-cols-3',
 };
 
 const props = defineProps<CheckoutAddressFieldsProps>();
@@ -101,7 +102,7 @@ const localize = (errors?: ErrorObject[] | string): ErrorObject[] | string | und
 </script>
 
 <template>
-    <div class="sv-checkout-address-fields flex flex-col gap-2">
+    <div class="sv-checkout-address-fields flex flex-col gap-2 [container-type:inline-size]">
         <CountrySelect
             v-if="withCountry && !countryBeforeAddress"
             v-model:single-model-value="country"

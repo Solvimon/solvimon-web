@@ -142,6 +142,25 @@ describe('BillingInformationForm', () => {
             expect(wrapper.text()).toContain('Enter a postal code in the format of this country');
         });
 
+        it('saves an email change while the stored postal code does not fit the country', async () => {
+            const { wrapper, updateCustomer } = mountForm({
+                ...individual,
+                individual: {
+                    name: { first_name: 'John', last_name: 'Doe' },
+                    residential_address: {
+                        line1: 'Main street 1',
+                        postal_code: '12345',
+                        country: 'NL',
+                    },
+                },
+            } as unknown as Customer);
+
+            await emailInput(wrapper).setValue('edited@example.com');
+            await submit(wrapper);
+
+            expect(updateCustomer).toHaveBeenCalledOnce();
+        });
+
         it('saves a Canadian address once the state is filled in', async () => {
             const { wrapper, updateCustomer } = mountForm(individual);
 

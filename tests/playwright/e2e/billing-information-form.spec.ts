@@ -172,7 +172,9 @@ test.describe('Billing information form', () => {
         expect(api.calls('updateCustomer')).toHaveLength(0);
     });
 
-    test('asks for a state after switching to Canada', async ({ page }) => {
+    test('asks for a state and a Canadian postal code after switching to Canada', async ({
+        page,
+    }) => {
         const customer = aCustomer();
         api = await mountBillingInformationForm(page, {
             customer,
@@ -184,6 +186,7 @@ test.describe('Billing information form', () => {
         await form.save.click();
         expect(api.calls('updateCustomer')).toHaveLength(0);
 
+        await form.root.locator('input[name="postal_code"]').fill('K1A 0B1');
         await form.root.locator('input[name="state"]').fill('ON');
         await form.save.click();
 

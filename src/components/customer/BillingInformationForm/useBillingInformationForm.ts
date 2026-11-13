@@ -12,7 +12,11 @@ import {
     getRequiredFieldsForCountry,
     isVatNumberShown,
 } from '@/components/customer/CheckoutForm/CheckoutForm.lib';
-import { addressRules } from '@/components/customer/CheckoutForm/addressRules';
+import {
+    addressRules,
+    postalCodeFormat,
+    requiredWhenAsked,
+} from '@/components/customer/CheckoutForm/addressRules';
 import { useAddressFormats } from '@/components/customer/CheckoutForm/useAddressFormats';
 import type { AddressFormat } from '@/components/customer/CheckoutForm/addressFormat';
 import { isCountryCode } from '@/utils/countryCode';
@@ -50,6 +54,16 @@ export function useBillingInformationForm<TResult>({
         !isVatNumberChanged(value) ||
         taxId.$validator(value, siblings, vm);
 
+    const format = (): AddressFormat | undefined => formatOf(form.value.country);
+    const postalCodeRule = postalCodeFormat(format);
+
+    // Like a stored tax id, a stored postal code the format rule rejects must not stop a save of
+    // something else: it is only judged once it or the country is edited.
+    const changedPostalCode = (value: unknown): boolean =>
+        (form.value.postalCode === currentInitialState.value.postalCode &&
+            form.value.country === currentInitialState.value.country) ||
+        postalCodeRule.$validator(value);
+
     const {
         form,
         validation,
@@ -60,11 +74,11 @@ export function useBillingInformationForm<TResult>({
     } = useForm({
         initialState: getInitialState(initialState),
         validationRules: {
-            ...addressRules(
-                'BILLING',
-                (): AddressFormat | undefined => formatOf(form.value.country),
-                isRequired,
-            ),
+            ...addressRules('BILLING', format, isRequired),
+            postalCode: {
+                ...requiredWhenAsked(isRequired, 'postalCode'),
+                postalCodeFormat: { ...postalCodeRule, $validator: changedPostalCode },
+            },
             email: { required, email },
             country: { required },
             companyLegalName: { required: requiredIf(isOrganizationForm) },

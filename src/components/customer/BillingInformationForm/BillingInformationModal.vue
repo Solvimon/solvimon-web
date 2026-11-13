@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { getApiError, Modal, useIntl } from '@solvimon/solvimon-ui';
 import type { Customer } from '@solvimon/solvimon-types';
 import BillingInformationForm from './BillingInformationForm.vue';
+import { hasBillingAddress } from './BillingInformationForm.lib';
 import type { useCustomer } from '@/composables/useCustomer';
 
 const props = defineProps<{
@@ -17,6 +18,16 @@ const emit = defineEmits<{ (e: 'close'): void }>();
 const { $t } = useIntl();
 
 const formRef = ref<InstanceType<typeof BillingInformationForm>>();
+
+/** Read as the modal opens, so the title does not change under a save that adds the address. */
+const isAdding = ref(false);
+watch(
+    () => props.showModal,
+    (isShown) => {
+        if (isShown) isAdding.value = !hasBillingAddress(props.customer);
+    },
+    { immediate: true },
+);
 
 const apiError = computed(() =>
     props.update.error.value ? getApiError(props.update.error.value) : undefined,
@@ -34,12 +45,19 @@ const handleClose = () => {
         size="lg"
         :show-modal="showModal"
         :title="
-            $t({
-                defaultMessage: 'Edit billing information',
-                id: 'billing_information_modal.title',
-                description:
-                    'Title of the modal in which the customer edits their billing information',
-            })
+            isAdding
+                ? $t({
+                      defaultMessage: 'Add billing address',
+                      id: 'billing_information_modal.add_title',
+                      description:
+                          'Title of the modal in which a customer without a billing address adds one',
+                  })
+                : $t({
+                      defaultMessage: 'Edit billing information',
+                      id: 'billing_information_modal.title',
+                      description:
+                          'Title of the modal in which the customer edits their billing information',
+                  })
         "
         :confirm-button-text="
             $t({

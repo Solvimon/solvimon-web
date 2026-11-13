@@ -59,14 +59,16 @@ describe('BillingInformation component', () => {
         isLoading = false,
         configuration,
         onEdit,
+        customer: shownCustomer = customer,
     }: {
         isLoading?: boolean;
         configuration?: BillingInformationConfiguration;
         onEdit?: () => void;
+        customer?: Customer;
     } = {}) =>
         mount(BillingInformation, {
             props: {
-                customer,
+                customer: shownCustomer,
                 isLoading,
                 configuration,
                 onEdit,
@@ -149,6 +151,21 @@ describe('BillingInformation component', () => {
 
         expect(onEdit).toHaveBeenCalledOnce();
         expect(mockDispatchAction).not.toHaveBeenCalled();
+    });
+
+    it('offers to add a billing address to a customer who has none yet', async () => {
+        const onEdit = vi.fn();
+        const wrapper = mountComponent({
+            onEdit,
+            customer: {
+                ...customer,
+                organization: { legal_name: 'Solvimon BV', registered_address: { country: 'NL' } },
+            } as unknown as Customer,
+        });
+
+        await getButtonByText(wrapper, 'Add billing address').trigger('click');
+
+        expect(onEdit).toHaveBeenCalledOnce();
     });
 
     it('keeps the options a partial configuration leaves out at their default', () => {

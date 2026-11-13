@@ -48,7 +48,10 @@ const customer = {
     },
 } as unknown as Customer;
 
-const mountModal = (execute: (payload: Partial<Customer>) => Promise<Customer>) => {
+const mountModal = (
+    execute: (payload: Partial<Customer>) => Promise<Customer>,
+    shown: Customer = customer,
+) => {
     const error = ref<Error | null>(null);
     const pending = ref(false);
     const update = {
@@ -69,7 +72,7 @@ const mountModal = (execute: (payload: Partial<Customer>) => Promise<Customer>) 
     const wrapper = mount(BillingInformationModal, {
         props: {
             showModal: true,
-            customer,
+            customer: shown,
             update: update as unknown as InstanceType<
                 typeof BillingInformationModal
             >['$props']['update'],
@@ -117,5 +120,16 @@ describe('BillingInformationModal', () => {
         await wrapper.find('[data-testid="close"]').trigger('click');
 
         expect(wrapper.emitted('close')).toBeUndefined();
+    });
+
+    it('says it adds a billing address to a customer who has none yet', () => {
+        const { wrapper } = mountModal(() => Promise.resolve(customer), {
+            ...customer,
+            individual: { residential_address: { country: 'NL' } },
+        } as unknown as Customer);
+
+        expect(wrapper.find('[role="dialog"]').attributes('aria-label')).toBe(
+            'Add billing address',
+        );
     });
 });

@@ -5,6 +5,7 @@ import type { BillingInformationProps } from './BillingInformation.types';
 import Skeleton from '@/components/shared/Skeleton.vue';
 import { useActionDispatchProvider } from '@/components/providers';
 import { resolveConfiguration } from '@/utils/configuration';
+import { hasBillingAddress } from '@/components/customer/BillingInformationForm/BillingInformationForm.lib';
 
 const DEFAULT_CONFIGURATION = {
     showEditButton: true,
@@ -22,6 +23,8 @@ const configuration = computed(() =>
 );
 
 const { $t } = useIntl();
+
+const hasAddress = computed(() => hasBillingAddress(props.customer));
 const { dispatchAction } = useActionDispatchProvider();
 </script>
 
@@ -42,16 +45,23 @@ const { dispatchAction } = useActionDispatchProvider();
             <Button
                 size="xs"
                 intent="subtle"
-                icon-prefix="edit"
+                :icon-prefix="hasAddress ? 'edit' : 'add'"
                 class="sv-action sv-action--ghost sv-billing-information__edit"
                 @click="onEdit ? onEdit() : dispatchAction({ action: 'edit-billing-information' })"
                 >{{
-                    $t({
-                        defaultMessage: 'Edit',
-                        id: 'customer_overview.billing_information_block.edit_button_label',
-                        description:
-                            'The label of the button that opens the form to edit the customer billing information',
-                    })
+                    hasAddress
+                        ? $t({
+                              defaultMessage: 'Edit',
+                              id: 'customer_overview.billing_information_block.edit_button_label',
+                              description:
+                                  'The label of the button that opens the form to edit the customer billing information',
+                          })
+                        : $t({
+                              defaultMessage: 'Add billing address',
+                              id: 'customer_overview.billing_information_block.add_button_label',
+                              description:
+                                  'The label of the button that opens the form to add a billing address for a customer who has none yet',
+                          })
                 }}</Button
             >
         </template>

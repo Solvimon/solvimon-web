@@ -1,4 +1,8 @@
-import { getBillingInformationFormApiErrors } from './BillingInformationForm.lib';
+import type { Customer } from '@solvimon/solvimon-types';
+import {
+    getBillingInformationFormApiErrors,
+    hasBillingAddress,
+} from './BillingInformationForm.lib';
 
 describe('getBillingInformationFormApiErrors', () => {
     const visibleFields = [
@@ -48,5 +52,33 @@ describe('getBillingInformationFormApiErrors', () => {
                 visibleFields,
             ),
         ).toEqual({ fields: {}, generic: 'Required' });
+    });
+});
+
+describe('hasBillingAddress', () => {
+    it.each([
+        ['no customer', undefined, false],
+        [
+            'a country only',
+            { type: 'INDIVIDUAL', individual: { residential_address: { country: 'NL' } } },
+            false,
+        ],
+        [
+            'a blank first line',
+            { type: 'ORGANIZATION', organization: { registered_address: { line1: ' ' } } },
+            false,
+        ],
+        [
+            'a person with a first line',
+            { type: 'INDIVIDUAL', individual: { residential_address: { line1: 'Dam 1' } } },
+            true,
+        ],
+        [
+            'a company with a first line',
+            { type: 'ORGANIZATION', organization: { registered_address: { line1: 'Dam 1' } } },
+            true,
+        ],
+    ])('is %s: %s', (_, customer, expected) => {
+        expect(hasBillingAddress(customer as Customer | undefined)).toBe(expected);
     });
 });

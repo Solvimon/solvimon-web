@@ -5,11 +5,15 @@ import type {
     BillingInformationFormEmits,
     BillingInformationFormProps,
 } from './BillingInformationForm.types';
-import { getBillingInformationFormApiErrors } from './BillingInformationForm.lib';
+import {
+    getBillingInformationFormApiErrors,
+    hasBillingAddress,
+} from './BillingInformationForm.lib';
 import { useBillingInformationForm } from './useBillingInformationForm';
 import CheckoutAddressFields from '@/components/customer/CheckoutForm/CheckoutAddressFields.vue';
 import type { CheckoutFormState } from '@/components/customer/CheckoutForm/CheckoutForm.types';
 import CompanyDetailsFields from '@/components/customer/CompanyDetailsFields.vue';
+import CompanyPurchaseToggle from '@/components/customer/CompanyPurchaseToggle.vue';
 import { useCustomerFormLabels } from '@/components/customer/useCustomerFormLabels';
 import { asOptionalText, formControlModel } from '@/utils/formControl';
 
@@ -40,6 +44,19 @@ type ValidatedField =
     | 'companyVatNumber';
 
 const isCompanyPurchase = computed<boolean>(() => form.value.type === 'ORGANIZATION');
+
+/**
+ * A customer without a billing address yet says whether it is for a person or a company. Once
+ * there is one, the type stays as it is.
+ */
+const canChooseType = computed(() => !hasBillingAddress(props.customer));
+
+const companyPurchaseModel = computed({
+    get: () => isCompanyPurchase.value,
+    set: (isCompany: boolean) => {
+        form.value.type = isCompany ? 'ORGANIZATION' : 'INDIVIDUAL';
+    },
+});
 
 const apiErrors = computed(() =>
     getBillingInformationFormApiErrors(props.apiError, [
@@ -123,6 +140,13 @@ watch(
                 :label="labels.emailLabel"
                 :placeholder="labels.emailPlaceholder"
                 :error="getError('email')"
+            />
+
+            <CompanyPurchaseToggle
+                v-if="canChooseType"
+                v-model="companyPurchaseModel"
+                no-spacing
+                class="sv-billing-form__company-toggle !flex"
             />
 
             <CompanyDetailsFields

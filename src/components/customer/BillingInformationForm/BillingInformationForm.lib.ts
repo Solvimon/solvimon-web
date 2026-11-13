@@ -1,4 +1,4 @@
-import type { FormFieldError } from '@solvimon/solvimon-types';
+import type { Customer, FormFieldError } from '@solvimon/solvimon-types';
 type BillingInformationFormField =
     | 'email'
     | 'country'
@@ -66,4 +66,21 @@ export const getBillingInformationFormApiErrors = (
     });
 
     return result;
+};
+
+/**
+ * Whether the customer has a billing address on file: a first line, which is what the billing
+ * information block shows one by. A country alone, which the checkout may store, is not one.
+ */
+export const hasBillingAddress = (customer: Customer | undefined): boolean => {
+    if (!customer) return false;
+
+    const address =
+        'individual' in customer
+            ? customer.individual?.residential_address
+            : 'organization' in customer
+              ? customer.organization?.registered_address
+              : undefined;
+
+    return !!address?.line1?.trim();
 };

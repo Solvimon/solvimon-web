@@ -131,6 +131,10 @@
     "defaultMessage": "Save changes",
     "description": "The label for the submit button of the billing information form"
   },
+  "billing_information_modal.add_title": {
+    "defaultMessage": "Add billing address",
+    "description": "Title of the modal in which a customer without a billing address adds one"
+  },
   "billing_information_modal.cancel_button.label": {
     "defaultMessage": "Cancel",
     "description": "Label of the button that closes the billing information modal unsaved"
@@ -766,6 +770,10 @@
   "customer.subscriptions_block.show_details_button_label": {
     "defaultMessage": "Subscription details",
     "description": "The label for the subscription details button in the subscriptions block"
+  },
+  "customer_overview.billing_information_block.add_button_label": {
+    "defaultMessage": "Add billing address",
+    "description": "The label of the button that opens the form to add a billing address for a customer who has none yet"
   },
   "customer_overview.billing_information_block.edit_button_label": {
     "defaultMessage": "Edit",

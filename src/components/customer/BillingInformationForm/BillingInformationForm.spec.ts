@@ -349,6 +349,40 @@ describe('BillingInformationForm', () => {
     });
 });
 
+describe('BillingInformationForm for a customer without a billing address', () => {
+    const withoutAddress = {
+        id: 'cus_new',
+        email: 'new@example.com',
+        type: 'INDIVIDUAL',
+        individual: { residential_address: { country: 'NL' } },
+    } as unknown as Customer;
+
+    it('lets them say they are a company, and saves them as one', async () => {
+        const { wrapper, updateCustomer } = mountForm(withoutAddress);
+
+        await wrapper.find('.sv-billing-form__company-toggle input').setValue(true);
+        await wrapper.find('input[name="legal_name"]').setValue('Acme B.V.');
+        await wrapper.find('input[name="address_line_1"]').setValue('Dam 1');
+        await wrapper.find('input[name="postal_code"]').setValue('1012 JS');
+        await wrapper.find('input[name="city"]').setValue('Amsterdam');
+        await submit(wrapper);
+
+        expect(updateCustomer.mock.calls[0][0].payload).toMatchObject({
+            type: 'ORGANIZATION',
+            organization: {
+                legal_name: 'Acme B.V.',
+                registered_address: { line1: 'Dam 1', country: 'NL' },
+            },
+        });
+    });
+
+    it('keeps the type of a customer who has a billing address', () => {
+        const { wrapper } = mountForm(individual);
+
+        expect(wrapper.find('.sv-billing-form__company-toggle').exists()).toBe(false);
+    });
+});
+
 describe('BillingInformationForm address labels', () => {
     it('names every address field for assistive technology', () => {
         const wrapper = mount(BillingInformationForm, {

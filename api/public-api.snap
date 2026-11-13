@@ -25,6 +25,9 @@ export * from '../../types/public/components/PaymentHistory/PaymentHistory.entry
 // components/PaymentMethodForm/PaymentMethodForm.ce.d.ts
 export * from '../../types/public/components/PaymentMethodForm/PaymentMethodForm.entry.ce';
 
+// components/ShippingAddressForm/ShippingAddressForm.ce.d.ts
+export * from '../../types/public/components/ShippingAddressForm/ShippingAddressForm.entry.ce';
+
 // components/SubscriptionSchedules/SubscriptionSchedules.ce.d.ts
 export * from '../../types/public/components/SubscriptionSchedules/SubscriptionSchedules.entry.ce';
 
@@ -358,6 +361,7 @@ export { defineSolvimonPaymentHistory } from './public/components/PaymentHistory
 export { defineSolvimonSubscriptionSchedules } from './public/components/SubscriptionSchedules/SubscriptionSchedules.entry.ce';
 export { defineSolvimonSubscriptionsList } from './public/components/SubscriptionsList/SubscriptionsList.entry.ce';
 export { defineSolvimonPaymentMethodForm } from './public/components/PaymentMethodForm/PaymentMethodForm.entry.ce';
+export { defineSolvimonShippingAddressForm } from './public/components/ShippingAddressForm/ShippingAddressForm.entry.ce';
 
 // types/public/components/BillingInformation/BillingInformation.entry.ce.d.ts
 export declare const defineSolvimonBillingInformation: (tagName?: string) => string;
@@ -647,6 +651,24 @@ export interface PaymentMethodFormEmits {
 }
 export {};
 
+// types/public/components/ShippingAddressForm/ShippingAddressForm.entry.ce.d.ts
+export declare const defineSolvimonShippingAddressForm: (tagName?: string) => string;
+
+// types/public/components/ShippingAddressForm/ShippingAddressForm.entry.types.d.ts
+import { CustomerPortalUrl } from '../../../vendor/@solvimon/solvimon-types/index';
+import { ShippingAddressFormConfiguration } from './ShippingAddressForm.types';
+import { EntryBaseProps } from '../../../types/EntryBaseProps';
+export interface SolvimonShippingAddressFormEntryProps extends EntryBaseProps<CustomerPortalUrl> {
+    configuration?: ShippingAddressFormConfiguration;
+}
+
+// types/public/components/ShippingAddressForm/ShippingAddressForm.types.d.ts
+import { ShippingAddress } from '../../../vendor/@solvimon/solvimon-types/index';
+export interface ShippingAddressFormConfiguration {
+    /** The stored address to edit. Left out, the form adds a new one. */
+    shippingAddressId?: ShippingAddress['id'];
+}
+
 // types/public/components/SubscriptionSchedules/SubscriptionSchedules.entry.ce.d.ts
 export declare const defineSolvimonSubscriptionSchedules: (tagName?: string) => string;
 
@@ -821,6 +843,16 @@ export interface SolvimonPaymentMethodAddedDetail {
     /** The tag name of the element the customer stored the method in. */
     componentName: string;
 }
+/** The `detail` of `solvimon-shipping-address-saved`. */
+export interface SolvimonShippingAddressSavedDetail {
+    /** The tag name of the element the customer saved the address in. */
+    componentName: string;
+    /**
+     * The address as stored. An edit is stored as a new address that replaces the old one, so this
+     * id differs from the one the form was opened with.
+     */
+    shippingAddressId: string;
+}
 /**
  * Every event an SDK element dispatches, by name. Each one bubbles and crosses the shadow root,
  * so a listener on the document or a container hears every element inside it.
@@ -847,6 +879,8 @@ export interface SolvimonEventMap {
     'solvimon-invoice-created': CustomEvent<SolvimonInvoiceCreatedDetail>;
     /** The customer stored a new payment method. */
     'solvimon-payment-method-added': CustomEvent<SolvimonPaymentMethodAddedDetail>;
+    /** The customer added or changed a shipping address in `shipping-address-form`. */
+    'solvimon-shipping-address-saved': CustomEvent<SolvimonShippingAddressSavedDetail>;
 }
 /**
  * Listeners for the `on` option of `createScreen` and `createComponent`, by event name. They are
@@ -900,6 +934,7 @@ import { SolvimonInvoiceHeaderEntryProps } from '../components/InvoiceHeader/Inv
 import { SolvimonInvoiceDetailsEntryProps } from '../components/InvoiceDetails/InvoiceDetails.entry.types';
 import { SolvimonInvoicesListEntryProps } from '../components/InvoicesList/InvoicesList.entry.types';
 import { SolvimonPaymentMethodFormEntryProps } from '../components/PaymentMethodForm/PaymentMethodForm.entry.types';
+import { SolvimonShippingAddressFormEntryProps } from '../components/ShippingAddressForm/ShippingAddressForm.entry.types';
 import { SolvimonPaymentHistoryEntryProps } from '../components/PaymentHistory/PaymentHistory.entry.types';
 import { SolvimonSubscriptionSchedulesEntryProps } from '../components/SubscriptionSchedules/SubscriptionSchedules.entry.types';
 import { SolvimonSubscriptionsListEntryProps } from '../components/SubscriptionsList/SubscriptionsList.entry.types';
@@ -951,6 +986,7 @@ interface RegisteredComponentEntryPropsById {
     'billing-information': SolvimonBillingInformationEntryProps;
     'billing-information-form': SolvimonBillingInformationFormEntryProps;
     'payment-method-form': SolvimonPaymentMethodFormEntryProps;
+    'shipping-address-form': SolvimonShippingAddressFormEntryProps;
 }
 interface RegisteredScreenEntryPropsById {
     checkout: SolvimonCheckoutEntryProps;

@@ -12,13 +12,17 @@ export interface CheckoutAddressFieldsProps {
     countryLabel?: string;
     format?: AddressFormat;
     getOptionalSuffix: (field: keyof CheckoutFormState) => string;
-    errors?: {
-        addressLine1?: ErrorObject[];
-        postalCode?: ErrorObject[];
-        city?: ErrorObject[];
-        state?: ErrorObject[];
-        country?: ErrorObject[];
-        phoneNumber?: ErrorObject[];
-        lastName?: ErrorObject[];
-    };
+    /** The form's own errors, or a message from the API. */
+    errors?: Partial<
+        Record<
+            | 'addressLine1'
+            | 'postalCode'
+            | 'city'
+            | 'state'
+            | 'country'
+            | 'phoneNumber'
+            | 'lastName',
+            ErrorObject[] | string
+        >
+    >;
 }

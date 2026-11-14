@@ -21,6 +21,6 @@ export interface BillingInformationFormProps {
 }
 
 export interface BillingInformationFormEmits {
-    /** The changes were stored. */
+    /** The changes were stored, or there were none to store. */
     (e: 'saved'): void;
 }

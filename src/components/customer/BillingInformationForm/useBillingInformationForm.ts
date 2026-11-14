@@ -103,7 +103,8 @@ export function useBillingInformationForm<TResult>({
             customerId,
             payload: mapFormStateToCustomerPayload(
                 data,
-                isVatNumberChanged(data.companyVatNumber)
+                // A hidden VAT number, as in the US, is neither checked nor sent.
+                isVatNumberShown(data) && isVatNumberChanged(data.companyVatNumber)
                     ? getTaxIds(storedTaxIds.value, data.companyVatNumber)
                     : undefined,
             ),

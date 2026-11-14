@@ -4,9 +4,11 @@ import type { Customer, ShippingAddress } from '@solvimon/solvimon-types';
 import ShippingAddressFormEntryView from './ShippingAddressForm.entry.view.vue';
 import { createTestPortalObject } from '@/test-utils/portalObjectFixture';
 
-const { mockFetchAll, items } = vi.hoisted(() => ({
+const { mockFetchAll, items, loadError, lists } = vi.hoisted(() => ({
     mockFetchAll: vi.fn(),
     items: { value: [] as ShippingAddress[] },
+    loadError: { value: undefined as unknown },
+    lists: [] as { value: ShippingAddress[] }[],
 }));
 
 vi.mock('@/composables/useCustomer', () => ({
@@ -21,10 +23,19 @@ vi.mock('@/composables/useShippingAddresses', async () => {
     return {
         useShippingAddresses: () => {
             const list = ref<ShippingAddress[]>([]);
+            const error = ref<unknown>();
+            lists.push(list);
             mockFetchAll.mockImplementation(async () => {
                 list.value = items.value;
+                error.value = loadError.value;
             });
-            return { items: list, fetchAll: mockFetchAll, create: vi.fn(), replace: vi.fn() };
+            return {
+                items: list,
+                error,
+                fetchAll: mockFetchAll,
+                create: vi.fn(),
+                replace: vi.fn(),
+            };
         },
     };
 });
@@ -56,6 +67,8 @@ describe('ShippingAddressForm entry view', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         items.value = [{ id: 'shad_1' } as ShippingAddress];
+        loadError.value = undefined;
+        lists.length = 0;
     });
 
     it('loads no addresses to add a new one', async () => {
@@ -82,5 +95,24 @@ describe('ShippingAddressForm entry view', () => {
         await flushPromises();
 
         expect(slotProps()).toMatchObject({ address: undefined, isAddressMissing: true });
+    });
+
+    it('keeps the address it opened with once a save has replaced it in the list', async () => {
+        const slotProps = mountView('shad_1');
+        await flushPromises();
+
+        // What the reload after a save holds: the replacement, not the address it replaced.
+        lists[0].value = [{ id: 'shad_2' } as ShippingAddress];
+        await flushPromises();
+
+        expect(slotProps()).toMatchObject({ address: { id: 'shad_1' }, isAddressMissing: false });
+    });
+
+    it('says the addresses could not be loaded, rather than that the address is missing', async () => {
+        loadError.value = new Error('Boom');
+        const slotProps = mountView('shad_1');
+        await flushPromises();
+
+        expect(slotProps()).toMatchObject({ hasLoadFailed: true, isAddressMissing: false });
     });
 });

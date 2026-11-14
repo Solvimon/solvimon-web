@@ -299,6 +299,13 @@ describe('EntryProvider logging seen from the host', () => {
 
             const form = recorded.element.shadowRoot?.querySelector('form');
             expect(form).toBeTruthy();
+            // An unchanged form has nothing to save, so it sends nothing.
+            const email = form?.querySelector<HTMLInputElement>('input[type="email"]');
+            if (email) {
+                email.value = 'edited@example.com';
+                email.dispatchEvent(new Event('input'));
+            }
+            await settle();
             form?.dispatchEvent(new Event('submit', { cancelable: true }));
             await settle();
 

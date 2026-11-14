@@ -3,6 +3,7 @@ import { computed, ref } from 'vue';
 import { Button, ErrorNotification, Typography, useIntl } from '@solvimon/solvimon-ui';
 import type { Customer, ShippingAddress } from '@solvimon/solvimon-types';
 import InternalShippingAddressForm from '@/components/customer/ShippingAddressForm/ShippingAddressForm.vue';
+import LoadFailedNotice from '@/components/shared/LoadFailedNotice.vue';
 import Skeleton from '@/components/shared/Skeleton.vue';
 import { useLogger } from '@/components/providers';
 import { useHostEvent } from '@/components/providers/HostElementProvider/composables/useHostEvent';
@@ -17,6 +18,8 @@ const props = defineProps<{
     address?: ShippingAddress;
     /** Set when the address to edit is not among the customer's. */
     isAddressMissing?: boolean;
+    /** Set when the customer or their addresses could not be loaded. */
+    hasLoadFailed?: boolean;
     isLoading?: boolean;
     actions: Pick<UseShippingAddresses, 'create' | 'replace'>;
 }>();
@@ -90,6 +93,10 @@ const save = async () => {
         v-if="isLoading"
         variant="section"
         class="sv-shipping-address-form sv-root sv-component sv-loading min-h-[200px]"
+    />
+    <LoadFailedNotice
+        v-else-if="hasLoadFailed"
+        class="sv-shipping-address-form sv-root sv-component"
     />
     <ErrorNotification
         v-else-if="isAddressMissing"

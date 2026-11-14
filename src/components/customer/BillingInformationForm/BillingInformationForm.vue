@@ -11,6 +11,7 @@ import {
 } from './BillingInformationForm.lib';
 import { useBillingInformationForm } from './useBillingInformationForm';
 import CheckoutAddressFields from '@/components/customer/CheckoutForm/CheckoutAddressFields.vue';
+import { isVatNumberShown } from '@/components/customer/CheckoutForm/CheckoutForm.lib';
 import type { CheckoutFormState } from '@/components/customer/CheckoutForm/CheckoutForm.types';
 import CompanyDetailsFields from '@/components/customer/CompanyDetailsFields.vue';
 import CompanyPurchaseToggle from '@/components/customer/CompanyPurchaseToggle.vue';
@@ -66,9 +67,10 @@ const apiErrors = computed(() =>
         'postalCode',
         'city',
         'state',
-        ...(isCompanyPurchase.value
-            ? (['companyLegalName', 'companyVatNumber'] as const)
-            : (['firstName', 'lastName'] as const)),
+        ...(isCompanyPurchase.value ? (['companyLegalName'] as const) : []),
+        // Without the field, as in the US, an error about it is shown as a generic one.
+        ...(isVatNumberShown(form.value) ? (['companyVatNumber'] as const) : []),
+        ...(isCompanyPurchase.value ? [] : (['firstName', 'lastName'] as const)),
     ]),
 );
 
@@ -93,6 +95,12 @@ const isSubmitting = ref(false);
 /** Whether the changes were stored. */
 const handleSubmit = async (): Promise<boolean> => {
     if (isSubmitting.value || !props.customer?.id) return false;
+
+    // Nothing to store, which a host saving from its own button can still ask for.
+    if (!hasChanges.value) {
+        emit('saved');
+        return true;
+    }
 
     isSubmitting.value = true;
 

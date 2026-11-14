@@ -20,6 +20,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The customer overview edits the billing information in a modal (`.sv-billing-information-modal`) instead of sending the `edit-billing-information` action request, and shows the stored details once they are saved. The `billing-information` component on its own still sends the action request.
 
+- A customer without a billing address (no first address line, a country alone included) is offered "Add billing address" instead of "Edit" in the billing information block, and the modal says it adds one. Until there is an address, the billing information form shows the checkout's company toggle, so the customer saves it as a person or as a company. Once there is one, the type stays as it is.
+
+- The address fields stack postal code, city and state one under the other while the fields themselves are narrower than 24rem, as in a phone-width form; wider, they stay side by side. The checkout, the billing information form and the shipping address form share these fields.
+
+- Every modal fills the screen on a viewport narrower than 768px, without a backdrop and with its buttons at the bottom: billing information, shipping addresses, on-demand orders, top-ups and automatic top-ups, deleting a payment method, cancelling a subscription and turning off automatic top-up. From 768px up they are as before. This needs `@solvimon/solvimon-ui` 1.28.0, whose `Modal` takes `fullScreenOnMobile`.
+
 - When pay-invoice fails to charge a stored payment method, its `PAYMENT_AUTHORIZATION_FAILED` log entry also lists the invoice's payment acceptors (`invoicePaymentAcceptorIds`) and those its payment method options offered (`offeredPaymentAcceptorIds`), so a refused acceptor can be traced to the one that does not match.
 
 - The checkout's order summary lists all its lines in one card (`.sv-order-summary__lines`) instead of a card per product, each discount still under the product it is on, and its amounts in medium-weight tabular figures so they line up. The totals below it use tabular figures too, with their amounts in medium weight and the total due in semibold. This needs `@solvimon/solvimon-ui` 1.27.1, whose `InvoicePreview` draws them so.

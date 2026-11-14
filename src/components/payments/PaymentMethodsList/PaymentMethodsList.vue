@@ -74,6 +74,7 @@ async function handleConfirmDelete() {
     </div>
 
     <Modal
+        full-screen-on-mobile
         size="md"
         :show-modal="!!pendingDeletePaymentMethod"
         :is-loading="isArchiving"

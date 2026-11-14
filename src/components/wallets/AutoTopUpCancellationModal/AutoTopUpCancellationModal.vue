@@ -95,6 +95,7 @@ const handleClose = () => {
 
 <template>
     <Modal
+        full-screen-on-mobile
         size="sm"
         :show-modal="showModal"
         :is-loading="isSubmitting"

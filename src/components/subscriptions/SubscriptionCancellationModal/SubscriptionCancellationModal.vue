@@ -127,6 +127,7 @@ const handleClose = () => {
 
 <template>
     <Modal
+        full-screen-on-mobile
         size="md"
         :show-modal="showModal"
         :title="title"

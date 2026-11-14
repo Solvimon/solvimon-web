@@ -264,6 +264,7 @@ const cancelButtonText = computed(() => {
 <template>
     <Modal
         no-click-away
+        full-screen-on-mobile
         size="lg"
         :show-modal="showModal"
         :title="title"

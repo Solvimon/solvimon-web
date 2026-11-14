@@ -27,6 +27,7 @@ defineExpose({
 <template>
     <Modal
         no-click-away
+        full-screen-on-mobile
         :show-modal="showModal"
         size="lg"
         :title="title"

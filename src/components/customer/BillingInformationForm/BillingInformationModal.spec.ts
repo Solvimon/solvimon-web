@@ -132,4 +132,16 @@ describe('BillingInformationModal', () => {
             'Add billing address',
         );
     });
+
+    it('closes without storing anything when nothing was changed', async () => {
+        const { wrapper, update } = mountModal((payload) =>
+            Promise.resolve({ ...customer, ...payload } as Customer),
+        );
+
+        await wrapper.find('[data-testid="confirm"]').trigger('click');
+        await flushPromises();
+
+        expect(update.execute).not.toHaveBeenCalled();
+        expect(wrapper.emitted('close')).toHaveLength(1);
+    });
 });

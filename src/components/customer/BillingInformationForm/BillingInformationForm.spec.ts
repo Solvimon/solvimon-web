@@ -287,6 +287,31 @@ describe('BillingInformationForm', () => {
         });
     });
 
+    describe('a VAT number the form does not show, as for a US company', () => {
+        it('does not send one typed in before the country moved to the US', async () => {
+            const { wrapper, updateCustomer } = mountForm(
+                organization([{ id: 'NL123456789B01', type: 'GENERIC_TAX_ID' }]),
+            );
+
+            await wrapper.find('input[name="vat_number"]').setValue('garbage');
+            await wrapper.find('[data-testid="country"]').setValue('US');
+            await wrapper.find('input[name="postal_code"]').setValue('12345');
+            await submit(wrapper);
+
+            const { payload } = updateCustomer.mock.calls[0][0];
+            expect('organization' in payload && payload.organization).not.toHaveProperty('tax_ids');
+        });
+
+        it('shows an API error about it as a generic one', () => {
+            const { wrapper } = mountForm(
+                organization([{ id: '12-3456789', type: 'GENERIC_TAX_ID' }], 'US'),
+                { 'organization.tax_ids[0].id': 'Tax id is invalid' },
+            );
+
+            expect(wrapper.find('[role="alert"]').text()).toBe('Tax id is invalid');
+        });
+    });
+
     describe('API errors', () => {
         it('shows a tax id error on the VAT field', () => {
             const { wrapper } = mountForm(

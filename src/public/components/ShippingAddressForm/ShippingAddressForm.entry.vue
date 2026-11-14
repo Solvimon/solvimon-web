@@ -17,11 +17,21 @@ defineProps<SolvimonShippingAddressFormEntryProps>();
         :allowed-portal-types="['CUSTOMER']"
     >
         <ShippingAddressFormEntryView v-bind="$props">
-            <template #default="{ customer, address, isAddressMissing, isLoading, actions }">
+            <template
+                #default="{
+                    customer,
+                    address,
+                    isAddressMissing,
+                    hasLoadFailed,
+                    isLoading,
+                    actions,
+                }"
+            >
                 <ShippingAddressForm
                     :customer="customer"
                     :address="address"
                     :is-address-missing="isAddressMissing"
+                    :has-load-failed="hasLoadFailed"
                     :is-loading="isLoading"
                     :actions="actions"
                 />

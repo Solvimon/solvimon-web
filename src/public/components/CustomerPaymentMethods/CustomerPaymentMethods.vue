@@ -12,7 +12,14 @@ const DEFAULT_CONFIGURATION = {
     showAddButton: true,
 };
 
-const props = defineProps<CustomerPaymentMethodsProps>();
+const props = defineProps<
+    CustomerPaymentMethodsProps & {
+        /** Shows every method in place, as the customer overview does; without it the host is asked. */
+        onViewAll?: () => void;
+        /** Adds a method in place, as the customer overview does; without it the host is asked. */
+        onAdd?: () => void;
+    }
+>();
 
 const configuration = computed(() =>
     resolveConfiguration(DEFAULT_CONFIGURATION, props.configuration),
@@ -34,7 +41,9 @@ const { dispatchAction } = useActionDispatchProvider();
         :payment-methods="paymentMethods"
         :show-view-all-button="configuration.showViewAllButton"
         :show-add-button="configuration.showAddButton"
-        @view-all-payment-methods="dispatchAction({ action: 'view-all-payment-methods' })"
-        @add-payment-method="dispatchAction({ action: 'add-payment-method' })"
+        @view-all-payment-methods="
+            onViewAll ? onViewAll() : dispatchAction({ action: 'view-all-payment-methods' })
+        "
+        @add-payment-method="onAdd ? onAdd() : dispatchAction({ action: 'add-payment-method' })"
     />
 </template>

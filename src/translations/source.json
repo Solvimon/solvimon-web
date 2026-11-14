@@ -1083,6 +1083,38 @@
     "defaultMessage": "Delete payment method",
     "description": "Title of the delete payment method confirmation modal"
   },
+  "payment_methods_modal.add.subtitle": {
+    "defaultMessage": "Add a payment method to pay your invoices with.",
+    "description": "Subtitle of the payment methods modal while a payment method is added"
+  },
+  "payment_methods_modal.add.title": {
+    "defaultMessage": "Add payment method",
+    "description": "Title of the payment methods modal while a payment method is added"
+  },
+  "payment_methods_modal.add_button.label": {
+    "defaultMessage": "Add payment method",
+    "description": "Label of the button in the payment methods modal that adds a payment method"
+  },
+  "payment_methods_modal.back_button.label": {
+    "defaultMessage": "Back",
+    "description": "Label of the button that leaves adding a payment method for the list of payment methods"
+  },
+  "payment_methods_modal.close_button.label": {
+    "defaultMessage": "Close",
+    "description": "Label of the button that closes the payment methods modal"
+  },
+  "payment_methods_modal.save_button.label": {
+    "defaultMessage": "Save payment method",
+    "description": "Label of the button that stores the payment method being added"
+  },
+  "payment_methods_modal.subtitle": {
+    "defaultMessage": "Set your default payment method, or add or delete one.",
+    "description": "Subtitle of the modal that lists the customer's payment methods"
+  },
+  "payment_methods_modal.title": {
+    "defaultMessage": "Payment methods",
+    "description": "Title of the modal that lists the customer's payment methods"
+  },
   "payment_methods_unavailable_card.description.authorize": {
     "defaultMessage": "Online payment is not set up for this invoice. The party that issued it can settle it with you directly.",
     "description": "Body text shown when an invoice cannot be paid online"

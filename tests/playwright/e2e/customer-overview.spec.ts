@@ -278,6 +278,44 @@ test.describe('Customer overview', () => {
         });
     });
 
+    // ─── Payment methods modal ────────────────────────────────────────────────
+
+    test.describe('payment methods modal', () => {
+        test('lists every payment method from View all, without asking the host', async ({
+            page,
+        }) => {
+            api = await mountLoaded(page, {
+                paymentMethods: [
+                    aPaymentMethod({ id: 'pame_1' }),
+                    aPaymentMethod({ id: 'pame_2' }),
+                    aPaymentMethod({ id: 'pame_3' }),
+                    aPaymentMethod({ id: 'pame_4' }),
+                ],
+            });
+
+            await customerOverview(page)
+                .paymentMethods.getByRole('button', { name: /view all/i })
+                .click();
+            const modal = page.getByRole('dialog', { name: 'Payment methods' });
+
+            await expect(modal.locator('.sv-payment-methods__item')).toHaveCount(4);
+            await modal.getByRole('button', { name: 'Close' }).last().click();
+            await expect(modal).toBeHidden();
+            expect((await hostEvents(page)).actions).toEqual([]);
+        });
+
+        test('opens on adding a method when the customer has none', async ({ page }) => {
+            api = await mountLoaded(page, { paymentMethods: [] });
+
+            await customerOverview(page)
+                .paymentMethods.getByRole('button', { name: 'Add payment method' })
+                .click();
+
+            await expect(page.getByRole('dialog', { name: 'Add payment method' })).toBeVisible();
+            expect((await hostEvents(page)).actions).toEqual([]);
+        });
+    });
+
     // ─── Failure modes ────────────────────────────────────────────────────────
 
     test.describe('failure modes', () => {

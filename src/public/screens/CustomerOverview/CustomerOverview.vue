@@ -19,10 +19,16 @@ import CustomerWalletBalances from '@/public/components/CustomerWalletBalances/C
 import { useActiveScheduleWarning } from '@/composables/useActiveScheduleWarning';
 import { useHasShippedSubscription } from '@/composables/useHasShippedSubscription';
 import LoadFailedNotice from '@/components/shared/LoadFailedNotice.vue';
+import type { PaymentMethodsModalStep } from '@/components/payments/PaymentMethodsModal/PaymentMethodsModal.types';
 
 /** Only customers with an order that ships see it, so the rest never download it. */
 const CustomerShippingAddresses = defineAsyncComponent(
     () => import('@/public/components/CustomerShippingAddresses/CustomerShippingAddresses.vue'),
+);
+
+/** Most customers never open it, so it is not part of the overview until one does. */
+const PaymentMethodsModal = defineAsyncComponent(
+    () => import('@/components/payments/PaymentMethodsModal/PaymentMethodsModal.vue'),
 );
 
 /** Most customers never open it, so it is not part of the overview until one does. */
@@ -76,6 +82,16 @@ const { isLoading } = useLoadInitialData(
     paymentMethods.fetchAll(),
     customerWalletBalances.fetch(),
 );
+
+const hasOpenedPaymentMethodsModal = ref(false);
+const isPaymentMethodsModalShown = ref(false);
+const paymentMethodsModalStart = ref<PaymentMethodsModalStep>('LIST');
+
+const openPaymentMethodsModal = (start: PaymentMethodsModalStep) => {
+    paymentMethodsModalStart.value = start;
+    hasOpenedPaymentMethodsModal.value = true;
+    isPaymentMethodsModalShown.value = true;
+};
 
 const hasOpenedBillingInformationModal = ref(false);
 const isBillingInformationModalShown = ref(false);
@@ -146,6 +162,17 @@ useActiveScheduleWarning(subscriptions.items);
                 :configuration="configuration?.paymentMethods"
                 :is-loading="isLoading"
                 :payment-methods="shownPaymentMethods"
+                :on-view-all="() => openPaymentMethodsModal('LIST')"
+                :on-add="() => openPaymentMethodsModal('ADD_PAYMENT_METHOD')"
+            />
+            <PaymentMethodsModal
+                v-if="hasOpenedPaymentMethodsModal"
+                :show-modal="isPaymentMethodsModalShown"
+                :start="paymentMethodsModalStart"
+                :customer="customer.customer.value"
+                :payment-methods="paymentMethods.items.value"
+                @changed="handlePaymentMethodStored"
+                @close="isPaymentMethodsModalShown = false"
             />
 
             <BillingInformation

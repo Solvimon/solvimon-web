@@ -83,10 +83,14 @@ describe('CustomerPaymentMethods component', () => {
         paymentMethods = [createPaymentMethod()],
         configuration,
         isLoading = false,
+        onViewAll,
+        onAdd,
     }: {
         paymentMethods?: PaymentMethod[];
         configuration?: CustomerPaymentMethodsConfiguration;
         isLoading?: boolean;
+        onViewAll?: () => void;
+        onAdd?: () => void;
     } = {}) =>
         mount(CustomerPaymentMethods, {
             props: {
@@ -94,6 +98,8 @@ describe('CustomerPaymentMethods component', () => {
                 paymentMethods,
                 paymentMethodsOptions,
                 configuration,
+                onViewAll,
+                onAdd,
             },
             global: {
                 stubs: {
@@ -191,6 +197,21 @@ describe('CustomerPaymentMethods component', () => {
         expect(mockDispatchAction).toHaveBeenCalledWith({
             action: 'add-payment-method',
         });
+    });
+
+    it('shows every method and adds one in place, instead of asking the host, when the screen around it does', async () => {
+        const onViewAll = vi.fn();
+        const onAdd = vi.fn();
+
+        await getButtonByText(mountComponent({ onViewAll }), 'View all').trigger('click');
+        await getButtonByText(
+            mountComponent({ paymentMethods: [], onAdd }),
+            'Add payment method',
+        ).trigger('click');
+
+        expect(onViewAll).toHaveBeenCalledOnce();
+        expect(onAdd).toHaveBeenCalledOnce();
+        expect(mockDispatchAction).not.toHaveBeenCalled();
     });
 
     it('keeps the options a partial configuration leaves out at their default', () => {

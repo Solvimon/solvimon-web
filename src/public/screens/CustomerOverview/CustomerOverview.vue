@@ -9,7 +9,7 @@ import { usePortal } from '@/components/providers/PortalProvider/composables/use
 import { useSubscriptionsList } from '@/composables/useSubscriptionsList';
 import { useCustomer } from '@/composables/useCustomer';
 import SubscriptionsList from '@/public/components/SubscriptionsList/SubscriptionsList.vue';
-import { usePaymentMethods } from '@/composables/usePaymentMethods';
+import { DEFAULT_PAYMENT_METHOD_FIRST, usePaymentMethods } from '@/composables/usePaymentMethods';
 import BillingInformation from '@/public/components/BillingInformation/BillingInformation.vue';
 import { useLoadInitialData } from '@/composables/useLoadInitialData';
 import CustomerPaymentMethods from '@/public/components/CustomerPaymentMethods/CustomerPaymentMethods.vue';
@@ -53,7 +53,29 @@ const invoices = useInvoicesList({ customerId, batchSize: 5 });
 const SUBSCRIPTIONS_SHOWN = 2;
 
 const subscriptions = useSubscriptionsList({ customerId });
-const paymentMethods = usePaymentMethods({ customerId });
+const paymentMethods = usePaymentMethods({ customerId, order: DEFAULT_PAYMENT_METHOD_FIRST });
+
+/**
+ * The order the methods loaded in, default first. A reload after a change in the modal keeps each
+ * method where it stood rather than moving a new default to the top under the customer's pointer;
+ * a method added since goes last.
+ */
+const loadedOrder = ref<string[]>();
+const orderedPaymentMethods = computed(() => {
+    const order = loadedOrder.value;
+    if (!order) return paymentMethods.items.value;
+
+    const position = (id: string) => {
+        const index = order.indexOf(id);
+        return index === -1 ? order.length : index;
+    };
+    return [...paymentMethods.items.value].sort((a, b) => position(a.id) - position(b.id));
+});
+
+const loadPaymentMethods = async (): Promise<void> => {
+    await paymentMethods.fetchAll();
+    loadedOrder.value = paymentMethods.items.value.map(({ id }) => id);
+};
 const customerWalletBalances = useCustomerWalletBalances({ customerId });
 const walletBalanceItems = computed(
     () => customerWalletBalances.walletBalances.value?.wallet_balances ?? [],
@@ -63,7 +85,7 @@ const shownSubscriptions = computed(() => subscriptions.items.value.slice(0, SUB
 
 /** The payment methods block is a summary here too, so it caps at what its own configuration asks for. */
 const shownPaymentMethods = computed(() =>
-    paymentMethods.items.value.slice(
+    orderedPaymentMethods.value.slice(
         0,
         props.configuration?.paymentMethods?.maxItems ?? DEFAULT_MAX_ITEMS,
     ),
@@ -80,7 +102,7 @@ const { isLoading } = useLoadInitialData(
     subscriptions
         .fetchAll()
         .finally(() => void shippedSubscriptions.check(subscriptions.items.value)),
-    paymentMethods.fetchAll(),
+    loadPaymentMethods(),
     customerWalletBalances.fetch(),
 );
 
@@ -186,7 +208,7 @@ useActiveScheduleWarning(subscriptions.items);
                 :show-modal="isPaymentMethodsModalShown"
                 :start="paymentMethodsModalStart"
                 :customer="customer.customer.value"
-                :payment-methods="paymentMethods.items.value"
+                :payment-methods="orderedPaymentMethods"
                 @changed="handlePaymentMethodStored"
                 @close="isPaymentMethodsModalShown = false"
             />

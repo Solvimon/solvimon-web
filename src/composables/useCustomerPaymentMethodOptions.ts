@@ -1,4 +1,4 @@
-import type { Customer, PricingPlanSubscription } from '@solvimon/solvimon-types';
+import { ApiStatus, type Customer, type PricingPlanSubscription } from '@solvimon/solvimon-types';
 import { computed, watch, type Ref } from 'vue';
 import { getCustomerCountry } from '@solvimon/solvimon-ui';
 import { usePaymentMethodOptions } from './usePaymentMethodOptions';
@@ -54,5 +54,13 @@ export function useCustomerPaymentMethodOptions({
         isPending.value ? undefined : paymentMethodOptions.value,
     );
 
-    return { paymentMethodOptions, settledOptions, isPending, apiStatus, load };
+    /**
+     * The gateway answered and offers nothing. A lookup still out, or one that failed, says
+     * nothing either way, so adding stays open and the form asks again.
+     */
+    const hasNoOptions = computed(
+        () => apiStatus.value === ApiStatus.Done && paymentMethodOptions.value.length === 0,
+    );
+
+    return { paymentMethodOptions, settledOptions, isPending, apiStatus, hasNoOptions, load };
 }

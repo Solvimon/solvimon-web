@@ -15,18 +15,14 @@ import {
     isSelectedIntegration,
     isStripePaymentIntegration,
 } from './PaymentIntegrationForm.lib';
+import {
+    loadAdyenPaymentIntegrationForm,
+    loadStripePaymentIntegrationForm,
+} from './paymentIntegrationFormLoaders';
 import type { SdkError as PaymentError } from '@/types/errors';
 
-const PaymentIntegrationFormStripe = defineAsyncComponent(() =>
-    import('@/components/payments/PaymentIntegrationFormStripe/PaymentIntegrationFormStripe.vue').then(
-        (m) => m.default,
-    ),
-);
-const PaymentIntegrationFormAdyen = defineAsyncComponent(() =>
-    import('@/components/payments/PaymentIntegrationFormAdyen/PaymentIntegrationFormAdyen.vue').then(
-        (m) => m.default,
-    ),
-);
+const PaymentIntegrationFormStripe = defineAsyncComponent(loadStripePaymentIntegrationForm);
+const PaymentIntegrationFormAdyen = defineAsyncComponent(loadAdyenPaymentIntegrationForm);
 
 const props = withDefaults(defineProps<PaymentIntegrationFormProps>(), {
     storePaymentMethod: undefined,
@@ -38,16 +34,20 @@ defineExpose({ submit });
 const { $t } = useIntl();
 
 /**
- * One form per integration. A billing entity can put several payment acceptors on one integration,
- * and asked without a subscription the options list each of them; a method is stored on the
- * integration, so which acceptor saves it makes no difference to it. The first one is kept.
+ * Storing a method takes one form per integration. A billing entity can put several payment
+ * acceptors on one integration, and asked without a subscription the options list each of them; a
+ * method is stored on the integration, so which acceptor stores it makes no difference to it, and
+ * the first one is kept. A payment goes through the acceptor it is for, so it keeps every one.
  */
 const integrationOptions = computed(() =>
-    props.paymentMethodOptions.filter(
-        (option, index, options) =>
-            options.findIndex(({ integration }) => integration.id === option.integration.id) ===
-            index,
-    ),
+    props.variant === 'TOKENIZE'
+        ? props.paymentMethodOptions.filter(
+              (option, index, options) =>
+                  options.findIndex(
+                      ({ integration }) => integration.id === option.integration.id,
+                  ) === index,
+          )
+        : props.paymentMethodOptions,
 );
 
 const userSelectedIntegration = ref<PaymentGatewayVariant>();
@@ -170,7 +170,7 @@ function submit() {
 <template>
     <template
         v-for="paymentMethodOption in integrationOptions"
-        :key="paymentMethodOption.integration.id"
+        :key="`${paymentMethodOption.integration.id}:${paymentMethodOption.payment_acceptor.id}`"
     >
         <!-- Adyen -->
         <PaymentIntegrationFormAdyen

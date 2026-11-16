@@ -110,12 +110,7 @@ const paymentMethodOptions = useCustomerPaymentMethodOptions({
     isOpen: ref(true),
     customer: customer.customer,
 });
-/** Only an answer counts: a failed lookup leaves adding open, and the modal asks again. */
-const hasNoPaymentMethodOptions = computed(
-    () =>
-        paymentMethodOptions.apiStatus.value === ApiStatus.Done &&
-        paymentMethodOptions.paymentMethodOptions.value?.length === 0,
-);
+const hasNoPaymentMethodOptions = paymentMethodOptions.hasNoOptions;
 
 const hasOpenedPaymentMethodsModal = ref(false);
 const isPaymentMethodsModalShown = ref(false);
@@ -141,6 +136,9 @@ const preloadPaymentMethodsModal = async (): Promise<void> => {
     ]);
 };
 
+/** How long adding waits for its form before the modal opens anyway and loads it there. */
+const PRELOAD_TIMEOUT_MS = 3000;
+
 const isOpeningPaymentMethodsModal = ref(false);
 
 const openPaymentMethodsModal = async (start: PaymentMethodsModalStep): Promise<void> => {
@@ -150,8 +148,17 @@ const openPaymentMethodsModal = async (start: PaymentMethodsModalStep): Promise<
     const preload = preloadPaymentMethodsModal();
     if (start === 'ADD_PAYMENT_METHOD') {
         isOpeningPaymentMethodsModal.value = true;
-        await preload;
-        isOpeningPaymentMethodsModal.value = false;
+        try {
+            await Promise.race([
+                preload,
+                new Promise((resolve) => setTimeout(resolve, PRELOAD_TIMEOUT_MS)),
+            ]);
+        } finally {
+            isOpeningPaymentMethodsModal.value = false;
+        }
+
+        // The options arrived meanwhile with nothing to add; the block says so instead.
+        if (hasNoPaymentMethodOptions.value) return;
     }
 
     paymentMethodsModalStart.value = start;
@@ -231,8 +238,8 @@ useActiveScheduleWarning(subscriptions.items);
                 :on-view-all="() => openPaymentMethodsModal('LIST')"
                 :on-add="() => openPaymentMethodsModal('ADD_PAYMENT_METHOD')"
                 :has-no-payment-method-options="hasNoPaymentMethodOptions"
-                :more-payment-methods-count="
-                    paymentMethods.items.value.length - shownPaymentMethods.length
+                :has-more-payment-methods="
+                    paymentMethods.items.value.length > shownPaymentMethods.length
                 "
             />
             <PaymentMethodsModal

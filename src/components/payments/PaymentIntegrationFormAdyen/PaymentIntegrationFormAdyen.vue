@@ -30,7 +30,7 @@ import {
     transformObjectToAdyenObject,
 } from '@/utils/adyen';
 import { toMinorUnitAmount } from '@/utils/amount';
-import { loadAdyenSdk } from '@/utils/adyenSdk';
+import { loadAdyen } from '@/utils/adyenSdk';
 import { useExperimentalFeature } from '@/components/providers/ExperimentalFeatureProvider/composables/useExperimentalFeature';
 import { useLogger } from '@/components/providers';
 import {
@@ -257,18 +257,6 @@ async function getConfiguration(): Promise<{
             onReady: () => emit('ready'),
         },
     };
-}
-
-/**
- * The Adyen SDK and its styles, loaded on demand so neither sits in the chunk a screen pulls in up
- * front. The SDK itself comes from `@/utils/adyenSdk`, which documents why it is the SDK's only
- * `import('@adyen/adyen-web')`.
- */
-function loadAdyen() {
-    return Promise.all([
-        loadAdyenSdk(),
-        import('@adyen/adyen-web/styles/adyen.css?inline').then((module) => module.default),
-    ]);
 }
 
 async function mountDropIn() {

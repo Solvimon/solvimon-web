@@ -27,12 +27,19 @@ const {
     isPending: isPaymentMethodOptionsPending,
     apiStatus: paymentMethodOptionsStatus,
 } = useCustomerPaymentMethodOptions({
-    isOpen: computed(() => props.showModal),
+    isOpen: computed(() => props.showModal && !props.paymentMethodOptions),
     customer: computed(() => props.customer),
 });
 
+const paymentMethodOptions = computed(() => props.paymentMethodOptions ?? settledOptions.value);
+const isOptionsPending = computed(
+    () => !props.paymentMethodOptions && isPaymentMethodOptionsPending.value,
+);
+
 const hasNoPaymentMethodOptions = computed(
-    () => paymentMethodOptionsStatus.value === ApiStatus.Done && settledOptions.value?.length === 0,
+    () =>
+        (!!props.paymentMethodOptions || paymentMethodOptionsStatus.value === ApiStatus.Done) &&
+        paymentMethodOptions.value?.length === 0,
 );
 
 const {
@@ -150,8 +157,8 @@ const cancelButtonText = computed(() =>
         add-payment-method-pane="ADD_PAYMENT_METHOD"
         :no-bottom-spacing="!isAddingPaymentMethod"
         :customer="customer"
-        :payment-method-options="settledOptions"
-        :is-payment-method-options-pending="isPaymentMethodOptionsPending"
+        :payment-method-options="paymentMethodOptions"
+        :is-payment-method-options-pending="isOptionsPending"
         @confirm="handleConfirm"
         @cancel="handleCancel"
         @payment-success="handlePaymentSuccess"

@@ -28,9 +28,9 @@ const CustomerShippingAddresses = defineAsyncComponent(
 );
 
 /** Most customers never open it, so it is not part of the overview until one does. */
-const PaymentMethodsModal = defineAsyncComponent(
-    () => import('@/components/payments/PaymentMethodsModal/PaymentMethodsModal.vue'),
-);
+const loadPaymentMethodsModal = () =>
+    import('@/components/payments/PaymentMethodsModal/PaymentMethodsModal.vue');
+const PaymentMethodsModal = defineAsyncComponent(loadPaymentMethodsModal);
 
 /** Most customers never open it, so it is not part of the overview until one does. */
 const BillingInformationModal = defineAsyncComponent(
@@ -121,7 +121,39 @@ const hasOpenedPaymentMethodsModal = ref(false);
 const isPaymentMethodsModalShown = ref(false);
 const paymentMethodsModalStart = ref<PaymentMethodsModalStep>('LIST');
 
-const openPaymentMethodsModal = (start: PaymentMethodsModalStep) => {
+/** The options once looked up, for the modal to use rather than asking again. */
+const loadedPaymentMethodOptions = computed(() =>
+    paymentMethodOptions.apiStatus.value === ApiStatus.Done
+        ? paymentMethodOptions.paymentMethodOptions.value
+        : undefined,
+);
+
+/** The modal, and the payment form it may show, so it opens on a form that is already there. */
+const preloadPaymentMethodsModal = async (): Promise<void> => {
+    await paymentMethodOptions.load();
+    await Promise.allSettled([
+        loadPaymentMethodsModal(),
+        // Loaded on use too, so what it needs stays out of the overview's own code.
+        import('@/components/payments/PaymentIntegrationForm/preloadPaymentIntegrationForms').then(
+            ({ preloadPaymentIntegrationForms }) =>
+                preloadPaymentIntegrationForms(loadedPaymentMethodOptions.value ?? []),
+        ),
+    ]);
+};
+
+const isOpeningPaymentMethodsModal = ref(false);
+
+const openPaymentMethodsModal = async (start: PaymentMethodsModalStep): Promise<void> => {
+    if (isOpeningPaymentMethodsModal.value) return;
+
+    // Opened on the list, the form is only a click away, so it loads meanwhile.
+    const preload = preloadPaymentMethodsModal();
+    if (start === 'ADD_PAYMENT_METHOD') {
+        isOpeningPaymentMethodsModal.value = true;
+        await preload;
+        isOpeningPaymentMethodsModal.value = false;
+    }
+
     paymentMethodsModalStart.value = start;
     hasOpenedPaymentMethodsModal.value = true;
     isPaymentMethodsModalShown.value = true;
@@ -209,6 +241,7 @@ useActiveScheduleWarning(subscriptions.items);
                 :start="paymentMethodsModalStart"
                 :customer="customer.customer.value"
                 :payment-methods="orderedPaymentMethods"
+                :payment-method-options="loadedPaymentMethodOptions"
                 @changed="handlePaymentMethodStored"
                 @close="isPaymentMethodsModalShown = false"
             />

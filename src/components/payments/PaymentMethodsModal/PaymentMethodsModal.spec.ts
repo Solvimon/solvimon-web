@@ -1,12 +1,20 @@
 import { mount } from '@vue/test-utils';
 import { defineComponent } from 'vue';
-import { ApiStatus, type Customer, type PaymentMethod } from '@solvimon/solvimon-types';
+import {
+    ApiStatus,
+    type Customer,
+    type PaymentMethod,
+    type PaymentMethodOptionsResponse,
+} from '@solvimon/solvimon-types';
 import PaymentMethodsModal from './PaymentMethodsModal.vue';
 import type { PaymentMethodsModalStep } from './PaymentMethodsModal.types';
 
 const { mockSubmit, optionsState } = vi.hoisted(() => ({
     mockSubmit: vi.fn(),
-    optionsState: { options: [{ type: 'CARD' }] as unknown[] },
+    optionsState: {
+        options: [{ type: 'CARD' }] as unknown[],
+        isOpen: undefined as { value: boolean } | undefined,
+    },
 }));
 
 vi.mock('@solvimon/solvimon-ui', async () => {
@@ -17,11 +25,14 @@ vi.mock('@solvimon/solvimon-ui', async () => {
 vi.mock('@/composables/useCustomerPaymentMethodOptions', async () => {
     const { ref } = await import('vue');
     return {
-        useCustomerPaymentMethodOptions: () => ({
-            settledOptions: ref(optionsState.options),
-            isPending: ref(false),
-            apiStatus: ref(ApiStatus.Done),
-        }),
+        useCustomerPaymentMethodOptions: ({ isOpen }: { isOpen: { value: boolean } }) => {
+            optionsState.isOpen = isOpen;
+            return {
+                settledOptions: ref(optionsState.options),
+                isPending: ref(false),
+                apiStatus: ref(ApiStatus.Done),
+            };
+        },
     };
 });
 
@@ -43,6 +54,7 @@ vi.mock('@/components/payments/OnDemandPaymentModalShell/OnDemandPaymentModalShe
             cancelButtonText: String,
             confirmButtonText: String,
             noBottomSpacing: Boolean,
+            paymentMethodOptions: Array,
         },
         emits: ['confirm', 'cancel', 'payment-success', 'payment-failed'],
         setup: (_, { expose }) => expose({ submit: mockSubmit, isSaving: false }),
@@ -143,6 +155,21 @@ describe('PaymentMethodsModal', () => {
         );
         expect(empty.find('.sv-payment-methods-modal__add').exists()).toBe(true);
         expect(mountModal().find('.sv-payment-methods-modal__empty').exists()).toBe(false);
+    });
+
+    it('uses the options it is given rather than looking them up again', () => {
+        const given = [{ type: 'IDEAL' }] as unknown as PaymentMethodOptionsResponse;
+        const wrapper = mount(PaymentMethodsModal, {
+            props: {
+                showModal: true,
+                customer: { id: 'cus_1' } as Customer,
+                paymentMethods: [],
+                paymentMethodOptions: given,
+            },
+        });
+
+        expect(optionsState.isOpen?.value).toBe(false);
+        expect(shell(wrapper).props('paymentMethodOptions')).toEqual(given);
     });
 
     it('offers no way to add a method when the gateway offers none', () => {

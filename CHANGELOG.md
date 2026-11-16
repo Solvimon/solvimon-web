@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Saved payment methods are listed 4px apart instead of 16px, on the customer overview, in its payment methods modal and on payment methods management.
 - The customer overview manages the customer's payment methods in a modal (`.sv-payment-methods-modal`), built like the top-up modals, instead of sending the `view-all-payment-methods` and `add-payment-method` action requests. Its View all button is now Manage (`.sv-payment-methods__manage`), like the shipping addresses block's, and opens it on the list, where a method is set as the default, deleted, or added; Add payment method opens it on adding one. The block reloads once a method is stored, set as default or deleted. When the customer's payment method options are empty, the block says no online payment methods are available and neither the block nor the modal offers to add one. Without any payment methods either, the block also leaves out Manage. The `customer-payment-methods` component on its own still sends the action requests.
 
 - `billing-information-form` uses the checkout's billing address and company fields. The address fields follow the customer's country, the postal code is checked against the country's format, and a company's EU VAT number can be checked with VIES, as in the checkout. The country moved from the contact details to the address, and optional fields say so. Individuals still edit their first and last name there.

@@ -89,6 +89,37 @@ describe('PaymentIntegrationForm', () => {
         expect(wrapper.emitted('select')).toEqual([[selection]]);
     });
 
+    it('shows one form per integration, for the first of the acceptors that share it', () => {
+        const wrapper = mountForm({
+            paymentMethodOptions: [
+                createPaymentMethodOptionEntry({
+                    paymentAcceptorId: 'pa_1',
+                    integrationId: 'int_1',
+                }),
+                createPaymentMethodOptionEntry({
+                    paymentAcceptorId: 'pa_2',
+                    integrationId: 'int_1',
+                }),
+                createPaymentMethodOptionEntry({
+                    paymentAcceptorId: 'pa_3',
+                    integrationId: 'int_2',
+                }),
+            ],
+        });
+
+        expect(
+            forms(wrapper).map(
+                (form) =>
+                    (
+                        (form.vm.$attrs['payment-method-option-response-entry'] ??
+                            form.vm.$attrs['paymentMethodOptionResponseEntry']) as {
+                            payment_acceptor: { id: string };
+                        }
+                    ).payment_acceptor.id,
+            ),
+        ).toEqual(['pa_1', 'pa_3']);
+    });
+
     it('opens the gateway form on its first method unless told not to', () => {
         expect(adyenStub(mountForm()).attributes('selected')).toBe('true');
         expect(adyenStub(mountForm({ openFirstPaymentMethod: false })).attributes('selected')).toBe(

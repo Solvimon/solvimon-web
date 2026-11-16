@@ -799,6 +799,10 @@
     "defaultMessage": "No online payment methods are available.",
     "description": "Shown on the customer overview when the customer has no payment methods and none can be added"
   },
+  "customer_overview.payment_methods_block.show_more_button_label": {
+    "defaultMessage": "Show more",
+    "description": "Label of the link below the payment methods block that opens the rest of them"
+  },
   "customer_overview.payment_methods_block.view_all_payment_methods_link_label": {
     "defaultMessage": "View all",
     "description": "The link text that links to the overview page of the customer invoices"

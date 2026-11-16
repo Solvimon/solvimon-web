@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Section, Typography, Button, useIntl } from '@solvimon/solvimon-ui';
+import { Section, Typography, Button, Chip, useIntl } from '@solvimon/solvimon-ui';
 import { computed } from 'vue';
 import type {
     CustomerPaymentMethodsBlockEmits,
@@ -76,7 +76,32 @@ const isHeaderButtonShown = computed<boolean>(
             >
         </template>
 
-        <PaymentMethodsList v-if="hasPaymentMethods" :payment-methods="paymentMethods" />
+        <template v-if="hasPaymentMethods">
+            <PaymentMethodsList :payment-methods="paymentMethods" />
+            <Button
+                v-if="morePaymentMethodsCount"
+                size="xs"
+                intent="subtle"
+                class="sv-action sv-action--ghost sv-payment-methods__show-more mt-2"
+                type="button"
+                @click="$emit('view-all-payment-methods')"
+            >
+                {{
+                    $t({
+                        defaultMessage: 'Show more',
+                        id: 'customer_overview.payment_methods_block.show_more_button_label',
+                        description:
+                            'Label of the link below the payment methods block that opens the rest of them',
+                    })
+                }}
+                <Chip
+                    class="sv-payment-methods__show-more-count ml-1"
+                    intent="neutral"
+                    size="sm"
+                    :content="String(morePaymentMethodsCount)"
+                />
+            </Button>
+        </template>
         <Section v-else class="sv-empty-state sv-payment-methods__empty">
             <Typography
                 :variant="hasNoPaymentMethodOptions ? 'body-xs' : 'body-sm'"

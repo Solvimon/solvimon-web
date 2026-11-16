@@ -203,7 +203,7 @@ describe('CustomerPaymentMethods component', () => {
         const onViewAll = vi.fn();
         const onAdd = vi.fn();
 
-        await getButtonByText(mountComponent({ onViewAll }), 'View all').trigger('click');
+        await getButtonByText(mountComponent({ onViewAll }), 'Manage').trigger('click');
         await getButtonByText(
             mountComponent({ paymentMethods: [], onAdd }),
             'Add payment method',

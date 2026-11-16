@@ -42,6 +42,7 @@ const { dispatchAction } = useActionDispatchProvider();
         class="sv-payment-methods sv-root sv-component"
         :payment-methods="paymentMethods"
         :show-view-all-button="configuration.showViewAllButton"
+        :is-managed="!!onViewAll"
         :show-add-button="configuration.showAddButton"
         :has-no-payment-method-options="hasNoPaymentMethodOptions"
         @view-all-payment-methods="

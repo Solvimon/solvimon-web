@@ -1369,7 +1369,9 @@ test.describe('Checkout', () => {
             const retry = page.locator('.sv-checkout__order-summary-retry');
             await expect(retry).toBeVisible();
             isUp = true;
-            await retry.click();
+            // Pricing again on its own before the click lands leaves no retry to click, and a click
+            // waiting on it would hold the test until it times out. Either way the order is priced.
+            void retry.click().catch(() => undefined);
 
             await expect(checkout(page).orderSummary).toContainText('20.00');
             await expect(checkout(page).submit).toBeVisible();

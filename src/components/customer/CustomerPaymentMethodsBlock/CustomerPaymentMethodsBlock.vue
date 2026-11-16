@@ -13,6 +13,13 @@ defineEmits<CustomerPaymentMethodsBlockEmits>();
 const { $t } = useIntl();
 
 const hasPaymentMethods = computed<boolean>(() => props.paymentMethods.length > 0);
+
+/** Managing needs a method to manage or one to add; without either there is nothing to do. */
+const isHeaderButtonShown = computed<boolean>(
+    () =>
+        props.showViewAllButton &&
+        (!props.isManaged || hasPaymentMethods.value || !props.hasNoPaymentMethodOptions),
+);
 </script>
 
 <template>
@@ -33,7 +40,7 @@ const hasPaymentMethods = computed<boolean>(() => props.paymentMethods.length > 
             )
         "
     >
-        <template v-if="showViewAllButton" #right>
+        <template v-if="isHeaderButtonShown" #right>
             <Button
                 v-if="isManaged"
                 size="xs"
@@ -72,14 +79,14 @@ const hasPaymentMethods = computed<boolean>(() => props.paymentMethods.length > 
         <PaymentMethodsList v-if="hasPaymentMethods" :payment-methods="paymentMethods" />
         <Section v-else class="sv-empty-state sv-payment-methods__empty">
             <Typography
-                variant="body-sm"
+                :variant="hasNoPaymentMethodOptions ? 'body-xs' : 'body-sm'"
                 color="subtle"
                 no-spacing
                 class="sv-payment-methods__empty-message"
                 >{{
                     hasNoPaymentMethodOptions
                         ? $t({
-                              defaultMessage: 'No payment methods are available.',
+                              defaultMessage: 'No online payment methods are available.',
                               description:
                                   'Shown on the customer overview when the customer has no payment methods and none can be added',
                               id: 'customer_overview.payment_methods_block.no_options_text',

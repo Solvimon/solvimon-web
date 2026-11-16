@@ -214,15 +214,36 @@ describe('CustomerPaymentMethods component', () => {
         expect(mockDispatchAction).not.toHaveBeenCalled();
     });
 
-    it('says no payment methods are available, without an add button, when none can be added', () => {
+    it('says no online payment methods are available, without an add button, when none can be added', () => {
         const wrapper = mount(CustomerPaymentMethods, {
             props: { isLoading: false, paymentMethods: [], hasNoPaymentMethodOptions: true },
             global: { stubs: { teleport: true } },
         });
 
-        expect(wrapper.text()).toContain('No payment methods are available.');
+        expect(wrapper.text()).toContain('No online payment methods are available.');
         expect(wrapper.text()).not.toContain('Add payment method');
     });
+
+    it.each([
+        { paymentMethods: [], hasNoPaymentMethodOptions: true, isShown: false },
+        { paymentMethods: [], hasNoPaymentMethodOptions: false, isShown: true },
+        { paymentMethods: [createPaymentMethod()], hasNoPaymentMethodOptions: true, isShown: true },
+    ])(
+        'offers Manage only with a method to manage or one to add: $isShown for $paymentMethods.length methods, no options $hasNoPaymentMethodOptions',
+        ({ paymentMethods, hasNoPaymentMethodOptions, isShown }) => {
+            const wrapper = mount(CustomerPaymentMethods, {
+                props: {
+                    isLoading: false,
+                    paymentMethods,
+                    hasNoPaymentMethodOptions,
+                    onViewAll: vi.fn(),
+                },
+                global: { stubs: { teleport: true } },
+            });
+
+            expect(wrapper.text().includes('Manage')).toBe(isShown);
+        },
+    );
 
     it('keeps the options a partial configuration leaves out at their default', () => {
         const wrapper = mountComponent({

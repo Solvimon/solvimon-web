@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { ApiStatus } from '@solvimon/solvimon-types';
-import { Button, Icon, useIntl } from '@solvimon/solvimon-ui';
+import { Button, Icon, Section, Typography, useIntl } from '@solvimon/solvimon-ui';
 import {
     PAYMENT_METHODS_MODAL_STEPS,
     type PaymentMethodsModalEmits,
@@ -159,6 +159,19 @@ const cancelButtonText = computed(() =>
     >
         <template #LIST>
             <div class="grid grid-cols-1 gap-2 pt-2">
+                <Section
+                    v-if="paymentMethods.length === 0"
+                    class="sv-empty-state sv-payment-methods-modal__empty"
+                >
+                    <Typography variant="body-sm" color="subtle" no-spacing>{{
+                        $t({
+                            defaultMessage: 'You have no payment methods yet.',
+                            id: 'payment_methods_modal.empty_text',
+                            description:
+                                'Shown in the payment methods modal when the customer has no payment methods',
+                        })
+                    }}</Typography>
+                </Section>
                 <PaymentMethodsList
                     :payment-methods="paymentMethods"
                     @set-default="emit('changed')"

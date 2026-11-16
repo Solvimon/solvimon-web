@@ -57,14 +57,12 @@ vi.mock('@/components/payments/OnDemandPaymentModalShell/OnDemandPaymentModalShe
     }),
 }));
 
-const mountModal = (start?: PaymentMethodsModalStep) =>
+const mountModal = (
+    start?: PaymentMethodsModalStep,
+    paymentMethods = [{ id: 'pame_1' }] as PaymentMethod[],
+) =>
     mount(PaymentMethodsModal, {
-        props: {
-            showModal: true,
-            start,
-            customer: { id: 'cus_1' } as Customer,
-            paymentMethods: [{ id: 'pame_1' }] as PaymentMethod[],
-        },
+        props: { showModal: true, start, customer: { id: 'cus_1' } as Customer, paymentMethods },
     });
 
 const shell = (wrapper: ReturnType<typeof mountModal>) =>
@@ -135,6 +133,16 @@ describe('PaymentMethodsModal', () => {
 
         expect(wrapper.emitted('changed')).toHaveLength(1);
         expect(wrapper.emitted('close')).toHaveLength(1);
+    });
+
+    it('says the customer has none yet above the add link, rather than an empty list', () => {
+        const empty = mountModal('LIST', []);
+
+        expect(empty.find('.sv-payment-methods-modal__empty').text()).toBe(
+            'You have no payment methods yet.',
+        );
+        expect(empty.find('.sv-payment-methods-modal__add').exists()).toBe(true);
+        expect(mountModal().find('.sv-payment-methods-modal__empty').exists()).toBe(false);
     });
 
     it('offers no way to add a method when the gateway offers none', () => {

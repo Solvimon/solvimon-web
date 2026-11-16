@@ -111,6 +111,19 @@ describe('PaymentMethodsList', () => {
         expect(wrapper.findAll('[data-testid="payment-method-stub"]')).toHaveLength(0);
     });
 
+    it('gives each card its menu, unless told to leave the menus out', () => {
+        const optionsOf = (hideOptions?: boolean) =>
+            mount(PaymentMethodsList, {
+                props: { paymentMethods: [createPaymentMethod()], hideOptions },
+                global: { stubs: { teleport: true } },
+            })
+                .findComponent({ name: 'PaymentMethodStub' })
+                .props('options');
+
+        expect(optionsOf()).toEqual([]);
+        expect(optionsOf(true)).toBeUndefined();
+    });
+
     it('hides the delete modal initially', () => {
         const wrapper = mountComponent();
 

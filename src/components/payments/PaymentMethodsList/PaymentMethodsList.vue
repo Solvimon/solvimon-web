@@ -68,7 +68,7 @@ async function handleConfirmDelete() {
             <PaymentMethod
                 class="sv-payment-methods__item-content"
                 :payment-method="paymentMethod"
-                :options="getContextMenuItems(paymentMethod)"
+                :options="hideOptions ? undefined : getContextMenuItems(paymentMethod)"
             />
         </Section>
     </div>

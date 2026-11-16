@@ -2,6 +2,8 @@ import type { PaymentMethod } from '@solvimon/solvimon-types';
 
 export interface PaymentMethodsListProps {
     paymentMethods: PaymentMethod[];
+    /** Leaves out each card's menu, for a summary whose methods are managed elsewhere. */
+    hideOptions?: boolean;
 }
 
 export interface PaymentMethodsListEmits {

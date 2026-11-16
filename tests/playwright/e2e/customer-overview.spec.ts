@@ -304,7 +304,7 @@ test.describe('Customer overview', () => {
             expect((await hostEvents(page)).actions).toEqual([]);
         });
 
-        test('lists the methods the block leaves out from Show more, with how many', async ({
+        test('lists the methods the block leaves out from Show all payment methods', async ({
             page,
         }) => {
             api = await mountLoaded(page, {
@@ -316,12 +316,10 @@ test.describe('Customer overview', () => {
                     aPaymentMethod({ id: 'pame_5' }),
                 ],
             });
-            const showMore = customerOverview(page).paymentMethods.getByRole('button', {
-                name: /show more/i,
-            });
 
-            await expect(showMore).toContainText('2');
-            await showMore.click();
+            await customerOverview(page)
+                .paymentMethods.getByRole('button', { name: 'Show all payment methods' })
+                .click();
 
             await expect(
                 page

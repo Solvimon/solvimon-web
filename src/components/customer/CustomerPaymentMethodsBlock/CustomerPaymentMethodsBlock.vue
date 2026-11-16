@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Section, Typography, Button, Chip, useIntl } from '@solvimon/solvimon-ui';
+import { Section, Typography, Button, useIntl } from '@solvimon/solvimon-ui';
 import { computed } from 'vue';
 import type {
     CustomerPaymentMethodsBlockEmits,
@@ -77,30 +77,23 @@ const isHeaderButtonShown = computed<boolean>(
         </template>
 
         <template v-if="hasPaymentMethods">
-            <PaymentMethodsList :payment-methods="paymentMethods" />
-            <Button
+            <!-- Managed in the modal, so the cards here are a summary without their menus. -->
+            <PaymentMethodsList :payment-methods="paymentMethods" :hide-options="isManaged" />
+            <button
                 v-if="morePaymentMethodsCount"
-                size="xs"
-                intent="subtle"
-                class="sv-action sv-action--ghost sv-payment-methods__show-more mt-2"
                 type="button"
+                class="sv-action sv-action--link sv-payment-methods__show-more ml-auto mt-1 block rounded text-xs text-primary-900 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary-600"
                 @click="$emit('view-all-payment-methods')"
             >
                 {{
                     $t({
-                        defaultMessage: 'Show more',
-                        id: 'customer_overview.payment_methods_block.show_more_button_label',
+                        defaultMessage: 'Show all payment methods',
+                        id: 'customer_overview.payment_methods_block.show_all_link_label',
                         description:
-                            'Label of the link below the payment methods block that opens the rest of them',
+                            'Text link below the payment methods block that opens all of them, shown when the block leaves some out',
                     })
                 }}
-                <Chip
-                    class="sv-payment-methods__show-more-count ml-1"
-                    intent="neutral"
-                    size="sm"
-                    :content="String(morePaymentMethodsCount)"
-                />
-            </Button>
+            </button>
         </template>
         <Section v-else class="sv-empty-state sv-payment-methods__empty">
             <Typography

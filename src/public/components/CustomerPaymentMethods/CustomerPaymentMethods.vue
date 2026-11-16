@@ -20,6 +20,8 @@ const props = defineProps<
         onAdd?: () => void;
         /** Set by a host that looked the options up, as the customer overview does. */
         hasNoPaymentMethodOptions?: boolean;
+        /** Set by a host that shows fewer methods than the customer has, as the customer overview does. */
+        morePaymentMethodsCount?: number;
     }
 >();
 
@@ -45,6 +47,7 @@ const { dispatchAction } = useActionDispatchProvider();
         :is-managed="!!onViewAll"
         :show-add-button="configuration.showAddButton"
         :has-no-payment-method-options="hasNoPaymentMethodOptions"
+        :more-payment-methods-count="morePaymentMethodsCount"
         @view-all-payment-methods="
             onViewAll ? onViewAll() : dispatchAction({ action: 'view-all-payment-methods' })
         "

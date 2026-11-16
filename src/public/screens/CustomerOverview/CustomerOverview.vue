@@ -177,6 +177,9 @@ useActiveScheduleWarning(subscriptions.items);
                 :on-view-all="() => openPaymentMethodsModal('LIST')"
                 :on-add="() => openPaymentMethodsModal('ADD_PAYMENT_METHOD')"
                 :has-no-payment-method-options="hasNoPaymentMethodOptions"
+                :more-payment-methods-count="
+                    paymentMethods.items.value.length - shownPaymentMethods.length
+                "
             />
             <PaymentMethodsModal
                 v-if="hasOpenedPaymentMethodsModal"

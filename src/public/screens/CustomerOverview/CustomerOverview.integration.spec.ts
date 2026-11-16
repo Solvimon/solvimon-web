@@ -142,7 +142,13 @@ vi.mock('@/public/components/CustomerWalletBalances/CustomerWalletBalances.vue',
 vi.mock('@/public/components/CustomerPaymentMethods/CustomerPaymentMethods.vue', () => ({
     default: defineComponent({
         name: 'CustomerPaymentMethodsStub',
-        props: ['paymentMethods', 'isLoading', 'configuration', 'hasNoPaymentMethodOptions'],
+        props: [
+            'paymentMethods',
+            'isLoading',
+            'configuration',
+            'hasNoPaymentMethodOptions',
+            'morePaymentMethodsCount',
+        ],
         setup: () => () => h('div'),
     }),
 }));
@@ -302,6 +308,23 @@ describe('CustomerOverview — payment methods', () => {
 
         expect(shownPaymentMethods(wrapper).map(({ id }) => id)).toEqual(['pm_1']);
     });
+
+    it.each([
+        { maxItems: undefined, more: 2 },
+        { maxItems: 1, more: 4 },
+        { maxItems: 10, more: 0 },
+    ])(
+        'tells the block how many it leaves out: $more with maxItems $maxItems',
+        async ({ maxItems, more }) => {
+            const wrapper = await mountOverview({ paymentMethods: { maxItems } });
+
+            expect(
+                wrapper
+                    .findComponent({ name: 'CustomerPaymentMethodsStub' })
+                    .props('morePaymentMethodsCount'),
+            ).toBe(more);
+        },
+    );
 });
 
 describe('CustomerOverview — shipping addresses', () => {

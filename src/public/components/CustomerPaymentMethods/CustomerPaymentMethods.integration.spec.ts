@@ -245,6 +245,32 @@ describe('CustomerPaymentMethods component', () => {
         },
     );
 
+    it('links to the methods it leaves out, with how many there are', async () => {
+        const onViewAll = vi.fn();
+        const wrapper = mount(CustomerPaymentMethods, {
+            props: {
+                isLoading: false,
+                paymentMethods: [createPaymentMethod()],
+                morePaymentMethodsCount: 2,
+                onViewAll,
+            },
+            global: { stubs: { teleport: true } },
+        });
+        const showMore = wrapper.get('.sv-payment-methods__show-more');
+
+        expect(showMore.text()).toContain('Show more');
+        expect(showMore.get('.sv-payment-methods__show-more-count').text()).toBe('2');
+
+        await showMore.trigger('click');
+        expect(onViewAll).toHaveBeenCalledOnce();
+    });
+
+    it('has no Show more when it shows every method', () => {
+        const wrapper = mountComponent({ onViewAll: vi.fn() });
+
+        expect(wrapper.find('.sv-payment-methods__show-more').exists()).toBe(false);
+    });
+
     it('keeps the options a partial configuration leaves out at their default', () => {
         const wrapper = mountComponent({
             paymentMethods: [],

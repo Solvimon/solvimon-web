@@ -304,6 +304,32 @@ test.describe('Customer overview', () => {
             expect((await hostEvents(page)).actions).toEqual([]);
         });
 
+        test('lists the methods the block leaves out from Show more, with how many', async ({
+            page,
+        }) => {
+            api = await mountLoaded(page, {
+                paymentMethods: [
+                    aPaymentMethod({ id: 'pame_1' }),
+                    aPaymentMethod({ id: 'pame_2' }),
+                    aPaymentMethod({ id: 'pame_3' }),
+                    aPaymentMethod({ id: 'pame_4' }),
+                    aPaymentMethod({ id: 'pame_5' }),
+                ],
+            });
+            const showMore = customerOverview(page).paymentMethods.getByRole('button', {
+                name: /show more/i,
+            });
+
+            await expect(showMore).toContainText('2');
+            await showMore.click();
+
+            await expect(
+                page
+                    .getByRole('dialog', { name: 'Payment methods' })
+                    .locator('.sv-payment-methods__item'),
+            ).toHaveCount(5);
+        });
+
         test('opens on adding a method when the customer has none', async ({ page }) => {
             api = await mountLoaded(page, { paymentMethods: [] });
 

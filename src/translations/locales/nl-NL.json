@@ -275,7 +275,7 @@
     "payment_methods_list.delete_modal.title": "Betaalmethode verwijderen",
     "payment_methods_modal.add.subtitle": "Voeg een betaalmethode toe om je facturen mee te betalen.",
     "payment_methods_modal.add.title": "Betaalmethode toevoegen",
-    "payment_methods_modal.add_button.label": "Betaalmethode toevoegen",
+    "payment_methods_modal.add_button.label": "Nieuwe betaalmethode toevoegen",
     "payment_methods_modal.back_button.label": "Terug",
     "payment_methods_modal.close_button.label": "Sluiten",
     "payment_methods_modal.save_button.label": "Betaalmethode opslaan",

@@ -39,7 +39,11 @@ defineExpose({
         @close="$emit('cancel')"
     >
         <template #body>
-            <div class="grid grid-cols-1 gap-4 pb-4" v-bind="$attrs">
+            <div
+                class="grid grid-cols-1 gap-4"
+                :class="{ 'pb-4': !noBottomSpacing }"
+                v-bind="$attrs"
+            >
                 <SlidingPanes :panes="panes" :current="step">
                     <template #[addPaymentMethodPane]>
                         <AddPaymentMethodPane

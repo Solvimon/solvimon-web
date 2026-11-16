@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { ApiStatus } from '@solvimon/solvimon-types';
-import { Button, useIntl } from '@solvimon/solvimon-ui';
+import { Button, Icon, useIntl } from '@solvimon/solvimon-ui';
 import {
     PAYMENT_METHODS_MODAL_STEPS,
     type PaymentMethodsModalEmits,
@@ -148,6 +148,7 @@ const cancelButtonText = computed(() =>
         :panes="PAYMENT_METHODS_MODAL_STEPS"
         :step="step"
         add-payment-method-pane="ADD_PAYMENT_METHOD"
+        :no-bottom-spacing="!isAddingPaymentMethod"
         :customer="customer"
         :payment-method-options="settledOptions"
         :is-payment-method-options-pending="isPaymentMethodOptionsPending"
@@ -157,7 +158,7 @@ const cancelButtonText = computed(() =>
         @payment-failed="(error) => emit('payment-failed', error)"
     >
         <template #LIST>
-            <div class="grid grid-cols-1 gap-4">
+            <div class="grid grid-cols-1 gap-2 pt-2">
                 <PaymentMethodsList
                     :payment-methods="paymentMethods"
                     @set-default="emit('changed')"
@@ -166,12 +167,13 @@ const cancelButtonText = computed(() =>
                 <button
                     v-if="!hasNoPaymentMethodOptions"
                     type="button"
-                    class="sv-action sv-action--link sv-payment-methods-modal__add w-fit rounded text-sm text-primary-900 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary-600"
+                    class="sv-action sv-action--link sv-payment-methods-modal__add inline-flex w-fit items-center gap-1 rounded text-sm text-primary-900 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary-600"
                     @click="openAddPaymentMethod"
                 >
+                    <Icon icon="add" size="xs" />
                     {{
                         $t({
-                            defaultMessage: 'Add payment method',
+                            defaultMessage: 'Add a new payment method',
                             id: 'payment_methods_modal.add_button.label',
                             description:
                                 'Label of the button in the payment methods modal that adds a payment method',

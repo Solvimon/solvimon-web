@@ -15,6 +15,8 @@ export interface OnDemandPaymentModalShellProps {
     customer?: Customer;
     paymentMethodOptions?: PaymentMethodOptionsResponse;
     isPaymentMethodOptionsPending?: boolean;
+    /** Leaves out the space below the panes, for content that ends in a link rather than a card. */
+    noBottomSpacing?: boolean;
 }
 
 export interface OnDemandPaymentModalShellEmits {

@@ -128,7 +128,7 @@ const noPaymentMethodsMessageParts = computed(() => {
         <Section v-else class="sv-empty-state sv-payment-methods__empty">
             <Typography
                 v-if="isAddedFromMessage"
-                variant="body-xs"
+                variant="body-sm"
                 color="subtle"
                 no-spacing
                 class="sv-payment-methods__empty-message"

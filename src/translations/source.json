@@ -796,7 +796,7 @@
     "description": "Label of the button that opens the management of the customer's payment methods"
   },
   "customer_overview.payment_methods_block.no_options_text": {
-    "defaultMessage": "No payment methods are available.",
+    "defaultMessage": "No online payment methods are available.",
     "description": "Shown on the customer overview when the customer has no payment methods and none can be added"
   },
   "customer_overview.payment_methods_block.view_all_payment_methods_link_label": {

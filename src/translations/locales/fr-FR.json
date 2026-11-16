@@ -198,7 +198,7 @@
     "customer_overview.payment_methods_block.add_payment_method_button_label": "Ajouter un moyen de paiement",
     "customer_overview.payment_methods_block.add_payment_method_helper_text": "Ajoutez un moyen de paiement pour régler les factures récurrentes.",
     "customer_overview.payment_methods_block.manage_button_label": "Gérer",
-    "customer_overview.payment_methods_block.no_options_text": "Aucun moyen de paiement n’est disponible.",
+    "customer_overview.payment_methods_block.no_options_text": "Aucun moyen de paiement en ligne n’est disponible.",
     "customer_overview.payment_methods_block.view_all_payment_methods_link_label": "Tout afficher",
     "customer_overview.shipping_addresses_block.add_button_label": "Ajouter une adresse de livraison",
     "customer_overview.shipping_addresses_block.empty": "Aucune adresse de livraison pour le moment",

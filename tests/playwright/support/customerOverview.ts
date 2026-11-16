@@ -9,6 +9,7 @@ import {
     aShippingAddress,
     aSubscription,
     collection,
+    paymentMethodOptions,
     walletBalances,
     type Json,
 } from './fixtures';
@@ -31,6 +32,8 @@ function defaultMocks(options: MountOptions): Partial<Record<EndpointName, Respo
         paymentMethods: {
             body: collection(options.paymentMethods ?? [aPaymentMethod({ isDefault: true })]),
         },
+        // The overview asks up front whether there is a payment method to add.
+        paymentMethodOptions: { body: paymentMethodOptions() },
         walletBalances: { body: options.wallets ?? walletBalances([]) },
         shippingAddresses: {
             body: collection(options.shippingAddresses ?? [aShippingAddress({ isDefault: true })]),

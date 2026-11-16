@@ -26,9 +26,14 @@ vi.mock('@solvimon/solvimon-ui', async () => {
     return createSolvimonUiMock({
         useIntl: () => ({
             ...mockUseIntl(),
-            $t: (message: { defaultMessage: string }, values?: Record<string, string>) => {
+            $t: (message: { defaultMessage: string }, values?: Record<string, unknown>) => {
                 if (values?.count && message.defaultMessage.includes('Payment method')) {
                     return values.count === '1' ? 'Payment method' : 'Payment methods';
+                }
+                const link = values?.link;
+                if (typeof link === 'function') {
+                    const [before, inner, after] = message.defaultMessage.split(/<\/?link>/);
+                    return [before, link([inner]), after];
                 }
                 return message.defaultMessage;
             },
@@ -226,10 +231,10 @@ describe('CustomerPaymentMethods component', () => {
 
     it.each([
         { paymentMethods: [], hasNoPaymentMethodOptions: true, isShown: false },
-        { paymentMethods: [], hasNoPaymentMethodOptions: false, isShown: true },
+        { paymentMethods: [], hasNoPaymentMethodOptions: false, isShown: false },
         { paymentMethods: [createPaymentMethod()], hasNoPaymentMethodOptions: true, isShown: true },
     ])(
-        'offers Manage only with a method to manage or one to add: $isShown for $paymentMethods.length methods, no options $hasNoPaymentMethodOptions',
+        'offers Manage only with a method to manage: $isShown for $paymentMethods.length methods, no options $hasNoPaymentMethodOptions',
         ({ paymentMethods, hasNoPaymentMethodOptions, isShown }) => {
             const wrapper = mount(CustomerPaymentMethods, {
                 props: {
@@ -253,6 +258,25 @@ describe('CustomerPaymentMethods component', () => {
 
         expect(hidesOptions(vi.fn())).toBe(true);
         expect(hidesOptions()).toBe(false);
+    });
+
+    it('offers adding the first method from a link in its message when managed in place', async () => {
+        const onAdd = vi.fn();
+        const wrapper = mount(CustomerPaymentMethods, {
+            props: { isLoading: false, paymentMethods: [], onViewAll: vi.fn(), onAdd },
+            global: { stubs: { teleport: true } },
+        });
+        const message = wrapper.get('.sv-payment-methods__empty-message');
+
+        expect(message.text()).toBe(
+            "You don't have any payment methods yet, add a payment method.",
+        );
+        expect(wrapper.findAll('button').map((button) => button.text())).toEqual([
+            'add a payment method',
+        ]);
+
+        await message.get('button').trigger('click');
+        expect(onAdd).toHaveBeenCalledOnce();
     });
 
     it('links to all the methods when it leaves some out', async () => {

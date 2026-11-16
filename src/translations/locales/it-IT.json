@@ -199,6 +199,7 @@
     "customer_overview.payment_methods_block.add_payment_method_helper_text": "Aggiungi un metodo di pagamento per i pagamenti ricorrenti delle fatture.",
     "customer_overview.payment_methods_block.manage_button_label": "Gestisci",
     "customer_overview.payment_methods_block.no_options_text": "Nessun metodo di pagamento online disponibile.",
+    "customer_overview.payment_methods_block.no_payment_methods_text": "Non hai ancora metodi di pagamento, <link>aggiungi un metodo di pagamento</link>.",
     "customer_overview.payment_methods_block.show_all_link_label": "Mostra tutti i metodi di pagamento",
     "customer_overview.payment_methods_block.view_all_payment_methods_link_label": "Mostra tutti",
     "customer_overview.shipping_addresses_block.add_button_label": "Aggiungi indirizzo di spedizione",

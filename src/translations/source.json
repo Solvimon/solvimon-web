@@ -1104,7 +1104,7 @@
     "description": "Title of the payment methods modal while a payment method is added"
   },
   "payment_methods_modal.add_button.label": {
-    "defaultMessage": "Add payment method",
+    "defaultMessage": "Add a new payment method",
     "description": "Label of the button in the payment methods modal that adds a payment method"
   },
   "payment_methods_modal.back_button.label": {

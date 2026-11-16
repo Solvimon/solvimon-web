@@ -275,7 +275,7 @@
   "payment_methods_list.delete_modal.title": "Delete payment method",
   "payment_methods_modal.add.subtitle": "Add a payment method to pay your invoices with.",
   "payment_methods_modal.add.title": "Add payment method",
-  "payment_methods_modal.add_button.label": "Add payment method",
+  "payment_methods_modal.add_button.label": "Add a new payment method",
   "payment_methods_modal.back_button.label": "Back",
   "payment_methods_modal.close_button.label": "Close",
   "payment_methods_modal.save_button.label": "Save payment method",

@@ -42,6 +42,7 @@ vi.mock('@/components/payments/OnDemandPaymentModalShell/OnDemandPaymentModalShe
             title: String,
             cancelButtonText: String,
             confirmButtonText: String,
+            noBottomSpacing: Boolean,
         },
         emits: ['confirm', 'cancel', 'payment-success', 'payment-failed'],
         setup: (_, { expose }) => expose({ submit: mockSubmit, isSaving: false }),
@@ -85,6 +86,15 @@ describe('PaymentMethodsModal', () => {
         await wrapper.find('.sv-payment-methods-modal__close').trigger('click');
 
         expect(wrapper.emitted('close')).toHaveLength(1);
+    });
+
+    it('ends the list on its add link, keeping the space below the add pane', async () => {
+        const wrapper = mountModal();
+
+        expect(shell(wrapper).props('noBottomSpacing')).toBe(true);
+
+        await wrapper.find('.sv-payment-methods-modal__add').trigger('click');
+        expect(shell(wrapper).props('noBottomSpacing')).toBe(false);
     });
 
     it('adds a method from the list, saving it from the footer, and goes back to the list', async () => {

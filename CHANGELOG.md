@@ -67,6 +67,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The payment form shows each payment integration once. A customer whose billing entity has several payment acceptors on one integration saw its payment methods listed once per acceptor, with the same method selected in each list; the first acceptor is now used.
 - An element that cannot load says so instead of staying empty or showing a skeleton for good:
     - A portal link identity refuses shows the element's "no longer available" notice, as an expired or revoked one does. When identity does not answer, or answers with a 5xx, the element offers to try again, as it already did for a `SIGNED_TOKEN` link, and logs `PORTAL_TOKEN_UNAVAILABLE` instead of `INVALID_TOKEN`.
     - The checkout shows "Checkout not available" when its subscription cannot be loaded, and offers "Try again" in the order summary when its first price cannot be, instead of waiting for the customer to change a field.

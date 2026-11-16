@@ -37,11 +37,24 @@ defineExpose({ submit });
 
 const { $t } = useIntl();
 
+/**
+ * One form per integration. A billing entity can put several payment acceptors on one integration,
+ * and asked without a subscription the options list each of them; a method is stored on the
+ * integration, so which acceptor saves it makes no difference to it. The first one is kept.
+ */
+const integrationOptions = computed(() =>
+    props.paymentMethodOptions.filter(
+        (option, index, options) =>
+            options.findIndex(({ integration }) => integration.id === option.integration.id) ===
+            index,
+    ),
+);
+
 const userSelectedIntegration = ref<PaymentGatewayVariant>();
 const selectedIntegration = computed(
     () =>
         userSelectedIntegration.value ??
-        props.paymentMethodOptions[0]?.integration.payment_gateway?.variant,
+        integrationOptions.value[0]?.integration.payment_gateway?.variant,
 );
 
 const integrationRefs = ref(new Map());
@@ -92,7 +105,7 @@ function validateFor(formId: string, { claims }: { claims: boolean }): () => Pro
 
 // A form taken out of the list mid-payment can no longer settle its record.
 watch(
-    () => props.paymentMethodOptions.map(({ integration }) => integration.id),
+    () => integrationOptions.value.map(({ integration }) => integration.id),
     (formIds) => {
         if (formInFlight !== undefined && !formIds.includes(formInFlight)) {
             formInFlight = undefined;
@@ -156,7 +169,7 @@ function submit() {
 
 <template>
     <template
-        v-for="paymentMethodOption in paymentMethodOptions"
+        v-for="paymentMethodOption in integrationOptions"
         :key="paymentMethodOption.integration.id"
     >
         <!-- Adyen -->

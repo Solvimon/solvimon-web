@@ -245,7 +245,17 @@ describe('CustomerPaymentMethods component', () => {
         },
     );
 
-    it('links to the methods it leaves out, with how many there are', async () => {
+    it('leaves the card menus to the modal when the screen around it manages the methods', () => {
+        const hidesOptions = (onViewAll?: () => void) =>
+            mountComponent({ onViewAll })
+                .findComponent({ name: 'PaymentMethodsList' })
+                .props('hideOptions');
+
+        expect(hidesOptions(vi.fn())).toBe(true);
+        expect(hidesOptions()).toBe(false);
+    });
+
+    it('links to all the methods when it leaves some out', async () => {
         const onViewAll = vi.fn();
         const wrapper = mount(CustomerPaymentMethods, {
             props: {
@@ -256,16 +266,15 @@ describe('CustomerPaymentMethods component', () => {
             },
             global: { stubs: { teleport: true } },
         });
-        const showMore = wrapper.get('.sv-payment-methods__show-more');
+        const showAll = wrapper.get('.sv-payment-methods__show-more');
 
-        expect(showMore.text()).toContain('Show more');
-        expect(showMore.get('.sv-payment-methods__show-more-count').text()).toBe('2');
+        expect(showAll.text()).toBe('Show all payment methods');
 
-        await showMore.trigger('click');
+        await showAll.trigger('click');
         expect(onViewAll).toHaveBeenCalledOnce();
     });
 
-    it('has no Show more when it shows every method', () => {
+    it('has no link to all the methods when it shows every one', () => {
         const wrapper = mountComponent({ onViewAll: vi.fn() });
 
         expect(wrapper.find('.sv-payment-methods__show-more').exists()).toBe(false);

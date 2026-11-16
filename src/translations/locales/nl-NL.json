@@ -199,7 +199,7 @@
     "customer_overview.payment_methods_block.add_payment_method_helper_text": "Voeg een betaalmethode toe voor terugkerende factuurbetalingen.",
     "customer_overview.payment_methods_block.manage_button_label": "Beheren",
     "customer_overview.payment_methods_block.no_options_text": "Er zijn geen online betaalmethoden beschikbaar.",
-    "customer_overview.payment_methods_block.show_more_button_label": "Meer tonen",
+    "customer_overview.payment_methods_block.show_all_link_label": "Alle betaalmethoden tonen",
     "customer_overview.payment_methods_block.view_all_payment_methods_link_label": "Alles weergeven",
     "customer_overview.shipping_addresses_block.add_button_label": "Verzendadres toevoegen",
     "customer_overview.shipping_addresses_block.empty": "Nog geen verzendadressen",

@@ -1,19 +1,27 @@
-import type { Customer } from '@solvimon/solvimon-types';
+import { ApiStatus, type Customer } from '@solvimon/solvimon-types';
 import { flushPromises } from '@vue/test-utils';
 import { nextTick, ref } from 'vue';
 import { useCustomerPaymentMethodOptions } from './useCustomerPaymentMethodOptions';
 
-const { mockGet } = vi.hoisted(() => ({ mockGet: vi.fn() }));
+const { mockGet, lookup } = vi.hoisted(() => ({
+    mockGet: vi.fn(),
+    lookup: {} as { options: { value: unknown[] }; status: { value: string } },
+}));
 
 vi.mock('./usePaymentMethodOptions', async () => {
     const { ref: createRef } = await import('vue');
 
     return {
-        usePaymentMethodOptions: () => ({
-            paymentMethodOptions: createRef([{ id: 'pmo_card' }]),
-            get: mockGet,
-            isPending: createRef(false),
-        }),
+        usePaymentMethodOptions: () => {
+            lookup.options = createRef<unknown[]>([{ id: 'pmo_card' }]);
+            lookup.status = createRef('DONE');
+            return {
+                paymentMethodOptions: lookup.options,
+                get: mockGet,
+                isPending: createRef(false),
+                apiStatus: lookup.status,
+            };
+        },
     };
 });
 
@@ -110,6 +118,18 @@ describe('useCustomerPaymentMethodOptions', () => {
 
         expect(mockGet).toHaveBeenCalledTimes(2);
         expect(onError).toHaveBeenCalledTimes(1);
+    });
+
+    it('has no options only once the gateway answered with none', () => {
+        const { hasNoOptions } = setup({ isOpen: true });
+        expect(hasNoOptions.value).toBe(false);
+
+        lookup.options.value = [];
+        lookup.status.value = ApiStatus.Failed;
+        expect(hasNoOptions.value).toBe(false);
+
+        lookup.status.value = ApiStatus.Done;
+        expect(hasNoOptions.value).toBe(true);
     });
 
     it('hands the options on to whoever asked for them', () => {

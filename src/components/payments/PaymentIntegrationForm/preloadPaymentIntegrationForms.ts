@@ -3,7 +3,11 @@ import {
     isAdyenPaymentIntegration,
     isStripePaymentIntegration,
 } from './PaymentIntegrationForm.lib';
-import { loadAdyenSdk } from '@/utils/adyenSdk';
+import {
+    loadAdyenPaymentIntegrationForm,
+    loadStripePaymentIntegrationForm,
+} from './paymentIntegrationFormLoaders';
+import { loadAdyen } from '@/utils/adyenSdk';
 
 /**
  * Loads the code the payment forms for these options need, so a modal can open once its form is
@@ -16,17 +20,11 @@ export async function preloadPaymentIntegrationForms(
     const loads: Promise<unknown>[] = [];
 
     if (options.some(isAdyenPaymentIntegration)) {
-        loads.push(
-            import('@/components/payments/PaymentIntegrationFormAdyen/PaymentIntegrationFormAdyen.vue'),
-            loadAdyenSdk(),
-            import('@adyen/adyen-web/styles/adyen.css?inline'),
-        );
+        loads.push(loadAdyenPaymentIntegrationForm(), loadAdyen());
     }
 
     if (options.some(isStripePaymentIntegration)) {
-        loads.push(
-            import('@/components/payments/PaymentIntegrationFormStripe/PaymentIntegrationFormStripe.vue'),
-        );
+        loads.push(loadStripePaymentIntegrationForm());
     }
 
     await Promise.allSettled(loads);

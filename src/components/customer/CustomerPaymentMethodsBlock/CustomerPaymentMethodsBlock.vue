@@ -110,7 +110,7 @@ const noPaymentMethodsMessageParts = computed(() => {
             <!-- Managed in the modal, so the cards here are a summary without their menus. -->
             <PaymentMethodsList :payment-methods="paymentMethods" :hide-options="isManaged" />
             <button
-                v-if="morePaymentMethodsCount"
+                v-if="hasMorePaymentMethods && showViewAllButton"
                 type="button"
                 class="sv-action sv-action--link sv-payment-methods__show-more ml-auto mt-1 block rounded text-xs text-primary-900 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary-600"
                 @click="$emit('view-all-payment-methods')"

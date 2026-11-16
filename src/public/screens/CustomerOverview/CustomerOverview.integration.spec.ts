@@ -51,6 +51,7 @@ vi.mock('@/composables/useCustomerPaymentMethodOptions', async () => {
         useCustomerPaymentMethodOptions: () => ({
             paymentMethodOptions: createRef(optionsState.options),
             apiStatus: createRef(optionsState.status),
+            hasNoOptions: createRef(optionsState.status === 'DONE' && !optionsState.options.length),
             load: () => Promise.resolve(),
         }),
     };
@@ -168,7 +169,7 @@ vi.mock('@/public/components/CustomerPaymentMethods/CustomerPaymentMethods.vue',
             'isLoading',
             'configuration',
             'hasNoPaymentMethodOptions',
-            'morePaymentMethodsCount',
+            'hasMorePaymentMethods',
             'onViewAll',
             'onAdd',
         ],
@@ -394,6 +395,31 @@ describe('CustomerOverview — payment methods', () => {
             });
         });
 
+        it('opens on adding once it has waited long enough for a slow form', async () => {
+            vi.useFakeTimers();
+            const wrapper = await mountOverview();
+
+            void (methodsBlock(wrapper).props('onAdd') as () => Promise<void>)();
+            await vi.advanceTimersByTimeAsync(2999);
+            expect(modal(wrapper).exists()).toBe(false);
+
+            await vi.advanceTimersByTimeAsync(1);
+            vi.useRealTimers();
+            await vi.waitFor(() => expect(modal(wrapper).exists()).toBe(true));
+            expect(modal(wrapper).props('start')).toBe('ADD_PAYMENT_METHOD');
+        });
+
+        it('does not open on adding when the options turn out to offer nothing', async () => {
+            optionsState.options = [];
+            const wrapper = await mountOverview();
+
+            void (methodsBlock(wrapper).props('onAdd') as () => Promise<void>)();
+            preload.resolve();
+            await flushPromises();
+
+            expect(modal(wrapper).exists()).toBe(false);
+        });
+
         it('opens on the list straight away, loading the form meanwhile', async () => {
             const wrapper = await mountOverview();
 
@@ -414,19 +440,19 @@ describe('CustomerOverview — payment methods', () => {
     });
 
     it.each([
-        { maxItems: undefined, more: 2 },
-        { maxItems: 1, more: 4 },
-        { maxItems: 10, more: 0 },
+        { maxItems: undefined, hasMore: true },
+        { maxItems: 1, hasMore: true },
+        { maxItems: 10, hasMore: false },
     ])(
-        'tells the block how many it leaves out: $more with maxItems $maxItems',
-        async ({ maxItems, more }) => {
+        'tells the block whether it leaves some out: $hasMore with maxItems $maxItems',
+        async ({ maxItems, hasMore }) => {
             const wrapper = await mountOverview({ paymentMethods: { maxItems } });
 
             expect(
                 wrapper
                     .findComponent({ name: 'CustomerPaymentMethodsStub' })
-                    .props('morePaymentMethodsCount'),
-            ).toBe(more);
+                    .props('hasMorePaymentMethods'),
+            ).toBe(hasMore);
         },
     );
 });

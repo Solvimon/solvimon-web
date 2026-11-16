@@ -1,10 +1,9 @@
 import { mount } from '@vue/test-utils';
 import { defineComponent } from 'vue';
-import {
-    ApiStatus,
-    type Customer,
-    type PaymentMethod,
-    type PaymentMethodOptionsResponse,
+import type {
+    Customer,
+    PaymentMethod,
+    PaymentMethodOptionsResponse,
 } from '@solvimon/solvimon-types';
 import PaymentMethodsModal from './PaymentMethodsModal.vue';
 import type { PaymentMethodsModalStep } from './PaymentMethodsModal.types';
@@ -30,7 +29,7 @@ vi.mock('@/composables/useCustomerPaymentMethodOptions', async () => {
             return {
                 settledOptions: ref(optionsState.options),
                 isPending: ref(false),
-                apiStatus: ref(ApiStatus.Done),
+                hasNoOptions: ref(optionsState.options.length === 0),
             };
         },
     };

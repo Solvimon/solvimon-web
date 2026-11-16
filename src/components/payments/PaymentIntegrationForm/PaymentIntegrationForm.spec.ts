@@ -89,25 +89,13 @@ describe('PaymentIntegrationForm', () => {
         expect(wrapper.emitted('select')).toEqual([[selection]]);
     });
 
-    it('shows one form per integration, for the first of the acceptors that share it', () => {
-        const wrapper = mountForm({
-            paymentMethodOptions: [
-                createPaymentMethodOptionEntry({
-                    paymentAcceptorId: 'pa_1',
-                    integrationId: 'int_1',
-                }),
-                createPaymentMethodOptionEntry({
-                    paymentAcceptorId: 'pa_2',
-                    integrationId: 'int_1',
-                }),
-                createPaymentMethodOptionEntry({
-                    paymentAcceptorId: 'pa_3',
-                    integrationId: 'int_2',
-                }),
-            ],
-        });
-
-        expect(
+    describe('with several acceptors on one integration', () => {
+        const sharedIntegration = [
+            createPaymentMethodOptionEntry({ paymentAcceptorId: 'pa_1', integrationId: 'int_1' }),
+            createPaymentMethodOptionEntry({ paymentAcceptorId: 'pa_2', integrationId: 'int_1' }),
+            createPaymentMethodOptionEntry({ paymentAcceptorId: 'pa_3', integrationId: 'int_2' }),
+        ];
+        const acceptorIds = (wrapper: Wrapper) =>
             forms(wrapper).map(
                 (form) =>
                     (
@@ -116,8 +104,22 @@ describe('PaymentIntegrationForm', () => {
                             payment_acceptor: { id: string };
                         }
                     ).payment_acceptor.id,
-            ),
-        ).toEqual(['pa_1', 'pa_3']);
+            );
+
+        it('stores a method through one form per integration, the first acceptor', () => {
+            const wrapper = mountForm({
+                variant: 'TOKENIZE',
+                paymentMethodOptions: sharedIntegration,
+            });
+
+            expect(acceptorIds(wrapper)).toEqual(['pa_1', 'pa_3']);
+        });
+
+        it('takes a payment with every acceptor, each being who it may be for', () => {
+            const wrapper = mountForm({ paymentMethodOptions: sharedIntegration });
+
+            expect(acceptorIds(wrapper)).toEqual(['pa_1', 'pa_2', 'pa_3']);
+        });
     });
 
     it('opens the gateway form on its first method unless told not to', () => {

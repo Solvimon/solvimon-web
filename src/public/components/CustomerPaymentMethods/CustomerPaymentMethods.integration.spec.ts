@@ -285,7 +285,7 @@ describe('CustomerPaymentMethods component', () => {
             props: {
                 isLoading: false,
                 paymentMethods: [createPaymentMethod()],
-                morePaymentMethodsCount: 2,
+                hasMorePaymentMethods: true,
                 onViewAll,
             },
             global: { stubs: { teleport: true } },
@@ -296,6 +296,21 @@ describe('CustomerPaymentMethods component', () => {
 
         await showAll.trigger('click');
         expect(onViewAll).toHaveBeenCalledOnce();
+    });
+
+    it('has no link to all the methods when the host hides View all', () => {
+        const wrapper = mount(CustomerPaymentMethods, {
+            props: {
+                isLoading: false,
+                paymentMethods: [createPaymentMethod()],
+                hasMorePaymentMethods: true,
+                configuration: { showViewAllButton: false },
+                onViewAll: vi.fn(),
+            },
+            global: { stubs: { teleport: true } },
+        });
+
+        expect(wrapper.find('.sv-payment-methods__show-more').exists()).toBe(false);
     });
 
     it('has no link to all the methods when it shows every one', () => {

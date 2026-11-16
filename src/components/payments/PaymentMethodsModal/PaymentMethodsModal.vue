@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
-import { ApiStatus } from '@solvimon/solvimon-types';
 import { Button, Icon, Section, Typography, useIntl } from '@solvimon/solvimon-ui';
 import {
     PAYMENT_METHODS_MODAL_STEPS,
@@ -25,7 +24,7 @@ const openedAt = ref<PaymentMethodsModalStep>('LIST');
 const {
     settledOptions,
     isPending: isPaymentMethodOptionsPending,
-    apiStatus: paymentMethodOptionsStatus,
+    hasNoOptions,
 } = useCustomerPaymentMethodOptions({
     isOpen: computed(() => props.showModal && !props.paymentMethodOptions),
     customer: computed(() => props.customer),
@@ -36,10 +35,8 @@ const isOptionsPending = computed(
     () => !props.paymentMethodOptions && isPaymentMethodOptionsPending.value,
 );
 
-const hasNoPaymentMethodOptions = computed(
-    () =>
-        (!!props.paymentMethodOptions || paymentMethodOptionsStatus.value === ApiStatus.Done) &&
-        paymentMethodOptions.value?.length === 0,
+const hasNoPaymentMethodOptions = computed(() =>
+    props.paymentMethodOptions ? props.paymentMethodOptions.length === 0 : hasNoOptions.value,
 );
 
 const {

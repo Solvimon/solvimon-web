@@ -75,5 +75,16 @@ export function loadAdyenSdk() {
     );
 }
 
+/**
+ * The Adyen SDK and its styles, which the Adyen form needs together. Loaded through here by the
+ * form and by anything that loads it ahead, so both always load the same.
+ */
+export function loadAdyen() {
+    return Promise.all([
+        loadAdyenSdk(),
+        import('@adyen/adyen-web/styles/adyen.css?inline').then((module) => module.default),
+    ]);
+}
+
 /** What {@link loadAdyenSdk} resolves to, for callers that hold on to part of it. */
 export type AdyenSdk = Awaited<ReturnType<typeof loadAdyenSdk>>;

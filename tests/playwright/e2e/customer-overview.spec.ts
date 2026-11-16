@@ -281,7 +281,7 @@ test.describe('Customer overview', () => {
     // ─── Payment methods modal ────────────────────────────────────────────────
 
     test.describe('payment methods modal', () => {
-        test('lists every payment method from View all, without asking the host', async ({
+        test('lists every payment method from Manage, without asking the host', async ({
             page,
         }) => {
             api = await mountLoaded(page, {
@@ -294,7 +294,7 @@ test.describe('Customer overview', () => {
             });
 
             await customerOverview(page)
-                .paymentMethods.getByRole('button', { name: /view all/i })
+                .paymentMethods.getByRole('button', { name: 'Manage' })
                 .click();
             const modal = page.getByRole('dialog', { name: 'Payment methods' });
 

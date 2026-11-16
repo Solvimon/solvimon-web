@@ -197,6 +197,7 @@
     "customer_overview.payment_methods.title": "{count,plural,one{Betaalmethode} other{Betaalmethoden}}",
     "customer_overview.payment_methods_block.add_payment_method_button_label": "Betaalmethode toevoegen",
     "customer_overview.payment_methods_block.add_payment_method_helper_text": "Voeg een betaalmethode toe voor terugkerende factuurbetalingen.",
+    "customer_overview.payment_methods_block.manage_button_label": "Beheren",
     "customer_overview.payment_methods_block.no_options_text": "Er zijn geen betaalmethoden beschikbaar.",
     "customer_overview.payment_methods_block.view_all_payment_methods_link_label": "Alles weergeven",
     "customer_overview.shipping_addresses_block.add_button_label": "Verzendadres toevoegen",

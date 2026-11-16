@@ -35,6 +35,23 @@ const hasPaymentMethods = computed<boolean>(() => props.paymentMethods.length > 
     >
         <template v-if="showViewAllButton" #right>
             <Button
+                v-if="isManaged"
+                size="xs"
+                intent="subtle"
+                class="sv-action sv-action--ghost sv-payment-methods__manage"
+                type="button"
+                @click="$emit('view-all-payment-methods')"
+                >{{
+                    $t({
+                        defaultMessage: 'Manage',
+                        id: 'customer_overview.payment_methods_block.manage_button_label',
+                        description:
+                            "Label of the button that opens the management of the customer's payment methods",
+                    })
+                }}</Button
+            >
+            <Button
+                v-else
                 size="xs"
                 intent="subtle"
                 icon-suffix="arrow_right_alt"

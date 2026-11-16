@@ -791,6 +791,10 @@
     "defaultMessage": "Add a payment method for recurring invoice payments.",
     "description": "Helper text for adding a payment method when no payment methods are configured"
   },
+  "customer_overview.payment_methods_block.manage_button_label": {
+    "defaultMessage": "Manage",
+    "description": "Label of the button that opens the management of the customer's payment methods"
+  },
   "customer_overview.payment_methods_block.no_options_text": {
     "defaultMessage": "No payment methods are available.",
     "description": "Shown on the customer overview when the customer has no payment methods and none can be added"

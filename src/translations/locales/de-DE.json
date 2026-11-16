@@ -197,6 +197,7 @@
     "customer_overview.payment_methods.title": "{count,plural,one{Zahlungsmethode} other{Zahlungsmethoden}}",
     "customer_overview.payment_methods_block.add_payment_method_button_label": "Zahlungsmethode hinzufügen",
     "customer_overview.payment_methods_block.add_payment_method_helper_text": "Fügen Sie eine Zahlungsmethode für wiederkehrende Rechnungszahlungen hinzu.",
+    "customer_overview.payment_methods_block.manage_button_label": "Verwalten",
     "customer_overview.payment_methods_block.no_options_text": "Es sind keine Zahlungsmethoden verfügbar.",
     "customer_overview.payment_methods_block.view_all_payment_methods_link_label": "Alle anzeigen",
     "customer_overview.shipping_addresses_block.add_button_label": "Lieferadresse hinzufügen",

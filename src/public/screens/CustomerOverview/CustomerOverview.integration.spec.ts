@@ -19,7 +19,7 @@ const {
     optionsState,
 } = vi.hoisted(() => ({
     subscriptionsState: {} as { items: { value: unknown[] }; error: { value: Error | null } },
-    paymentMethodsState: {} as { items: { value: unknown[] } },
+    paymentMethodsState: {} as { items: { value: unknown[] }; options?: unknown },
     mockFetchAll: vi.fn(() => Promise.resolve()),
     mockFetchInitial: vi.fn(),
     mockFetchWalletBalances: vi.fn(),
@@ -87,7 +87,11 @@ vi.mock('@/composables/usePaymentMethods', async () => {
     paymentMethodsState.items = createRef<unknown[]>([]);
 
     return {
-        usePaymentMethods: () => ({ ...emptyList(), items: paymentMethodsState.items }),
+        DEFAULT_PAYMENT_METHOD_FIRST: { orderBy: 'default', orderDirection: 'desc' },
+        usePaymentMethods: (options: unknown) => {
+            paymentMethodsState.options = options;
+            return { ...emptyList(), items: paymentMethodsState.items };
+        },
     };
 });
 
@@ -302,6 +306,36 @@ describe('CustomerOverview — payment methods', () => {
             ).toBe(expected);
         },
     );
+
+    it('loads the default method first', async () => {
+        await mountOverview();
+
+        expect(paymentMethodsState.options).toMatchObject({
+            order: { orderBy: 'default', orderDirection: 'desc' },
+        });
+    });
+
+    it('keeps the methods where they loaded when they reload, with a new one last', async () => {
+        const wrapper = await mountOverview({ paymentMethods: { maxItems: 10 } });
+
+        // A new default reloads to the top, and a method added since comes back with it.
+        paymentMethodsState.items.value = [
+            ...paymentMethodsOf(6).slice(2, 3),
+            ...paymentMethodsOf(6).slice(5),
+            ...paymentMethodsOf(2),
+            ...paymentMethodsOf(5).slice(3),
+        ];
+        await flushPromises();
+
+        expect(shownPaymentMethods(wrapper).map(({ id }) => id)).toEqual([
+            'pm_1',
+            'pm_2',
+            'pm_3',
+            'pm_4',
+            'pm_5',
+            'pm_6',
+        ]);
+    });
 
     it('shows as many as maxItems asks for', async () => {
         const wrapper = await mountOverview({ paymentMethods: { maxItems: 1 } });

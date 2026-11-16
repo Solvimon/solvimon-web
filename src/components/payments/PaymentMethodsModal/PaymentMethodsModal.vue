@@ -163,22 +163,21 @@ const cancelButtonText = computed(() =>
                     @set-default="emit('changed')"
                     @delete="emit('changed')"
                 />
-                <Button
+                <button
                     v-if="!hasNoPaymentMethodOptions"
-                    class="sv-action sv-action--secondary sv-payment-methods-modal__add w-full"
-                    intent="secondary"
-                    icon-prefix="add"
                     type="button"
+                    class="sv-action sv-action--link sv-payment-methods-modal__add w-fit rounded text-sm text-primary-900 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary-600"
                     @click="openAddPaymentMethod"
-                    >{{
+                >
+                    {{
                         $t({
                             defaultMessage: 'Add payment method',
                             id: 'payment_methods_modal.add_button.label',
                             description:
                                 'Label of the button in the payment methods modal that adds a payment method',
                         })
-                    }}</Button
-                >
+                    }}
+                </button>
             </div>
         </template>
 

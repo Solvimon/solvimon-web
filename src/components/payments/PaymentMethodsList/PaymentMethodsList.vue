@@ -59,7 +59,7 @@ async function handleConfirmDelete() {
 </script>
 
 <template>
-    <div v-if="paymentMethods.length > 0" class="sv-payment-methods__list grid grid-cols-1 gap-4">
+    <div v-if="paymentMethods.length > 0" class="sv-payment-methods__list grid grid-cols-1 gap-1">
         <Section
             v-for="paymentMethod in paymentMethods"
             :key="paymentMethod.id"

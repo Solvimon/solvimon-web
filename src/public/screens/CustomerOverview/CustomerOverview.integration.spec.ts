@@ -17,6 +17,7 @@ const {
     shippedState,
     mockCheckShipped,
     optionsState,
+    preload,
 } = vi.hoisted(() => ({
     subscriptionsState: {} as { items: { value: unknown[] }; error: { value: Error | null } },
     paymentMethodsState: {} as { items: { value: unknown[] }; options?: unknown },
@@ -26,6 +27,21 @@ const {
     shippedState: { value: false },
     mockCheckShipped: vi.fn(),
     optionsState: { options: [] as unknown[], status: undefined as unknown },
+    preload: { resolve: () => {}, mock: vi.fn() },
+}));
+
+vi.mock('@/components/payments/PaymentIntegrationForm/preloadPaymentIntegrationForms', () => ({
+    preloadPaymentIntegrationForms: preload.mock,
+}));
+
+// Loaded with `import()`, which only unwraps `default` from a module that says it is one.
+vi.mock('@/components/payments/PaymentMethodsModal/PaymentMethodsModal.vue', () => ({
+    __esModule: true,
+    default: defineComponent({
+        name: 'PaymentMethodsModalStub',
+        props: ['showModal', 'start', 'paymentMethodOptions', 'paymentMethods', 'customer'],
+        setup: () => () => h('div', { class: 'payment-methods-modal-stub' }),
+    }),
 }));
 
 vi.mock('@/composables/useCustomerPaymentMethodOptions', async () => {
@@ -35,6 +51,7 @@ vi.mock('@/composables/useCustomerPaymentMethodOptions', async () => {
         useCustomerPaymentMethodOptions: () => ({
             paymentMethodOptions: createRef(optionsState.options),
             apiStatus: createRef(optionsState.status),
+            load: () => Promise.resolve(),
         }),
     };
 });
@@ -152,6 +169,8 @@ vi.mock('@/public/components/CustomerPaymentMethods/CustomerPaymentMethods.vue',
             'configuration',
             'hasNoPaymentMethodOptions',
             'morePaymentMethodsCount',
+            'onViewAll',
+            'onAdd',
         ],
         setup: () => () => h('div'),
     }),
@@ -335,6 +354,57 @@ describe('CustomerOverview — payment methods', () => {
             'pm_5',
             'pm_6',
         ]);
+    });
+
+    describe('opening the payment methods modal', () => {
+        const methodsBlock = (wrapper: Awaited<ReturnType<typeof mountOverview>>) =>
+            wrapper.findComponent({ name: 'CustomerPaymentMethodsStub' });
+        const modal = (wrapper: Awaited<ReturnType<typeof mountOverview>>) =>
+            wrapper.findComponent({ name: 'PaymentMethodsModalStub' });
+
+        // Two first-time imports of a mocked module at once can resolve to the real one.
+        beforeAll(
+            () => import('@/components/payments/PaymentMethodsModal/PaymentMethodsModal.vue'),
+        );
+
+        beforeEach(() => {
+            optionsState.options = [{ type: 'CARD' }];
+            optionsState.status = ApiStatus.Done;
+            preload.mock.mockImplementation(
+                () => new Promise<void>((resolve) => (preload.resolve = resolve)),
+            );
+        });
+
+        it('opens on adding a method once its payment form has loaded', async () => {
+            const wrapper = await mountOverview();
+
+            void (methodsBlock(wrapper).props('onAdd') as () => Promise<void>)();
+            await flushPromises();
+
+            expect(preload.mock).toHaveBeenCalledWith([{ type: 'CARD' }]);
+            expect(modal(wrapper).exists()).toBe(false);
+
+            preload.resolve();
+            await flushPromises();
+
+            expect(modal(wrapper).props()).toMatchObject({
+                showModal: true,
+                start: 'ADD_PAYMENT_METHOD',
+                paymentMethodOptions: [{ type: 'CARD' }],
+            });
+        });
+
+        it('opens on the list straight away, loading the form meanwhile', async () => {
+            const wrapper = await mountOverview();
+
+            void (methodsBlock(wrapper).props('onViewAll') as () => Promise<void>)();
+            await flushPromises();
+
+            // The preload is still out, and the modal is already on its way in.
+            expect(preload.mock).toHaveBeenCalled();
+            expect(wrapper.findComponent({ name: 'AsyncComponentWrapper' }).exists()).toBe(true);
+            wrapper.unmount();
+        });
     });
 
     it('shows as many as maxItems asks for', async () => {

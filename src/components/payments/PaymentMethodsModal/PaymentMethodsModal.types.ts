@@ -1,4 +1,8 @@
-import type { Customer, PaymentMethod } from '@solvimon/solvimon-types';
+import type {
+    Customer,
+    PaymentMethod,
+    PaymentMethodOptionsResponse,
+} from '@solvimon/solvimon-types';
 
 export const PAYMENT_METHODS_MODAL_STEPS = ['LIST', 'ADD_PAYMENT_METHOD'] as const;
 
@@ -14,6 +18,8 @@ export interface PaymentMethodsModalProps {
     start?: PaymentMethodsModalStep;
     customer?: Customer;
     paymentMethods: PaymentMethod[];
+    /** Options the host already looked up; without them the modal looks them up when it opens. */
+    paymentMethodOptions?: PaymentMethodOptionsResponse;
 }
 
 export interface PaymentMethodsModalEmits {

@@ -199,6 +199,7 @@
   "customer_overview.payment_methods_block.add_payment_method_helper_text": "Add a payment method for recurring invoice payments.",
   "customer_overview.payment_methods_block.manage_button_label": "Manage",
   "customer_overview.payment_methods_block.no_options_text": "No online payment methods are available.",
+  "customer_overview.payment_methods_block.no_payment_methods_text": "You don't have any payment methods yet, <link>add a payment method</link>.",
   "customer_overview.payment_methods_block.show_all_link_label": "Show all payment methods",
   "customer_overview.payment_methods_block.view_all_payment_methods_link_label": "View all",
   "customer_overview.shipping_addresses_block.add_button_label": "Add shipping address",

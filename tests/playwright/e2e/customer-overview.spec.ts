@@ -332,7 +332,7 @@ test.describe('Customer overview', () => {
             api = await mountLoaded(page, { paymentMethods: [] });
 
             await customerOverview(page)
-                .paymentMethods.getByRole('button', { name: 'Add payment method' })
+                .paymentMethods.getByRole('button', { name: 'add a payment method' })
                 .click();
 
             await expect(page.getByRole('dialog', { name: 'Add payment method' })).toBeVisible();

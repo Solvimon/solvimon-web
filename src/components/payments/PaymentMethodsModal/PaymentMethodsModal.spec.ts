@@ -1,10 +1,13 @@
 import { mount } from '@vue/test-utils';
 import { defineComponent } from 'vue';
-import type { Customer, PaymentMethod } from '@solvimon/solvimon-types';
+import { ApiStatus, type Customer, type PaymentMethod } from '@solvimon/solvimon-types';
 import PaymentMethodsModal from './PaymentMethodsModal.vue';
 import type { PaymentMethodsModalStep } from './PaymentMethodsModal.types';
 
-const { mockSubmit } = vi.hoisted(() => ({ mockSubmit: vi.fn() }));
+const { mockSubmit, optionsState } = vi.hoisted(() => ({
+    mockSubmit: vi.fn(),
+    optionsState: { options: [{ type: 'CARD' }] as unknown[] },
+}));
 
 vi.mock('@solvimon/solvimon-ui', async () => {
     const { createSolvimonUiMock } = await import('@/test-utils/solvimonUiMock');
@@ -15,8 +18,9 @@ vi.mock('@/composables/useCustomerPaymentMethodOptions', async () => {
     const { ref } = await import('vue');
     return {
         useCustomerPaymentMethodOptions: () => ({
-            settledOptions: ref([]),
+            settledOptions: ref(optionsState.options),
             isPending: ref(false),
+            apiStatus: ref(ApiStatus.Done),
         }),
     };
 });
@@ -66,7 +70,10 @@ const shell = (wrapper: ReturnType<typeof mountModal>) =>
     wrapper.findComponent({ name: 'OnDemandPaymentModalShellStub' });
 
 describe('PaymentMethodsModal', () => {
-    beforeEach(() => vi.clearAllMocks());
+    beforeEach(() => {
+        vi.clearAllMocks();
+        optionsState.options = [{ type: 'CARD' }];
+    });
 
     it('lists the payment methods, and closes from the list with one button', async () => {
         const wrapper = mountModal();
@@ -118,6 +125,13 @@ describe('PaymentMethodsModal', () => {
 
         expect(wrapper.emitted('changed')).toHaveLength(1);
         expect(wrapper.emitted('close')).toHaveLength(1);
+    });
+
+    it('offers no way to add a method when the gateway offers none', () => {
+        optionsState.options = [];
+        const wrapper = mountModal();
+
+        expect(wrapper.find('.sv-payment-methods-modal__add').exists()).toBe(false);
     });
 
     it.each(['set-default', 'delete'])(

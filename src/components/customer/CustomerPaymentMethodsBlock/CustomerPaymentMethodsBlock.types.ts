@@ -4,6 +4,8 @@ export interface CustomerPaymentMethodsBlockProps {
     paymentMethods: PaymentMethod[];
     showViewAllButton?: boolean;
     showAddButton?: boolean;
+    /** The gateway offers no method to add, so the block says so instead of offering to add one. */
+    hasNoPaymentMethodOptions?: boolean;
 }
 
 export interface CustomerPaymentMethodsBlockEmits {

@@ -18,6 +18,8 @@ const props = defineProps<
         onViewAll?: () => void;
         /** Adds a method in place, as the customer overview does; without it the host is asked. */
         onAdd?: () => void;
+        /** Set by a host that looked the options up, as the customer overview does. */
+        hasNoPaymentMethodOptions?: boolean;
     }
 >();
 
@@ -41,6 +43,7 @@ const { dispatchAction } = useActionDispatchProvider();
         :payment-methods="paymentMethods"
         :show-view-all-button="configuration.showViewAllButton"
         :show-add-button="configuration.showAddButton"
+        :has-no-payment-method-options="hasNoPaymentMethodOptions"
         @view-all-payment-methods="
             onViewAll ? onViewAll() : dispatchAction({ action: 'view-all-payment-methods' })
         "

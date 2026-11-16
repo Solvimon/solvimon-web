@@ -278,6 +278,7 @@
     "payment_methods_modal.add_button.label": "Aggiungi un nuovo metodo di pagamento",
     "payment_methods_modal.back_button.label": "Indietro",
     "payment_methods_modal.close_button.label": "Chiudi",
+    "payment_methods_modal.empty_text": "Non hai ancora metodi di pagamento.",
     "payment_methods_modal.save_button.label": "Salva metodo di pagamento",
     "payment_methods_modal.subtitle": "Imposta il tuo metodo di pagamento predefinito, oppure aggiungine o eliminane uno.",
     "payment_methods_modal.title": "Metodi di pagamento",

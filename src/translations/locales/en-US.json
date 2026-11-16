@@ -278,6 +278,7 @@
   "payment_methods_modal.add_button.label": "Add a new payment method",
   "payment_methods_modal.back_button.label": "Back",
   "payment_methods_modal.close_button.label": "Close",
+  "payment_methods_modal.empty_text": "You have no payment methods yet.",
   "payment_methods_modal.save_button.label": "Save payment method",
   "payment_methods_modal.subtitle": "Set your default payment method, or add or delete one.",
   "payment_methods_modal.title": "Payment methods",

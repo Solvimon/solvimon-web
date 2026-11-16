@@ -1115,6 +1115,10 @@
     "defaultMessage": "Close",
     "description": "Label of the button that closes the payment methods modal"
   },
+  "payment_methods_modal.empty_text": {
+    "defaultMessage": "You have no payment methods yet.",
+    "description": "Shown in the payment methods modal when the customer has no payment methods"
+  },
   "payment_methods_modal.save_button.label": {
     "defaultMessage": "Save payment method",
     "description": "Label of the button that stores the payment method being added"

@@ -278,6 +278,7 @@
     "payment_methods_modal.add_button.label": "Nieuwe betaalmethode toevoegen",
     "payment_methods_modal.back_button.label": "Terug",
     "payment_methods_modal.close_button.label": "Sluiten",
+    "payment_methods_modal.empty_text": "Je hebt nog geen betaalmethoden.",
     "payment_methods_modal.save_button.label": "Betaalmethode opslaan",
     "payment_methods_modal.subtitle": "Stel je standaardbetaalmethode in, of voeg er een toe of verwijder er een.",
     "payment_methods_modal.title": "Betaalmethoden",

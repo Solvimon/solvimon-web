@@ -278,6 +278,7 @@
     "payment_methods_modal.add_button.label": "Neue Zahlungsmethode hinzufügen",
     "payment_methods_modal.back_button.label": "Zurück",
     "payment_methods_modal.close_button.label": "Schließen",
+    "payment_methods_modal.empty_text": "Sie haben noch keine Zahlungsmethoden.",
     "payment_methods_modal.save_button.label": "Zahlungsmethode speichern",
     "payment_methods_modal.subtitle": "Legen Sie Ihre Standard-Zahlungsmethode fest oder fügen Sie eine hinzu bzw. löschen Sie eine.",
     "payment_methods_modal.title": "Zahlungsmethoden",

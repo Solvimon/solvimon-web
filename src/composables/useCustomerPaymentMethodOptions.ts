@@ -15,7 +15,7 @@ export function useCustomerPaymentMethodOptions({
     subscriptionId?: Ref<PricingPlanSubscription['id'] | undefined>;
     onError?: (error: unknown) => void;
 }) {
-    const { paymentMethodOptions, get, isPending } = usePaymentMethodOptions();
+    const { paymentMethodOptions, get, isPending, apiStatus } = usePaymentMethodOptions();
 
     /**
      * Looks the options up for the current customer, once it is open and the customer has loaded:
@@ -54,5 +54,5 @@ export function useCustomerPaymentMethodOptions({
         isPending.value ? undefined : paymentMethodOptions.value,
     );
 
-    return { paymentMethodOptions, settledOptions, isPending, load };
+    return { paymentMethodOptions, settledOptions, isPending, apiStatus, load };
 }

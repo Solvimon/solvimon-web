@@ -18,6 +18,7 @@ import { useCustomerWalletBalances } from '@/composables/useCustomerWalletBalanc
 import CustomerWalletBalances from '@/public/components/CustomerWalletBalances/CustomerWalletBalances.vue';
 import { useActiveScheduleWarning } from '@/composables/useActiveScheduleWarning';
 import { useHasShippedSubscription } from '@/composables/useHasShippedSubscription';
+import { useCustomerPaymentMethodOptions } from '@/composables/useCustomerPaymentMethodOptions';
 import LoadFailedNotice from '@/components/shared/LoadFailedNotice.vue';
 import type { PaymentMethodsModalStep } from '@/components/payments/PaymentMethodsModal/PaymentMethodsModal.types';
 
@@ -81,6 +82,17 @@ const { isLoading } = useLoadInitialData(
         .finally(() => void shippedSubscriptions.check(subscriptions.items.value)),
     paymentMethods.fetchAll(),
     customerWalletBalances.fetch(),
+);
+
+const paymentMethodOptions = useCustomerPaymentMethodOptions({
+    isOpen: ref(true),
+    customer: customer.customer,
+});
+/** Only an answer counts: a failed lookup leaves adding open, and the modal asks again. */
+const hasNoPaymentMethodOptions = computed(
+    () =>
+        paymentMethodOptions.apiStatus.value === ApiStatus.Done &&
+        paymentMethodOptions.paymentMethodOptions.value?.length === 0,
 );
 
 const hasOpenedPaymentMethodsModal = ref(false);
@@ -164,6 +176,7 @@ useActiveScheduleWarning(subscriptions.items);
                 :payment-methods="shownPaymentMethods"
                 :on-view-all="() => openPaymentMethodsModal('LIST')"
                 :on-add="() => openPaymentMethodsModal('ADD_PAYMENT_METHOD')"
+                :has-no-payment-method-options="hasNoPaymentMethodOptions"
             />
             <PaymentMethodsModal
                 v-if="hasOpenedPaymentMethodsModal"

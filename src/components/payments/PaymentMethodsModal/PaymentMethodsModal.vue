@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
+import { ApiStatus } from '@solvimon/solvimon-types';
 import { Button, useIntl } from '@solvimon/solvimon-ui';
 import {
     PAYMENT_METHODS_MODAL_STEPS,
@@ -21,11 +22,18 @@ const step = ref<PaymentMethodsModalStep>('LIST');
 /** The step the modal opened on, which is where closing it is one step back. */
 const openedAt = ref<PaymentMethodsModalStep>('LIST');
 
-const { settledOptions, isPending: isPaymentMethodOptionsPending } =
-    useCustomerPaymentMethodOptions({
-        isOpen: computed(() => props.showModal),
-        customer: computed(() => props.customer),
-    });
+const {
+    settledOptions,
+    isPending: isPaymentMethodOptionsPending,
+    apiStatus: paymentMethodOptionsStatus,
+} = useCustomerPaymentMethodOptions({
+    isOpen: computed(() => props.showModal),
+    customer: computed(() => props.customer),
+});
+
+const hasNoPaymentMethodOptions = computed(
+    () => paymentMethodOptionsStatus.value === ApiStatus.Done && settledOptions.value?.length === 0,
+);
 
 const {
     paneRef: addPaymentMethodRef,
@@ -156,6 +164,7 @@ const cancelButtonText = computed(() =>
                     @delete="emit('changed')"
                 />
                 <Button
+                    v-if="!hasNoPaymentMethodOptions"
                     class="sv-action sv-action--secondary sv-payment-methods-modal__add w-full"
                     intent="secondary"
                     icon-prefix="add"

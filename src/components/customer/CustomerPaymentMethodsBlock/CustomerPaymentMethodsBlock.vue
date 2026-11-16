@@ -60,16 +60,24 @@ const hasPaymentMethods = computed<boolean>(() => props.paymentMethods.length > 
                 no-spacing
                 class="sv-payment-methods__empty-message"
                 >{{
-                    $t({
-                        defaultMessage: 'Add a payment method for recurring invoice payments.',
-                        description:
-                            'Helper text for adding a payment method when no payment methods are configured',
-                        id: 'customer_overview.payment_methods_block.add_payment_method_helper_text',
-                    })
+                    hasNoPaymentMethodOptions
+                        ? $t({
+                              defaultMessage: 'No payment methods are available.',
+                              description:
+                                  'Shown on the customer overview when the customer has no payment methods and none can be added',
+                              id: 'customer_overview.payment_methods_block.no_options_text',
+                          })
+                        : $t({
+                              defaultMessage:
+                                  'Add a payment method for recurring invoice payments.',
+                              description:
+                                  'Helper text for adding a payment method when no payment methods are configured',
+                              id: 'customer_overview.payment_methods_block.add_payment_method_helper_text',
+                          })
                 }}</Typography
             >
             <Button
-                v-if="showAddButton"
+                v-if="showAddButton && !hasNoPaymentMethodOptions"
                 class="sv-action sv-action--secondary sv-action--full-width sv-payment-methods__add mt-4 w-full"
                 intent="secondary"
                 icon-prefix="add"

@@ -1,6 +1,10 @@
 import { flushPromises, mount } from '@vue/test-utils';
 import { defineComponent, h, ref } from 'vue';
-import type { PaymentMethod, PricingPlanSubscriptionExpanded } from '@solvimon/solvimon-types';
+import {
+    ApiStatus,
+    type PaymentMethod,
+    type PricingPlanSubscriptionExpanded,
+} from '@solvimon/solvimon-types';
 import CustomerOverview from './CustomerOverview.vue';
 import type { CustomerOverviewConfiguration } from './CustomerOverview.types';
 
@@ -12,6 +16,7 @@ const {
     mockFetchWalletBalances,
     shippedState,
     mockCheckShipped,
+    optionsState,
 } = vi.hoisted(() => ({
     subscriptionsState: {} as { items: { value: unknown[] }; error: { value: Error | null } },
     paymentMethodsState: {} as { items: { value: unknown[] } },
@@ -20,7 +25,19 @@ const {
     mockFetchWalletBalances: vi.fn(),
     shippedState: { value: false },
     mockCheckShipped: vi.fn(),
+    optionsState: { options: [] as unknown[], status: undefined as unknown },
 }));
+
+vi.mock('@/composables/useCustomerPaymentMethodOptions', async () => {
+    const { ref: createRef } = await import('vue');
+
+    return {
+        useCustomerPaymentMethodOptions: () => ({
+            paymentMethodOptions: createRef(optionsState.options),
+            apiStatus: createRef(optionsState.status),
+        }),
+    };
+});
 
 vi.mock('@/composables/useHasShippedSubscription', async () => {
     const { computed } = await import('vue');
@@ -125,7 +142,7 @@ vi.mock('@/public/components/CustomerWalletBalances/CustomerWalletBalances.vue',
 vi.mock('@/public/components/CustomerPaymentMethods/CustomerPaymentMethods.vue', () => ({
     default: defineComponent({
         name: 'CustomerPaymentMethodsStub',
-        props: ['paymentMethods', 'isLoading', 'configuration'],
+        props: ['paymentMethods', 'isLoading', 'configuration', 'hasNoPaymentMethodOptions'],
         setup: () => () => h('div'),
     }),
 }));
@@ -260,6 +277,25 @@ describe('CustomerOverview — payment methods', () => {
 
         expect(shownPaymentMethods(wrapper).map(({ id }) => id)).toEqual(['pm_1', 'pm_2', 'pm_3']);
     });
+
+    it.each([
+        { options: [], status: ApiStatus.Done, expected: true },
+        { options: [{ type: 'CARD' }], status: ApiStatus.Done, expected: false },
+        { options: [], status: ApiStatus.Failed, expected: false },
+    ])(
+        'tells the block there is nothing to add: $expected, for $options.length options and $status',
+        async ({ options, status, expected }) => {
+            optionsState.options = options;
+            optionsState.status = status;
+            const wrapper = await mountOverview();
+
+            expect(
+                wrapper
+                    .findComponent({ name: 'CustomerPaymentMethodsStub' })
+                    .props('hasNoPaymentMethodOptions'),
+            ).toBe(expected);
+        },
+    );
 
     it('shows as many as maxItems asks for', async () => {
         const wrapper = await mountOverview({ paymentMethods: { maxItems: 1 } });

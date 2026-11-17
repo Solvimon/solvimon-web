@@ -46,9 +46,12 @@ export type CheckoutFormDisplay = Partial<Record<CheckoutFormGroup, CheckoutForm
 
 // Custom fields have no field in the form.
 const FIELDS_BY_GROUP: [CheckoutFormGroup, (keyof CheckoutFormState)[]][] = [
-    ['customer_details', ['companyLegalName', 'firstName', 'infix', 'lastName']],
+    [
+        'customer_details',
+        ['companyLegalName', 'companyRegistrationNumber', 'firstName', 'infix', 'lastName'],
+    ],
     ['address', ['addressLine1', 'addressLine2', 'postalCode', 'city', 'state', 'country']],
-    ['tax_ids', ['companyVatNumber']],
+    ['tax_ids', ['companyVatNumber', 'taxExempt', 'taxExemptNote']],
     ['email', ['email']],
 ];
 
@@ -282,6 +285,9 @@ export const getInitialState = (
         city: undefined,
         state: undefined,
         companyVatNumber: undefined,
+        companyRegistrationNumber: undefined,
+        taxExempt: undefined,
+        taxExemptNote: undefined,
         shippingAddressLine1: undefined,
         shippingAddressLine2: undefined,
         shippingPostalCode: undefined,

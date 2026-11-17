@@ -78,9 +78,12 @@ export const COMPLETION_POLL_FIRST_DELAY_MS = 1_000;
 export const COMPLETION_POLL_MAX_DELAY_MS = 15_000;
 export const COMPLETION_POLL_LIMIT_MS = 60_000;
 
-const REFILLED_FIELDS: TextField[] = [
+const REFILLED_FIELDS: (keyof CheckoutFormState)[] = [
     'email',
     'companyLegalName',
+    'companyRegistrationNumber',
+    'taxExempt',
+    'taxExemptNote',
     'firstName',
     'infix',
     'lastName',
@@ -93,7 +96,7 @@ const REFILLED_FIELDS: TextField[] = [
     'country',
 ];
 
-const copyField = <K extends TextField>(
+const copyField = <K extends keyof CheckoutFormState>(
     target: CheckoutFormState,
     source: CheckoutFormState,
     field: K,
@@ -468,7 +471,7 @@ export function useCheckoutSession({ portalUrlId }: { portalUrlId: string }) {
         index: number,
         before: CheckoutSessionNewCustomer | undefined,
         sentForm: CheckoutFormState,
-        sentFields: TextField[],
+        sentFields: (keyof CheckoutFormState)[],
     ) => {
         const stored = getInitialState(toFormState(before));
         const fresh = getInitialState(toFormState(session.value?.customers[index]?.customer));

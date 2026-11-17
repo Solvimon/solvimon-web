@@ -501,6 +501,111 @@ describe('CheckoutForm', () => {
             expect(isRequired('first_name')).toBe(false);
         });
 
+        describe('registration number and tax exemption', () => {
+            const filled = {
+                ...organization,
+                companyRegistrationNumber: '12345678',
+                taxExempt: true,
+                taxExemptNote: 'Charity',
+            };
+            const editable: CheckoutFormDisplay = {
+                customer_details: 'EDITABLE',
+                tax_ids: 'EDITABLE',
+            };
+
+            it('offers neither without a display', () => {
+                const { wrapper } = mountForm(filled);
+
+                expect(fieldRoot(wrapper, 'registration_number').exists()).toBe(false);
+                expect(wrapper.find('[name="tax_exempt"]').exists()).toBe(false);
+                expect(fieldRoot(wrapper, 'tax_exempt_note').exists()).toBe(false);
+                expect(wrapper.text()).not.toContain('12345678');
+            });
+
+            it('offers an organization both inputs, the reason only while exempt', async () => {
+                const { wrapper, checkoutForm } = mountForm(
+                    { ...organization, companyRegistrationNumber: '12345678' },
+                    { display: editable },
+                );
+
+                const registration = fieldRoot(wrapper, 'registration_number').find('input');
+                expect(registration.element.value).toBe('12345678');
+                expect(fieldRoot(wrapper, 'tax_exempt_note').exists()).toBe(false);
+
+                await wrapper.find('input[name="tax_exempt"]').setValue(true);
+                expect(checkoutForm.form.value.taxExempt).toBe(true);
+                await fieldRoot(wrapper, 'tax_exempt_note').find('input').setValue('Charity');
+                expect(checkoutForm.form.value.taxExemptNote).toBe('Charity');
+            });
+
+            it('offers an individual neither', () => {
+                const { wrapper } = mountForm(
+                    { email: 'jane@example.com', country: 'NL' as CountryCode },
+                    { display: editable },
+                );
+
+                expect(fieldRoot(wrapper, 'registration_number').exists()).toBe(false);
+                expect(wrapper.find('[name="tax_exempt"]').exists()).toBe(false);
+            });
+
+            it('shows read-only values without inputs', () => {
+                const { wrapper } = mountForm(filled, {
+                    display: { customer_details: 'READ_ONLY', tax_ids: 'READ_ONLY' },
+                });
+
+                expect(fieldRoot(wrapper, 'registration_number').exists()).toBe(false);
+                expect(wrapper.find('[name="tax_exempt"]').exists()).toBe(false);
+                expect(wrapper.text()).toContain('Registration number');
+                expect(wrapper.text()).toContain('12345678');
+                expect(wrapper.text()).toContain('Tax exempt');
+                expect(wrapper.text()).toContain('Charity');
+            });
+
+            it('says a read-only exemption without a reason is one', () => {
+                const { wrapper } = mountForm(
+                    { ...organization, taxExempt: true },
+                    { display: { tax_ids: 'READ_ONLY' } },
+                );
+
+                expect(wrapper.text()).toContain('Tax exempt');
+                expect(wrapper.text()).toContain('Yes');
+            });
+
+            it('shows nothing of a read-only customer that is not exempt', () => {
+                const { wrapper } = mountForm(
+                    { ...organization, taxExempt: false, taxExemptNote: 'Charity' },
+                    { display: { tax_ids: 'READ_ONLY' } },
+                );
+
+                expect(wrapper.text()).not.toContain('Tax exempt');
+                expect(wrapper.text()).not.toContain('Charity');
+            });
+
+            it('renders nothing of hidden groups', () => {
+                const { wrapper } = mountForm(filled, {
+                    display: { customer_details: 'HIDDEN', tax_ids: 'HIDDEN' },
+                });
+
+                expect(fieldRoot(wrapper, 'registration_number').exists()).toBe(false);
+                expect(wrapper.find('[name="tax_exempt"]').exists()).toBe(false);
+                expect(wrapper.text()).not.toContain('12345678');
+                expect(wrapper.text()).not.toContain('Charity');
+            });
+
+            it('requires the registration number only when it is asked for', async () => {
+                const optional = mountForm(organization, { display: editable });
+                expect(
+                    optional.checkoutForm.validation.value.companyRegistrationNumber.$invalid,
+                ).toBe(false);
+
+                const { checkoutForm } = mountForm(organization, {
+                    display: editable,
+                    alsoRequired: ['companyRegistrationNumber'],
+                });
+                expect(checkoutForm.validation.value.companyRegistrationNumber.$invalid).toBe(true);
+            });
+        });
+
         it('opens the billing address when its city is required', () => {
             const { wrapper } = mountForm(
                 { email: 'jane@example.com', country: 'NL' as CountryCode },

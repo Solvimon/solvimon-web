@@ -663,6 +663,10 @@
     "defaultMessage": "Promotion code removed",
     "description": "Aria live message when a promotion code is removed in checkout"
   },
+  "checkout.registration_number.label": {
+    "defaultMessage": "Registration number",
+    "description": "Label of the company registration number of an organization customer"
+  },
   "checkout.shipping_address.title": {
     "defaultMessage": "Shipping address",
     "description": "Label above the address an order is shipped to in the checkout form"
@@ -726,6 +730,18 @@
   "checkout.subscription_description_without_price": {
     "defaultMessage": "per {period_name}, starting today",
     "description": "The description of the subscription, while the price is still being determined"
+  },
+  "checkout.tax_exempt.label": {
+    "defaultMessage": "Tax exempt",
+    "description": "Label of whether an organization customer is exempt from tax"
+  },
+  "checkout.tax_exempt.yes": {
+    "defaultMessage": "Yes",
+    "description": "Shown for an organization customer that is exempt from tax, when no reason is given"
+  },
+  "checkout.tax_exempt_note.label": {
+    "defaultMessage": "Reason for tax exemption",
+    "description": "Label of the reason an organization customer is exempt from tax"
   },
   "checkout.trial.label": {
     "defaultMessage": "Trial",

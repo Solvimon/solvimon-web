@@ -39,6 +39,9 @@ export interface CheckoutFormState {
     city: string | undefined;
     state: string | undefined;
     companyVatNumber: string | undefined;
+    companyRegistrationNumber?: string;
+    taxExempt?: boolean;
+    taxExemptNote?: string;
     shippingAddressLine1: string | undefined;
     shippingAddressLine2: string | undefined;
     shippingPostalCode: string | undefined;

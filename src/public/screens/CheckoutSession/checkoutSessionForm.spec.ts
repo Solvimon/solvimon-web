@@ -7,6 +7,7 @@ describe('getMissingFormFields', () => {
                 [
                     'checkout_session.customers.0.customer.organization.registered_address.country',
                     'checkout_session.customers.0.customer.organization.legal_name',
+                    'checkout_session.customers.0.customer.organization.registration_number',
                     'checkout_session.customers.1.customer.email',
                     'checkout_session.customers.1.customer.individual.residential_address.postal_code',
                     'checkout_session.customers.1.customer.individual.name',
@@ -14,7 +15,7 @@ describe('getMissingFormFields', () => {
                 2,
             ),
         ).toStrictEqual([
-            ['country', 'companyLegalName'],
+            ['country', 'companyLegalName', 'companyRegistrationNumber'],
             ['email', 'postalCode', 'firstName', 'lastName'],
         ]);
     });
@@ -23,7 +24,7 @@ describe('getMissingFormFields', () => {
         expect(
             getMissingFormFields(
                 [
-                    'checkout_session.customers.0.customer.organization.registration_number',
+                    'checkout_session.customers.0.customer.organization.tax_registrations',
                     'checkout_session.customers.0',
                     'checkout_session.pricing_plan_subscriptions.0.pricing_plan_subscription',
                     'checkout_session.customers.3.customer.email',

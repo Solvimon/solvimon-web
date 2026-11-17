@@ -49,10 +49,23 @@ const fields = reactive({
     state: formControlModel(model, 'state', asOptionalText),
     firstName: formControlModel(model, 'firstName', asOptionalText),
     lastName: formControlModel(model, 'lastName', asOptionalText),
+    companyRegistrationNumber: formControlModel(model, 'companyRegistrationNumber', asOptionalText),
+    taxExemptNote: formControlModel(model, 'taxExemptNote', asOptionalText),
+});
+
+const taxExempt = computed({
+    get: () => !!model.value.taxExempt,
+    set: (value: boolean) => {
+        model.value.taxExempt = value;
+    },
 });
 
 const displayOf = (field: keyof CheckoutFormState) => getFieldDisplay(props.display, field);
 const isEditable = (field: keyof CheckoutFormState) => displayOf(field) === 'EDITABLE';
+
+/** Only a form told how to show the customer's details asks for these organization fields. */
+const showsOrganizationField = (field: keyof CheckoutFormState, mode: 'EDITABLE' | 'READ_ONLY') =>
+    isCompanyPurchase.value && !!props.display && displayOf(field) === mode;
 
 /** Only a form told how to show the customer's details asks an individual for their name. */
 const showsIndividualName = computed(
@@ -122,6 +135,22 @@ const nameLabel = computed(() =>
     }),
 );
 
+const registrationNumberLabel = computed(() =>
+    $t({
+        defaultMessage: 'Registration number',
+        id: 'checkout.registration_number.label',
+        description: 'Label of the company registration number of an organization customer',
+    }),
+);
+
+const taxExemptLabel = computed(() =>
+    $t({
+        defaultMessage: 'Tax exempt',
+        id: 'checkout.tax_exempt.label',
+        description: 'Label of whether an organization customer is exempt from tax',
+    }),
+);
+
 const readOnlyDetails = computed(() =>
     [
         isCompanyPurchase.value &&
@@ -133,6 +162,22 @@ const readOnlyDetails = computed(() =>
             displayOf('companyVatNumber') === 'READ_ONLY' && {
                 label: labels.vatNumberLabel,
                 value: model.value.companyVatNumber,
+            },
+        showsOrganizationField('companyRegistrationNumber', 'READ_ONLY') && {
+            label: registrationNumberLabel.value,
+            value: model.value.companyRegistrationNumber,
+        },
+        showsOrganizationField('taxExempt', 'READ_ONLY') &&
+            model.value.taxExempt && {
+                label: taxExemptLabel.value,
+                value:
+                    model.value.taxExemptNote ||
+                    $t({
+                        defaultMessage: 'Yes',
+                        id: 'checkout.tax_exempt.yes',
+                        description:
+                            'Shown for an organization customer that is exempt from tax, when no reason is given',
+                    }),
             },
         showsIndividualName.value &&
             displayOf('firstName') === 'READ_ONLY' && {
@@ -570,6 +615,49 @@ const shippingCountryPlaceholder = computed(() =>
                             :hides-legal-name="!isEditable('companyLegalName')"
                             :hides-vat-number="!isEditable('companyVatNumber')"
                         />
+                        <div
+                            v-if="
+                                showsOrganizationField('companyRegistrationNumber', 'EDITABLE') ||
+                                showsOrganizationField('taxExempt', 'EDITABLE')
+                            "
+                            class="mt-2 flex flex-col gap-2"
+                        >
+                            <Input
+                                v-if="
+                                    showsOrganizationField('companyRegistrationNumber', 'EDITABLE')
+                                "
+                                v-model="fields.companyRegistrationNumber"
+                                name="registration_number"
+                                autocomplete="off"
+                                :required="getIsFieldRequired('companyRegistrationNumber')"
+                                :label="
+                                    registrationNumberLabel +
+                                    getOptionalSuffix('companyRegistrationNumber')
+                                "
+                                :error="validation.value.companyRegistrationNumber.$errors"
+                            />
+                            <template v-if="showsOrganizationField('taxExempt', 'EDITABLE')">
+                                <Checkbox
+                                    v-model="taxExempt"
+                                    name="tax_exempt"
+                                    :label="taxExemptLabel"
+                                />
+                                <Input
+                                    v-if="taxExempt"
+                                    v-model="fields.taxExemptNote"
+                                    name="tax_exempt_note"
+                                    autocomplete="off"
+                                    :label="
+                                        $t({
+                                            defaultMessage: 'Reason for tax exemption',
+                                            id: 'checkout.tax_exempt_note.label',
+                                            description:
+                                                'Label of the reason an organization customer is exempt from tax',
+                                        }) + getOptionalSuffix('taxExemptNote')
+                                    "
+                                />
+                            </template>
+                        </div>
                     </div>
                 </Expand>
             </Section>

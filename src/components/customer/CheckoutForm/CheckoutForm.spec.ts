@@ -538,6 +538,19 @@ describe('CheckoutForm', () => {
                 expect(checkoutForm.form.value.taxExemptNote).toBe('Charity');
             });
 
+            it('marks each input optional once', async () => {
+                const { wrapper } = mountForm(organization, { display: editable });
+                await wrapper.find('input[name="tax_exempt"]').setValue(true);
+
+                for (const name of ['registration_number', 'tax_exempt_note']) {
+                    expect(
+                        fieldRoot(wrapper, name)
+                            .text()
+                            .match(/\(optional\)/g),
+                    ).toHaveLength(1);
+                }
+            });
+
             it('offers an individual neither', () => {
                 const { wrapper } = mountForm(
                     { email: 'jane@example.com', country: 'NL' as CountryCode },

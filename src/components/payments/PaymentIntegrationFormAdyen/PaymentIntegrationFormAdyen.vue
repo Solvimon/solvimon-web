@@ -87,6 +87,9 @@ let pendingRedirectResult: string | undefined;
 let isConfirmingRedirect = false;
 // The API's answer to a refused authorize, handed on with the failure the drop-in reports for it.
 let authorizeRefusal: unknown;
+// Set when this form has already logged the failure the drop-in is about to report, so one refusal
+// is one entry rather than two.
+let isFailureLogged = false;
 
 const logger = useLogger();
 const { locale } = useIntl();
@@ -574,6 +577,7 @@ function applyPaymentResult(
     }
 
     logFailure(paymentResult);
+    isFailureLogged = true;
     actions.resolve({ resultCode: 'Error' });
 }
 
@@ -585,6 +589,7 @@ function handleOnSubmit(
     if (isSubmissionInFlight) return;
     isSubmissionInFlight = true;
     authorizeRefusal = undefined;
+    isFailureLogged = false;
 
     props
         .validateOnSubmit()
@@ -667,6 +672,7 @@ function handleOnSubmit(
                         }
 
                         authorizeRefusal = error;
+                        isFailureLogged = true;
                         actions.resolve({ resultCode: 'Error' });
                     });
                 return;
@@ -727,6 +733,7 @@ function handleOnSubmit(
                             }),
                             error,
                         );
+                        isFailureLogged = true;
                         actions.resolve({ resultCode: 'Error' });
                     });
             }
@@ -811,17 +818,18 @@ function handleOnPaymentFailed(
 ): ReturnType<NonNullable<CoreConfiguration['onPaymentFailed']>> {
     const [data] = args;
 
-    // The drop-in reporting a failed payment is the single most common way a customer ends up on
-    // the error card, and until now it was the one path that emitted nothing at all.
-    logger.error(
-        'ADYEN_PAYMENT_FAILED',
-        'Adyen reported the payment as failed',
-        failureContext({
-            reason: 'ADYEN_PAYMENT_FAILED',
-            extra: { resultCode: data?.resultCode },
-        }),
-        data,
-    );
+    // Only a failure nothing here has logged yet, such as one after a 3-D Secure challenge.
+    if (!isFailureLogged) {
+        logger.error(
+            'ADYEN_PAYMENT_FAILED',
+            'Adyen reported the payment as failed',
+            failureContext({
+                reason: 'ADYEN_PAYMENT_FAILED',
+                extra: { resultCode: data?.resultCode },
+            }),
+        );
+    }
+    isFailureLogged = false;
     const apiError = authorizeRefusal;
     authorizeRefusal = undefined;
     emitError({

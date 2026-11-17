@@ -93,7 +93,6 @@ const {
     checkoutForm,
     customerForms,
     planCustomizations,
-    isOrderFixed,
     invoicePreview,
     invoicePreviewByBillingPeriod,
     trialInvoicePreview,
@@ -801,10 +800,9 @@ const retryInvoicePreview = () => loadInvoicePreview().catch(() => {});
                     <template v-for="entry in planCustomizations" :key="entry.key">
                         <PlanCustomizationEditor
                             v-if="
-                                !isOrderFixed &&
-                                (entry.seatsValues.value.length ||
-                                    entry.unitsValues.value.length ||
-                                    entry.promotionCode)
+                                entry.seatsValues.value.length ||
+                                entry.unitsValues.value.length ||
+                                entry.promotionCode
                             "
                             v-bind="orderLockAttrs"
                             v-model:seats-values="entry.seatsValues.value"

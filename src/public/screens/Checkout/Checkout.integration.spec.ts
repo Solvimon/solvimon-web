@@ -989,15 +989,6 @@ describe('Checkout', () => {
             expect(wrapper.findComponent({ name: 'PlanCustomizationEditor' }).exists()).toBe(false);
         });
 
-        it('shows no section to change the order when the flow fixes it', async () => {
-            const wrapper = await mountWithoutPayment({
-                planCustomizations: shallowRef([planCustomization('0')]),
-                isOrderFixed: ref(true),
-            });
-
-            expect(wrapper.findComponent({ name: 'PlanCustomizationEditor' }).exists()).toBe(false);
-        });
-
         it('shows the promotion code of each subscription, and its error, in its own section', async () => {
             const wrapper = await mountWithoutPayment(
                 {

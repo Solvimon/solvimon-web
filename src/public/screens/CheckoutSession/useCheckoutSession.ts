@@ -486,6 +486,18 @@ export function useCheckoutSession({ portalUrlId }: { portalUrlId: string }) {
         }
     };
 
+    /** Each form as it is now, against the session it was filled from; `withSent`: and what goes out. */
+    const snapshotForms = (withSent: boolean) =>
+        forms.value.map((form, index) => ({
+            before: session.value?.customers[index]?.customer,
+            form: { ...form.form.value },
+            fields: withSent ? (getCustomerChange(index)?.fields ?? []) : [],
+        }));
+    const refillForms = (snapshot: ReturnType<typeof snapshotForms>) =>
+        snapshot.forEach(({ before, form, fields }, index) =>
+            refillForm(index, before, form, fields),
+        );
+
     /** Sends what the form changed, against the version last read. Never while the session is closed. */
     const save = async () => {
         if (!session.value || !isOpen.value) return;
@@ -494,11 +506,7 @@ export function useCheckoutSession({ portalUrlId }: { portalUrlId: string }) {
         const key = keyOf(edit);
         if (!key || key === settledKey.value) return;
 
-        const sent = forms.value.map((form, index) => ({
-            before: session.value?.customers[index]?.customer,
-            form: { ...form.form.value },
-            fields: getCustomerChange(index)?.fields ?? [],
-        }));
+        const sent = snapshotForms(true);
 
         isSaving.value = true;
         try {
@@ -518,9 +526,7 @@ export function useCheckoutSession({ portalUrlId }: { portalUrlId: string }) {
                     toCheckoutSessionPatch(portalUrl.value.checkout_session.version, edit),
                 );
             }
-            sent.forEach(({ before, form, fields }, index) =>
-                refillForm(index, before, form, fields),
-            );
+            refillForms(sent);
 
             if (keyOf(getEdit()) === key) {
                 settledKey.value = key;
@@ -1045,7 +1051,10 @@ export function useCheckoutSession({ portalUrlId }: { portalUrlId: string }) {
     /** Shows what the session still misses, in the form and in the preview. */
     const rereadSession = async () => {
         try {
+            // Taken into the forms like a save's answer, so a value changed elsewhere is not sent back.
+            const snapshot = snapshotForms(false);
             portalUrl.value = await service.getCheckoutSession(portalUrlId);
+            refillForms(snapshot);
         } catch (error) {
             logger.error(
                 'CHECKOUT_SESSION_LOAD_FAILED',

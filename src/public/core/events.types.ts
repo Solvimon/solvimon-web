@@ -79,8 +79,9 @@ export interface SolvimonEventMap {
     /** The customer asked to go somewhere the host decides on, such as an invoice. */
     'solvimon-action-request': CustomEvent<ActionRequestDetail>;
     /**
-     * A payment went through: in the checkout, on pay-invoice, or in `payment-method-form` in
-     * `payment` mode. The only cancelable event; see `SolvimonPaymentSucceededEvent`.
+     * A payment went through: in the checkout, in the checkout session once the session completed,
+     * on pay-invoice, or in `payment-method-form` in `payment` mode. The only cancelable event; see
+     * `SolvimonPaymentSucceededEvent`.
      */
     'solvimon-payment-succeeded': SolvimonPaymentSucceededEvent;
     /**

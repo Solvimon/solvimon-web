@@ -25,7 +25,9 @@ const {
     mockGetGeoLocation,
     mockRedirect,
     mockGetOptions,
+    mockDispatch,
 } = vi.hoisted(() => ({
+    mockDispatch: vi.fn(),
     mockGet: vi.fn(),
     mockGetGeoLocation: vi.fn(),
     mockUpdate: vi.fn(),
@@ -33,6 +35,10 @@ const {
     mockGetSubscription: vi.fn(),
     mockRedirect: vi.fn(),
     mockGetOptions: vi.fn(),
+}));
+
+vi.mock('@/components/providers/HostElementProvider/composables/useHostEvent', () => ({
+    useHostEvent: () => ({ dispatch: mockDispatch, componentName: 'solvimon-checkout-session' }),
 }));
 
 vi.mock('@/services/paymentMethods', () => ({
@@ -192,6 +198,7 @@ describe('useCheckoutSession', () => {
         mockGetGeoLocation.mockReset().mockRejectedValue(new Error('none'));
         mockRedirect.mockReset();
         mockGetOptions.mockReset().mockResolvedValue([]);
+        mockDispatch.mockReset().mockReturnValue(true);
     });
 
     afterEach(() => {
@@ -1644,6 +1651,48 @@ describe('useCheckoutSession', () => {
 
             expect(endState.value).toBe('COMPLETED');
             expect(mockRedirect).toHaveBeenCalledWith('https://shop.test/done?session=purl_1');
+        });
+
+        it('tells the host the payment succeeded once the paid session completes, then redirects', async () => {
+            const { source } = await loaded();
+            mockGet.mockResolvedValue(portalUrl({ status: 'COMPLETED' }, 'CLOSED'));
+
+            source.payment?.awaitCompletion?.();
+            await flushPromises();
+
+            expect(mockDispatch).toHaveBeenCalledTimes(1);
+            expect(mockDispatch).toHaveBeenCalledWith('solvimon-payment-succeeded', {
+                componentName: 'solvimon-checkout-session',
+            });
+            expect(mockDispatch.mock.invocationCallOrder[0]).toBeLessThan(
+                mockRedirect.mock.invocationCallOrder[0],
+            );
+        });
+
+        it('keeps the customer on the completed screen when the host cancels the payment event', async () => {
+            mockDispatch.mockReturnValue(false);
+            const { source, endState, isRedirecting } = await loaded();
+            mockGet.mockResolvedValue(portalUrl({ status: 'COMPLETED' }, 'CLOSED'));
+
+            source.payment?.awaitCompletion?.();
+            await flushPromises();
+
+            expect(endState.value).toBe('COMPLETED');
+            expect(isRedirecting.value).toBe(false);
+            expect(mockRedirect).not.toHaveBeenCalled();
+        });
+
+        it('does not tell the host of a payment for a session it did not see paid', async () => {
+            const { source } = await loaded();
+            mockGet.mockResolvedValue(portalUrl({ status: 'COMPLETED' }, 'CLOSED'));
+
+            source.payment?.recoverPaymentFailure?.(
+                failure(new ApiError({ statusCode: 400, field: 'checkout_session.status' })),
+            );
+            await flushPromises();
+
+            expect(mockRedirect).toHaveBeenCalled();
+            expect(mockDispatch).not.toHaveBeenCalled();
         });
 
         it('reads the paid session again, waiting longer each time, until it fails', async () => {

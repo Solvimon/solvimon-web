@@ -2141,6 +2141,29 @@ describe('useCheckoutSession', () => {
             expect(other.subscription.name).toBe('Office hardware');
         });
 
+        it('charges each subscription on its own schedule, with the pricings that schedule enables', async () => {
+            const scheduleInfo = (id: string, enabled: string[]) => ({
+                id,
+                pricing_plan_schedule: {
+                    id,
+                    enabled_pricings: enabled.map((pricing_id) => ({ pricing_id })),
+                },
+            });
+            mockGetSubscription.mockResolvedValue({
+                ...template,
+                pricing_plan_schedule_infos: [
+                    scheduleInfo('pps_2', ['pri_other']),
+                    scheduleInfo('pps_1', ['pri_addon']),
+                ],
+            });
+            const { source } = await loaded();
+
+            expect(source.chargedSchedules?.value).toMatchObject([
+                { scheduleInfo: { id: 'pps_1' }, enabledPricingIds: ['pri_addon'] },
+                { scheduleInfo: { id: 'pps_2' }, enabledPricingIds: ['pri_other'] },
+            ]);
+        });
+
         it('gives each subscription a section of its own, named after its plan', async () => {
             const { source } = await loaded();
             const [first, other] = source.planCustomizations!.value;

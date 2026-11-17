@@ -284,20 +284,36 @@ const handleValidateOnSubmit = async () => {
 
 const hasTrialPeriod = computed(() => !!trialInvoicePreview.value);
 
-const planModelTypes = computed(() =>
-    getModelTypesFromScheduleInfo(scheduleInfo.value, {
-        enabledPricingIds: checkoutForm.form.value.enabledPricingIds,
-    }),
+const chargedSchedules = computed(
+    () =>
+        props.source.chargedSchedules?.value ?? [
+            {
+                scheduleInfo: scheduleInfo.value,
+                enabledPricingIds: checkoutForm.form.value.enabledPricingIds,
+                billingPeriod: subscription.value?.billing_period,
+            },
+        ],
+);
+
+const planModelTypes = computed(
+    () =>
+        new Set(
+            chargedSchedules.value.flatMap((charged) => [
+                ...getModelTypesFromScheduleInfo(charged.scheduleInfo, {
+                    enabledPricingIds: charged.enabledPricingIds,
+                }),
+            ]),
+        ),
 );
 
 const usagePriceGroups = computed(() =>
-    getUsagePriceGroups({
-        scheduleInfo: scheduleInfo.value,
-        enabledPricingIds: checkoutForm.form.value.enabledPricingIds,
-        currency: pricingCurrency.value,
-        billingPeriod: subscription.value?.billing_period,
-        intl,
-    }),
+    chargedSchedules.value.flatMap((charged) =>
+        getUsagePriceGroups({
+            ...charged,
+            currency: pricingCurrency.value,
+            intl,
+        }),
+    ),
 );
 
 const hasRecurringPricing = computed(() =>

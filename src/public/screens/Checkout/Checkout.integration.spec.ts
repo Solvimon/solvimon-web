@@ -3,7 +3,11 @@ import { type Component, computed, defineComponent, h, ref, shallowRef } from 'v
 import type { Invoice, PortalUrl, PricingPlanSubscriptionExpanded } from '@solvimon/solvimon-types';
 import LegacyCheckout from './LegacyCheckout.vue';
 import Checkout from './Checkout.vue';
-import type { CheckoutPlanCustomization, CheckoutSource } from './Checkout.source.types';
+import type {
+    ChargedSchedule,
+    CheckoutPlanCustomization,
+    CheckoutSource,
+} from './Checkout.source.types';
 import { useCheckoutView } from './useCheckout.view';
 import { HOST_ELEMENT_PROVIDER_INJECTION_KEY } from '@/components/providers/HostElementProvider/HostElementProvider.lib';
 
@@ -979,6 +983,59 @@ describe('Checkout', () => {
                 { id: 'sub_0', billing_period: 'MONTHLY' },
                 { id: 'sub_1', billing_period: 'MONTHLY' },
             ]);
+        });
+
+        it('lists the usage of every schedule the flow charges, and an add-on only once enabled', async () => {
+            const usagePricing = (id: string, extra: Record<string, unknown> = {}) => ({
+                id,
+                ...extra,
+                items: [
+                    {
+                        id: `${id}_item`,
+                        product_items: [{ name: id, model_type: 'USAGE_BASED' }],
+                        configs: [
+                            {
+                                id: `${id}_config`,
+                                details: {
+                                    pricing_type: 'FLAT',
+                                    bands: [{ amount: { quantity: '0.05', currency: 'EUR' } }],
+                                },
+                            },
+                        ],
+                    },
+                ],
+            });
+            const scheduleOf = (id: string, pricings: unknown[]) =>
+                ({
+                    id,
+                    pricing_plan_version: {
+                        pricing_categories: [
+                            { product_category: { id: 'cat', name: 'Usage' }, pricings },
+                        ],
+                    },
+                    pricing_plan_schedule: { id },
+                }) as never;
+            const withAddon = scheduleOf('pps_addon', [
+                usagePricing('Add-on usage', { product_type: 'ADDON' }),
+            ]);
+            const summary = async (chargedSchedules: ChargedSchedule[]) =>
+                (await mountWithoutPayment({ chargedSchedules: shallowRef(chargedSchedules) }))
+                    .findComponent({ name: 'OrderSummary' })
+                    .props() as { isUsageBased: boolean; usagePriceGroups: unknown[] };
+
+            expect(
+                await summary([{ scheduleInfo: withAddon, enabledPricingIds: [] }]),
+            ).toMatchObject({ isUsageBased: false, usagePriceGroups: [] });
+
+            const listed = await summary([
+                { scheduleInfo: withAddon, enabledPricingIds: [] },
+                {
+                    scheduleInfo: scheduleOf('pps_usage', [usagePricing('Transactions')]),
+                    enabledPricingIds: [],
+                },
+            ]);
+            expect(listed.isUsageBased).toBe(true);
+            expect(listed.usagePriceGroups).toHaveLength(1);
         });
 
         it('leaves out the section of a subscription with nothing to change', async () => {

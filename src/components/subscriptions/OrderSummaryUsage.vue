@@ -44,7 +44,12 @@ const subtitle = computed(() => {
 </script>
 
 <template>
-    <Section no-spacing class="sv-order-summary__usage">
+    <Section
+        no-spacing
+        class="sv-order-summary__usage"
+        :content-background="isExpanded ? 'none' : 'gray'"
+        :content-classes="`transition-colors duration-300 ease-in-out${isExpanded ? ' bg-white' : ''}`"
+    >
         <div v-if="!groups.length" class="px-3 py-2">
             <Typography no-spacing variant="body-sm" color="subtle">{{ usageLabel }}</Typography>
         </div>

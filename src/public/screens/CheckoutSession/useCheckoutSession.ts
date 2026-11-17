@@ -1020,20 +1020,35 @@ export function useCheckoutSession({ portalUrlId }: { portalUrlId: string }) {
         error: paymentMethodOptionsError,
     } = usePaymentMethodOptions();
 
-    // Fresh every time: the session decides the options, and a save may change what it decides.
-    const loadPaymentMethodOptions = () =>
-        getPaymentMethodOptions({ portalUrlId }, { fresh: true }).catch((error: unknown) => {
-            logger.error(
-                'PAYMENT_METHOD_OPTIONS_LOAD_FAILED',
-                'Failed to load the payment methods that can be offered',
-                { flow: 'CHECKOUT_SESSION' },
-                error,
-            );
-        });
+    /** The options shown, by the customer and seller they were loaded for; unset when refused. */
+    const loadedOptionsFor = ref<string>();
+    const optionsFor = () =>
+        JSON.stringify([sessionPaymentCountry.value, invoicePreview.value?.billing_entity?.id]);
 
-    watch([isLoaded, isOpen, () => session.value?.version], () => {
-        if (isLoaded.value && isOpen.value) void loadPaymentMethodOptions();
-    });
+    // Fresh every time: the session decides the options, and a save may change what it decides.
+    const loadPaymentMethodOptions = () => {
+        const loadingFor = optionsFor();
+        return getPaymentMethodOptions({ portalUrlId }, { fresh: true }).then(
+            () => {
+                loadedOptionsFor.value = loadingFor;
+            },
+            (error: unknown) => {
+                logger.error(
+                    'PAYMENT_METHOD_OPTIONS_LOAD_FAILED',
+                    'Failed to load the payment methods that can be offered',
+                    { flow: 'CHECKOUT_SESSION' },
+                    error,
+                );
+            },
+        );
+    };
+
+    /** A failed reload leaves the options on screen while they were loaded for the same payer and seller. */
+    const hasPaymentMethodOptionsError = computed(
+        () =>
+            paymentMethodOptionsError.value !== null &&
+            !(paymentMethodOptions.value.length && loadedOptionsFor.value === optionsFor()),
+    );
 
     /** Whether the session read has completed or failed, or its link can no longer be used. */
     const readUntilDone = async (): Promise<boolean> => {
@@ -1122,6 +1137,7 @@ export function useCheckoutSession({ portalUrlId }: { portalUrlId: string }) {
             return undefined;
         }
         if (isBadRequestOn(error, 'payment_acceptor_id')) {
+            loadedOptionsFor.value = undefined;
             void loadPaymentMethodOptions();
             return undefined;
         }
@@ -1145,17 +1161,17 @@ export function useCheckoutSession({ portalUrlId }: { portalUrlId: string }) {
         );
     });
 
-    const paymentCountry = computed(() => {
+    /** The payer's country as the session holds it; for a customer that already exists, the invoice's. */
+    const sessionPaymentCountry = computed(() => {
         const payer = payingCustomer.value;
         const sessionCustomer = payer?.customer;
-        if (!payer || sessionCustomer) {
-            // The payer's form, as typed; the first while the payer is not known yet.
-            const form = forms.value[payer ? (session.value?.customers.indexOf(payer) ?? 0) : 0];
+        if (sessionCustomer) {
             const address =
-                sessionCustomer?.organization?.registered_address ??
-                sessionCustomer?.individual?.residential_address;
-            return form?.form.value.country || address?.country || undefined;
+                sessionCustomer.organization?.registered_address ??
+                sessionCustomer.individual?.residential_address;
+            return address?.country || undefined;
         }
+        if (!payer) return undefined;
         // shortcut: the preview's invoice customer is a stand-in (MD-5514); upgrade when the session exposes an existing customer's country.
         const invoiceCustomer = invoicePreview.value?.customer;
         if (!invoiceCustomer) return undefined;
@@ -1166,10 +1182,33 @@ export function useCheckoutSession({ portalUrlId }: { portalUrlId: string }) {
         return address?.country || undefined;
     });
 
+    const paymentCountry = computed(() => {
+        const payer = payingCustomer.value;
+        if (payer && !payer.customer) return sessionPaymentCountry.value;
+        // The payer's form, as typed; the first while the payer is not known yet.
+        const form = forms.value[payer ? (session.value?.customers.indexOf(payer) ?? 0) : 0];
+        return form?.form.value.country || sessionPaymentCountry.value;
+    });
+
+    // Loaded again only when what the session decides the options by can have changed.
+    watch(
+        [
+            isLoaded,
+            isOpen,
+            sessionPaymentCountry,
+            () => invoicePreview.value?.billing_entity?.id,
+            () => preview.value?.total?.amount_incl_tax,
+            () => preview.value?.total?.currency,
+        ],
+        () => {
+            if (isLoaded.value && isOpen.value) void loadPaymentMethodOptions();
+        },
+    );
+
     const payment: CheckoutPayment = {
         paymentMethodOptions,
         isPaymentMethodsPending,
-        hasPaymentMethodOptionsError: computed(() => paymentMethodOptionsError.value !== null),
+        hasPaymentMethodOptionsError,
         retryPaymentMethodOptions: () => void loadPaymentMethodOptions(),
         countryCode: paymentCountry,
         authorizationContext: computed<CheckoutSessionAuthorizationContext | undefined>(() =>

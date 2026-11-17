@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- The checkout's `RECURRING_AMOUNT_UNRESOLVED` warning carries `unattributedGroupTypes`: the types of the invoice groups it could not place on the recurring or one-off side, such as `DISCOUNT`.
 - The checkout's order summary names its products in semibold and shows each line's amount in the lighter, subtle colour. The subtotal and the totals keep their colour.
 - A payment method's Default chip sits right after its name, such as the card number, in the brand colour, instead of on a line of its own below it. This needs `@solvimon/solvimon-ui` 1.28.1, whose `PaymentMethod` draws it so.
 - The blocks beside the main content are 24px apart instead of 16px, on the customer overview and the other screens with a side column.

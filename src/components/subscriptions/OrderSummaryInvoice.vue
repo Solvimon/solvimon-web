@@ -11,6 +11,7 @@ import {
 import type { Amount, InvoiceGroup } from '@solvimon/solvimon-types';
 import { computed } from 'vue';
 import type { OrderSummaryInvoiceProps } from './OrderSummaryInvoice.types';
+import OrderSummaryCollapsible from './OrderSummaryCollapsible.vue';
 import OrderSummaryQuantity from './OrderSummaryQuantity.vue';
 import {
     getGroupsSubtotal,
@@ -55,6 +56,8 @@ const sectionRows = computed(() =>
         };
     }),
 );
+// Past three customers the blocks start closed, so the totals stay in view.
+const isSectionCollapsed = computed(() => sectionRows.value.length > 3);
 const discountsUnderAProduct = computed(
     () =>
         new Set(
@@ -97,13 +100,19 @@ const subtotalOf = (groups: InvoiceGroup[]): Amount | undefined =>
         class="sv-order-summary__items grid grid-cols-1 gap-1"
     >
         <template v-if="sectionRows.length">
-            <Section
+            <component
+                :is="isSectionCollapsed ? OrderSummaryCollapsible : Section"
                 v-for="section in sectionRows"
                 :key="section.key"
-                no-spacing
+                v-bind="
+                    isSectionCollapsed
+                        ? { title: section.title, subtitle: section.subscriptionNames || undefined }
+                        : { noSpacing: true }
+                "
                 class="sv-order-summary__section"
             >
                 <div
+                    v-if="!isSectionCollapsed"
                     class="sv-order-summary__section-header flex flex-row items-center gap-2 px-3 py-2"
                 >
                     <Typography
@@ -126,8 +135,8 @@ const subtotalOf = (groups: InvoiceGroup[]): Amount | undefined =>
                         >
                     </div>
                 </div>
-                <Divider spacing="none" />
-                <div class="px-3 py-2">
+                <Divider v-if="!isSectionCollapsed" spacing="none" />
+                <div :class="{ 'px-3 py-2': !isSectionCollapsed }">
                     <template
                         v-for="(cluster, clusterIndex) in section.clusters"
                         :key="clusterIndex"
@@ -169,7 +178,7 @@ const subtotalOf = (groups: InvoiceGroup[]): Amount | undefined =>
                         </div>
                     </template>
                 </div>
-            </Section>
+            </component>
         </template>
         <template v-else-if="hasBothRecurrences">
             <div

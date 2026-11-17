@@ -83,7 +83,7 @@ const subtitle = computed(() => {
                     <div
                         v-for="(group, groupIndex) in groups"
                         :key="groupIndex"
-                        class="flex flex-col gap-1"
+                        class="flex flex-col gap-1.5"
                     >
                         <Typography v-if="group.name" variant="caps-heading">{{
                             group.name

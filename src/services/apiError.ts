@@ -1,3 +1,5 @@
+import type { PortalLinkEnding } from '@/components/providers/AuthProvider/AuthProvider.lib';
+
 /**
  * A failed API call. An `Error` rather than an object literal so a host's reporter has a name, a
  * message and a stack to group by.
@@ -50,6 +52,13 @@ export class ApiError extends Error {
         if (checkoutSessionStatus) this.checkoutSessionStatus = checkoutSessionStatus;
     }
 }
+
+/** Why a portal link can no longer be used, by the error code of the API's 410. */
+export const LINK_ENDINGS: Record<string, PortalLinkEnding> = {
+    PORTAL_URL_EXPIRED: 'expired',
+    PORTAL_URL_REVOKED: 'revoked',
+    CHECKOUT_SESSION_CLOSED: 'closed',
+};
 
 export function isApiError(error: unknown): error is ApiError {
     return error instanceof ApiError;

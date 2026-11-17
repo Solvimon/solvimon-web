@@ -1,7 +1,7 @@
 import type { Token } from '@solvimon/solvimon-types';
-import type { AuthStatus, PortalLinkEnding } from './AuthProvider.lib';
+import type { AuthStatus } from './AuthProvider.lib';
 import type { Logger } from '@/components/providers/LoggerProvider/LoggerProvider.types';
-import { isApiError } from '@/services/apiError';
+import { isApiError, LINK_ENDINGS } from '@/services/apiError';
 
 /** What an exchange may do to the session it signs in. */
 export interface ExchangeSession {
@@ -18,12 +18,6 @@ export interface ExchangeSession {
 }
 
 const EXCHANGE_RETRY_DELAYS_MS = [1000, 2000, 4000];
-
-export const LINK_ENDINGS: Record<string, PortalLinkEnding> = {
-    PORTAL_URL_EXPIRED: 'expired',
-    PORTAL_URL_REVOKED: 'revoked',
-    CHECKOUT_SESSION_CLOSED: 'closed',
-};
 
 // No answer, a server or gateway error, or a rate limit says nothing about the link itself.
 const isTransient = (err: unknown) =>

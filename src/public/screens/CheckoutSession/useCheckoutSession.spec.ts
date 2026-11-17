@@ -1844,13 +1844,11 @@ describe('useCheckoutSession', () => {
             });
         });
 
-        it('starts each config at its starting value, and lets only the listed ones be changed', async () => {
+        it('offers only the listed configs, at their starting value, and leaves a fixed one out', async () => {
             const { source } = await loaded();
             const other = sectionOf(source, 1);
 
-            expect(other.seatsValues.value).toStrictEqual([
-                { pricing_item_config_id: 'pic_fixed', number: '7' },
-            ]);
+            expect(other.seatsValues.value).toStrictEqual([]);
             expect(other.unitsValues.value).toStrictEqual([
                 { pricing_item_config_id: 'pic_units', number: '1.5' },
             ]);

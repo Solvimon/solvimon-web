@@ -21,6 +21,7 @@ import { useHasShippedSubscription } from '@/composables/useHasShippedSubscripti
 import { useCustomerPaymentMethodOptions } from '@/composables/useCustomerPaymentMethodOptions';
 import LoadFailedNotice from '@/components/shared/LoadFailedNotice.vue';
 import type { PaymentMethodsModalStep } from '@/components/payments/PaymentMethodsModal/PaymentMethodsModal.types';
+import { hasPaymentRedirectReturn } from '@/utils/paymentRedirect';
 
 /** Only customers with an order that ships see it, so the rest never download it. */
 const CustomerShippingAddresses = defineAsyncComponent(
@@ -165,6 +166,10 @@ const openPaymentMethodsModal = async (start: PaymentMethodsModalStep): Promise<
     hasOpenedPaymentMethodsModal.value = true;
     isPaymentMethodsModalShown.value = true;
 };
+
+// A gateway sends the customer back to the page they added from, and only the form in the modal
+// confirms what they authorised there.
+if (hasPaymentRedirectReturn()) void openPaymentMethodsModal('ADD_PAYMENT_METHOD');
 
 const hasOpenedBillingInformationModal = ref(false);
 const isBillingInformationModalShown = ref(false);

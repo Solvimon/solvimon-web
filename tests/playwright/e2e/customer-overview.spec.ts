@@ -16,6 +16,8 @@ import {
     aWalletBalance,
     collection,
     CUSTOMER_ID,
+    PAYMENT_ACCEPTOR_ID,
+    paymentMethodOptions,
     walletBalances,
 } from '../support/fixtures';
 
@@ -337,6 +339,22 @@ test.describe('Customer overview', () => {
 
             await expect(page.getByRole('dialog', { name: 'Add payment method' })).toBeVisible();
             expect((await hostEvents(page)).actions).toEqual([]);
+        });
+
+        test('confirms an Adyen method back from 3DS once, and shows it', async ({ page }) => {
+            api = await mountCustomerOverview(page, {
+                query: { payment_acceptor_id: PAYMENT_ACCEPTOR_ID, redirectResult: 'res_1' },
+                mocks: {
+                    paymentMethodOptions: { body: paymentMethodOptions({ gateways: ['ADYEN'] }) },
+                    verifyPaymentDetails: { body: { payment_status: 'SUCCESS' } },
+                },
+            });
+
+            await api.waitForCall('verifyPaymentDetails');
+            await expect(page.getByRole('dialog', { name: 'Add payment method' })).toBeHidden();
+            await expect.poll(() => api.calls('paymentMethods').length).toBe(2);
+            expect(api.calls('verifyPaymentDetails')).toHaveLength(1);
+            expect(new URL(page.url()).search).toBe('');
         });
     });
 

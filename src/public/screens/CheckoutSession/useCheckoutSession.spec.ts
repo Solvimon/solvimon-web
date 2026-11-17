@@ -215,7 +215,29 @@ describe('useCheckoutSession', () => {
                 id: 'ppsu_template',
                 expanded: true,
             });
-            expect(source.subscription.value).toBe(template);
+            expect(source.subscription.value).toEqual(template);
+        });
+
+        it('names the subscription of the order as the session does, not as its template', async () => {
+            mockGetSubscription.mockResolvedValue({ ...template, name: 'Pro template' });
+            mockGet.mockResolvedValue(
+                portalUrl({
+                    pricing_plan_subscriptions: [
+                        {
+                            ...createSession().pricing_plan_subscriptions[0],
+                            pricing_plan_subscription: {
+                                reference: 'sub-ref',
+                                customer_reference: 'cust-ref',
+                                name: 'Pro for Acme',
+                            },
+                        },
+                    ],
+                }),
+            );
+            const { source } = await loaded();
+
+            expect(source.subscription.value?.name).toBe('Pro for Acme');
+            expect(source.subscription.value?.id).toBe('ppsu_template');
         });
 
         it('fills the form from the first customer, and the quantities from the subscription', async () => {

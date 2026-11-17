@@ -1185,7 +1185,8 @@ export function useCheckoutSession({ portalUrlId }: { portalUrlId: string }) {
     };
 
     const source: CheckoutSource = {
-        subscription: computed(() => templates.value[0]),
+        // The first section's copy, under the name the session gives it.
+        subscription: computed(() => customizations.value[0]?.subscription ?? templates.value[0]),
         hasSubscriptionLoadFailed: computed(() => !!loadFailure.value),
         orderMeterValues: computed(() => ({})),
         planCustomizations: computed(() =>

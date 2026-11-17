@@ -934,6 +934,27 @@ describe('useCheckoutSession', () => {
             expect(formsOf(result).every(({ title }) => title)).toBe(true);
         });
 
+        it('shows no form for a customer whose groups are all hidden', async () => {
+            const hidden = {
+                ...individualCustomer,
+                effective_display: {
+                    customer_details: 'HIDDEN' as const,
+                    address: 'HIDDEN' as const,
+                    tax_ids: 'HIDDEN' as const,
+                    email: 'HIDDEN' as const,
+                    custom_fields: 'HIDDEN' as const,
+                },
+            };
+            mockGet.mockResolvedValue(
+                portalUrl({ customers: [createSession().customers[0], hidden] }),
+            );
+            const result = await loaded();
+
+            expect(formsOf(result)).toHaveLength(1);
+            expect(formsOf(result)[0].key).toBe('0');
+            expect(formsOf(result)[0].title).toBeUndefined();
+        });
+
         it('gives each customer a form of its own, in session order, named after the customer', async () => {
             mockGet.mockResolvedValue(
                 portalUrl({ customers: [createSession().customers[0], individualCustomer] }),

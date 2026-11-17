@@ -351,14 +351,17 @@ describe('OrderSummary', () => {
             expect(opened.text()).toMatch(/Pro.*Amsterdam platform/s);
         });
 
-        it('shows up to three customers open', () => {
+        it('shows up to three customers open, with their subscriptions as the first line', () => {
             const wrapper = mountSections(3);
+            const first = wrapper.findAll('.sv-order-summary__section')[0];
 
             expect(wrapper.findAll('.sv-order-summary__section button')).toHaveLength(0);
             expect(wrapper.findAll('.sv-order-summary__section-title')).toHaveLength(3);
-            expect(wrapper.findAll('.sv-order-summary__section')[0].text()).toContain(
-                'Amsterdam platform',
+            expect(first.find('.sv-order-summary__section-header').text()).toBe(
+                "Domino's Amsterdam",
             );
+            expect(first.find('.sv-order-summary__section-subscriptions').text()).toBe('Pro');
+            expect(first.text()).toMatch(/Pro.*Amsterdam platform/s);
         });
     });
 });

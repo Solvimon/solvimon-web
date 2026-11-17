@@ -39,6 +39,7 @@ import type {
 } from '@/public/screens/Checkout/Checkout.source.types';
 import type { CheckoutSessionAuthorizationContext } from '@/components/payments/PaymentIntegrationForm/PaymentIntegrationForm.types';
 import { useLogger } from '@/components/providers';
+import { useHostEvent } from '@/components/providers/HostElementProvider/composables/useHostEvent';
 import { LINK_ENDINGS } from '@/components/providers/AuthProvider/AuthProvider.handle';
 import type { PortalLinkEnding } from '@/components/providers/AuthProvider/AuthProvider.lib';
 import { useCheckoutForm } from '@/components/customer/CheckoutForm/useCheckoutForm';
@@ -866,12 +867,19 @@ export function useCheckoutSession({ portalUrlId }: { portalUrlId: string }) {
         url?.replaceAll(SESSION_ID_PLACEHOLDER, encodeURIComponent(portalUrlId));
     const successUrl = computed(() => withSessionId(session.value?.success_url));
     const isRedirecting = ref(false);
+    const { dispatch, componentName } = useHostEvent();
+    /** A host that cancels `solvimon-payment-succeeded` keeps the customer here, as on any checkout. */
+    const isSuccessRedirectCancelled = ref(false);
+    let isPaymentSucceededSent = false;
 
     // Read on load or returned by a save: either way the customer goes on to the merchant.
     watch(
         endState,
         (state) => {
-            const url = state === 'COMPLETED' ? sanitizeUrl(successUrl.value ?? '') : '';
+            const url =
+                state === 'COMPLETED' && !isSuccessRedirectCancelled.value
+                    ? sanitizeUrl(successUrl.value ?? '')
+                    : '';
             isRedirecting.value = !!url;
             if (url) safeUrlRedirect(url);
         },
@@ -1051,9 +1059,20 @@ export function useCheckoutSession({ portalUrlId }: { portalUrlId: string }) {
     );
 
     /** Whether the session read has completed or failed, or its link can no longer be used. */
-    const readUntilDone = async (): Promise<boolean> => {
+    const readUntilDone = async (paid: boolean): Promise<boolean> => {
         try {
             const response = await service.getCheckoutSession(portalUrlId);
+            // Told before the redirect the completed session sets off, so the host can stop it.
+            if (
+                paid &&
+                response.checkout_session.status === 'COMPLETED' &&
+                !isPaymentSucceededSent
+            ) {
+                isPaymentSucceededSent = true;
+                isSuccessRedirectCancelled.value = !dispatch('solvimon-payment-succeeded', {
+                    componentName,
+                });
+            }
             // An OPEN read is not taken on: the forms would be compared with it and saved.
             if (response.status !== 'PUBLISHED' || response.checkout_session.status !== 'OPEN') {
                 portalUrl.value = response;
@@ -1090,7 +1109,7 @@ export function useCheckoutSession({ portalUrlId }: { portalUrlId: string }) {
         const isCurrent = () => !isDisposed && follow === follows;
         let waited = 0;
         for (let attempt = 0; isCurrent(); attempt++) {
-            if ((attempt > 0 || !isRead) && (await readUntilDone())) return;
+            if ((attempt > 0 || !isRead) && (await readUntilDone(paid))) return;
             const delay = Math.min(
                 COMPLETION_POLL_FIRST_DELAY_MS * 2 ** attempt,
                 COMPLETION_POLL_MAX_DELAY_MS,

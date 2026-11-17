@@ -282,8 +282,13 @@ export function getMeterValues(
             number: bound[key].number,
         }));
     return {
+        // Only what the buyer may change: a fixed quantity already shows in the order summary.
         values: [
-            ...current,
+            ...current.filter(({ pricing_item_config_id }) =>
+                (bounds ?? []).some(
+                    (bound) => bound.pricing_item_config_id === pricing_item_config_id,
+                ),
+            ),
             ...unset.map(({ pricing_item_config_id, min }) => ({
                 pricing_item_config_id,
                 number: min.number,

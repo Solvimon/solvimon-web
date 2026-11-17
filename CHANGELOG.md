@@ -75,6 +75,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- A `REQUEST_FAILED` entry's `fingerprint` names the endpoint with `:id` in place of the ids in its path, such as `/v1/portal/invoices/:id`, so the failures of one endpoint group as one issue rather than one per invoice or subscription. `path` still carries the ids.
 - The Adyen form logs a refused payment or tokenization (`PAYMENT_AUTHORIZATION_FAILED`, `TOKENIZATION_FAILED`) without an `error`, with the payment's `paymentStatus` and `paymentResult` in its context. It passed the API's response as the error, which a host's error reporter took for a thrown exception.
 - Adding a payment method shows each payment integration once. A customer whose billing entity has several payment acceptors on one integration saw its payment methods listed once per acceptor, with the same method selected in each list; the first acceptor now stores it. A payment, in the checkout or pay-invoice, still lists every acceptor it is offered.
 - An element that cannot load says so instead of staying empty or showing a skeleton for good:

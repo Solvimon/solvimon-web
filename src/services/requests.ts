@@ -99,7 +99,8 @@ export function createRequestService({
             fingerprint: [
                 parseError ? 'REQUEST_PARSE_FAILED' : 'REQUEST_FAILED',
                 options.method ?? 'GET',
-                url.pathname,
+                // One issue per endpoint, not per invoice or subscription named in its path.
+                url.pathname.replace(/\/[a-z]{4}_[A-Za-z0-9]+(?=\/|$)/g, '/:id'),
                 `${statusCode}`,
             ],
         };

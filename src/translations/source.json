@@ -515,6 +515,10 @@
     "defaultMessage": "{percentage} of {unit} value",
     "description": "A usage price as a percentage of what is used, e.g. \"1.19% of transaction value\""
   },
+  "checkout.order_summary_block.usage.rate_percentage_amount": {
+    "defaultMessage": "{percentage} + {amount} / {unit}",
+    "description": "A usage price of a percentage plus an amount per unit, e.g. \"1.4% + €0.25 / transaction\""
+  },
   "checkout.order_summary_block.usage.tier_open": {
     "defaultMessage": "{from}+",
     "description": "The last band of a tiered usage price, which has no upper bound, e.g. \"20,000+\""

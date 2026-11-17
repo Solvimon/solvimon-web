@@ -155,7 +155,7 @@ describe('payments service', () => {
     });
 
     describe('chargeStoredPaymentMethod', () => {
-        it('authorizes the invoice on the stored method, with no gateway payload or return URL', async () => {
+        it('authorizes the invoice on the stored method, leaving a decline for the caller to report', async () => {
             mockRequest.mockResolvedValue({ status: 'SUCCESS' });
 
             const { chargeStoredPaymentMethod } = createPaymentsService();
@@ -169,7 +169,7 @@ describe('payments service', () => {
 
             expect(mockRequest).toHaveBeenCalledWith({
                 url: 'https://api.test/portal/payments/authorize',
-                options: { method: 'POST' },
+                options: { method: 'POST', expectedStatusCodes: [400, 422] },
                 data: {
                     payment_acceptor_id: 'paya_1',
                     customer_id: 'cust_1',

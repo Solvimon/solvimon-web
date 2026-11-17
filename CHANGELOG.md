@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- A charge to a stored payment method that the gateway declines (`400` or `422`) is logged as a `REQUEST_FAILED` warning. The pay-invoice screen still logs the failed payment as a `PAYMENT_AUTHORIZATION_FAILED` error.
 - The Adyen form's `PAYMENT_INTEGRATION_NOT_RENDERABLE` warning carries `offeredPaymentMethodTypes`: the payment method types the API offered for the acceptor, such as `applepay`, which shows whether it offered none or only ones the drop-in leaves out.
 - The checkout's `RECURRING_AMOUNT_UNRESOLVED` warning carries `unattributedGroupTypes`: the types of the invoice groups it could not place on the recurring or one-off side, such as `DISCOUNT`.
 - The checkout's order summary names its products in semibold and shows each line's amount in the lighter, subtle colour. The subtotal and the totals keep their colour.

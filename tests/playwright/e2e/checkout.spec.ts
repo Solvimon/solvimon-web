@@ -426,9 +426,26 @@ test.describe('Checkout', () => {
         });
 
         test('renders a usage-based plan as usage based', async ({ page }) => {
-            api = await mountLoaded(page, { usageBased: true });
+            api = await mountLoaded(page, {
+                usageBased: true,
+                subscription: aSubscription({ usagePrices: true }),
+            });
+            const usage = checkout(page).orderSummary.locator('.sv-order-summary__usage');
+            const toggle = usage.getByRole('button', { name: /usage/i });
 
-            await expect(checkout(page).orderSummary).toContainText(/usage/i);
+            await expect(toggle).toHaveText(/^\s*\+ Usage\s*Billed monthly\s*$/);
+            await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+
+            await toggle.click();
+
+            await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+            await expect(usage).toContainText('Payments');
+            await expect(usage.locator('.sv-order-summary__usage-price')).toHaveText([
+                /Card payments\s*€0\.05 \/ transaction/,
+                'Payouts',
+                /0 - 20,000\s*€0\.05 \/ transaction/,
+                /20,000\+\s*€0\.04 \/ transaction/,
+            ]);
         });
     });
 

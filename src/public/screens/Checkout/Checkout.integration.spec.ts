@@ -95,6 +95,7 @@ vi.mock('./useCheckout.view', async () => {
             trialInvoicePreview: r(undefined),
             trialPeriod: r(undefined),
             authorizationContext: r(undefined),
+            pricingCurrency: r('EUR'),
             isPaid: c({
                 get: () => isPaid.value,
                 set: (value: boolean) => (isPaid.value = value),

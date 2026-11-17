@@ -76,7 +76,6 @@ const subtitle = computed(() => {
             />
         </button>
 
-        <!-- Without an `inert` property (jsdom) Vue writes `inert="false"`, which still disables. -->
         <div v-if="groups.length" :id="panelId" :inert="!isExpanded || undefined">
             <Expand :is-open="isExpanded" lazy>
                 <div class="flex flex-col gap-3 border-t px-3 py-2">

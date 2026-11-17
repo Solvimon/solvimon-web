@@ -120,6 +120,10 @@ export function useCheckoutForm({
                 companyLegalName: {
                     required: requiredIf(() => form.value.type === 'ORGANIZATION'),
                 },
+                companyRegistrationNumber: requiredWhenAsked(
+                    getIsFieldRequired,
+                    'companyRegistrationNumber',
+                ),
                 firstName: requiredWhenAsked(getIsFieldRequired, 'firstName'),
                 lastName: requiredWhenAsked(getIsFieldRequired, 'lastName'),
                 companyVatNumber: isVatNumberShown(form.value) ? { taxId } : {},

@@ -571,6 +571,102 @@ describe('useCheckoutSession', () => {
             expect(mockUpdate).not.toHaveBeenCalled();
         });
 
+        it('fills the registration number and tax exemption, and sends nothing on load', async () => {
+            mockGet.mockResolvedValue(
+                portalUrl({
+                    customers: [
+                        organizationCustomer({
+                            legal_name: 'Acme',
+                            registered_address: { country: 'NL', city: 'Utrecht' },
+                            registration_number: '12345678',
+                            tax_exempt: true,
+                            tax_exempt_note: 'Charity',
+                        }),
+                    ],
+                }),
+            );
+            const { source } = await loaded();
+            await settleEdits();
+
+            expect(source.checkoutForm.form.value).toMatchObject({
+                companyRegistrationNumber: '12345678',
+                taxExempt: true,
+                taxExemptNote: 'Charity',
+            });
+            expect(mockUpdate).not.toHaveBeenCalled();
+        });
+
+        it('sends a changed registration number and tax exemption, trimmed', async () => {
+            mockUpdate.mockResolvedValue(portalUrl({ version: 2 }));
+            const { source } = await loaded();
+
+            source.checkoutForm.form.value.companyRegistrationNumber = ' 12345678 ';
+            source.checkoutForm.form.value.taxExempt = true;
+            source.checkoutForm.form.value.taxExemptNote = ' Charity ';
+            await settleEdits();
+
+            expect(mockUpdate.mock.calls[0][1].checkout_session.customers).toStrictEqual([
+                {
+                    customer: {
+                        organization: {
+                            registration_number: '12345678',
+                            tax_exempt: true,
+                            tax_exempt_note: 'Charity',
+                        },
+                    },
+                },
+            ]);
+        });
+
+        it('sends an exemption turned off as false, without its reason', async () => {
+            mockGet.mockResolvedValue(
+                portalUrl({
+                    customers: [
+                        organizationCustomer({
+                            legal_name: 'Acme',
+                            registered_address: { country: 'NL', city: 'Utrecht' },
+                            tax_exempt: true,
+                        }),
+                    ],
+                }),
+            );
+            mockUpdate.mockResolvedValue(portalUrl({ version: 2 }));
+            const { source } = await loaded();
+
+            source.checkoutForm.form.value.taxExempt = false;
+            source.checkoutForm.form.value.taxExemptNote = 'Charity';
+            await settleEdits();
+
+            expect(mockUpdate.mock.calls[0][1].checkout_session.customers).toStrictEqual([
+                { customer: { organization: { tax_exempt: false } } },
+            ]);
+        });
+
+        it('does not send a registration number or tax exemption the session does not let it edit', async () => {
+            mockGet.mockResolvedValue(
+                portalUrl({
+                    customers: [
+                        {
+                            ...createSession().customers[0],
+                            effective_display: {
+                                ...createSession().customers[0].effective_display,
+                                customer_details: 'READ_ONLY',
+                                tax_ids: 'HIDDEN',
+                            },
+                        },
+                    ],
+                }),
+            );
+            const { source } = await loaded();
+
+            source.checkoutForm.form.value.companyRegistrationNumber = '12345678';
+            source.checkoutForm.form.value.taxExempt = true;
+            source.checkoutForm.form.value.taxExemptNote = 'Charity';
+            await settleEdits();
+
+            expect(mockUpdate).not.toHaveBeenCalled();
+        });
+
         it('sends nothing for an individual whose name the API returns with empty parts', async () => {
             mockGet.mockResolvedValue(
                 portalUrl({
@@ -968,6 +1064,23 @@ describe('useCheckoutSession', () => {
             expect(validation.addressLine1.$errors).not.toHaveLength(0);
             expect(source.checkoutForm.getIsFieldRequired('addressLine1')).toBe(true);
             expect(validation.city.$dirty).toBe(false);
+        });
+
+        it('shows a missing registration number as needing input', async () => {
+            mockGet.mockResolvedValue(
+                portalUrl({
+                    customers: [organizationCustomer({ legal_name: 'Acme' })],
+                    missing_fields: [
+                        'checkout_session.customers.0.customer.organization.registration_number',
+                    ],
+                }),
+            );
+            const { source } = await loaded();
+
+            expect(source.checkoutForm.getIsFieldRequired('companyRegistrationNumber')).toBe(true);
+            expect(
+                source.checkoutForm.validation.value.companyRegistrationNumber.$errors,
+            ).not.toHaveLength(0);
         });
 
         it('does not mark a missing field before the session is read', async () => {

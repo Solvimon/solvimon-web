@@ -27,7 +27,8 @@ export function toFormState(
             ? customer.organization?.registered_address
             : customer.individual?.residential_address;
     const name = customer.individual?.name;
-    const vatNumber = customer.organization?.tax_ids?.[0]?.id;
+    const organization = customer.organization;
+    const vatNumber = organization?.tax_ids?.[0]?.id;
     const country = address?.country;
 
     return {
@@ -40,6 +41,13 @@ export function toFormState(
         ...(name?.infix && { infix: name.infix }),
         ...(name?.last_name && { lastName: name.last_name }),
         ...(vatNumber && { companyVatNumber: vatNumber }),
+        ...(organization?.registration_number && {
+            companyRegistrationNumber: organization.registration_number,
+        }),
+        ...(typeof organization?.tax_exempt === 'boolean' && {
+            taxExempt: organization.tax_exempt,
+        }),
+        ...(organization?.tax_exempt_note && { taxExemptNote: organization.tax_exempt_note }),
         ...(address?.line1 && { addressLine1: address.line1 }),
         ...(address?.line2 && { addressLine2: address.line2 }),
         ...(address?.postal_code && { postalCode: address.postal_code }),
@@ -74,6 +82,7 @@ const NAME_FIELDS = {
 const MISSING_FIELD_PATHS: Record<string, TextField[]> = {
     email: ['email'],
     'organization.legal_name': ['companyLegalName'],
+    'organization.registration_number': ['companyRegistrationNumber'],
     'organization.tax_id': ['companyVatNumber'],
     'organization.tax_ids': ['companyVatNumber'],
     'individual.name': ['firstName', 'lastName'],
@@ -114,10 +123,10 @@ export function getCustomerEdit(
     customer: CheckoutSessionNewCustomer,
     display: CheckoutSessionEffectiveDisplay,
     isInvalid: (field: TextField) => boolean = () => false,
-): { patch: CheckoutSessionCustomerPatch; fields: TextField[] } | undefined {
+): { patch: CheckoutSessionCustomerPatch; fields: (keyof CheckoutFormState)[] } | undefined {
     const stored = toFormState(customer);
     /** The form fields the patch carries. */
-    const fields: TextField[] = [];
+    const fields: (keyof CheckoutFormState)[] = [];
     const isEditable = (group: keyof CheckoutSessionEffectiveDisplay, fields: TextField[]) =>
         display[group] === 'EDITABLE' && !fields.some(isInvalid);
     const changedTo = (field: TextField) => {
@@ -165,17 +174,32 @@ export function getCustomerEdit(
         const legalName = isEditable('customer_details', ['companyLegalName'])
             ? changedTo('companyLegalName')
             : undefined;
+        const registrationNumber = isEditable('customer_details', ['companyRegistrationNumber'])
+            ? changedTo('companyRegistrationNumber')
+            : undefined;
         const taxIds = isEditable('tax_ids', ['companyVatNumber'])
             ? getTaxIdsEdit(form.companyVatNumber, customer)
             : undefined;
         if (taxIds !== undefined) fields.push('companyVatNumber');
-        if (legalName || address || taxIds !== undefined) {
-            edit.organization = {
-                ...(legalName && { legal_name: legalName }),
-                ...(address && { registered_address: address }),
-                ...(taxIds !== undefined && { tax_ids: taxIds }),
-            };
-        }
+        const taxExempt =
+            isEditable('tax_ids', []) && !!form.taxExempt !== !!stored.taxExempt
+                ? !!form.taxExempt
+                : undefined;
+        if (taxExempt !== undefined) fields.push('taxExempt');
+        // The reason is asked for only while the customer is exempt.
+        const taxExemptNote =
+            isEditable('tax_ids', ['taxExemptNote']) && form.taxExempt
+                ? changedTo('taxExemptNote')
+                : undefined;
+        const organization = {
+            ...(legalName && { legal_name: legalName }),
+            ...(registrationNumber && { registration_number: registrationNumber }),
+            ...(address && { registered_address: address }),
+            ...(taxIds !== undefined && { tax_ids: taxIds }),
+            ...(taxExempt !== undefined && { tax_exempt: taxExempt }),
+            ...(taxExemptNote && { tax_exempt_note: taxExemptNote }),
+        };
+        if (Object.keys(organization).length) edit.organization = organization;
     }
     return Object.keys(edit).length ? { patch: edit, fields } : undefined;
 }

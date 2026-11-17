@@ -996,7 +996,7 @@ export function useCheckoutSession({ portalUrlId }: { portalUrlId: string }) {
             pollTimer = setTimeout(resolve, ms);
         });
 
-    /** Whether the session read has completed or failed. */
+    /** Whether the session read has completed or failed, or its link can no longer be used. */
     const readUntilDone = async (): Promise<boolean> => {
         try {
             const response = await service.getCheckoutSession(portalUrlId);
@@ -1005,7 +1005,7 @@ export function useCheckoutSession({ portalUrlId }: { portalUrlId: string }) {
                 portalUrl.value = response;
             }
             const { status } = response.checkout_session;
-            return status === 'COMPLETED' || status === 'FAILED';
+            return status === 'COMPLETED' || status === 'FAILED' || response.status !== 'PUBLISHED';
         } catch (error) {
             logger.warn(
                 'CHECKOUT_SESSION_COMPLETION_CHECK_FAILED',

@@ -1520,6 +1520,17 @@ describe('useCheckoutSession', () => {
             expect(mockGet).toHaveBeenCalledTimes(reads);
         });
 
+        it('stops reading a paid session once its link is closed, while the session is still open', async () => {
+            const { source, endState } = await loaded();
+            mockGet.mockReset().mockResolvedValue(portalUrl({}, 'CLOSED'));
+
+            source.payment?.awaitCompletion?.();
+            await vi.advanceTimersByTimeAsync(COMPLETION_POLL_LIMIT_MS * 2);
+
+            expect(mockGet).toHaveBeenCalledTimes(1);
+            expect(endState.value).toBe('CLOSED');
+        });
+
         it('keeps waiting through a read that fails', async () => {
             const { source, endState } = await loaded();
             mockGet.mockReset();

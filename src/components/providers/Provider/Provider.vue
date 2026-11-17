@@ -78,8 +78,11 @@ defineSlots<ProviderSlots>();
                                                             />
                                                         </template>
                                                     </AuthProvider>
-                                                    <template #unavailable>
-                                                        <slot name="portal-unavailable" />
+                                                    <template #unavailable="{ ending }">
+                                                        <slot
+                                                            name="portal-unavailable"
+                                                            :ending="ending"
+                                                        />
                                                     </template>
                                                 </PortalProvider>
                                             </TranslationProvider>

@@ -40,10 +40,21 @@ watch(
     { immediate: true },
 );
 
+const revokedEnding = computed(() =>
+    props.portalObject.status === 'REVOKED'
+        ? ({ state: 'ended', reason: 'revoked' } as const)
+        : undefined,
+);
+
 provide(PORTAL_INJECTION_KEY, toRef(props, 'portalObject'));
 </script>
 
 <template>
     <slot v-if="!unavailableReason" />
-    <slot v-else-if="unavailableReason === 'not-published'" name="unavailable" />
+    <!-- Revoked ends the link as the exchange's 410 would, which the element tells apart. -->
+    <slot
+        v-else-if="unavailableReason === 'not-published'"
+        name="unavailable"
+        :ending="revokedEnding"
+    />
 </template>

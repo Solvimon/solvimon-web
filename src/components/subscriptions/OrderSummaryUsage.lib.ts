@@ -50,45 +50,58 @@ export function getUsagePriceGroups({
     if (!scheduleInfo) return [];
 
     const formatRate = (band: Band, unit: string | undefined): string | undefined => {
-        if (Number(band.percentage)) {
-            const percentage = formatNumber(Number(band.percentage) / 100, {
+        const percentage =
+            Number(band.percentage) !== 0 &&
+            band.percentage &&
+            formatNumber(Number(band.percentage) / 100, {
                 style: 'percent',
                 maximumFractionDigits: 4,
             });
+        const amount =
+            band.amount &&
+            !(percentage && Number(band.amount.quantity) === 0) &&
+            formatAmount(band.amount);
+        const perUnit =
+            unit ??
+            $t({
+                defaultMessage: 'unit',
+                id: 'checkout.order_summary_block.usage.unit_fallback',
+                description: 'The unit a usage price is charged per when its product names none',
+            });
 
-            return unit
-                ? $t(
-                      {
-                          defaultMessage: '{percentage} of {unit} value',
-                          id: 'checkout.order_summary_block.usage.rate_percentage',
-                          description:
-                              'A usage price as a percentage of what is used, e.g. "1.19% of transaction value"',
-                      },
-                      { percentage, unit },
-                  )
-                : percentage;
+        if (percentage && amount) {
+            return $t(
+                {
+                    defaultMessage: '{percentage} + {amount} / {unit}',
+                    id: 'checkout.order_summary_block.usage.rate_percentage_amount',
+                    description:
+                        'A usage price of a percentage plus an amount per unit, e.g. "1.4% + €0.25 / transaction"',
+                },
+                { percentage, amount, unit: perUnit },
+            );
         }
-        if (band.amount) {
+        if (amount) {
             return $t(
                 {
                     defaultMessage: '{amount} / {unit}',
                     id: 'checkout.order_summary_block.usage.rate_per_unit',
                     description: 'A usage price per unit, e.g. "€0.05 / transaction"',
                 },
-                {
-                    amount: formatAmount(band.amount),
-                    unit:
-                        unit ??
-                        $t({
-                            defaultMessage: 'unit',
-                            id: 'checkout.order_summary_block.usage.unit_fallback',
-                            description:
-                                'The unit a usage price is charged per when its product names none',
-                        }),
-                },
+                { amount, unit: perUnit },
             );
         }
-        return undefined;
+        if (percentage && unit) {
+            return $t(
+                {
+                    defaultMessage: '{percentage} of {unit} value',
+                    id: 'checkout.order_summary_block.usage.rate_percentage',
+                    description:
+                        'A usage price as a percentage of what is used, e.g. "1.19% of transaction value"',
+                },
+                { percentage, unit },
+            );
+        }
+        return percentage || undefined;
     };
 
     // A rate per unit would misstate a band priced per block, capped, or with a fee on top.

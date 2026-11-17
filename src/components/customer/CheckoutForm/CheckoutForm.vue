@@ -630,10 +630,7 @@ const shippingCountryPlaceholder = computed(() =>
                                 name="registration_number"
                                 autocomplete="off"
                                 :required="getIsFieldRequired('companyRegistrationNumber')"
-                                :label="
-                                    registrationNumberLabel +
-                                    getOptionalSuffix('companyRegistrationNumber')
-                                "
+                                :label="registrationNumberLabel"
                                 :error="validation.value.companyRegistrationNumber.$errors"
                             />
                             <template v-if="showsOrganizationField('taxExempt', 'EDITABLE')">
@@ -653,7 +650,7 @@ const shippingCountryPlaceholder = computed(() =>
                                             id: 'checkout.tax_exempt_note.label',
                                             description:
                                                 'Label of the reason an organization customer is exempt from tax',
-                                        }) + getOptionalSuffix('taxExemptNote')
+                                        })
                                     "
                                 />
                             </template>

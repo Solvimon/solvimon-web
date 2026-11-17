@@ -29,6 +29,7 @@ import {
     toFormState,
 } from './checkoutSessionForm';
 import type {
+    ChargedSchedule,
     CheckoutCustomerForm,
     CheckoutPayment,
     CheckoutPlanCustomization,
@@ -843,6 +844,32 @@ export function useCheckoutSession({ portalUrlId }: { portalUrlId: string }) {
         );
     };
 
+    /** Each subscription's schedule and what it charges, once for subscriptions on the same one. */
+    const chargedSchedules = computed(() => {
+        const byKey = new Map<string, ChargedSchedule>();
+        templates.value.forEach((template, index) => {
+            if (!template) return;
+            const scheduleId = scheduleIdOf(index);
+            const scheduleInfo = template.pricing_plan_schedule_infos.find(
+                ({ id }) => id === scheduleId,
+            );
+            // The session changes no pricing choice, so it charges those of the template's schedule.
+            const enabledPricingIds = (
+                scheduleInfo?.pricing_plan_schedule?.enabled_pricings ?? []
+            ).map(({ pricing_id }) => pricing_id);
+            const charged = {
+                scheduleInfo,
+                enabledPricingIds,
+                billingPeriod: template.billing_period,
+            };
+            byKey.set(
+                JSON.stringify([scheduleId, enabledPricingIds, template.billing_period]),
+                charged,
+            );
+        });
+        return [...byKey.values()];
+    });
+
     const isLoaded = ref(false);
 
     // A field the session misses shows as such, typed in or not, once the session is read.
@@ -1250,6 +1277,7 @@ export function useCheckoutSession({ portalUrlId }: { portalUrlId: string }) {
         subscription: computed(() => customizations.value[0]?.subscription ?? templates.value[0]),
         hasSubscriptionLoadFailed: computed(() => !!loadFailure.value),
         orderMeterValues: computed(() => ({})),
+        chargedSchedules,
         planCustomizations: computed(() =>
             customizations.value.filter((entry) => entry !== undefined),
         ),

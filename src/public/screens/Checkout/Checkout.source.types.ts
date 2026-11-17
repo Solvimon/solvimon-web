@@ -6,6 +6,8 @@ import type {
     CountryCode,
     Invoice,
     PaymentMethodOptionsResponse,
+    Pricing,
+    PricingPlanScheduleInfoExpanded,
     PricingPlanSubscriptionExpanded,
     TimePeriod,
 } from '@solvimon/solvimon-types';
@@ -90,6 +92,13 @@ export interface CheckoutPlanCustomization {
     promotionCode?: CheckoutPromotionCode;
 }
 
+/** A schedule the order is charged on, with the add-ons and group members it charges. */
+export interface ChargedSchedule {
+    scheduleInfo: PricingPlanScheduleInfoExpanded | undefined;
+    enabledPricingIds?: Pricing['id'][];
+    billingPeriod?: BillingPeriod;
+}
+
 /** Everything the checkout screen renders and pays from; each checkout flow supplies its own. */
 export interface CheckoutSource {
     /** What the host configured, once anything unusable has been dropped and reported. */
@@ -109,6 +118,8 @@ export interface CheckoutSource {
      * its pricing choices. Held shallowly, like `customerForms`.
      */
     planCustomizations?: Readonly<Ref<CheckoutPlanCustomization[]>>;
+    /** What the order's usage and renewal are read from; left out, the plan the form prices. */
+    chargedSchedules?: Readonly<Ref<ChargedSchedule[]>>;
     checkoutForm: ReturnType<typeof useCheckoutForm>;
     /**
      * A section per customer, shown and validated in place of `checkoutForm`'s own. Held shallowly

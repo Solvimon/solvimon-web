@@ -29,6 +29,22 @@ const unitsNumber = computed<number>({
 
 const clampCount = ref(0);
 
+const minUnits = props.defaultValue?.number ? +props.defaultValue.number : undefined;
+
+// Raised to the minimum on blur, not per keystroke: that would stop 12 being typed above a
+// minimum of 5.
+let isBelowMin = false;
+const setFractionalUnits = (input: unknown) => {
+    isBelowMin = minUnits !== undefined && input !== '' && Number(input) < minUnits;
+    if (!isBelowMin) setUnits(input);
+};
+const raiseToMinUnits = () => {
+    if (!isBelowMin) return;
+    isBelowMin = false;
+    clampCount.value++;
+    setUnits(minUnits);
+};
+
 /**
  * The stepper reads whole numbers only, so a bounded config with a fraction anywhere gets a number
  * field. Decided once, so the field does not swap while the customer types.
@@ -76,7 +92,8 @@ const numberFieldAttrs = computed(() => ({
                 :label="unitsLabel"
                 label-screen-reader-only
                 :disabled="disabled"
-                @update:model-value="setUnits"
+                @update:model-value="setFractionalUnits"
+                @blur="raiseToMinUnits"
             />
             <StepInput
                 v-else

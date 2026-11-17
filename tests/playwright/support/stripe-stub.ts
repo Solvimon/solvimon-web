@@ -9,7 +9,7 @@
  * leaving the SDK's own code — the iframe, the postMessage bridge, the authorize call — real.
  *
  * Only what the SDK calls is implemented: `elements`, `elements.submit`, `elements.update`,
- * `createConfirmationToken`, `handleNextAction` and `retrievePaymentIntent`.
+ * `createConfirmationToken`, `handleNextAction`, `retrievePaymentIntent` and `retrieveSetupIntent`.
  */
 
 export interface StripeStubConfig {
@@ -133,6 +133,14 @@ export function stripeStubScript(config: StripeStubConfig): string {
                     config.retrieveError
                         ? { error: config.retrieveError }
                         : { paymentIntent: { status: config.intentStatus || 'succeeded' } },
+                );
+            },
+            retrieveSetupIntent: function () {
+                window.__STRIPE_STUB_RETRIEVALS__ = (window.__STRIPE_STUB_RETRIEVALS__ || 0) + 1;
+                return Promise.resolve(
+                    config.retrieveError
+                        ? { error: config.retrieveError }
+                        : { setupIntent: { status: config.intentStatus || 'succeeded' } },
                 );
             },
         };

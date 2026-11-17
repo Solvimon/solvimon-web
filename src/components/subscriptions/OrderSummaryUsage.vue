@@ -26,8 +26,8 @@ const subtitle = computed(() => {
     const [first] = periods;
     const isSharedSinglePeriod =
         !!first &&
-        first.value === 1 &&
-        periods.every((period) => period?.type === first.type && period.value === first.value);
+        (first.value ?? 1) === 1 &&
+        periods.every((period) => period?.type === first.type && (period.value ?? 1) === 1);
 
     return isSharedSinglePeriod
         ? $t(

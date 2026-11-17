@@ -44,8 +44,10 @@ export function getChargedPricings(
 
     return pricings
         .filter(({ pricing, inGroup }) => {
-            if (seenIds.has(pricing?.id)) return false;
-            seenIds.add(pricing?.id);
+            if (pricing?.id) {
+                if (seenIds.has(pricing.id)) return false;
+                seenIds.add(pricing.id);
+            }
 
             const isOptional =
                 inGroup || !!pricing?.pricing_group_id || pricing?.product_type === 'ADDON';

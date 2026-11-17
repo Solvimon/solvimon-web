@@ -352,6 +352,20 @@ describe('getUsagePriceGroups', () => {
         ).toEqual(['Instant payouts']);
     });
 
+    it('leaves out a zero percentage next to an amount', () => {
+        const scheduleInfo = scheduleInfoOf([
+            category('prca_payments', 'Payments', [
+                usagePricing({
+                    id: 'pri_1',
+                    name: 'Refunds',
+                    bands: [{ percentage: '0', amount: eur('0.25') }],
+                }),
+            ]),
+        ]);
+
+        expect(ratesOf(scheduleInfo)).toEqual([['Refunds', '€0.25 / transaction']]);
+    });
+
     it('leaves out a zero amount next to a percentage', () => {
         const scheduleInfo = scheduleInfoOf([
             category('prca_payments', 'Payments', [

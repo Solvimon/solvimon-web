@@ -295,6 +295,7 @@ const hasUsagePricing = computed(() => planModelTypes.value.has('USAGE_BASED'));
 const isUsageBased = computed(
     () =>
         hasUsagePricing.value ||
+        usagePriceGroups.value.length > 0 ||
         (invoicePreview.value ? isInvoiceUsageBased(invoicePreview.value) : false),
 );
 

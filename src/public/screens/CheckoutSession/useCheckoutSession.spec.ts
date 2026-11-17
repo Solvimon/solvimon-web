@@ -1632,6 +1632,36 @@ describe('useCheckoutSession', () => {
             expect(source.canPay?.value).toBe(false);
         });
 
+        it('takes what changed elsewhere into the forms when it reads the session again, and sends only what the customer typed', async () => {
+            const { source } = await loaded();
+            const changedElsewhere = (legalName: string) => [
+                organizationCustomer(
+                    { legal_name: legalName, registered_address: { country: 'NL' } },
+                    'merchant@acme.test',
+                ),
+            ];
+            mockGet
+                .mockReset()
+                .mockResolvedValue(portalUrl({ version: 2, customers: changedElsewhere('Acme') }));
+            mockUpdate.mockResolvedValue(
+                portalUrl({ version: 3, customers: changedElsewhere('Acme BV') }),
+            );
+
+            source.checkoutForm.form.value.companyLegalName = 'Acme BV';
+            source.payment?.recoverPaymentFailure?.(failure(new ApiError({ statusCode: 409 })));
+            await flushPromises();
+            await settleEdits();
+
+            expect(source.checkoutForm.form.value.email).toBe('merchant@acme.test');
+            expect(mockUpdate).toHaveBeenCalledTimes(1);
+            expect(mockUpdate).toHaveBeenCalledWith(PORTAL_URL_ID, {
+                checkout_session: {
+                    expected_version: 2,
+                    customers: [{ customer: { organization: { legal_name: 'Acme BV' } } }],
+                },
+            });
+        });
+
         it('prices the order again when it was paid at a version the session moved on from', async () => {
             const { source } = await loaded();
             mockPreview.mockClear().mockResolvedValue(previewOf(2));

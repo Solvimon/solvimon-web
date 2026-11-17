@@ -16,7 +16,7 @@ import type { ExpressBillingInformation } from '@/components/payments/ExpressPay
 import type { PaymentAuthorizationContext } from '@/components/payments/PaymentIntegrationForm/PaymentIntegrationForm.types';
 import CheckoutForm from '@/components/customer/CheckoutForm/CheckoutForm.vue';
 import CheckoutTitle from '@/components/checkout/CheckoutTitle.vue';
-import { isInvoiceUsageBased } from '@/utils/invoice';
+import { isInvoiceUsageBased, splitInvoiceByRecurrence } from '@/utils/invoice';
 import SubscriptionPaymentCompletedCard from '@/components/payments/SubscriptionPaymentCompletedCard/SubscriptionPaymentCompletedCard.vue';
 import OrderSummary from '@/components/subscriptions/OrderSummary.vue';
 import MarkdownText from '@/components/shared/MarkdownText/MarkdownText.vue';
@@ -349,7 +349,12 @@ watch(
             logger.warn(
                 'RECURRING_AMOUNT_UNRESOLVED',
                 'Could not tell the recurring part of the invoice from the one-off part; the mandate states the invoice total',
-                { flow: 'CHECKOUT' },
+                {
+                    flow: 'CHECKOUT',
+                    unattributedGroupTypes: invoicePreview.value
+                        ? splitInvoiceByRecurrence(invoicePreview.value).unattributedGroupTypes
+                        : [],
+                },
             );
         }
     },

@@ -32,6 +32,8 @@ export interface InvoiceRecurrenceSplit {
     unattributed: InvoiceAmountTotals;
     hasOneOff: boolean;
     hasUnattributed: boolean;
+    /** The types of the groups behind `unattributed`, each once, for a log to say why. */
+    unattributedGroupTypes: InvoiceGroup['type'][];
 }
 
 const RECURRENCE_BY_GROUP_TYPE: Record<InvoiceGroup['type'], InvoiceRecurrence> = {
@@ -160,6 +162,7 @@ export function splitInvoiceByRecurrence(invoice: Invoice): InvoiceRecurrenceSpl
         ONE_OFF: { excludingTax: [], includingTax: [] },
         UNATTRIBUTED: { excludingTax: [], includingTax: [] },
     };
+    const unattributedGroupTypes = new Set<InvoiceGroup['type']>();
 
     const add = (
         recurrence: InvoiceRecurrence,
@@ -177,6 +180,9 @@ export function splitInvoiceByRecurrence(invoice: Invoice): InvoiceRecurrenceSpl
     invoice.periods?.forEach((period) => {
         period.groups?.forEach((group) => {
             const groupRecurrence = RECURRENCE_BY_GROUP_TYPE[group.type] ?? 'UNATTRIBUTED';
+            if (groupRecurrence === 'UNATTRIBUTED') {
+                unattributedGroupTypes.add(group.type);
+            }
 
             if (!group.lines?.length) {
                 add(groupRecurrence, group);
@@ -211,5 +217,6 @@ export function splitInvoiceByRecurrence(invoice: Invoice): InvoiceRecurrenceSpl
         unattributed,
         hasOneOff: !isZero(oneOff),
         hasUnattributed: !isZero(unattributed),
+        unattributedGroupTypes: [...unattributedGroupTypes],
     };
 }

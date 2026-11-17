@@ -270,6 +270,7 @@ describe('splitInvoiceByRecurrence', () => {
         expect(result.recurring.includingTax).toEqual(eur('484.00'));
         expect(result.unattributed.includingTax).toEqual(eur('-48.40'));
         expect(result.hasUnattributed).toBe(true);
+        expect(result.unattributedGroupTypes).toEqual(['DISCOUNT']);
     });
 
     it('sums without the drift adding the quantities as floats would introduce', () => {

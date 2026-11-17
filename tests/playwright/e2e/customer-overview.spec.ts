@@ -356,6 +356,27 @@ test.describe('Customer overview', () => {
             expect(api.calls('verifyPaymentDetails')).toHaveLength(1);
             expect(new URL(page.url()).search).toBe('');
         });
+
+        test('confirms a Stripe method back from a redirect with Stripe, and shows it', async ({
+            page,
+        }) => {
+            api = await mountCustomerOverview(page, {
+                query: {
+                    payment_acceptor_id: PAYMENT_ACCEPTOR_ID,
+                    redirect_status: 'succeeded',
+                    setup_intent: 'seti_1Tester',
+                    setup_intent_client_secret: 'seti_1Tester_secret_Abc123',
+                },
+                stripe: { intentStatus: 'succeeded' },
+            });
+
+            await expect.poll(() => api.calls('paymentMethods').length).toBe(2);
+            await expect(page.getByRole('dialog', { name: 'Add payment method' })).toBeHidden();
+            expect(
+                await page.evaluate(() => Reflect.get(window, '__STRIPE_STUB_RETRIEVALS__')),
+            ).toBe(1);
+            expect(new URL(page.url()).search).toBe('');
+        });
     });
 
     // ─── Failure modes ────────────────────────────────────────────────────────

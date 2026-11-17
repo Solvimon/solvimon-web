@@ -48,7 +48,7 @@ const subtitle = computed(() => {
         no-spacing
         class="sv-order-summary__usage"
         :content-background="isExpanded ? 'none' : 'gray'"
-        :content-classes="`transition-colors duration-300 ease-in-out${isExpanded ? ' bg-white' : ''}`"
+        :content-classes="`transition duration-300 ease-in-out${isExpanded ? ' bg-white shadow-[0_0_0_2px_rgb(0_0_0/0.04)]' : ''}`"
     >
         <div v-if="!groups.length" class="px-3 py-2">
             <Typography no-spacing variant="body-sm" color="subtle">{{ usageLabel }}</Typography>

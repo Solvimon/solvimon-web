@@ -181,4 +181,18 @@ describe('Provider', () => {
         expect(mockGetAuth).not.toHaveBeenCalled();
         expect(wrapper.find('.probe').exists()).toBe(false);
     });
+
+    // Revoked is the same ending whether the host says so or only the exchange finds out.
+    it('tells the unavailable notice that a revoked portal ended as revoked', async () => {
+        const wrapper = mount(Provider, {
+            props: props({ portalObject: { ...createTestPortalObject(), status: 'REVOKED' } }),
+            slots: {
+                'portal-unavailable': ({ ending }: { ending?: { reason: string } }) =>
+                    h('p', { class: 'ended' }, ending?.reason ?? 'none'),
+            },
+        });
+        await settle();
+
+        expect(wrapper.find('.ended').text()).toBe('revoked');
+    });
 });

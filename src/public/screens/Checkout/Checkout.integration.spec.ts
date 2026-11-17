@@ -1166,7 +1166,10 @@ describe('Checkout', () => {
             mockExperimentalFeatures.value['express-checkout'] = false;
         });
 
-        const mountFlow = async (payment: Partial<NonNullable<CheckoutSource['payment']>> = {}) => {
+        const mountFlow = async (
+            payment: Partial<NonNullable<CheckoutSource['payment']>> = {},
+            canPay = true,
+        ) => {
             paymentMethodOptions.value = [
                 { integration: { payment_gateway: { variant: 'ADYEN' } } },
             ];
@@ -1191,7 +1194,7 @@ describe('Checkout', () => {
                     recoverPaymentFailure,
                     ...payment,
                 },
-                canPay: ref(true),
+                canPay: ref(canPay),
                 successUrl: ref('https://shop.test/done'),
                 note: ref(undefined),
                 saveFormStateForRedirect: undefined,
@@ -1212,6 +1215,14 @@ describe('Checkout', () => {
             const submit = () => wrapper.find('.sv-checkout__submit');
             return { wrapper, form, submit };
         };
+
+        // Enter in a card field pays without the button, which the flow keeps off.
+        it('holds a payment back that the flow cannot take yet', async () => {
+            const { form } = await mountFlow({}, false);
+            const validate = form().vm.$attrs['validate-on-submit'] as () => Promise<boolean>;
+
+            await expect(validate()).resolves.toBe(false);
+        });
 
         it('offers its payment methods in the country the flow knows when the form has none', async () => {
             const { wrapper, form } = await mountFlow({ countryCode: ref('BE') });

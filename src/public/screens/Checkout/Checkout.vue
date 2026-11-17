@@ -274,6 +274,7 @@ const handleValidateOnSubmit = async () => {
         });
         return false;
     }
+    if (!canPay.value) return false;
 
     if (amount.value) {
         paymentOrder.value = { amount: amount.value, context: authorizationContext.value };

@@ -306,4 +306,59 @@ describe('OrderSummary', () => {
         // The sections name the subscriptions, so no list of them stands above.
         expect(wrapper.find('.sv-order-summary__subscription').exists()).toBe(false);
     });
+
+    describe('several customers', () => {
+        const sectionOf = (city: string) => ({
+            key: city,
+            title: `Domino's ${city}`,
+            invoices: [invoiceOf(group(`${city} platform`, line('pico_fee')))],
+            subscriptions: [subscription],
+        });
+        const mountSections = (count: number) =>
+            mount(OrderSummary, {
+                props: {
+                    subscription,
+                    invoice: invoiceOf(),
+                    countryCode: 'NL',
+                    invoiceSections: ['Amsterdam', 'Utrecht', 'Den Haag', 'Nijmegen']
+                        .slice(0, count)
+                        .map(sectionOf),
+                },
+                global: { stubs: { SubscriptionSummary: true } },
+            });
+
+        it('closes each customer to its title and subscriptions past three customers', async () => {
+            const wrapper = mountSections(4);
+            const toggles = wrapper.findAll('.sv-order-summary__section button');
+
+            expect(toggles.map((toggle) => toggle.text())).toEqual([
+                expect.stringMatching(/^Domino's Amsterdam\s*Pro$/),
+                expect.stringMatching(/^Domino's Utrecht\s*Pro$/),
+                expect.stringMatching(/^Domino's Den Haag\s*Pro$/),
+                expect.stringMatching(/^Domino's Nijmegen\s*Pro$/),
+            ]);
+            expect(toggles.every((toggle) => toggle.attributes('aria-expanded') === 'false')).toBe(
+                true,
+            );
+
+            await toggles[0].trigger('click');
+            await new Promise(requestAnimationFrame);
+            await nextTick();
+
+            expect(toggles[0].attributes('aria-expanded')).toBe('true');
+            expect(wrapper.findAll('.sv-order-summary__section')[0].text()).toContain(
+                'Amsterdam platform',
+            );
+        });
+
+        it('shows up to three customers open', () => {
+            const wrapper = mountSections(3);
+
+            expect(wrapper.findAll('.sv-order-summary__section button')).toHaveLength(0);
+            expect(wrapper.findAll('.sv-order-summary__section-title')).toHaveLength(3);
+            expect(wrapper.findAll('.sv-order-summary__section')[0].text()).toContain(
+                'Amsterdam platform',
+            );
+        });
+    });
 });

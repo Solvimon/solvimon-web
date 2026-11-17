@@ -56,6 +56,7 @@ const panelId = useId();
                 </Typography>
                 <Icon
                     icon="keyboard_arrow_down"
+                    size="xs"
                     class="transition ease-in-out"
                     :class="{ 'rotate-180': isExpanded }"
                 />

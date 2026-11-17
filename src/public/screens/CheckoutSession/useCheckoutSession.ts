@@ -1146,12 +1146,15 @@ export function useCheckoutSession({ portalUrlId }: { portalUrlId: string }) {
     });
 
     const paymentCountry = computed(() => {
-        const sessionCustomer = payingCustomer.value?.customer;
-        if (sessionCustomer) {
+        const payer = payingCustomer.value;
+        const sessionCustomer = payer?.customer;
+        if (!payer || sessionCustomer) {
+            // The payer's form, as typed; the first while the payer is not known yet.
+            const form = forms.value[payer ? (session.value?.customers.indexOf(payer) ?? 0) : 0];
             const address =
-                sessionCustomer.organization?.registered_address ??
-                sessionCustomer.individual?.residential_address;
-            return address?.country || undefined;
+                sessionCustomer?.organization?.registered_address ??
+                sessionCustomer?.individual?.residential_address;
+            return form?.form.value.country || address?.country || undefined;
         }
         // shortcut: the preview's invoice customer is a stand-in (MD-5514); upgrade when the session exposes an existing customer's country.
         const invoiceCustomer = invoicePreview.value?.customer;

@@ -356,7 +356,13 @@ describe('PaymentIntegrationFormAdyen', () => {
         });
 
         it('reports it as degraded, grouped by the acceptor that is misconfigured', async () => {
-            await mountComponent({ invoiceId: 'invo_123' });
+            await mountComponent({
+                invoiceId: 'invo_123',
+                paymentMethodOptionResponseEntry: {
+                    ...mockProps.paymentMethodOptionResponseEntry,
+                    options: [{ payment_gateway_variant: 'ADYEN', adyen: { type: 'applepay' } }],
+                } as unknown as PaymentIntegrationFormAdyenProps['paymentMethodOptionResponseEntry'],
+            });
 
             expect(mockLogger.warn).toHaveBeenCalledWith(
                 'PAYMENT_INTEGRATION_NOT_RENDERABLE',
@@ -365,6 +371,7 @@ describe('PaymentIntegrationFormAdyen', () => {
                     fingerprint: ['PAYMENT_INTEGRATION_NOT_RENDERABLE', 'paya_123'],
                     paymentAcceptorId: 'paya_123',
                     integrationId: 'int_123',
+                    offeredPaymentMethodTypes: ['applepay'],
                     invoiceId: 'invo_123',
                 },
             );

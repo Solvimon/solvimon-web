@@ -274,13 +274,22 @@ async function mountDropIn() {
     integrationError.value = undefined;
 
     if (!canMountDropIn.value) {
-        const { payment_acceptor: paymentAcceptor, integration } =
-            props.paymentMethodOptionResponseEntry;
+        const {
+            payment_acceptor: paymentAcceptor,
+            integration,
+            options = [],
+        } = props.paymentMethodOptionResponseEntry;
 
         logger.warn('PAYMENT_INTEGRATION_NOT_RENDERABLE', 'No Adyen payment methods to offer', {
             fingerprint: ['PAYMENT_INTEGRATION_NOT_RENDERABLE', paymentAcceptor.id],
             paymentAcceptorId: paymentAcceptor.id,
             integrationId: integration.id,
+            // Tells a configuration that offers nothing apart from methods the drop-in leaves out.
+            offeredPaymentMethodTypes: options.map((option) =>
+                option.payment_gateway_variant === 'ADYEN'
+                    ? option.adyen.type
+                    : option.payment_gateway_variant,
+            ),
             ...(props.invoiceId ? { invoiceId: props.invoiceId } : {}),
         });
         return;

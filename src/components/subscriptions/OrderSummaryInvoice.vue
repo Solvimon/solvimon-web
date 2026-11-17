@@ -53,6 +53,7 @@ const sectionRows = computed(() =>
             clusters,
             subscriptionNames: names.join(', '),
             quantityWidth: quantityWidthOf(clusters.flat()),
+            total: getGroupsSubtotal(clusters.flat(), props.invoice.billing_currency),
         };
     }),
 );
@@ -106,7 +107,7 @@ const subtotalOf = (groups: InvoiceGroup[]): Amount | undefined =>
                 :key="section.key"
                 v-bind="
                     isSectionCollapsed
-                        ? { title: section.title, subtitle: section.subscriptionNames || undefined }
+                        ? { title: section.title, total: section.total }
                         : { noSpacing: true }
                 "
                 class="sv-order-summary__section"
@@ -137,6 +138,14 @@ const subtotalOf = (groups: InvoiceGroup[]): Amount | undefined =>
                 </div>
                 <Divider v-if="!isSectionCollapsed" spacing="none" />
                 <div :class="{ 'px-3 py-2': !isSectionCollapsed }">
+                    <Typography
+                        v-if="isSectionCollapsed && section.subscriptionNames"
+                        variant="body-xs"
+                        color="subtle"
+                        no-spacing
+                        class="sv-order-summary__section-subscriptions py-1.5"
+                        >{{ section.subscriptionNames }}</Typography
+                    >
                     <template
                         v-for="(cluster, clusterIndex) in section.clusters"
                         :key="clusterIndex"

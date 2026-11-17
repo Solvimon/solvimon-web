@@ -327,15 +327,15 @@ describe('OrderSummary', () => {
                 global: { stubs: { SubscriptionSummary: true } },
             });
 
-        it('closes each customer to its title and subscriptions past three customers', async () => {
+        it('closes each customer to its name and total past three customers, with its subscriptions inside', async () => {
             const wrapper = mountSections(4);
             const toggles = wrapper.findAll('.sv-order-summary__section button');
 
             expect(toggles.map((toggle) => toggle.text())).toEqual([
-                expect.stringMatching(/^Domino's Amsterdam\s*Pro$/),
-                expect.stringMatching(/^Domino's Utrecht\s*Pro$/),
-                expect.stringMatching(/^Domino's Den Haag\s*Pro$/),
-                expect.stringMatching(/^Domino's Nijmegen\s*Pro$/),
+                expect.stringMatching(/^Domino's Amsterdam\s*€1\.00$/),
+                expect.stringMatching(/^Domino's Utrecht\s*€1\.00$/),
+                expect.stringMatching(/^Domino's Den Haag\s*€1\.00$/),
+                expect.stringMatching(/^Domino's Nijmegen\s*€1\.00$/),
             ]);
             expect(toggles.every((toggle) => toggle.attributes('aria-expanded') === 'false')).toBe(
                 true,
@@ -345,10 +345,10 @@ describe('OrderSummary', () => {
             await new Promise(requestAnimationFrame);
             await nextTick();
 
+            const opened = wrapper.findAll('.sv-order-summary__section')[0];
             expect(toggles[0].attributes('aria-expanded')).toBe('true');
-            expect(wrapper.findAll('.sv-order-summary__section')[0].text()).toContain(
-                'Amsterdam platform',
-            );
+            expect(opened.find('.sv-order-summary__section-subscriptions').text()).toBe('Pro');
+            expect(opened.text()).toMatch(/Pro.*Amsterdam platform/s);
         });
 
         it('shows up to three customers open', () => {

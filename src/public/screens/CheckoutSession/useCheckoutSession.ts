@@ -41,13 +41,12 @@ import type {
 import type { CheckoutSessionAuthorizationContext } from '@/components/payments/PaymentIntegrationForm/PaymentIntegrationForm.types';
 import { useLogger } from '@/components/providers';
 import { useHostEvent } from '@/components/providers/HostElementProvider/composables/useHostEvent';
-import { LINK_ENDINGS } from '@/components/providers/AuthProvider/AuthProvider.handle';
 import type { PortalLinkEnding } from '@/components/providers/AuthProvider/AuthProvider.lib';
 import { useCheckoutForm } from '@/components/customer/CheckoutForm/useCheckoutForm';
 import { getInitialState } from '@/components/customer/CheckoutForm/CheckoutForm.lib';
 import { useWatchDebounced } from '@/composables/useWatchDebounced';
 import { usePaymentMethodOptions } from '@/composables/usePaymentMethodOptions';
-import { isApiError } from '@/services/apiError';
+import { isApiError, LINK_ENDINGS } from '@/services/apiError';
 import {
     type CheckoutSessionEdit,
     createCheckoutSessionsService,

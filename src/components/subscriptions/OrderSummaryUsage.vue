@@ -90,7 +90,12 @@ const subtitle = computed(() => {
                         }}</Typography>
                         <template v-for="(price, index) in group.prices" :key="index">
                             <div class="sv-order-summary__usage-price grid grid-cols-2 gap-2">
-                                <Typography variant="body-xs" tag="div" class="break-words">
+                                <Typography
+                                    variant="body-xs"
+                                    weight="semibold"
+                                    tag="div"
+                                    class="break-words"
+                                >
                                     {{ price.name }}
                                 </Typography>
                                 <Typography

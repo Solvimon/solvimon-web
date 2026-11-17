@@ -119,6 +119,7 @@ const subtotalOf = (groups: InvoiceGroup[]): Amount | undefined =>
                                 v-if="!showsDiscountChip(group)"
                                 tag="span"
                                 variant="body-xs"
+                                weight="semibold"
                                 >{{ getInvoiceGroupName(group) }}</Typography
                             >
                             <InvoicePricingClauseChip
@@ -132,6 +133,7 @@ const subtotalOf = (groups: InvoiceGroup[]): Amount | undefined =>
                             tag="span"
                             variant="body-xs"
                             weight="medium"
+                            color="subtle"
                             class="tabular-nums"
                         >
                             <AmountDisplay :value="group.amount_excluding_tax" />
@@ -173,10 +175,16 @@ const subtotalOf = (groups: InvoiceGroup[]): Amount | undefined =>
                     :quantity="quantityOf(group)"
                     :width="quantityWidth"
                 />
-                <Typography tag="span" variant="body-xs" class="grow">{{
+                <Typography tag="span" variant="body-xs" weight="semibold" class="grow">{{
                     getInvoiceGroupName(group)
                 }}</Typography>
-                <Typography tag="span" variant="body-xs" weight="medium" class="tabular-nums">
+                <Typography
+                    tag="span"
+                    variant="body-xs"
+                    weight="medium"
+                    color="subtle"
+                    class="tabular-nums"
+                >
                     <AmountDisplay :value="group.amount_excluding_tax" />
                 </Typography>
             </div>
@@ -198,9 +206,13 @@ const subtotalOf = (groups: InvoiceGroup[]): Amount | undefined =>
                             :quantity="quantityOf(group)"
                             :width="quantityWidth"
                         />
-                        <Typography v-if="!showsDiscountChip(group)" tag="span" variant="body-xs">{{
-                            getInvoiceGroupName(group)
-                        }}</Typography>
+                        <Typography
+                            v-if="!showsDiscountChip(group)"
+                            tag="span"
+                            variant="body-xs"
+                            weight="semibold"
+                            >{{ getInvoiceGroupName(group) }}</Typography
+                        >
                         <InvoicePricingClauseChip
                             v-else
                             class="sv-order-summary__discount"
@@ -208,7 +220,13 @@ const subtotalOf = (groups: InvoiceGroup[]): Amount | undefined =>
                             :price-details-band="getDiscountBand(group)"
                         />
                     </div>
-                    <Typography tag="span" variant="body-xs" weight="medium" class="tabular-nums">
+                    <Typography
+                        tag="span"
+                        variant="body-xs"
+                        weight="medium"
+                        color="subtle"
+                        class="tabular-nums"
+                    >
                         <AmountDisplay :value="group.amount_excluding_tax" />
                     </Typography>
                 </div>

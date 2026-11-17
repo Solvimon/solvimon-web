@@ -207,11 +207,6 @@ describe('getUsagePriceGroups', () => {
                 usagePricing({ id: 'pri_1', name: 'Per unit', bands: [{ amount: eur('0.05') }] }),
                 usagePricing({ id: 'pri_2', name: 'Share', bands: [{ percentage: '1.19' }] }),
                 usagePricing({
-                    id: 'pri_3',
-                    name: 'Both',
-                    bands: [{ percentage: '1.4', amount: eur('0.25') }],
-                }),
-                usagePricing({
                     id: 'pri_4',
                     name: 'No unit',
                     unit: '',
@@ -229,7 +224,6 @@ describe('getUsagePriceGroups', () => {
         expect(ratesOf(scheduleInfo)).toEqual([
             ['Per unit', '€0.05 / transaction'],
             ['Share', '1.19% of transaction value'],
-            ['Both', '1.4% + €0.25 / transaction'],
             ['No unit', '€0.01 / unit'],
             ['No unit share', '2%'],
         ]);

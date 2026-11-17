@@ -128,7 +128,6 @@
   "checkout.order_summary_block.usage.billed_period": "Billed {period}",
   "checkout.order_summary_block.usage.rate_per_unit": "{amount} / {unit}",
   "checkout.order_summary_block.usage.rate_percentage": "{percentage} of {unit} value",
-  "checkout.order_summary_block.usage.rate_percentage_amount": "{percentage} + {amount} / {unit}",
   "checkout.order_summary_block.usage.tier_open": "{from}+",
   "checkout.order_summary_block.usage.tier_range": "{from} - {to}",
   "checkout.order_summary_block.usage.unit_fallback": "unit",

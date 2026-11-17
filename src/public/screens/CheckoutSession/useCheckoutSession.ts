@@ -1191,7 +1191,7 @@ export function useCheckoutSession({ portalUrlId }: { portalUrlId: string }) {
             return undefined;
         }
         // Priced at a version the session has moved on from: priced again, for the customer to check.
-        if (error.statusCode === 400 && error.field === 'context.checkout_session.version') {
+        if (isBadRequestOn(error, 'checkout_session.version')) {
             void refreshPreview();
             return 'PRICE_CHANGED';
         }

@@ -1927,24 +1927,26 @@ describe('useCheckoutSession', () => {
             });
         });
 
-        it('prices the order again when it was paid at a version the session moved on from', async () => {
-            const { source } = await loaded();
-            mockPreview.mockClear().mockResolvedValue(previewOf(2));
+        // Named with or without the request's `context`, as the API names the session's status.
+        it.each(['context.checkout_session.version', 'checkout_session.version'])(
+            'prices the order again when it was paid at a version the session moved on from (%s)',
+            async (field) => {
+                const { source } = await loaded();
+                mockPreview.mockClear().mockResolvedValue(previewOf(2));
 
-            const recovery = source.payment?.recoverPaymentFailure?.(
-                failure(
-                    new ApiError({ statusCode: 400, field: 'context.checkout_session.version' }),
-                ),
-            );
-            await flushPromises();
+                const recovery = source.payment?.recoverPaymentFailure?.(
+                    failure(new ApiError({ statusCode: 400, field })),
+                );
+                await flushPromises();
 
-            expect(recovery).toBe('PRICE_CHANGED');
-            expect(mockPreview).toHaveBeenCalledTimes(1);
-            expect(mockGet).toHaveBeenCalledTimes(1);
-            expect(source.payment?.authorizationContext.value).toMatchObject({
-                checkout_session: { version: 2 },
-            });
-        });
+                expect(recovery).toBe('PRICE_CHANGED');
+                expect(mockPreview).toHaveBeenCalledTimes(1);
+                expect(mockGet).toHaveBeenCalledTimes(1);
+                expect(source.payment?.authorizationContext.value).toMatchObject({
+                    checkout_session: { version: 2 },
+                });
+            },
+        );
 
         it('loads the payment methods again when the API refuses the payment acceptor', async () => {
             const { source } = await loaded();

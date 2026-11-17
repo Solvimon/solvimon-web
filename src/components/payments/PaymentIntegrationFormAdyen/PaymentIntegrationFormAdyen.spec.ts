@@ -398,7 +398,7 @@ describe('PaymentIntegrationFormAdyen', () => {
             expect(wrapper.findComponent({ name: 'PaymentCompletedCard' }).exists()).toBe(true);
         });
 
-        it('reports the failure and resolves as an error on any other result', async () => {
+        it('reports a refusal as context, not as a thrown error, and resolves as an error', async () => {
             mockAuthorizePayment.mockResolvedValue(refusedResponse);
 
             await mountComponent();
@@ -412,8 +412,9 @@ describe('PaymentIntegrationFormAdyen', () => {
                     gateway: 'ADYEN',
                     paymentAcceptorId: 'paya_123',
                     reference: expect.stringMatching(/^SV-/),
+                    paymentStatus: 'SUCCESS',
+                    paymentResult: 'REFUSED',
                 }),
-                refusedResponse,
             );
             expect(actions.resolve).toHaveBeenCalledWith({ resultCode: 'Error' });
         });
@@ -756,8 +757,9 @@ describe('PaymentIntegrationFormAdyen', () => {
                 expect.objectContaining({
                     reason: 'TOKENIZATION_REJECTED',
                     reference: expect.stringMatching(/^SV-/),
+                    paymentStatus: 'SUCCESS',
+                    paymentResult: 'REFUSED',
                 }),
-                refusedResponse,
             );
             expect(actions.resolve).toHaveBeenCalledWith({ resultCode: 'Error' });
         });

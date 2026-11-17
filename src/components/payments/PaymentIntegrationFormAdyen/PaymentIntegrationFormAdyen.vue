@@ -522,7 +522,7 @@ function applyPaymentResult(
     }: {
         paymentMethodType: string;
         actions: SubmitActions;
-        logFailure: (error: unknown) => void;
+        logFailure: (rejected: AuthorizePaymentResponse) => void;
     },
 ): void {
     if (
@@ -621,16 +621,18 @@ function handleOnSubmit(
                         applyPaymentResult(paymentResult, {
                             paymentMethodType: state.data.paymentMethod.type,
                             actions,
-                            logFailure: (error) =>
+                            logFailure: (rejected) =>
                                 logger.error(
                                     'PAYMENT_AUTHORIZATION_FAILED',
                                     `Failed payment authorization for payment acceptor with id ${paymentAcceptorId}`,
                                     failureContext({
                                         reason: 'PAYMENT_AUTHORIZATION_REJECTED',
                                         paymentMethodType: state.data.paymentMethod.type,
-                                        cause: error,
+                                        extra: {
+                                            paymentStatus: rejected.status,
+                                            paymentResult: rejected.payment?.result,
+                                        },
                                     }),
-                                    error,
                                 ),
                         }),
                     )
@@ -690,16 +692,18 @@ function handleOnSubmit(
                         applyPaymentResult(paymentResult, {
                             paymentMethodType: state.data.paymentMethod.type,
                             actions,
-                            logFailure: (error) =>
+                            logFailure: (rejected) =>
                                 logger.error(
                                     'TOKENIZATION_FAILED',
                                     `Tokenization failed for payment acceptor with id ${paymentAcceptorId}`,
                                     failureContext({
                                         reason: 'TOKENIZATION_REJECTED',
                                         paymentMethodType: state.data.paymentMethod.type,
-                                        cause: error,
+                                        extra: {
+                                            paymentStatus: rejected.status,
+                                            paymentResult: rejected.payment?.result,
+                                        },
                                     }),
-                                    error,
                                 ),
                         }),
                     )

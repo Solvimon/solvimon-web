@@ -123,23 +123,11 @@ const subtotalOf = (groups: InvoiceGroup[]): Amount | undefined =>
                         class="sv-order-summary__section-title shrink-0"
                         >{{ section.title }}</Typography
                     >
-                    <div
-                        v-if="section.subscriptionNames"
-                        class="min-w-0"
-                        :title="section.subscriptionNames"
-                    >
-                        <Typography
-                            variant="body-xs"
-                            no-spacing
-                            class="sv-order-summary__section-subscriptions truncate"
-                            >{{ section.subscriptionNames }}</Typography
-                        >
-                    </div>
                 </div>
                 <Divider v-if="!isSectionCollapsed" spacing="none" />
                 <div :class="{ 'px-3 py-2': !isSectionCollapsed }">
                     <Typography
-                        v-if="isSectionCollapsed && section.subscriptionNames"
+                        v-if="section.subscriptionNames"
                         variant="body-xs"
                         color="subtle"
                         no-spacing

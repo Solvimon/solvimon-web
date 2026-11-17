@@ -42,7 +42,7 @@ const panelId = useId();
                     {{ subtitle }}
                 </Typography>
             </span>
-            <span class="flex shrink-0 flex-row items-center gap-2">
+            <span class="flex shrink-0 flex-row items-center gap-1">
                 <!-- As the invoice preview's tax amount. -->
                 <Typography
                     v-if="total"
@@ -54,10 +54,11 @@ const panelId = useId();
                 >
                     <AmountDisplay :value="total" />
                 </Typography>
+                <!-- The arrow fills the middle half of its box; this lines it up with the amounts. -->
                 <Icon
                     icon="keyboard_arrow_down"
                     size="xs"
-                    class="transition ease-in-out"
+                    class="-mr-1 transition ease-in-out"
                     :class="{ 'rotate-180': isExpanded }"
                 />
             </span>

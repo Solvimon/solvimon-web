@@ -4,6 +4,7 @@ import type { PricingPlanSubscriptionExpanded } from '@solvimon/solvimon-types';
 import {
     CHECKOUT_SESSION_EDIT_DEBOUNCE_MS,
     COMPLETION_POLL_LIMIT_MS,
+    PREVIEW_RETRY_DELAY_MS,
     useCheckoutSession,
 } from './useCheckoutSession';
 import { ApiError } from '@/services/apiError';
@@ -1286,6 +1287,7 @@ describe('useCheckoutSession', () => {
             mockGet.mockResolvedValue(portalUrl({ version: 2 }));
             mockPreview.mockResolvedValue(previewOf(1));
             const { source } = await loaded();
+            await vi.advanceTimersByTimeAsync(1_000);
 
             // One alongside the read, then a few for the version read.
             expect(mockPreview).toHaveBeenCalledTimes(4);
@@ -1294,6 +1296,32 @@ describe('useCheckoutSession', () => {
             mockPreview.mockResolvedValue(previewOf(2));
             await expect(source.settleInvoicePreview()).resolves.toBe('SETTLED');
             expect(source.isInvoicePreviewStale.value).toBe(false);
+        });
+
+        it('waits longer before each preview it asks again for a version behind', async () => {
+            mockGet.mockResolvedValue(portalUrl({ version: 2 }));
+            mockPreview.mockResolvedValue(previewOf(1));
+            await loaded();
+            expect(mockPreview).toHaveBeenCalledTimes(2);
+
+            await vi.advanceTimersByTimeAsync(PREVIEW_RETRY_DELAY_MS);
+            expect(mockPreview).toHaveBeenCalledTimes(3);
+            await vi.advanceTimersByTimeAsync(PREVIEW_RETRY_DELAY_MS * 2 - 1);
+            expect(mockPreview).toHaveBeenCalledTimes(3);
+            await vi.advanceTimersByTimeAsync(1);
+            expect(mockPreview).toHaveBeenCalledTimes(4);
+        });
+
+        it('asks no preview again once the screen is gone', async () => {
+            mockGet.mockResolvedValue(portalUrl({ version: 2 }));
+            mockPreview.mockResolvedValue(previewOf(1));
+            const { wrapper } = mounted();
+            await flushPromises();
+
+            wrapper.unmount();
+            await vi.advanceTimersByTimeAsync(10_000);
+
+            expect(mockPreview).toHaveBeenCalledTimes(2);
         });
     });
 
@@ -1796,6 +1824,7 @@ describe('useCheckoutSession', () => {
                 }),
             );
             mockUpdate.mockResolvedValue(portalUrl({ version: 2 }));
+            mockPreview.mockResolvedValue(previewOf(2));
             const { source } = await loaded();
             expect(source.promotionCode.code.value).toBe('SPRING');
 

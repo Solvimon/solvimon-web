@@ -70,8 +70,9 @@ import type {
 } from '@/types/checkoutSession';
 
 export const CHECKOUT_SESSION_EDIT_DEBOUNCE_MS = 400;
-/** A preview of an older version is asked again, a few times at most. */
+/** A preview of an older version is asked again, a few times at most, waiting twice as long each time. */
 const MAX_PREVIEW_ATTEMPTS = 3;
+export const PREVIEW_RETRY_DELAY_MS = 250;
 const SESSION_ID_PLACEHOLDER = '{CHECKOUT_SESSION_ID}';
 /** After a payment the session is read again, waiting twice as long each time, for about a minute. */
 export const COMPLETION_POLL_FIRST_DELAY_MS = 1_000;
@@ -430,6 +431,22 @@ export function useCheckoutSession({ portalUrlId }: { portalUrlId: string }) {
         () => !!pendingKey.value && pendingKey.value !== settledKey.value,
     );
 
+    let isDisposed = false;
+    const timers = new Set<ReturnType<typeof setTimeout>>();
+    onScopeDispose(() => {
+        isDisposed = true;
+        timers.forEach(clearTimeout);
+    });
+    /** Never resolves once the screen is gone, so nothing waiting on it carries on. */
+    const wait = (ms: number) =>
+        new Promise<void>((resolve) => {
+            const timer = setTimeout(() => {
+                timers.delete(timer);
+                resolve();
+            }, ms);
+            timers.add(timer);
+        });
+
     const previewRuns = ref(0);
     const isPreviewPending = computed(() => previewRuns.value > 0);
     const isPreviewFailed = ref(false);
@@ -439,6 +456,7 @@ export function useCheckoutSession({ portalUrlId }: { portalUrlId: string }) {
         previewRuns.value++;
         try {
             for (let attempt = 0; attempt < MAX_PREVIEW_ATTEMPTS; attempt++) {
+                if (attempt > 0) await wait(PREVIEW_RETRY_DELAY_MS * 2 ** (attempt - 1));
                 const result = await service.previewCheckoutSession(portalUrlId);
                 if (
                     !preview.value ||
@@ -984,17 +1002,6 @@ export function useCheckoutSession({ portalUrlId }: { portalUrlId: string }) {
     watch([isLoaded, isOpen, () => session.value?.version], () => {
         if (isLoaded.value && isOpen.value) void loadPaymentMethodOptions();
     });
-
-    let isDisposed = false;
-    let pollTimer: ReturnType<typeof setTimeout> | undefined;
-    onScopeDispose(() => {
-        isDisposed = true;
-        clearTimeout(pollTimer);
-    });
-    const wait = (ms: number) =>
-        new Promise<void>((resolve) => {
-            pollTimer = setTimeout(resolve, ms);
-        });
 
     /** Whether the session read has completed or failed, or its link can no longer be used. */
     const readUntilDone = async (): Promise<boolean> => {

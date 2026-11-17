@@ -73,6 +73,7 @@ export const CHECKOUT_SESSION_EDIT_DEBOUNCE_MS = 400;
 /** A preview of an older version is asked again, a few times at most, waiting twice as long each time. */
 const MAX_PREVIEW_ATTEMPTS = 3;
 export const PREVIEW_RETRY_DELAY_MS = 250;
+export const SAVE_RETRY_DELAYS_MS = [1_000, 2_000, 4_000, 8_000, 16_000];
 const SESSION_ID_PLACEHOLDER = '{CHECKOUT_SESSION_ID}';
 /** After a payment the session is read again, waiting twice as long each time, for about a minute. */
 export const COMPLETION_POLL_FIRST_DELAY_MS = 1_000;
@@ -579,28 +580,54 @@ export function useCheckoutSession({ portalUrlId }: { portalUrlId: string }) {
 
     const isRefusal = (error: unknown) => isApiError(error) && error.statusCode === 400;
 
-    const saveQuietly = () =>
-        enqueueSave().catch((error) => {
-            if (isRefusal(error)) {
-                logger.warn(
-                    'CHECKOUT_SESSION_UPDATE_REFUSED',
-                    'The API refused a change to the checkout session',
-                    { field: isApiError(error) ? error.field : undefined },
+    /** A save lost on the network or the server goes again a few times, or the price would stay stale. */
+    let saveRetries = 0;
+    let isSaveRetryScheduled = false;
+    const retrySave = (error: unknown) => {
+        const isTransient = !isApiError(error) || error.statusCode >= 500;
+        if (!isTransient || isSaveRetryScheduled || saveRetries >= SAVE_RETRY_DELAYS_MS.length) {
+            return;
+        }
+        isSaveRetryScheduled = true;
+        void wait(SAVE_RETRY_DELAYS_MS[saveRetries++]).then(() => {
+            isSaveRetryScheduled = false;
+            return saveQuietly();
+        });
+    };
+
+    const saveQuietly = (): Promise<void> =>
+        enqueueSave().then(
+            () => {
+                saveRetries = 0;
+            },
+            (error) => {
+                retrySave(error);
+                if (isRefusal(error)) {
+                    logger.warn(
+                        'CHECKOUT_SESSION_UPDATE_REFUSED',
+                        'The API refused a change to the checkout session',
+                        { field: isApiError(error) ? error.field : undefined },
+                        error,
+                    );
+                    return;
+                }
+                logger.error(
+                    'CHECKOUT_SESSION_UPDATE_FAILED',
+                    'Failed to save the checkout session',
+                    {},
                     error,
                 );
-                return;
-            }
-            logger.error(
-                'CHECKOUT_SESSION_UPDATE_FAILED',
-                'Failed to save the checkout session',
-                {},
-                error,
-            );
-        });
+            },
+        );
 
-    useWatchDebounced(() => pendingKey.value, saveQuietly, {
-        debounce: CHECKOUT_SESSION_EDIT_DEBOUNCE_MS,
-    });
+    useWatchDebounced(
+        () => pendingKey.value,
+        () => {
+            saveRetries = 0;
+            void saveQuietly();
+        },
+        { debounce: CHECKOUT_SESSION_EDIT_DEBOUNCE_MS },
+    );
 
     const promotionCodeStates = new Map<number, PromotionCodeState>();
     const promotionCodeState = (index: number): PromotionCodeState => {

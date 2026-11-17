@@ -90,7 +90,8 @@ export const createPaymentsService = () => {
 
     /**
      * The API charges the stored method itself, without the customer at a gateway form, so it takes
-     * no gateway payload and refuses a return URL; a charge the gateway declines answers 400.
+     * no gateway payload and refuses a return URL. A charge the gateway declines answers 400 or 422;
+     * the caller reports that as the failed payment, so the request is only a warning.
      */
     function chargeStoredPaymentMethod({
         paymentAcceptorId,
@@ -101,7 +102,7 @@ export const createPaymentsService = () => {
     }: ChargeStoredPaymentMethodPayload) {
         return request<AuthorizePaymentResponse>({
             url: buildUrl(config.apiUrls.transaction, ...BASE_PATH, 'authorize'),
-            options: { method: 'POST' },
+            options: { method: 'POST', expectedStatusCodes: [400, 422] },
             data: {
                 payment_acceptor_id: paymentAcceptorId,
                 customer_id: customerId,

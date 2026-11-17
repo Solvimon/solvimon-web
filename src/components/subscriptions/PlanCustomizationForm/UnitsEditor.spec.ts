@@ -105,6 +105,25 @@ describe('UnitsEditor', () => {
             );
         });
 
+        it('raises a quantity below the minimum to it once the field is left, on screen as well', async () => {
+            const wrapper = mountBound({
+                modelValue: [unit('pic_a', '1.5')],
+                initialUnitsValues: [unit('pic_a', '1')],
+                maxValues: [unit('pic_a', '4')],
+            });
+            const field = wrapper.find('input[type="number"]');
+
+            (field.element as HTMLInputElement).value = '0.5';
+            await field.trigger('input');
+            expect(wrapper.props('modelValue')).toStrictEqual([unit('pic_a', '1.5')]);
+
+            await field.trigger('blur');
+            expect(wrapper.props('modelValue')).toStrictEqual([unit('pic_a', '1')]);
+            expect((wrapper.find('input[type="number"]').element as HTMLInputElement).value).toBe(
+                '1',
+            );
+        });
+
         it('keeps the stepper, and takes any count, for a config without a maximum', async () => {
             const wrapper = mountBound({ modelValue: [unit('pic_a', '1.5')] });
 

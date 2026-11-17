@@ -5,6 +5,7 @@ import {
     CHECKOUT_SESSION_EDIT_DEBOUNCE_MS,
     COMPLETION_POLL_LIMIT_MS,
     PREVIEW_RETRY_DELAY_MS,
+    SAVE_RETRY_DELAYS_MS,
     useCheckoutSession,
 } from './useCheckoutSession';
 import { ApiError } from '@/services/apiError';
@@ -454,6 +455,45 @@ describe('useCheckoutSession', () => {
             );
             expect(providerMockLogger.error).not.toHaveBeenCalled();
             expect(providerMockLogger.capture).not.toHaveBeenCalled();
+        });
+
+        it('sends an edit lost on the network again, so the order can be paid once it is saved', async () => {
+            mockUpdate
+                .mockRejectedValueOnce(new TypeError('Failed to fetch'))
+                .mockResolvedValueOnce(portalUrl({ version: 2 }));
+            mockPreview.mockResolvedValue(previewOf(2));
+            const { source } = await loaded();
+            mockUpdate.mockClear();
+
+            source.checkoutForm.form.value.companyLegalName = 'Acme BV';
+            await settleEdits();
+            expect(mockUpdate).toHaveBeenCalledTimes(1);
+            expect(source.canPay?.value).toBe(false);
+
+            await vi.advanceTimersByTimeAsync(SAVE_RETRY_DELAYS_MS[0]);
+
+            expect(mockUpdate).toHaveBeenCalledTimes(2);
+            expect(mockUpdate.mock.calls[1]).toStrictEqual(mockUpdate.mock.calls[0]);
+            expect(source.canPay?.value).toBe(true);
+        });
+
+        it('sends an edit the server failed on again a few times, waiting longer each time, then stops', async () => {
+            mockUpdate.mockRejectedValue(new ApiError({ statusCode: 503 }));
+            const { source } = await loaded();
+
+            source.checkoutForm.form.value.companyLegalName = 'Acme BV';
+            await settleEdits();
+            await vi.advanceTimersByTimeAsync(SAVE_RETRY_DELAYS_MS[0] - 50);
+            expect(mockUpdate).toHaveBeenCalledTimes(1);
+            await vi.advanceTimersByTimeAsync(50);
+            expect(mockUpdate).toHaveBeenCalledTimes(2);
+            await vi.advanceTimersByTimeAsync(SAVE_RETRY_DELAYS_MS[1] - 50);
+            expect(mockUpdate).toHaveBeenCalledTimes(2);
+            await vi.advanceTimersByTimeAsync(50);
+            expect(mockUpdate).toHaveBeenCalledTimes(3);
+            await vi.advanceTimersByTimeAsync(COMPLETION_POLL_LIMIT_MS * 5);
+
+            expect(mockUpdate).toHaveBeenCalledTimes(1 + SAVE_RETRY_DELAYS_MS.length);
         });
 
         it('leaves a refused seat count out of later edits until the customer changes it again', async () => {

@@ -453,8 +453,11 @@ export function useCheckoutSession({ portalUrlId }: { portalUrlId: string }) {
     const isPreviewPending = computed(() => previewRuns.value > 0);
     const isPreviewFailed = ref(false);
 
+    const reportPreviewFailure = (error: unknown) =>
+        logger.error('INVOICE_PREVIEW_FAILED', 'Failed to preview the checkout session', {}, error);
+
     /** Gives up after a few previews of an older version; the next save or settle asks again. */
-    const refreshPreview = async () => {
+    const refreshPreview = async ({ onFailure = reportPreviewFailure } = {}) => {
         previewRuns.value++;
         try {
             for (let attempt = 0; attempt < MAX_PREVIEW_ATTEMPTS; attempt++) {
@@ -471,12 +474,7 @@ export function useCheckoutSession({ portalUrlId }: { portalUrlId: string }) {
             }
         } catch (error) {
             isPreviewFailed.value = true;
-            logger.error(
-                'INVOICE_PREVIEW_FAILED',
-                'Failed to preview the checkout session',
-                {},
-                error,
-            );
+            onFailure(error);
         } finally {
             previewRuns.value--;
         }
@@ -913,10 +911,13 @@ export function useCheckoutSession({ portalUrlId }: { portalUrlId: string }) {
     );
 
     const load = async () => {
+        // The preview fails too when the link has ended: reported only once the session read is in.
+        let previewFailure: unknown;
         const [response] = await Promise.all([
             service.getCheckoutSession(portalUrlId),
-            refreshPreview(),
+            refreshPreview({ onFailure: (error) => (previewFailure = error) }),
         ]);
+        if (previewFailure !== undefined) reportPreviewFailure(previewFailure);
         if (response.status !== 'PUBLISHED' || response.checkout_session.status !== 'OPEN') {
             portalUrl.value = response;
             // Paid already, such as before a redirect back here: followed until it is done.
@@ -1314,7 +1315,7 @@ export function useCheckoutSession({ portalUrlId }: { portalUrlId: string }) {
         isInvoicePreviewPending: computed(() => isPreviewPending.value || isSaving.value),
         isInvoicePreviewStale,
         isInvoicePreviewFailed: isPreviewFailed,
-        loadInvoicePreview: refreshPreview,
+        loadInvoicePreview: () => refreshPreview(),
         settleInvoicePreview,
         amount,
         recurringAmount,

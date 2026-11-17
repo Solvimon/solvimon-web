@@ -2495,6 +2495,30 @@ describe('useCheckoutSession', () => {
             expect(loadFailure.value).toStrictEqual({ reason: 'closed', status: 'FAILED' });
         });
 
+        it('reports only the ended link, not the preview read alongside it', async () => {
+            const ended = new ApiError({ statusCode: 410, errorCode: 'PORTAL_URL_REVOKED' });
+            mockGet.mockRejectedValue(ended);
+            mockPreview.mockRejectedValue(ended);
+            await loaded();
+
+            expect(providerMockLogger.error.mock.calls.map(([code]) => code)).toEqual([
+                'CHECKOUT_SESSION_LOAD_FAILED',
+            ]);
+        });
+
+        it('reports a preview that fails beside a session read fine', async () => {
+            mockPreview.mockRejectedValue(new ApiError({ statusCode: 503 }));
+            const { source } = await loaded();
+
+            expect(providerMockLogger.error).toHaveBeenCalledWith(
+                'INVOICE_PREVIEW_FAILED',
+                expect.any(String),
+                {},
+                expect.any(ApiError),
+            );
+            expect(source.isInvoicePreviewFailed?.value).toBe(true);
+        });
+
         it('has no failure while the session loads fine', async () => {
             const { loadFailure } = await loaded();
 

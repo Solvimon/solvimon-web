@@ -37,8 +37,8 @@ export interface CheckoutPayment {
     retryPaymentMethodOptions: () => void;
     authorizationContext: Readonly<Ref<PaymentAuthorizationContext | undefined>>;
     /**
-     * The country the payment methods are set up for when the flow knows it apart from the form,
-     * such as that of a customer who already exists. The form's own country goes first.
+     * The country the payment methods are set up for, given by a flow that knows whose it is, such
+     * as that of the customer who pays when there are several. Left out, the form's country is used.
      */
     countryCode?: Readonly<Ref<string | undefined>>;
     /**

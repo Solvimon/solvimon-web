@@ -135,8 +135,9 @@ const hasPaymentMethodOptionsError = computed(
 const authorizationContext = computed(() => payment?.authorizationContext.value);
 const retryPaymentMethodOptions = () => payment?.retryPaymentMethodOptions();
 const onExpressBillingInformationChange = payment?.updateInvoicePreviewOnBillingInformationChange;
-const paymentCountryCode = computed(
-    () => checkoutForm.form.value.country ?? payment?.countryCode?.value,
+// A flow with several customers knows whose country the payment is for; its form 0 may be another's.
+const paymentCountryCode = computed(() =>
+    payment?.countryCode ? payment.countryCode.value : checkoutForm.form.value.country,
 );
 const canPay = computed(() => !!payment && (props.source.canPay?.value ?? true));
 

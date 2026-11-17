@@ -1166,6 +1166,13 @@ describe('Checkout', () => {
             expect(wrapper.find('.sv-checkout__payment-methods-empty').exists()).toBe(false);
         });
 
+        it("offers its payment methods in the flow's country over the form's", async () => {
+            const { form } = await mountFlow({ countryCode: ref('DE') });
+
+            expect(checkoutFormValue.current!.value.country).toBe('NL');
+            expect(form().attributes('country-code')).toBe('DE');
+        });
+
         it('asks for the billing country when neither the form nor the flow knows it', async () => {
             const { wrapper, form } = await mountFlow();
             checkoutFormValue.current!.value.country = undefined;

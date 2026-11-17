@@ -1503,6 +1503,31 @@ describe('useCheckoutSession', () => {
             expect(source.payment?.countryCode?.value).toBe('DE');
         });
 
+        it('follows the country typed into the form of the payer, not of the first customer', async () => {
+            mockGet.mockResolvedValue(
+                portalUrl({
+                    payment: { customer_reference: 'payer-ref' },
+                    customers: [
+                        createSession().customers[0],
+                        {
+                            ...organizationCustomer({ legal_name: 'Payer' }),
+                            customer: {
+                                reference: 'payer-ref',
+                                type: 'ORGANIZATION',
+                                organization: { legal_name: 'Payer' },
+                            },
+                        },
+                    ],
+                }),
+            );
+            const { source } = await loaded();
+            expect(source.payment?.countryCode?.value).toBeUndefined();
+
+            source.customerForms!.value[1].form.form.value.country = 'BE';
+
+            expect(source.payment?.countryCode?.value).toBe('BE');
+        });
+
         it('takes the country of the invoice customer for a customer that already exists', async () => {
             mockGet.mockResolvedValue(
                 portalUrl({

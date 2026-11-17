@@ -1146,17 +1146,21 @@ export function useCheckoutSession({ portalUrlId }: { portalUrlId: string }) {
         checkoutForm,
         customerForms: computed(() => {
             const customers = session.value?.customers ?? [];
+            const shown = customers.filter(
+                ({ effective_display: display }) =>
+                    !Object.values(display).every((group) => group === 'HIDDEN'),
+            );
             return customers.flatMap((customer, index): CheckoutCustomerForm[] => {
                 const form = forms.value[index];
                 // An existing customer cannot be edited, and the session gives nothing to show of it.
-                if (!customer.customer || !form) return [];
+                if (!customer.customer || !form || !shown.includes(customer)) return [];
                 return [
                     {
                         key: `${index}`,
                         form,
                         display: customer.effective_display,
                         isTypeLocked: true,
-                        ...(customers.length > 1 && { title: titleOf(customer.customer) }),
+                        ...(shown.length > 1 && { title: titleOf(customer.customer) }),
                     },
                 ];
             });

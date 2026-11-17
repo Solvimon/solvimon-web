@@ -1,12 +1,17 @@
 <script setup lang="ts">
-import { Expand, Icon, Section, Typography } from '@solvimon/solvimon-ui';
+import { Amount as AmountDisplay, Expand, Icon, Section, Typography } from '@solvimon/solvimon-ui';
+import type { Amount } from '@solvimon/solvimon-types';
 import { ref, useId } from 'vue';
 
 /** A card of the order summary that opens on its title to show its default slot. */
-withDefaults(defineProps<{ title: string; subtitle?: string; expandable?: boolean }>(), {
-    subtitle: undefined,
-    expandable: true,
-});
+withDefaults(
+    defineProps<{ title: string; subtitle?: string; total?: Amount; expandable?: boolean }>(),
+    {
+        subtitle: undefined,
+        total: undefined,
+        expandable: true,
+    },
+);
 
 const isExpanded = ref(false);
 const panelId = useId();
@@ -37,11 +42,24 @@ const panelId = useId();
                     {{ subtitle }}
                 </Typography>
             </span>
-            <Icon
-                icon="keyboard_arrow_down"
-                class="shrink-0 transition ease-in-out"
-                :class="{ 'rotate-180': isExpanded }"
-            />
+            <span class="flex shrink-0 flex-row items-center gap-2">
+                <!-- As the invoice preview's tax amount. -->
+                <Typography
+                    v-if="total"
+                    no-spacing
+                    tag="span"
+                    variant="body-xs"
+                    weight="medium"
+                    class="whitespace-nowrap tabular-nums"
+                >
+                    <AmountDisplay :value="total" />
+                </Typography>
+                <Icon
+                    icon="keyboard_arrow_down"
+                    class="transition ease-in-out"
+                    :class="{ 'rotate-180': isExpanded }"
+                />
+            </span>
         </button>
 
         <div v-if="expandable" :id="panelId" :inert="!isExpanded || undefined">

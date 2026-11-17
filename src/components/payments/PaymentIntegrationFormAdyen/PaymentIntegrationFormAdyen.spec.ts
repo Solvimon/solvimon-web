@@ -424,6 +424,11 @@ describe('PaymentIntegrationFormAdyen', () => {
                 }),
             );
             expect(actions.resolve).toHaveBeenCalledWith({ resultCode: 'Error' });
+
+            captured.checkoutConfig?.onPaymentFailed?.({ resultCode: 'Error' });
+            await flushPromises();
+            // The drop-in's report of the same refusal adds no second entry.
+            expect(mockLogger.error).toHaveBeenCalledTimes(1);
         });
 
         it('reports the failure and resolves as an error when the API turns the request down', async () => {
@@ -879,7 +884,6 @@ describe('PaymentIntegrationFormAdyen', () => {
                     resultCode: 'Refused',
                     reference: expect.stringMatching(/^SV-/),
                 }),
-                failure,
             );
             expect(reference(wrapper).exists()).toBe(true);
         });

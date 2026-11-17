@@ -51,6 +51,7 @@ export function getUsagePriceGroups({
 
     const formatRate = (band: Band, unit: string | undefined): string | undefined => {
         const percentage =
+            Number(band.percentage) !== 0 &&
             band.percentage &&
             formatNumber(Number(band.percentage) / 100, {
                 style: 'percent',

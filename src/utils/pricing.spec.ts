@@ -259,6 +259,21 @@ describe('getModelTypesFromScheduleInfo', () => {
         expect([...result].sort()).toEqual(['ONE_OFF', 'USAGE_BASED']);
     });
 
+    it('keeps pricings that have no id apart', () => {
+        const result = getModelTypesFromScheduleInfo(
+            scheduleInfo([
+                {
+                    pricings: [
+                        { ...pricing('', 'ONE_OFF'), id: undefined },
+                        { ...pricing('', 'USAGE_BASED'), id: undefined },
+                    ],
+                },
+            ]),
+        );
+
+        expect([...result].sort()).toEqual(['ONE_OFF', 'USAGE_BASED']);
+    });
+
     it('counts everything when no selection is given', () => {
         const result = getModelTypesFromScheduleInfo(
             scheduleInfo([

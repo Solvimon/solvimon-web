@@ -351,6 +351,30 @@ describe('createRequestService', () => {
             expect(context.fingerprint).toEqual(['REQUEST_FAILED', 'GET', '/test', '500']);
         });
 
+        it('groups the requests for different resources of one endpoint together', async () => {
+            const request = createRequestService();
+            mockFetch.mockResolvedValueOnce(jsonErrorResponse(404, {}));
+
+            await expect(
+                request({
+                    url: 'https://api.test/v1/portal/invoices/invo_CwDE5i0vwh6mRsDTju1w/pdf',
+                }),
+            ).rejects.toThrow();
+
+            const [, , context] = loggerError.mock.calls[0] as [
+                string,
+                string,
+                { path: string; fingerprint: string[] },
+            ];
+            expect(context.fingerprint).toEqual([
+                'REQUEST_FAILED',
+                'GET',
+                '/v1/portal/invoices/:id/pdf',
+                '404',
+            ]);
+            expect(context.path).toBe('/v1/portal/invoices/invo_CwDE5i0vwh6mRsDTju1w/pdf');
+        });
+
         it('drops to a warning for a status the caller said it expects', async () => {
             const request = createRequestService();
             mockFetch.mockResolvedValueOnce(jsonErrorResponse(401, {}));

@@ -1830,6 +1830,37 @@ describe('useCheckoutSession', () => {
             expect(source.promotionCode.errorMessage.value).toBeNull();
         });
 
+        it('shows the code as the session stores it, and does not send it again with a later edit', async () => {
+            const stored = (version: number) =>
+                portalUrl({
+                    version,
+                    pricing_plan_subscriptions: [
+                        {
+                            ...createSession().pricing_plan_subscriptions[0],
+                            pricing_plan_schedule_customizations: [
+                                { pricing_plan_schedule_id: 'pps_1', promotion_codes: ['SAVE10'] },
+                            ],
+                        },
+                    ],
+                });
+            mockUpdate.mockResolvedValueOnce(stored(2)).mockResolvedValueOnce(stored(3));
+            mockPreview.mockResolvedValue(previewOf(3));
+            const { source } = await loaded();
+
+            await source.promotionCode.apply('save10');
+            source.checkoutForm.form.value.companyLegalName = 'Acme BV';
+            await settleEdits();
+
+            expect(source.promotionCode.code.value).toBe('SAVE10');
+            expect(mockUpdate).toHaveBeenCalledTimes(2);
+            expect(mockUpdate.mock.calls[1][1]).toStrictEqual({
+                checkout_session: {
+                    expected_version: 2,
+                    customers: [{ customer: { organization: { legal_name: 'Acme BV' } } }],
+                },
+            });
+        });
+
         it('shows an inline error for a code the API turned down, and drops it', async () => {
             mockUpdate.mockRejectedValue(
                 new ApiError({

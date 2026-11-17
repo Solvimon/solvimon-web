@@ -526,6 +526,7 @@ export function useCheckoutSession({ portalUrlId }: { portalUrlId: string }) {
         if (!key || key === settledKey.value) return;
 
         const sent = snapshotForms(true);
+        const sentCodes = new Map(wantedPromotionCodes);
 
         isSaving.value = true;
         try {
@@ -546,6 +547,10 @@ export function useCheckoutSession({ portalUrlId }: { portalUrlId: string }) {
                 );
             }
             refillForms(sent);
+            // Saved, the session's own code shows, such as `SAVE10` for `save10`, and is not sent again.
+            for (const [index, code] of sentCodes) {
+                if (wantedPromotionCodes.get(index) === code) wantedPromotionCodes.delete(index);
+            }
 
             if (keyOf(getEdit()) === key) {
                 settledKey.value = key;

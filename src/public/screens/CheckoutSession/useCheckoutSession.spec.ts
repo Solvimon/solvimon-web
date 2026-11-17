@@ -1565,19 +1565,74 @@ describe('useCheckoutSession', () => {
             expect(mockGetOptions).not.toHaveBeenCalled();
         });
 
-        it('loads the payment methods again after every save', async () => {
-            mockUpdate.mockResolvedValueOnce(portalUrl({ version: 2 }));
-            mockUpdate.mockResolvedValueOnce(portalUrl({ version: 3 }));
-            mockPreview.mockResolvedValue(previewOf(3));
+        const withTotal = (version: number, amount: string): CheckoutSessionPreview => ({
+            ...previewOf(version),
+            total: { ...previewOf(version).total!, amount_incl_tax: amount },
+        });
+
+        it('loads the payment methods again after a save only when the total, seller or payer country changed', async () => {
+            mockUpdate
+                .mockResolvedValueOnce(portalUrl({ version: 2 }))
+                .mockResolvedValueOnce(portalUrl({ version: 3 }))
+                .mockResolvedValueOnce(
+                    portalUrl({
+                        version: 4,
+                        customers: [
+                            organizationCustomer({
+                                legal_name: 'Acme',
+                                registered_address: { country: 'BE' },
+                            }),
+                        ],
+                    }),
+                );
+            mockPreview
+                .mockResolvedValueOnce(previewOf(1))
+                .mockResolvedValueOnce(previewOf(2))
+                .mockResolvedValueOnce(withTotal(3, '242.00'))
+                .mockResolvedValue(withTotal(4, '242.00'));
             const { source } = await loaded();
+            expect(mockGetOptions).toHaveBeenCalledTimes(1);
 
             source.checkoutForm.form.value.email = 'finance@acme.test';
             await settleEdits();
+            expect(mockGetOptions).toHaveBeenCalledTimes(1);
+
+            source.checkoutForm.form.value.companyLegalName = 'Acme BV';
+            await settleEdits();
+            expect(mockGetOptions).toHaveBeenCalledTimes(2);
+
+            source.checkoutForm.form.value.country = 'BE';
+            await settleEdits();
+            expect(mockUpdate).toHaveBeenCalledTimes(3);
+            expect(mockGetOptions).toHaveBeenCalledTimes(3);
+        });
+
+        it('keeps the payment methods on screen when loading them again for a new total fails', async () => {
+            mockGetOptions.mockResolvedValueOnce(OPTIONS).mockRejectedValue(new Error('offline'));
+            mockUpdate.mockResolvedValue(portalUrl({ version: 2 }));
+            mockPreview
+                .mockResolvedValueOnce(previewOf(1))
+                .mockResolvedValue(withTotal(2, '242.00'));
+            const { source } = await loaded();
+
             source.checkoutForm.form.value.companyLegalName = 'Acme BV';
             await settleEdits();
 
-            expect(mockUpdate).toHaveBeenCalledTimes(2);
-            expect(mockGetOptions).toHaveBeenCalledTimes(3);
+            expect(mockGetOptions).toHaveBeenCalledTimes(2);
+            expect(source.payment?.paymentMethodOptions.value).toEqual(OPTIONS);
+            expect(source.payment?.hasPaymentMethodOptionsError.value).toBe(false);
+        });
+
+        it('shows the payment methods as failed when loading them again after a refused acceptor fails', async () => {
+            mockGetOptions.mockResolvedValueOnce(OPTIONS).mockRejectedValue(new Error('offline'));
+            const { source } = await loaded();
+
+            source.payment?.recoverPaymentFailure?.(
+                failure(new ApiError({ statusCode: 400, field: 'payment_acceptor_id' })),
+            );
+            await flushPromises();
+
+            expect(source.payment?.hasPaymentMethodOptionsError.value).toBe(true);
         });
 
         it('goes to the success URL once the paid session reads as completed', async () => {

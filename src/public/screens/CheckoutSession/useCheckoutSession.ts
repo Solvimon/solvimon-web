@@ -1060,12 +1060,15 @@ export function useCheckoutSession({ portalUrlId }: { portalUrlId: string }) {
     const optionsFor = () =>
         JSON.stringify([sessionPaymentCountry.value, invoicePreview.value?.billing_entity?.id]);
 
+    // Only the load asked last is shown; an earlier one answering after it must not claim the options.
+    let latestOptionsLoad = 0;
     // Fresh every time: the session decides the options, and a save may change what it decides.
     const loadPaymentMethodOptions = () => {
         const loadingFor = optionsFor();
+        const load = ++latestOptionsLoad;
         return getPaymentMethodOptions({ portalUrlId }, { fresh: true }).then(
             () => {
-                loadedOptionsFor.value = loadingFor;
+                if (load === latestOptionsLoad) loadedOptionsFor.value = loadingFor;
             },
             (error: unknown) => {
                 logger.error(

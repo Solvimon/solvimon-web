@@ -1630,6 +1630,41 @@ describe('useCheckoutSession', () => {
             expect(source.payment?.hasPaymentMethodOptionsError.value).toBe(false);
         });
 
+        it('keeps the payment methods on screen when an earlier load for another payer answers last', async () => {
+            let answerFirstLoad: (options: typeof OPTIONS) => void = () => undefined;
+            mockGetOptions
+                .mockReturnValueOnce(new Promise((resolve) => (answerFirstLoad = resolve)))
+                .mockResolvedValueOnce(OPTIONS)
+                .mockRejectedValue(new Error('offline'));
+            const inBelgium = (version: number) =>
+                portalUrl({
+                    version,
+                    customers: [
+                        organizationCustomer({
+                            legal_name: 'Acme',
+                            registered_address: { country: 'BE' },
+                        }),
+                    ],
+                });
+            mockUpdate.mockResolvedValueOnce(inBelgium(2)).mockResolvedValue(inBelgium(3));
+            mockPreview
+                .mockResolvedValueOnce(previewOf(1))
+                .mockResolvedValueOnce(previewOf(2))
+                .mockResolvedValue(withTotal(3, '242.00'));
+            const { source } = await loaded();
+
+            source.checkoutForm.form.value.country = 'BE';
+            await settleEdits();
+            answerFirstLoad(OPTIONS);
+            await flushPromises();
+
+            source.checkoutForm.form.value.companyLegalName = 'Acme BV';
+            await settleEdits();
+
+            expect(mockGetOptions).toHaveBeenCalledTimes(3);
+            expect(source.payment?.hasPaymentMethodOptionsError.value).toBe(false);
+        });
+
         it('shows the payment methods as failed when loading them again after a refused acceptor fails', async () => {
             mockGetOptions.mockResolvedValueOnce(OPTIONS).mockRejectedValue(new Error('offline'));
             const { source } = await loaded();

@@ -301,14 +301,12 @@ export function useCheckoutSession({ portalUrlId }: { portalUrlId: string }) {
             const kept = pickBy(group, (key, value) => !isRefused(`${prefix}.${key}`, value));
             return Object.keys(kept).length ? kept : undefined;
         };
+        const keptIndividual = keep(individual, `${at}.individual`);
+        const keptOrganization = keep(organization, `${at}.organization`);
         const kept: CheckoutSessionCustomerPatch = {
             ...keep(rest, at),
-            ...(keep(individual, `${at}.individual`) && {
-                individual: keep(individual, `${at}.individual`),
-            }),
-            ...(keep(organization, `${at}.organization`) && {
-                organization: keep(organization, `${at}.organization`),
-            }),
+            ...(keptIndividual && { individual: keptIndividual }),
+            ...(keptOrganization && { organization: keptOrganization }),
         };
         return Object.keys(kept).length ? kept : undefined;
     };

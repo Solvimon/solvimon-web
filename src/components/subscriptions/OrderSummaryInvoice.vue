@@ -20,7 +20,10 @@ import {
 } from './OrderSummary.lib';
 import { getInvoiceGroupsByRecurrence, getInvoiceGroupsWithDiscounts } from '@/utils/invoice';
 
-/** What an invoice is for and comes to, as the order summary lists it; the default slot follows the totals. */
+/**
+ * What an invoice is for and comes to, as the order summary lists it. The `before-totals` slot sits
+ * between the products and the totals; the default slot follows the totals.
+ */
 const props = defineProps<OrderSummaryInvoiceProps>();
 
 const { $t, formatNumber } = useIntl();
@@ -212,6 +215,8 @@ const subtotalOf = (groups: InvoiceGroup[]): Amount | undefined =>
             </template>
         </Section>
     </div>
+
+    <slot name="before-totals" />
 
     <!-- invoice totals preview -->
     <Section class="sv-order-summary__totals">

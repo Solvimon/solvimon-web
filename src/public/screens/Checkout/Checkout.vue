@@ -37,6 +37,7 @@ import {
     getPricingItemConfigMetaById,
 } from '@/utils/pricingPlanSchedule';
 import { getModelTypesFromScheduleInfo } from '@/utils/pricing';
+import { getUsagePriceGroups } from '@/components/subscriptions/OrderSummaryUsage.lib';
 import { ContentWithAsideLayout } from '@/layouts';
 import { useViewport } from '@/composables/useViewport';
 import { usePaymentFormHold } from '@/composables/usePaymentFormHold';
@@ -73,7 +74,8 @@ const props = defineProps<CheckoutProps & { avatar?: string }>();
 const paymentIntegrationFormRef = ref();
 
 const logger = useLogger();
-const { $t, locale } = useIntl();
+const intl = useIntl();
+const { $t, locale } = intl;
 const { formatTimePeriod } = useTimePeriod();
 const portal = usePortal();
 const { isMobileViewport } = useViewport();
@@ -269,6 +271,16 @@ const hasTrialPeriod = computed(() => !!trialInvoicePreview.value);
 const planModelTypes = computed(() =>
     getModelTypesFromScheduleInfo(scheduleInfo.value, {
         enabledPricingIds: checkoutForm.form.value.enabledPricingIds,
+    }),
+);
+
+const usagePriceGroups = computed(() =>
+    getUsagePriceGroups({
+        scheduleInfo: scheduleInfo.value,
+        enabledPricingIds: checkoutForm.form.value.enabledPricingIds,
+        currency: pricingCurrency.value,
+        billingPeriod: subscription.value?.billing_period,
+        intl,
     }),
 );
 
@@ -527,6 +539,7 @@ const orderSummaryProps = computed(() => ({
     avatar: props.avatar,
     isPaid: isPaid.value,
     isUsageBased: isUsageBased.value,
+    usagePriceGroups: usagePriceGroups.value,
 }));
 
 const expressPaymentMethodBillingInformation = computed(() => {

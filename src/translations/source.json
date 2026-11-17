@@ -503,6 +503,34 @@
     "defaultMessage": "Order summary",
     "description": "The title of the order summary block that lists the subscription cost in the checkout"
   },
+  "checkout.order_summary_block.usage.billed_period": {
+    "defaultMessage": "Billed {period}",
+    "description": "Next to the usage line of the order summary, how often usage is billed, e.g. \"Billed monthly\""
+  },
+  "checkout.order_summary_block.usage.rate_per_unit": {
+    "defaultMessage": "{amount} / {unit}",
+    "description": "A usage price per unit, e.g. \"€0.05 / transaction\""
+  },
+  "checkout.order_summary_block.usage.rate_percentage": {
+    "defaultMessage": "{percentage} of {unit} value",
+    "description": "A usage price as a percentage of what is used, e.g. \"1.19% of transaction value\""
+  },
+  "checkout.order_summary_block.usage.rate_percentage_amount": {
+    "defaultMessage": "{percentage} + {amount} / {unit}",
+    "description": "A usage price of a percentage plus an amount per unit, e.g. \"1.4% + €0.25 / transaction\""
+  },
+  "checkout.order_summary_block.usage.tier_open": {
+    "defaultMessage": "{from}+",
+    "description": "The last band of a tiered usage price, which has no upper bound, e.g. \"20,000+\""
+  },
+  "checkout.order_summary_block.usage.tier_range": {
+    "defaultMessage": "{from} - {to}",
+    "description": "The range of a band of a tiered usage price, e.g. \"0 - 20,000\""
+  },
+  "checkout.order_summary_block.usage.unit_fallback": {
+    "defaultMessage": "unit",
+    "description": "The unit a usage price is charged per when its product names none"
+  },
   "checkout.page_title": {
     "defaultMessage": "Pay and subscribe",
     "description": "The title of the checkout page"

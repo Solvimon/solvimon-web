@@ -4,6 +4,7 @@ import type {
     Pricing,
     PricingPlanSubscriptionExpanded,
 } from '@solvimon/solvimon-types';
+import type { UsagePriceGroup } from './OrderSummaryUsage.lib';
 
 export interface OrderSummaryProps {
     /**
@@ -38,6 +39,10 @@ export interface OrderSummaryProps {
      * Whether the invoice is usage based.
      */
     isUsageBased?: boolean;
+    /**
+     * The usage prices of the plan, grouped by pricing category.
+     */
+    usagePriceGroups?: UsagePriceGroup[];
     /**
      * Whether the subscription is collapsible, if not provided,
      * the subscription will be displayed in the expanded state.

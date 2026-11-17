@@ -14,6 +14,7 @@ import type { Amount, BillingPeriod, Pricing } from '@solvimon/solvimon-types';
 import { computed } from 'vue';
 import SubscriptionSummary from './SubscriptionSummary.vue';
 import OrderSummaryInvoice from './OrderSummaryInvoice.vue';
+import OrderSummaryUsage from './OrderSummaryUsage.vue';
 import type { OrderSummaryProps } from './OrderSummary.types';
 import {
     getAnnualizedAmount,
@@ -399,22 +400,6 @@ const handleBinaryBillingToggle = (checked: boolean) => {
                 show-suffix-in-closed-input
             />
 
-            <!-- usage based -->
-            <Section v-if="isUsageBased" no-spacing class="sv-order-summary__usage">
-                <div class="px-3 py-2">
-                    <Typography no-spacing variant="body-sm" color="subtle">
-                        {{
-                            $t({
-                                defaultMessage: '+ Usage',
-                                id: 'checkout.invoice_preview.usage_based_message',
-                                description:
-                                    'The message shown for the usage based invoice preview',
-                            })
-                        }}
-                    </Typography>
-                </div>
-            </Section>
-
             <OrderSummaryInvoice
                 v-if="invoice"
                 :invoice="invoice"
@@ -424,6 +409,9 @@ const handleBinaryBillingToggle = (checked: boolean) => {
                 :is-preview-without-taxes="!countryCode"
                 :variant="variant"
             >
+                <template #before-totals>
+                    <OrderSummaryUsage v-if="isUsageBased" :groups="usagePriceGroups ?? []" />
+                </template>
                 <div
                     v-if="renewalAmount"
                     class="sv-order-summary__renewal flex flex-row gap-2 pt-1.5"

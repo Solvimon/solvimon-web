@@ -1,6 +1,7 @@
 import type {
     ModelType,
     Pricing,
+    PricingCategoryExtended,
     PricingExtended,
     PricingPlanScheduleInfoExpanded,
 } from '@solvimon/solvimon-types';
@@ -25,34 +26,49 @@ export function getNameFromPricing(pricing: PricingExtended): string | undefined
 }
 
 /**
+ * The pricings a plan charges for. An addon or group member is priced only once picked, so counting
+ * one they left alone would promise usage billing, or a renewal, on something they are not buying.
+ */
+export function getChargedPricings(
+    categories: PricingCategoryExtended[] | undefined,
+    { enabledPricingIds }: { enabledPricingIds?: Pricing['id'][] } = {},
+): { category: PricingCategoryExtended; pricing: PricingExtended }[] {
+    const pricings = (categories ?? []).flatMap((category) => [
+        ...(category.pricings ?? []).map((pricing) => ({ category, pricing, inGroup: false })),
+        ...(category.pricing_groups ?? []).flatMap((group) =>
+            (group.pricings ?? []).map((pricing) => ({ category, pricing, inGroup: true })),
+        ),
+    ]);
+
+    const seenIds = new Set<Pricing['id']>();
+
+    return pricings
+        .filter(({ pricing, inGroup }) => {
+            if (seenIds.has(pricing?.id)) return false;
+            seenIds.add(pricing?.id);
+
+            const isOptional =
+                inGroup || !!pricing?.pricing_group_id || pricing?.product_type === 'ADDON';
+            // A customized pricing takes the override's id; the schedule enables it by the original's.
+            const isEnabled = [pricing?.id, pricing?.original_pricing_id].some(
+                (id) => !!id && !!enabledPricingIds?.includes(id),
+            );
+
+            return !isOptional || !enabledPricingIds || isEnabled;
+        })
+        .map(({ category, pricing }) => ({ category, pricing }));
+}
+
+/**
  * Read off the plan, not off an invoice: a plan billed on usage puts no line on its first invoice,
  * so the invoice answers "nothing recurs" for a subscription that plainly does.
  */
 export function getModelTypesFromScheduleInfo(
     scheduleInfo: PricingPlanScheduleInfoExpanded | undefined,
-    { enabledPricingIds }: { enabledPricingIds?: Pricing['id'][] } = {},
+    options: { enabledPricingIds?: Pricing['id'][] } = {},
 ): Set<ModelType> {
-    const categories = scheduleInfo?.pricing_plan_version?.pricing_categories ?? [];
-
-    const pricings = categories.flatMap((category) => [
-        ...(category.pricings ?? []).map((pricing) => ({ pricing, inGroup: false })),
-        ...(category.pricing_groups ?? []).flatMap((group) =>
-            (group.pricings ?? []).map((pricing) => ({ pricing, inGroup: true })),
-        ),
-    ]);
-
-    // An addon or group member is priced only once picked, so counting one they left alone would
-    // promise usage billing, or a renewal, on something they are not buying.
-    const isCharged = ({ pricing, inGroup }: (typeof pricings)[number]) => {
-        const isOptional =
-            inGroup || !!pricing?.pricing_group_id || pricing?.product_type === 'ADDON';
-
-        return !isOptional || !enabledPricingIds || enabledPricingIds.includes(pricing?.id);
-    };
-
     return new Set(
-        pricings
-            .filter(isCharged)
+        getChargedPricings(scheduleInfo?.pricing_plan_version?.pricing_categories, options)
             .flatMap(({ pricing }) => pricing?.items ?? [])
             .flatMap((item) => item.product_items ?? [])
             .map(({ model_type }) => model_type),

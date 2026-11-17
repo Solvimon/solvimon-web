@@ -172,6 +172,47 @@ const aPricing = ({
     ],
 });
 
+const aUsagePricing = (id: string, name: string, details: Json): Json => ({
+    id,
+    name,
+    product_type: 'DEFAULT',
+    items: [
+        {
+            id: `${id}_item`,
+            product_items: [
+                {
+                    name,
+                    model_type: 'USAGE_BASED',
+                    unit_name: { singular: 'transaction', plural: 'transactions' },
+                },
+            ],
+            configs: [{ id: `${id}_config`, details }],
+        },
+    ],
+});
+
+const USAGE_CATEGORY: Json = {
+    id: 'prca_payments',
+    product_category_id: 'prca_payments',
+    product_category: { id: 'prca_payments', name: 'Payments' },
+    pricings: [
+        aUsagePricing('pri_cards', 'Card payments', {
+            pricing_type: 'FLAT',
+            bands: [{ amount: { quantity: '0.05', currency: 'EUR' } }],
+        }),
+        aUsagePricing('pri_payouts', 'Payouts', {
+            pricing_type: 'TIERED',
+            bands: [
+                {
+                    amount: { quantity: '0.05', currency: 'EUR' },
+                    tier_top_bound: { number: '20000' },
+                },
+                { amount: { quantity: '0.04', currency: 'EUR' } },
+            ],
+        }),
+    ],
+};
+
 /**
  * A subscription as `GET /portal/pricing-plan-subscriptions/{id}?expand=ALL` returns it.
  *
@@ -190,6 +231,7 @@ export function aSubscription({
     trial = false,
     cancelled = false,
     planChange = false,
+    usagePrices = false,
 }: {
     id?: string;
     name?: string;
@@ -203,6 +245,8 @@ export function aSubscription({
     cancelled?: boolean;
     /** Moving to another subscription, which the API also records as an inactive period. */
     planChange?: boolean;
+    /** Adds a Payments category of usage prices: one per transaction, one tiered. */
+    usagePrices?: boolean;
 } = {}): Json {
     const startAt = '2026-01-01T00:00:00Z';
 
@@ -256,6 +300,7 @@ export function aSubscription({
                       ]
                     : [],
             },
+            ...(usagePrices ? [USAGE_CATEGORY] : []),
         ],
     };
 

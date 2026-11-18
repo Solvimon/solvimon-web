@@ -1,5 +1,6 @@
 import type {
     ApiSuccessCollectionResponse,
+    PaymentAcceptor,
     PaymentMethod,
     PricingPlan,
     PricingPlanSchedule,
@@ -53,6 +54,15 @@ interface SubscriptionsService {
     getSubscriptionPricingPlanGroup(params: {
         id: PricingPlanSubscription['id'];
     }): Promise<PricingPlanGroup>;
+    getSubscriptionsOfVariant(args: {
+        customerId: string;
+        variant: PricingPlanSubscription['variant'];
+        pageSize: number;
+    }): Promise<ApiSuccessCollectionResponse<PricingPlanSubscription>>;
+    setSubscriptionPaymentAcceptors(params: {
+        id: PricingPlanSubscription['id'];
+        paymentAcceptorIds: PaymentAcceptor['id'][];
+    }): Promise<PricingPlanSubscription>;
 }
 
 export interface ChangeSubscriptionPlanPayload {
@@ -190,7 +200,48 @@ export function createSubscriptionsService(): SubscriptionsService {
         });
     }
 
+    /** A page of the customer's billing subscriptions of one variant, whatever their status. */
+    function getSubscriptionsOfVariant({
+        customerId,
+        variant,
+        pageSize,
+    }: {
+        customerId: string;
+        variant: PricingPlanSubscription['variant'];
+        pageSize: number;
+    }): Promise<ApiSuccessCollectionResponse<PricingPlanSubscription>> {
+        return request<PricingPlanSubscription>({
+            url: buildUrl(config.apiUrls.config, ...ENDPOINT),
+            query: withPagination(
+                { customer_id: customerId, variant, type: 'BILLING' },
+                { page: 1, pageSize },
+            ),
+            isCollection: true,
+        });
+    }
+
+    /**
+     * PATCH /v1/portal/pricing-plan-subscriptions/{id} — the bank accounts a self-billing
+     * subscription is paid into. An empty list unlinks them all, after which every active acceptor
+     * of the customer applies.
+     */
+    function setSubscriptionPaymentAcceptors({
+        id,
+        paymentAcceptorIds,
+    }: {
+        id: PricingPlanSubscription['id'];
+        paymentAcceptorIds: PaymentAcceptor['id'][];
+    }): Promise<PricingPlanSubscription> {
+        return request<PricingPlanSubscription>({
+            url: buildUrl(config.apiUrls.config, ...ENDPOINT, id),
+            data: { payment_acceptor_ids: paymentAcceptorIds },
+            options: { method: 'PATCH' },
+        });
+    }
+
     return {
+        getSubscriptionsOfVariant,
+        setSubscriptionPaymentAcceptors,
         setSubscriptionPaymentMethod,
         getSubscription,
         getActiveSubscriptions,

@@ -16,6 +16,8 @@ const {
     mockFetchWalletBalances,
     shippedState,
     mockCheckShipped,
+    selfBillingState,
+    mockCheckSelfBilling,
     optionsState,
     preload,
 } = vi.hoisted(() => ({
@@ -26,6 +28,8 @@ const {
     mockFetchWalletBalances: vi.fn(),
     shippedState: { value: false },
     mockCheckShipped: vi.fn(),
+    selfBillingState: { value: false },
+    mockCheckSelfBilling: vi.fn(),
     optionsState: { options: [] as unknown[], status: undefined as unknown },
     preload: { resolve: () => {}, mock: vi.fn() },
 }));
@@ -64,6 +68,17 @@ vi.mock('@/composables/useHasShippedSubscription', async () => {
         useHasShippedSubscription: () => ({
             hasShippedSubscription: computed(() => shippedState.value),
             check: mockCheckShipped,
+        }),
+    };
+});
+
+vi.mock('@/composables/useHasSelfBillingSubscription', async () => {
+    const { computed } = await import('vue');
+
+    return {
+        useHasSelfBillingSubscription: () => ({
+            hasSelfBillingSubscription: computed(() => selfBillingState.value),
+            check: mockCheckSelfBilling,
         }),
     };
 });
@@ -191,6 +206,16 @@ vi.mock('@/public/components/CustomerShippingAddresses/CustomerShippingAddresses
         name: 'CustomerShippingAddresses',
         props: { customerId: String, customer: Object, isLoading: Boolean },
         setup: () => () => h('div', { class: 'shipping-addresses-stub' }),
+    }),
+}));
+
+// Loaded with `import()`, which only unwraps `default` from a module that says it is one.
+vi.mock('@/public/components/CustomerPaymentAcceptors/CustomerPaymentAcceptors.vue', () => ({
+    __esModule: true,
+    default: defineComponent({
+        name: 'CustomerPaymentAcceptors',
+        props: { customerId: String, isLoading: Boolean },
+        setup: () => () => h('div', { class: 'payment-acceptors-stub' }),
     }),
 }));
 
@@ -490,5 +515,33 @@ describe('CustomerOverview — shipping addresses', () => {
         expect(aside.indexOf('shipping-addresses-stub')).toBeGreaterThan(
             aside.indexOf('sv-customer-overview__billing-information'),
         );
+    });
+});
+
+describe('CustomerOverview — payment acceptors', () => {
+    afterEach(() => {
+        selfBillingState.value = false;
+    });
+
+    it('finds out whether the customer has a self-billing subscription', async () => {
+        await mountOverview();
+
+        expect(mockCheckSelfBilling).toHaveBeenCalled();
+    });
+
+    it('leaves the payment acceptors out for a customer without a self-billing subscription', async () => {
+        const wrapper = await mountOverview();
+
+        expect(wrapper.findComponent({ name: 'CustomerPaymentAcceptors' }).exists()).toBe(false);
+    });
+
+    it("shows a self-billing customer's payment acceptors, for its customer", async () => {
+        selfBillingState.value = true;
+        const wrapper = await mountOverview();
+
+        const acceptors = wrapper.findComponent({ name: 'CustomerPaymentAcceptors' });
+
+        expect(acceptors.exists()).toBe(true);
+        expect(acceptors.props('customerId')).toBe('cust_1');
     });
 });

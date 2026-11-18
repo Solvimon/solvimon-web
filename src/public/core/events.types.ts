@@ -65,6 +65,13 @@ export interface SolvimonShippingAddressSavedDetail {
     shippingAddressId: string;
 }
 
+/** The `detail` of `solvimon-payment-acceptor-saved`. */
+export interface SolvimonPaymentAcceptorSavedDetail {
+    /** The tag name of the element the customer saved the bank account in. */
+    componentName: string;
+    paymentAcceptorId: string;
+}
+
 /**
  * Every event an SDK element dispatches, by name. Each one bubbles and crosses the shadow root,
  * so a listener on the document or a container hears every element inside it.
@@ -94,6 +101,8 @@ export interface SolvimonEventMap {
     'solvimon-payment-method-added': CustomEvent<SolvimonPaymentMethodAddedDetail>;
     /** The customer added or changed a shipping address in `shipping-address-form`. */
     'solvimon-shipping-address-saved': CustomEvent<SolvimonShippingAddressSavedDetail>;
+    /** The customer added or changed a bank account they are paid into in `payment-acceptor-form`. */
+    'solvimon-payment-acceptor-saved': CustomEvent<SolvimonPaymentAcceptorSavedDetail>;
 }
 
 /**

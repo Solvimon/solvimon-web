@@ -847,6 +847,10 @@
     "defaultMessage": "This promotion code is not valid.",
     "description": "Error shown under the promotion code field when the code the customer entered was not accepted"
   },
+  "components.payment_acceptor_form.not_found": {
+    "defaultMessage": "We could not find this payment acceptor.",
+    "description": "Shown instead of the payment acceptor form when the bank account to edit is not among the customer’s"
+  },
   "components.payment_method_form.continue_button.label": {
     "defaultMessage": "Continue",
     "description": "Label of the button that leaves the form once the payment method is stored"
@@ -946,6 +950,10 @@
   "customer_overview.payment_acceptors_block.title": {
     "defaultMessage": "{count,plural,one{Payment acceptor} other{Payment acceptors}}",
     "description": "Title of the block that lists the bank accounts the customer receives payments on"
+  },
+  "customer_overview.payment_acceptors_block.view_all_button_label": {
+    "defaultMessage": "View all",
+    "description": "Label of the button that opens the list of all the bank accounts the customer is paid into"
   },
   "customer_overview.payment_methods.title": {
     "defaultMessage": "{count,plural,one{Payment method} other{Payment methods}}",
@@ -1223,10 +1231,6 @@
     "defaultMessage": "New payment acceptor",
     "description": "Title of the payment acceptors modal while a new bank account is added"
   },
-  "payment_acceptors_modal.add_button.label": {
-    "defaultMessage": "Add payment acceptor",
-    "description": "Label of the button that moves to the form for a new bank account"
-  },
   "payment_acceptors_modal.back_button.label": {
     "defaultMessage": "Back",
     "description": "Label of the button that goes back a step in the payment acceptors modal"
@@ -1259,10 +1263,6 @@
     "defaultMessage": "Choose payment acceptors",
     "description": "Title of the payment acceptors modal in which the bank accounts of one subscription are chosen"
   },
-  "payment_acceptors_modal.close_button.label": {
-    "defaultMessage": "Close",
-    "description": "Label of the button that closes the payment acceptors modal"
-  },
   "payment_acceptors_modal.delete.message": {
     "defaultMessage": "You will no longer be paid into this bank account.",
     "description": "Explains what deleting a bank account does, above the account"
@@ -1275,21 +1275,9 @@
     "defaultMessage": "Delete",
     "description": "Label of the button that confirms deleting a bank account"
   },
-  "payment_acceptors_modal.edit.title": {
-    "defaultMessage": "Edit payment acceptor",
-    "description": "Title of the payment acceptors modal while a bank account is changed"
-  },
-  "payment_acceptors_modal.empty.title": {
-    "defaultMessage": "No payment acceptors yet",
-    "description": "Shown in the payment acceptors modal when the customer has no bank accounts"
-  },
   "payment_acceptors_modal.error": {
     "defaultMessage": "Something went wrong. Please try again.",
     "description": "Error shown in the payment acceptors modal when a change cannot be made"
-  },
-  "payment_acceptors_modal.list.description": {
-    "defaultMessage": "Bank accounts where you receive payments for your self-billing subscriptions.",
-    "description": "Explains the bank accounts listed in the payment acceptors modal"
   },
   "payment_acceptors_modal.payer_fallback": {
     "defaultMessage": "Your customer",
@@ -1298,10 +1286,6 @@
   "payment_acceptors_modal.save_button.label": {
     "defaultMessage": "Save",
     "description": "Label of the button that stores a new or changed bank account"
-  },
-  "payment_acceptors_modal.title": {
-    "defaultMessage": "Payment acceptors",
-    "description": "Title of the modal that lists the bank accounts the customer receives payments on"
   },
   "payment_completed_card.redirect_message": {
     "defaultMessage": "You are being redirected...",
@@ -1570,6 +1554,10 @@
   "pricing_item_pricing.unsupported_pricing_error": {
     "defaultMessage": "Unsupported pricing",
     "description": "Text displayed when the pricing item pricing is unsupported"
+  },
+  "screens.payment_acceptors_management.title": {
+    "defaultMessage": "Payment acceptors",
+    "description": "Title of the screen that lists the bank accounts the customer is paid into"
   },
   "screens.payment_method_management.add_button": {
     "defaultMessage": "Add payment method",

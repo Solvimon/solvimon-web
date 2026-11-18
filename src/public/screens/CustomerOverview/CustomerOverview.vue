@@ -18,6 +18,7 @@ import { useCustomerWalletBalances } from '@/composables/useCustomerWalletBalanc
 import CustomerWalletBalances from '@/public/components/CustomerWalletBalances/CustomerWalletBalances.vue';
 import { useActiveScheduleWarning } from '@/composables/useActiveScheduleWarning';
 import { useHasShippedSubscription } from '@/composables/useHasShippedSubscription';
+import { useHasSelfBillingSubscription } from '@/composables/useHasSelfBillingSubscription';
 import { useCustomerPaymentMethodOptions } from '@/composables/useCustomerPaymentMethodOptions';
 import LoadFailedNotice from '@/components/shared/LoadFailedNotice.vue';
 import type { PaymentMethodsModalStep } from '@/components/payments/PaymentMethodsModal/PaymentMethodsModal.types';
@@ -26,6 +27,11 @@ import { hasPaymentRedirectReturn } from '@/utils/paymentRedirect';
 /** Only customers with an order that ships see it, so the rest never download it. */
 const CustomerShippingAddresses = defineAsyncComponent(
     () => import('@/public/components/CustomerShippingAddresses/CustomerShippingAddresses.vue'),
+);
+
+/** Only self-billing customers see it, so the rest never download it. */
+const CustomerPaymentAcceptors = defineAsyncComponent(
+    () => import('@/public/components/CustomerPaymentAcceptors/CustomerPaymentAcceptors.vue'),
 );
 
 /** Most customers never open it, so it is not part of the overview until one does. */
@@ -94,6 +100,10 @@ const shownPaymentMethods = computed(() =>
 
 /** Shipping addresses are only shown to a customer with a subscription, of any status, that ships. */
 const shippedSubscriptions = useHasShippedSubscription({ customerId });
+
+/** Payment acceptors are only shown to a customer that is paid on a self-billing subscription. */
+const selfBillingSubscriptions = useHasSelfBillingSubscription({ customerId });
+void selfBillingSubscriptions.check();
 
 const { isLoading } = useLoadInitialData(
     customer.get.execute(),
@@ -275,6 +285,13 @@ useActiveScheduleWarning(subscriptions.items);
                 :customer="customer.customer.value"
                 :update="customer.update"
                 @close="closeBillingInformationModal"
+            />
+
+            <CustomerPaymentAcceptors
+                v-if="selfBillingSubscriptions.hasSelfBillingSubscription.value"
+                class="sv-customer-overview__payment-acceptors"
+                :is-loading="isLoading"
+                :customer-id="customerId"
             />
 
             <CustomerShippingAddresses

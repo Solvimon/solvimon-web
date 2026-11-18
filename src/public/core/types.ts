@@ -13,6 +13,7 @@ import type { SolvimonInvoiceHeaderEntryProps } from '@/public/components/Invoic
 import type { SolvimonInvoiceDetailsEntryProps } from '@/public/components/InvoiceDetails/InvoiceDetails.entry.types';
 import type { SolvimonInvoicesListEntryProps } from '@/public/components/InvoicesList/InvoicesList.entry.types';
 import type { SolvimonPaymentMethodFormEntryProps } from '@/public/components/PaymentMethodForm/PaymentMethodForm.entry.types';
+import type { SolvimonPaymentAcceptorFormEntryProps } from '@/public/components/PaymentAcceptorForm/PaymentAcceptorForm.entry.types';
 import type { SolvimonShippingAddressFormEntryProps } from '@/public/components/ShippingAddressForm/ShippingAddressForm.entry.types';
 import type { SolvimonPaymentHistoryEntryProps } from '@/public/components/PaymentHistory/PaymentHistory.entry.types';
 import type { SolvimonSubscriptionSchedulesEntryProps } from '@/public/components/SubscriptionSchedules/SubscriptionSchedules.entry.types';
@@ -24,6 +25,7 @@ import type { SolvimonCustomerOverviewEntryProps } from '@/public/screens/Custom
 import type { SolvimonSubscriptionManagementEntryProps } from '@/public/screens/SubscriptionManagement/SubscriptionManagement.entry.types';
 import type { SolvimonPayInvoiceEntryProps } from '@/public/screens/PayInvoice/PayInvoice.entry.types';
 import type { SolvimonSubscriptionDetailsEntryProps } from '@/public/screens/SubscriptionDetails/SubscriptionDetails.entry.types';
+import type { SolvimonPaymentAcceptorsManagementEntryProps } from '@/public/screens/PaymentAcceptorsManagement/PaymentAcceptorsManagement.entry.types';
 import type { SolvimonPaymentMethodsManagementEntryProps } from '@/public/screens/PaymentMethodsManagement/PaymentMethodsManagement.entry.types';
 
 /**
@@ -71,6 +73,7 @@ interface RegisteredComponentEntryPropsById {
     'billing-information-form': SolvimonBillingInformationFormEntryProps;
     'payment-method-form': SolvimonPaymentMethodFormEntryProps;
     'shipping-address-form': SolvimonShippingAddressFormEntryProps;
+    'payment-acceptor-form': SolvimonPaymentAcceptorFormEntryProps;
 }
 
 interface RegisteredScreenEntryPropsById {
@@ -81,6 +84,7 @@ interface RegisteredScreenEntryPropsById {
     'subscription-details': SolvimonSubscriptionDetailsEntryProps;
     'pay-invoice': SolvimonPayInvoiceEntryProps;
     'payment-methods-management': SolvimonPaymentMethodsManagementEntryProps;
+    'payment-acceptors-management': SolvimonPaymentAcceptorsManagementEntryProps;
 }
 
 /**

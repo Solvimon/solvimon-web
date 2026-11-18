@@ -8,8 +8,8 @@ import type {
 import { DEFAULT_MAX_ITEMS, getSubscriptionPaymentAcceptors } from './CustomerPaymentAcceptors.lib';
 import EmptyStatePlaceholder from '@/components/checkout/EmptyStatePlaceholder.vue';
 import PaymentAcceptorList from '@/components/payments/PaymentAcceptors/PaymentAcceptorList.vue';
-import type { PaymentAcceptorsModalStart } from '@/components/payments/PaymentAcceptors/PaymentAcceptorsModal.types';
 import Skeleton from '@/components/shared/Skeleton.vue';
+import { useActionDispatchProvider } from '@/components/providers';
 import { usePaymentAcceptors } from '@/composables/usePaymentAcceptors';
 import { createSubscriptionsService } from '@/services/subscriptions';
 
@@ -73,17 +73,21 @@ const saveChoice = async (paymentAcceptorIds: string[]) => {
 
 const hasOpenedModal = ref(false);
 const isModalShown = ref(false);
-const modalStart = ref<PaymentAcceptorsModalStart>({ step: 'LIST' });
-
-const openModal = (start: PaymentAcceptorsModalStart) => {
-    modalStart.value = start;
+const openModal = () => {
     hasOpenedModal.value = true;
     isModalShown.value = true;
 };
 
-/** Managing a subscription's acceptors chooses them; the customer's own, lists them. */
-const manage = () => openModal({ step: props.subscription ? 'CHOOSE' : 'LIST' });
-const add = () => openModal({ step: props.subscription ? 'CHOOSE' : 'ADD' });
+const { dispatchAction } = useActionDispatchProvider();
+
+/**
+ * A subscription's acceptors are chosen in place. The customer's own are listed and added on screens
+ * the host routes to.
+ */
+const manage = () =>
+    props.subscription ? openModal() : dispatchAction({ action: 'view-all-payment-acceptors' });
+const add = () =>
+    props.subscription ? openModal() : dispatchAction({ action: 'add-payment-acceptor' });
 
 const description = computed(() => {
     if (!props.subscription) {
@@ -156,6 +160,7 @@ const description = computed(() => {
         <template #right>
             <slot name="action" :manage="manage">
                 <Button
+                    v-if="subscription"
                     size="xs"
                     intent="subtle"
                     class="sv-action sv-action--ghost sv-payment-acceptors__manage"
@@ -166,6 +171,22 @@ const description = computed(() => {
                             id: 'customer_overview.payment_acceptors_block.manage_button_label',
                             description:
                                 'Label of the button that opens the modal to manage the bank accounts the customer is paid into',
+                        })
+                    }}</Button
+                >
+                <Button
+                    v-else-if="items.length"
+                    size="xs"
+                    intent="subtle"
+                    icon-suffix="arrow_right_alt"
+                    class="sv-action sv-action--ghost sv-payment-acceptors__view-all"
+                    @click="manage"
+                    >{{
+                        $t({
+                            defaultMessage: 'View all',
+                            id: 'customer_overview.payment_acceptors_block.view_all_button_label',
+                            description:
+                                'Label of the button that opens the list of all the bank accounts the customer is paid into',
                         })
                     }}</Button
                 >
@@ -258,21 +279,11 @@ const description = computed(() => {
         </div>
 
         <PaymentAcceptorsModal
-            v-if="hasOpenedModal"
+            v-if="hasOpenedModal && subscription"
             :show-modal="isModalShown"
-            :start="modalStart"
             :payment-acceptors="items"
-            :is-loading="isPending"
-            :actions="paymentAcceptors"
-            :subscription="
-                subscription
-                    ? {
-                          id: subscription.id,
-                          paymentAcceptorIds: linkedIds,
-                          payerName,
-                      }
-                    : undefined
-            "
+            :create="paymentAcceptors.create"
+            :subscription="{ id: subscription.id, paymentAcceptorIds: linkedIds, payerName }"
             :save-choice="saveChoice"
             @close="isModalShown = false"
         />

@@ -4,10 +4,16 @@ import type { PaymentAcceptor, PricingPlanSubscriptionExpanded } from '@solvimon
 import CustomerPaymentAcceptors from './CustomerPaymentAcceptors.vue';
 import type { CustomerPaymentAcceptorsProps } from './CustomerPaymentAcceptors.types';
 
-const { acceptorsState, mockFetchAll, mockSetSubscriptionPaymentAcceptors } = vi.hoisted(() => ({
-    acceptorsState: { items: [] as unknown[] },
-    mockFetchAll: vi.fn(),
-    mockSetSubscriptionPaymentAcceptors: vi.fn(),
+const { acceptorsState, mockFetchAll, mockSetSubscriptionPaymentAcceptors, mockDispatchAction } =
+    vi.hoisted(() => ({
+        acceptorsState: { items: [] as unknown[] },
+        mockFetchAll: vi.fn(),
+        mockSetSubscriptionPaymentAcceptors: vi.fn(),
+        mockDispatchAction: vi.fn(),
+    }));
+
+vi.mock('@/components/providers', () => ({
+    useActionDispatchProvider: () => ({ dispatchAction: mockDispatchAction }),
 }));
 
 vi.mock('@/composables/usePaymentAcceptors', () => ({
@@ -35,10 +41,8 @@ vi.mock('@/components/payments/PaymentAcceptors/PaymentAcceptorsModal.vue', () =
         name: 'PaymentAcceptorsModal',
         props: {
             showModal: Boolean,
-            start: Object,
             paymentAcceptors: Array,
-            isLoading: Boolean,
-            actions: Object,
+            create: Function,
             subscription: Object,
             saveChoice: Function,
         },
@@ -110,27 +114,24 @@ describe('CustomerPaymentAcceptors', () => {
         expect(wrapper.find('.sv-payment-acceptors__more').exists()).toBe(false);
     });
 
-    it('opens the list to manage the customer acceptors', async () => {
+    it('asks the host to show them all', async () => {
         const wrapper = await mountBlock();
 
-        await wrapper.find('.sv-payment-acceptors__manage').trigger('click');
-        await flushPromises();
+        await wrapper.find('.sv-payment-acceptors__view-all').trigger('click');
 
-        expect(wrapper.findComponent({ name: 'PaymentAcceptorsModal' }).props('start')).toEqual({
-            step: 'LIST',
-        });
+        expect(mockDispatchAction).toHaveBeenCalledWith({ action: 'view-all-payment-acceptors' });
+        expect(wrapper.findComponent({ name: 'PaymentAcceptorsModal' }).exists()).toBe(false);
     });
 
-    it('offers adding the first acceptor when there is none', async () => {
+    it('asks the host to add the first acceptor when there is none', async () => {
         acceptorsState.items = [];
         const wrapper = await mountBlock();
 
-        await wrapper.find('.sv-payment-acceptors__add').trigger('click');
-        await flushPromises();
+        expect(wrapper.find('.sv-payment-acceptors__view-all').exists()).toBe(false);
 
-        expect(wrapper.findComponent({ name: 'PaymentAcceptorsModal' }).props('start')).toEqual({
-            step: 'ADD',
-        });
+        await wrapper.find('.sv-payment-acceptors__add').trigger('click');
+
+        expect(mockDispatchAction).toHaveBeenCalledWith({ action: 'add-payment-acceptor' });
     });
 
     describe('for a subscription', () => {
@@ -160,7 +161,6 @@ describe('CustomerPaymentAcceptors', () => {
             await wrapper.find('.sv-payment-acceptors__manage').trigger('click');
             await flushPromises();
             const modal = wrapper.findComponent({ name: 'PaymentAcceptorsModal' });
-            expect(modal.props('start')).toEqual({ step: 'CHOOSE' });
             expect(modal.props('subscription')).toEqual({
                 id: 'ppsu_1',
                 paymentAcceptorIds: ['b'],

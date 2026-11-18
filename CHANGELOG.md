@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0-alpha.31] - 2026-11-18
+
 ### Added
 
 - A checkout plan billed on usage lists its usage prices in the order summary. The + Usage line (`.sv-order-summary__usage`) now sits between the product lines and the totals, says how often usage is billed, such as "Billed monthly", and opens to the prices under their pricing category. Each price is a row (`.sv-order-summary__usage-price`) with its rate, such as "€0.05 / transaction" or "1.19% of transaction value", and a tiered price has a row per band. A price no single rate describes, such as one per block or per condition, shows its name alone. A customized price shows its customized rate, and an add-on or group member counts only once it is picked.

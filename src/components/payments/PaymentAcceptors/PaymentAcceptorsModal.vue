@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import {
+    Button,
     CheckboxGroupExtended,
+    DividerText,
     ErrorNotification,
     Modal,
     Typography,
@@ -178,13 +180,13 @@ const handleConfirm = () => {
 const title = computed(() =>
     step.value === 'ADD'
         ? $t({
-              defaultMessage: 'New payment acceptor',
-              id: 'payment_acceptors_modal.add.title',
+              defaultMessage: 'Create new payment acceptor',
+              id: 'payment_acceptors_modal.create.title',
               description: 'Title of the payment acceptors modal while a new bank account is added',
           })
         : $t({
-              defaultMessage: 'Choose payment acceptors',
-              id: 'payment_acceptors_modal.choose.title',
+              defaultMessage: 'Assign payment acceptors',
+              id: 'payment_acceptors_modal.assign.title',
               description:
                   'Title of the payment acceptors modal in which the bank accounts of one subscription are chosen',
           }),
@@ -193,13 +195,14 @@ const title = computed(() =>
 const confirmButtonText = computed(() =>
     step.value === 'ADD'
         ? $t({
-              defaultMessage: 'Save',
-              id: 'payment_acceptors_modal.save_button.label',
-              description: 'Label of the button that stores a new or changed bank account',
+              defaultMessage: 'Continue',
+              id: 'payment_acceptors_modal.create.continue_button.label',
+              description:
+                  'Label of the button that stores the new bank account and goes back to assigning',
           })
         : $t({
-              defaultMessage: 'Save',
-              id: 'payment_acceptors_modal.choose.save_button.label',
+              defaultMessage: 'Assign payment acceptors',
+              id: 'payment_acceptors_modal.assign.confirm_button.label',
               description:
                   'Label of the button that stores the bank accounts chosen for the subscription',
           }),
@@ -292,29 +295,41 @@ const payerName = computed(
                                 :options="choiceOptions"
                                 :label="
                                     $t({
-                                        defaultMessage: 'Payment acceptors',
-                                        id: 'payment_acceptors_modal.choose.label',
+                                        defaultMessage: 'Select payment acceptors',
+                                        id: 'payment_acceptors_modal.assign.label',
                                         description:
                                             'Label of the list of bank accounts to choose for the subscription',
                                     })
                                 "
                             />
 
-                            <button
-                                type="button"
-                                class="sv-action sv-action--link sv-payment-acceptors-modal__add w-fit rounded text-sm text-primary-900 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary-600"
-                                :disabled="isWorking"
-                                @click="goTo('ADD')"
-                            >
-                                {{
-                                    $t({
-                                        defaultMessage: '+ Add a new payment acceptor',
-                                        id: 'payment_acceptors_modal.choose.add_link',
-                                        description:
-                                            'Link below the bank accounts to choose that moves to the form for a new one',
-                                    })
-                                }}
-                            </button>
+                            <div class="grid grid-cols-1 gap-2">
+                                <DividerText
+                                    :text="
+                                        $t({
+                                            defaultMessage: 'or',
+                                            id: 'payment_acceptors_modal.assign.divider_text',
+                                            description:
+                                                'Between the bank accounts to assign and the button that creates a new one',
+                                        })
+                                    "
+                                />
+                                <Button
+                                    intent="secondary"
+                                    type="button"
+                                    class="sv-action sv-action--secondary sv-action--full-width sv-payment-acceptors-modal__add w-full"
+                                    :disabled="isWorking"
+                                    @click="goTo('ADD')"
+                                    >{{
+                                        $t({
+                                            defaultMessage: 'Create new',
+                                            id: 'payment_acceptors_modal.assign.create_button.label',
+                                            description:
+                                                'Label of the button that moves to the form for a new bank account',
+                                        })
+                                    }}</Button
+                                >
+                            </div>
                         </div>
                     </template>
 
@@ -322,6 +337,14 @@ const payerName = computed(
                         <PaymentAcceptorForm
                             ref="formRef"
                             :key="formKey"
+                            :bank-account-title="
+                                $t({
+                                    defaultMessage: 'Add new bank account',
+                                    id: 'payment_acceptors_modal.create.bank_account_title',
+                                    description:
+                                        'Heading above the bank account fields in the modal that creates a payment acceptor',
+                                })
+                            "
                             :disabled="isWorking"
                             :api-error="apiError"
                         />

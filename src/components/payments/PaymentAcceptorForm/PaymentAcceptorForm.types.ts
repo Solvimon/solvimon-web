@@ -12,6 +12,11 @@ export interface PaymentAcceptorFormProps {
     disabled?: boolean;
     /** What the API refused, by field. */
     apiError?: FormFieldError;
+    /**
+     * The heading above the bank account fields.
+     * @default 'Bank account'
+     */
+    bankAccountTitle?: string;
 }
 
 export interface PaymentAcceptorFormState {

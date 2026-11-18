@@ -1219,6 +1219,10 @@
     "defaultMessage": "Edit",
     "description": "Menu option that opens the form to change a bank account"
   },
+  "payment_acceptor_form.bank_account.title": {
+    "defaultMessage": "Bank account",
+    "description": "Heading above the bank account fields of a payment acceptor"
+  },
   "payment_acceptor_form.name.label": {
     "defaultMessage": "Name",
     "description": "Label of the field naming a bank account the customer receives payments on"
@@ -1227,9 +1231,25 @@
     "defaultMessage": "For example: Main business account",
     "description": "Placeholder of the name of a bank account the customer is paid on"
   },
-  "payment_acceptors_modal.add.title": {
-    "defaultMessage": "New payment acceptor",
-    "description": "Title of the payment acceptors modal while a new bank account is added"
+  "payment_acceptors_modal.assign.confirm_button.label": {
+    "defaultMessage": "Assign payment acceptors",
+    "description": "Label of the button that stores the bank accounts chosen for the subscription"
+  },
+  "payment_acceptors_modal.assign.create_button.label": {
+    "defaultMessage": "Create new",
+    "description": "Label of the button that moves to the form for a new bank account"
+  },
+  "payment_acceptors_modal.assign.divider_text": {
+    "defaultMessage": "or",
+    "description": "Between the bank accounts to assign and the button that creates a new one"
+  },
+  "payment_acceptors_modal.assign.label": {
+    "defaultMessage": "Select payment acceptors",
+    "description": "Label of the list of bank accounts to choose for the subscription"
+  },
+  "payment_acceptors_modal.assign.title": {
+    "defaultMessage": "Assign payment acceptors",
+    "description": "Title of the payment acceptors modal in which the bank accounts of one subscription are chosen"
   },
   "payment_acceptors_modal.back_button.label": {
     "defaultMessage": "Back",
@@ -1239,29 +1259,25 @@
     "defaultMessage": "Cancel",
     "description": "Label of the button that closes the payment acceptors modal without saving"
   },
-  "payment_acceptors_modal.choose.add_link": {
-    "defaultMessage": "+ Add a new payment acceptor",
-    "description": "Link below the bank accounts to choose that moves to the form for a new one"
-  },
   "payment_acceptors_modal.choose.description": {
     "defaultMessage": "{payer} pays you into the accounts you choose for this subscription.",
     "description": "Explains choosing the bank accounts a self-billing subscription is paid into"
-  },
-  "payment_acceptors_modal.choose.label": {
-    "defaultMessage": "Payment acceptors",
-    "description": "Label of the list of bank accounts to choose for the subscription"
   },
   "payment_acceptors_modal.choose.none_chosen": {
     "defaultMessage": "No specific accounts are chosen for this subscription, so {payer} can pay you into any of your active accounts.",
     "description": "Explains that without a choice every active bank account of the customer applies to the subscription"
   },
-  "payment_acceptors_modal.choose.save_button.label": {
-    "defaultMessage": "Save",
-    "description": "Label of the button that stores the bank accounts chosen for the subscription"
+  "payment_acceptors_modal.create.bank_account_title": {
+    "defaultMessage": "Add new bank account",
+    "description": "Heading above the bank account fields in the modal that creates a payment acceptor"
   },
-  "payment_acceptors_modal.choose.title": {
-    "defaultMessage": "Choose payment acceptors",
-    "description": "Title of the payment acceptors modal in which the bank accounts of one subscription are chosen"
+  "payment_acceptors_modal.create.continue_button.label": {
+    "defaultMessage": "Continue",
+    "description": "Label of the button that stores the new bank account and goes back to assigning"
+  },
+  "payment_acceptors_modal.create.title": {
+    "defaultMessage": "Create new payment acceptor",
+    "description": "Title of the payment acceptors modal while a new bank account is added"
   },
   "payment_acceptors_modal.delete.message": {
     "defaultMessage": "You will no longer be paid into this bank account.",

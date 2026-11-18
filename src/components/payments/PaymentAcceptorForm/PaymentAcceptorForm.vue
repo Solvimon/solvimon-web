@@ -1,6 +1,12 @@
 <script setup lang="ts">
 import { ref, toRaw } from 'vue';
-import { BankAccountEditor, Input, useIntl, useValidation } from '@solvimon/solvimon-ui';
+import {
+    BankAccountEditor,
+    Input,
+    Typography,
+    useIntl,
+    useValidation,
+} from '@solvimon/solvimon-ui';
 import { maxLength, required } from '@vuelidate/validators';
 import type {
     PaymentAcceptorFormProps,
@@ -68,11 +74,31 @@ defineExpose({
             :error="apiError?.name || validation.name.$errors"
         />
 
-        <BankAccountEditor
-            v-model="form.bank_account"
-            :disabled="disabled"
-            :api-error="apiError"
-            :method="paymentAcceptor ? 'UPDATE' : 'CREATE'"
-        />
+        <section class="sv-payment-acceptor-form__bank-account grid grid-cols-1 gap-1">
+            <Typography
+                tag="h3"
+                variant="body-sm"
+                weight="semibold"
+                no-spacing
+                class="sv-payment-acceptor-form__bank-account-title"
+                >{{
+                    bankAccountTitle ||
+                    $t({
+                        defaultMessage: 'Bank account',
+                        id: 'payment_acceptor_form.bank_account.title',
+                        description: 'Heading above the bank account fields of a payment acceptor',
+                    })
+                }}</Typography
+            >
+
+            <div class="grid grid-cols-1 gap-3">
+                <BankAccountEditor
+                    v-model="form.bank_account"
+                    :disabled="disabled"
+                    :api-error="apiError"
+                    :method="paymentAcceptor ? 'UPDATE' : 'CREATE'"
+                />
+            </div>
+        </section>
     </div>
 </template>

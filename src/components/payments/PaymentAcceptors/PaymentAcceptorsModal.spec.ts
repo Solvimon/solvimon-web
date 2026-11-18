@@ -191,14 +191,14 @@ describe('PaymentAcceptorsModal', () => {
         const wrapper = mountComponent({ create });
 
         await wrapper.find('.sv-payment-acceptors-modal__add').trigger('click');
-        expect(wrapper.find('.modal__title').text()).toBe('New payment acceptor');
+        expect(wrapper.find('.modal__title').text()).toBe('Create new payment acceptor');
         expect(wrapper.find('.modal__cancel').text()).toBe('Back');
 
         await wrapper.find('.modal__confirm').trigger('click');
         await flushPromises();
 
         expect(create).toHaveBeenCalledWith({ name: 'New account', type: 'BANK_ACCOUNT' });
-        expect(wrapper.find('.modal__title').text()).toBe('Choose payment acceptors');
+        expect(wrapper.find('.modal__title').text()).toBe('Assign payment acceptors');
         expect(choices(wrapper).props('modelValue')).toEqual(['main', 'new']);
     });
 
@@ -238,7 +238,7 @@ describe('PaymentAcceptorsModal', () => {
             subscription: { ...subscription, paymentAcceptorIds: [] },
         });
 
-        expect(wrapper.find('.modal__title').text()).toBe('New payment acceptor');
+        expect(wrapper.find('.modal__title').text()).toBe('Create new payment acceptor');
 
         await wrapper.find('.modal__cancel').trigger('click');
 

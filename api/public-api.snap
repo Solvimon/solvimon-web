@@ -19,6 +19,9 @@ export * from '../../types/public/components/InvoiceHeader/InvoiceHeader.entry.c
 // components/InvoicesList/InvoicesList.ce.d.ts
 export * from '../../types/public/components/InvoicesList/InvoicesList.entry.ce';
 
+// components/PaymentAcceptorForm/PaymentAcceptorForm.ce.d.ts
+export * from '../../types/public/components/PaymentAcceptorForm/PaymentAcceptorForm.entry.ce';
+
 // components/PaymentHistory/PaymentHistory.ce.d.ts
 export * from '../../types/public/components/PaymentHistory/PaymentHistory.entry.ce';
 
@@ -54,6 +57,9 @@ export * from '../../types/public/screens/CustomerOverview/CustomerOverview.entr
 
 // screens/PayInvoice/PayInvoice.ce.d.ts
 export * from '../../types/public/screens/PayInvoice/PayInvoice.entry.ce';
+
+// screens/PaymentAcceptorsManagement/PaymentAcceptorsManagement.ce.d.ts
+export * from '../../types/public/screens/PaymentAcceptorsManagement/PaymentAcceptorsManagement.entry.ce';
 
 // screens/PaymentMethodsManagement/PaymentMethodsManagement.ce.d.ts
 export * from '../../types/public/screens/PaymentMethodsManagement/PaymentMethodsManagement.entry.ce';
@@ -369,6 +375,7 @@ export { defineSolvimonSubscriptionManagement } from './public/screens/Subscript
 export { defineSolvimonSubscriptionDetails } from './public/screens/SubscriptionDetails/SubscriptionDetails.entry.ce';
 export { defineSolvimonPayInvoice } from './public/screens/PayInvoice/PayInvoice.entry.ce';
 export { defineSolvimonPaymentMethodsManagement } from './public/screens/PaymentMethodsManagement/PaymentMethodsManagement.entry.ce';
+export { defineSolvimonPaymentAcceptorsManagement } from './public/screens/PaymentAcceptorsManagement/PaymentAcceptorsManagement.entry.ce';
 export { defineSolvimonBillingInformation } from './public/components/BillingInformation/BillingInformation.entry.ce';
 export { defineSolvimonBillingInformationForm } from './public/components/BillingInformationForm/BillingInformationForm.entry.ce';
 export { defineSolvimonCustomerPaymentMethods } from './public/components/CustomerPaymentMethods/CustomerPaymentMethods.entry.ce';
@@ -382,6 +389,7 @@ export { defineSolvimonSubscriptionSchedules } from './public/components/Subscri
 export { defineSolvimonSubscriptionsList } from './public/components/SubscriptionsList/SubscriptionsList.entry.ce';
 export { defineSolvimonPaymentMethodForm } from './public/components/PaymentMethodForm/PaymentMethodForm.entry.ce';
 export { defineSolvimonShippingAddressForm } from './public/components/ShippingAddressForm/ShippingAddressForm.entry.ce';
+export { defineSolvimonPaymentAcceptorForm } from './public/components/PaymentAcceptorForm/PaymentAcceptorForm.entry.ce';
 
 // types/public/components/BillingInformation/BillingInformation.entry.ce.d.ts
 export declare const defineSolvimonBillingInformation: (tagName?: string) => string;
@@ -586,6 +594,24 @@ export interface InvoicesListProps {
 }
 export interface InvoicesListEmits {
     (e: 'load-more'): void;
+}
+
+// types/public/components/PaymentAcceptorForm/PaymentAcceptorForm.entry.ce.d.ts
+export declare const defineSolvimonPaymentAcceptorForm: (tagName?: string) => string;
+
+// types/public/components/PaymentAcceptorForm/PaymentAcceptorForm.entry.types.d.ts
+import { CustomerPortalUrl } from '../../../vendor/@solvimon/solvimon-types/index';
+import { PaymentAcceptorFormConfiguration } from './PaymentAcceptorForm.types';
+import { EntryBaseProps } from '../../../types/EntryBaseProps';
+export interface SolvimonPaymentAcceptorFormEntryProps extends EntryBaseProps<CustomerPortalUrl> {
+    configuration?: PaymentAcceptorFormConfiguration;
+}
+
+// types/public/components/PaymentAcceptorForm/PaymentAcceptorForm.types.d.ts
+import { PaymentAcceptor } from '../../../vendor/@solvimon/solvimon-types/index';
+export interface PaymentAcceptorFormConfiguration {
+    /** The bank account to edit. Left out, the form adds a new one. */
+    paymentAcceptorId?: PaymentAcceptor['id'];
 }
 
 // types/public/components/PaymentHistory/PaymentHistory.entry.ce.d.ts
@@ -803,10 +829,23 @@ export interface ActionRequestDetailViewAllPaymentMethods {
 export interface ActionRequestDetailAddPaymentMethod {
     action: 'add-payment-method';
 }
+export interface ActionRequestDetailViewAllPaymentAcceptors {
+    action: 'view-all-payment-acceptors';
+}
+export interface ActionRequestDetailAddPaymentAcceptor {
+    action: 'add-payment-acceptor';
+}
+/** Hand `paymentAcceptorId` to `payment-acceptor-form` as `configuration.paymentAcceptorId`. */
+export interface ActionRequestDetailEditPaymentAcceptor {
+    action: 'edit-payment-acceptor';
+    data: {
+        paymentAcceptorId: string;
+    };
+}
 export interface ActionRequestDetailViewCustomerOverview {
     action: 'view-customer-overview';
 }
-export type ActionRequestDetail = ActionRequestDetailViewInvoice | ActionRequestDetailPayInvoice | ActionRequestDetailViewSubscriptionDetails | ActionRequestDetailViewAllSubscriptions | ActionRequestDetailManageSubscription | ActionRequestDetailEditBillingInformation | ActionRequestDetailViewAllPaymentMethods | ActionRequestDetailAddPaymentMethod | ActionRequestDetailViewCustomerOverview;
+export type ActionRequestDetail = ActionRequestDetailViewInvoice | ActionRequestDetailPayInvoice | ActionRequestDetailViewSubscriptionDetails | ActionRequestDetailViewAllSubscriptions | ActionRequestDetailManageSubscription | ActionRequestDetailEditBillingInformation | ActionRequestDetailViewAllPaymentMethods | ActionRequestDetailAddPaymentMethod | ActionRequestDetailViewAllPaymentAcceptors | ActionRequestDetailAddPaymentAcceptor | ActionRequestDetailEditPaymentAcceptor | ActionRequestDetailViewCustomerOverview;
 /**
  * The `solvimon-action-request` event. It bubbles and crosses the shadow root, so a listener on the
  * document or a container hears every element.
@@ -874,6 +913,12 @@ export interface SolvimonShippingAddressSavedDetail {
      */
     shippingAddressId: string;
 }
+/** The `detail` of `solvimon-payment-acceptor-saved`. */
+export interface SolvimonPaymentAcceptorSavedDetail {
+    /** The tag name of the element the customer saved the bank account in. */
+    componentName: string;
+    paymentAcceptorId: string;
+}
 /**
  * Every event an SDK element dispatches, by name. Each one bubbles and crosses the shadow root,
  * so a listener on the document or a container hears every element inside it.
@@ -903,6 +948,8 @@ export interface SolvimonEventMap {
     'solvimon-payment-method-added': CustomEvent<SolvimonPaymentMethodAddedDetail>;
     /** The customer added or changed a shipping address in `shipping-address-form`. */
     'solvimon-shipping-address-saved': CustomEvent<SolvimonShippingAddressSavedDetail>;
+    /** The customer added or changed a bank account they are paid into in `payment-acceptor-form`. */
+    'solvimon-payment-acceptor-saved': CustomEvent<SolvimonPaymentAcceptorSavedDetail>;
 }
 /**
  * Listeners for the `on` option of `createScreen` and `createComponent`, by event name. They are
@@ -928,11 +975,11 @@ declare global {
 export { createSolvimonCore } from './configuration';
 export { getRegisteredScreenIds, getRegisteredComponentIds } from './registry';
 export type { CoreConfiguration, ComponentConfigurationById, ScreenConfigurationById, ComponentMountConfiguration, ScreenMountConfiguration, SolvimonMountConfig, SolvimonMountInstance, RegisteredScreenId, RegisteredComponentId, } from './types';
-export type { ActionRequestDetail, ActionRequestDetailAddPaymentMethod, ActionRequestDetailEditBillingInformation, ActionRequestDetailManageSubscription, ActionRequestDetailPayInvoice, ActionRequestDetailViewAllPaymentMethods, ActionRequestDetailViewCustomerOverview, ActionRequestDetailViewAllSubscriptions, ActionRequestDetailViewInvoice, ActionRequestDetailViewSubscriptionDetails, ActionRequestEvent, } from './action-request.types';
+export type { ActionRequestDetail, ActionRequestDetailAddPaymentAcceptor, ActionRequestDetailAddPaymentMethod, ActionRequestDetailEditPaymentAcceptor, ActionRequestDetailEditBillingInformation, ActionRequestDetailManageSubscription, ActionRequestDetailPayInvoice, ActionRequestDetailViewAllPaymentAcceptors, ActionRequestDetailViewAllPaymentMethods, ActionRequestDetailViewCustomerOverview, ActionRequestDetailViewAllSubscriptions, ActionRequestDetailViewInvoice, ActionRequestDetailViewSubscriptionDetails, ActionRequestEvent, } from './action-request.types';
 export type { Amount, CheckoutPagePortalUrl, CheckoutPagePortalUrlPayload, CountryCode, CustomerPortalUrl, CustomerPortalUrlPayload, PlatformBranding, PortalUrl, } from '../../vendor/@solvimon/solvimon-types/index';
 export type { IntlMessages, Environment } from '../types';
 export type { SolvimonBranding } from '../../types/branding';
-export type { SolvimonErrorDetail, SolvimonEventListeners, SolvimonPaymentMethodAddedDetail, SolvimonInvoiceCreatedDetail, SolvimonPaymentSucceededDetail, SolvimonPaymentSucceededEvent, SolvimonErrorEvent, SolvimonEventMap, } from './events.types';
+export type { SolvimonErrorDetail, SolvimonEventListeners, SolvimonPaymentMethodAddedDetail, SolvimonPaymentAcceptorSavedDetail, SolvimonInvoiceCreatedDetail, SolvimonPaymentSucceededDetail, SolvimonPaymentSucceededEvent, SolvimonErrorEvent, SolvimonEventMap, } from './events.types';
 export type { ExperimentalFeature } from '../../components/providers/ExperimentalFeatureProvider/ExperimentalFeatureProvider.lib';
 export type { LogEntry, LogLevel, LogSink, ErrorCode, WarnCode, } from '../../components/providers/LoggerProvider/LoggerProvider.types';
 
@@ -956,6 +1003,7 @@ import { SolvimonInvoiceHeaderEntryProps } from '../components/InvoiceHeader/Inv
 import { SolvimonInvoiceDetailsEntryProps } from '../components/InvoiceDetails/InvoiceDetails.entry.types';
 import { SolvimonInvoicesListEntryProps } from '../components/InvoicesList/InvoicesList.entry.types';
 import { SolvimonPaymentMethodFormEntryProps } from '../components/PaymentMethodForm/PaymentMethodForm.entry.types';
+import { SolvimonPaymentAcceptorFormEntryProps } from '../components/PaymentAcceptorForm/PaymentAcceptorForm.entry.types';
 import { SolvimonShippingAddressFormEntryProps } from '../components/ShippingAddressForm/ShippingAddressForm.entry.types';
 import { SolvimonPaymentHistoryEntryProps } from '../components/PaymentHistory/PaymentHistory.entry.types';
 import { SolvimonSubscriptionSchedulesEntryProps } from '../components/SubscriptionSchedules/SubscriptionSchedules.entry.types';
@@ -967,6 +1015,7 @@ import { SolvimonCustomerOverviewEntryProps } from '../screens/CustomerOverview/
 import { SolvimonSubscriptionManagementEntryProps } from '../screens/SubscriptionManagement/SubscriptionManagement.entry.types';
 import { SolvimonPayInvoiceEntryProps } from '../screens/PayInvoice/PayInvoice.entry.types';
 import { SolvimonSubscriptionDetailsEntryProps } from '../screens/SubscriptionDetails/SubscriptionDetails.entry.types';
+import { SolvimonPaymentAcceptorsManagementEntryProps } from '../screens/PaymentAcceptorsManagement/PaymentAcceptorsManagement.entry.types';
 import { SolvimonPaymentMethodsManagementEntryProps } from '../screens/PaymentMethodsManagement/PaymentMethodsManagement.entry.types';
 /**
  * Shared configuration passed to all mounted Solvimon components and screens.
@@ -1010,6 +1059,7 @@ interface RegisteredComponentEntryPropsById {
     'billing-information-form': SolvimonBillingInformationFormEntryProps;
     'payment-method-form': SolvimonPaymentMethodFormEntryProps;
     'shipping-address-form': SolvimonShippingAddressFormEntryProps;
+    'payment-acceptor-form': SolvimonPaymentAcceptorFormEntryProps;
 }
 interface RegisteredScreenEntryPropsById {
     checkout: SolvimonCheckoutEntryProps;
@@ -1019,6 +1069,7 @@ interface RegisteredScreenEntryPropsById {
     'subscription-details': SolvimonSubscriptionDetailsEntryProps;
     'pay-invoice': SolvimonPayInvoiceEntryProps;
     'payment-methods-management': SolvimonPaymentMethodsManagementEntryProps;
+    'payment-acceptors-management': SolvimonPaymentAcceptorsManagementEntryProps;
 }
 /**
  * Registered screen ids that can be used with createScreen.
@@ -1176,6 +1227,14 @@ export interface PayInvoiceProps extends BaseScreenProps {
     refresh?: () => Promise<unknown>;
     configuration: PayInvoiceConfiguration;
 }
+
+// types/public/screens/PaymentAcceptorsManagement/PaymentAcceptorsManagement.entry.ce.d.ts
+export declare const defineSolvimonPaymentAcceptorsManagement: (tagName?: string) => string;
+
+// types/public/screens/PaymentAcceptorsManagement/PaymentAcceptorsManagement.entry.types.d.ts
+import { CustomerPortalUrl } from '../../../vendor/@solvimon/solvimon-types/index';
+import { EntryBaseProps } from '../../../types/EntryBaseProps';
+export type SolvimonPaymentAcceptorsManagementEntryProps = EntryBaseProps<CustomerPortalUrl>;
 
 // types/public/screens/PaymentMethodsManagement/PaymentMethodsManagement.entry.ce.d.ts
 export declare const defineSolvimonPaymentMethodsManagement: (tagName?: string) => string;

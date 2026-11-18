@@ -56,6 +56,12 @@ export const screens: StoryEntry[] = [
         label: 'Payment Methods Management',
         description: 'Add new or set default payment methods for a customer.',
     },
+    {
+        kind: 'screen',
+        id: 'payment-acceptors-management',
+        label: 'Payment Acceptors Management',
+        description: 'Lists the bank accounts a self-billing customer is paid into.',
+    },
 ];
 
 export const components: StoryEntry[] = [
@@ -77,6 +83,14 @@ export const components: StoryEntry[] = [
         label: 'Shipping Address Form',
         description: 'Adds a shipping address, or edits one given configuration.shippingAddressId.',
         defaultConfiguration: { shippingAddressId: '' },
+    },
+    {
+        kind: 'component',
+        id: 'payment-acceptor-form',
+        label: 'Payment Acceptor Form',
+        description:
+            'Adds a bank account a self-billing customer is paid into, or edits one given configuration.paymentAcceptorId.',
+        defaultConfiguration: { paymentAcceptorId: '' },
     },
     {
         kind: 'component',

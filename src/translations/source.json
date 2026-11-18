@@ -919,6 +919,34 @@
     "defaultMessage": "Edit",
     "description": "The label of the button that opens the form to edit the customer billing information"
   },
+  "customer_overview.payment_acceptors_block.add_button_label": {
+    "defaultMessage": "Add payment acceptor",
+    "description": "Label of the link that opens the form for a first bank account"
+  },
+  "customer_overview.payment_acceptors_block.description": {
+    "defaultMessage": "Bank accounts where you receive payments for your self-billing subscriptions.",
+    "description": "Explains the payment acceptors block on the customer overview: the bank accounts the customer is paid into"
+  },
+  "customer_overview.payment_acceptors_block.empty": {
+    "defaultMessage": "No payment acceptors yet",
+    "description": "Shown in the payment acceptors block when the customer has no bank accounts"
+  },
+  "customer_overview.payment_acceptors_block.load_error": {
+    "defaultMessage": "We could not load your payment acceptors.",
+    "description": "Shown in the payment acceptors block when the bank accounts cannot be loaded"
+  },
+  "customer_overview.payment_acceptors_block.manage_button_label": {
+    "defaultMessage": "Manage",
+    "description": "Label of the button that opens the modal to manage the bank accounts the customer is paid into"
+  },
+  "customer_overview.payment_acceptors_block.more": {
+    "defaultMessage": "+ {count} more",
+    "description": "Counts the bank accounts the payment acceptors block leaves out"
+  },
+  "customer_overview.payment_acceptors_block.title": {
+    "defaultMessage": "{count,plural,one{Payment acceptor} other{Payment acceptors}}",
+    "description": "Title of the block that lists the bank accounts the customer receives payments on"
+  },
   "customer_overview.payment_methods.title": {
     "defaultMessage": "{count,plural,one{Payment method} other{Payment methods}}",
     "description": "Title for the payment methods block on the customer overview page"
@@ -1174,6 +1202,106 @@
   "pay_invoice.unavailable.download_invoice": {
     "defaultMessage": "Download invoice",
     "description": "Button that downloads the invoice when it cannot be paid online"
+  },
+  "payment_acceptor.context_menu.delete.label": {
+    "defaultMessage": "Delete",
+    "description": "Menu option that deletes a bank account"
+  },
+  "payment_acceptor.context_menu.edit.label": {
+    "defaultMessage": "Edit",
+    "description": "Menu option that opens the form to change a bank account"
+  },
+  "payment_acceptor_form.name.label": {
+    "defaultMessage": "Name",
+    "description": "Label of the field naming a bank account the customer receives payments on"
+  },
+  "payment_acceptor_form.name.placeholder": {
+    "defaultMessage": "For example: Main business account",
+    "description": "Placeholder of the name of a bank account the customer is paid on"
+  },
+  "payment_acceptors_modal.add.title": {
+    "defaultMessage": "New payment acceptor",
+    "description": "Title of the payment acceptors modal while a new bank account is added"
+  },
+  "payment_acceptors_modal.add_button.label": {
+    "defaultMessage": "Add payment acceptor",
+    "description": "Label of the button that moves to the form for a new bank account"
+  },
+  "payment_acceptors_modal.back_button.label": {
+    "defaultMessage": "Back",
+    "description": "Label of the button that goes back a step in the payment acceptors modal"
+  },
+  "payment_acceptors_modal.cancel_button.label": {
+    "defaultMessage": "Cancel",
+    "description": "Label of the button that closes the payment acceptors modal without saving"
+  },
+  "payment_acceptors_modal.choose.add_link": {
+    "defaultMessage": "+ Add a new payment acceptor",
+    "description": "Link below the bank accounts to choose that moves to the form for a new one"
+  },
+  "payment_acceptors_modal.choose.description": {
+    "defaultMessage": "{payer} pays you into the accounts you choose for this subscription.",
+    "description": "Explains choosing the bank accounts a self-billing subscription is paid into"
+  },
+  "payment_acceptors_modal.choose.label": {
+    "defaultMessage": "Payment acceptors",
+    "description": "Label of the list of bank accounts to choose for the subscription"
+  },
+  "payment_acceptors_modal.choose.none_chosen": {
+    "defaultMessage": "No specific accounts are chosen for this subscription, so {payer} can pay you into any of your active accounts.",
+    "description": "Explains that without a choice every active bank account of the customer applies to the subscription"
+  },
+  "payment_acceptors_modal.choose.save_button.label": {
+    "defaultMessage": "Save",
+    "description": "Label of the button that stores the bank accounts chosen for the subscription"
+  },
+  "payment_acceptors_modal.choose.title": {
+    "defaultMessage": "Choose payment acceptors",
+    "description": "Title of the payment acceptors modal in which the bank accounts of one subscription are chosen"
+  },
+  "payment_acceptors_modal.close_button.label": {
+    "defaultMessage": "Close",
+    "description": "Label of the button that closes the payment acceptors modal"
+  },
+  "payment_acceptors_modal.delete.message": {
+    "defaultMessage": "You will no longer be paid into this bank account.",
+    "description": "Explains what deleting a bank account does, above the account"
+  },
+  "payment_acceptors_modal.delete.title": {
+    "defaultMessage": "Delete payment acceptor",
+    "description": "Title of the payment acceptors modal while a delete is confirmed"
+  },
+  "payment_acceptors_modal.delete_button.label": {
+    "defaultMessage": "Delete",
+    "description": "Label of the button that confirms deleting a bank account"
+  },
+  "payment_acceptors_modal.edit.title": {
+    "defaultMessage": "Edit payment acceptor",
+    "description": "Title of the payment acceptors modal while a bank account is changed"
+  },
+  "payment_acceptors_modal.empty.title": {
+    "defaultMessage": "No payment acceptors yet",
+    "description": "Shown in the payment acceptors modal when the customer has no bank accounts"
+  },
+  "payment_acceptors_modal.error": {
+    "defaultMessage": "Something went wrong. Please try again.",
+    "description": "Error shown in the payment acceptors modal when a change cannot be made"
+  },
+  "payment_acceptors_modal.list.description": {
+    "defaultMessage": "Bank accounts where you receive payments for your self-billing subscriptions.",
+    "description": "Explains the bank accounts listed in the payment acceptors modal"
+  },
+  "payment_acceptors_modal.payer_fallback": {
+    "defaultMessage": "Your customer",
+    "description": "Stands in for the name of whoever pays the subscription when it is not known"
+  },
+  "payment_acceptors_modal.save_button.label": {
+    "defaultMessage": "Save",
+    "description": "Label of the button that stores a new or changed bank account"
+  },
+  "payment_acceptors_modal.title": {
+    "defaultMessage": "Payment acceptors",
+    "description": "Title of the modal that lists the bank accounts the customer receives payments on"
   },
   "payment_completed_card.redirect_message": {
     "defaultMessage": "You are being redirected...",
@@ -1678,6 +1806,18 @@
   "subscription_details.load_error": {
     "defaultMessage": "Unable to load this subscription. Please try again later.",
     "description": "Error message shown when the subscription cannot be loaded on the subscription details page"
+  },
+  "subscription_details.payment_acceptors_block.description": {
+    "defaultMessage": "{payer} pays you into these accounts for this subscription.",
+    "description": "Explains the bank accounts a self-billing subscription is paid into"
+  },
+  "subscription_details.payment_acceptors_block.none_chosen": {
+    "defaultMessage": "No specific accounts are chosen for this subscription, so {payer} can pay you into any of your active accounts.",
+    "description": "Explains on a subscription without chosen bank accounts that every active one of the customer applies"
+  },
+  "subscription_details.payment_acceptors_block.payer_fallback": {
+    "defaultMessage": "Your customer",
+    "description": "Stands in for the name of whoever pays the subscription when it is not known"
   },
   "subscription_details.renew_button.label": {
     "defaultMessage": "Renew subscription",

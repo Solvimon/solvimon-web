@@ -30,6 +30,11 @@ const SubscriptionSchedules = defineAsyncComponent(
     () => import('@/public/components/SubscriptionSchedules/SubscriptionSchedules.vue'),
 );
 
+/** Only self-billing subscriptions show it, so the rest never download it. */
+const CustomerPaymentAcceptors = defineAsyncComponent(
+    () => import('@/public/components/CustomerPaymentAcceptors/CustomerPaymentAcceptors.vue'),
+);
+
 const ChargeOnDemandModal = defineAsyncComponent(
     () => import('@/components/subscriptions/ChargeOnDemandModal/ChargeOnDemandModal.vue'),
 );
@@ -243,6 +248,14 @@ const title = computed<string>(() =>
                 :is-loading="isLoading"
                 :payment-methods="[subscriptionPaymentMethod]"
                 :configuration="{ showViewAllButton: false, showAddButton: false }"
+            />
+
+            <CustomerPaymentAcceptors
+                v-if="subscription?.variant === 'SELF_BILLING'"
+                class="sv-subscription-details__payment-acceptors"
+                :is-loading="isLoading"
+                :subscription="subscription"
+                @subscription-changed="$emit('subscription-changed')"
             />
 
             <ChargeOnDemandModal

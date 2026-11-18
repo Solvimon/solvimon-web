@@ -6,6 +6,7 @@
     "components/InvoiceDetails": 44000,
     "components/InvoiceHeader": 51800,
     "components/InvoicesList": 53100,
+    "components/PaymentAcceptorForm": 86400,
     "components/PaymentHistory": 57300,
     "components/PaymentMethodForm": 50200,
     "components/ShippingAddressForm": 87000,
@@ -16,6 +17,7 @@
     "screens/CheckoutSession": 134800,
     "screens/CustomerOverview": 124200,
     "screens/PayInvoice": 81600,
+    "screens/PaymentAcceptorsManagement": 60200,
     "screens/PaymentMethodsManagement": 67800,
     "screens/SubscriptionDetails": 117900,
     "screens/SubscriptionManagement": 100200

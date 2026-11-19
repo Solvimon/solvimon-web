@@ -2,6 +2,25 @@
     "name": "@solvimon/solvimon-web",
     "version": "0.1.0-alpha.31",
     "description": "Solvimon's Front-end SDK provides you with the building blocks to create a billing self serve experience",
+    "keywords": [
+        "solvimon",
+        "billing",
+        "checkout",
+        "subscriptions",
+        "payments",
+        "adyen",
+        "web-components",
+        "custom-elements",
+        "sdk"
+    ],
+    "homepage": "https://docs.solvimon.com/sdk/frontend-components/overview",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/Solvimon/solvimon-web.git"
+    },
+    "bugs": {
+        "url": "https://github.com/Solvimon/solvimon-web/issues"
+    },
     "private": false,
     "engines": {
         "node": ">=20.19.0"

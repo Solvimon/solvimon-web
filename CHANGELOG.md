@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Self-billing customers manage the bank accounts they are paid into (payment acceptors). The customer overview shows a **Payment acceptors** block (`.sv-payment-acceptors`) to a customer with a self-billing subscription, with up to three of them, **View all** and, without any yet, **Add payment acceptor**. Both ask the host to go on, through the new `view-all-payment-acceptors` and `add-payment-acceptor` action requests.
+- A `payment-acceptors-management` screen (`<solvimon-payment-acceptors-management>`, `@solvimon/solvimon-web/screens/payment-acceptors-management`) lists every acceptor of the customer, inactive ones dimmed. **Add payment acceptor** and each acceptor's **Edit** ask the host to go on (`add-payment-acceptor`, `edit-payment-acceptor` with `{ paymentAcceptorId }`); **Delete** is confirmed in place.
+- A `payment-acceptor-form` component (`<solvimon-payment-acceptor-form>`, `@solvimon/solvimon-web/components/payment-acceptor-form`) adds a bank account, or edits the one given as `configuration.paymentAcceptorId`, with the bank account formats Solvimon Desk offers. It dispatches `solvimon-payment-acceptor-saved` with `{ componentName, paymentAcceptorId }` once stored.
+- Subscription details shows a self-billing subscription's payment acceptors: the ones assigned to it, or, with none assigned, every active one, and says so. **Manage** assigns them in a modal, where a new one can be created too. Assigning needs `PATCH /v1/portal/pricing-plan-subscriptions/{id}` with `payment_acceptor_ids`.
+- Log codes `PAYMENT_ACCEPTORS_LOAD_FAILED`, `PAYMENT_ACCEPTOR_SAVE_FAILED`, `PAYMENT_ACCEPTOR_DELETE_FAILED`, `SUBSCRIPTION_PAYMENT_ACCEPTORS_SAVE_FAILED` and `SELF_BILLING_SUBSCRIPTIONS_LOAD_FAILED`.
+
 ## [0.1.0-alpha.31] - 2026-11-18
 
 ### Added

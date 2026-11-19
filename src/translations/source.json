@@ -931,10 +931,6 @@
     "defaultMessage": "Manage",
     "description": "Label of the button that opens the modal to manage the bank accounts the customer is paid into"
   },
-  "customer_overview.payment_acceptors_block.more": {
-    "defaultMessage": "+ {count} more",
-    "description": "Counts the bank accounts the payment acceptors block leaves out"
-  },
   "customer_overview.payment_acceptors_block.title": {
     "defaultMessage": "{count,plural,one{Payment acceptor} other{Payment acceptors}}",
     "description": "Title of the block that lists the bank accounts the customer receives payments on"
@@ -1106,6 +1102,10 @@
   "invoices_list.title": {
     "defaultMessage": "Invoices",
     "description": "Invoices list title"
+  },
+  "limited_list.more": {
+    "defaultMessage": "+ {count} more",
+    "description": "Card below a shortened list with the number of items it leaves out"
   },
   "on_demand_items_card.more_available": {
     "defaultMessage": "+ {count} available",

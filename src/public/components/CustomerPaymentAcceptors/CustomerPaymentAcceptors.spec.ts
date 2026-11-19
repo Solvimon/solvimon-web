@@ -104,14 +104,14 @@ describe('CustomerPaymentAcceptors', () => {
         const wrapper = await mountBlock();
 
         expect(shownIds(wrapper)).toEqual(['a', 'b', 'c']);
-        expect(wrapper.find('.sv-payment-acceptors__more').text()).toBe('+ 1 more');
+        expect(wrapper.find('.sv-payment-acceptor-list__more').text()).toBe('+ 1 more');
     });
 
     it('shows as many as maxItems asks for', async () => {
         const wrapper = await mountBlock({ customerId: 'cust_1', maxItems: 10 });
 
         expect(shownIds(wrapper)).toEqual(['a', 'b', 'c', 'd']);
-        expect(wrapper.find('.sv-payment-acceptors__more').exists()).toBe(false);
+        expect(wrapper.find('.sv-payment-acceptor-list__more').exists()).toBe(false);
     });
 
     it('asks the host to show them all', async () => {

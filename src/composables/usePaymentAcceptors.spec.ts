@@ -1,6 +1,5 @@
 import type { PaymentAcceptor } from '@solvimon/solvimon-types';
 import { usePaymentAcceptors } from './usePaymentAcceptors';
-import { ApiError } from '@/services/apiError';
 
 const { mockService, mockLoggerError } = vi.hoisted(() => ({
     mockService: {
@@ -82,7 +81,7 @@ describe('usePaymentAcceptors', () => {
         );
     });
 
-    it('stores a new acceptor for the customer with a reference of its own and reloads', async () => {
+    it('stores a new acceptor for the customer, leaving the reference to the portal, and reloads', async () => {
         mockService.createPaymentAcceptor.mockResolvedValue(acceptor());
         const { create } = usePaymentAcceptors({ customerId: 'cust_1' });
 
@@ -91,30 +90,17 @@ describe('usePaymentAcceptors', () => {
         expect(mockService.createPaymentAcceptor).toHaveBeenCalledWith({
             ...details,
             customer_id: 'cust_1',
-            reference: expect.stringMatching(/^[0-9a-f-]{36}$/),
         });
         expect(mockService.getPaymentAcceptors).toHaveBeenCalled();
     });
 
-    it('tries once more with a fresh reference when the reference is taken', async () => {
-        mockService.createPaymentAcceptor
-            .mockRejectedValueOnce(new ApiError({ statusCode: 400, field: 'reference' }))
-            .mockResolvedValueOnce(acceptor());
-        const { create } = usePaymentAcceptors({ customerId: 'cust_1' });
-
-        await create(details);
-
-        const [[first], [second]] = mockService.createPaymentAcceptor.mock.calls;
-        expect(second.reference).not.toBe(first.reference);
-    });
-
-    it('does not retry an error on another field', async () => {
-        const failure = new ApiError({ statusCode: 400, field: 'bank_account.iban' });
+    it('reloads after a failed create and passes the error on', async () => {
+        const failure = new Error('down');
         mockService.createPaymentAcceptor.mockRejectedValue(failure);
         const { create } = usePaymentAcceptors({ customerId: 'cust_1' });
 
         await expect(create(details)).rejects.toBe(failure);
-        expect(mockService.createPaymentAcceptor).toHaveBeenCalledTimes(1);
+        expect(mockService.getPaymentAcceptors).toHaveBeenCalled();
     });
 
     it('updates and deletes by id, reloading after each', async () => {

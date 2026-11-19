@@ -190,14 +190,14 @@ describe('subscriptions service', () => {
     });
 
     describe('setSubscriptionPaymentAcceptors', () => {
-        it('patches only the payment acceptor ids', async () => {
+        it('replaces the payment acceptor ids of the subscription', async () => {
             const { setSubscriptionPaymentAcceptors } = createSubscriptionsService();
             await setSubscriptionPaymentAcceptors({ id: 'ppsu_1', paymentAcceptorIds: ['paya_1'] });
 
             expect(mockRequest).toHaveBeenCalledWith({
-                url: 'https://api.test/portal/pricing-plan-subscriptions/ppsu_1',
+                url: 'https://api.test/portal/pricing-plan-subscriptions/ppsu_1/set-payment-acceptors',
                 data: { payment_acceptor_ids: ['paya_1'] },
-                options: { method: 'PATCH' },
+                options: { method: 'POST' },
             });
         });
     });

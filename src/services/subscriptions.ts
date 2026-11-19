@@ -221,9 +221,9 @@ export function createSubscriptionsService(): SubscriptionsService {
     }
 
     /**
-     * PATCH /v1/portal/pricing-plan-subscriptions/{id} — the bank accounts a self-billing
-     * subscription is paid into. An empty list unlinks them all, after which every active acceptor
-     * of the customer applies.
+     * POST /v1/portal/pricing-plan-subscriptions/{id}/set-payment-acceptors — the bank accounts a
+     * self-billing subscription is paid into. The list replaces the current one; an empty list
+     * unlinks them all, after which every active acceptor of the customer applies.
      */
     function setSubscriptionPaymentAcceptors({
         id,
@@ -233,9 +233,9 @@ export function createSubscriptionsService(): SubscriptionsService {
         paymentAcceptorIds: PaymentAcceptor['id'][];
     }): Promise<PricingPlanSubscription> {
         return request<PricingPlanSubscription>({
-            url: buildUrl(config.apiUrls.config, ...ENDPOINT, id),
+            url: buildUrl(config.apiUrls.config, ...ENDPOINT, id, 'set-payment-acceptors'),
             data: { payment_acceptor_ids: paymentAcceptorIds },
-            options: { method: 'PATCH' },
+            options: { method: 'POST' },
         });
     }
 

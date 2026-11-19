@@ -8,6 +8,7 @@ import {
     useIntl,
 } from '@solvimon/solvimon-ui';
 import type { OnDemandItemsCardEmits, OnDemandItemsCardProps } from './OnDemandItemsCard.types';
+import LimitedList from '@/components/shared/LimitedList/LimitedList.vue';
 
 const MAX_VISIBLE_ITEMS = 2;
 
@@ -17,14 +18,9 @@ defineEmits<OnDemandItemsCardEmits>();
 const { $t } = useIntl();
 const { getPriceLabel } = useChargeOnDemandPriceLabel();
 
-const visibleItems = computed(() =>
-    props.items.slice(0, MAX_VISIBLE_ITEMS).map((item) => ({
-        item,
-        priceLabel: getPriceLabel(item),
-    })),
+const itemsWithPrices = computed(() =>
+    props.items.map((item) => ({ item, priceLabel: getPriceLabel(item) })),
 );
-
-const hiddenItemCount = computed(() => Math.max(props.items.length - MAX_VISIBLE_ITEMS, 0));
 </script>
 
 <template>
@@ -60,12 +56,15 @@ const hiddenItemCount = computed(() => Math.max(props.items.length - MAX_VISIBLE
             </Button>
         </template>
 
-        <ul class="sv-on-demand-items-card__items grid grid-cols-1 gap-1">
-            <li
-                v-for="{ item, priceLabel } in visibleItems"
-                :key="item.pricingItemId"
-                class="sv-on-demand-items-card__item"
-            >
+        <LimitedList
+            class="sv-on-demand-items-card__items"
+            :items="itemsWithPrices"
+            :limit="MAX_VISIBLE_ITEMS"
+            :item-key="({ item }) => item.pricingItemId"
+            item-class="sv-on-demand-items-card__item"
+            more-class="sv-on-demand-items-card__more"
+        >
+            <template #item="{ item: { item, priceLabel } }">
                 <Section no-spacing content-classes="flex flex-col px-4 py-3">
                     <Typography
                         tag="span"
@@ -84,24 +83,18 @@ const hiddenItemCount = computed(() => Math.max(props.items.length - MAX_VISIBLE
                         >{{ priceLabel }}</Typography
                     >
                 </Section>
-            </li>
-            <li v-if="hiddenItemCount > 0" class="sv-on-demand-items-card__more">
-                <Section no-spacing content-classes="px-4 py-3 text-center">
-                    <Typography tag="span" weight="semibold" color="secondary" no-spacing>
-                        {{
-                            $t(
-                                {
-                                    defaultMessage: '+ {count} available',
-                                    id: 'on_demand_items_card.more_available',
-                                    description:
-                                        'Shown below the first on-demand items with the number of items not listed',
-                                },
-                                { count: String(hiddenItemCount) },
-                            )
-                        }}
-                    </Typography>
-                </Section>
-            </li>
-        </ul>
+            </template>
+            <template #more="{ count }">{{
+                $t(
+                    {
+                        defaultMessage: '+ {count} available',
+                        id: 'on_demand_items_card.more_available',
+                        description:
+                            'Shown below the first on-demand items with the number of items not listed',
+                    },
+                    { count: String(count) },
+                )
+            }}</template>
+        </LimitedList>
     </Section>
 </template>

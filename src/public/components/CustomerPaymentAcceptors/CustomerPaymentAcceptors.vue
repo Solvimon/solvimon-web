@@ -56,8 +56,6 @@ const relevantAcceptors = computed(() =>
 );
 
 const maxItems = computed(() => props.maxItems ?? DEFAULT_MAX_ITEMS);
-const shownAcceptors = computed(() => relevantAcceptors.value.slice(0, maxItems.value));
-const hiddenCount = computed(() => relevantAcceptors.value.length - shownAcceptors.value.length);
 
 const subscriptionsService = createSubscriptionsService();
 
@@ -222,30 +220,12 @@ const description = computed(() => {
                 class="min-h-[100px]"
             />
 
-            <div v-else-if="shownAcceptors.length" class="grid grid-cols-1 gap-1">
-                <PaymentAcceptorList
-                    class="sv-payment-acceptors__list"
-                    :payment-acceptors="shownAcceptors"
-                />
-                <Section
-                    v-if="hiddenCount > 0"
-                    no-spacing
-                    content-classes="px-4 py-3 text-center"
-                    class="sv-payment-acceptors__more"
-                >
-                    <Typography tag="span" weight="semibold" color="secondary" no-spacing>{{
-                        $t(
-                            {
-                                defaultMessage: '+ {count} more',
-                                id: 'customer_overview.payment_acceptors_block.more',
-                                description:
-                                    'Counts the bank accounts the payment acceptors block leaves out',
-                            },
-                            { count: String(hiddenCount) },
-                        )
-                    }}</Typography>
-                </Section>
-            </div>
+            <PaymentAcceptorList
+                v-else-if="relevantAcceptors.length"
+                class="sv-payment-acceptors__list"
+                :payment-acceptors="relevantAcceptors"
+                :limit="maxItems"
+            />
 
             <EmptyStatePlaceholder v-else class="sv-payment-acceptors__empty" icon="checkbook">
                 <template #title>

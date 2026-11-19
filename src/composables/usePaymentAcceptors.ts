@@ -6,11 +6,9 @@ import type {
 } from '@solvimon/solvimon-types';
 import { ref, toValue, type MaybeRefOrGetter, type Ref } from 'vue';
 import { useLogger } from '@/components/providers';
-import { ApiError } from '@/services/apiError';
 import { createPaymentAcceptorsService } from '@/services/paymentAcceptors';
-import { randomUuid } from '@/utils/randomUuid';
 
-/** What the customer fills in; the reference and the owner are added on create. */
+/** What the customer fills in; the owner is added on create, and the portal makes the reference. */
 export type PaymentAcceptorCreateDetails = Omit<
     PaymentAcceptorPayload,
     'reference' | 'customer_id'
@@ -33,9 +31,6 @@ export interface UsePaymentAcceptors {
 /** Active ones first, each group in the order the API lists them. */
 const byActiveFirst = (a: PaymentAcceptor, b: PaymentAcceptor) =>
     Number(b.status === 'ACTIVE') - Number(a.status === 'ACTIVE');
-
-const isReferenceTaken = (error: unknown) =>
-    error instanceof ApiError && error.field === 'reference';
 
 /**
  * The payment acceptors of a customer: the bank accounts a self-billing customer is paid into. A
@@ -78,29 +73,12 @@ export function usePaymentAcceptors({
         }
     };
 
-    /**
-     * The customer is not asked for a reference, so each gets a random one. The API keeps references
-     * unique across the platform; a taken one is tried once more with a fresh one.
-     */
-    const store = async (details: PaymentAcceptorCreateDetails) => {
-        const id = toValue(customerId);
-        const payload = (): PaymentAcceptorPayload => ({
-            ...details,
-            reference: randomUuid(),
-            customer_id: id,
-        });
-
-        try {
-            return await service.createPaymentAcceptor(payload());
-        } catch (createError) {
-            if (!isReferenceTaken(createError)) throw createError;
-            return service.createPaymentAcceptor(payload());
-        }
-    };
-
     const create = async (details: PaymentAcceptorCreateDetails) => {
         try {
-            return await store(details);
+            return await service.createPaymentAcceptor({
+                ...details,
+                customer_id: toValue(customerId),
+            });
         } finally {
             await fetchAll();
         }

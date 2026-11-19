@@ -9,11 +9,16 @@ import { createRequestService } from './requests';
 import { buildUrl } from './requests.lib';
 import { useConfig } from '@/components/providers/ConfigProvider/composables/useConfig';
 
+/** Without a reference, the portal generates one (`bank_account_` and 16 random characters). */
+export type PaymentAcceptorCreatePayload = Omit<PaymentAcceptorPayload, 'reference'> & {
+    reference?: PaymentAcceptorPayload['reference'];
+};
+
 export interface PaymentAcceptorsService {
     getPaymentAcceptors(args: {
         customerId: Customer['id'];
     }): Promise<ApiSuccessCollectionResponse<PaymentAcceptor>>;
-    createPaymentAcceptor(payload: PaymentAcceptorPayload): Promise<PaymentAcceptor>;
+    createPaymentAcceptor(payload: PaymentAcceptorCreatePayload): Promise<PaymentAcceptor>;
     updatePaymentAcceptor(args: {
         paymentAcceptorId: PaymentAcceptor['id'];
         payload: PaymentAcceptorPatchPayload;
@@ -45,7 +50,9 @@ export function createPaymentAcceptorsService(): PaymentAcceptorsService {
     }
 
     /** POST /v1/portal/payment-acceptors — only a self-billing customer may, and only a bank account. */
-    function createPaymentAcceptor(payload: PaymentAcceptorPayload): Promise<PaymentAcceptor> {
+    function createPaymentAcceptor(
+        payload: PaymentAcceptorCreatePayload,
+    ): Promise<PaymentAcceptor> {
         return request<PaymentAcceptor>({
             url: buildUrl(config.apiUrls.config, ...BASE_PATH),
             data: payload,

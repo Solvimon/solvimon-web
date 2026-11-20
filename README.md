@@ -153,6 +153,7 @@ or with another library's on the same page.
 | `solvimon-payment-succeeded`      | the checkout, pay-invoice, and `payment-method-form` in `payment` mode                                                                                                                            | `{ componentName, subscriptionId?, invoiceId? }` |
 | `solvimon-invoice-created`        | subscription details, when an on-demand order creates an invoice                                                                                                                                  | `{ invoiceId, paymentStatus }`                   |
 | `solvimon-payment-method-added`   | `payment-method-form`, `payment-methods-management`, and the add-method step of an on-demand order, a top-up or an auto top-up (in subscription details, customer overview and `wallet-balances`) | `{ componentName }`                              |
+| `solvimon-payment-acceptor-saved` | `payment-acceptor-form`, once the bank account is stored                                                                                                                                          | `{ componentName, paymentAcceptorId }`           |
 | `solvimon-shipping-address-saved` | `shipping-address-form`, once the address is stored                                                                                                                                               | `{ componentName, shippingAddressId }`           |
 
 `componentName` is the tag name of the element the event came from. A nested element's event reaches
@@ -262,7 +263,8 @@ container.addEventListener('solvimon-action-request', ({ detail }) => {
 
 `detail.action` is one of `view-invoice`, `pay-invoice`, `view-subscription-details`,
 `view-all-subscriptions`, `manage-subscription`, `edit-billing-information`,
-`view-all-payment-methods`, `add-payment-method` and `view-customer-overview`. None of them
+`view-all-payment-methods`, `add-payment-method`, `view-all-payment-acceptors`,
+`add-payment-acceptor`, `edit-payment-acceptor` and `view-customer-overview`. None of them
 does anything unless you handle it.
 
 ## CSS overrides
@@ -301,15 +303,16 @@ For more details, see [`@solvimon/solvimon-web/core`](./src/public/core/README.m
 
 Full-page experiences.
 
-| Export path                                                 | Custom element                          |
-| ----------------------------------------------------------- | --------------------------------------- |
-| `@solvimon/solvimon-web/screens/checkout`                   | `<solvimon-checkout>`                   |
-| `@solvimon/solvimon-web/screens/checkout-session`           | `<solvimon-checkout-session>`           |
-| `@solvimon/solvimon-web/screens/customer-overview`          | `<solvimon-customer-overview>`          |
-| `@solvimon/solvimon-web/screens/pay-invoice`                | `<solvimon-pay-invoice>`                |
-| `@solvimon/solvimon-web/screens/payment-methods-management` | `<solvimon-payment-methods-management>` |
-| `@solvimon/solvimon-web/screens/subscription-details`       | `<solvimon-subscription-details>`       |
-| `@solvimon/solvimon-web/screens/subscription-management`    | `<solvimon-subscription-management>`    |
+| Export path                                                   | Custom element                            |
+| ------------------------------------------------------------- | ----------------------------------------- |
+| `@solvimon/solvimon-web/screens/checkout`                     | `<solvimon-checkout>`                     |
+| `@solvimon/solvimon-web/screens/checkout-session`             | `<solvimon-checkout-session>`             |
+| `@solvimon/solvimon-web/screens/customer-overview`            | `<solvimon-customer-overview>`            |
+| `@solvimon/solvimon-web/screens/pay-invoice`                  | `<solvimon-pay-invoice>`                  |
+| `@solvimon/solvimon-web/screens/payment-acceptors-management` | `<solvimon-payment-acceptors-management>` |
+| `@solvimon/solvimon-web/screens/payment-methods-management`   | `<solvimon-payment-methods-management>`   |
+| `@solvimon/solvimon-web/screens/subscription-details`         | `<solvimon-subscription-details>`         |
+| `@solvimon/solvimon-web/screens/subscription-management`      | `<solvimon-subscription-management>`      |
 
 ### Components
 
@@ -324,6 +327,7 @@ Embeddable building blocks.
 | `@solvimon/solvimon-web/components/invoice-details`          | `<solvimon-invoice-details>`          |
 | `@solvimon/solvimon-web/components/invoice-header`           | `<solvimon-invoice-header>`           |
 | `@solvimon/solvimon-web/components/invoices-list`            | `<solvimon-invoices-list>`            |
+| `@solvimon/solvimon-web/components/payment-acceptor-form`    | `<solvimon-payment-acceptor-form>`    |
 | `@solvimon/solvimon-web/components/payment-history`          | `<solvimon-payment-history>`          |
 | `@solvimon/solvimon-web/components/payment-method-form`      | `<solvimon-payment-method-form>`      |
 | `@solvimon/solvimon-web/components/shipping-address-form`    | `<solvimon-shipping-address-form>`    |
@@ -447,59 +451,64 @@ The SDK emits structured log entries via the [`onLog`](#error-logging) callback.
 
 ### Error codes
 
-| Code                                        | Description                                                       |
-| :------------------------------------------ | :---------------------------------------------------------------- |
-| `ADYEN_PAYMENT_FAILED`                      | Adyen reported the payment as failed                              |
-| `ADYEN_SUBMIT_FAILED`                       | Failed to submit Adyen drop-in                                    |
-| `APPLE_PAY_AUTHORIZATION_FAILED`            | Payment authorization failed                                      |
-| `APPLE_PAY_ERROR`                           | Apple Pay error                                                   |
-| `AUTO_TOP_UP_CANCELLATION_FAILED`           | Failed to turn off a wallet                                       |
-| `AUTO_TOP_UP_SAVE_FAILED`                   | Failed to save the automatic top-up rule                          |
-| `CHECKOUT_SESSION_LOAD_FAILED`              | Failed to load the checkout session                               |
-| `CHECKOUT_SESSION_UPDATE_FAILED`            | Failed to save the checkout session                               |
-| `INITIAL_DATA_LOAD_FAILED`                  | Failed to load initial data                                       |
-| `INTEGRATION_ERROR`                         | Unhandled error in payment submission flow                        |
-| `INVALID_COUNTRY_CODE`                      | invalid country code provided:…                                   |
-| `INVALID_EMAIL`                             | invalid email provided                                            |
-| `INVALID_REDIRECT_RESULT`                   | Redirect result is set but payment acceptor id is missing         |
-| `INVALID_TOKEN`                             | Failed to fetch access token                                      |
-| `INVOICE_PREVIEW_FAILED`                    | Failed to load the invoice preview                                |
-| `NO_PAYMENT_METHODS_AVAILABLE`              | No payment method can be offered to the customer                  |
-| `ON_DEMAND_CHARGE_FAILED`                   | Failed to charge the on-demand order                              |
-| `ON_DEMAND_ITEMS_LOAD_FAILED`               | Failed to load the on-demand items of the subscription            |
-| `PAYMENT_ACCEPTOR_MISSING`                  | Additional details arrived without a payment acceptor id          |
-| `PAYMENT_AUTHORIZATION_FAILED`              | Failed payment authorization for payment acceptor with id…        |
-| `PAYMENT_DETAILS_CALL_FAILED`               | Failed fetching payment details                                   |
-| `PAYMENT_DETAILS_REJECTED`                  | Payment details returned a failed payment                         |
-| `PAYMENT_INTEGRATION_INITIALIZATION_FAILED` | Failed to mount Adyen web drop-in                                 |
-| `PAYMENT_METHOD_OPTIONS_LOAD_FAILED`        | Failed to load the payment methods that can be offered            |
-| `PORTAL_TOKEN_UNAVAILABLE`                  | Could not exchange the portal link handle for a token             |
-| `PORTAL_TYPE_NOT_ALLOWED`                   | This element does not accept a portal object of type…             |
-| `PORTAL_URL_EXPIRED`                        | The portal link has expired                                       |
-| `PORTAL_URL_REVOKED`                        | The portal link is revoked                                        |
-| `PRICING_PLAN_GROUP_LOAD_FAILED`            | Failed to load the pricing plan group of the subscription         |
-| `PROMOTION_CODE_APPLY_FAILED`               | Failed to apply promotion code                                    |
-| `PROMOTION_CODE_REMOVE_FAILED`              | Failed to remove promotion code                                   |
-| `REQUEST_FAILED`                            | Request failed                                                    |
-| `REQUEST_PARSE_FAILED`                      | Failed to parse JSON response                                     |
-| `RESOURCE_REVOKED`                          | The portal object is not published                                |
-| `SESSION_EXPIRED`                           | Stopped refreshing the access token after repeated 401 responses  |
-| `SHIPPED_SUBSCRIPTIONS_LOAD_FAILED`         | Failed to find out whether the customer has shipped subscriptions |
-| `SHIPPING_ADDRESSES_LOAD_FAILED`            | Failed to load the shipping addresses                             |
-| `SHIPPING_ADDRESS_DELETE_FAILED`            | Failed to delete the shipping address                             |
-| `SHIPPING_ADDRESS_SAVE_FAILED`              | Failed to save the shipping address                               |
-| `STRIPE_ACTION_FAILED`                      | Missing client_secret in Stripe ACTION_REQUIRED response          |
-| `STRIPE_CONFIRMATION_TOKEN_FAILED`          | Stripe submission failed                                          |
-| `STRIPE_REDIRECT_RETURN_FAILED`             | Could not retrieve the payment the Stripe redirect returned from  |
-| `STRIPE_SUBMIT_FAILED`                      | Unexpected error during Stripe submission                         |
-| `SUBSCRIPTION_CANCELLATION_FAILED`          | Failed to change the cancellation state of a subscription         |
-| `SUBSCRIPTION_LOAD_FAILED`                  | Failed to load the subscription the checkout prices               |
-| `SUBSCRIPTION_PAYMENT_METHOD_UPDATE_FAILED` | Failed to link the payment method to the subscription             |
-| `SUBSCRIPTION_PLAN_CHANGE_FAILED`           | Failed to move the subscription to another plan in its group      |
-| `SUBSCRIPTION_UPDATE_FAILED`                | Failed to start a new pricing plan schedule                       |
-| `TOKENIZATION_FAILED`                       | Missing customer id for payment acceptor with id…                 |
-| `TOP_UP_FAILED`                             | Failed to charge the wallet top-up                                |
-| `UNHANDLED_ERROR`                           | An error that reached the SDK with no more specific code          |
+| Code                                         | Description                                                            |
+| :------------------------------------------- | :--------------------------------------------------------------------- |
+| `ADYEN_PAYMENT_FAILED`                       | Adyen reported the payment as failed                                   |
+| `ADYEN_SUBMIT_FAILED`                        | Failed to submit Adyen drop-in                                         |
+| `APPLE_PAY_AUTHORIZATION_FAILED`             | Payment authorization failed                                           |
+| `APPLE_PAY_ERROR`                            | Apple Pay error                                                        |
+| `AUTO_TOP_UP_CANCELLATION_FAILED`            | Failed to turn off a wallet                                            |
+| `AUTO_TOP_UP_SAVE_FAILED`                    | Failed to save the automatic top-up rule                               |
+| `CHECKOUT_SESSION_LOAD_FAILED`               | Failed to load the checkout session                                    |
+| `CHECKOUT_SESSION_UPDATE_FAILED`             | Failed to save the checkout session                                    |
+| `INITIAL_DATA_LOAD_FAILED`                   | Failed to load initial data                                            |
+| `INTEGRATION_ERROR`                          | Unhandled error in payment submission flow                             |
+| `INVALID_COUNTRY_CODE`                       | invalid country code provided:…                                        |
+| `INVALID_EMAIL`                              | invalid email provided                                                 |
+| `INVALID_REDIRECT_RESULT`                    | Redirect result is set but payment acceptor id is missing              |
+| `INVALID_TOKEN`                              | Failed to fetch access token                                           |
+| `INVOICE_PREVIEW_FAILED`                     | Failed to load the invoice preview                                     |
+| `NO_PAYMENT_METHODS_AVAILABLE`               | No payment method can be offered to the customer                       |
+| `ON_DEMAND_CHARGE_FAILED`                    | Failed to charge the on-demand order                                   |
+| `ON_DEMAND_ITEMS_LOAD_FAILED`                | Failed to load the on-demand items of the subscription                 |
+| `PAYMENT_ACCEPTORS_LOAD_FAILED`              | Failed to load the payment acceptors                                   |
+| `PAYMENT_ACCEPTOR_DELETE_FAILED`             | Failed to delete the payment acceptor                                  |
+| `PAYMENT_ACCEPTOR_MISSING`                   | Additional details arrived without a payment acceptor id               |
+| `PAYMENT_ACCEPTOR_SAVE_FAILED`               | Failed to save the payment acceptor                                    |
+| `PAYMENT_AUTHORIZATION_FAILED`               | Failed payment authorization for payment acceptor with id…             |
+| `PAYMENT_DETAILS_CALL_FAILED`                | Failed fetching payment details                                        |
+| `PAYMENT_DETAILS_REJECTED`                   | Payment details returned a failed payment                              |
+| `PAYMENT_INTEGRATION_INITIALIZATION_FAILED`  | Failed to mount Adyen web drop-in                                      |
+| `PAYMENT_METHOD_OPTIONS_LOAD_FAILED`         | Failed to load the payment methods that can be offered                 |
+| `PORTAL_TOKEN_UNAVAILABLE`                   | Could not exchange the portal link handle for a token                  |
+| `PORTAL_TYPE_NOT_ALLOWED`                    | This element does not accept a portal object of type…                  |
+| `PORTAL_URL_EXPIRED`                         | The portal link has expired                                            |
+| `PORTAL_URL_REVOKED`                         | The portal link is revoked                                             |
+| `PRICING_PLAN_GROUP_LOAD_FAILED`             | Failed to load the pricing plan group of the subscription              |
+| `PROMOTION_CODE_APPLY_FAILED`                | Failed to apply promotion code                                         |
+| `PROMOTION_CODE_REMOVE_FAILED`               | Failed to remove promotion code                                        |
+| `REQUEST_FAILED`                             | Request failed                                                         |
+| `REQUEST_PARSE_FAILED`                       | Failed to parse JSON response                                          |
+| `RESOURCE_REVOKED`                           | The portal object is not published                                     |
+| `SELF_BILLING_SUBSCRIPTIONS_LOAD_FAILED`     | Failed to find out whether the customer has self-billing subscriptions |
+| `SESSION_EXPIRED`                            | Stopped refreshing the access token after repeated 401 responses       |
+| `SHIPPED_SUBSCRIPTIONS_LOAD_FAILED`          | Failed to find out whether the customer has shipped subscriptions      |
+| `SHIPPING_ADDRESSES_LOAD_FAILED`             | Failed to load the shipping addresses                                  |
+| `SHIPPING_ADDRESS_DELETE_FAILED`             | Failed to delete the shipping address                                  |
+| `SHIPPING_ADDRESS_SAVE_FAILED`               | Failed to save the shipping address                                    |
+| `STRIPE_ACTION_FAILED`                       | Missing client_secret in Stripe ACTION_REQUIRED response               |
+| `STRIPE_CONFIRMATION_TOKEN_FAILED`           | Stripe submission failed                                               |
+| `STRIPE_REDIRECT_RETURN_FAILED`              | Could not retrieve the payment the Stripe redirect returned from       |
+| `STRIPE_SUBMIT_FAILED`                       | Unexpected error during Stripe submission                              |
+| `SUBSCRIPTION_CANCELLATION_FAILED`           | Failed to change the cancellation state of a subscription              |
+| `SUBSCRIPTION_LOAD_FAILED`                   | Failed to load the subscription the checkout prices                    |
+| `SUBSCRIPTION_PAYMENT_ACCEPTORS_SAVE_FAILED` | Failed to save the payment acceptors of the subscription               |
+| `SUBSCRIPTION_PAYMENT_METHOD_UPDATE_FAILED`  | Failed to link the payment method to the subscription                  |
+| `SUBSCRIPTION_PLAN_CHANGE_FAILED`            | Failed to move the subscription to another plan in its group           |
+| `SUBSCRIPTION_UPDATE_FAILED`                 | Failed to start a new pricing plan schedule                            |
+| `TOKENIZATION_FAILED`                        | Missing customer id for payment acceptor with id…                      |
+| `TOP_UP_FAILED`                              | Failed to charge the wallet top-up                                     |
+| `UNHANDLED_ERROR`                            | An error that reached the SDK with no more specific code               |
 
 ### Warning codes
 

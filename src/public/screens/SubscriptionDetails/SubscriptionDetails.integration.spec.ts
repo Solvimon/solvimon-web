@@ -154,6 +154,17 @@ vi.mock('@/components/subscriptions/ChargeOnDemandModal/ChargeOnDemandModal.vue'
     }),
 }));
 
+// Loaded with `import()`, which only unwraps `default` from a module that says it is one.
+vi.mock('@/public/components/CustomerPaymentAcceptors/CustomerPaymentAcceptors.vue', () => ({
+    __esModule: true,
+    default: defineComponent({
+        name: 'CustomerPaymentAcceptorsStub',
+        props: { subscription: Object, isLoading: Boolean },
+        emits: ['subscription-changed'],
+        setup: () => () => h('div', { class: 'payment-acceptors-stub' }),
+    }),
+}));
+
 vi.mock('@/public/components/CustomerPaymentMethods/CustomerPaymentMethods.vue', () => ({
     default: defineComponent({
         name: 'CustomerPaymentMethodsStub',
@@ -612,6 +623,42 @@ describe('SubscriptionDetails', () => {
             });
 
             expect(wrapper.find('.sv-subscription-details__payment-method').exists()).toBe(false);
+        });
+    });
+
+    describe('payment acceptors', () => {
+        const selfBilling = {
+            ...mockSubscription,
+            variant: 'SELF_BILLING',
+        } as unknown as PricingPlanSubscriptionExpanded;
+
+        it('shows the bank accounts a self-billing subscription is paid into', async () => {
+            const wrapper = mountComponent({ subscription: selfBilling });
+            await flushPromises();
+
+            const block = wrapper.findComponent({ name: 'CustomerPaymentAcceptorsStub' });
+            expect(block.exists()).toBe(true);
+            expect(block.props('subscription')).toEqual(selfBilling);
+        });
+
+        it('asks for the subscription again once its acceptors are chosen', async () => {
+            const wrapper = mountComponent({ subscription: selfBilling });
+            await flushPromises();
+
+            wrapper
+                .findComponent({ name: 'CustomerPaymentAcceptorsStub' })
+                .vm.$emit('subscription-changed');
+
+            expect(wrapper.emitted('subscription-changed')).toHaveLength(1);
+        });
+
+        it('leaves them out of any other subscription', async () => {
+            const wrapper = mountComponent();
+            await flushPromises();
+
+            expect(wrapper.findComponent({ name: 'CustomerPaymentAcceptorsStub' }).exists()).toBe(
+                false,
+            );
         });
     });
 

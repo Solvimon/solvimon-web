@@ -124,6 +124,10 @@
             "types": "./dist/screens/PaymentMethodsManagement/PaymentMethodsManagement.ce.d.ts",
             "default": "./dist/screens/PaymentMethodsManagement/PaymentMethodsManagement.mjs"
         },
+        "./screens/payment-acceptors-management": {
+            "types": "./dist/screens/PaymentAcceptorsManagement/PaymentAcceptorsManagement.ce.d.ts",
+            "default": "./dist/screens/PaymentAcceptorsManagement/PaymentAcceptorsManagement.mjs"
+        },
         "./components/subscriptions-list": {
             "types": "./dist/components/SubscriptionsList/SubscriptionsList.ce.d.ts",
             "default": "./dist/components/SubscriptionsList/SubscriptionsList.mjs"
@@ -147,6 +151,10 @@
         "./components/shipping-address-form": {
             "types": "./dist/components/ShippingAddressForm/ShippingAddressForm.ce.d.ts",
             "default": "./dist/components/ShippingAddressForm/ShippingAddressForm.mjs"
+        },
+        "./components/payment-acceptor-form": {
+            "types": "./dist/components/PaymentAcceptorForm/PaymentAcceptorForm.ce.d.ts",
+            "default": "./dist/components/PaymentAcceptorForm/PaymentAcceptorForm.mjs"
         },
         "./components/invoice": {
             "types": "./dist/components/Invoice/Invoice.ce.d.ts",

@@ -5,7 +5,6 @@ import {
     ErrorNotification,
     PaymentAcceptor,
     Section,
-    Typography,
     useIntl,
 } from '@solvimon/solvimon-ui';
 import type {
@@ -152,6 +151,7 @@ const description = computed(() => {
         no-spacing
         no-border
         content-background="none"
+        :description="description"
         :title="
             $t(
                 {
@@ -203,15 +203,6 @@ const description = computed(() => {
         </template>
 
         <div class="grid grid-cols-1 gap-2">
-            <Typography
-                variant="body-xs"
-                color="secondary"
-                tag="p"
-                no-spacing
-                class="sv-payment-acceptors__description"
-                >{{ description }}</Typography
-            >
-
             <ErrorNotification
                 v-if="error"
                 class="sv-payment-acceptors__error sv-error"

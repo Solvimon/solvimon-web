@@ -305,6 +305,8 @@
     "pay_invoice.unavailable.download_invoice": "Rechnung herunterladen",
     "payment_acceptor.context_menu.delete.label": "Löschen",
     "payment_acceptor.context_menu.edit.label": "Bearbeiten",
+    "payment_acceptor_errors.field_refused": "Dieser Wert wird nicht akzeptiert. Prüfen Sie ihn und versuchen Sie es erneut.",
+    "payment_acceptor_errors.in_use": "Sie können dieses Empfangskonto nicht löschen, weil ein Abonnement oder eine Rechnung es verwendet.",
     "payment_acceptor_form.bank_account.title": "Bankkonto",
     "payment_acceptor_form.name.label": "Name",
     "payment_acceptor_form.name.placeholder": "Zum Beispiel: Hauptgeschäftskonto",

@@ -1,9 +1,12 @@
 import type { PaymentAcceptor } from '@solvimon/solvimon-types';
 import {
     createPaymentAcceptorFormState,
+    getRefusedShownField,
+    isPaymentAcceptorInUse,
     toCreateDetails,
     toPatchPayload,
 } from './PaymentAcceptorForm.lib';
+import { ApiError } from '@/services/apiError';
 
 const stored = {
     id: 'paya_1',
@@ -85,5 +88,33 @@ describe('toPatchPayload', () => {
         form.bank_account.bank_name = '';
 
         expect(toPatchPayload(initial, form).bank_account).toMatchObject({ bank_name: null });
+    });
+});
+
+describe('getRefusedShownField', () => {
+    it('names a refused field the form shows, by its own name', () => {
+        expect(
+            getRefusedShownField(
+                new ApiError({ statusCode: 400, field: 'bank_account.br_local.branch' }),
+            ),
+        ).toBe('branch');
+        expect(getRefusedShownField(new ApiError({ statusCode: 400, field: 'iban' }))).toBe('iban');
+    });
+
+    it('names nothing for a field the form does not show, or an error that is not a refusal', () => {
+        expect(
+            getRefusedShownField(new ApiError({ statusCode: 400, field: 'id' })),
+        ).toBeUndefined();
+        expect(
+            getRefusedShownField(new ApiError({ statusCode: 500, field: 'iban' })),
+        ).toBeUndefined();
+        expect(getRefusedShownField(new Error('down'))).toBeUndefined();
+    });
+});
+
+describe('isPaymentAcceptorInUse', () => {
+    it('recognises the refusal to delete a payment acceptor that is still used', () => {
+        expect(isPaymentAcceptorInUse(new ApiError({ statusCode: 400, field: 'id' }))).toBe(true);
+        expect(isPaymentAcceptorInUse(new ApiError({ statusCode: 500 }))).toBe(false);
     });
 });

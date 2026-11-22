@@ -113,7 +113,7 @@ describe('PaymentAcceptorForm (public)', () => {
 
         expect(
             wrapper.findComponent({ name: 'InternalPaymentAcceptorForm' }).props('apiError'),
-        ).toEqual({ iban: 'Bad IBAN' });
+        ).toEqual({ iban: "This value isn't accepted. Check it and try again." });
         expect(wrapper.find('.error-notification-stub').exists()).toBe(false);
     });
 

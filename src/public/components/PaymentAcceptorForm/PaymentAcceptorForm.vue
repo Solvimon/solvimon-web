@@ -8,7 +8,8 @@ import Skeleton from '@/components/shared/Skeleton.vue';
 import { useLogger } from '@/components/providers';
 import { useHostEvent } from '@/components/providers/HostElementProvider/composables/useHostEvent';
 import type { UsePaymentAcceptors } from '@/composables/usePaymentAcceptors';
-import { ApiError } from '@/services/apiError';
+import { getRefusedShownField } from '@/components/payments/PaymentAcceptorForm/PaymentAcceptorForm.lib';
+import { usePaymentAcceptorErrorMessages } from '@/composables/usePaymentAcceptorErrorMessages';
 
 const props = defineProps<{
     /** The bank account being edited; left out, a new one is added. */
@@ -23,6 +24,7 @@ const props = defineProps<{
 
 const { $t } = useIntl();
 const logger = useLogger();
+const { fieldRefused } = usePaymentAcceptorErrorMessages();
 const { dispatch, componentName } = useHostEvent();
 
 const formRef = ref<InstanceType<typeof InternalPaymentAcceptorForm>>();
@@ -68,8 +70,9 @@ const save = async () => {
             {},
             error,
         );
-        if (error instanceof ApiError && error.field) {
-            apiError.value = { [error.field]: error.message };
+        const refusedField = getRefusedShownField(error);
+        if (refusedField) {
+            apiError.value = { [refusedField]: fieldRefused() };
         } else {
             hasSaveFailed.value = true;
         }

@@ -7,6 +7,7 @@ import {
 } from '@solvimon/solvimon-ui';
 import type { PaymentAcceptorFormState } from './PaymentAcceptorForm.types';
 import type { PaymentAcceptorCreateDetails } from '@/composables/usePaymentAcceptors';
+import { isApiError } from '@/services/apiError';
 
 /** The form filled from an acceptor, or empty, starting on IBAN, for a new one. */
 export const createPaymentAcceptorFormState = (
@@ -58,3 +59,46 @@ export const toPatchPayload = (
         bank_account: bankAccount,
     };
 };
+
+/**
+ * The fields the form shows, by the name the API reports a refused field under: the property name
+ * alone, such as `branch` for `bank_account.br_local.branch`.
+ */
+const SHOWN_FIELDS = new Set([
+    'name',
+    'country',
+    'bank_name',
+    'iban',
+    'bic',
+    'account_number',
+    'bank_code',
+    'routing_number',
+    'account_type',
+    'sort_code',
+    'branch',
+    'cbu',
+    'clabe',
+    'line1',
+    'line2',
+    'postal_code',
+    'city',
+    'state',
+]);
+
+/**
+ * The field a refused save names, when it is one the form shows. A field the form does not show
+ * would put the message where the customer cannot see it, so that is left to a general message.
+ */
+export const getRefusedShownField = (error: unknown): string | undefined => {
+    if (!isApiError(error) || error.statusCode !== 400 || !error.field) return undefined;
+
+    const fieldName = error.field.split('.').pop() ?? error.field;
+    return SHOWN_FIELDS.has(fieldName) ? fieldName : undefined;
+};
+
+/**
+ * The API refuses to delete an acceptor that a subscription or an invoice still uses, both on its
+ * `id`, and tells the two apart only in its English message.
+ */
+export const isPaymentAcceptorInUse = (error: unknown): boolean =>
+    isApiError(error) && error.statusCode === 400 && error.field === 'id';

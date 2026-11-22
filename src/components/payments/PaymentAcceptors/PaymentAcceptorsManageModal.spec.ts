@@ -246,6 +246,50 @@ describe('PaymentAcceptorsManageModal', () => {
         );
     });
 
+    it('says a payment acceptor in use cannot be deleted', async () => {
+        const actions = {
+            ...createActions(),
+            remove: vi.fn().mockRejectedValue(
+                new ApiError({
+                    statusCode: 400,
+                    field: 'id',
+                    message: 'associated with invoices',
+                }),
+            ),
+        };
+        const wrapper = mountComponent({ actions });
+
+        await clickMenuItem(wrapper, 'Delete');
+        await wrapper.find('.modal__confirm').trigger('click');
+        await flushPromises();
+
+        expect(wrapper.find('.error-notification-stub').text()).toBe(
+            "You can't delete this payment acceptor because a subscription or invoice uses it.",
+        );
+    });
+
+    it('gives a general error for a refused field the form does not show', async () => {
+        const actions = {
+            ...createActions(),
+            create: vi
+                .fn()
+                .mockRejectedValue(
+                    new ApiError({ statusCode: 400, field: 'customer_id', message: 'Unknown' }),
+                ),
+        };
+        const wrapper = mountComponent({ actions, start: 'ADD' });
+
+        await wrapper.find('.modal__confirm').trigger('click');
+        await flushPromises();
+
+        expect(wrapper.find('.error-notification-stub').text()).toBe(
+            'Something went wrong. Please try again.',
+        );
+        expect(
+            wrapper.findComponent({ name: 'PaymentAcceptorForm' }).props('apiError'),
+        ).toBeUndefined();
+    });
+
     it('hands a refused field to the form rather than a general error', async () => {
         const actions = {
             ...createActions(),
@@ -261,7 +305,7 @@ describe('PaymentAcceptorsManageModal', () => {
         await flushPromises();
 
         expect(wrapper.findComponent({ name: 'PaymentAcceptorForm' }).props('apiError')).toEqual({
-            iban: 'Bad IBAN',
+            iban: "This value isn't accepted. Check it and try again.",
         });
         expect(wrapper.find('.error-notification-stub').exists()).toBe(false);
     });

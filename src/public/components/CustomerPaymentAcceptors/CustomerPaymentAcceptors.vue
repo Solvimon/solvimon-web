@@ -190,7 +190,6 @@ const description = computed(() => {
                 class="sv-payment-acceptors__list sv-payment-acceptor-list"
                 :items="relevantAcceptors"
                 :limit="maxItems"
-                :show-all="manage"
                 :item-key="({ id }) => id"
                 item-class="sv-payment-acceptor-list__item"
                 more-class="sv-payment-acceptor-list__more"

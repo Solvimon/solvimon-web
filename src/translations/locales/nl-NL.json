@@ -277,7 +277,6 @@
     "invoice_table.row.view_invoice_aria_label": "Factuur {invoiceNumber} bekijken",
     "invoices_list.title": "Facturen",
     "limited_list.more": "+ {count} meer",
-    "limited_list.show_all": "Alle {count} tonen",
     "on_demand_items_card.more_available": "+ {count} beschikbaar",
     "on_demand_items_card.order_button.label": "Kopen",
     "on_demand_items_card.title": "Beschikbare on-demand items",

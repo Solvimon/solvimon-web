@@ -24,7 +24,7 @@ const hiddenCount = computed(() => props.items.length - shownItems.value.length)
         <li v-for="item in shownItems" :key="itemKey(item)" :class="itemClass">
             <slot name="item" :item="item" />
         </li>
-        <li v-if="hiddenCount > 0" class="mt-1 text-sm text-primary-900" :class="moreClass">
+        <li v-if="hiddenCount > 0" class="text-xs text-primary-900" :class="moreClass">
             <slot name="more" :count="hiddenCount">{{
                 $t(
                     {

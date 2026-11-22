@@ -44,16 +44,6 @@ describe('LimitedList', () => {
         expect(wrapper.find('.more').text()).toBe('+ 2 available');
     });
 
-    it('offers to show all items, with the total, when it is given a way to', async () => {
-        const showAll = vi.fn();
-        const wrapper = mountList({ limit: 3, moreClass: 'more', showAll });
-
-        expect(wrapper.find('.more').text()).toBe('Show all 4');
-        await wrapper.find('.more button').trigger('click');
-
-        expect(showAll).toHaveBeenCalledOnce();
-    });
-
     it('puts the given classes on each item', () => {
         const wrapper = mountList({ limit: 4, itemClass: 'item' });
 

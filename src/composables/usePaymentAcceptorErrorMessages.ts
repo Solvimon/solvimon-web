@@ -1,8 +1,23 @@
 import { useIntl } from '@solvimon/solvimon-ui';
+import type { FormFieldError } from '@solvimon/solvimon-types';
+import {
+    getRefusedShownField,
+    isPaymentAcceptorInUse,
+} from '@/components/payments/PaymentAcceptorForm/PaymentAcceptorForm.lib';
 
-/** The customer-facing words for a refusal from the payment acceptors API, in the SDK's languages. */
+/**
+ * What the customer is told when the payment acceptors API refuses a change, in the SDK's
+ * languages. The API's own messages are English and technical, so they go to the logs only.
+ */
 export function usePaymentAcceptorErrorMessages() {
     const { $t } = useIntl();
+
+    const somethingWentWrong = () =>
+        $t({
+            defaultMessage: 'Something went wrong. Please try again.',
+            id: 'payment_acceptors_modal.error',
+            description: 'Error shown in the payment acceptors modal when a change cannot be made',
+        });
 
     const fieldRefused = () =>
         $t({
@@ -21,5 +36,18 @@ export function usePaymentAcceptorErrorMessages() {
                 'Shown when a payment acceptor cannot be deleted because a subscription or invoice still uses it',
         });
 
-    return { fieldRefused, inUse };
+    /** A refused field the form shows goes on that field; anything else is a message above it. */
+    const describeSaveError = (
+        error: unknown,
+    ): { apiError: FormFieldError; message?: never } | { apiError?: never; message: string } => {
+        const refusedField = getRefusedShownField(error);
+        return refusedField
+            ? { apiError: { [refusedField]: fieldRefused() } }
+            : { message: somethingWentWrong() };
+    };
+
+    const describeDeleteError = (error: unknown): string =>
+        isPaymentAcceptorInUse(error) ? inUse() : somethingWentWrong();
+
+    return { describeSaveError, describeDeleteError };
 }

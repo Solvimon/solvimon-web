@@ -1119,6 +1119,10 @@
     "defaultMessage": "+ {count} more",
     "description": "Text below a shortened list with the number of items it leaves out"
   },
+  "limited_list.show_all": {
+    "defaultMessage": "Show all {count}",
+    "description": "Link below a shortened list that opens all of its items, with how many there are"
+  },
   "on_demand_items_card.more_available": {
     "defaultMessage": "+ {count} available",
     "description": "Shown below the first on-demand items with the number of items not listed"

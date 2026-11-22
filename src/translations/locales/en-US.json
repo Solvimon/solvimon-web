@@ -279,6 +279,7 @@
   "invoice_table.row.view_invoice_aria_label": "View invoice {invoiceNumber}",
   "invoices_list.title": "Invoices",
   "limited_list.more": "+ {count} more",
+  "limited_list.show_all": "Show all {count}",
   "on_demand_items_card.more_available": "+ {count} available",
   "on_demand_items_card.order_button.label": "Purchase",
   "on_demand_items_card.title": "Available on demand items",

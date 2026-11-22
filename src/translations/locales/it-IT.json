@@ -279,6 +279,7 @@
     "invoice_table.row.view_invoice_aria_label": "Visualizza fattura {invoiceNumber}",
     "invoices_list.title": "Fatture",
     "limited_list.more": "+ altri {count}",
+    "limited_list.show_all": "Mostra tutti ({count})",
     "on_demand_items_card.more_available": "+ {count} disponibili",
     "on_demand_items_card.order_button.label": "Acquista",
     "on_demand_items_card.title": "Articoli on demand disponibili",

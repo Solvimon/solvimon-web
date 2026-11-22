@@ -235,8 +235,7 @@ const confirmButtonText = computed(() =>
         ? $t({
               defaultMessage: 'Create',
               id: 'payment_acceptors_modal.create.create_button.label',
-              description:
-                  'Label of the button that creates the new payment acceptor and goes back to assigning',
+              description: 'Label of the button that creates the new payment acceptor',
           })
         : $t({
               defaultMessage: 'Assign payment acceptors',

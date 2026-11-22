@@ -1235,14 +1235,6 @@
     "defaultMessage": "For example: Main business account",
     "description": "Placeholder of the name of a bank account the customer is paid on"
   },
-  "payment_acceptors_modal.assign.all.description": {
-    "defaultMessage": "Including ones you add later",
-    "description": "Below the option that chooses every payment acceptor: ones added later apply too"
-  },
-  "payment_acceptors_modal.assign.all.label": {
-    "defaultMessage": "All payment acceptors",
-    "description": "Option that chooses every payment acceptor of the customer for the subscription"
-  },
   "payment_acceptors_modal.assign.confirm_button.label": {
     "defaultMessage": "Assign payment acceptors",
     "description": "Label of the button that stores the bank accounts chosen for the subscription"
@@ -1251,9 +1243,9 @@
     "defaultMessage": "Select payment acceptors",
     "description": "Label of the list of bank accounts to choose for the subscription"
   },
-  "payment_acceptors_modal.assign.none_chosen_error": {
-    "defaultMessage": "Select at least one payment acceptor.",
-    "description": "Error in the payment acceptors modal when no payment acceptor is ticked for the subscription"
+  "payment_acceptors_modal.assign.none_selected_error": {
+    "defaultMessage": "Select at least one payment acceptor, or turn on Use all.",
+    "description": "Error in the payment acceptors modal when the use-all toggle is off and no payment acceptor is ticked"
   },
   "payment_acceptors_modal.assign.title": {
     "defaultMessage": "Assign payment acceptors",
@@ -1334,6 +1326,14 @@
   "payment_acceptors_modal.save_button.label": {
     "defaultMessage": "Save",
     "description": "Label of the button that stores a new or changed bank account"
+  },
+  "payment_acceptors_modal.use_all.description": {
+    "defaultMessage": "Includes any you add later.",
+    "description": "Below the use-all toggle: payment acceptors added later also apply to the subscription"
+  },
+  "payment_acceptors_modal.use_all.label": {
+    "defaultMessage": "Use all payment acceptors",
+    "description": "Label of the toggle that lets a self-billing subscription use every active payment acceptor of the customer"
   },
   "payment_completed_card.redirect_message": {
     "defaultMessage": "You are being redirected...",

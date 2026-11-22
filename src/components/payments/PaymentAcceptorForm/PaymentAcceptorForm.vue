@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, toRaw } from 'vue';
+import { nextTick, ref, toRaw } from 'vue';
 import {
     BankAccountEditor,
     Input,
@@ -32,13 +32,32 @@ const name = formControlModel(form, 'name', asText);
 /** Collects the bank account editor's own rules too, which register under this one. */
 const validation = useValidation({ name: { required, maxLength: maxLength(256) } }, form);
 
+const root = ref<HTMLElement>();
+
+/**
+ * Brings the first refused field into view. The form is often taller than the modal around it, so
+ * a refused field below the fold would otherwise leave the confirm button looking like it did
+ * nothing. The fields mark an error only with its message, which the ui renders in the danger
+ * colour, so that class is the one hook there is.
+ */
+const showFirstError = async () => {
+    await nextTick();
+    root.value?.querySelector('.text-feedback-danger')?.scrollIntoView({
+        block: 'center',
+        behavior: 'smooth',
+    });
+};
+
 defineExpose({
     /**
      * Checks the form and hands back what to store, or nothing while something is missing — the
      * fields say what. Adding gives the details of a new acceptor; editing, the changes to send.
      */
     submit: async (): Promise<PaymentAcceptorFormResult | undefined> => {
-        if (!(await validation.value.$validate())) return undefined;
+        if (!(await validation.value.$validate())) {
+            await showFirstError();
+            return undefined;
+        }
 
         return props.paymentAcceptor
             ? { method: 'UPDATE', payload: toPatchPayload(initialState, toRaw(form.value)) }
@@ -48,7 +67,7 @@ defineExpose({
 </script>
 
 <template>
-    <div class="sv-payment-acceptor-form grid grid-cols-1 gap-4">
+    <div ref="root" class="sv-payment-acceptor-form grid grid-cols-1 gap-4">
         <Input
             v-model="name"
             name="payment_acceptor_name"

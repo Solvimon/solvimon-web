@@ -9,7 +9,10 @@ vi.mock('@solvimon/solvimon-ui', async () => {
 
 const items = ['a', 'b', 'c', 'd'];
 
-const mountList = (props: Record<string, unknown> = {}, slots: Record<string, unknown> = {}) =>
+const mountList = (
+    props: { limit: number } & Record<string, unknown>,
+    slots: Record<string, unknown> = {},
+) =>
     mount(LimitedList<string>, {
         props: { items, itemKey: (item: string) => item, ...props },
         slots: {
@@ -19,13 +22,6 @@ const mountList = (props: Record<string, unknown> = {}, slots: Record<string, un
     });
 
 describe('LimitedList', () => {
-    it('shows every item without a limit', () => {
-        const wrapper = mountList();
-
-        expect(wrapper.findAll('.row').map((row) => row.text())).toEqual(items);
-        expect(wrapper.text()).not.toContain('more');
-    });
-
     it('shows the first items up to the limit and counts the rest', () => {
         const wrapper = mountList({ limit: 3, moreClass: 'more' });
 
@@ -49,7 +45,7 @@ describe('LimitedList', () => {
     });
 
     it('puts the given classes on each item', () => {
-        const wrapper = mountList({ itemClass: 'item' });
+        const wrapper = mountList({ limit: 4, itemClass: 'item' });
 
         expect(wrapper.findAll('li.item')).toHaveLength(4);
     });

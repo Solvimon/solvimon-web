@@ -158,6 +158,15 @@ describe('CustomerPaymentAcceptors', () => {
             expect(wrapper.text()).toContain("You're paid into one of your payment acceptors.");
         });
 
+        it('offers no manage action while there is no payment acceptor to show', async () => {
+            acceptorsState.items = [acceptor('old', 'ARCHIVED')];
+            const wrapper = await mountBlock({ subscription: subscription() });
+
+            expect(wrapper.find('.sv-payment-acceptors__manage').exists()).toBe(false);
+            expect(wrapper.find('.sv-payment-acceptors__view-all').exists()).toBe(false);
+            expect(wrapper.find('.sv-payment-acceptors__add').exists()).toBe(true);
+        });
+
         it('chooses its acceptors, storing the choice on the subscription', async () => {
             mockSetSubscriptionPaymentAcceptors.mockResolvedValue({});
             const wrapper = await mountBlock({ subscription: subscription(['b']) });

@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { nextTick, ref, toRaw } from 'vue';
+import { nextTick, ref, toRaw, watch } from 'vue';
 import {
     BankAccountEditor,
+    createBankAccountFormState,
     Input,
     Typography,
     useIntl,
@@ -28,6 +29,20 @@ const initialState = createPaymentAcceptorFormState(props.paymentAcceptor);
 const form = ref<PaymentAcceptorFormState>(structuredClone(initialState));
 
 const name = formControlModel(form, 'name', asText);
+
+/**
+ * The editor's type select only changes `type`, but each type keeps its fields in its own part of the
+ * state (`account_number_and_bic`, `br_local`, …), which the editor needs before it shows them and
+ * validates them as required. Rebuild the bank account for the new type, keeping what is shared.
+ */
+watch(
+    () => form.value.bank_account.type,
+    (type, previousType) => {
+        if (type === previousType) return;
+        form.value.bank_account = createBankAccountFormState(type, form.value.bank_account);
+    },
+    { flush: 'sync' },
+);
 
 /** Collects the bank account editor's own rules too, which register under this one. */
 const validation = useValidation({ name: { required, maxLength: maxLength(256) } }, form);

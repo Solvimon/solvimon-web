@@ -51,6 +51,25 @@ describe('PaymentAcceptorForm', () => {
         expect(scrollIntoView).toHaveBeenCalledOnce();
     });
 
+    it('gives the editor the fields of a bank account type it switches to', async () => {
+        const wrapper = mount(PaymentAcceptorForm);
+        const editor = wrapper.findComponent({ name: 'BankAccountEditorStub' });
+        const ibanAccount = editor.props('modelValue') as Record<string, unknown>;
+
+        editor.vm.$emit('update:modelValue', {
+            ...ibanAccount,
+            bank_name: 'Banco',
+            type: 'ACCOUNT_NUMBER_AND_BIC',
+        });
+        await wrapper.vm.$nextTick();
+
+        expect(editor.props('modelValue')).toMatchObject({
+            type: 'ACCOUNT_NUMBER_AND_BIC',
+            bank_name: 'Banco',
+            account_number_and_bic: { account_number: '', bic: '', bank_code: '' },
+        });
+    });
+
     it('hands back a new bank account once named', async () => {
         const wrapper = mount(PaymentAcceptorForm);
         await wrapper.find('input[name="payment_acceptor_name"]').setValue('Main account');

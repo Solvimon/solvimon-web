@@ -1,13 +1,20 @@
 <script setup lang="ts">
 import { computed, defineAsyncComponent, ref, watch } from 'vue';
-import { Button, ErrorNotification, Section, Typography, useIntl } from '@solvimon/solvimon-ui';
+import {
+    Button,
+    ErrorNotification,
+    PaymentAcceptor,
+    Section,
+    Typography,
+    useIntl,
+} from '@solvimon/solvimon-ui';
 import type {
     CustomerPaymentAcceptorsEmits,
     CustomerPaymentAcceptorsProps,
 } from './CustomerPaymentAcceptors.types';
 import { DEFAULT_MAX_ITEMS, getSubscriptionPaymentAcceptors } from './CustomerPaymentAcceptors.lib';
 import EmptyStatePlaceholder from '@/components/checkout/EmptyStatePlaceholder.vue';
-import PaymentAcceptorList from '@/components/payments/PaymentAcceptors/PaymentAcceptorList.vue';
+import LimitedList from '@/components/shared/LimitedList/LimitedList.vue';
 import Skeleton from '@/components/shared/Skeleton.vue';
 import { useActionDispatchProvider } from '@/components/providers';
 import { usePaymentAcceptors } from '@/composables/usePaymentAcceptors';
@@ -220,12 +227,24 @@ const description = computed(() => {
                 class="min-h-[100px]"
             />
 
-            <PaymentAcceptorList
+            <LimitedList
                 v-else-if="relevantAcceptors.length"
-                class="sv-payment-acceptors__list"
-                :payment-acceptors="relevantAcceptors"
+                class="sv-payment-acceptors__list sv-payment-acceptor-list"
+                :items="relevantAcceptors"
                 :limit="maxItems"
-            />
+                :item-key="({ id }) => id"
+                item-class="sv-payment-acceptor-list__item"
+                more-class="sv-payment-acceptor-list__more"
+            >
+                <template #item="{ item }">
+                    <Section>
+                        <PaymentAcceptor
+                            class="sv-payment-acceptor-list__item-content"
+                            :payment-acceptor="item"
+                        />
+                    </Section>
+                </template>
+            </LimitedList>
 
             <EmptyStatePlaceholder v-else class="sv-payment-acceptors__empty" icon="checkbook">
                 <template #title>

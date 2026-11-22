@@ -14,9 +14,7 @@ defineSlots<{
 
 const { $t } = useIntl();
 
-const shownItems = computed(() =>
-    props.limit === undefined ? props.items : props.items.slice(0, props.limit),
-);
+const shownItems = computed(() => props.items.slice(0, props.limit));
 
 const hiddenCount = computed(() => props.items.length - shownItems.value.length);
 </script>

@@ -1,6 +1,6 @@
 <script setup lang="ts" generic="T">
 import { computed } from 'vue';
-import { Icon, useIntl } from '@solvimon/solvimon-ui';
+import { useIntl } from '@solvimon/solvimon-ui';
 import type { LimitedListProps } from './LimitedList.types';
 
 const props = defineProps<LimitedListProps<T>>();
@@ -28,7 +28,7 @@ const hiddenCount = computed(() => props.items.length - shownItems.value.length)
             <button
                 v-if="showAll"
                 type="button"
-                class="sv-action sv-action--link ml-auto inline-flex items-center gap-1 rounded text-xs text-primary-900 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary-600"
+                class="sv-action sv-action--link ml-auto rounded text-xs text-primary-900 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary-600"
                 @click="showAll"
             >
                 {{
@@ -42,7 +42,6 @@ const hiddenCount = computed(() => props.items.length - shownItems.value.length)
                         { count: String(items.length) },
                     )
                 }}
-                <Icon icon="arrow_right_alt" size="xs" />
             </button>
             <span v-else class="text-xs text-primary-900">
                 <slot name="more" :count="hiddenCount">{{

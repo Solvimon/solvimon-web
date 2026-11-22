@@ -94,10 +94,10 @@ const confirmDelete = async () => {
             :description="
                 $t({
                     defaultMessage:
-                        'Where you receive payments for your self-billing subscriptions. Each subscription uses all of them unless you choose specific ones.',
-                    id: 'customer_overview.payment_acceptors_block.description_uses_all',
+                        'Where you receive payments for your self-billing subscriptions.',
+                    id: 'customer_overview.payment_acceptors_block.where_paid',
                     description:
-                        'Explains the payment acceptors block on the customer overview and the payment acceptors screen: where the customer is paid, and that subscriptions use all of them unless specific ones are chosen',
+                        'Explains the payment acceptors block on the customer overview and the payment acceptors screen: where the customer is paid',
                 })
             "
         >

@@ -150,11 +150,11 @@ describe('CustomerPaymentAcceptors', () => {
         expect(mockDispatchAction).toHaveBeenCalledWith({ action: 'add-payment-acceptor' });
     });
 
-    it('says that subscriptions use all of them unless specific ones are chosen', async () => {
+    it('says it is where the customer receives payments', async () => {
         const wrapper = await mountBlock({ customerId: 'cust_1' });
 
         expect(wrapper.text()).toContain(
-            'Where you receive payments for your self-billing subscriptions. Each subscription uses all of them unless you choose specific ones.',
+            'Where you receive payments for your self-billing subscriptions.',
         );
     });
 
@@ -193,7 +193,7 @@ describe('CustomerPaymentAcceptors', () => {
             const wrapper = await mountBlock({ subscription: subscription(['b']) });
 
             expect(shownIds(wrapper)).toEqual(['b']);
-            expect(wrapper.text()).toContain("You're paid into one of these payment acceptors.");
+            expect(wrapper.text()).toContain('Where you receive payments for this subscription.');
         });
 
         it('shows every active acceptor and says so when none is linked', async () => {
@@ -201,7 +201,7 @@ describe('CustomerPaymentAcceptors', () => {
             const wrapper = await mountBlock({ subscription: subscription() });
 
             expect(shownIds(wrapper)).toEqual(['a']);
-            expect(wrapper.text()).toContain("You're paid into one of your payment acceptors.");
+            expect(wrapper.text()).toContain('Where you receive payments for this subscription.');
         });
 
         it('offers no manage action while there is no payment acceptor to show', async () => {

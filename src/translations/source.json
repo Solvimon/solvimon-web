@@ -927,9 +927,9 @@
     "defaultMessage": "Add payment acceptor",
     "description": "Label of the link that opens the form for a first bank account"
   },
-  "customer_overview.payment_acceptors_block.description": {
-    "defaultMessage": "Bank accounts where you receive payments for your self-billing subscriptions.",
-    "description": "Explains the payment acceptors block on the customer overview: the bank accounts the customer is paid into"
+  "customer_overview.payment_acceptors_block.description_uses_all": {
+    "defaultMessage": "Where you receive payments for your self-billing subscriptions. Each subscription uses all of them unless you choose specific ones.",
+    "description": "Explains the payment acceptors block on the customer overview and the payment acceptors screen: where the customer is paid, and that subscriptions use all of them unless specific ones are chosen"
   },
   "customer_overview.payment_acceptors_block.empty": {
     "defaultMessage": "No payment acceptors yet",
@@ -1815,17 +1815,13 @@
     "defaultMessage": "Unable to load this subscription. Please try again later.",
     "description": "Error message shown when the subscription cannot be loaded on the subscription details page"
   },
-  "subscription_details.payment_acceptors_block.description": {
-    "defaultMessage": "{payer} pays you into these accounts for this subscription.",
-    "description": "Explains the bank accounts a self-billing subscription is paid into"
+  "subscription_details.payment_acceptors_block.uses_all": {
+    "defaultMessage": "You're paid into one of your payment acceptors.",
+    "description": "On a self-billing subscription that uses all payment acceptors: the payer pays into one of them"
   },
-  "subscription_details.payment_acceptors_block.none_chosen": {
-    "defaultMessage": "No specific accounts are chosen for this subscription, so {payer} can pay you into any of your active accounts.",
-    "description": "Explains on a subscription without chosen bank accounts that every active one of the customer applies"
-  },
-  "subscription_details.payment_acceptors_block.payer_fallback": {
-    "defaultMessage": "Your customer",
-    "description": "Stands in for the name of whoever pays the subscription when it is not known"
+  "subscription_details.payment_acceptors_block.uses_chosen": {
+    "defaultMessage": "You're paid into one of these payment acceptors.",
+    "description": "On a self-billing subscription with chosen payment acceptors: the payer pays into one of those listed"
   },
   "subscription_details.renew_button.label": {
     "defaultMessage": "Renew subscription",

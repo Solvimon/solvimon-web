@@ -98,42 +98,26 @@ const description = computed(() => {
     if (!props.subscription) {
         return $t({
             defaultMessage:
-                'Bank accounts where you receive payments for your self-billing subscriptions.',
-            id: 'customer_overview.payment_acceptors_block.description',
+                'Where you receive payments for your self-billing subscriptions. Each subscription uses all of them unless you choose specific ones.',
+            id: 'customer_overview.payment_acceptors_block.description_uses_all',
             description:
-                'Explains the payment acceptors block on the customer overview: the bank accounts the customer is paid into',
+                'Explains the payment acceptors block on the customer overview and the payment acceptors screen: where the customer is paid, and that subscriptions use all of them unless specific ones are chosen',
         });
     }
 
-    const payer =
-        payerName.value ||
-        $t({
-            defaultMessage: 'Your customer',
-            id: 'subscription_details.payment_acceptors_block.payer_fallback',
-            description:
-                'Stands in for the name of whoever pays the subscription when it is not known',
-        });
-
     return hasNoneChosen.value
-        ? $t(
-              {
-                  defaultMessage:
-                      'No specific accounts are chosen for this subscription, so {payer} can pay you into any of your active accounts.',
-                  id: 'subscription_details.payment_acceptors_block.none_chosen',
-                  description:
-                      'Explains on a subscription without chosen bank accounts that every active one of the customer applies',
-              },
-              { payer },
-          )
-        : $t(
-              {
-                  defaultMessage: '{payer} pays you into these accounts for this subscription.',
-                  id: 'subscription_details.payment_acceptors_block.description',
-                  description:
-                      'Explains the bank accounts a self-billing subscription is paid into',
-              },
-              { payer },
-          );
+        ? $t({
+              defaultMessage: "You're paid into one of your payment acceptors.",
+              id: 'subscription_details.payment_acceptors_block.uses_all',
+              description:
+                  'On a self-billing subscription that uses all payment acceptors: the payer pays into one of them',
+          })
+        : $t({
+              defaultMessage: "You're paid into one of these payment acceptors.",
+              id: 'subscription_details.payment_acceptors_block.uses_chosen',
+              description:
+                  'On a self-billing subscription with chosen payment acceptors: the payer pays into one of those listed',
+          });
 });
 </script>
 

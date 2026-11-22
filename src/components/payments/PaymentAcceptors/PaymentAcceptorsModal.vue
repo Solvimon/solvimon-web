@@ -364,17 +364,17 @@ const payerName = computed(
 
                                 <button
                                     type="button"
-                                    class="sv-action sv-action--link sv-payment-acceptors-modal__add flex w-full items-center gap-1 rounded border border-dashed border-gray-300 px-4 py-3 text-sm font-semibold text-primary-600 hover:bg-gray-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary-600 disabled:cursor-not-allowed disabled:opacity-50"
+                                    class="sv-action sv-action--link sv-payment-acceptors-modal__add inline-flex w-fit items-center gap-1 rounded text-sm text-primary-900 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary-600 disabled:cursor-not-allowed disabled:opacity-50"
                                     :disabled="isWorking"
                                     @click="goTo('ADD')"
                                 >
                                     <Icon icon="add" size="xs" />
                                     {{
                                         $t({
-                                            defaultMessage: 'Add payment acceptor',
-                                            id: 'payment_acceptors_modal.assign.add_button.label',
+                                            defaultMessage: 'Add a new payment acceptor',
+                                            id: 'payment_acceptors_modal.manage.add_button.label',
                                             description:
-                                                'Label of the last row in the list of payment acceptors, which opens the form for a new bank account',
+                                                'Label of the button in the payment acceptors modal that adds a payment acceptor',
                                         })
                                     }}
                                 </button>

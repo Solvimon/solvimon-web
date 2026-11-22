@@ -20,13 +20,10 @@ export type {
 } from './types';
 export type {
     ActionRequestDetail,
-    ActionRequestDetailAddPaymentAcceptor,
     ActionRequestDetailAddPaymentMethod,
-    ActionRequestDetailEditPaymentAcceptor,
     ActionRequestDetailEditBillingInformation,
     ActionRequestDetailManageSubscription,
     ActionRequestDetailPayInvoice,
-    ActionRequestDetailViewAllPaymentAcceptors,
     ActionRequestDetailViewAllPaymentMethods,
     ActionRequestDetailViewCustomerOverview,
     ActionRequestDetailViewAllSubscriptions,
@@ -50,7 +47,6 @@ export type {
     SolvimonErrorDetail,
     SolvimonEventListeners,
     SolvimonPaymentMethodAddedDetail,
-    SolvimonPaymentAcceptorSavedDetail,
     SolvimonInvoiceCreatedDetail,
     SolvimonPaymentSucceededDetail,
     SolvimonPaymentSucceededEvent,

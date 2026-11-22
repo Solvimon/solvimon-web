@@ -47,7 +47,6 @@ export { defineSolvimonSubscriptionManagement } from './public/screens/Subscript
 export { defineSolvimonSubscriptionDetails } from './public/screens/SubscriptionDetails/SubscriptionDetails.entry.ce';
 export { defineSolvimonPayInvoice } from './public/screens/PayInvoice/PayInvoice.entry.ce';
 export { defineSolvimonPaymentMethodsManagement } from './public/screens/PaymentMethodsManagement/PaymentMethodsManagement.entry.ce';
-export { defineSolvimonPaymentAcceptorsManagement } from './public/screens/PaymentAcceptorsManagement/PaymentAcceptorsManagement.entry.ce';
 
 export { defineSolvimonBillingInformation } from './public/components/BillingInformation/BillingInformation.entry.ce';
 export { defineSolvimonBillingInformationForm } from './public/components/BillingInformationForm/BillingInformationForm.entry.ce';
@@ -62,4 +61,3 @@ export { defineSolvimonSubscriptionSchedules } from './public/components/Subscri
 export { defineSolvimonSubscriptionsList } from './public/components/SubscriptionsList/SubscriptionsList.entry.ce';
 export { defineSolvimonPaymentMethodForm } from './public/components/PaymentMethodForm/PaymentMethodForm.entry.ce';
 export { defineSolvimonShippingAddressForm } from './public/components/ShippingAddressForm/ShippingAddressForm.entry.ce';
-export { defineSolvimonPaymentAcceptorForm } from './public/components/PaymentAcceptorForm/PaymentAcceptorForm.entry.ce';

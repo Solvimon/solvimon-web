@@ -15,7 +15,6 @@ import { DEFAULT_MAX_ITEMS, getSubscriptionPaymentAcceptors } from './CustomerPa
 import EmptyStatePlaceholder from '@/components/checkout/EmptyStatePlaceholder.vue';
 import LimitedList from '@/components/shared/LimitedList/LimitedList.vue';
 import Skeleton from '@/components/shared/Skeleton.vue';
-import { useActionDispatchProvider } from '@/components/providers';
 import { usePaymentAcceptors } from '@/composables/usePaymentAcceptors';
 import { createSubscriptionsService } from '@/services/subscriptions';
 
@@ -27,12 +26,7 @@ const PaymentAcceptorsManageModal = defineAsyncComponent(
     () => import('@/components/payments/PaymentAcceptors/PaymentAcceptorsManageModal.vue'),
 );
 
-const props = defineProps<
-    CustomerPaymentAcceptorsProps & {
-        /** Manages the customer's acceptors in a modal, as the customer overview does; without it the host is asked. */
-        managesInPlace?: boolean;
-    }
->();
+const props = defineProps<CustomerPaymentAcceptorsProps>();
 const emit = defineEmits<CustomerPaymentAcceptorsEmits>();
 
 const { $t } = useIntl();
@@ -97,27 +91,12 @@ const openManageModal = (start: 'LIST' | 'ADD') => {
     isManageModalShown.value = true;
 };
 
-const { dispatchAction } = useActionDispatchProvider();
-
-/**
- * A subscription's acceptors are chosen in place. The customer's own are managed in place when the
- * screen around the block asks for it, and otherwise on screens the host routes to.
- */
-const manage = () => {
-    if (props.subscription) openModal();
-    else if (props.managesInPlace) openManageModal('LIST');
-    else dispatchAction({ action: 'view-all-payment-acceptors' });
-};
-const add = () => {
-    if (props.subscription) openModal();
-    else if (props.managesInPlace) openManageModal('ADD');
-    else dispatchAction({ action: 'add-payment-acceptor' });
-};
+/** A subscription's acceptors are chosen for it; the customer's own are managed in a modal. */
+const manage = () => (props.subscription ? openModal() : openManageModal('LIST'));
+const add = () => (props.subscription ? openModal() : openManageModal('ADD'));
 
 const hasManageButton = computed(() =>
-    props.subscription
-        ? relevantAcceptors.value.length > 0
-        : props.managesInPlace && items.value.length > 0,
+    props.subscription ? relevantAcceptors.value.length > 0 : items.value.length > 0,
 );
 
 const description = computed(() => {
@@ -180,22 +159,6 @@ const description = computed(() => {
                             id: 'customer_overview.payment_acceptors_block.manage_button_label',
                             description:
                                 'Label of the button that opens the modal to manage the bank accounts the customer is paid into',
-                        })
-                    }}</Button
-                >
-                <Button
-                    v-else-if="!subscription && !managesInPlace && items.length"
-                    size="xs"
-                    intent="subtle"
-                    icon-suffix="arrow_right_alt"
-                    class="sv-action sv-action--ghost sv-payment-acceptors__view-all"
-                    @click="manage"
-                    >{{
-                        $t({
-                            defaultMessage: 'View all',
-                            id: 'customer_overview.payment_acceptors_block.view_all_button_label',
-                            description:
-                                'Label of the button that opens the list of all the bank accounts the customer is paid into',
                         })
                     }}</Button
                 >

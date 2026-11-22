@@ -153,7 +153,6 @@ or with another library's on the same page.
 | `solvimon-payment-succeeded`      | the checkout, pay-invoice, and `payment-method-form` in `payment` mode                                                                                                                            | `{ componentName, subscriptionId?, invoiceId? }` |
 | `solvimon-invoice-created`        | subscription details, when an on-demand order creates an invoice                                                                                                                                  | `{ invoiceId, paymentStatus }`                   |
 | `solvimon-payment-method-added`   | `payment-method-form`, `payment-methods-management`, and the add-method step of an on-demand order, a top-up or an auto top-up (in subscription details, customer overview and `wallet-balances`) | `{ componentName }`                              |
-| `solvimon-payment-acceptor-saved` | `payment-acceptor-form`, once the bank account is stored                                                                                                                                          | `{ componentName, paymentAcceptorId }`           |
 | `solvimon-shipping-address-saved` | `shipping-address-form`, once the address is stored                                                                                                                                               | `{ componentName, shippingAddressId }`           |
 
 `componentName` is the tag name of the element the event came from. A nested element's event reaches
@@ -263,8 +262,7 @@ container.addEventListener('solvimon-action-request', ({ detail }) => {
 
 `detail.action` is one of `view-invoice`, `pay-invoice`, `view-subscription-details`,
 `view-all-subscriptions`, `manage-subscription`, `edit-billing-information`,
-`view-all-payment-methods`, `add-payment-method`, `view-all-payment-acceptors`,
-`add-payment-acceptor`, `edit-payment-acceptor` and `view-customer-overview`. None of them
+`view-all-payment-methods`, `add-payment-method` and `view-customer-overview`. None of them
 does anything unless you handle it.
 
 ## CSS overrides
@@ -303,16 +301,15 @@ For more details, see [`@solvimon/solvimon-web/core`](./src/public/core/README.m
 
 Full-page experiences.
 
-| Export path                                                   | Custom element                            |
-| ------------------------------------------------------------- | ----------------------------------------- |
-| `@solvimon/solvimon-web/screens/checkout`                     | `<solvimon-checkout>`                     |
-| `@solvimon/solvimon-web/screens/checkout-session`             | `<solvimon-checkout-session>`             |
-| `@solvimon/solvimon-web/screens/customer-overview`            | `<solvimon-customer-overview>`            |
-| `@solvimon/solvimon-web/screens/pay-invoice`                  | `<solvimon-pay-invoice>`                  |
-| `@solvimon/solvimon-web/screens/payment-acceptors-management` | `<solvimon-payment-acceptors-management>` |
-| `@solvimon/solvimon-web/screens/payment-methods-management`   | `<solvimon-payment-methods-management>`   |
-| `@solvimon/solvimon-web/screens/subscription-details`         | `<solvimon-subscription-details>`         |
-| `@solvimon/solvimon-web/screens/subscription-management`      | `<solvimon-subscription-management>`      |
+| Export path                                                 | Custom element                          |
+| ----------------------------------------------------------- | --------------------------------------- |
+| `@solvimon/solvimon-web/screens/checkout`                   | `<solvimon-checkout>`                   |
+| `@solvimon/solvimon-web/screens/checkout-session`           | `<solvimon-checkout-session>`           |
+| `@solvimon/solvimon-web/screens/customer-overview`          | `<solvimon-customer-overview>`          |
+| `@solvimon/solvimon-web/screens/pay-invoice`                | `<solvimon-pay-invoice>`                |
+| `@solvimon/solvimon-web/screens/payment-methods-management` | `<solvimon-payment-methods-management>` |
+| `@solvimon/solvimon-web/screens/subscription-details`       | `<solvimon-subscription-details>`       |
+| `@solvimon/solvimon-web/screens/subscription-management`    | `<solvimon-subscription-management>`    |
 
 ### Components
 
@@ -327,7 +324,6 @@ Embeddable building blocks.
 | `@solvimon/solvimon-web/components/invoice-details`          | `<solvimon-invoice-details>`          |
 | `@solvimon/solvimon-web/components/invoice-header`           | `<solvimon-invoice-header>`           |
 | `@solvimon/solvimon-web/components/invoices-list`            | `<solvimon-invoices-list>`            |
-| `@solvimon/solvimon-web/components/payment-acceptor-form`    | `<solvimon-payment-acceptor-form>`    |
 | `@solvimon/solvimon-web/components/payment-history`          | `<solvimon-payment-history>`          |
 | `@solvimon/solvimon-web/components/payment-method-form`      | `<solvimon-payment-method-form>`      |
 | `@solvimon/solvimon-web/components/shipping-address-form`    | `<solvimon-shipping-address-form>`    |

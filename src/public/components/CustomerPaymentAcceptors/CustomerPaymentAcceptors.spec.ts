@@ -4,16 +4,10 @@ import type { PaymentAcceptor, PricingPlanSubscriptionExpanded } from '@solvimon
 import CustomerPaymentAcceptors from './CustomerPaymentAcceptors.vue';
 import type { CustomerPaymentAcceptorsProps } from './CustomerPaymentAcceptors.types';
 
-const { acceptorsState, mockFetchAll, mockSetSubscriptionPaymentAcceptors, mockDispatchAction } =
-    vi.hoisted(() => ({
-        acceptorsState: { items: [] as unknown[] },
-        mockFetchAll: vi.fn(),
-        mockSetSubscriptionPaymentAcceptors: vi.fn(),
-        mockDispatchAction: vi.fn(),
-    }));
-
-vi.mock('@/components/providers', () => ({
-    useActionDispatchProvider: () => ({ dispatchAction: mockDispatchAction }),
+const { acceptorsState, mockFetchAll, mockSetSubscriptionPaymentAcceptors } = vi.hoisted(() => ({
+    acceptorsState: { items: [] as unknown[] },
+    mockFetchAll: vi.fn(),
+    mockSetSubscriptionPaymentAcceptors: vi.fn(),
 }));
 
 vi.mock('@/composables/usePaymentAcceptors', () => ({
@@ -89,9 +83,7 @@ const subscription = (paymentAcceptorIds?: string[]) =>
         billing_entity: { legal_name: 'Tivoli' },
     }) as unknown as PricingPlanSubscriptionExpanded;
 
-const mountBlock = async (
-    props: CustomerPaymentAcceptorsProps & { managesInPlace?: boolean } = { customerId: 'cust_1' },
-) => {
+const mountBlock = async (props: CustomerPaymentAcceptorsProps = { customerId: 'cust_1' }) => {
     const wrapper = mount(CustomerPaymentAcceptors, { props });
     await flushPromises();
     return wrapper;
@@ -99,6 +91,9 @@ const mountBlock = async (
 
 const shownIds = (wrapper: Awaited<ReturnType<typeof mountBlock>>) =>
     wrapper.findAll('.payment-acceptor-stub').map((row) => row.text());
+
+const manageModal = (wrapper: Awaited<ReturnType<typeof mountBlock>>) =>
+    wrapper.findComponent({ name: 'PaymentAcceptorsManageModal' });
 
 describe('CustomerPaymentAcceptors', () => {
     beforeEach(() => {
@@ -119,8 +114,9 @@ describe('CustomerPaymentAcceptors', () => {
         expect(wrapper.find('.sv-payment-acceptor-list__more').text()).toBe('Show all 4');
 
         await wrapper.find('.sv-payment-acceptor-list__more button').trigger('click');
+        await flushPromises();
 
-        expect(mockDispatchAction).toHaveBeenCalledWith({ action: 'view-all-payment-acceptors' });
+        expect(manageModal(wrapper).props('start')).toBe('LIST');
     });
 
     it('shows as many as maxItems asks for', async () => {
@@ -128,26 +124,6 @@ describe('CustomerPaymentAcceptors', () => {
 
         expect(shownIds(wrapper)).toEqual(['a', 'b', 'c', 'd']);
         expect(wrapper.find('.sv-payment-acceptor-list__more').exists()).toBe(false);
-    });
-
-    it('asks the host to show them all', async () => {
-        const wrapper = await mountBlock();
-
-        await wrapper.find('.sv-payment-acceptors__view-all').trigger('click');
-
-        expect(mockDispatchAction).toHaveBeenCalledWith({ action: 'view-all-payment-acceptors' });
-        expect(wrapper.findComponent({ name: 'PaymentAcceptorsModal' }).exists()).toBe(false);
-    });
-
-    it('asks the host to add the first acceptor when there is none', async () => {
-        acceptorsState.items = [];
-        const wrapper = await mountBlock();
-
-        expect(wrapper.find('.sv-payment-acceptors__view-all').exists()).toBe(false);
-
-        await wrapper.find('.sv-payment-acceptors__add').trigger('click');
-
-        expect(mockDispatchAction).toHaveBeenCalledWith({ action: 'add-payment-acceptor' });
     });
 
     it('says it is where the customer receives payments', async () => {
@@ -158,34 +134,25 @@ describe('CustomerPaymentAcceptors', () => {
         );
     });
 
-    describe('managed in place', () => {
-        it('opens the management modal on its list from Manage', async () => {
-            acceptorsState.items = [acceptor('a')];
-            const wrapper = await mountBlock({ customerId: 'cust_1', managesInPlace: true });
+    it('opens the management modal on its list from Manage', async () => {
+        const wrapper = await mountBlock();
 
-            expect(wrapper.find('.sv-payment-acceptors__view-all').exists()).toBe(false);
-            await wrapper.find('.sv-payment-acceptors__manage').trigger('click');
-            await flushPromises();
+        await wrapper.find('.sv-payment-acceptors__manage').trigger('click');
+        await flushPromises();
 
-            const modal = wrapper.findComponent({ name: 'PaymentAcceptorsManageModal' });
-            expect(modal.props('showModal')).toBe(true);
-            expect(modal.props('start')).toBe('LIST');
-            expect(mockDispatchAction).not.toHaveBeenCalled();
-        });
+        expect(manageModal(wrapper).props('showModal')).toBe(true);
+        expect(manageModal(wrapper).props('start')).toBe('LIST');
+    });
 
-        it('opens the management modal on adding from the empty state', async () => {
-            acceptorsState.items = [];
-            const wrapper = await mountBlock({ customerId: 'cust_1', managesInPlace: true });
+    it('opens the management modal on adding from the empty state', async () => {
+        acceptorsState.items = [];
+        const wrapper = await mountBlock();
 
-            expect(wrapper.find('.sv-payment-acceptors__manage').exists()).toBe(false);
-            await wrapper.find('.sv-payment-acceptors__add').trigger('click');
-            await flushPromises();
+        expect(wrapper.find('.sv-payment-acceptors__manage').exists()).toBe(false);
+        await wrapper.find('.sv-payment-acceptors__add').trigger('click');
+        await flushPromises();
 
-            expect(
-                wrapper.findComponent({ name: 'PaymentAcceptorsManageModal' }).props('start'),
-            ).toBe('ADD');
-            expect(mockDispatchAction).not.toHaveBeenCalled();
-        });
+        expect(manageModal(wrapper).props('start')).toBe('ADD');
     });
 
     describe('for a subscription', () => {
@@ -209,7 +176,6 @@ describe('CustomerPaymentAcceptors', () => {
             const wrapper = await mountBlock({ subscription: subscription() });
 
             expect(wrapper.find('.sv-payment-acceptors__manage').exists()).toBe(false);
-            expect(wrapper.find('.sv-payment-acceptors__view-all').exists()).toBe(false);
             expect(wrapper.find('.sv-payment-acceptors__add').exists()).toBe(true);
         });
 

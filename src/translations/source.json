@@ -1263,13 +1263,17 @@
     "defaultMessage": "Choose the payment acceptors {payer} can pick from when paying you.",
     "description": "Explains that the payment acceptors chosen for a self-billing subscription are the ones the payer picks from"
   },
+  "payment_acceptors_modal.close_button.label": {
+    "defaultMessage": "Close",
+    "description": "Label of the button that closes the payment acceptors modal"
+  },
   "payment_acceptors_modal.create.bank_account_title": {
     "defaultMessage": "Add new bank account",
     "description": "Heading above the bank account fields in the modal that creates a payment acceptor"
   },
   "payment_acceptors_modal.create.create_button.label": {
     "defaultMessage": "Create",
-    "description": "Label of the button that creates the new payment acceptor and goes back to assigning"
+    "description": "Label of the button that creates the new payment acceptor"
   },
   "payment_acceptors_modal.create.new_title": {
     "defaultMessage": "New payment acceptor",
@@ -1287,9 +1291,29 @@
     "defaultMessage": "Delete",
     "description": "Label of the button that confirms deleting a bank account"
   },
+  "payment_acceptors_modal.edit.title": {
+    "defaultMessage": "Edit payment acceptor",
+    "description": "Title of the payment acceptors modal while a bank account is changed"
+  },
   "payment_acceptors_modal.error": {
     "defaultMessage": "Something went wrong. Please try again.",
     "description": "Error shown in the payment acceptors modal when a change cannot be made"
+  },
+  "payment_acceptors_modal.manage.add_button.label": {
+    "defaultMessage": "Add a new payment acceptor",
+    "description": "Label of the button in the payment acceptors modal that adds a payment acceptor"
+  },
+  "payment_acceptors_modal.manage.empty_text": {
+    "defaultMessage": "You have no payment acceptors yet.",
+    "description": "Shown in the payment acceptors modal when the customer has no payment acceptors"
+  },
+  "payment_acceptors_modal.manage.subtitle": {
+    "defaultMessage": "Add, edit or delete the payment acceptors you receive payments in.",
+    "description": "Subtitle of the modal that lists the payment acceptors the customer is paid into"
+  },
+  "payment_acceptors_modal.manage.title": {
+    "defaultMessage": "Payment acceptors",
+    "description": "Title of the modal that lists the payment acceptors the customer is paid into"
   },
   "payment_acceptors_modal.payer_fallback": {
     "defaultMessage": "Your customer",

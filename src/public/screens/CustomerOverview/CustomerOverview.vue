@@ -292,6 +292,7 @@ useActiveScheduleWarning(subscriptions.items);
                 class="sv-customer-overview__payment-acceptors"
                 :is-loading="isLoading"
                 :customer-id="customerId"
+                manages-in-place
             />
 
             <CustomerShippingAddresses

@@ -51,6 +51,16 @@ vi.mock('@/components/payments/PaymentAcceptors/PaymentAcceptorsModal.vue', () =
     }),
 }));
 
+vi.mock('@/components/payments/PaymentAcceptors/PaymentAcceptorsManageModal.vue', () => ({
+    __esModule: true,
+    default: defineComponent({
+        name: 'PaymentAcceptorsManageModal',
+        props: { showModal: Boolean, start: String, paymentAcceptors: Array, actions: Object },
+        emits: ['close'],
+        setup: () => () => h('div', { class: 'payment-acceptors-manage-modal-stub' }),
+    }),
+}));
+
 vi.mock('@solvimon/solvimon-ui', async () => {
     const { createSolvimonUiMock } = await import('@/test-utils/solvimonUiMock');
     return createSolvimonUiMock({
@@ -79,7 +89,9 @@ const subscription = (paymentAcceptorIds?: string[]) =>
         billing_entity: { legal_name: 'Tivoli' },
     }) as unknown as PricingPlanSubscriptionExpanded;
 
-const mountBlock = async (props: CustomerPaymentAcceptorsProps = { customerId: 'cust_1' }) => {
+const mountBlock = async (
+    props: CustomerPaymentAcceptorsProps & { managesInPlace?: boolean } = { customerId: 'cust_1' },
+) => {
     const wrapper = mount(CustomerPaymentAcceptors, { props });
     await flushPromises();
     return wrapper;
@@ -140,6 +152,36 @@ describe('CustomerPaymentAcceptors', () => {
         expect(wrapper.text()).toContain(
             'Where you receive payments for your self-billing subscriptions. Each subscription uses all of them unless you choose specific ones.',
         );
+    });
+
+    describe('managed in place', () => {
+        it('opens the management modal on its list from Manage', async () => {
+            acceptorsState.items = [acceptor('a')];
+            const wrapper = await mountBlock({ customerId: 'cust_1', managesInPlace: true });
+
+            expect(wrapper.find('.sv-payment-acceptors__view-all').exists()).toBe(false);
+            await wrapper.find('.sv-payment-acceptors__manage').trigger('click');
+            await flushPromises();
+
+            const modal = wrapper.findComponent({ name: 'PaymentAcceptorsManageModal' });
+            expect(modal.props('showModal')).toBe(true);
+            expect(modal.props('start')).toBe('LIST');
+            expect(mockDispatchAction).not.toHaveBeenCalled();
+        });
+
+        it('opens the management modal on adding from the empty state', async () => {
+            acceptorsState.items = [];
+            const wrapper = await mountBlock({ customerId: 'cust_1', managesInPlace: true });
+
+            expect(wrapper.find('.sv-payment-acceptors__manage').exists()).toBe(false);
+            await wrapper.find('.sv-payment-acceptors__add').trigger('click');
+            await flushPromises();
+
+            expect(
+                wrapper.findComponent({ name: 'PaymentAcceptorsManageModal' }).props('start'),
+            ).toBe('ADD');
+            expect(mockDispatchAction).not.toHaveBeenCalled();
+        });
     });
 
     describe('for a subscription', () => {

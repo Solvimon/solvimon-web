@@ -148,21 +148,23 @@ const description = computed(() => {
     >
         <template #right>
             <slot name="action" :manage="manage">
-                <button
-                    v-if="subscription"
-                    type="button"
-                    class="sv-action sv-action--link sv-payment-acceptors__manage rounded text-xs font-semibold text-primary-600 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary-600"
-                    @click="manage"
-                >
-                    {{
-                        $t({
-                            defaultMessage: 'Manage',
-                            id: 'customer_overview.payment_acceptors_block.manage_button_label',
-                            description:
-                                'Label of the button that opens the modal to manage the bank accounts the customer is paid into',
-                        })
-                    }}
-                </button>
+                <template v-if="subscription">
+                    <button
+                        v-if="relevantAcceptors.length"
+                        type="button"
+                        class="sv-action sv-action--link sv-payment-acceptors__manage block rounded text-xs font-semibold text-primary-600 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary-600"
+                        @click="manage"
+                    >
+                        {{
+                            $t({
+                                defaultMessage: 'Manage',
+                                id: 'customer_overview.payment_acceptors_block.manage_button_label',
+                                description:
+                                    'Label of the button that opens the modal to manage the bank accounts the customer is paid into',
+                            })
+                        }}
+                    </button>
+                </template>
                 <Button
                     v-else-if="items.length"
                     size="xs"

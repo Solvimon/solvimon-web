@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import {
-    Button,
     CheckboxGroupExtended,
-    DividerText,
     ErrorNotification,
+    Icon,
     Modal,
+    Toggle,
     Typography,
     getPaymentAcceptorSubtitle,
     useIntl,
@@ -34,8 +34,15 @@ const step = ref<Step>('CHOOSE');
 const isWorking = ref(false);
 const errorMessage = ref<string>();
 const apiError = ref<FormFieldError>();
-/** The acceptors ticked for the subscription. */
+/**
+ * Whether the subscription uses all of the customer's active acceptors, including ones added
+ * later. The backend stores this as an empty list; the toggle is how the customer sees it.
+ */
+const usesAll = ref(true);
+/** The acceptors ticked while the toggle is off; kept when the toggle goes back on until saved. */
 const chosenIds = ref<PaymentAcceptor['id'][]>([]);
+/** Shown when the toggle is off and nothing is ticked: saving that would mean all of them. */
+const choiceError = ref<string>();
 
 const formRef = ref<InstanceType<typeof PaymentAcceptorForm>>();
 
@@ -49,6 +56,11 @@ const formKey = ref(0);
 const activeAcceptors = computed(() =>
     props.paymentAcceptors.filter(({ status }) => status === 'ACTIVE'),
 );
+
+const activeIds = computed(() => activeAcceptors.value.map(({ id }) => id));
+
+/** With the toggle on every active acceptor shows ticked, since every one of them applies. */
+const tickedIds = computed(() => (usesAll.value ? activeIds.value : chosenIds.value));
 
 const choiceOptions = computed(() =>
     activeAcceptors.value.map((paymentAcceptor) => ({
@@ -73,8 +85,11 @@ watch(
     (isShown) => {
         if (!isShown) return;
 
-        const activeIds = new Set(activeAcceptors.value.map(({ id }) => id));
-        chosenIds.value = props.subscription.paymentAcceptorIds.filter((id) => activeIds.has(id));
+        usesAll.value = props.subscription.paymentAcceptorIds.length === 0;
+        chosenIds.value = props.subscription.paymentAcceptorIds.filter((id) =>
+            activeIds.value.includes(id),
+        );
+        choiceError.value = undefined;
 
         opensOnAdding.value = activeAcceptors.value.length === 0;
         goTo(opensOnAdding.value ? 'ADD' : 'CHOOSE');
@@ -135,17 +150,40 @@ const add = async () => {
 
     if (!saved) return;
 
-    // A new acceptor added while choosing is one the customer means to use for the subscription.
-    chosenIds.value = [...chosenIds.value, saved.result.id];
+    // With the toggle on the new acceptor already applies; with it off, the customer means to use it.
+    if (!usesAll.value) chosenIds.value = [...chosenIds.value, saved.result.id];
     opensOnAdding.value = false;
     goTo('CHOOSE');
+};
+
+const setUsesAll = (value: boolean) => {
+    usesAll.value = value;
+    choiceError.value = undefined;
+    // Turning it off starts from what was on screen: every acceptor ticked.
+    if (!value && chosenIds.value.length === 0) chosenIds.value = [...activeIds.value];
+};
+
+const setChosenIds = (ids: PaymentAcceptor['id'][]) => {
+    chosenIds.value = ids;
+    choiceError.value = undefined;
 };
 
 const saveChoice = async () => {
     if (isWorking.value) return;
 
+    if (!usesAll.value && chosenIds.value.length === 0) {
+        choiceError.value = $t({
+            defaultMessage: 'Select at least one payment acceptor, or turn on Use all.',
+            id: 'payment_acceptors_modal.assign.none_selected_error',
+            description:
+                'Error in the payment acceptors modal when the use-all toggle is off and no payment acceptor is ticked',
+        });
+        return;
+    }
+
+    const paymentAcceptorIds = usesAll.value ? [] : chosenIds.value;
     const saved = await run(
-        () => props.saveChoice(chosenIds.value),
+        () => props.saveChoice(paymentAcceptorIds),
         (error) =>
             logger.error(
                 'SUBSCRIPTION_PAYMENT_ACCEPTORS_SAVE_FAILED',
@@ -262,73 +300,85 @@ const payerName = computed(
                         <div class="sv-payment-acceptors-modal__choose grid grid-cols-1 gap-4">
                             <Typography variant="body-sm" color="secondary" tag="p" no-spacing>
                                 {{
-                                    chosenIds.length
-                                        ? $t(
-                                              {
-                                                  defaultMessage:
-                                                      '{payer} pays you into the accounts you choose for this subscription.',
-                                                  id: 'payment_acceptors_modal.choose.description',
-                                                  description:
-                                                      'Explains choosing the bank accounts a self-billing subscription is paid into',
-                                              },
-                                              { payer: payerName },
-                                          )
-                                        : $t(
-                                              {
-                                                  defaultMessage:
-                                                      'No specific accounts are chosen for this subscription, so {payer} can pay you into any of your active accounts.',
-                                                  id: 'payment_acceptors_modal.choose.none_chosen',
-                                                  description:
-                                                      'Explains that without a choice every active bank account of the customer applies to the subscription',
-                                              },
-                                              { payer: payerName },
-                                          )
+                                    $t(
+                                        {
+                                            defaultMessage:
+                                                'Choose the payment acceptors {payer} can pick from when paying you.',
+                                            id: 'payment_acceptors_modal.choose.payer_picks',
+                                            description:
+                                                'Explains that the payment acceptors chosen for a self-billing subscription are the ones the payer picks from',
+                                        },
+                                        { payer: payerName },
+                                    )
                                 }}
                             </Typography>
 
-                            <CheckboxGroupExtended
-                                v-model="chosenIds"
-                                class="sv-payment-acceptors-modal__choices"
-                                name="payment_acceptor_ids"
-                                direction="column"
+                            <Toggle
+                                :model-value="usesAll"
+                                no-spacing
+                                label-position="before"
+                                class="sv-payment-acceptors-modal__use-all !flex"
                                 :disabled="isWorking"
-                                :options="choiceOptions"
-                                :label="
-                                    $t({
-                                        defaultMessage: 'Select payment acceptors',
-                                        id: 'payment_acceptors_modal.assign.label',
-                                        description:
-                                            'Label of the list of bank accounts to choose for the subscription',
-                                    })
-                                "
-                            />
+                                @update:model-value="setUsesAll"
+                            >
+                                <template #inline-label>
+                                    <div class="flex grow flex-col">
+                                        <Typography tag="span" variant="body-sm">{{
+                                            $t({
+                                                defaultMessage: 'Use all payment acceptors',
+                                                id: 'payment_acceptors_modal.use_all.label',
+                                                description:
+                                                    'Label of the toggle that lets a self-billing subscription use every active payment acceptor of the customer',
+                                            })
+                                        }}</Typography>
+                                        <Typography tag="span" variant="body-xs" color="subtle">{{
+                                            $t({
+                                                defaultMessage: 'Includes any you add later.',
+                                                id: 'payment_acceptors_modal.use_all.description',
+                                                description:
+                                                    'Below the use-all toggle: payment acceptors added later also apply to the subscription',
+                                            })
+                                        }}</Typography>
+                                    </div>
+                                </template>
+                            </Toggle>
 
                             <div class="grid grid-cols-1 gap-2">
-                                <DividerText
-                                    :text="
+                                <CheckboxGroupExtended
+                                    :model-value="tickedIds"
+                                    class="sv-payment-acceptors-modal__choices"
+                                    name="payment_acceptor_ids"
+                                    direction="column"
+                                    :disabled="usesAll || isWorking"
+                                    :error="choiceError"
+                                    :options="choiceOptions"
+                                    :label="
                                         $t({
-                                            defaultMessage: 'or',
-                                            id: 'payment_acceptors_modal.assign.divider_text',
+                                            defaultMessage: 'Select payment acceptors',
+                                            id: 'payment_acceptors_modal.assign.label',
                                             description:
-                                                'Between the bank accounts to assign and the button that creates a new one',
+                                                'Label of the list of bank accounts to choose for the subscription',
                                         })
                                     "
+                                    @update:model-value="setChosenIds"
                                 />
-                                <Button
-                                    intent="secondary"
+
+                                <button
                                     type="button"
-                                    class="sv-action sv-action--secondary sv-action--full-width sv-payment-acceptors-modal__add w-full"
+                                    class="sv-action sv-action--link sv-payment-acceptors-modal__add flex w-full items-center gap-1 rounded border border-dashed border-gray-300 px-4 py-3 text-sm font-semibold text-primary-600 hover:bg-gray-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary-600 disabled:cursor-not-allowed disabled:opacity-50"
                                     :disabled="isWorking"
                                     @click="goTo('ADD')"
-                                    >{{
-                                        $t({
-                                            defaultMessage: 'Create new',
-                                            id: 'payment_acceptors_modal.assign.create_button.label',
-                                            description:
-                                                'Label of the button that moves to the form for a new bank account',
-                                        })
-                                    }}</Button
                                 >
+                                    <Icon icon="add" size="xs" />
+                                    {{
+                                        $t({
+                                            defaultMessage: 'Add payment acceptor',
+                                            id: 'payment_acceptors_modal.assign.add_button.label',
+                                            description:
+                                                'Label of the last row in the list of payment acceptors, which opens the form for a new bank account',
+                                        })
+                                    }}
+                                </button>
                             </div>
                         </div>
                     </template>

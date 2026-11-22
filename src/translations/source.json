@@ -1231,21 +1231,21 @@
     "defaultMessage": "For example: Main business account",
     "description": "Placeholder of the name of a bank account the customer is paid on"
   },
+  "payment_acceptors_modal.assign.add_button.label": {
+    "defaultMessage": "Add payment acceptor",
+    "description": "Label of the last row in the list of payment acceptors, which opens the form for a new bank account"
+  },
   "payment_acceptors_modal.assign.confirm_button.label": {
     "defaultMessage": "Assign payment acceptors",
     "description": "Label of the button that stores the bank accounts chosen for the subscription"
   },
-  "payment_acceptors_modal.assign.create_button.label": {
-    "defaultMessage": "Create new",
-    "description": "Label of the button that moves to the form for a new bank account"
-  },
-  "payment_acceptors_modal.assign.divider_text": {
-    "defaultMessage": "or",
-    "description": "Between the bank accounts to assign and the button that creates a new one"
-  },
   "payment_acceptors_modal.assign.label": {
     "defaultMessage": "Select payment acceptors",
     "description": "Label of the list of bank accounts to choose for the subscription"
+  },
+  "payment_acceptors_modal.assign.none_selected_error": {
+    "defaultMessage": "Select at least one payment acceptor, or turn on Use all.",
+    "description": "Error in the payment acceptors modal when the use-all toggle is off and no payment acceptor is ticked"
   },
   "payment_acceptors_modal.assign.title": {
     "defaultMessage": "Assign payment acceptors",
@@ -1259,13 +1259,9 @@
     "defaultMessage": "Cancel",
     "description": "Label of the button that closes the payment acceptors modal without saving"
   },
-  "payment_acceptors_modal.choose.description": {
-    "defaultMessage": "{payer} pays you into the accounts you choose for this subscription.",
-    "description": "Explains choosing the bank accounts a self-billing subscription is paid into"
-  },
-  "payment_acceptors_modal.choose.none_chosen": {
-    "defaultMessage": "No specific accounts are chosen for this subscription, so {payer} can pay you into any of your active accounts.",
-    "description": "Explains that without a choice every active bank account of the customer applies to the subscription"
+  "payment_acceptors_modal.choose.payer_picks": {
+    "defaultMessage": "Choose the payment acceptors {payer} can pick from when paying you.",
+    "description": "Explains that the payment acceptors chosen for a self-billing subscription are the ones the payer picks from"
   },
   "payment_acceptors_modal.create.bank_account_title": {
     "defaultMessage": "Add new bank account",
@@ -1302,6 +1298,14 @@
   "payment_acceptors_modal.save_button.label": {
     "defaultMessage": "Save",
     "description": "Label of the button that stores a new or changed bank account"
+  },
+  "payment_acceptors_modal.use_all.description": {
+    "defaultMessage": "Includes any you add later.",
+    "description": "Below the use-all toggle: payment acceptors added later also apply to the subscription"
+  },
+  "payment_acceptors_modal.use_all.label": {
+    "defaultMessage": "Use all payment acceptors",
+    "description": "Label of the toggle that lets a self-billing subscription use every active payment acceptor of the customer"
   },
   "payment_completed_card.redirect_message": {
     "defaultMessage": "You are being redirected...",

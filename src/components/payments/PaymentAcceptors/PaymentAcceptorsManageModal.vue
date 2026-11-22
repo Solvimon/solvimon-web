@@ -22,13 +22,18 @@ import PaymentAcceptorForm from '@/components/payments/PaymentAcceptorForm/Payme
 import SlidingPanes from '@/components/shared/SlidingPanes/SlidingPanes.vue';
 import { useLogger } from '@/components/providers';
 import { usePaymentAcceptorMenuItems } from '@/composables/usePaymentAcceptorMenuItems';
-import { ApiError } from '@/services/apiError';
+import {
+    getRefusedShownField,
+    isPaymentAcceptorInUse,
+} from '@/components/payments/PaymentAcceptorForm/PaymentAcceptorForm.lib';
+import { usePaymentAcceptorErrorMessages } from '@/composables/usePaymentAcceptorErrorMessages';
 
 const props = defineProps<PaymentAcceptorsManageModalProps>();
 const emit = defineEmits<PaymentAcceptorsManageModalEmits>();
 
 const { $t } = useIntl();
 const logger = useLogger();
+const { fieldRefused, inUse } = usePaymentAcceptorErrorMessages();
 
 const step = ref<PaymentAcceptorsManageModalStep>('LIST');
 /** The step the modal opened on, which is where cancelling closes it rather than going back. */
@@ -112,8 +117,9 @@ const save = async () => {
             error,
         );
         // A refused field is shown at the field; anything else as a message above the form.
-        if (error instanceof ApiError && error.field) {
-            apiError.value = { [error.field]: error.message };
+        const refusedField = getRefusedShownField(error);
+        if (refusedField) {
+            apiError.value = { [refusedField]: fieldRefused() };
         } else {
             errorMessage.value = somethingWentWrong();
         }
@@ -139,7 +145,7 @@ const confirmDelete = async () => {
             {},
             error,
         );
-        errorMessage.value = somethingWentWrong();
+        errorMessage.value = isPaymentAcceptorInUse(error) ? inUse() : somethingWentWrong();
     } finally {
         isWorking.value = false;
     }

@@ -314,7 +314,7 @@ describe('PaymentAcceptorsModal', () => {
         await flushPromises();
 
         expect(wrapper.findComponent({ name: 'PaymentAcceptorForm' }).props('apiError')).toEqual({
-            iban: 'Bad IBAN',
+            iban: "This value isn't accepted. Check it and try again.",
         });
         expect(wrapper.find('.error-notification-stub').exists()).toBe(false);
     });

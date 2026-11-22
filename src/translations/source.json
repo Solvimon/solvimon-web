@@ -1223,6 +1223,14 @@
     "defaultMessage": "Edit",
     "description": "Menu option that opens the form to change a bank account"
   },
+  "payment_acceptor_errors.field_refused": {
+    "defaultMessage": "This value isn't accepted. Check it and try again.",
+    "description": "Shown on a bank account field the API refused, in place of its technical message"
+  },
+  "payment_acceptor_errors.in_use": {
+    "defaultMessage": "You can't delete this payment acceptor because a subscription or invoice uses it.",
+    "description": "Shown when a payment acceptor cannot be deleted because a subscription or invoice still uses it"
+  },
   "payment_acceptor_form.bank_account.title": {
     "defaultMessage": "Bank account",
     "description": "Heading above the bank account fields of a payment acceptor"

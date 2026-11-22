@@ -17,6 +17,8 @@ import PaymentAcceptorList from '@/components/payments/PaymentAcceptors/PaymentA
 import { useActionDispatchProvider, useLogger } from '@/components/providers';
 import { usePaymentAcceptorMenuItems } from '@/composables/usePaymentAcceptorMenuItems';
 import { usePaymentAcceptors } from '@/composables/usePaymentAcceptors';
+import { usePaymentAcceptorErrorMessages } from '@/composables/usePaymentAcceptorErrorMessages';
+import { isPaymentAcceptorInUse } from '@/components/payments/PaymentAcceptorForm/PaymentAcceptorForm.lib';
 
 const props = defineProps<{ customerId: Customer['id'] }>();
 
@@ -37,6 +39,8 @@ const add = () => dispatchAction({ action: 'add-payment-acceptor' });
 const pendingDelete = ref<PaymentAcceptor>();
 const isDeleting = ref(false);
 const hasDeleteFailed = ref(false);
+const isDeleteRefusedInUse = ref(false);
+const { inUse } = usePaymentAcceptorErrorMessages();
 
 const { getMenuItems } = usePaymentAcceptorMenuItems({
     onEdit: (paymentAcceptor) =>
@@ -74,6 +78,7 @@ const confirmDelete = async () => {
             deleteError,
         );
         hasDeleteFailed.value = true;
+        isDeleteRefusedInUse.value = isPaymentAcceptorInUse(deleteError);
     } finally {
         isDeleting.value = false;
     }
@@ -215,12 +220,14 @@ const confirmDelete = async () => {
                         v-if="hasDeleteFailed"
                         class="sv-error"
                         :title="
-                            $t({
-                                defaultMessage: 'Something went wrong. Please try again.',
-                                id: 'payment_acceptors_modal.error',
-                                description:
-                                    'Error shown in the payment acceptors modal when a change cannot be made',
-                            })
+                            isDeleteRefusedInUse
+                                ? inUse()
+                                : $t({
+                                      defaultMessage: 'Something went wrong. Please try again.',
+                                      id: 'payment_acceptors_modal.error',
+                                      description:
+                                          'Error shown in the payment acceptors modal when a change cannot be made',
+                                  })
                         "
                     />
                 </div>

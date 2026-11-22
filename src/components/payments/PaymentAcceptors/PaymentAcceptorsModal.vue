@@ -18,7 +18,8 @@ import type {
 import PaymentAcceptorForm from '@/components/payments/PaymentAcceptorForm/PaymentAcceptorForm.vue';
 import SlidingPanes from '@/components/shared/SlidingPanes/SlidingPanes.vue';
 import { useLogger } from '@/components/providers';
-import { ApiError } from '@/services/apiError';
+import { getRefusedShownField } from '@/components/payments/PaymentAcceptorForm/PaymentAcceptorForm.lib';
+import { usePaymentAcceptorErrorMessages } from '@/composables/usePaymentAcceptorErrorMessages';
 
 type Step = 'CHOOSE' | 'ADD';
 
@@ -29,6 +30,7 @@ const emit = defineEmits<PaymentAcceptorsModalEmits>();
 
 const { $t } = useIntl();
 const logger = useLogger();
+const { fieldRefused } = usePaymentAcceptorErrorMessages();
 
 const step = ref<Step>('CHOOSE');
 const isWorking = ref(false);
@@ -118,8 +120,9 @@ const run = async <T,>(
     } catch (error) {
         onError(error);
         // A refused field is shown at the field; anything else as a message above the form.
-        if (error instanceof ApiError && error.field) {
-            apiError.value = { [error.field]: error.message };
+        const refusedField = getRefusedShownField(error);
+        if (refusedField) {
+            apiError.value = { [refusedField]: fieldRefused() };
         } else {
             errorMessage.value = somethingWentWrong();
         }

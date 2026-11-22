@@ -308,7 +308,6 @@
     "payment_acceptor_form.bank_account.title": "Compte bancaire",
     "payment_acceptor_form.name.label": "Nom",
     "payment_acceptor_form.name.placeholder": "Par exemple : compte professionnel principal",
-    "payment_acceptors_modal.assign.add_button.label": "Ajouter un compte de réception",
     "payment_acceptors_modal.assign.confirm_button.label": "Attribuer les comptes de réception",
     "payment_acceptors_modal.assign.label": "Sélectionnez les comptes de réception",
     "payment_acceptors_modal.assign.none_selected_error": "Sélectionnez au moins un compte de réception, ou activez « Tout utiliser ».",

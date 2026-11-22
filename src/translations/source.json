@@ -1235,10 +1235,6 @@
     "defaultMessage": "For example: Main business account",
     "description": "Placeholder of the name of a bank account the customer is paid on"
   },
-  "payment_acceptors_modal.assign.add_button.label": {
-    "defaultMessage": "Add payment acceptor",
-    "description": "Label of the last row in the list of payment acceptors, which opens the form for a new bank account"
-  },
   "payment_acceptors_modal.assign.confirm_button.label": {
     "defaultMessage": "Assign payment acceptors",
     "description": "Label of the button that stores the bank accounts chosen for the subscription"

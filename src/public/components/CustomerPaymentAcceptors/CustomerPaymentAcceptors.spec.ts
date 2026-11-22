@@ -112,11 +112,15 @@ describe('CustomerPaymentAcceptors', () => {
         expect(mockFetchAll).toHaveBeenCalled();
     });
 
-    it('shows the first three and counts the rest', async () => {
+    it('shows the first three and offers to show all of them', async () => {
         const wrapper = await mountBlock();
 
         expect(shownIds(wrapper)).toEqual(['a', 'b', 'c']);
-        expect(wrapper.find('.sv-payment-acceptor-list__more').text()).toBe('+ 1 more');
+        expect(wrapper.find('.sv-payment-acceptor-list__more').text()).toBe('Show all 4');
+
+        await wrapper.find('.sv-payment-acceptor-list__more button').trigger('click');
+
+        expect(mockDispatchAction).toHaveBeenCalledWith({ action: 'view-all-payment-acceptors' });
     });
 
     it('shows as many as maxItems asks for', async () => {

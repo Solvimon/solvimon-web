@@ -261,7 +261,7 @@ describe('PaymentAcceptorsModal', () => {
         const wrapper = mountComponent({ create });
 
         await wrapper.find('.sv-payment-acceptors-modal__add').trigger('click');
-        expect(wrapper.find('.modal__title').text()).toBe('Create new payment acceptor');
+        expect(wrapper.find('.modal__title').text()).toBe('New payment acceptor');
         expect(wrapper.find('.modal__cancel').text()).toBe('Back');
 
         await wrapper.find('.modal__confirm').trigger('click');
@@ -324,7 +324,7 @@ describe('PaymentAcceptorsModal', () => {
             subscription: { ...subscription, paymentAcceptorIds: [] },
         });
 
-        expect(wrapper.find('.modal__title').text()).toBe('Create new payment acceptor');
+        expect(wrapper.find('.modal__title').text()).toBe('New payment acceptor');
 
         await wrapper.find('.modal__cancel').trigger('click');
 

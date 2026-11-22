@@ -218,8 +218,8 @@ const handleConfirm = () => {
 const title = computed(() =>
     step.value === 'ADD'
         ? $t({
-              defaultMessage: 'Create new payment acceptor',
-              id: 'payment_acceptors_modal.create.title',
+              defaultMessage: 'New payment acceptor',
+              id: 'payment_acceptors_modal.create.new_title',
               description: 'Title of the payment acceptors modal while a new bank account is added',
           })
         : $t({
@@ -233,10 +233,10 @@ const title = computed(() =>
 const confirmButtonText = computed(() =>
     step.value === 'ADD'
         ? $t({
-              defaultMessage: 'Continue',
-              id: 'payment_acceptors_modal.create.continue_button.label',
+              defaultMessage: 'Create',
+              id: 'payment_acceptors_modal.create.create_button.label',
               description:
-                  'Label of the button that stores the new bank account and goes back to assigning',
+                  'Label of the button that creates the new payment acceptor and goes back to assigning',
           })
         : $t({
               defaultMessage: 'Assign payment acceptors',

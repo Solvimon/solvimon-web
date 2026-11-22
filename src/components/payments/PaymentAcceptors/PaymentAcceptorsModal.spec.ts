@@ -34,6 +34,7 @@ vi.mock('@solvimon/solvimon-ui', async () => {
             props: {
                 showModal: Boolean,
                 title: String,
+                subTitle: String,
                 confirmButtonText: String,
                 cancelButtonText: String,
                 isLoading: Boolean,
@@ -162,7 +163,7 @@ describe('PaymentAcceptorsModal', () => {
     it('says the chosen acceptors are what the payer picks from', () => {
         const wrapper = mountComponent();
 
-        expect(wrapper.text()).toContain(
+        expect(wrapper.findComponent({ name: 'ModalStub' }).props('subTitle')).toBe(
             'Choose the payment acceptors Tivoli can pick from when paying you.',
         );
     });

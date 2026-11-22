@@ -230,6 +230,17 @@ const title = computed(() =>
           }),
 );
 
+const payerName = computed(
+    () =>
+        props.subscription.payerName ||
+        $t({
+            defaultMessage: 'Your customer',
+            id: 'payment_acceptors_modal.payer_fallback',
+            description:
+                'Stands in for the name of whoever pays the subscription when it is not known',
+        }),
+);
+
 const subTitle = computed(() =>
     step.value === 'ADD'
         ? $t({
@@ -238,7 +249,16 @@ const subTitle = computed(() =>
               description:
                   'Subtitle of the step that adds a payment acceptor: subscriptions on use-all payment acceptors get the new one too',
           })
-        : undefined,
+        : $t(
+              {
+                  defaultMessage:
+                      'Choose the payment acceptors {payer} can pick from when paying you.',
+                  id: 'payment_acceptors_modal.choose.payer_picks',
+                  description:
+                      'Explains that the payment acceptors chosen for a self-billing subscription are the ones the payer picks from',
+              },
+              { payer: payerName.value },
+          ),
 );
 
 const confirmButtonText = computed(() =>
@@ -271,17 +291,6 @@ const cancelButtonText = computed(() =>
                   'Label of the button that closes the payment acceptors modal without saving',
           }),
 );
-
-const payerName = computed(
-    () =>
-        props.subscription.payerName ||
-        $t({
-            defaultMessage: 'Your customer',
-            id: 'payment_acceptors_modal.payer_fallback',
-            description:
-                'Stands in for the name of whoever pays the subscription when it is not known',
-        }),
-);
 </script>
 
 <template>
@@ -309,21 +318,6 @@ const payerName = computed(
                 <SlidingPanes :panes="PANES" :current="step">
                     <template #CHOOSE>
                         <div class="sv-payment-acceptors-modal__choose grid grid-cols-1 gap-4">
-                            <Typography variant="body-sm" color="secondary" tag="p" no-spacing>
-                                {{
-                                    $t(
-                                        {
-                                            defaultMessage:
-                                                'Choose the payment acceptors {payer} can pick from when paying you.',
-                                            id: 'payment_acceptors_modal.choose.payer_picks',
-                                            description:
-                                                'Explains that the payment acceptors chosen for a self-billing subscription are the ones the payer picks from',
-                                        },
-                                        { payer: payerName },
-                                    )
-                                }}
-                            </Typography>
-
                             <Toggle
                                 :model-value="usesAll"
                                 no-spacing

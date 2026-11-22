@@ -100,7 +100,7 @@ export function usePaymentAcceptors({
 
     const remove = async (paymentAcceptor: PaymentAcceptor) => {
         try {
-            await service.deletePaymentAcceptor({ paymentAcceptorId: paymentAcceptor.id });
+            await service.archivePaymentAcceptor({ paymentAcceptorId: paymentAcceptor.id });
         } finally {
             await fetchAll();
         }

@@ -2,7 +2,7 @@ import type { PaymentAcceptor } from '@solvimon/solvimon-types';
 import {
     createPaymentAcceptorFormState,
     getRefusedShownField,
-    isPaymentAcceptorInUse,
+    isPaymentAcceptorChosenBySubscription,
     toCreateDetails,
     toPatchPayload,
 } from './PaymentAcceptorForm.lib';
@@ -112,9 +112,15 @@ describe('getRefusedShownField', () => {
     });
 });
 
-describe('isPaymentAcceptorInUse', () => {
-    it('recognises the refusal to delete a payment acceptor that is still used', () => {
-        expect(isPaymentAcceptorInUse(new ApiError({ statusCode: 400, field: 'id' }))).toBe(true);
-        expect(isPaymentAcceptorInUse(new ApiError({ statusCode: 500 }))).toBe(false);
+describe('isPaymentAcceptorChosenBySubscription', () => {
+    it('recognises the refusal to archive a payment acceptor a subscription is set to use', () => {
+        expect(
+            isPaymentAcceptorChosenBySubscription(
+                new ApiError({ statusCode: 400, field: 'status' }),
+            ),
+        ).toBe(true);
+        expect(
+            isPaymentAcceptorChosenBySubscription(new ApiError({ statusCode: 400, field: 'iban' })),
+        ).toBe(false);
     });
 });

@@ -2,7 +2,7 @@ import { useIntl } from '@solvimon/solvimon-ui';
 import type { FormFieldError } from '@solvimon/solvimon-types';
 import {
     getRefusedShownField,
-    isPaymentAcceptorInUse,
+    isPaymentAcceptorChosenBySubscription,
 } from '@/components/payments/PaymentAcceptorForm/PaymentAcceptorForm.lib';
 
 /**
@@ -27,13 +27,13 @@ export function usePaymentAcceptorErrorMessages() {
                 'Shown on a bank account field the API refused, in place of its technical message',
         });
 
-    const inUse = () =>
+    const chosenBySubscription = () =>
         $t({
             defaultMessage:
-                "You can't delete this payment acceptor because a subscription or invoice uses it.",
-            id: 'payment_acceptor_errors.in_use',
+                'A subscription is set to use this payment acceptor. Choose other payment acceptors for it first.',
+            id: 'payment_acceptor_errors.chosen_by_subscription',
             description:
-                'Shown when a payment acceptor cannot be deleted because a subscription or invoice still uses it',
+                'Shown when a payment acceptor cannot be deleted because an active subscription is set to use it',
         });
 
     /** A refused field the form shows goes on that field; anything else is a message above it. */
@@ -47,7 +47,9 @@ export function usePaymentAcceptorErrorMessages() {
     };
 
     const describeDeleteError = (error: unknown): string =>
-        isPaymentAcceptorInUse(error) ? inUse() : somethingWentWrong();
+        isPaymentAcceptorChosenBySubscription(error)
+            ? chosenBySubscription()
+            : somethingWentWrong();
 
     return { describeSaveError, describeDeleteError };
 }

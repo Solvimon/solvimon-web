@@ -6,7 +6,7 @@ const { mockService, mockLoggerError } = vi.hoisted(() => ({
         getPaymentAcceptors: vi.fn(),
         createPaymentAcceptor: vi.fn(),
         updatePaymentAcceptor: vi.fn(),
-        deletePaymentAcceptor: vi.fn(),
+        archivePaymentAcceptor: vi.fn(),
     },
     mockLoggerError: vi.fn(),
 }));
@@ -114,7 +114,7 @@ describe('usePaymentAcceptors', () => {
             paymentAcceptorId: 'paya_1',
             payload: { name: 'Renamed' },
         });
-        expect(mockService.deletePaymentAcceptor).toHaveBeenCalledWith({
+        expect(mockService.archivePaymentAcceptor).toHaveBeenCalledWith({
             paymentAcceptorId: 'paya_1',
         });
         expect(mockService.getPaymentAcceptors).toHaveBeenCalledTimes(2);

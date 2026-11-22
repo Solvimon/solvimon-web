@@ -23,7 +23,7 @@ export interface PaymentAcceptorsService {
         paymentAcceptorId: PaymentAcceptor['id'];
         payload: PaymentAcceptorPatchPayload;
     }): Promise<PaymentAcceptor>;
-    deletePaymentAcceptor(args: {
+    archivePaymentAcceptor(args: {
         paymentAcceptorId: PaymentAcceptor['id'];
     }): Promise<PaymentAcceptor>;
 }
@@ -34,19 +34,24 @@ export function createPaymentAcceptorsService(): PaymentAcceptorsService {
     const BASE_PATH = ['portal', 'payment-acceptors'];
 
     /**
-     * GET /v1/portal/payment-acceptors — every acceptor of the customer, whatever its status. The
-     * portal does not page this list.
+     * GET /v1/portal/payment-acceptors — the customer's acceptors except archived ones, which the
+     * customer deleted. The portal does not page this list.
      */
-    function getPaymentAcceptors({
+    async function getPaymentAcceptors({
         customerId,
     }: {
         customerId: Customer['id'];
     }): Promise<ApiSuccessCollectionResponse<PaymentAcceptor>> {
-        return request<PaymentAcceptor>({
+        const response = await request<PaymentAcceptor>({
             url: buildUrl(config.apiUrls.config, ...BASE_PATH),
             query: { customer_id: customerId },
             isCollection: true,
         });
+
+        return {
+            ...response,
+            data: (response.data ?? []).filter(({ status }) => status !== 'ARCHIVED'),
+        };
     }
 
     /** POST /v1/portal/payment-acceptors — only a self-billing customer may, and only a bank account. */
@@ -75,15 +80,20 @@ export function createPaymentAcceptorsService(): PaymentAcceptorsService {
         });
     }
 
-    /** DELETE /v1/portal/payment-acceptors/{id} */
-    function deletePaymentAcceptor({
+    /**
+     * PATCH /v1/portal/payment-acceptors/{id} with `status: ARCHIVED` — what deleting one does. The
+     * API refuses a real delete once an invoice has used the acceptor, and an archived one is no
+     * longer offered to the payer.
+     */
+    function archivePaymentAcceptor({
         paymentAcceptorId,
     }: {
         paymentAcceptorId: PaymentAcceptor['id'];
     }): Promise<PaymentAcceptor> {
         return request<PaymentAcceptor>({
             url: buildUrl(config.apiUrls.config, ...BASE_PATH, paymentAcceptorId),
-            options: { method: 'DELETE' },
+            data: { status: 'ARCHIVED' },
+            options: { method: 'PATCH' },
         });
     }
 
@@ -91,6 +101,6 @@ export function createPaymentAcceptorsService(): PaymentAcceptorsService {
         getPaymentAcceptors,
         createPaymentAcceptor,
         updatePaymentAcceptor,
-        deletePaymentAcceptor,
+        archivePaymentAcceptor,
     };
 }

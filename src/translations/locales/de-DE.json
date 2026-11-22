@@ -309,7 +309,6 @@
     "payment_acceptor_form.name.label": "Name",
     "payment_acceptor_form.name.placeholder": "Zum Beispiel: Hauptgeschäftskonto",
     "payment_acceptors_modal.assign.confirm_button.label": "Empfangskonten zuweisen",
-    "payment_acceptors_modal.assign.label": "Empfangskonten auswählen",
     "payment_acceptors_modal.assign.none_selected_error": "Wählen Sie mindestens ein Empfangskonto aus oder aktivieren Sie „Alle verwenden“.",
     "payment_acceptors_modal.assign.title": "Empfangskonten zuweisen",
     "payment_acceptors_modal.back_button.label": "Zurück",

@@ -363,14 +363,6 @@ const payerName = computed(
                                     :disabled="usesAll || isWorking"
                                     :error="choiceError"
                                     :options="choiceOptions"
-                                    :label="
-                                        $t({
-                                            defaultMessage: 'Select payment acceptors',
-                                            id: 'payment_acceptors_modal.assign.label',
-                                            description:
-                                                'Label of the list of bank accounts to choose for the subscription',
-                                        })
-                                    "
                                     @update:model-value="setChosenIds"
                                 />
 

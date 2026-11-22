@@ -166,6 +166,9 @@ describe('PaymentAcceptorsManageModal', () => {
 
         await wrapper.find('.sv-payment-acceptors-manage-modal__add').trigger('click');
         expect(title(wrapper)).toBe('New payment acceptor');
+        expect(wrapper.findComponent({ name: 'ModalStub' }).props('subTitle')).toBe(
+            'Subscriptions that use all payment acceptors will use this one too.',
+        );
         expect(wrapper.find('.modal__confirm').text()).toBe('Create');
         expect(wrapper.find('.modal__cancel').text()).toBe('Back');
 

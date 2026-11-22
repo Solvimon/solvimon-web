@@ -230,6 +230,17 @@ const title = computed(() =>
           }),
 );
 
+const subTitle = computed(() =>
+    step.value === 'ADD'
+        ? $t({
+              defaultMessage: 'Subscriptions that use all payment acceptors will use this one too.',
+              id: 'payment_acceptors_modal.create.uses_all_note',
+              description:
+                  'Subtitle of the step that adds a payment acceptor: subscriptions on use-all payment acceptors get the new one too',
+          })
+        : undefined,
+);
+
 const confirmButtonText = computed(() =>
     step.value === 'ADD'
         ? $t({
@@ -280,6 +291,7 @@ const payerName = computed(
         size="lg"
         :show-modal="showModal"
         :title="title"
+        :sub-title="subTitle"
         :confirm-button-text="confirmButtonText"
         :cancel-button-text="cancelButtonText"
         :is-loading="isWorking"

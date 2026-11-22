@@ -192,16 +192,25 @@ const title = computed(() => {
     }
 });
 
-const subTitle = computed(() =>
-    step.value === 'LIST'
+const subTitle = computed(() => {
+    if (step.value === 'LIST') {
+        return $t({
+            defaultMessage: 'Add, edit or delete the payment acceptors you receive payments in.',
+            id: 'payment_acceptors_modal.manage.subtitle',
+            description:
+                'Subtitle of the modal that lists the payment acceptors the customer is paid into',
+        });
+    }
+
+    return step.value === 'ADD'
         ? $t({
-              defaultMessage: 'Add, edit or delete the payment acceptors you receive payments in.',
-              id: 'payment_acceptors_modal.manage.subtitle',
+              defaultMessage: 'Subscriptions that use all payment acceptors will use this one too.',
+              id: 'payment_acceptors_modal.create.uses_all_note',
               description:
-                  'Subtitle of the modal that lists the payment acceptors the customer is paid into',
+                  'Subtitle of the step that adds a payment acceptor: subscriptions on use-all payment acceptors get the new one too',
           })
-        : undefined,
-);
+        : undefined;
+});
 
 const confirmButtonText = computed(() => {
     switch (step.value) {

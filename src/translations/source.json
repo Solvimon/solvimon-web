@@ -927,10 +927,6 @@
     "defaultMessage": "Add payment acceptor",
     "description": "Label of the link that opens the form for a first bank account"
   },
-  "customer_overview.payment_acceptors_block.description_uses_all": {
-    "defaultMessage": "Where you receive payments for your self-billing subscriptions. Each subscription uses all of them unless you choose specific ones.",
-    "description": "Explains the payment acceptors block on the customer overview and the payment acceptors screen: where the customer is paid, and that subscriptions use all of them unless specific ones are chosen"
-  },
   "customer_overview.payment_acceptors_block.empty": {
     "defaultMessage": "No payment acceptors yet",
     "description": "Shown in the payment acceptors block when the customer has no bank accounts"
@@ -950,6 +946,10 @@
   "customer_overview.payment_acceptors_block.view_all_button_label": {
     "defaultMessage": "View all",
     "description": "Label of the button that opens the list of all the bank accounts the customer is paid into"
+  },
+  "customer_overview.payment_acceptors_block.where_paid": {
+    "defaultMessage": "Where you receive payments for your self-billing subscriptions.",
+    "description": "Explains the payment acceptors block on the customer overview and the payment acceptors screen: where the customer is paid"
   },
   "customer_overview.payment_methods.title": {
     "defaultMessage": "{count,plural,one{Payment method} other{Payment methods}}",
@@ -1278,6 +1278,10 @@
   "payment_acceptors_modal.create.new_title": {
     "defaultMessage": "New payment acceptor",
     "description": "Title of the payment acceptors modal while a new bank account is added"
+  },
+  "payment_acceptors_modal.create.uses_all_note": {
+    "defaultMessage": "Subscriptions that use all payment acceptors will use this one too.",
+    "description": "Subtitle of the step that adds a payment acceptor: subscriptions on use-all payment acceptors get the new one too"
   },
   "payment_acceptors_modal.delete.message": {
     "defaultMessage": "You will no longer be paid into this bank account.",
@@ -1839,13 +1843,9 @@
     "defaultMessage": "Unable to load this subscription. Please try again later.",
     "description": "Error message shown when the subscription cannot be loaded on the subscription details page"
   },
-  "subscription_details.payment_acceptors_block.uses_all": {
-    "defaultMessage": "You're paid into one of your payment acceptors.",
-    "description": "On a self-billing subscription that uses all payment acceptors: the payer pays into one of them"
-  },
-  "subscription_details.payment_acceptors_block.uses_chosen": {
-    "defaultMessage": "You're paid into one of these payment acceptors.",
-    "description": "On a self-billing subscription with chosen payment acceptors: the payer pays into one of those listed"
+  "subscription_details.payment_acceptors_block.where_paid": {
+    "defaultMessage": "Where you receive payments for this subscription.",
+    "description": "Explains the payment acceptors block on a self-billing subscription: where the customer is paid for it"
   },
   "subscription_details.renew_button.label": {
     "defaultMessage": "Renew subscription",

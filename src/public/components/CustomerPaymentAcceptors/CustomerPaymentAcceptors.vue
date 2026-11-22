@@ -59,8 +59,6 @@ const linkedIds = computed(
         [],
 );
 
-const hasNoneChosen = computed(() => !!props.subscription && linkedIds.value.length === 0);
-
 /** Who pays the subscription: the billing entity it bills the customer's self-billing for. */
 const payerName = computed(() => props.subscription?.billing_entity?.legal_name);
 
@@ -126,27 +124,19 @@ const hasManageButton = computed(() =>
 const description = computed(() => {
     if (!props.subscription) {
         return $t({
-            defaultMessage:
-                'Where you receive payments for your self-billing subscriptions. Each subscription uses all of them unless you choose specific ones.',
-            id: 'customer_overview.payment_acceptors_block.description_uses_all',
+            defaultMessage: 'Where you receive payments for your self-billing subscriptions.',
+            id: 'customer_overview.payment_acceptors_block.where_paid',
             description:
-                'Explains the payment acceptors block on the customer overview and the payment acceptors screen: where the customer is paid, and that subscriptions use all of them unless specific ones are chosen',
+                'Explains the payment acceptors block on the customer overview and the payment acceptors screen: where the customer is paid',
         });
     }
 
-    return hasNoneChosen.value
-        ? $t({
-              defaultMessage: "You're paid into one of your payment acceptors.",
-              id: 'subscription_details.payment_acceptors_block.uses_all',
-              description:
-                  'On a self-billing subscription that uses all payment acceptors: the payer pays into one of them',
-          })
-        : $t({
-              defaultMessage: "You're paid into one of these payment acceptors.",
-              id: 'subscription_details.payment_acceptors_block.uses_chosen',
-              description:
-                  'On a self-billing subscription with chosen payment acceptors: the payer pays into one of those listed',
-          });
+    return $t({
+        defaultMessage: 'Where you receive payments for this subscription.',
+        id: 'subscription_details.payment_acceptors_block.where_paid',
+        description:
+            'Explains the payment acceptors block on a self-billing subscription: where the customer is paid for it',
+    });
 });
 </script>
 

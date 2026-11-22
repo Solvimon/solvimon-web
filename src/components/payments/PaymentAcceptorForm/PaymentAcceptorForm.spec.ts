@@ -33,6 +33,24 @@ describe('PaymentAcceptorForm', () => {
         expect(result).toBeUndefined();
     });
 
+    it('brings the first refused field into view', async () => {
+        const scrollIntoView = vi.fn();
+        Element.prototype.scrollIntoView = scrollIntoView;
+        const wrapper = mount(PaymentAcceptorForm, {
+            global: {
+                stubs: {
+                    BankAccountEditorStub: {
+                        template: '<p class="text-feedback-danger">Required</p>',
+                    },
+                },
+            },
+        });
+
+        await (wrapper.vm as unknown as FormInstance).submit();
+
+        expect(scrollIntoView).toHaveBeenCalledOnce();
+    });
+
     it('hands back a new bank account once named', async () => {
         const wrapper = mount(PaymentAcceptorForm);
         await wrapper.find('input[name="payment_acceptor_name"]').setValue('Main account');

@@ -22,10 +22,6 @@ import PaymentAcceptorForm from '@/components/payments/PaymentAcceptorForm/Payme
 import SlidingPanes from '@/components/shared/SlidingPanes/SlidingPanes.vue';
 import { useLogger } from '@/components/providers';
 import { usePaymentAcceptorMenuItems } from '@/composables/usePaymentAcceptorMenuItems';
-import {
-    getRefusedShownField,
-    isPaymentAcceptorInUse,
-} from '@/components/payments/PaymentAcceptorForm/PaymentAcceptorForm.lib';
 import { usePaymentAcceptorErrorMessages } from '@/composables/usePaymentAcceptorErrorMessages';
 
 const props = defineProps<PaymentAcceptorsManageModalProps>();
@@ -33,7 +29,7 @@ const emit = defineEmits<PaymentAcceptorsManageModalEmits>();
 
 const { $t } = useIntl();
 const logger = useLogger();
-const { fieldRefused, inUse } = usePaymentAcceptorErrorMessages();
+const { describeSaveError, describeDeleteError } = usePaymentAcceptorErrorMessages();
 
 const step = ref<PaymentAcceptorsManageModalStep>('LIST');
 /** The step the modal opened on, which is where cancelling closes it rather than going back. */
@@ -84,13 +80,6 @@ const finishStep = () => {
     goTo('LIST');
 };
 
-const somethingWentWrong = () =>
-    $t({
-        defaultMessage: 'Something went wrong. Please try again.',
-        id: 'payment_acceptors_modal.error',
-        description: 'Error shown in the payment acceptors modal when a change cannot be made',
-    });
-
 const save = async () => {
     // A second confirm while the first is still out would store the acceptor twice.
     if (isWorking.value) return;
@@ -116,13 +105,9 @@ const save = async () => {
             {},
             error,
         );
-        // A refused field is shown at the field; anything else as a message above the form.
-        const refusedField = getRefusedShownField(error);
-        if (refusedField) {
-            apiError.value = { [refusedField]: fieldRefused() };
-        } else {
-            errorMessage.value = somethingWentWrong();
-        }
+        const described = describeSaveError(error);
+        apiError.value = described.apiError;
+        errorMessage.value = described.message;
     } finally {
         isWorking.value = false;
     }
@@ -145,7 +130,7 @@ const confirmDelete = async () => {
             {},
             error,
         );
-        errorMessage.value = isPaymentAcceptorInUse(error) ? inUse() : somethingWentWrong();
+        errorMessage.value = describeDeleteError(error);
     } finally {
         isWorking.value = false;
     }

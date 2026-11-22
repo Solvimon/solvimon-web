@@ -18,7 +18,6 @@ import type {
 import PaymentAcceptorForm from '@/components/payments/PaymentAcceptorForm/PaymentAcceptorForm.vue';
 import SlidingPanes from '@/components/shared/SlidingPanes/SlidingPanes.vue';
 import { useLogger } from '@/components/providers';
-import { getRefusedShownField } from '@/components/payments/PaymentAcceptorForm/PaymentAcceptorForm.lib';
 import { usePaymentAcceptorErrorMessages } from '@/composables/usePaymentAcceptorErrorMessages';
 
 type Step = 'CHOOSE' | 'ADD';
@@ -30,7 +29,7 @@ const emit = defineEmits<PaymentAcceptorsModalEmits>();
 
 const { $t } = useIntl();
 const logger = useLogger();
-const { fieldRefused } = usePaymentAcceptorErrorMessages();
+const { describeSaveError } = usePaymentAcceptorErrorMessages();
 
 const step = ref<Step>('CHOOSE');
 const isWorking = ref(false);
@@ -99,13 +98,6 @@ watch(
     { immediate: true },
 );
 
-const somethingWentWrong = () =>
-    $t({
-        defaultMessage: 'Something went wrong. Please try again.',
-        id: 'payment_acceptors_modal.error',
-        description: 'Error shown in the payment acceptors modal when a change cannot be made',
-    });
-
 /** Runs a change, holding the modal while it is out and saying so when it fails. */
 const run = async <T,>(
     change: () => Promise<T>,
@@ -119,13 +111,9 @@ const run = async <T,>(
         return { result: await change() };
     } catch (error) {
         onError(error);
-        // A refused field is shown at the field; anything else as a message above the form.
-        const refusedField = getRefusedShownField(error);
-        if (refusedField) {
-            apiError.value = { [refusedField]: fieldRefused() };
-        } else {
-            errorMessage.value = somethingWentWrong();
-        }
+        const described = describeSaveError(error);
+        apiError.value = described.apiError;
+        errorMessage.value = described.message;
         return undefined;
     } finally {
         isWorking.value = false;

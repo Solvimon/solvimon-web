@@ -1,6 +1,6 @@
 <script setup lang="ts" generic="T">
 import { computed } from 'vue';
-import { Section, Typography, useIntl } from '@solvimon/solvimon-ui';
+import { useIntl } from '@solvimon/solvimon-ui';
 import type { LimitedListProps } from './LimitedList.types';
 
 const props = defineProps<LimitedListProps<T>>();
@@ -8,7 +8,7 @@ const props = defineProps<LimitedListProps<T>>();
 defineSlots<{
     /** One item. */
     item(props: { item: T }): unknown;
-    /** The text of the card counting the items left out. Defaults to "+ {count} more". */
+    /** The text counting the items left out. Defaults to "+ {count} more". */
     more?(props: { count: number }): unknown;
 }>();
 
@@ -24,22 +24,18 @@ const hiddenCount = computed(() => props.items.length - shownItems.value.length)
         <li v-for="item in shownItems" :key="itemKey(item)" :class="itemClass">
             <slot name="item" :item="item" />
         </li>
-        <li v-if="hiddenCount > 0" :class="moreClass">
-            <Section no-spacing content-classes="px-4 py-3 text-center">
-                <Typography tag="span" weight="semibold" color="secondary" no-spacing>
-                    <slot name="more" :count="hiddenCount">{{
-                        $t(
-                            {
-                                defaultMessage: '+ {count} more',
-                                id: 'limited_list.more',
-                                description:
-                                    'Card below a shortened list with the number of items it leaves out',
-                            },
-                            { count: String(hiddenCount) },
-                        )
-                    }}</slot>
-                </Typography>
-            </Section>
+        <li v-if="hiddenCount > 0" class="mt-1 text-sm text-primary-900" :class="moreClass">
+            <slot name="more" :count="hiddenCount">{{
+                $t(
+                    {
+                        defaultMessage: '+ {count} more',
+                        id: 'limited_list.more',
+                        description:
+                            'Text below a shortened list with the number of items it leaves out',
+                    },
+                    { count: String(hiddenCount) },
+                )
+            }}</slot>
         </li>
     </ul>
 </template>

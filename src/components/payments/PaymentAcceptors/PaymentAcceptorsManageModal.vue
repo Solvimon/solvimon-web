@@ -280,11 +280,7 @@ const cancelButtonText = computed(() => {
         @close="handleClose"
     >
         <template #body>
-            <!-- The list closes with one button right under it, as the payment methods modal does. -->
-            <div
-                class="sv-payment-acceptors-manage-modal grid grid-cols-1 gap-4"
-                :class="{ 'pb-4': step !== 'LIST' }"
-            >
+            <div class="sv-payment-acceptors-manage-modal grid grid-cols-1 gap-4 pb-4">
                 <ErrorNotification
                     v-if="errorMessage"
                     class="sv-payment-acceptors-manage-modal__error sv-error"

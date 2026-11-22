@@ -9,15 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Self-billing customers manage the bank accounts they are paid into (payment acceptors). The customer overview shows a **Payment acceptors** block (`.sv-payment-acceptors`) to a customer with a self-billing subscription, with up to three of them, **View all** and, without any yet, **Add payment acceptor**. Both ask the host to go on, through the new `view-all-payment-acceptors` and `add-payment-acceptor` action requests.
-- A `payment-acceptors-management` screen (`<solvimon-payment-acceptors-management>`, `@solvimon/solvimon-web/screens/payment-acceptors-management`) lists every acceptor of the customer, inactive ones dimmed. **Add payment acceptor** and each acceptor's **Edit** ask the host to go on (`add-payment-acceptor`, `edit-payment-acceptor` with `{ paymentAcceptorId }`); **Delete** is confirmed in place.
-- A `payment-acceptor-form` component (`<solvimon-payment-acceptor-form>`, `@solvimon/solvimon-web/components/payment-acceptor-form`) adds a bank account, or edits the one given as `configuration.paymentAcceptorId`, with the bank account formats Solvimon Desk offers. It dispatches `solvimon-payment-acceptor-saved` with `{ componentName, paymentAcceptorId }` once stored.
-- Subscription details shows a self-billing subscription's payment acceptors: the ones assigned to it, or, with none assigned, every active one, and says so. **Manage** assigns them in a modal, where a new one can be created too. Assigning needs `POST /v1/portal/pricing-plan-subscriptions/{id}/set-payment-acceptors` with `payment_acceptor_ids`. A new bank account is stored without a reference, which the portal generates.
 - Log codes `PAYMENT_ACCEPTORS_LOAD_FAILED`, `PAYMENT_ACCEPTOR_SAVE_FAILED`, `PAYMENT_ACCEPTOR_DELETE_FAILED`, `SUBSCRIPTION_PAYMENT_ACCEPTORS_SAVE_FAILED` and `SELF_BILLING_SUBSCRIPTIONS_LOAD_FAILED`.
+- Self-billing customers manage the bank accounts they are paid into (payment acceptors). The customer overview shows a **Payment acceptors** block (`.sv-payment-acceptors`) to a customer with a self-billing subscription, with up to three of them and **Show all N** for the rest. **Manage** opens a modal that lists every payment acceptor and adds, edits and deletes them in place; without any yet, **Add payment acceptor** opens it on adding. An archived or deprecated payment acceptor can be deleted but not edited.
+- Subscription details shows a self-billing subscription's payment acceptors: the ones chosen for it, or every active one when none is. **Manage** opens a modal to choose them, with **Use all payment acceptors** for every active one including ones added later, and to add a new one. Choosing needs `POST /v1/portal/pricing-plan-subscriptions/{id}/set-payment-acceptors` with `payment_acceptor_ids`. A new bank account is stored without a reference, which the portal generates.
+- When the API refuses a change to a payment acceptor, the customer is told in their language: a refused field shows on that field, and a delete refused because a subscription or invoice still uses the payment acceptor says so. The API's own message goes to the logs.
+- Opening the customer overview makes one more request, `GET /v1/portal/pricing-plan-subscriptions` with `variant=SELF_BILLING`, to find out whether to show the payment acceptors block.
 
 ### Changed
 
 - `CheckoutSessionReadableCustomer.effective_display` may now be absent or `null`, as the API sends it on an existing customer's entry. A host that reads it must handle both.
+- The number of on-demand items a subscription's on-demand items card leaves out (`.sv-on-demand-items-card__more`) is a line of text below the list rather than a card.
 
 ### Fixed
 

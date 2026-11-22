@@ -1117,7 +1117,7 @@
   },
   "limited_list.more": {
     "defaultMessage": "+ {count} more",
-    "description": "Card below a shortened list with the number of items it leaves out"
+    "description": "Text below a shortened list with the number of items it leaves out"
   },
   "on_demand_items_card.more_available": {
     "defaultMessage": "+ {count} available",

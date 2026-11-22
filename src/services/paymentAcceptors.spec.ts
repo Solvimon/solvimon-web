@@ -17,6 +17,7 @@ describe('payment acceptors service', () => {
     });
 
     it("lists the customer's acceptors", async () => {
+        mockRequest.mockResolvedValue({ data: [] });
         await createPaymentAcceptorsService().getPaymentAcceptors({ customerId: 'cust_1' });
 
         expect(mockRequest).toHaveBeenCalledWith({
@@ -24,6 +25,22 @@ describe('payment acceptors service', () => {
             query: { customer_id: 'cust_1' },
             isCollection: true,
         });
+    });
+
+    it('leaves out the acceptors the customer deleted', async () => {
+        mockRequest.mockResolvedValue({
+            data: [
+                { id: 'paya_1', status: 'ACTIVE' },
+                { id: 'paya_2', status: 'ARCHIVED' },
+                { id: 'paya_3', status: 'DEPRECATED' },
+            ],
+        });
+
+        const { data } = await createPaymentAcceptorsService().getPaymentAcceptors({
+            customerId: 'cust_1',
+        });
+
+        expect(data.map(({ id }) => id)).toEqual(['paya_1', 'paya_3']);
     });
 
     it('edits an acceptor in place', async () => {
@@ -39,14 +56,15 @@ describe('payment acceptors service', () => {
         });
     });
 
-    it('deletes an acceptor', async () => {
-        await createPaymentAcceptorsService().deletePaymentAcceptor({
+    it('deletes an acceptor by archiving it', async () => {
+        await createPaymentAcceptorsService().archivePaymentAcceptor({
             paymentAcceptorId: 'paya_1',
         });
 
         expect(mockRequest).toHaveBeenCalledWith({
             url: 'https://api.test/portal/payment-acceptors/paya_1',
-            options: { method: 'DELETE' },
+            data: { status: 'ARCHIVED' },
+            options: { method: 'PATCH' },
         });
     });
 });

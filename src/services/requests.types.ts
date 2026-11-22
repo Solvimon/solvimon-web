@@ -8,7 +8,7 @@ export type GetDefaultHeaders = (params: {
 
 export type RequestOptions = {
     headers?: Record<string, string | null>;
-    method?: 'GET' | 'POST' | 'PATCH' | 'DELETE';
+    method?: 'GET' | 'POST' | 'PATCH';
     /** Statuses the caller handles itself. Still rejected; only the log entry drops to `warn`. */
     expectedStatusCodes?: number[];
     /** Like `expectedStatusCodes`, for failures the status alone does not tell apart. */

@@ -97,8 +97,8 @@ export const getRefusedShownField = (error: unknown): string | undefined => {
 };
 
 /**
- * The API refuses to delete an acceptor that a subscription or an invoice still uses, both on its
- * `id`, and tells the two apart only in its English message.
+ * The API refuses to archive an acceptor that an active or paused subscription is set to use,
+ * naming the `status` it was asked to change.
  */
-export const isPaymentAcceptorInUse = (error: unknown): boolean =>
-    isApiError(error) && error.statusCode === 400 && error.field === 'id';
+export const isPaymentAcceptorChosenBySubscription = (error: unknown): boolean =>
+    isApiError(error) && error.statusCode === 400 && error.field === 'status';

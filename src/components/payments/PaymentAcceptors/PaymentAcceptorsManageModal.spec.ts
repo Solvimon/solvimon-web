@@ -255,14 +255,14 @@ describe('PaymentAcceptorsManageModal', () => {
         );
     });
 
-    it('says a payment acceptor in use cannot be deleted', async () => {
+    it('says a payment acceptor a subscription is set to use cannot be deleted', async () => {
         const actions = {
             ...createActions(),
             remove: vi.fn().mockRejectedValue(
                 new ApiError({
                     statusCode: 400,
-                    field: 'id',
-                    message: 'associated with invoices',
+                    field: 'status',
+                    message: 'There is active Subscription with the Payment Acceptor',
                 }),
             ),
         };
@@ -273,7 +273,7 @@ describe('PaymentAcceptorsManageModal', () => {
         await flushPromises();
 
         expect(wrapper.find('.error-notification-stub').text()).toBe(
-            "You can't delete this payment acceptor because a subscription or invoice uses it.",
+            'A subscription is set to use this payment acceptor. Choose other payment acceptors for it first.',
         );
     });
 

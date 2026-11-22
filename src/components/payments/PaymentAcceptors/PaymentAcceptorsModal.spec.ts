@@ -88,15 +88,15 @@ vi.mock('@solvimon/solvimon-ui', async () => {
                     ),
                 ]),
         }),
-        Toggle: defineComponent({
-            name: 'ToggleStub',
-            props: { modelValue: Boolean, disabled: Boolean },
-            emits: ['update:modelValue'],
-            setup: () => () => h('div', { class: 'toggle-stub' }),
-        }),
         CheckboxGroupExtended: defineComponent({
             name: 'CheckboxGroupExtendedStub',
-            props: { modelValue: Array, options: Array, disabled: Boolean, error: String },
+            props: {
+                name: String,
+                modelValue: Array,
+                options: Array,
+                disabled: Boolean,
+                error: String,
+            },
             emits: ['update:modelValue'],
             setup: () => () => h('div', { class: 'checkbox-group-stub' }),
         }),
@@ -133,11 +133,19 @@ const mountComponent = (props: Partial<PaymentAcceptorsModalProps> = {}) =>
         },
     });
 
-const choices = (wrapper: ReturnType<typeof mountComponent>) =>
-    wrapper.findComponent({ name: 'CheckboxGroupExtendedStub' });
+const group = (wrapper: ReturnType<typeof mountComponent>, name: string) => {
+    const found = wrapper
+        .findAllComponents({ name: 'CheckboxGroupExtendedStub' })
+        .find((component) => component.props('name') === name);
+    if (!found) throw new Error(`No checkbox group named ${name}`);
+    return found;
+};
 
-const useAllToggle = (wrapper: ReturnType<typeof mountComponent>) =>
-    wrapper.findComponent({ name: 'ToggleStub' });
+const choices = (wrapper: ReturnType<typeof mountComponent>) =>
+    group(wrapper, 'payment_acceptor_ids');
+
+const allRow = (wrapper: ReturnType<typeof mountComponent>) =>
+    group(wrapper, 'payment_acceptors_all');
 
 const usingAll = { ...subscription, paymentAcceptorIds: [] };
 
@@ -167,53 +175,53 @@ describe('PaymentAcceptorsModal', () => {
         );
     });
 
-    it('opens with the toggle off when the subscription has chosen acceptors', () => {
+    it('leaves "All" unticked when the subscription has chosen acceptors', () => {
         const wrapper = mountComponent();
 
-        expect(useAllToggle(wrapper).props('modelValue')).toBe(false);
-        expect(choices(wrapper).props('disabled')).toBe(false);
+        expect(allRow(wrapper).props('modelValue')).toEqual([]);
+        expect(choices(wrapper).props('modelValue')).toEqual(['main']);
     });
 
-    it('opens with the toggle on and every active acceptor ticked and locked when none is chosen', () => {
+    it('opens with "All" and every active acceptor ticked when the subscription uses all', () => {
         const wrapper = mountComponent({ subscription: usingAll });
 
-        expect(useAllToggle(wrapper).props('modelValue')).toBe(true);
+        expect(allRow(wrapper).props('modelValue')).toEqual(['ALL']);
         expect(choices(wrapper).props('modelValue')).toEqual(['main', 'other']);
-        expect(choices(wrapper).props('disabled')).toBe(true);
     });
 
-    it('saves an empty list while the toggle is on', async () => {
+    it('ticks and unticks every acceptor from the "All" row', async () => {
+        const wrapper = mountComponent();
+
+        allRow(wrapper).vm.$emit('update:modelValue', ['ALL']);
+        await wrapper.vm.$nextTick();
+        expect(choices(wrapper).props('modelValue')).toEqual(['main', 'other']);
+
+        allRow(wrapper).vm.$emit('update:modelValue', []);
+        await wrapper.vm.$nextTick();
+        expect(choices(wrapper).props('modelValue')).toEqual([]);
+    });
+
+    it('unticks "All" once one acceptor is unticked', async () => {
+        const wrapper = mountComponent({ subscription: usingAll });
+
+        choices(wrapper).vm.$emit('update:modelValue', ['main']);
+        await wrapper.vm.$nextTick();
+
+        expect(allRow(wrapper).props('modelValue')).toEqual([]);
+    });
+
+    it('saves an empty list, meaning all including later ones, with every acceptor ticked', async () => {
         const saveChoice = vi.fn().mockResolvedValue(undefined);
         const wrapper = mountComponent({ saveChoice });
 
-        useAllToggle(wrapper).vm.$emit('update:modelValue', true);
+        choices(wrapper).vm.$emit('update:modelValue', ['main', 'other']);
         await wrapper.find('.modal__confirm').trigger('click');
         await flushPromises();
 
         expect(saveChoice).toHaveBeenCalledWith([]);
     });
 
-    it('ticks every active acceptor when the toggle is turned off', async () => {
-        const wrapper = mountComponent({ subscription: usingAll });
-
-        useAllToggle(wrapper).vm.$emit('update:modelValue', false);
-        await wrapper.vm.$nextTick();
-
-        expect(choices(wrapper).props('modelValue')).toEqual(['main', 'other']);
-        expect(choices(wrapper).props('disabled')).toBe(false);
-    });
-
-    it('keeps the selection when the toggle goes on and off again before saving', async () => {
-        const wrapper = mountComponent();
-
-        useAllToggle(wrapper).vm.$emit('update:modelValue', true);
-        useAllToggle(wrapper).vm.$emit('update:modelValue', false);
-        await wrapper.vm.$nextTick();
-
-        expect(choices(wrapper).props('modelValue')).toEqual(['main']);
-    });
-
-    it('refuses to save with the toggle off and nothing ticked', async () => {
+    it('refuses to save with nothing ticked', async () => {
         const saveChoice = vi.fn();
         const wrapper = mountComponent({ saveChoice });
 
@@ -222,9 +230,7 @@ describe('PaymentAcceptorsModal', () => {
         await flushPromises();
 
         expect(saveChoice).not.toHaveBeenCalled();
-        expect(choices(wrapper).props('error')).toBe(
-            'Select at least one payment acceptor, or turn on Use all.',
-        );
+        expect(choices(wrapper).props('error')).toBe('Select at least one payment acceptor.');
         expect(wrapper.emitted('close')).toBeUndefined();
     });
 
@@ -272,7 +278,7 @@ describe('PaymentAcceptorsModal', () => {
         expect(choices(wrapper).props('modelValue')).toEqual(['main', 'new']);
     });
 
-    it('leaves the toggle on after adding one, so the new one applies with the rest', async () => {
+    it('keeps "All" ticked after adding one, so the new one applies with the rest', async () => {
         const saveChoice = vi.fn().mockResolvedValue(undefined);
         const wrapper = mountComponent({ subscription: usingAll, saveChoice });
 
@@ -280,7 +286,7 @@ describe('PaymentAcceptorsModal', () => {
         await wrapper.find('.modal__confirm').trigger('click');
         await flushPromises();
 
-        expect(useAllToggle(wrapper).props('modelValue')).toBe(true);
+        expect(allRow(wrapper).props('modelValue')).toEqual(['ALL']);
 
         await wrapper.find('.modal__confirm').trigger('click');
         await flushPromises();

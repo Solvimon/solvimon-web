@@ -847,10 +847,6 @@
     "defaultMessage": "This promotion code is not valid.",
     "description": "Error shown under the promotion code field when the code the customer entered was not accepted"
   },
-  "components.payment_acceptor_form.not_found": {
-    "defaultMessage": "We could not find this payment acceptor.",
-    "description": "Shown instead of the payment acceptor form when the bank account to edit is not among the customer’s"
-  },
   "components.payment_method_form.continue_button.label": {
     "defaultMessage": "Continue",
     "description": "Label of the button that leaves the form once the payment method is stored"
@@ -942,10 +938,6 @@
   "customer_overview.payment_acceptors_block.title": {
     "defaultMessage": "{count,plural,one{Payment acceptor} other{Payment acceptors}}",
     "description": "Title of the block that lists the bank accounts the customer receives payments on"
-  },
-  "customer_overview.payment_acceptors_block.view_all_button_label": {
-    "defaultMessage": "View all",
-    "description": "Label of the button that opens the list of all the bank accounts the customer is paid into"
   },
   "customer_overview.payment_acceptors_block.where_paid": {
     "defaultMessage": "Where you receive payments for your self-billing subscriptions.",
@@ -1606,10 +1598,6 @@
   "pricing_item_pricing.unsupported_pricing_error": {
     "defaultMessage": "Unsupported pricing",
     "description": "Text displayed when the pricing item pricing is unsupported"
-  },
-  "screens.payment_acceptors_management.title": {
-    "defaultMessage": "Payment acceptors",
-    "description": "Title of the screen that lists the bank accounts the customer is paid into"
   },
   "screens.payment_method_management.add_button": {
     "defaultMessage": "Add payment method",

@@ -43,20 +43,6 @@ export interface ActionRequestDetailAddPaymentMethod {
     action: 'add-payment-method';
 }
 
-export interface ActionRequestDetailViewAllPaymentAcceptors {
-    action: 'view-all-payment-acceptors';
-}
-
-export interface ActionRequestDetailAddPaymentAcceptor {
-    action: 'add-payment-acceptor';
-}
-
-/** Hand `paymentAcceptorId` to `payment-acceptor-form` as `configuration.paymentAcceptorId`. */
-export interface ActionRequestDetailEditPaymentAcceptor {
-    action: 'edit-payment-acceptor';
-    data: { paymentAcceptorId: string };
-}
-
 export interface ActionRequestDetailViewCustomerOverview {
     action: 'view-customer-overview';
 }
@@ -70,9 +56,6 @@ export type ActionRequestDetail =
     | ActionRequestDetailEditBillingInformation
     | ActionRequestDetailViewAllPaymentMethods
     | ActionRequestDetailAddPaymentMethod
-    | ActionRequestDetailViewAllPaymentAcceptors
-    | ActionRequestDetailAddPaymentAcceptor
-    | ActionRequestDetailEditPaymentAcceptor
     | ActionRequestDetailViewCustomerOverview;
 
 /**

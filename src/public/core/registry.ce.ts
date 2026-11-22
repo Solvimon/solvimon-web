@@ -40,10 +40,6 @@ const SCREEN_LOADERS: Record<RegisteredScreenId, DefineLoader> = {
         import('@/public/screens/PaymentMethodsManagement/PaymentMethodsManagement.entry.ce').then(
             (module) => module.defineSolvimonPaymentMethodsManagement,
         ),
-    'payment-acceptors-management': () =>
-        import('@/public/screens/PaymentAcceptorsManagement/PaymentAcceptorsManagement.entry.ce').then(
-            (module) => module.defineSolvimonPaymentAcceptorsManagement,
-        ),
 };
 
 const COMPONENT_LOADERS: Record<RegisteredComponentId, DefineLoader> = {
@@ -98,10 +94,6 @@ const COMPONENT_LOADERS: Record<RegisteredComponentId, DefineLoader> = {
     'shipping-address-form': () =>
         import('@/public/components/ShippingAddressForm/ShippingAddressForm.entry.ce').then(
             (module) => module.defineSolvimonShippingAddressForm,
-        ),
-    'payment-acceptor-form': () =>
-        import('@/public/components/PaymentAcceptorForm/PaymentAcceptorForm.entry.ce').then(
-            (module) => module.defineSolvimonPaymentAcceptorForm,
         ),
 };
 

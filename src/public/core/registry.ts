@@ -12,7 +12,6 @@ const SCREEN_IDS: Record<RegisteredScreenId, true> = {
     'subscription-details': true,
     'pay-invoice': true,
     'payment-methods-management': true,
-    'payment-acceptors-management': true,
 };
 
 const COMPONENT_IDS: Record<RegisteredComponentId, true> = {
@@ -29,7 +28,6 @@ const COMPONENT_IDS: Record<RegisteredComponentId, true> = {
     'billing-information-form': true,
     'payment-method-form': true,
     'shipping-address-form': true,
-    'payment-acceptor-form': true,
 };
 
 const isScreenId = (id: string): id is RegisteredScreenId => Object.hasOwn(SCREEN_IDS, id);

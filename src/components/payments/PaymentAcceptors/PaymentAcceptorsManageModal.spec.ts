@@ -154,6 +154,15 @@ describe('PaymentAcceptorsManageModal', () => {
         expect(wrapper.emitted('close')).toHaveLength(1);
     });
 
+    it('offers no edit for a payment acceptor the API will not change', () => {
+        const archived = { ...acceptor('old'), status: 'ARCHIVED' } as PaymentAcceptor;
+        const wrapper = mountComponent({ paymentAcceptors: [archived] });
+
+        expect(
+            wrapper.findAll('.payment-acceptor-stub__menu-item').map((item) => item.text()),
+        ).toEqual(['Delete']);
+    });
+
     it('says so when there are no payment acceptors yet', () => {
         const wrapper = mountComponent({ paymentAcceptors: [] });
 

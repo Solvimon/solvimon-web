@@ -340,16 +340,29 @@ const cancelButtonText = computed(() =>
                             </Toggle>
 
                             <div class="grid grid-cols-1 gap-2">
-                                <CheckboxGroupExtended
-                                    :model-value="tickedIds"
-                                    class="sv-payment-acceptors-modal__choices"
-                                    name="payment_acceptor_ids"
-                                    direction="column"
-                                    :disabled="usesAll || isWorking"
-                                    :error="choiceError"
-                                    :options="choiceOptions"
-                                    @update:model-value="setChosenIds"
-                                />
+                                <div
+                                    role="group"
+                                    :aria-label="
+                                        $t({
+                                            defaultMessage:
+                                                'Payment acceptors for this subscription',
+                                            id: 'payment_acceptors_modal.assign.list_label',
+                                            description:
+                                                'Screen-reader name of the list of payment acceptors to choose for the subscription',
+                                        })
+                                    "
+                                >
+                                    <CheckboxGroupExtended
+                                        :model-value="tickedIds"
+                                        class="sv-payment-acceptors-modal__choices"
+                                        name="payment_acceptor_ids"
+                                        direction="column"
+                                        :disabled="usesAll || isWorking"
+                                        :error="choiceError"
+                                        :options="choiceOptions"
+                                        @update:model-value="setChosenIds"
+                                    />
+                                </div>
 
                                 <button
                                     type="button"

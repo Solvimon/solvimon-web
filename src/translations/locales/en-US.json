@@ -309,6 +309,7 @@
   "payment_acceptor_form.name.label": "Name",
   "payment_acceptor_form.name.placeholder": "For example: Main business account",
   "payment_acceptors_modal.assign.confirm_button.label": "Assign payment acceptors",
+  "payment_acceptors_modal.assign.list_label": "Payment acceptors for this subscription",
   "payment_acceptors_modal.assign.none_selected_error": "Select at least one payment acceptor, or turn on Use all.",
   "payment_acceptors_modal.assign.title": "Assign payment acceptors",
   "payment_acceptors_modal.back_button.label": "Back",

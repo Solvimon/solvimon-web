@@ -1239,6 +1239,10 @@
     "defaultMessage": "Assign payment acceptors",
     "description": "Label of the button that stores the bank accounts chosen for the subscription"
   },
+  "payment_acceptors_modal.assign.list_label": {
+    "defaultMessage": "Payment acceptors for this subscription",
+    "description": "Screen-reader name of the list of payment acceptors to choose for the subscription"
+  },
   "payment_acceptors_modal.assign.none_selected_error": {
     "defaultMessage": "Select at least one payment acceptor, or turn on Use all.",
     "description": "Error in the payment acceptors modal when the use-all toggle is off and no payment acceptor is ticked"

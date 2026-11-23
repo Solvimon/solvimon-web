@@ -124,7 +124,7 @@ describe('CustomerPaymentAcceptors', () => {
     it('says it is where the customer receives payments', async () => {
         const wrapper = await mountBlock({ customerId: 'cust_1' });
 
-        expect(wrapper.text()).toContain(
+        expect(wrapper.find('.sv-payment-acceptors__description').text()).toBe(
             'Where you receive payments for your self-billing subscriptions.',
         );
     });

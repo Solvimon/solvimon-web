@@ -18,7 +18,6 @@ import { useCustomerWalletBalances } from '@/composables/useCustomerWalletBalanc
 import CustomerWalletBalances from '@/public/components/CustomerWalletBalances/CustomerWalletBalances.vue';
 import { useActiveScheduleWarning } from '@/composables/useActiveScheduleWarning';
 import { useHasShippedSubscription } from '@/composables/useHasShippedSubscription';
-import { useHasSelfBillingSubscription } from '@/composables/useHasSelfBillingSubscription';
 import { useCustomerPaymentMethodOptions } from '@/composables/useCustomerPaymentMethodOptions';
 import LoadFailedNotice from '@/components/shared/LoadFailedNotice.vue';
 import type { PaymentMethodsModalStep } from '@/components/payments/PaymentMethodsModal/PaymentMethodsModal.types';
@@ -101,9 +100,10 @@ const shownPaymentMethods = computed(() =>
 /** Shipping addresses are only shown to a customer with a subscription, of any status, that ships. */
 const shippedSubscriptions = useHasShippedSubscription({ customerId });
 
-/** Payment acceptors are only shown to a customer that is paid on a self-billing subscription. */
-const selfBillingSubscriptions = useHasSelfBillingSubscription({ customerId });
-void selfBillingSubscriptions.check();
+/** Payment acceptors are only shown to a customer with the self-billing role. */
+const isSelfBilling = computed(
+    () => customer.customer.value?.roles?.includes('SELF_BILLING') ?? false,
+);
 
 const { isLoading } = useLoadInitialData(
     customer.get.execute(),
@@ -288,7 +288,7 @@ useActiveScheduleWarning(subscriptions.items);
             />
 
             <CustomerPaymentAcceptors
-                v-if="selfBillingSubscriptions.hasSelfBillingSubscription.value"
+                v-if="isSelfBilling"
                 class="sv-customer-overview__payment-acceptors"
                 :is-loading="isLoading"
                 :customer-id="customerId"

@@ -54,11 +54,6 @@ interface SubscriptionsService {
     getSubscriptionPricingPlanGroup(params: {
         id: PricingPlanSubscription['id'];
     }): Promise<PricingPlanGroup>;
-    getSubscriptionsOfVariant(args: {
-        customerId: string;
-        variant: PricingPlanSubscription['variant'];
-        pageSize: number;
-    }): Promise<ApiSuccessCollectionResponse<PricingPlanSubscription>>;
     setSubscriptionPaymentAcceptors(params: {
         id: PricingPlanSubscription['id'];
         paymentAcceptorIds: PaymentAcceptor['id'][];
@@ -200,26 +195,6 @@ export function createSubscriptionsService(): SubscriptionsService {
         });
     }
 
-    /** A page of the customer's billing subscriptions of one variant, whatever their status. */
-    function getSubscriptionsOfVariant({
-        customerId,
-        variant,
-        pageSize,
-    }: {
-        customerId: string;
-        variant: PricingPlanSubscription['variant'];
-        pageSize: number;
-    }): Promise<ApiSuccessCollectionResponse<PricingPlanSubscription>> {
-        return request<PricingPlanSubscription>({
-            url: buildUrl(config.apiUrls.config, ...ENDPOINT),
-            query: withPagination(
-                { customer_id: customerId, variant, type: 'BILLING' },
-                { page: 1, pageSize },
-            ),
-            isCollection: true,
-        });
-    }
-
     /**
      * POST /v1/portal/pricing-plan-subscriptions/{id}/set-payment-acceptors — the bank accounts a
      * self-billing subscription is paid into. The list replaces the current one; an empty list
@@ -240,7 +215,6 @@ export function createSubscriptionsService(): SubscriptionsService {
     }
 
     return {
-        getSubscriptionsOfVariant,
         setSubscriptionPaymentAcceptors,
         setSubscriptionPaymentMethod,
         getSubscription,

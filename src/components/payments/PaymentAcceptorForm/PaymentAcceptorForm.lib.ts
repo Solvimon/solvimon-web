@@ -20,12 +20,27 @@ export const createPaymentAcceptorFormState = (
     ),
 });
 
+/** Deletes the fields left empty, in the given object and in its nested parts. */
+const deleteEmptyFields = (value: object): void => {
+    for (const [key, item] of Object.entries(value)) {
+        if (item === '' || item === undefined) {
+            Reflect.deleteProperty(value, key);
+        } else if (item !== null && typeof item === 'object') {
+            deleteEmptyFields(item);
+        }
+    }
+};
+
 /** A new bank account acceptor. The portal only lets a customer add bank accounts. */
-export const toCreateDetails = (form: PaymentAcceptorFormState): PaymentAcceptorCreateDetails => ({
-    type: 'BANK_ACCOUNT',
-    name: form.name.trim(),
-    bank_account: toBankAccountCreatePayload(structuredClone(form.bank_account)),
-});
+export const toCreateDetails = (form: PaymentAcceptorFormState): PaymentAcceptorCreateDetails => {
+    const bankAccount = toBankAccountCreatePayload(structuredClone(form.bank_account));
+
+    if (bankAccount) {
+        deleteEmptyFields(bankAccount);
+    }
+
+    return { type: 'BANK_ACCOUNT', name: form.name.trim(), bank_account: bankAccount };
+};
 
 /**
  * What changed since the form was filled. A cleared field is sent as null so the API clears it too.

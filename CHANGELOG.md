@@ -18,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - `CheckoutSessionReadableCustomer.effective_display` may now be absent or `null`, as the API sends it on an existing customer's entry. A host that reads it must handle both.
-- The number of on-demand items a subscription's on-demand items card leaves out (`.sv-on-demand-items-card__more`) is a line of text below the list rather than a card.
+- The count of on-demand items a subscription's on-demand items card leaves out (`.sv-on-demand-items-card__more`) is a smaller box in small text, in the same style as the payment acceptors block's count.
 
 ### Fixed
 

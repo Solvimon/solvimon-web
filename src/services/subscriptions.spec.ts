@@ -166,29 +166,6 @@ describe('subscriptions service', () => {
         });
     });
 
-    describe('getSubscriptionsOfVariant', () => {
-        it('asks for the first page of the customer billing subscriptions of the variant', async () => {
-            const { getSubscriptionsOfVariant } = createSubscriptionsService();
-            await getSubscriptionsOfVariant({
-                customerId: 'cust_1',
-                variant: 'SELF_BILLING',
-                pageSize: 1,
-            });
-
-            expect(mockRequest).toHaveBeenCalledWith({
-                url: 'https://api.test/portal/pricing-plan-subscriptions',
-                query: {
-                    customer_id: 'cust_1',
-                    variant: 'SELF_BILLING',
-                    type: 'BILLING',
-                    page: '1',
-                    limit: 1,
-                },
-                isCollection: true,
-            });
-        });
-    });
-
     describe('setSubscriptionPaymentAcceptors', () => {
         it('replaces the payment acceptor ids of the subscription', async () => {
             const { setSubscriptionPaymentAcceptors } = createSubscriptionsService();

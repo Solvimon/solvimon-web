@@ -16,8 +16,7 @@ const {
     mockFetchWalletBalances,
     shippedState,
     mockCheckShipped,
-    selfBillingState,
-    mockCheckSelfBilling,
+    customerState,
     optionsState,
     preload,
 } = vi.hoisted(() => ({
@@ -28,8 +27,7 @@ const {
     mockFetchWalletBalances: vi.fn(),
     shippedState: { value: false },
     mockCheckShipped: vi.fn(),
-    selfBillingState: { value: false },
-    mockCheckSelfBilling: vi.fn(),
+    customerState: { roles: undefined as string[] | undefined },
     optionsState: { options: [] as unknown[], status: undefined as unknown },
     preload: { resolve: () => {}, mock: vi.fn() },
 }));
@@ -68,17 +66,6 @@ vi.mock('@/composables/useHasShippedSubscription', async () => {
         useHasShippedSubscription: () => ({
             hasShippedSubscription: computed(() => shippedState.value),
             check: mockCheckShipped,
-        }),
-    };
-});
-
-vi.mock('@/composables/useHasSelfBillingSubscription', async () => {
-    const { computed } = await import('vue');
-
-    return {
-        useHasSelfBillingSubscription: () => ({
-            hasSelfBillingSubscription: computed(() => selfBillingState.value),
-            check: mockCheckSelfBilling,
         }),
     };
 });
@@ -130,7 +117,7 @@ vi.mock('@/composables/usePaymentMethods', async () => {
 
 vi.mock('@/composables/useCustomer', () => ({
     useCustomer: () => ({
-        customer: ref({ id: 'cust_1' }),
+        customer: ref({ id: 'cust_1', roles: customerState.roles }),
         get: { execute: vi.fn().mockResolvedValue(undefined) },
     }),
 }));
@@ -520,23 +507,18 @@ describe('CustomerOverview — shipping addresses', () => {
 
 describe('CustomerOverview — payment acceptors', () => {
     afterEach(() => {
-        selfBillingState.value = false;
+        customerState.roles = undefined;
     });
 
-    it('finds out whether the customer has a self-billing subscription', async () => {
-        await mountOverview();
-
-        expect(mockCheckSelfBilling).toHaveBeenCalled();
-    });
-
-    it('leaves the payment acceptors out for a customer without a self-billing subscription', async () => {
+    it('leaves the payment acceptors out for a customer without the self-billing role', async () => {
+        customerState.roles = ['DEFAULT'];
         const wrapper = await mountOverview();
 
         expect(wrapper.findComponent({ name: 'CustomerPaymentAcceptors' }).exists()).toBe(false);
     });
 
     it("shows a self-billing customer's payment acceptors, for its customer", async () => {
-        selfBillingState.value = true;
+        customerState.roles = ['DEFAULT', 'SELF_BILLING'];
         const wrapper = await mountOverview();
 
         const acceptors = wrapper.findComponent({ name: 'CustomerPaymentAcceptors' });

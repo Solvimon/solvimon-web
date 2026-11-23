@@ -131,6 +131,7 @@ const description = computed(() => {
         no-border
         content-background="none"
         :description="description"
+        description-classes="sv-payment-acceptors__description"
         :title="
             $t(
                 {

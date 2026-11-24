@@ -135,6 +135,7 @@
     "checkout.order_summary_block.title": "Riepilogo ordine",
     "checkout.order_summary_block.updating": "Aggiornamento del prezzo in corso",
     "checkout.order_summary_block.usage.billed_period": "Addebito {period}",
+    "checkout.order_summary_block.usage.condition_other": "Altro",
     "checkout.order_summary_block.usage.rate_per_block": "{amount} / {blockSize} {unit}",
     "checkout.order_summary_block.usage.rate_per_unit": "{amount} / {unit}",
     "checkout.order_summary_block.usage.rate_percentage": "{percentage} del valore di {unit}",

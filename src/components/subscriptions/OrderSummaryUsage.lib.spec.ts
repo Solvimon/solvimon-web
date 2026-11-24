@@ -373,6 +373,15 @@ describe('getUsagePriceGroups', () => {
     });
 
     it('states a rate per block of units', () => {
+        const singularOnly = usagePricing({
+            id: 'pri_singular',
+            name: 'Singular only',
+            bands: [{ amount: eur('0.02'), block_size: { number: '1000000' } }],
+        });
+        singularOnly.items[0]!.product_items[0]!.unit_name = { singular: 'token' } as {
+            singular: string;
+            plural: string;
+        };
         const scheduleInfo = scheduleInfoOf([
             category('prca_tokens', 'Tokens', [
                 usagePricing({
@@ -402,6 +411,19 @@ describe('getUsagePriceGroups', () => {
                     name: 'Per amount block',
                     bands: [{ amount: eur('2.00'), block_size: { amount: eur('1000') } }],
                 }),
+                usagePricing({
+                    id: 'pri_short',
+                    name: 'Short block',
+                    unit: 'token',
+                    bands: [{ amount: eur('2.00'), block_size: { number: '12500' } }],
+                }),
+                usagePricing({
+                    id: 'pri_long',
+                    name: 'Long block',
+                    unit: 'token',
+                    bands: [{ amount: eur('2.00'), block_size: { number: '1234567' } }],
+                }),
+                singularOnly,
             ]),
         ]);
 
@@ -411,6 +433,9 @@ describe('getUsagePriceGroups', () => {
             ['No unit', '€1.00 / 1K units'],
             ['Share per block', undefined],
             ['Per amount block', undefined],
+            ['Short block', '€2.00 / 12.5K tokens'],
+            ['Long block', '€2.00 / 1,234,567 tokens'],
+            ['Singular only', '€0.02 / 1M token'],
         ]);
     });
 
@@ -508,7 +533,24 @@ describe('getUsagePriceGroups', () => {
             ).toEqual(['On demand', 'Spot']);
         });
 
-        it('shows the name alone when a condition has no single value or rate', () => {
+        it('labels a row without conditions as the other case', () => {
+            expect(
+                pricesOf(
+                    conditionalPricing([
+                        flat('spot', 1, '6.39', condition('spot')),
+                        flat('rest', 2, '12.79', undefined),
+                    ]),
+                )?.[0]?.rows,
+            ).toEqual([
+                { label: 'spot', rate: '€6.39 / transaction' },
+                { label: 'Other', rate: '€12.79 / transaction' },
+            ]);
+        });
+
+        it('shows the name alone when its rows would not say what each one matches', () => {
+            const onModel = {
+                meter_properties: [{ id: 'metp_model', value: 'B300', comparator: 'EQUALS' }],
+            };
             const twoProperties = {
                 meter_properties: [
                     { id: 'metp_capacity', value: 'spot', comparator: 'EQUALS' },
@@ -538,6 +580,12 @@ describe('getUsagePriceGroups', () => {
                 ],
                 [flat('a', 1, '12.79', condition('on_demand')), tiered],
                 [flat('a', 1, '12.79', condition('on_demand')), flat('b', 2, '6.39', nested)],
+                [flat('a', 1, '12.79', condition('on_demand')), flat('b', 2, '6.39', onModel)],
+                [
+                    flat('a', 1, '12.79', condition('on_demand')),
+                    flat('b', 2, '6.39', undefined),
+                    flat('c', 3, '5.00', undefined),
+                ],
             ].forEach((configs) => {
                 expect(pricesOf(conditionalPricing(configs))).toEqual([
                     { name: 'B300 usage', rate: undefined, rows: undefined },

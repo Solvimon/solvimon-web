@@ -543,6 +543,10 @@
     "defaultMessage": "Billed {period}",
     "description": "Next to the usage line of the order summary, how often usage is billed, e.g. \"Billed monthly\""
   },
+  "checkout.order_summary_block.usage.condition_other": {
+    "defaultMessage": "Other",
+    "description": "The row of a usage price set per condition that applies when no condition matches, e.g. below \"spot €6.39 / GPU-hour\""
+  },
   "checkout.order_summary_block.usage.rate_per_block": {
     "defaultMessage": "{amount} / {blockSize} {unit}",
     "description": "A usage price per block of units, e.g. \"$0.02 / 1M tokens\""

@@ -135,6 +135,7 @@
   "checkout.order_summary_block.title": "Order summary",
   "checkout.order_summary_block.updating": "Updating the price",
   "checkout.order_summary_block.usage.billed_period": "Billed {period}",
+  "checkout.order_summary_block.usage.condition_other": "Other",
   "checkout.order_summary_block.usage.rate_per_block": "{amount} / {blockSize} {unit}",
   "checkout.order_summary_block.usage.rate_per_unit": "{amount} / {unit}",
   "checkout.order_summary_block.usage.rate_percentage": "{percentage} of {unit} value",

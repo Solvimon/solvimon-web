@@ -135,6 +135,7 @@
     "checkout.order_summary_block.title": "Besteloverzicht",
     "checkout.order_summary_block.updating": "De prijs wordt bijgewerkt",
     "checkout.order_summary_block.usage.billed_period": "{period} gefactureerd",
+    "checkout.order_summary_block.usage.condition_other": "Overig",
     "checkout.order_summary_block.usage.rate_per_block": "{amount} / {blockSize} {unit}",
     "checkout.order_summary_block.usage.rate_per_unit": "{amount} / {unit}",
     "checkout.order_summary_block.usage.rate_percentage": "{percentage} van de waarde van de {unit}",

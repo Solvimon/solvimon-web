@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- The checkout's usage prices state a price per block of units, such as "$0.02 / 1M tokens", and a price set per condition gets a row per condition under its name, such as "on_demand $12.79 / GPU-hour" and "spot $6.39 / GPU-hour", in the plan's order. A row is labelled by the condition's name when it has one, or else by the value it matches. A price whose conditions match more than one value or are not an equality, or that has a condition without a single flat rate, still shows its name alone, as does a block of an amount.
+- The checkout's usage prices state a price per block of units, such as "$0.02 / 1M tokens", and a price set per condition gets a row per condition under its name, such as "on_demand $12.79 / GPU-hour" and "spot $6.39 / GPU-hour", in the plan's order. A block size is shortened only where that loses nothing (12,500 is 12.5K, 1,234,567 stays whole). A row is labelled by the condition's name when it has one, or else by the value it matches, and the one price without a condition is "Other". A price still shows its name alone when its conditions match more than one value, are not an equality, or are on different properties without a name, when more than one of its prices has no condition, or when one of them has no single flat rate; so does a block of an amount.
 
 ### Security
 

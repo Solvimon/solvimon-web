@@ -135,6 +135,7 @@
     "checkout.order_summary_block.title": "Bestellübersicht",
     "checkout.order_summary_block.updating": "Der Preis wird aktualisiert",
     "checkout.order_summary_block.usage.billed_period": "{period} abgerechnet",
+    "checkout.order_summary_block.usage.condition_other": "Sonstige",
     "checkout.order_summary_block.usage.rate_per_block": "{amount} / {blockSize} {unit}",
     "checkout.order_summary_block.usage.rate_per_unit": "{amount} / {unit}",
     "checkout.order_summary_block.usage.rate_percentage": "{percentage} des Werts je {unit}",

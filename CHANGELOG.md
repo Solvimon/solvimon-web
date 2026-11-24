@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - `checkout-session` loads again. It read each subscription's plan from its template, which a checkout session's token is refused (`SUBSCRIPTION_LOAD_FAILED`); it now reads the plan from the session, with `expand[]=ALL`, and charges the pricings of the version the session resolves. `CheckoutSessionSubscription` gains the read-only `name`, `billing_currency`, `billing_period`, `billing_entity_id`, `billing_entity` and `pricing_plan_schedule_infos`.
+- `checkout-session` shows that it cannot be loaded when a subscription comes without its plan, instead of loading for good.
+- The SEPA mandate in `checkout` and `checkout-session` names the invoice's billing entity, falling back to the subscription's. A session's billing entity can follow the customer's country, which the subscription's leaves out.
 
 ## [0.1.0-alpha.31] - 2026-11-18
 

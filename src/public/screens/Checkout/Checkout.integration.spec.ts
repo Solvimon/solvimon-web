@@ -368,6 +368,20 @@ describe('Checkout', () => {
         ).toBe('ACME B.V.');
     });
 
+    it("names the invoice's billing entity in the payment form over the subscription's", async () => {
+        paymentMethodOptions.value = [{ integration: { payment_gateway: { variant: 'ADYEN' } } }];
+        invoicePreview.value = {
+            ...(invoicePreview.value as object),
+            billing_entity: { legal_name: 'Seller by country B.V.' },
+        };
+
+        const wrapper = await mountCheckout({ Skeleton: false });
+
+        expect(
+            wrapper.find('payment-integration-form-stub').attributes('billing-entity-name'),
+        ).toBe('Seller by country B.V.');
+    });
+
     // The payment may still go through; a second press of the button could charge twice.
     it('keeps the pay button off once a payment outcome is unconfirmed', async () => {
         paymentMethodOptions.value = [{ integration: { payment_gateway: { variant: 'ADYEN' } } }];

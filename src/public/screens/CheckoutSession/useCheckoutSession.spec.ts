@@ -261,6 +261,27 @@ describe('useCheckoutSession', () => {
             expect(source.subscription.value?.name).toBe('Pro for Acme');
         });
 
+        it('names the subscription as the session asks, over the name the read resolves', async () => {
+            mockGet.mockResolvedValue(
+                portalUrl({
+                    pricing_plan_subscriptions: [
+                        {
+                            ...createSession().pricing_plan_subscriptions[0],
+                            name: 'Pro template',
+                            pricing_plan_subscription: {
+                                reference: 'sub-ref',
+                                customer_reference: 'cust-ref',
+                                name: 'Pro for Acme',
+                            },
+                        },
+                    ],
+                }),
+            );
+            const { source } = await loaded();
+
+            expect(source.subscription.value?.name).toBe('Pro for Acme');
+        });
+
         it('reports a subscription that came without its plan, and offers no section for it', async () => {
             mockGet.mockResolvedValue(
                 portalUrl({
@@ -277,6 +298,7 @@ describe('useCheckoutSession', () => {
             const { source } = await loaded();
 
             expect(source.planCustomizations?.value).toStrictEqual([]);
+            expect(source.hasSubscriptionLoadFailed.value).toBe(true);
             expect(providerMockLogger.error).toHaveBeenCalledWith(
                 'SUBSCRIPTION_LOAD_FAILED',
                 expect.any(String),

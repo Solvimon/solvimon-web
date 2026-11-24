@@ -3,6 +3,7 @@ import type {
     BillingPeriod,
     Currency,
     Pricing,
+    PricingItemConfig,
     PricingPlanScheduleInfoExpanded,
 } from '@solvimon/solvimon-types';
 import {
@@ -15,8 +16,9 @@ import {
 import { getChargedPricings, getNameFromPricing } from '@/utils/pricing';
 import { withScheduleOverrides } from '@/utils/pricingPlanScheduleOverrides';
 
-export interface UsagePriceTier {
-    range: string;
+/** A band of a tiered price, or the price under one condition. */
+export interface UsagePriceRow {
+    label: string;
     rate?: string;
 }
 
@@ -24,7 +26,7 @@ export interface UsagePrice {
     name: string;
     billingPeriod?: BillingPeriod;
     rate?: string;
-    tiers?: UsagePriceTier[];
+    rows?: UsagePriceRow[];
 }
 
 export interface UsagePriceGroup {
@@ -104,16 +106,56 @@ export function getUsagePriceGroups({
         return percentage || undefined;
     };
 
-    // A rate per unit would misstate a band priced per block, capped, or with a fee on top.
-    const formatBand = (band: Band, unit: string | undefined, isStairStep: boolean) => {
+    const formatBlockRate = (
+        band: Band,
+        blockSize: number,
+        units: string | undefined,
+    ): string | undefined => {
+        if (!band.amount || Number(band.percentage) || band.fixed_amount) return undefined;
+        return $t(
+            {
+                defaultMessage: '{amount} / {blockSize} {unit}',
+                id: 'checkout.order_summary_block.usage.rate_per_block',
+                description: 'A usage price per block of units, e.g. "$0.02 / 1M tokens"',
+            },
+            {
+                amount: formatAmount(band.amount),
+                blockSize: formatNumber(blockSize, { notation: 'compact' }),
+                unit:
+                    units ??
+                    $t({
+                        defaultMessage: 'units',
+                        id: 'checkout.order_summary_block.usage.units_fallback',
+                        description:
+                            'The units a usage price is charged per block of when its product names none',
+                    }),
+            },
+        );
+    };
+
+    // A rate per unit would misstate a band capped or with a fee on top.
+    const formatBand = (
+        band: Band,
+        unit: string | undefined,
+        isStairStep: boolean,
+        units?: string,
+    ) => {
         if (
-            band.block_size ||
             band.minimum_amount ||
             band.maximum_amount ||
             band.minimum_number ||
             band.maximum_number
         ) {
             return undefined;
+        }
+        if (band.block_size) {
+            // A block of an amount (per €1,000 processed, say) has no unit to count.
+            const blockSize = 'number' in band.block_size ? Number(band.block_size.number) : 0;
+            if (blockSize !== 1) {
+                return isStairStep || !(blockSize > 1)
+                    ? undefined
+                    : formatBlockRate(band, blockSize, units);
+            }
         }
         if (band.fixed_amount) {
             return isStairStep && !band.amount && !band.percentage
@@ -123,19 +165,24 @@ export function getUsagePriceGroups({
         return isStairStep ? undefined : formatRate(band, unit);
     };
 
-    const formatTiers = (bands: Band[], unit: string | undefined, isStairStep: boolean) => {
+    const formatTiers = (
+        bands: Band[],
+        unit: string | undefined,
+        isStairStep: boolean,
+        units: string | undefined,
+    ) => {
         const i18n = {
             infinite: '',
             formatNumber: (value: number) => formatNumber(value),
             formatAmount,
         };
 
-        return bands.map((band, index): UsagePriceTier => {
+        return bands.map((band, index): UsagePriceRow => {
             const from = String(getBottomBound(i18n)(bands[index - 1]) ?? '');
             const isLast = index === bands.length - 1;
 
             return {
-                range: isLast
+                label: isLast
                     ? $t(
                           {
                               defaultMessage: '{from}+',
@@ -154,9 +201,33 @@ export function getUsagePriceGroups({
                           },
                           { from, to: getTopBound(i18n)(band, bands, index) ?? '' },
                       ),
-                rate: formatBand(band, unit, isStairStep),
+                rate: formatBand(band, unit, isStairStep, units),
             };
         });
+    };
+
+    // A row per condition, only when each one names a single value and has a single rate;
+    // otherwise the price shows its name alone.
+    const formatConditions = (
+        configs: PricingItemConfig[],
+        unit: string | undefined,
+        units: string | undefined,
+    ): UsagePriceRow[] | undefined => {
+        const rows: UsagePriceRow[] = [];
+        for (const { conditions, details } of [...configs].sort((a, b) => a.order - b.order)) {
+            const [condition, ...rest] = conditions?.meter_properties ?? [];
+            const band = details.bands?.length === 1 ? details.bands[0] : undefined;
+            const label =
+                conditions?.name ||
+                (!rest.length && condition?.comparator === 'EQUALS' ? condition.value : undefined);
+            const rate =
+                details.pricing_type === 'FLAT' && band
+                    ? formatBand(band, unit, false, units)
+                    : undefined;
+            if (!label || !rate || conditions?.configs?.length) return undefined;
+            rows.push({ label, rate });
+        }
+        return rows;
     };
 
     const groups = new Map<string, UsagePriceGroup>();
@@ -180,12 +251,12 @@ export function getUsagePriceGroups({
                     ...(entry.billing_period_configs ?? []).map((period) => period.configs),
                 ]),
             ];
-            // Conditional prices (one rate per card scheme, say) have no single rate to show.
-            const isConditional =
-                !!config?.conditions?.configs?.length ||
-                (configLists.find((list) => config && list?.includes(config))?.length ?? 0) > 1;
+            const configList = configLists.find((list) => config && list?.includes(config)) ?? [];
+            // Conditional prices (one rate per card scheme, say) show a row per condition instead.
+            const isConditional = !!config?.conditions?.configs?.length || configList.length > 1;
 
             const unit = productItem.unit_name?.singular || undefined;
+            const units = productItem.unit_name?.plural || undefined;
             const bands = details?.bands ?? [];
             const band = bands[0];
             const price: UsagePrice = {
@@ -195,10 +266,12 @@ export function getUsagePriceGroups({
 
             const pricingType = isConditional ? undefined : details?.pricing_type;
 
-            if (pricingType && TIERED_TYPES.includes(pricingType)) {
-                price.tiers = formatTiers(bands, unit, pricingType === 'STAIR_STEP');
+            if (isConditional) {
+                price.rows = formatConditions(configList, unit, units);
+            } else if (pricingType && TIERED_TYPES.includes(pricingType)) {
+                price.rows = formatTiers(bands, unit, pricingType === 'STAIR_STEP', units);
             } else if (pricingType === 'FLAT' && band) {
-                price.rate = formatBand(band, unit, false);
+                price.rate = formatBand(band, unit, false, units);
             }
 
             const group = groups.get(category.product_category_id) ?? {

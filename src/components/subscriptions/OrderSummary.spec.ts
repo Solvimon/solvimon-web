@@ -126,9 +126,9 @@ describe('OrderSummary', () => {
                     {
                         name: 'Payouts',
                         billingPeriod: { type: 'MONTH', value: 1 },
-                        tiers: [
-                            { range: '0 - 20,000', rate: '€0.05 / transaction' },
-                            { range: '20,000+', rate: '€0.04 / transaction' },
+                        rows: [
+                            { label: '0 - 20,000', rate: '€0.05 / transaction' },
+                            { label: '20,000+', rate: '€0.04 / transaction' },
                         ],
                     },
                 ],

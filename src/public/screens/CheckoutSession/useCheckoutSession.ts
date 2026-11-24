@@ -161,7 +161,9 @@ const toPlan = (
     subscription: CheckoutSessionSubscription,
 ): PricingPlanSubscriptionExpanded | undefined => {
     const infos = subscription.pricing_plan_schedule_infos;
-    if (!infos?.some(({ pricing_plan_version }) => pricing_plan_version)) return undefined;
+    if (!infos?.length || !infos.every(({ pricing_plan_version }) => pricing_plan_version)) {
+        return undefined;
+    }
     // shortcut: only the fields the checkout reads; give the source a narrower type if it reads more.
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     return {
@@ -863,7 +865,8 @@ export function useCheckoutSession({ portalUrlId }: { portalUrlId: string }) {
                 scheduleInfo: plan.pricing_plan_schedule_infos.find(({ id }) => id === scheduleId),
                 billingPeriod: plan.billing_period,
             };
-            byKey.set(JSON.stringify([scheduleId, plan.billing_period]), charged);
+            // Each subscription's version has its own session applied, so the same schedule can differ.
+            byKey.set(JSON.stringify([charged.scheduleInfo, plan.billing_period]), charged);
         });
         return [...byKey.values()];
     });
@@ -927,6 +930,7 @@ export function useCheckoutSession({ portalUrlId }: { portalUrlId: string }) {
             }
             return;
         }
+        // Read once: the buyer changes quantities and codes, never the pricings a plan holds.
         readPlans(response);
         createFormsFor(response.checkout_session.customers.length);
         // Set together with the form, so the form is never compared with a session it has not seen.

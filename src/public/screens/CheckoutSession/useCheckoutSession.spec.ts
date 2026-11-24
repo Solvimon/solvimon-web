@@ -282,14 +282,15 @@ describe('useCheckoutSession', () => {
             expect(source.subscription.value?.name).toBe('Pro for Acme');
         });
 
-        it('reports a subscription that came without its plan, and offers no section for it', async () => {
+        it('reports a subscription whose plan came only partly, and offers no section for it', async () => {
             mockGet.mockResolvedValue(
                 portalUrl({
                     pricing_plan_subscriptions: [
                         {
                             ...createSession().pricing_plan_subscriptions[0],
                             pricing_plan_schedule_infos: [
-                                { id: 'pps_1' } as PricingPlanScheduleInfoExpanded,
+                                scheduleInfo('pps_1'),
+                                { id: 'pps_later' } as PricingPlanScheduleInfoExpanded,
                             ],
                         },
                     ],
@@ -2242,6 +2243,29 @@ describe('useCheckoutSession', () => {
                 },
                 { scheduleInfo: scheduleInfo('pps_2'), billingPeriod: undefined },
             ]);
+        });
+
+        it('charges subscriptions on one schedule apart when the session made their versions differ', async () => {
+            const onFirstSchedule = (version: string) => ({
+                ...second,
+                starting_values: [{ pricing_plan_schedule_id: 'pps_1' }],
+                pricing_plan_schedule_infos: [
+                    { ...scheduleInfo('pps_1'), pricing_plan_version: { id: version } },
+                ] as PricingPlanScheduleInfoExpanded[],
+            });
+            mockGet.mockResolvedValue(
+                twoSubscriptions([onFirstSchedule('ppve_a'), onFirstSchedule('ppve_b')]),
+            );
+            const { source } = await loaded();
+
+            expect(source.chargedSchedules?.value).toHaveLength(2);
+
+            mockGet.mockResolvedValue(
+                twoSubscriptions([onFirstSchedule('ppve_a'), onFirstSchedule('ppve_a')]),
+            );
+            const alike = await loaded();
+
+            expect(alike.source.chargedSchedules?.value).toHaveLength(1);
         });
 
         it('gives each subscription a section of its own, named after its plan', async () => {

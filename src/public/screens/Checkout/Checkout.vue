@@ -1082,9 +1082,7 @@ const retryInvoicePreview = () => loadInvoicePreview().catch(() => {});
                                         :validate-on-submit="handleValidateOnSubmit"
                                         :redirects-on-success="redirectsOnSuccess"
                                         force-store-payment-method
-                                        :billing-entity-name="
-                                            subscription?.billing_entity?.legal_name
-                                        "
+                                        :billing-entity-name="sellerName"
                                         @payment-success="handlePaymentSuccess"
                                         @payment-failed="handlePaymentFailed"
                                         @invalid="handlePaymentNotSubmitted"

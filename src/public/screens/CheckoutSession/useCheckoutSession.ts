@@ -166,7 +166,8 @@ const toPlan = (
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     return {
         id: subscription.template_pricing_plan_subscription_id,
-        name: subscription.name ?? subscription.pricing_plan_subscription.name,
+        // The name the platform gave the session wins; the read's own may be the template's.
+        name: subscription.pricing_plan_subscription.name ?? subscription.name,
         billing_period: subscription.billing_period,
         billing_currency: subscription.billing_currency,
         billing_entity_id: subscription.billing_entity_id,
@@ -1278,7 +1279,10 @@ export function useCheckoutSession({ portalUrlId }: { portalUrlId: string }) {
     const source: CheckoutSource = {
         // The first section's copy, under the name the session gives it.
         subscription: computed(() => customizations.value[0]?.subscription ?? plans.value[0]),
-        hasSubscriptionLoadFailed: computed(() => !!loadFailure.value),
+        // An order shown without one of its plans would ask payment for what it does not show.
+        hasSubscriptionLoadFailed: computed(
+            () => !!loadFailure.value || (isLoaded.value && plans.value.some((plan) => !plan)),
+        ),
         orderMeterValues: computed(() => ({})),
         chargedSchedules,
         planCustomizations: computed(() =>

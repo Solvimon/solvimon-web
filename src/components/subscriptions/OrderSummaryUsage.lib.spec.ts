@@ -256,26 +256,26 @@ describe('getUsagePriceGroups', () => {
         ]);
 
         expect(
-            groupsOf(scheduleInfo)[0]?.prices.map(({ name, rate, tiers }) => ({
+            groupsOf(scheduleInfo)[0]?.prices.map(({ name, rate, rows }) => ({
                 name,
                 rate,
-                tiers,
+                rows,
             })),
         ).toEqual([
             {
                 name: 'Cards',
                 rate: undefined,
-                tiers: [
-                    { range: '0 - 20,000', rate: '€0.05 / transaction' },
-                    { range: '20,000+', rate: '€0.04 / transaction' },
+                rows: [
+                    { label: '0 - 20,000', rate: '€0.05 / transaction' },
+                    { label: '20,000+', rate: '€0.04 / transaction' },
                 ],
             },
             {
                 name: 'Payouts',
                 rate: undefined,
-                tiers: [
-                    { range: '0 - 100', rate: '€10.00' },
-                    { range: '100+', rate: '€15.00' },
+                rows: [
+                    { label: '0 - 100', rate: '€10.00' },
+                    { label: '100+', rate: '€15.00' },
                 ],
             },
         ]);
@@ -291,18 +291,10 @@ describe('getUsagePriceGroups', () => {
                     pricingType: 'PASS_THROUGH',
                     bands: [{ percentage: '100' }],
                 }),
-                usagePricing({
-                    id: 'pri_block',
-                    name: 'Blocks',
-                    bands: [{ amount: eur('1.00'), block_size: { number: '1000' } }],
-                }),
             ]),
         ]);
 
-        expect(ratesOf(scheduleInfo)).toEqual([
-            ['Network fees', undefined],
-            ['Blocks', undefined],
-        ]);
+        expect(ratesOf(scheduleInfo)).toEqual([['Network fees', undefined]]);
     });
 
     it('counts a customized add-on enabled under its original id', () => {
@@ -380,7 +372,49 @@ describe('getUsagePriceGroups', () => {
         expect(ratesOf(scheduleInfo)).toEqual([['Cards', '1.4% of transaction value']]);
     });
 
-    it('shows no rate for a band priced per block, capped, or with a fixed fee on top', () => {
+    it('states a rate per block of units', () => {
+        const scheduleInfo = scheduleInfoOf([
+            category('prca_tokens', 'Tokens', [
+                usagePricing({
+                    id: 'pri_input',
+                    name: 'Input tokens',
+                    unit: 'token',
+                    bands: [{ amount: eur('0.02'), block_size: { number: '1000000' } }],
+                }),
+                usagePricing({
+                    id: 'pri_one',
+                    name: 'Block of one',
+                    bands: [{ amount: eur('0.05'), block_size: { number: '1' } }],
+                }),
+                usagePricing({
+                    id: 'pri_no_unit',
+                    name: 'No unit',
+                    unit: '',
+                    bands: [{ amount: eur('1.00'), block_size: { number: '1000' } }],
+                }),
+                usagePricing({
+                    id: 'pri_share',
+                    name: 'Share per block',
+                    bands: [{ percentage: '1', block_size: { number: '1000' } }],
+                }),
+                usagePricing({
+                    id: 'pri_amount_block',
+                    name: 'Per amount block',
+                    bands: [{ amount: eur('2.00'), block_size: { amount: eur('1000') } }],
+                }),
+            ]),
+        ]);
+
+        expect(ratesOf(scheduleInfo)).toEqual([
+            ['Input tokens', '€0.02 / 1M tokens'],
+            ['Block of one', '€0.05 / transaction'],
+            ['No unit', '€1.00 / 1K units'],
+            ['Share per block', undefined],
+            ['Per amount block', undefined],
+        ]);
+    });
+
+    it('shows no rate for a band capped or with a fixed fee on top', () => {
         const scheduleInfo = scheduleInfoOf([
             category('prca_payments', 'Payments', [
                 usagePricing({
@@ -410,30 +444,105 @@ describe('getUsagePriceGroups', () => {
         ]);
 
         expect(
-            groupsOf(scheduleInfo)[0]?.prices.map(({ name, rate, tiers }) => ({
+            groupsOf(scheduleInfo)[0]?.prices.map(({ name, rate, rows }) => ({
                 name,
                 rate,
-                rates: tiers?.map((tier) => tier.rate),
+                rates: rows?.map((row) => row.rate),
             })),
         ).toEqual([
-            { name: 'Cards', rate: undefined, rates: [undefined, undefined, undefined] },
+            {
+                name: 'Cards',
+                rate: undefined,
+                rates: [undefined, '€5.00 / 1K transactions', undefined],
+            },
             { name: 'Payouts', rate: undefined, rates: undefined },
         ]);
     });
 
-    it('shows no rate for a price with a config per condition', () => {
-        const pricing = usagePricing({
-            id: 'pri_cards',
-            name: 'Cards',
-            bands: [{ percentage: '1.4' }],
+    describe('a price with a config per condition', () => {
+        const condition = (value: string, comparator = 'EQUALS') => ({
+            meter_properties: [{ id: 'metp_capacity', value, comparator }],
         });
-        pricing.items[0]!.configs.push({
-            id: 'pri_cards_amex',
-            details: { pricing_type: 'FLAT', bands: [{ percentage: '2.9' }] },
+        const conditionalPricing = (configs: unknown[]) => {
+            const pricing = usagePricing({ id: 'pri_gpu', name: 'B300 usage', bands: [] });
+            pricing.items[0]!.configs = configs as (typeof pricing.items)[0]['configs'];
+            return scheduleInfoOf([category('prca_compute', 'Compute', [pricing])]);
+        };
+        const flat = (id: string, order: number, amount: string, conditions: unknown) => ({
+            id,
+            order,
+            conditions,
+            details: { pricing_type: 'FLAT', bands: [{ amount: eur(amount) }] },
+        });
+        const pricesOf = (scheduleInfo: PricingPlanScheduleInfoExpanded) =>
+            groupsOf(scheduleInfo)[0]?.prices.map(({ name, rate, rows }) => ({ name, rate, rows }));
+
+        it('lists a row per condition value, in the configs order', () => {
+            expect(
+                pricesOf(
+                    conditionalPricing([
+                        flat('spot', 2, '6.39', condition('spot')),
+                        flat('on_demand', 1, '12.79', condition('on_demand')),
+                    ]),
+                ),
+            ).toEqual([
+                {
+                    name: 'B300 usage',
+                    rate: undefined,
+                    rows: [
+                        { label: 'on_demand', rate: '€12.79 / transaction' },
+                        { label: 'spot', rate: '€6.39 / transaction' },
+                    ],
+                },
+            ]);
         });
 
-        expect(ratesOf(scheduleInfoOf([category('prca_payments', 'Payments', [pricing])]))).toEqual(
-            [['Cards', undefined]],
-        );
+        it('labels a row by the condition name when it has one', () => {
+            expect(
+                pricesOf(
+                    conditionalPricing([
+                        flat('a', 1, '12.79', { ...condition('on_demand'), name: 'On demand' }),
+                        flat('b', 2, '6.39', { ...condition('spot'), name: 'Spot' }),
+                    ]),
+                )?.[0]?.rows?.map((row) => row.label),
+            ).toEqual(['On demand', 'Spot']);
+        });
+
+        it('shows the name alone when a condition has no single value or rate', () => {
+            const twoProperties = {
+                meter_properties: [
+                    { id: 'metp_capacity', value: 'spot', comparator: 'EQUALS' },
+                    { id: 'metp_model', value: 'B300', comparator: 'EQUALS' },
+                ],
+            };
+            const tiered = {
+                ...flat('b', 2, '6.39', condition('spot')),
+                details: {
+                    pricing_type: 'TIERED',
+                    bands: [
+                        { amount: eur('1'), tier_top_bound: { number: '10' } },
+                        { amount: eur('2') },
+                    ],
+                },
+            };
+            const nested = { ...condition('spot'), configs: [flat('n', 1, '1', undefined)] };
+
+            [
+                [
+                    flat('a', 1, '12.79', condition('on_demand')),
+                    flat('b', 2, '6.39', condition('spot', 'NOT_EQUALS')),
+                ],
+                [
+                    flat('a', 1, '12.79', condition('on_demand')),
+                    flat('b', 2, '6.39', twoProperties),
+                ],
+                [flat('a', 1, '12.79', condition('on_demand')), tiered],
+                [flat('a', 1, '12.79', condition('on_demand')), flat('b', 2, '6.39', nested)],
+            ].forEach((configs) => {
+                expect(pricesOf(conditionalPricing(configs))).toEqual([
+                    { name: 'B300 usage', rate: undefined, rows: undefined },
+                ]);
+            });
+        });
     });
 });

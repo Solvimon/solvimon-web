@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- The checkout's usage prices state a price per block of units, such as "$0.02 / 1M tokens", and a price set per condition gets a row per condition under its name, such as "on_demand $12.79 / GPU-hour" and "spot $6.39 / GPU-hour", in the plan's order. A row is labelled by the condition's name when it has one, or else by the value it matches. A price whose conditions match more than one value or are not an equality, or that has a condition without a single flat rate, still shows its name alone, as does a block of an amount.
+
 ### Security
 
 - Fixed the reported `minimatch` denial-of-service advisory (GHSA-g3hv-75wg-m249) in development dependencies.

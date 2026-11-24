@@ -75,12 +75,12 @@ const subtitle = computed(() => {
                         </Typography>
                     </div>
                     <div
-                        v-for="(tier, tierIndex) in price.tiers"
-                        :key="`${index}-${tierIndex}`"
+                        v-for="(row, rowIndex) in price.rows"
+                        :key="`${index}-${rowIndex}`"
                         class="sv-order-summary__usage-price grid grid-cols-2 gap-2"
                     >
                         <Typography variant="body-xs" color="subtle" tag="div" class="break-words">
-                            {{ tier.range }}
+                            {{ row.label }}
                         </Typography>
                         <Typography
                             variant="body-xs"
@@ -88,7 +88,7 @@ const subtitle = computed(() => {
                             tag="div"
                             class="break-words text-right"
                         >
-                            {{ tier.rate }}
+                            {{ row.rate }}
                         </Typography>
                     </div>
                 </template>

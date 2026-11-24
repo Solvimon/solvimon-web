@@ -135,6 +135,7 @@
     "checkout.order_summary_block.title": "Récapitulatif de la commande",
     "checkout.order_summary_block.updating": "Mise à jour du prix en cours",
     "checkout.order_summary_block.usage.billed_period": "Cycle de facturation {period}",
+    "checkout.order_summary_block.usage.condition_other": "Autre",
     "checkout.order_summary_block.usage.rate_per_block": "{amount} / {blockSize} {unit}",
     "checkout.order_summary_block.usage.rate_per_unit": "{amount} / {unit}",
     "checkout.order_summary_block.usage.rate_percentage": "{percentage} de la valeur de {unit}",

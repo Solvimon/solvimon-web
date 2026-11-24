@@ -120,7 +120,13 @@ export function getUsagePriceGroups({
             },
             {
                 amount: formatAmount(band.amount),
-                blockSize: formatNumber(blockSize, { notation: 'compact' }),
+                // Compact notation rounds: 1,234,567 must not read as "1.2M".
+                blockSize: formatNumber(
+                    blockSize,
+                    Number(blockSize.toPrecision(3)) === blockSize
+                        ? { notation: 'compact', maximumSignificantDigits: 3 }
+                        : undefined,
+                ),
                 unit:
                     units ??
                     $t({
@@ -154,7 +160,7 @@ export function getUsagePriceGroups({
             if (blockSize !== 1) {
                 return isStairStep || !(blockSize > 1)
                     ? undefined
-                    : formatBlockRate(band, blockSize, units);
+                    : formatBlockRate(band, blockSize, units ?? unit);
             }
         }
         if (band.fixed_amount) {
@@ -213,13 +219,33 @@ export function getUsagePriceGroups({
         unit: string | undefined,
         units: string | undefined,
     ): UsagePriceRow[] | undefined => {
+        const sorted = [...configs].sort((a, b) => a.order - b.order);
+        const unnamed = sorted.filter(({ conditions }) => !conditions?.name);
+        const propertyIds = new Set(
+            unnamed
+                .flatMap(({ conditions }) => conditions?.meter_properties ?? [])
+                .map(({ id }) => id),
+        );
+        const defaults = unnamed.filter(({ conditions }) => !conditions?.meter_properties?.length);
+        // A bare value says what it matches only while every row matches the same property.
+        if (propertyIds.size > 1 || defaults.length > 1) return undefined;
+
         const rows: UsagePriceRow[] = [];
-        for (const { conditions, details } of [...configs].sort((a, b) => a.order - b.order)) {
+        for (const { conditions, details } of sorted) {
             const [condition, ...rest] = conditions?.meter_properties ?? [];
             const band = details.bands?.length === 1 ? details.bands[0] : undefined;
             const label =
                 conditions?.name ||
-                (!rest.length && condition?.comparator === 'EQUALS' ? condition.value : undefined);
+                (!condition
+                    ? $t({
+                          defaultMessage: 'Other',
+                          id: 'checkout.order_summary_block.usage.condition_other',
+                          description:
+                              'The row of a usage price set per condition that applies when no condition matches, e.g. below "spot €6.39 / GPU-hour"',
+                      })
+                    : !rest.length && condition.comparator === 'EQUALS'
+                      ? condition.value
+                      : undefined);
             const rate =
                 details.pricing_type === 'FLAT' && band
                     ? formatBand(band, unit, false, units)

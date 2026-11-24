@@ -3,6 +3,7 @@ import type {
     Customer,
     CustomerWalletBalanceItem,
     PaymentMethod,
+    PricingPlanSubscriptionExpanded,
 } from '@solvimon/solvimon-types';
 
 export type AutoTopUpModalStep = 'AUTO_TOP_UP' | 'ADD_PAYMENT_METHOD';
@@ -15,6 +16,8 @@ export interface AutoTopUpModalProps {
     topUpItem?: ChargeOnDemandPricingItem;
     paymentMethods?: PaymentMethod[];
     customer?: Customer;
+    /** Where a credits wallet's top-up takes its currency from: the subscription it is charged on. */
+    subscriptions?: PricingPlanSubscriptionExpanded[];
 }
 
 export interface AutoTopUpModalEmits {

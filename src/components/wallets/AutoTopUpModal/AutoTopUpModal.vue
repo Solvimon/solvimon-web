@@ -35,7 +35,9 @@ const step = ref<AutoTopUpModalStep>('AUTO_TOP_UP');
 
 const currentBalance = computed(() => formatOpenBalance(props.walletBalanceItem));
 
-const topUpPricingItems = computed(() => getTopUpPricingItems(props.walletBalanceItem));
+const topUpPricingItems = computed(() =>
+    getTopUpPricingItems(props.walletBalanceItem, props.subscriptions),
+);
 
 const autoTopUpEditor = computed(() => getAutoTopUpEditorConfig(topUpPricingItems.value));
 

@@ -1,5 +1,7 @@
 import type {
     Address,
+    BillingEntity,
+    BillingPeriod,
     CheckoutSessionNewCustomerType,
     CheckoutSessionStatus,
     ConfiguredMeterValue,
@@ -8,6 +10,7 @@ import type {
     InvoiceInfo,
     Name,
     PortalUrl,
+    PricingPlanScheduleInfoExpanded,
     PricingPlanSubscription,
     TaxIdentifier,
 } from '@solvimon/solvimon-types';
@@ -105,6 +108,16 @@ export interface CheckoutSessionSubscription {
         seats_values?: ConfiguredMeterValue[];
         units?: ConfiguredMeterValue[];
     }[];
+    /** Read only: what the subscription will be, resolved from its template and the session. */
+    name?: string;
+    billing_currency?: string;
+    billing_period?: BillingPeriod;
+    /** Left out while it still depends on a country the buyer has not entered. */
+    billing_entity_id?: BillingEntity['id'];
+    /** With `expand[]=ALL` only. */
+    billing_entity?: BillingEntity;
+    /** Keyed by the ids `starting_values` uses; the version, with the session applied, only expanded. */
+    pricing_plan_schedule_infos?: PricingPlanScheduleInfoExpanded[];
 }
 
 export interface CheckoutSession {

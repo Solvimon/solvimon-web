@@ -53,7 +53,6 @@ import {
     isEmptyCheckoutSessionPatch,
     toCheckoutSessionPatch,
 } from '@/services/checkoutSessions';
-import { createSubscriptionsService } from '@/services/subscriptions';
 import { getFirstPricingPlanScheduleOfType } from '@/utils/pricingPlanSchedule';
 import { splitInvoiceByRecurrence } from '@/utils/invoice';
 import { getSubscriptionName } from '@/utils/subscription';
@@ -154,6 +153,28 @@ const refusedPromotionCodeIndex = (error: unknown): number | undefined => {
     return match ? Number(match[1]) : -1;
 };
 
+/**
+ * A session subscription as the checkout's subscription. The session's copy has no id of its own yet,
+ * so it goes by its template's. Without an expanded version there is nothing to render.
+ */
+const toPlan = (
+    subscription: CheckoutSessionSubscription,
+): PricingPlanSubscriptionExpanded | undefined => {
+    const infos = subscription.pricing_plan_schedule_infos;
+    if (!infos?.some(({ pricing_plan_version }) => pricing_plan_version)) return undefined;
+    // shortcut: only the fields the checkout reads; give the source a narrower type if it reads more.
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    return {
+        id: subscription.template_pricing_plan_subscription_id,
+        name: subscription.name ?? subscription.pricing_plan_subscription.name,
+        billing_period: subscription.billing_period,
+        billing_currency: subscription.billing_currency,
+        billing_entity_id: subscription.billing_entity_id,
+        billing_entity: subscription.billing_entity,
+        pricing_plan_schedule_infos: infos,
+    } as PricingPlanSubscriptionExpanded;
+};
+
 /** Why the session can no longer be edited: its status, or `CLOSED` for a link that is. */
 export type CheckoutSessionEndState = Exclude<CheckoutSessionStatus, 'OPEN'> | 'CLOSED';
 
@@ -167,12 +188,11 @@ export function useCheckoutSession({ portalUrlId }: { portalUrlId: string }) {
     const logger = useLogger();
     const { $t } = useIntl();
     const service = createCheckoutSessionsService();
-    const { getSubscription } = createSubscriptionsService();
 
     const portalUrl = shallowRef<CheckoutSessionPortalUrlResponse>();
     const preview = shallowRef<CheckoutSessionPreview>();
     /** The plan of each subscription, in the session's order. */
-    const templates = shallowRef<(PricingPlanSubscriptionExpanded | undefined)[]>([]);
+    const plans = shallowRef<(PricingPlanSubscriptionExpanded | undefined)[]>([]);
     const isSaving = ref(false);
     const isPaid = ref(false);
     /** Paid, but the session was still not done when the wait for it ran out. */
@@ -234,13 +254,13 @@ export function useCheckoutSession({ portalUrlId }: { portalUrlId: string }) {
 
     const scheduleIdOf = (index: number) => {
         const subscription = session.value?.pricing_plan_subscriptions[index];
-        const template = templates.value[index];
+        const plan = plans.value[index];
         if (!subscription) return undefined;
         return getScheduleId(
             subscription,
-            template &&
+            plan &&
                 getFirstPricingPlanScheduleOfType({
-                    pricingPlanScheduleInfos: template.pricing_plan_schedule_infos,
+                    pricingPlanScheduleInfos: plan.pricing_plan_schedule_infos,
                     type: 'DEFAULT',
                 })?.id,
         );
@@ -771,21 +791,18 @@ export function useCheckoutSession({ portalUrlId }: { portalUrlId: string }) {
         promotionCodeIndexes.value.length === 1 ? promotionCodeIndexes.value[0] : -1,
     );
 
-    const loadTemplates = async (response: CheckoutSessionPortalUrlResponse) => {
-        templates.value = await Promise.all(
-            response.checkout_session.pricing_plan_subscriptions.map(
-                ({ template_pricing_plan_subscription_id: id }) =>
-                    getSubscription({ id, expanded: true }).catch((error: unknown) => {
-                        logger.error(
-                            'SUBSCRIPTION_LOAD_FAILED',
-                            'Failed to load the plan of a checkout session subscription',
-                            {},
-                            error,
-                        );
-                        return undefined;
-                    }),
-            ),
-        );
+    const readPlans = (response: CheckoutSessionPortalUrlResponse) => {
+        plans.value = response.checkout_session.pricing_plan_subscriptions.map((subscription) => {
+            const plan = toPlan(subscription);
+            if (!plan) {
+                logger.error(
+                    'SUBSCRIPTION_LOAD_FAILED',
+                    'A checkout session subscription came without its plan',
+                    {},
+                );
+            }
+            return plan;
+        });
     };
 
     /** Each form follows its customer, and each subscription's section its quantities. */
@@ -793,14 +810,9 @@ export function useCheckoutSession({ portalUrlId }: { portalUrlId: string }) {
         const current = session.value;
         const subscriptions = current?.pricing_plan_subscriptions ?? [];
         customizations.value = subscriptions.map((subscription, index) => {
-            const loaded = templates.value[index];
+            const plan = plans.value[index];
             const scheduleId = scheduleIdOf(index);
-            if (!loaded) return undefined;
-            // The template's own name is the merchant's, such as "Pro template"; the session names its copy.
-            const template = {
-                ...loaded,
-                name: subscription.pricing_plan_subscription.name ?? loaded.name,
-            };
+            if (!plan) return undefined;
             const meters = (key: 'seats_values' | 'units', bounds: 'edit_seats' | 'edit_units') =>
                 getMeterValues(
                     subscription.options?.[bounds],
@@ -812,10 +824,10 @@ export function useCheckoutSession({ portalUrlId }: { portalUrlId: string }) {
                 promotionCodeIndexes.value.includes(index) && orderPromotionCodeIndex.value === -1;
             return {
                 key: `${index}`,
-                subscription: template,
+                subscription: plan,
                 ...(subscriptions.length > 1 && {
                     title: getSubscriptionName({
-                        subscription: template,
+                        subscription: plan,
                         fallback: $t({
                             defaultMessage: 'Subscription',
                             description:
@@ -842,25 +854,15 @@ export function useCheckoutSession({ portalUrlId }: { portalUrlId: string }) {
     /** Each subscription's schedule and what it charges, once for subscriptions on the same one. */
     const chargedSchedules = computed(() => {
         const byKey = new Map<string, ChargedSchedule>();
-        templates.value.forEach((template, index) => {
-            if (!template) return;
+        plans.value.forEach((plan, index) => {
+            if (!plan) return;
             const scheduleId = scheduleIdOf(index);
-            const scheduleInfo = template.pricing_plan_schedule_infos.find(
-                ({ id }) => id === scheduleId,
-            );
-            // The session changes no pricing choice, so it charges those of the template's schedule.
-            const enabledPricingIds = (
-                scheduleInfo?.pricing_plan_schedule?.enabled_pricings ?? []
-            ).map(({ pricing_id }) => pricing_id);
+            // The session's version holds only the pricings it charges, so none is left to pick.
             const charged = {
-                scheduleInfo,
-                enabledPricingIds,
-                billingPeriod: template.billing_period,
+                scheduleInfo: plan.pricing_plan_schedule_infos.find(({ id }) => id === scheduleId),
+                billingPeriod: plan.billing_period,
             };
-            byKey.set(
-                JSON.stringify([scheduleId, enabledPricingIds, template.billing_period]),
-                charged,
-            );
+            byKey.set(JSON.stringify([scheduleId, plan.billing_period]), charged);
         });
         return [...byKey.values()];
     });
@@ -912,7 +914,7 @@ export function useCheckoutSession({ portalUrlId }: { portalUrlId: string }) {
         // The preview fails too when the link has ended: reported only once the session read is in.
         let previewFailure: unknown;
         const [response] = await Promise.all([
-            service.getCheckoutSession(portalUrlId),
+            service.getCheckoutSession(portalUrlId, { expanded: true }),
             refreshPreview({ onFailure: (error) => (previewFailure = error) }),
         ]);
         if (previewFailure !== undefined) reportPreviewFailure(previewFailure);
@@ -924,7 +926,7 @@ export function useCheckoutSession({ portalUrlId }: { portalUrlId: string }) {
             }
             return;
         }
-        await loadTemplates(response);
+        readPlans(response);
         createFormsFor(response.checkout_session.customers.length);
         // Set together with the form, so the form is never compared with a session it has not seen.
         portalUrl.value = response;
@@ -1275,7 +1277,7 @@ export function useCheckoutSession({ portalUrlId }: { portalUrlId: string }) {
 
     const source: CheckoutSource = {
         // The first section's copy, under the name the session gives it.
-        subscription: computed(() => customizations.value[0]?.subscription ?? templates.value[0]),
+        subscription: computed(() => customizations.value[0]?.subscription ?? plans.value[0]),
         hasSubscriptionLoadFailed: computed(() => !!loadFailure.value),
         orderMeterValues: computed(() => ({})),
         chargedSchedules,
@@ -1336,7 +1338,7 @@ export function useCheckoutSession({ portalUrlId }: { portalUrlId: string }) {
         portalUrl,
         session,
         preview,
-        templates,
+        plans,
         isOpen,
         missingFields,
         endState,

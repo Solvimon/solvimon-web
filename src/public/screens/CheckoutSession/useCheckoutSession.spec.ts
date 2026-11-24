@@ -1,6 +1,6 @@
 import { flushPromises, mount } from '@vue/test-utils';
 import { defineComponent, h } from 'vue';
-import type { PricingPlanSubscriptionExpanded } from '@solvimon/solvimon-types';
+import type { PricingPlanScheduleInfoExpanded } from '@solvimon/solvimon-types';
 import {
     CHECKOUT_SESSION_EDIT_DEBOUNCE_MS,
     COMPLETION_POLL_LIMIT_MS,
@@ -21,7 +21,6 @@ const {
     mockGet,
     mockUpdate,
     mockPreview,
-    mockGetSubscription,
     mockGetGeoLocation,
     mockRedirect,
     mockGetOptions,
@@ -32,7 +31,6 @@ const {
     mockGetGeoLocation: vi.fn(),
     mockUpdate: vi.fn(),
     mockPreview: vi.fn(),
-    mockGetSubscription: vi.fn(),
     mockRedirect: vi.fn(),
     mockGetOptions: vi.fn(),
 }));
@@ -59,15 +57,18 @@ vi.mock('@/services/checkoutSessions', async (importOriginal) => ({
     }),
 }));
 
-vi.mock('@/services/subscriptions', () => ({
-    createSubscriptionsService: () => ({ getSubscription: mockGetSubscription }),
-}));
-
 vi.mock('@/services/geolocation', () => ({
     createGeoLocationService: () => ({ getGeoLocation: mockGetGeoLocation }),
 }));
 
 const PORTAL_URL_ID = 'purl_1';
+
+const scheduleInfo = (id: string) =>
+    ({
+        id,
+        type: 'DEFAULT',
+        pricing_plan_version: { id: `ppve_${id}`, pricing_categories: [] },
+    }) as unknown as PricingPlanScheduleInfoExpanded;
 
 const createSession = (overrides: Partial<CheckoutSession> = {}): CheckoutSession => ({
     status: 'OPEN',
@@ -100,6 +101,8 @@ const createSession = (overrides: Partial<CheckoutSession> = {}): CheckoutSessio
         {
             template_pricing_plan_subscription_id: 'ppsu_template',
             pricing_plan_subscription: { reference: 'sub-ref', customer_reference: 'cust-ref' },
+            billing_period: { type: 'MONTH', value: 1 },
+            pricing_plan_schedule_infos: [scheduleInfo('pps_1')],
             options: {
                 edit_seats: [
                     {
@@ -152,11 +155,6 @@ const previewOf = (version: number, missingFields?: string[]): CheckoutSessionPr
     checkout_session: { version, ...(missingFields && { missing_fields: missingFields }) },
 });
 
-const template = {
-    id: 'ppsu_template',
-    pricing_plan_schedule_infos: [],
-} as unknown as PricingPlanSubscriptionExpanded;
-
 function setup(portalUrlId = PORTAL_URL_ID) {
     return mounted(portalUrlId).result;
 }
@@ -194,7 +192,6 @@ describe('useCheckoutSession', () => {
         mockGet.mockReset().mockResolvedValue(portalUrl());
         mockUpdate.mockReset();
         mockPreview.mockReset().mockResolvedValue(previewOf(1));
-        mockGetSubscription.mockReset().mockResolvedValue(template);
         mockGetGeoLocation.mockReset().mockRejectedValue(new Error('none'));
         mockRedirect.mockReset();
         mockGetOptions.mockReset().mockResolvedValue([]);
@@ -211,22 +208,40 @@ describe('useCheckoutSession', () => {
             setup();
             await flushPromises();
 
-            expect(mockGet).toHaveBeenCalledWith(PORTAL_URL_ID);
+            expect(mockGet).toHaveBeenCalledWith(PORTAL_URL_ID, { expanded: true });
             expect(mockPreview).toHaveBeenCalledWith(PORTAL_URL_ID);
         });
 
-        it('loads the plan of each subscription from its template, expanded', async () => {
+        it('reads the plan of each subscription from the session, expanded', async () => {
+            const billingEntity = { id: 'bile_1', legal_name: 'Seller B.V.' };
+            mockGet.mockResolvedValue(
+                portalUrl({
+                    pricing_plan_subscriptions: [
+                        {
+                            ...createSession().pricing_plan_subscriptions[0],
+                            name: 'Pro for Acme',
+                            billing_currency: 'EUR',
+                            billing_entity_id: 'bile_1',
+                            billing_entity: billingEntity as never,
+                        },
+                    ],
+                }),
+            );
             const { source } = await loaded();
 
-            expect(mockGetSubscription).toHaveBeenCalledWith({
+            expect(mockGet).toHaveBeenCalledWith(PORTAL_URL_ID, { expanded: true });
+            expect(source.subscription.value).toStrictEqual({
                 id: 'ppsu_template',
-                expanded: true,
+                name: 'Pro for Acme',
+                billing_period: { type: 'MONTH', value: 1 },
+                billing_currency: 'EUR',
+                billing_entity_id: 'bile_1',
+                billing_entity: billingEntity,
+                pricing_plan_schedule_infos: [scheduleInfo('pps_1')],
             });
-            expect(source.subscription.value).toEqual(template);
         });
 
-        it('names the subscription of the order as the session does, not as its template', async () => {
-            mockGetSubscription.mockResolvedValue({ ...template, name: 'Pro template' });
+        it('names the subscription as the session asks when the read leaves its name out', async () => {
             mockGet.mockResolvedValue(
                 portalUrl({
                     pricing_plan_subscriptions: [
@@ -244,7 +259,29 @@ describe('useCheckoutSession', () => {
             const { source } = await loaded();
 
             expect(source.subscription.value?.name).toBe('Pro for Acme');
-            expect(source.subscription.value?.id).toBe('ppsu_template');
+        });
+
+        it('reports a subscription that came without its plan, and offers no section for it', async () => {
+            mockGet.mockResolvedValue(
+                portalUrl({
+                    pricing_plan_subscriptions: [
+                        {
+                            ...createSession().pricing_plan_subscriptions[0],
+                            pricing_plan_schedule_infos: [
+                                { id: 'pps_1' } as PricingPlanScheduleInfoExpanded,
+                            ],
+                        },
+                    ],
+                }),
+            );
+            const { source } = await loaded();
+
+            expect(source.planCustomizations?.value).toStrictEqual([]);
+            expect(providerMockLogger.error).toHaveBeenCalledWith(
+                'SUBSCRIPTION_LOAD_FAILED',
+                expect.any(String),
+                {},
+            );
         });
 
         it('fills the form from the first customer, and the quantities from the subscription', async () => {
@@ -258,7 +295,7 @@ describe('useCheckoutSession', () => {
                 city: 'Utrecht',
             });
             expect(sectionOf(source)).toMatchObject({
-                subscription: template,
+                subscription: { id: 'ppsu_template' },
                 minimums: { seatsValues: [{ pricing_item_config_id: 'pic_seats', number: '2' }] },
                 maximums: { seatsValues: [{ pricing_item_config_id: 'pic_seats', number: '10' }] },
                 editableConfigIds: ['pic_seats'],
@@ -2122,6 +2159,8 @@ describe('useCheckoutSession', () => {
         const second: CheckoutSession['pricing_plan_subscriptions'][number] = {
             template_pricing_plan_subscription_id: 'ppsu_second',
             pricing_plan_subscription: { reference: 'second-ref', customer_reference: 'cust-ref' },
+            name: 'Hardware',
+            pricing_plan_schedule_infos: [scheduleInfo('pps_2')],
             options: {
                 edit_units: [
                     {
@@ -2140,11 +2179,6 @@ describe('useCheckoutSession', () => {
                 },
             ],
         };
-        const secondTemplate = {
-            id: 'ppsu_second',
-            name: 'Hardware',
-            pricing_plan_schedule_infos: [],
-        } as unknown as PricingPlanSubscriptionExpanded;
         const twoSubscriptions = (
             subscriptions = [createSession().pricing_plan_subscriptions[0], second],
             overrides: Partial<CheckoutSession> = {},
@@ -2152,17 +2186,15 @@ describe('useCheckoutSession', () => {
 
         beforeEach(() => {
             mockGet.mockResolvedValue(twoSubscriptions());
-            mockGetSubscription.mockImplementation(({ id }: { id: string }) =>
-                Promise.resolve(id === 'ppsu_second' ? secondTemplate : template),
-            );
         });
 
-        it('names a subscription as the session does, else as its template', async () => {
+        it('names a subscription as the session does, else by a fallback', async () => {
             mockGet.mockResolvedValue(
                 twoSubscriptions([
                     createSession().pricing_plan_subscriptions[0],
                     {
                         ...second,
+                        name: undefined,
                         pricing_plan_subscription: {
                             ...second.pricing_plan_subscription,
                             name: 'Office hardware',
@@ -2178,26 +2210,15 @@ describe('useCheckoutSession', () => {
             expect(other.subscription.name).toBe('Office hardware');
         });
 
-        it('charges each subscription on its own schedule, with the pricings that schedule enables', async () => {
-            const scheduleInfo = (id: string, enabled: string[]) => ({
-                id,
-                pricing_plan_schedule: {
-                    id,
-                    enabled_pricings: enabled.map((pricing_id) => ({ pricing_id })),
-                },
-            });
-            mockGetSubscription.mockResolvedValue({
-                ...template,
-                pricing_plan_schedule_infos: [
-                    scheduleInfo('pps_2', ['pri_other']),
-                    scheduleInfo('pps_1', ['pri_addon']),
-                ],
-            });
+        it('charges each subscription on its own schedule, with every pricing its version holds', async () => {
             const { source } = await loaded();
 
-            expect(source.chargedSchedules?.value).toMatchObject([
-                { scheduleInfo: { id: 'pps_1' }, enabledPricingIds: ['pri_addon'] },
-                { scheduleInfo: { id: 'pps_2' }, enabledPricingIds: ['pri_other'] },
+            expect(source.chargedSchedules?.value).toStrictEqual([
+                {
+                    scheduleInfo: scheduleInfo('pps_1'),
+                    billingPeriod: { type: 'MONTH', value: 1 },
+                },
+                { scheduleInfo: scheduleInfo('pps_2'), billingPeriod: undefined },
             ]);
         });
 
@@ -2207,12 +2228,12 @@ describe('useCheckoutSession', () => {
 
             expect(first).toMatchObject({
                 key: '0',
-                subscription: template,
+                subscription: { id: 'ppsu_template' },
                 title: 'Subscription',
             });
             expect(other).toMatchObject({
                 key: '1',
-                subscription: secondTemplate,
+                subscription: { id: 'ppsu_second', name: 'Hardware' },
                 title: 'Hardware',
             });
         });
@@ -2602,7 +2623,6 @@ describe('useCheckoutSession', () => {
             await settleEdits();
             await settleEdits();
 
-            expect(mockGetSubscription).not.toHaveBeenCalled();
             expect(mockUpdate).not.toHaveBeenCalled();
             expect(mockPreview).toHaveBeenCalledTimes(1);
             expect(source.planCustomizations?.value).toStrictEqual([]);

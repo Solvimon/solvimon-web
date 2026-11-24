@@ -259,6 +259,68 @@ describe('getTopUpPricingItems', () => {
     it('returns nothing without a wallet balance item', () => {
         expect(getTopUpPricingItems()).toEqual([]);
     });
+
+    describe('an item priced per currency or billing period', () => {
+        const usdConfig = { id: 'pico_usd', on_demand: true };
+        const eurConfig = { id: 'pico_eur', on_demand: true };
+        const entry = {
+            pricing_item_id: 'prii_1',
+            pricing_item: {
+                id: 'prii_1',
+                pricing_currency_configs: [
+                    { currency: 'USD', configs: [usdConfig] },
+                    {
+                        currency: 'EUR',
+                        billing_period_configs: [
+                            { billing_period: { type: 'MONTH', value: 1 }, configs: [eurConfig] },
+                        ],
+                    },
+                ],
+            },
+        };
+        const createWallet = (balance: unknown) =>
+            ({
+                wallet_id: 'wall_1',
+                wallet_balance: { balance },
+                charge_on_demand_pricing_items: [entry],
+            }) as unknown as CustomerWalletBalanceItem;
+
+        it("offers only the configs in the wallet's currency", () => {
+            const result = getTopUpPricingItems(
+                createWallet({ amount: { quantity: '10', currency: 'EUR' } }),
+            );
+
+            expect(result.map(({ config }) => config.id)).toEqual(['pico_eur']);
+        });
+
+        it('offers every currency to a credits wallet', () => {
+            const result = getTopUpPricingItems(
+                createWallet({ credits: { quantity: '10', credit_type_id: 'ctyp_1' } }),
+            );
+
+            expect(result.map(({ config }) => config.id)).toEqual(['pico_usd', 'pico_eur']);
+        });
+
+        it('reads configs kept per billing period on the item itself', () => {
+            const result = getTopUpPricingItems(
+                createBalanceItem([
+                    {
+                        pricing_item_id: 'prii_2',
+                        pricing_item: {
+                            billing_period_configs: [
+                                {
+                                    billing_period: { type: 'MONTH', value: 1 },
+                                    configs: [flexibleConfig],
+                                },
+                            ],
+                        },
+                    },
+                ]),
+            );
+
+            expect(result.map(({ config }) => config.id)).toEqual(['pico_1']);
+        });
+    });
 });
 
 describe('getTopUpPricingItems pricing kinds', () => {

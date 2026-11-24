@@ -1,6 +1,8 @@
 import type {
     Amount,
     CustomerWalletBalanceItem,
+    PricingCurrencyConfig,
+    PricingItemConfigBillingPeriodConfig,
     PricingItemConfigExtended,
     PricingItemExtended,
     PricingPlanSchedule,
@@ -34,8 +36,32 @@ interface ChargeOnDemandPricingItem {
     pricing_item?: {
         id?: PricingItemExtended['id'];
         configs?: PricingItemConfigExtended[];
+        billing_period_configs?: PricingItemConfigBillingPeriodConfig<PricingItemConfigExtended>[];
+        pricing_currency_configs?: PricingCurrencyConfig<PricingItemConfigExtended>[];
     };
 }
+
+const getConfigsOfBillingPeriods = (
+    billingPeriodConfigs?: PricingItemConfigBillingPeriodConfig<PricingItemConfigExtended>[],
+) => (billingPeriodConfigs ?? []).flatMap(({ configs }) => configs ?? []);
+
+/**
+ * Every config of the item, wherever the plan keeps it. A price per currency only counts in the
+ * wallet's currency; a credits wallet names none, so it keeps them all.
+ */
+const getItemConfigs = (
+    item: ChargeOnDemandPricingItem['pricing_item'],
+    currency?: string,
+): PricingItemConfigExtended[] => [
+    ...(item?.configs ?? []),
+    ...getConfigsOfBillingPeriods(item?.billing_period_configs),
+    ...(item?.pricing_currency_configs ?? [])
+        .filter((currencyConfig) => !currency || currencyConfig.currency === currency)
+        .flatMap((currencyConfig) => [
+            ...(currencyConfig.configs ?? []),
+            ...getConfigsOfBillingPeriods(currencyConfig.billing_period_configs),
+        ]),
+];
 
 const isChargeOnDemandPricingItem = (entry: unknown): entry is ChargeOnDemandPricingItem =>
     typeof entry === 'object' && entry !== null && 'pricing_item' in entry;
@@ -206,7 +232,9 @@ export const getTopUpPricingItems = (
             return [];
         }
 
-        return (entry.pricing_item?.configs ?? []).map((config) => {
+        const walletCurrency = walletBalanceItem?.wallet_balance.balance?.amount?.currency;
+
+        return getItemConfigs(entry.pricing_item, walletCurrency).map((config) => {
             const flexiblePricing = getFlexiblePricing(config, walletBalanceItem);
             const fixedPricing = getFixedPricing(config, walletBalanceItem);
 

@@ -213,12 +213,25 @@ export const withTopUpPricingItemsForSchedules = (
     };
 };
 
+/** The billing currency of the subscription that carries the schedule. */
+const getBillingCurrency = (
+    subscriptions: PricingPlanSubscriptionExpanded[],
+    scheduleId?: PricingPlanSchedule['id'],
+) =>
+    scheduleId
+        ? subscriptions.find(({ pricing_plan_schedule_infos }) =>
+              pricing_plan_schedule_infos?.some(({ id }) => id === scheduleId),
+          )?.billing_currency
+        : undefined;
+
 /**
  * The ways this wallet can be topped up, one entry per pricing config, paired with the item id and
- * schedule needed to charge it.
+ * schedule needed to charge it. A price per currency counts in the wallet's currency, or for a
+ * credits wallet in the billing currency of the subscription the top-up is charged on.
  */
 export const getTopUpPricingItems = (
     walletBalanceItem?: CustomerWalletBalanceItem,
+    subscriptions: PricingPlanSubscriptionExpanded[] = [],
 ): TopUpPricingItem[] =>
     (walletBalanceItem?.charge_on_demand_pricing_items ?? []).flatMap((entry) => {
         if (!isChargeOnDemandPricingItem(entry)) {
@@ -232,9 +245,11 @@ export const getTopUpPricingItems = (
             return [];
         }
 
-        const walletCurrency = walletBalanceItem?.wallet_balance.balance?.amount?.currency;
+        const currency =
+            walletBalanceItem?.wallet_balance.balance?.amount?.currency ??
+            getBillingCurrency(subscriptions, entry.pricing_plan_schedule_id);
 
-        return getItemConfigs(entry.pricing_item, walletCurrency).map((config) => {
+        return getItemConfigs(entry.pricing_item, currency).map((config) => {
             const flexiblePricing = getFlexiblePricing(config, walletBalanceItem);
             const fixedPricing = getFixedPricing(config, walletBalanceItem);
 

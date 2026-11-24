@@ -103,7 +103,9 @@ const balanceItemForSubscription = computed(() => {
     return withTopUpPricingItemsForSchedules(props.selectedBalanceItem, selected.scheduleIds);
 });
 
-const topUpPricingItems = computed(() => getTopUpPricingItems(balanceItemForSubscription.value));
+const topUpPricingItems = computed(() =>
+    getTopUpPricingItems(balanceItemForSubscription.value, props.subscriptions),
+);
 
 const {
     paymentMethodOptions,

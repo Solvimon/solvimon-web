@@ -265,6 +265,7 @@ describe('getTopUpPricingItems', () => {
         const eurConfig = { id: 'pico_eur', on_demand: true };
         const entry = {
             pricing_item_id: 'prii_1',
+            pricing_plan_schedule_id: 'ppsc_1',
             pricing_item: {
                 id: 'prii_1',
                 pricing_currency_configs: [
@@ -293,10 +294,24 @@ describe('getTopUpPricingItems', () => {
             expect(result.map(({ config }) => config.id)).toEqual(['pico_eur']);
         });
 
-        it('offers every currency to a credits wallet', () => {
-            const result = getTopUpPricingItems(
-                createWallet({ credits: { quantity: '10', credit_type_id: 'ctyp_1' } }),
-            );
+        const creditsWallet = createWallet({
+            credits: { quantity: '10', credit_type_id: 'ctyp_1' },
+        });
+
+        it('offers a credits wallet the billing currency of the subscription it is charged on', () => {
+            const subscription = {
+                id: 'ppsu_1',
+                billing_currency: 'EUR',
+                pricing_plan_schedule_infos: [{ id: 'ppsc_1' }],
+            } as unknown as PricingPlanSubscriptionExpanded;
+
+            const result = getTopUpPricingItems(creditsWallet, [subscription]);
+
+            expect(result.map(({ config }) => config.id)).toEqual(['pico_eur']);
+        });
+
+        it('offers every currency to a credits wallet when no subscription carries the schedule', () => {
+            const result = getTopUpPricingItems(creditsWallet);
 
             expect(result.map(({ config }) => config.id)).toEqual(['pico_usd', 'pico_eur']);
         });

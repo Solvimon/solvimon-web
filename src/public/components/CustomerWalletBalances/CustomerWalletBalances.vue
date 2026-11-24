@@ -115,6 +115,7 @@ const showAutoTopUpCancellation = computed(() => !!cancellingAutoTopUpConfig.val
         :top-up-item="selectedAutoTopUpItem"
         :payment-methods="payablePaymentMethods"
         :customer="customer"
+        :subscriptions="subscriptions"
         @close="selectedAutoTopUpItem = undefined"
         @saved="emit('auto-top-up-saved')"
         @payment-success="emit('payment-method-stored')"

@@ -130,8 +130,7 @@ const description = computed(() => {
         no-spacing
         no-border
         content-background="none"
-        :description="description"
-        description-classes="sv-payment-acceptors__description"
+        :description="{ content: description, classes: 'sv-payment-acceptors__description' }"
         :title="
             $t(
                 {

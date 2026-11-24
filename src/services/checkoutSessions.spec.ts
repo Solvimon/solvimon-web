@@ -25,6 +25,15 @@ describe('checkout sessions service', () => {
         });
     });
 
+    it('expands everything when asked for the plans of the session', async () => {
+        await createCheckoutSessionsService().getCheckoutSession('purl_1', { expanded: true });
+
+        expect(mockRequest).toHaveBeenCalledWith({
+            url: 'https://transaction.test/portal/portal-urls/purl_1',
+            query: { expand: ['ALL'] },
+        });
+    });
+
     it('patches the session with the body it is given, a 400 being for the caller', async () => {
         const body = toCheckoutSessionPatch(3, { customers: [{ email: 'a@b.test' }] });
 

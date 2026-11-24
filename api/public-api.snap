@@ -1302,7 +1302,7 @@ export interface SolvimonBranding {
 }
 
 // types/types/checkoutSession.d.ts
-import { Address, CheckoutSessionNewCustomerType, CheckoutSessionStatus, ConfiguredMeterValue, CreatedCheckoutSessionPortalUrl, Invoice, InvoiceInfo, Name, PortalUrl, PricingPlanSubscription, TaxIdentifier } from '../vendor/@solvimon/solvimon-types/index';
+import { Address, BillingEntity, BillingPeriod, CheckoutSessionNewCustomerType, CheckoutSessionStatus, ConfiguredMeterValue, CreatedCheckoutSessionPortalUrl, Invoice, InvoiceInfo, Name, PortalUrl, PricingPlanScheduleInfoExpanded, PricingPlanSubscription, TaxIdentifier } from '../vendor/@solvimon/solvimon-types/index';
 /** A `CLOSED` link (its session COMPLETED or FAILED) can still be read. */
 export type CheckoutSessionPortalUrlStatus = 'PUBLISHED' | 'REVOKED' | 'CLOSED';
 /** The portal object a host passes for a checkout session link; `token` is the handle. */
@@ -1392,6 +1392,16 @@ export interface CheckoutSessionSubscription {
         seats_values?: ConfiguredMeterValue[];
         units?: ConfiguredMeterValue[];
     }[];
+    /** Read only: what the subscription will be, resolved from its template and the session. */
+    name?: string;
+    billing_currency?: string;
+    billing_period?: BillingPeriod;
+    /** Left out while it still depends on a country the buyer has not entered. */
+    billing_entity_id?: BillingEntity['id'];
+    /** With `expand[]=ALL` only. */
+    billing_entity?: BillingEntity;
+    /** Keyed by the ids `starting_values` uses; the version, with the session applied, only expanded. */
+    pricing_plan_schedule_infos?: PricingPlanScheduleInfoExpanded[];
 }
 export interface CheckoutSession {
     status: CheckoutSessionStatus;

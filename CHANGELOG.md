@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Fixed the reported `minimatch` denial-of-service advisory (GHSA-g3hv-75wg-m249) in development dependencies.
 
+### Fixed
+
+- `checkout-session` loads again. It read each subscription's plan from its template, which a checkout session's token is refused (`SUBSCRIPTION_LOAD_FAILED`); it now reads the plan from the session, with `expand[]=ALL`, and charges the pricings of the version the session resolves. `CheckoutSessionSubscription` gains the read-only `name`, `billing_currency`, `billing_period`, `billing_entity_id`, `billing_entity` and `pricing_plan_schedule_infos`.
+
 ## [0.1.0-alpha.31] - 2026-11-18
 
 ### Added

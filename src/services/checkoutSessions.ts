@@ -1,6 +1,8 @@
+import { withExpand } from '@solvimon/solvimon-ui';
 import { createRequestService } from './requests';
 import { buildUrl } from './requests.lib';
 import { useConfig } from '@/components/providers/ConfigProvider/composables/useConfig';
+import { EXPAND_ALL } from '@/constants';
 import type {
     CheckoutSessionAddressPatch,
     CheckoutSessionCustomerPatch,
@@ -140,8 +142,15 @@ export function createCheckoutSessionsService() {
         buildUrl(config.apiUrls.transaction, 'portal', 'portal-urls', id, ...rest);
 
     return {
-        getCheckoutSession(id: string): Promise<CheckoutSessionPortalUrlResponse> {
-            return request<CheckoutSessionPortalUrlResponse>({ url: portalUrl(id) });
+        /** `expanded` adds each subscription's plan, which a session token can read only here. */
+        getCheckoutSession(
+            id: string,
+            { expanded = false }: { expanded?: boolean } = {},
+        ): Promise<CheckoutSessionPortalUrlResponse> {
+            return request<CheckoutSessionPortalUrlResponse>({
+                url: portalUrl(id),
+                ...(expanded && { query: withExpand({ expandParams: EXPAND_ALL, expand: true }) }),
+            });
         },
         /** A stale `expected_version` or a refused promotion code is a 400 the caller handles. */
         updateCheckoutSession(

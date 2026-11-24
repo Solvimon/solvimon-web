@@ -19,13 +19,14 @@
         "@types/node": "^22.10.7",
         "@vitejs/plugin-vue": "^5.2.1",
         "@vue/tsconfig": "^0.7.0",
-        "npm-run-all2": "^7.0.2",
+        "npm-run-all2": "^9.1.0",
         "typescript": "~5.7.3",
         "vite": "^6.4.5",
         "vite-plugin-vue-devtools": "^7.7.0",
         "vue-tsc": "^2.2.0"
     },
     "overrides": {
-        "postcss": "^8.5.10"
+        "postcss": "^8.5.10",
+        "minimatch": "^11.0.1"
     }
 }

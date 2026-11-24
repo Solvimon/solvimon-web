@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- Fixed the reported `minimatch` denial-of-service advisory (GHSA-g3hv-75wg-m249) in development dependencies.
+
 ## [0.1.0-alpha.31] - 2026-11-18
 
 ### Added

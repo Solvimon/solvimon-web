@@ -84,14 +84,14 @@ const save = async () => {
     // A second confirm while the first is still out would store the acceptor twice.
     if (isWorking.value) return;
 
-    const filledIn = await formRef.value?.submit();
-    if (!filledIn) return;
-
     isWorking.value = true;
     errorMessage.value = undefined;
     apiError.value = undefined;
 
     try {
+        const filledIn = await formRef.value?.submit();
+        if (!filledIn) return;
+
         if (filledIn.method === 'UPDATE' && selected.value) {
             await props.actions.update(selected.value, filledIn.payload);
         } else if (filledIn.method === 'CREATE') {

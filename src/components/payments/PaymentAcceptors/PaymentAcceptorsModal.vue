@@ -124,12 +124,13 @@ const add = async () => {
     // A second confirm while the first is still being checked would store the acceptor twice.
     if (isWorking.value) return;
 
-    const filledIn = await formRef.value?.submit();
-
-    if (filledIn?.method !== 'CREATE') return;
-
     const saved = await run(
-        () => props.create(filledIn.details),
+        async () => {
+            const filledIn = await formRef.value?.submit();
+            if (filledIn?.method === 'CREATE') {
+                return props.create(filledIn.details);
+            }
+        },
         (error) =>
             logger.error(
                 'PAYMENT_ACCEPTOR_SAVE_FAILED',
@@ -139,7 +140,7 @@ const add = async () => {
             ),
     );
 
-    if (!saved) return;
+    if (!saved?.result) return;
 
     // With the toggle on the new acceptor already applies; with it off, the customer means to use it.
     if (!usesAll.value) chosenIds.value = [...chosenIds.value, saved.result.id];

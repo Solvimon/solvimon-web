@@ -9,11 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Self-billing customers manage the bank accounts they are paid into (payment acceptors). The customer overview shows a **Payment acceptors** block (`.sv-payment-acceptors`) to a customer with the `SELF_BILLING` role, with up to three of them and a count of the rest. **Manage** opens a modal that lists every payment acceptor and adds, edits and deletes them in place; without any yet, **Add payment acceptor** opens it on adding. Editing one keeps its stored bank address. Deleting a payment acceptor archives it, so invoices that used it keep it. Only active payment acceptors are listed, since they are the only ones a payer can pay into.
 - Subscription details shows a self-billing subscription's payment acceptors: the ones chosen for it, or every active one when none is. **Manage** opens a modal to choose them, with **Use all payment acceptors** for every active one including ones added later, and to add a new one. Choosing needs `POST /v1/portal/pricing-plan-subscriptions/{id}/set-payment-acceptors` with `payment_acceptor_ids`. A new bank account is stored without a reference, which the portal generates.
 - When the API refuses a change to a payment acceptor, the customer is told in their language: a refused field shows on that field, and a delete refused because an active subscription is set to use the payment acceptor says to choose others for it first. The API's own message goes to the logs.
 - Log codes `PAYMENT_ACCEPTORS_LOAD_FAILED`, `PAYMENT_ACCEPTOR_SAVE_FAILED`, `PAYMENT_ACCEPTOR_DELETE_FAILED` and `SUBSCRIPTION_PAYMENT_ACCEPTORS_SAVE_FAILED`.
 - Standalone `customer-payment-acceptors` and `subscription-payment-acceptors` components, with read-only mode and configurable summary length. The existing overview and subscription screens accept the same options and let hosts hide their embedded block. Successful writes emit `solvimon-payment-acceptor-changed` or `solvimon-subscription-payment-acceptors-changed` with IDs and, for assignment, the explicit `all-active` or `selected` mode.
-- Self-billing customers manage the bank accounts they are paid into (payment acceptors). The customer overview shows a **Payment acceptors** block (`.sv-payment-acceptors`) to a customer with the `SELF_BILLING` role, with up to three of them and a count of the rest. **Manage** opens a modal that lists every payment acceptor and adds, edits and deletes them in place; without any yet, **Add payment acceptor** opens it on adding. Deleting a payment acceptor archives it, so invoices that used it keep it. Only active payment acceptors are listed, since they are the only ones a payer can pay into.
 
 ### Changed
 
@@ -25,7 +25,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The checkout-session screen no longer fails to render when the session includes an existing customer (an entry by `customer_id`).
 - The top-up modal no longer requests a total for an amount outside the top-up's minimum or maximum, which showed "Unable to calculate the total" beside the amount's own error.
 - The pay-invoice screen recognises an invoice as paid from its `payment_status`, not only from the deprecated `paid` flag. An invoice the API already counted as paid kept offering the pay form, and every attempt was refused.
-- Editing a payment acceptor preserves its stored bank address and legacy bank-account type. Both add forms guard against duplicate submissions during validation. The acceptor list and subscription assignment apply confirmed writes to the UI immediately.
 
 ## [0.1.0-alpha.32] - 2026-11-25
 

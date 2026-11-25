@@ -111,6 +111,9 @@ const SHOWN_FIELDS = new Set([
     'state',
 ]);
 
+/** The fields of the bank's address. The form shows no country for it, only the account's own. */
+const ADDRESS_FIELDS = new Set(['line1', 'line2', 'postal_code', 'city', 'state']);
+
 /**
  * The field a refused save names, when it is one the form shows. A field the form does not show
  * would put the message where the customer cannot see it, so that is left to a general message.
@@ -118,7 +121,10 @@ const SHOWN_FIELDS = new Set([
 export const getRefusedShownField = (error: unknown): string | undefined => {
     if (!isApiError(error) || error.statusCode !== 400 || !error.field) return undefined;
 
-    const fieldName = error.field.split('.').pop() ?? error.field;
+    const path = error.field.split('.');
+    const fieldName = path.pop() ?? error.field;
+    // Names repeat between the account and its bank's address, so the path must agree with which.
+    if (path.includes('bank_address') !== ADDRESS_FIELDS.has(fieldName)) return undefined;
     return SHOWN_FIELDS.has(fieldName) ? fieldName : undefined;
 };
 

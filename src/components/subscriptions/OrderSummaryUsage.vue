@@ -56,12 +56,12 @@ const subtitle = computed(() => {
             >
                 <Typography v-if="group.name" variant="caps-heading">{{ group.name }}</Typography>
                 <template v-for="(price, index) in group.prices" :key="index">
-                    <div class="sv-order-summary__usage-price grid grid-cols-2 gap-2">
+                    <div class="sv-order-summary__usage-price flex justify-between gap-2">
                         <Typography
                             variant="body-xs"
                             weight="semibold"
                             tag="div"
-                            class="break-words"
+                            class="min-w-0 flex-1 break-words"
                         >
                             {{ price.name }}
                         </Typography>
@@ -69,7 +69,7 @@ const subtitle = computed(() => {
                             variant="body-xs"
                             color="subtle"
                             tag="div"
-                            class="break-words text-right"
+                            class="min-w-0 break-words text-right"
                         >
                             {{ price.rate }}
                         </Typography>
@@ -77,16 +77,21 @@ const subtitle = computed(() => {
                     <div
                         v-for="(row, rowIndex) in price.rows"
                         :key="`${index}-${rowIndex}`"
-                        class="sv-order-summary__usage-price grid grid-cols-2 gap-2"
+                        class="sv-order-summary__usage-price flex justify-between gap-2"
                     >
-                        <Typography variant="body-xs" color="subtle" tag="div" class="break-words">
+                        <Typography
+                            variant="body-xs"
+                            color="subtle"
+                            tag="div"
+                            class="min-w-0 flex-1 break-words"
+                        >
                             {{ row.label }}
                         </Typography>
                         <Typography
                             variant="body-xs"
                             color="subtle"
                             tag="div"
-                            class="break-words text-right"
+                            class="min-w-0 break-words text-right"
                         >
                             {{ row.rate }}
                         </Typography>

@@ -25,6 +25,18 @@ const stored = {
 } as unknown as PaymentAcceptor;
 
 describe('PaymentAcceptorForm', () => {
+    const scrollIntoView = vi.fn();
+
+    // jsdom has no scrollIntoView, which the form calls on the first refused field.
+    beforeEach(() => {
+        scrollIntoView.mockClear();
+        Element.prototype.scrollIntoView = scrollIntoView;
+    });
+
+    afterEach(() => {
+        Reflect.deleteProperty(Element.prototype, 'scrollIntoView');
+    });
+
     it('hands back nothing while the name is missing', async () => {
         const wrapper = mount(PaymentAcceptorForm);
 
@@ -34,8 +46,6 @@ describe('PaymentAcceptorForm', () => {
     });
 
     it('brings the first refused field into view', async () => {
-        const scrollIntoView = vi.fn();
-        Element.prototype.scrollIntoView = scrollIntoView;
         const wrapper = mount(PaymentAcceptorForm, {
             global: {
                 stubs: {

@@ -62,7 +62,7 @@ test('mounts customer payment acceptors in read-only mode', async ({ page }) => 
     expect(api.unmatchedCalls()).toEqual([]);
 });
 
-test('replaces an unavailable assignment and sends the confirmed result to the host', async ({
+test('replaces an assignment that is no longer active and sends the confirmed result to the host', async ({
     page,
 }) => {
     const subscription = { ...aSubscription(), variant: 'SELF_BILLING' };
@@ -80,9 +80,7 @@ test('replaces an unavailable assignment and sends the confirmed result to the h
     const block = page.locator('solvimon-subscription-payment-acceptors');
 
     await block.getByRole('button', { name: 'Manage' }).click();
-    await expect(
-        block.getByText('These assigned payment acceptors are unavailable.', { exact: false }),
-    ).toBeVisible();
+    await expect(block.getByText('paya_unavailable')).toHaveCount(0);
     await block.getByText(acceptor.name, { exact: true }).click();
     await block.getByRole('button', { name: 'Assign payment acceptors' }).click();
 

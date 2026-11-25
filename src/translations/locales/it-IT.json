@@ -313,7 +313,6 @@
     "payment_acceptors_modal.assign.list_label": "Conti di accredito di questo abbonamento",
     "payment_acceptors_modal.assign.none_selected_error": "Seleziona almeno un conto di accredito oppure attiva “Usa tutti”.",
     "payment_acceptors_modal.assign.title": "Assegna conti di accredito",
-    "payment_acceptors_modal.assign.unavailable": "Questi conti di accredito assegnati non sono disponibili. Seleziona altri conti o attiva l’opzione per usarli tutti.",
     "payment_acceptors_modal.back_button.label": "Indietro",
     "payment_acceptors_modal.cancel_button.label": "Annulla",
     "payment_acceptors_modal.choose.payer_picks": "Scegli i conti di accredito tra cui {payer} può scegliere quando ti paga.",

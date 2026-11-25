@@ -50,7 +50,7 @@ export function createPaymentAcceptorsService(): PaymentAcceptorsService {
 
         return {
             ...response,
-            data: (response.data ?? []).filter(({ status }) => status !== 'ARCHIVED'),
+            data: (response.data ?? []).filter(({ status }) => status === 'ACTIVE'),
         };
     }
 

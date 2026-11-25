@@ -29,10 +29,6 @@ export interface UsePaymentAcceptors {
     remove: (paymentAcceptor: PaymentAcceptor) => Promise<void>;
 }
 
-/** Active ones first, each group in the order the API lists them. */
-const byActiveFirst = (a: PaymentAcceptor, b: PaymentAcceptor) =>
-    Number(b.status === 'ACTIVE') - Number(a.status === 'ACTIVE');
-
 /**
  * The payment acceptors of a customer: the bank accounts a self-billing customer is paid into.
  */
@@ -73,7 +69,7 @@ export function usePaymentAcceptors({
 
         try {
             const response = await service.getPaymentAcceptors({ customerId: id });
-            if (isCurrent()) items.value = [...response.data].sort(byActiveFirst);
+            if (isCurrent()) items.value = response.data;
         } catch (loadError) {
             if (!isCurrent()) return;
             logger.error(
@@ -95,14 +91,12 @@ export function usePaymentAcceptors({
         latestLoad++;
         isPending.value = false;
         const index = items.value.findIndex((item) => item.id === acceptor.id);
-        if (archived || acceptor.status === 'ARCHIVED') {
+        if (archived || acceptor.status !== 'ACTIVE') {
             items.value = items.value.filter((item) => item.id !== acceptor.id);
         } else if (index === -1) {
-            items.value = [...items.value, acceptor].sort(byActiveFirst);
+            items.value = [...items.value, acceptor];
         } else {
-            items.value = items.value
-                .map((item) => (item.id === acceptor.id ? acceptor : item))
-                .sort(byActiveFirst);
+            items.value = items.value.map((item) => (item.id === acceptor.id ? acceptor : item));
         }
     };
 

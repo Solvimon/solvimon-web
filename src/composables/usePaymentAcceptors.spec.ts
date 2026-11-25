@@ -42,18 +42,15 @@ describe('usePaymentAcceptors', () => {
         mockService.getPaymentAcceptors.mockResolvedValue({ data: [] });
     });
 
-    it('lists the active acceptors before the inactive ones', async () => {
+    it('lists the acceptors in the order the API gives them', async () => {
         mockService.getPaymentAcceptors.mockResolvedValue({
-            data: [
-                acceptor({ id: 'paya_archived', status: 'ARCHIVED' }),
-                acceptor({ id: 'paya_active' }),
-            ],
+            data: [acceptor({ id: 'paya_2' }), acceptor({ id: 'paya_1' })],
         });
         const { items, fetchAll } = usePaymentAcceptors({ customerId: 'cust_1' });
 
         await fetchAll();
 
-        expect(items.value.map(({ id }) => id)).toEqual(['paya_active', 'paya_archived']);
+        expect(items.value.map(({ id }) => id)).toEqual(['paya_2', 'paya_1']);
         expect(mockService.getPaymentAcceptors).toHaveBeenCalledWith({ customerId: 'cust_1' });
     });
 

@@ -313,7 +313,6 @@
     "payment_acceptors_modal.assign.list_label": "Empfangskonten für dieses Abonnement",
     "payment_acceptors_modal.assign.none_selected_error": "Wählen Sie mindestens ein Empfangskonto aus oder aktivieren Sie „Alle verwenden“.",
     "payment_acceptors_modal.assign.title": "Empfangskonten zuweisen",
-    "payment_acceptors_modal.assign.unavailable": "Diese zugewiesenen Zahlungsempfänger sind nicht verfügbar. Wählen Sie andere aus oder aktivieren Sie „Alle Zahlungsempfänger verwenden“.",
     "payment_acceptors_modal.back_button.label": "Zurück",
     "payment_acceptors_modal.cancel_button.label": "Abbrechen",
     "payment_acceptors_modal.choose.payer_picks": "Wählen Sie die Empfangskonten, aus denen {payer} bei der Zahlung an Sie wählen kann.",

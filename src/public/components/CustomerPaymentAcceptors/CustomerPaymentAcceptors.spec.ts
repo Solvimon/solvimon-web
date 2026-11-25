@@ -30,37 +30,31 @@ vi.mock('@/services/subscriptions', () => ({
 }));
 
 // Loaded with `import()`, which only unwraps `default` from a module that says it is one.
-vi.mock(
-    '@/public/components/CustomerPaymentAcceptors/internal/PaymentAcceptors/PaymentAcceptorsModal.vue',
-    () => ({
-        __esModule: true,
-        default: defineComponent({
-            name: 'PaymentAcceptorsModal',
-            props: {
-                showModal: Boolean,
-                paymentAcceptors: Array,
-                create: Function,
-                subscription: Object,
-                saveChoice: Function,
-            },
-            emits: ['close'],
-            setup: () => () => h('div', { class: 'payment-acceptors-modal-stub' }),
-        }),
+vi.mock('@/components/payments/PaymentAcceptors/PaymentAcceptorsModal.vue', () => ({
+    __esModule: true,
+    default: defineComponent({
+        name: 'PaymentAcceptorsModal',
+        props: {
+            showModal: Boolean,
+            paymentAcceptors: Array,
+            create: Function,
+            subscription: Object,
+            saveChoice: Function,
+        },
+        emits: ['close'],
+        setup: () => () => h('div', { class: 'payment-acceptors-modal-stub' }),
     }),
-);
+}));
 
-vi.mock(
-    '@/public/components/CustomerPaymentAcceptors/internal/PaymentAcceptors/PaymentAcceptorsManageModal.vue',
-    () => ({
-        __esModule: true,
-        default: defineComponent({
-            name: 'PaymentAcceptorsManageModal',
-            props: { showModal: Boolean, start: String, paymentAcceptors: Array, actions: Object },
-            emits: ['close'],
-            setup: () => () => h('div', { class: 'payment-acceptors-manage-modal-stub' }),
-        }),
+vi.mock('@/components/payments/PaymentAcceptors/PaymentAcceptorsManageModal.vue', () => ({
+    __esModule: true,
+    default: defineComponent({
+        name: 'PaymentAcceptorsManageModal',
+        props: { showModal: Boolean, start: String, paymentAcceptors: Array, actions: Object },
+        emits: ['close'],
+        setup: () => () => h('div', { class: 'payment-acceptors-manage-modal-stub' }),
     }),
-);
+}));
 
 vi.mock('@solvimon/solvimon-ui', async () => {
     const { createSolvimonUiMock } = await import('@/test-utils/solvimonUiMock');

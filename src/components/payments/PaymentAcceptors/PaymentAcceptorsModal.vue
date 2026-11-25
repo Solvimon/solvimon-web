@@ -15,7 +15,7 @@ import type {
     PaymentAcceptorsModalEmits,
     PaymentAcceptorsModalProps,
 } from './PaymentAcceptorsModal.types';
-import PaymentAcceptorForm from '@/public/components/CustomerPaymentAcceptors/internal/PaymentAcceptorForm/PaymentAcceptorForm.vue';
+import PaymentAcceptorForm from '@/components/payments/PaymentAcceptorForm/PaymentAcceptorForm.vue';
 import SlidingPanes from '@/components/shared/SlidingPanes/SlidingPanes.vue';
 import { useLogger } from '@/components/providers';
 import { usePaymentAcceptorErrorMessages } from '@/composables/usePaymentAcceptorErrorMessages';

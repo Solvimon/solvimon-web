@@ -23,12 +23,10 @@ import type { PaymentAcceptorAssignment } from '@/public/types/paymentAcceptors'
 
 /** Most customers never open it, so it is not part of the screen until one does. */
 const PaymentAcceptorsModal = defineAsyncComponent(
-    () =>
-        import('@/public/components/CustomerPaymentAcceptors/internal/PaymentAcceptors/PaymentAcceptorsModal.vue'),
+    () => import('@/components/payments/PaymentAcceptors/PaymentAcceptorsModal.vue'),
 );
 const PaymentAcceptorsManageModal = defineAsyncComponent(
-    () =>
-        import('@/public/components/CustomerPaymentAcceptors/internal/PaymentAcceptors/PaymentAcceptorsManageModal.vue'),
+    () => import('@/components/payments/PaymentAcceptors/PaymentAcceptorsManageModal.vue'),
 );
 
 const props = defineProps<CustomerPaymentAcceptorsProps>();

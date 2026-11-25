@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The checkout's usage prices keep a product's name on one line when it fits. The name and its price no longer get half the width each, so a name with no price beside it uses the whole row, and a price is not broken over two lines when a long name wraps.
 - The top-up modals find the price of a top-up item that is priced per currency or per billing period. Before, they only read a price set on the item itself. A money wallet offers only the prices in its own currency. A credits wallet offers only those in the billing currency of the subscription the top-up is charged on. The **Top up** and **Auto top-up** buttons now show for such an item too (solvimon-ui 1.33.1).
 - `checkout-session` loads again. It read each subscription's plan from its template, which a checkout session's token is refused (`SUBSCRIPTION_LOAD_FAILED`); it now reads the plan from the session, with `expand[]=ALL`, and charges the pricings of the version the session resolves. `CheckoutSessionSubscription` gains the read-only `name`, `billing_currency`, `billing_period`, `billing_entity_id`, `billing_entity` and `pricing_plan_schedule_infos`.
 - `checkout-session` shows that it cannot be loaded when a subscription comes without its plan, instead of loading for good.

@@ -125,13 +125,6 @@ const canManage = computed(
 /** With none at all there is nothing to choose or change, only one to add. */
 const hasManageButton = computed(() => canManage.value && items.value.length > 0);
 
-watch(canManage, (canManage) => {
-    if (!canManage && props.management === 'read-only') {
-        isModalShown.value = false;
-        isManageModalShown.value = false;
-    }
-});
-
 /** A subscription none of whose acceptors is active gives its payer nothing to pay into. */
 const emptyTitle = computed(() => {
     if (!props.subscription) {

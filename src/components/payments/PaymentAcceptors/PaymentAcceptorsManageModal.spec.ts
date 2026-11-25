@@ -142,6 +142,18 @@ describe('PaymentAcceptorsManageModal', () => {
         });
     });
 
+    it('validates and creates once when confirmed twice during validation', async () => {
+        const actions = createActions();
+        const wrapper = mountComponent({ start: 'ADD', actions });
+        const confirm = wrapper.get('.modal__confirm');
+
+        await Promise.all([confirm.trigger('click'), confirm.trigger('click')]);
+        await flushPromises();
+
+        expect(mockSubmit).toHaveBeenCalledTimes(1);
+        expect(actions.create).toHaveBeenCalledTimes(1);
+    });
+
     it('lists the payment acceptors with their menus and closes with one button', async () => {
         const wrapper = mountComponent();
 

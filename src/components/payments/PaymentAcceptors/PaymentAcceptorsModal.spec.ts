@@ -151,6 +151,18 @@ describe('PaymentAcceptorsModal', () => {
         });
     });
 
+    it('validates and creates once when confirmed twice during validation', async () => {
+        const create = vi.fn().mockResolvedValue(acceptor('new'));
+        const wrapper = mountComponent({ paymentAcceptors: [], create });
+        const confirm = wrapper.get('.modal__confirm');
+
+        await Promise.all([confirm.trigger('click'), confirm.trigger('click')]);
+        await flushPromises();
+
+        expect(mockSubmit).toHaveBeenCalledTimes(1);
+        expect(create).toHaveBeenCalledTimes(1);
+    });
+
     it('offers only the active acceptors, with the linked ones ticked', () => {
         const wrapper = mountComponent();
 

@@ -122,18 +122,43 @@ const add = () => (props.subscription ? openModal() : openManageModal('ADD'));
 const canManage = computed(
     () => props.management !== 'read-only' && !isPending.value && !error.value,
 );
-const hasManageButton = computed(
-    () =>
-        canManage.value &&
-        (relevantAcceptors.value.length > 0 ||
-            (props.subscription && assignment.value.mode === 'selected')),
-);
+/** With none at all there is nothing to choose or change, only one to add. */
+const hasManageButton = computed(() => canManage.value && items.value.length > 0);
 
 watch(canManage, (canManage) => {
     if (!canManage && props.management === 'read-only') {
         isModalShown.value = false;
         isManageModalShown.value = false;
     }
+});
+
+/** A subscription none of whose acceptors is active gives its payer nothing to pay into. */
+const emptyTitle = computed(() => {
+    if (!props.subscription) {
+        return $t({
+            defaultMessage: 'No payment acceptors yet',
+            id: 'customer_overview.payment_acceptors_block.empty',
+            description:
+                'Shown in the payment acceptors block when the customer has no bank accounts',
+        });
+    }
+    if (!payerName.value) {
+        return $t({
+            defaultMessage: 'There are no options to pay you.',
+            id: 'subscription_details.payment_acceptors_block.no_options',
+            description:
+                'Shown in the payment acceptors block of a self-billing subscription with no active payment acceptor, when the name of whoever pays it is not known',
+        });
+    }
+    return $t(
+        {
+            defaultMessage: '{payer} has no options to pay you.',
+            id: 'subscription_details.payment_acceptors_block.payer_has_no_options',
+            description:
+                'Shown in the payment acceptors block of a self-billing subscription with no active payment acceptor. {payer} is the legal name of the company that pays the customer',
+        },
+        { payer: payerName.value },
+    );
 });
 
 const description = computed(() => {
@@ -268,17 +293,18 @@ const description = computed(() => {
             </LimitedList>
 
             <EmptyStatePlaceholder v-else class="sv-payment-acceptors__empty" icon="checkbook">
-                <template #title>
+                <template #title>{{ emptyTitle }}</template>
+                <template v-if="subscription && hasManageButton" #message>
                     {{
                         $t({
-                            defaultMessage: 'No payment acceptors yet',
-                            id: 'customer_overview.payment_acceptors_block.empty',
+                            defaultMessage: 'Choose one of your payment acceptors or add one.',
+                            id: 'subscription_details.payment_acceptors_block.choose_or_add',
                             description:
-                                'Shown in the payment acceptors block when the customer has no bank accounts',
+                                'Shown under the empty payment acceptors block of a self-billing subscription when the customer has active payment acceptors, none of them chosen for it; Manage is where they choose',
                         })
                     }}
                 </template>
-                <template v-if="canManage && !hasManageButton" #message>
+                <template v-else-if="canManage && !hasManageButton" #message>
                     <button
                         type="button"
                         class="sv-action sv-action--link sv-payment-acceptors__add underline"

@@ -174,12 +174,50 @@ describe('CustomerPaymentAcceptors', () => {
             );
         });
 
-        it('offers no manage action while there is no payment acceptor to show', async () => {
+        it('says the payer has no options and offers to add one when the customer has none', async () => {
             acceptorsState.items = [];
-            const wrapper = await mountBlock({ subscription: subscription() });
+            const wrapper = await mountBlock({ subscription: subscription(['gone']) });
 
+            expect(wrapper.find('.sv-payment-acceptors__empty').text()).toContain(
+                'Tivoli has no options to pay you.',
+            );
+            expect(wrapper.text()).not.toContain('Choose one of your payment acceptors');
             expect(wrapper.find('.sv-payment-acceptors__manage').exists()).toBe(false);
             expect(wrapper.find('.sv-payment-acceptors__add').exists()).toBe(true);
+        });
+
+        it('says the payer has no options and to choose one when none chosen is active', async () => {
+            const wrapper = await mountBlock({ subscription: subscription(['gone']) });
+
+            expect(shownIds(wrapper)).toEqual([]);
+            expect(wrapper.find('.sv-payment-acceptors__empty').text()).toContain(
+                'Tivoli has no options to pay you.',
+            );
+            expect(wrapper.text()).toContain('Choose one of your payment acceptors or add one.');
+            expect(wrapper.find('.sv-payment-acceptors__manage').exists()).toBe(true);
+            expect(wrapper.find('.sv-payment-acceptors__add').exists()).toBe(false);
+        });
+
+        it('only says the payer has no options when it cannot be managed', async () => {
+            const wrapper = await mountBlock({
+                subscription: subscription(['gone']),
+                management: 'read-only',
+            });
+
+            expect(wrapper.find('.sv-payment-acceptors__empty').text()).toContain(
+                'Tivoli has no options to pay you.',
+            );
+            expect(wrapper.text()).not.toContain('Choose one of your payment acceptors');
+            expect(wrapper.find('.sv-payment-acceptors__add').exists()).toBe(false);
+        });
+
+        it('says there are no options to pay when the payer is not known', async () => {
+            acceptorsState.items = [];
+            const wrapper = await mountBlock({ subscription: subscription([], '') });
+
+            expect(wrapper.find('.sv-payment-acceptors__empty').text()).toContain(
+                'There are no options to pay you.',
+            );
         });
 
         it('chooses its acceptors, storing the choice on the subscription', async () => {

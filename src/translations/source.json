@@ -1843,6 +1843,18 @@
     "defaultMessage": "Unable to load this subscription. Please try again later.",
     "description": "Error message shown when the subscription cannot be loaded on the subscription details page"
   },
+  "subscription_details.payment_acceptors_block.choose_or_add": {
+    "defaultMessage": "Choose one of your payment acceptors or add one.",
+    "description": "Shown under the empty payment acceptors block of a self-billing subscription when the customer has active payment acceptors, none of them chosen for it; Manage is where they choose"
+  },
+  "subscription_details.payment_acceptors_block.no_options": {
+    "defaultMessage": "There are no options to pay you.",
+    "description": "Shown in the payment acceptors block of a self-billing subscription with no active payment acceptor, when the name of whoever pays it is not known"
+  },
+  "subscription_details.payment_acceptors_block.payer_has_no_options": {
+    "defaultMessage": "{payer} has no options to pay you.",
+    "description": "Shown in the payment acceptors block of a self-billing subscription with no active payment acceptor. {payer} is the legal name of the company that pays the customer"
+  },
   "subscription_details.payment_acceptors_block.where_can_be_paid": {
     "defaultMessage": "Where you can receive payments for this subscription.",
     "description": "Explains the payment acceptors block on a self-billing subscription when the name of whoever pays it is not known"

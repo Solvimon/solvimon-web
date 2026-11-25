@@ -81,7 +81,7 @@ const saveChoice = async (selection: PaymentAcceptorAssignment) => {
 
     const subscriptionId = props.subscription.id;
     const paymentAcceptorIds =
-        selection.mode === 'selected' ? [...selection.paymentAcceptorIds] : [];
+        selection.mode === 'selected' ? [...selection.paymentAcceptorIds] : null;
     const saved = await subscriptionsService.setSubscriptionPaymentAcceptors({
         id: subscriptionId,
         paymentAcceptorIds,

@@ -56,7 +56,7 @@ interface SubscriptionsService {
     }): Promise<PricingPlanGroup>;
     setSubscriptionPaymentAcceptors(params: {
         id: PricingPlanSubscription['id'];
-        paymentAcceptorIds: PaymentAcceptor['id'][];
+        paymentAcceptorIds: PaymentAcceptor['id'][] | null;
     }): Promise<PricingPlanSubscription>;
 }
 
@@ -197,15 +197,16 @@ export function createSubscriptionsService(): SubscriptionsService {
 
     /**
      * POST /v1/portal/pricing-plan-subscriptions/{id}/set-payment-acceptors — the bank accounts a
-     * self-billing subscription is paid into. The list replaces the current one; an empty list
-     * unlinks them all, after which every active acceptor of the customer applies.
+     * self-billing subscription is paid into. The list replaces the current one; `null` unlinks them
+     * all, after which every active acceptor of the customer applies. `[]` is not that: the API is to
+     * treat it as choosing none.
      */
     function setSubscriptionPaymentAcceptors({
         id,
         paymentAcceptorIds,
     }: {
         id: PricingPlanSubscription['id'];
-        paymentAcceptorIds: PaymentAcceptor['id'][];
+        paymentAcceptorIds: PaymentAcceptor['id'][] | null;
     }): Promise<PricingPlanSubscription> {
         return request<PricingPlanSubscription>({
             url: buildUrl(config.apiUrls.config, ...ENDPOINT, id, 'set-payment-acceptors'),

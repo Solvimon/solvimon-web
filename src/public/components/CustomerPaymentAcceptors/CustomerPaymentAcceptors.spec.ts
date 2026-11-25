@@ -201,5 +201,22 @@ describe('CustomerPaymentAcceptors', () => {
             });
             expect(shownIds(wrapper)).toEqual(['a']);
         });
+
+        it('unlinks its acceptors with null when it is to use all of them', async () => {
+            mockSetSubscriptionPaymentAcceptors.mockResolvedValue({});
+            const wrapper = await mountBlock({ subscription: subscription(['b']) });
+
+            await wrapper.find('.sv-payment-acceptors__manage').trigger('click');
+            await flushPromises();
+            const modal = wrapper.findComponent({ name: 'PaymentAcceptorsModal' });
+            await (
+                modal.props('saveChoice') as (selection: PaymentAcceptorAssignment) => Promise<void>
+            )({ mode: 'all-active' });
+
+            expect(mockSetSubscriptionPaymentAcceptors).toHaveBeenCalledWith({
+                id: 'ppsu_1',
+                paymentAcceptorIds: null,
+            });
+        });
     });
 });

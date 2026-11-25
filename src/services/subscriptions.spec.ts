@@ -177,5 +177,16 @@ describe('subscriptions service', () => {
                 options: { method: 'POST' },
             });
         });
+
+        it('sends null to unlink them all', async () => {
+            const { setSubscriptionPaymentAcceptors } = createSubscriptionsService();
+            await setSubscriptionPaymentAcceptors({ id: 'ppsu_1', paymentAcceptorIds: null });
+
+            expect(mockRequest).toHaveBeenCalledWith({
+                url: 'https://api.test/portal/pricing-plan-subscriptions/ppsu_1/set-payment-acceptors',
+                data: { payment_acceptor_ids: null },
+                options: { method: 'POST' },
+            });
+        });
     });
 });

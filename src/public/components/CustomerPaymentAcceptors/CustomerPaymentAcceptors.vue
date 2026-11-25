@@ -46,6 +46,11 @@ const { items, isPending, error } = paymentAcceptors;
 watch(customerId, () => void paymentAcceptors.fetchAll(), { immediate: true });
 
 const savedChoice = ref<{ subscriptionId: string; assignment: PaymentAcceptorAssignment }>();
+/** A subscription the screen passes again is newer than the choice saved here. */
+watch(
+    () => props.subscription,
+    () => (savedChoice.value = undefined),
+);
 
 /** The acceptors linked to the subscription; none means every active one applies. */
 const assignment = computed(() => {

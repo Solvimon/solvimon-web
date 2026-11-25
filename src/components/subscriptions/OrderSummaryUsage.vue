@@ -69,7 +69,7 @@ const subtitle = computed(() => {
                             variant="body-xs"
                             color="subtle"
                             tag="div"
-                            class="min-w-0 break-words text-right"
+                            class="min-w-0 max-w-[50%] break-words text-right"
                         >
                             {{ price.rate }}
                         </Typography>
@@ -91,7 +91,7 @@ const subtitle = computed(() => {
                             variant="body-xs"
                             color="subtle"
                             tag="div"
-                            class="min-w-0 break-words text-right"
+                            class="min-w-0 max-w-[50%] break-words text-right"
                         >
                             {{ row.rate }}
                         </Typography>

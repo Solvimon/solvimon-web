@@ -21,4 +21,4 @@ export const getSubscriptionPaymentAcceptors = (
 ): PaymentAcceptor[] =>
     assignment.mode === 'selected'
         ? paymentAcceptors.filter(({ id }) => assignment.paymentAcceptorIds.includes(id))
-        : paymentAcceptors.filter(({ status }) => status === 'ACTIVE');
+        : paymentAcceptors;

@@ -130,7 +130,7 @@ const mountComponent = (props: Partial<PaymentAcceptorsModalProps> = {}) =>
     mount(PaymentAcceptorsModal, {
         props: {
             showModal: true,
-            paymentAcceptors: [acceptor('main'), acceptor('other'), acceptor('old', 'ARCHIVED')],
+            paymentAcceptors: [acceptor('main'), acceptor('other')],
             subscription,
             create: vi.fn().mockResolvedValue(acceptor('new')),
             saveChoice: vi.fn().mockResolvedValue(undefined),
@@ -170,13 +170,25 @@ describe('PaymentAcceptorsModal', () => {
         expect(create).toHaveBeenCalledTimes(1);
     });
 
-    it('offers only the active acceptors, with the linked ones ticked', () => {
+    it('offers the acceptors, with the linked ones ticked', () => {
         const wrapper = mountComponent();
 
         expect(
             (choices(wrapper).props('options') as { value: string }[]).map(({ value }) => value),
         ).toEqual(['main', 'other']);
         expect(choices(wrapper).props('modelValue')).toEqual(['main']);
+    });
+
+    it('leaves out a linked acceptor that is no longer active', () => {
+        const wrapper = mountComponent({
+            subscription: {
+                ...subscription,
+                assignment: { mode: 'selected', paymentAcceptorIds: ['main', 'paya_gone'] },
+            },
+        });
+
+        expect(choices(wrapper).props('modelValue')).toEqual(['main']);
+        expect(wrapper.text()).not.toContain('paya_gone');
     });
 
     it('says the chosen acceptors are what the payer picks from', () => {
@@ -194,7 +206,7 @@ describe('PaymentAcceptorsModal', () => {
         expect(choices(wrapper).props('disabled')).toBe(false);
     });
 
-    it('opens with the toggle on and every active acceptor ticked and locked when none is chosen', () => {
+    it('opens with the toggle on and every acceptor ticked and locked when none is chosen', () => {
         const wrapper = mountComponent({ subscription: usingAll });
 
         expect(useAllToggle(wrapper).props('modelValue')).toBe(true);
@@ -213,7 +225,7 @@ describe('PaymentAcceptorsModal', () => {
         expect(saveChoice).toHaveBeenCalledWith({ mode: 'all-active' });
     });
 
-    it('ticks every active acceptor when the toggle is turned off', async () => {
+    it('ticks every acceptor when the toggle is turned off', async () => {
         const wrapper = mountComponent({ subscription: usingAll });
 
         useAllToggle(wrapper).vm.$emit('update:modelValue', false);

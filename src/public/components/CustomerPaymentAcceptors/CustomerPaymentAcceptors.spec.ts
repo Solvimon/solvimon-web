@@ -72,8 +72,8 @@ vi.mock('@solvimon/solvimon-ui', async () => {
     });
 });
 
-const acceptor = (id: string, status: PaymentAcceptor['status'] = 'ACTIVE') =>
-    ({ id, name: id, status, reference: id }) as unknown as PaymentAcceptor;
+const acceptor = (id: string) =>
+    ({ id, name: id, status: 'ACTIVE', reference: id }) as unknown as PaymentAcceptor;
 
 const subscription = (paymentAcceptorIds?: string[]) =>
     ({
@@ -159,16 +159,15 @@ describe('CustomerPaymentAcceptors', () => {
             expect(wrapper.text()).toContain('Where you receive payments for this subscription.');
         });
 
-        it('shows every active acceptor and says so when none is linked', async () => {
-            acceptorsState.items = [acceptor('a'), acceptor('old', 'ARCHIVED')];
+        it('shows every acceptor and says so when none is linked', async () => {
             const wrapper = await mountBlock({ subscription: subscription() });
 
-            expect(shownIds(wrapper)).toEqual(['a']);
+            expect(shownIds(wrapper)).toEqual(['a', 'b', 'c']);
             expect(wrapper.text()).toContain('Where you receive payments for this subscription.');
         });
 
         it('offers no manage action while there is no payment acceptor to show', async () => {
-            acceptorsState.items = [acceptor('old', 'ARCHIVED')];
+            acceptorsState.items = [];
             const wrapper = await mountBlock({ subscription: subscription() });
 
             expect(wrapper.find('.sv-payment-acceptors__manage').exists()).toBe(false);

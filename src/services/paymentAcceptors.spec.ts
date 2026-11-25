@@ -27,7 +27,7 @@ describe('payment acceptors service', () => {
         });
     });
 
-    it('leaves out the acceptors the customer deleted', async () => {
+    it('lists only the active acceptors, the ones a payer can pay into', async () => {
         mockRequest.mockResolvedValue({
             data: [
                 { id: 'paya_1', status: 'ACTIVE' },
@@ -40,7 +40,7 @@ describe('payment acceptors service', () => {
             customerId: 'cust_1',
         });
 
-        expect(data.map(({ id }) => id)).toEqual(['paya_1', 'paya_3']);
+        expect(data.map(({ id }) => id)).toEqual(['paya_1']);
     });
 
     it('edits an acceptor in place', async () => {

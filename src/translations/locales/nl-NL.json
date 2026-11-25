@@ -307,6 +307,7 @@
     "payment_acceptor_form.bank_account.title": "Bankrekening",
     "payment_acceptor_form.name.label": "Naam",
     "payment_acceptor_form.name.placeholder": "Bijvoorbeeld: zakelijke hoofdrekening",
+    "payment_acceptors.retry": "Opnieuw proberen",
     "payment_acceptors_modal.assign.confirm_button.label": "Ontvangstrekeningen toewijzen",
     "payment_acceptors_modal.assign.list_label": "Ontvangstrekeningen voor dit abonnement",
     "payment_acceptors_modal.assign.none_selected_error": "Selecteer ten minste één ontvangstrekening, of zet ‘Alle gebruiken’ aan.",

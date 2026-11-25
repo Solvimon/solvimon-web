@@ -81,9 +81,9 @@ describe('usePaymentAcceptors', () => {
         );
     });
 
-    it('stores a new acceptor for the customer, leaving the reference to the portal, and reloads', async () => {
+    it('shows the server-confirmed acceptor without waiting for a reload', async () => {
         mockService.createPaymentAcceptor.mockResolvedValue(acceptor());
-        const { create } = usePaymentAcceptors({ customerId: 'cust_1' });
+        const { create, items } = usePaymentAcceptors({ customerId: 'cust_1' });
 
         await create(details);
 
@@ -91,23 +91,26 @@ describe('usePaymentAcceptors', () => {
             ...details,
             customer_id: 'cust_1',
         });
-        expect(mockService.getPaymentAcceptors).toHaveBeenCalled();
+        expect(items.value).toEqual([acceptor()]);
+        expect(mockService.getPaymentAcceptors).not.toHaveBeenCalled();
     });
 
-    it('reloads after a failed create and passes the error on', async () => {
+    it('passes a failed create on without changing the list', async () => {
         const failure = new Error('down');
         mockService.createPaymentAcceptor.mockRejectedValue(failure);
-        const { create } = usePaymentAcceptors({ customerId: 'cust_1' });
+        const { create, items } = usePaymentAcceptors({ customerId: 'cust_1' });
 
         await expect(create(details)).rejects.toBe(failure);
-        expect(mockService.getPaymentAcceptors).toHaveBeenCalled();
+        expect(items.value).toEqual([]);
     });
 
-    it('updates and deletes by id, reloading after each', async () => {
-        mockService.updatePaymentAcceptor.mockResolvedValue(acceptor());
-        const { update, remove } = usePaymentAcceptors({ customerId: 'cust_1' });
+    it('reconciles updates and archives by id', async () => {
+        const renamed = acceptor({ name: 'Renamed' });
+        mockService.updatePaymentAcceptor.mockResolvedValue(renamed);
+        const { update, remove, items } = usePaymentAcceptors({ customerId: 'cust_1' });
 
         await update(acceptor(), { name: 'Renamed' });
+        expect(items.value).toEqual([renamed]);
         await remove(acceptor());
 
         expect(mockService.updatePaymentAcceptor).toHaveBeenCalledWith({
@@ -117,6 +120,6 @@ describe('usePaymentAcceptors', () => {
         expect(mockService.archivePaymentAcceptor).toHaveBeenCalledWith({
             paymentAcceptorId: 'paya_1',
         });
-        expect(mockService.getPaymentAcceptors).toHaveBeenCalledTimes(2);
+        expect(items.value).toEqual([]);
     });
 });

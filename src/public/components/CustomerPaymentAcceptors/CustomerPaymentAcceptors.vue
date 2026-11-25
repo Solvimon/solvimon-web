@@ -7,10 +7,7 @@ import {
     Section,
     useIntl,
 } from '@solvimon/solvimon-ui';
-import type {
-    CustomerPaymentAcceptorsEmits,
-    CustomerPaymentAcceptorsProps,
-} from './CustomerPaymentAcceptors.types';
+import type { CustomerPaymentAcceptorsProps } from './CustomerPaymentAcceptors.types';
 import { DEFAULT_MAX_ITEMS, getSubscriptionPaymentAcceptors } from './CustomerPaymentAcceptors.lib';
 import EmptyStatePlaceholder from '@/components/checkout/EmptyStatePlaceholder.vue';
 import LimitedList from '@/components/shared/LimitedList/LimitedList.vue';
@@ -27,7 +24,6 @@ const PaymentAcceptorsManageModal = defineAsyncComponent(
 );
 
 const props = defineProps<CustomerPaymentAcceptorsProps>();
-const emit = defineEmits<CustomerPaymentAcceptorsEmits>();
 
 const { $t } = useIntl();
 
@@ -36,21 +32,21 @@ const customerId = computed(() => props.customerId ?? props.subscription?.custom
 const paymentAcceptors = usePaymentAcceptors({ customerId });
 const { items, isPending, error } = paymentAcceptors;
 
-watch(
-    customerId,
-    (customerId) => {
-        if (customerId) void paymentAcceptors.fetchAll();
-    },
-    { immediate: true },
-);
+watch(customerId, () => void paymentAcceptors.fetchAll(), { immediate: true });
+
+const savedChoice = ref<{ subscriptionId: string; paymentAcceptorIds: string[] }>();
 
 /** The acceptors linked to the subscription; none means every active one applies. */
-const linkedIds = computed(
-    () =>
+const linkedIds = computed(() => {
+    if (savedChoice.value && savedChoice.value.subscriptionId === props.subscription?.id) {
+        return savedChoice.value.paymentAcceptorIds;
+    }
+    return (
         props.subscription?.payment_acceptor_ids ??
         props.subscription?.payment_acceptors?.map(({ id }) => id) ??
-        [],
-);
+        []
+    );
+});
 
 /** Who pays the subscription: the billing entity it bills the customer's self-billing for. */
 const payerName = computed(() => props.subscription?.billing_entity?.legal_name);
@@ -68,11 +64,20 @@ const subscriptionsService = createSubscriptionsService();
 const saveChoice = async (paymentAcceptorIds: string[]) => {
     if (!props.subscription) return;
 
-    await subscriptionsService.setSubscriptionPaymentAcceptors({
-        id: props.subscription.id,
+    const subscriptionId = props.subscription.id;
+    const saved = await subscriptionsService.setSubscriptionPaymentAcceptors({
+        id: subscriptionId,
         paymentAcceptorIds,
     });
-    emit('subscription-changed');
+    if (props.subscription?.id === subscriptionId) {
+        savedChoice.value = {
+            subscriptionId,
+            paymentAcceptorIds:
+                saved.payment_acceptor_ids === null
+                    ? []
+                    : (saved.payment_acceptor_ids ?? paymentAcceptorIds),
+        };
+    }
 };
 
 const hasOpenedModal = ref(false);
@@ -166,18 +171,34 @@ const description = computed(() => {
         </template>
 
         <div class="grid grid-cols-1 gap-2">
-            <ErrorNotification
-                v-if="error"
-                class="sv-payment-acceptors__error sv-error"
-                :title="
-                    $t({
-                        defaultMessage: 'We could not load your payment acceptors.',
-                        id: 'customer_overview.payment_acceptors_block.load_error',
-                        description:
-                            'Shown in the payment acceptors block when the bank accounts cannot be loaded',
-                    })
-                "
-            />
+            <template v-if="error">
+                <ErrorNotification
+                    class="sv-payment-acceptors__error sv-error"
+                    :title="
+                        $t({
+                            defaultMessage: 'We could not load your payment acceptors.',
+                            id: 'customer_overview.payment_acceptors_block.load_error',
+                            description:
+                                'Shown in the payment acceptors block when the bank accounts cannot be loaded',
+                        })
+                    "
+                />
+                <Button
+                    size="xs"
+                    intent="secondary"
+                    :disabled="isPending"
+                    class="sv-payment-acceptors__retry"
+                    @click="paymentAcceptors.fetchAll()"
+                >
+                    {{
+                        $t({
+                            id: 'payment_acceptors.retry',
+                            defaultMessage: 'Try again',
+                            description: 'Retries loading the customer’s payment acceptors',
+                        })
+                    }}
+                </Button>
+            </template>
 
             <Skeleton
                 v-else-if="isPending && !items.length"

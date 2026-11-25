@@ -193,7 +193,7 @@ describe('CustomerPaymentAcceptors', () => {
                 id: 'ppsu_1',
                 paymentAcceptorIds: ['a'],
             });
-            expect(wrapper.emitted('subscription-changed')).toHaveLength(1);
+            expect(shownIds(wrapper)).toEqual(['a']);
         });
     });
 });

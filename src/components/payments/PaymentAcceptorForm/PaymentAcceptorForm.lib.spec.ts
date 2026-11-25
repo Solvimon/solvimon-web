@@ -115,6 +115,22 @@ describe('getRefusedShownField', () => {
         expect(getRefusedShownField(new ApiError({ statusCode: 400, field: 'iban' }))).toBe('iban');
     });
 
+    it('tells a field of the bank address from the account field of the same name', () => {
+        expect(
+            getRefusedShownField(
+                new ApiError({ statusCode: 400, field: 'bank_account.bank_address.country' }),
+            ),
+        ).toBeUndefined();
+        expect(
+            getRefusedShownField(new ApiError({ statusCode: 400, field: 'bank_account.country' })),
+        ).toBe('country');
+        expect(
+            getRefusedShownField(
+                new ApiError({ statusCode: 400, field: 'bank_account.bank_address.city' }),
+            ),
+        ).toBe('city');
+    });
+
     it('names nothing for a field the form does not show, or an error that is not a refusal', () => {
         expect(
             getRefusedShownField(new ApiError({ statusCode: 400, field: 'id' })),

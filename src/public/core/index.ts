@@ -47,12 +47,19 @@ export type {
     SolvimonErrorDetail,
     SolvimonEventListeners,
     SolvimonPaymentMethodAddedDetail,
+    SolvimonPaymentAcceptorChangedDetail,
+    SolvimonSubscriptionPaymentAcceptorsChangedDetail,
     SolvimonInvoiceCreatedDetail,
     SolvimonPaymentSucceededDetail,
     SolvimonPaymentSucceededEvent,
     SolvimonErrorEvent,
     SolvimonEventMap,
 } from '@/public/core/events.types';
+export type {
+    PaymentAcceptorAssignment,
+    PaymentAcceptorsConfiguration,
+    SubscriptionPaymentAcceptorsConfiguration,
+} from '@/public/types/paymentAcceptors';
 export type { ExperimentalFeature } from '@/components/providers/ExperimentalFeatureProvider/ExperimentalFeatureProvider.lib';
 
 export type {

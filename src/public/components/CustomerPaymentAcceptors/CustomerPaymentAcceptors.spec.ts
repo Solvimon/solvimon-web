@@ -3,6 +3,7 @@ import { defineComponent, h, ref } from 'vue';
 import type { PaymentAcceptor, PricingPlanSubscriptionExpanded } from '@solvimon/solvimon-types';
 import CustomerPaymentAcceptors from './CustomerPaymentAcceptors.vue';
 import type { CustomerPaymentAcceptorsProps } from './CustomerPaymentAcceptors.types';
+import type { PaymentAcceptorAssignment } from '@/public/types/paymentAcceptors';
 
 const { acceptorsState, mockFetchAll, mockSetSubscriptionPaymentAcceptors } = vi.hoisted(() => ({
     acceptorsState: { items: [] as unknown[] },
@@ -29,31 +30,37 @@ vi.mock('@/services/subscriptions', () => ({
 }));
 
 // Loaded with `import()`, which only unwraps `default` from a module that says it is one.
-vi.mock('@/components/payments/PaymentAcceptors/PaymentAcceptorsModal.vue', () => ({
-    __esModule: true,
-    default: defineComponent({
-        name: 'PaymentAcceptorsModal',
-        props: {
-            showModal: Boolean,
-            paymentAcceptors: Array,
-            create: Function,
-            subscription: Object,
-            saveChoice: Function,
-        },
-        emits: ['close'],
-        setup: () => () => h('div', { class: 'payment-acceptors-modal-stub' }),
+vi.mock(
+    '@/public/components/CustomerPaymentAcceptors/internal/PaymentAcceptors/PaymentAcceptorsModal.vue',
+    () => ({
+        __esModule: true,
+        default: defineComponent({
+            name: 'PaymentAcceptorsModal',
+            props: {
+                showModal: Boolean,
+                paymentAcceptors: Array,
+                create: Function,
+                subscription: Object,
+                saveChoice: Function,
+            },
+            emits: ['close'],
+            setup: () => () => h('div', { class: 'payment-acceptors-modal-stub' }),
+        }),
     }),
-}));
+);
 
-vi.mock('@/components/payments/PaymentAcceptors/PaymentAcceptorsManageModal.vue', () => ({
-    __esModule: true,
-    default: defineComponent({
-        name: 'PaymentAcceptorsManageModal',
-        props: { showModal: Boolean, start: String, paymentAcceptors: Array, actions: Object },
-        emits: ['close'],
-        setup: () => () => h('div', { class: 'payment-acceptors-manage-modal-stub' }),
+vi.mock(
+    '@/public/components/CustomerPaymentAcceptors/internal/PaymentAcceptors/PaymentAcceptorsManageModal.vue',
+    () => ({
+        __esModule: true,
+        default: defineComponent({
+            name: 'PaymentAcceptorsManageModal',
+            props: { showModal: Boolean, start: String, paymentAcceptors: Array, actions: Object },
+            emits: ['close'],
+            setup: () => () => h('div', { class: 'payment-acceptors-manage-modal-stub' }),
+        }),
     }),
-}));
+);
 
 vi.mock('@solvimon/solvimon-ui', async () => {
     const { createSolvimonUiMock } = await import('@/test-utils/solvimonUiMock');
@@ -183,11 +190,16 @@ describe('CustomerPaymentAcceptors', () => {
             const modal = wrapper.findComponent({ name: 'PaymentAcceptorsModal' });
             expect(modal.props('subscription')).toEqual({
                 id: 'ppsu_1',
-                paymentAcceptorIds: ['b'],
+                assignment: { mode: 'selected', paymentAcceptorIds: ['b'] },
                 payerName: 'Tivoli',
             });
 
-            await (modal.props('saveChoice') as (ids: string[]) => Promise<void>)(['a']);
+            await (
+                modal.props('saveChoice') as (selection: PaymentAcceptorAssignment) => Promise<void>
+            )({
+                mode: 'selected',
+                paymentAcceptorIds: ['a'],
+            });
 
             expect(mockSetSubscriptionPaymentAcceptors).toHaveBeenCalledWith({
                 id: 'ppsu_1',

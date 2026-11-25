@@ -23,6 +23,8 @@ const COMPONENT_IDS: Record<RegisteredComponentId, true> = {
     'subscriptions-list': true,
     'subscription-schedules': true,
     'customer-payment-methods': true,
+    'customer-payment-acceptors': true,
+    'subscription-payment-acceptors': true,
     'wallet-balances': true,
     'billing-information': true,
     'billing-information-form': true,

@@ -288,10 +288,12 @@ useActiveScheduleWarning(subscriptions.items);
             />
 
             <CustomerPaymentAcceptors
-                v-if="isSelfBilling"
+                v-if="isSelfBilling && configuration?.paymentAcceptors !== false"
                 class="sv-customer-overview__payment-acceptors"
                 :is-loading="isLoading"
                 :customer-id="customerId"
+                :max-items="configuration?.paymentAcceptors?.maxItems"
+                :management="configuration?.paymentAcceptors?.management"
             />
 
             <CustomerShippingAddresses

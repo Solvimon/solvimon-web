@@ -75,6 +75,14 @@ const COMPONENT_LOADERS: Record<RegisteredComponentId, DefineLoader> = {
         import('@/public/components/CustomerPaymentMethods/CustomerPaymentMethods.entry.ce').then(
             (module) => module.defineSolvimonCustomerPaymentMethods,
         ),
+    'customer-payment-acceptors': () =>
+        import('@/public/components/CustomerPaymentAcceptors/CustomerPaymentAcceptors.entry.ce').then(
+            (module) => module.defineSolvimonCustomerPaymentAcceptors,
+        ),
+    'subscription-payment-acceptors': () =>
+        import('@/public/components/SubscriptionPaymentAcceptors/SubscriptionPaymentAcceptors.entry.ce').then(
+            (module) => module.defineSolvimonSubscriptionPaymentAcceptors,
+        ),
     'wallet-balances': () =>
         import('@/public/components/WalletBalances/WalletBalances.entry.ce').then(
             (module) => module.defineSolvimonWalletBalances,

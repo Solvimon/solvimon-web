@@ -1,6 +1,7 @@
 {
     "components/BillingInformation": 47900,
     "components/BillingInformationForm": 89000,
+    "components/CustomerPaymentAcceptors": 59600,
     "components/CustomerPaymentMethods": 62900,
     "components/Invoice": 79100,
     "components/InvoiceDetails": 44000,
@@ -9,6 +10,7 @@
     "components/PaymentHistory": 57300,
     "components/PaymentMethodForm": 50200,
     "components/ShippingAddressForm": 87000,
+    "components/SubscriptionPaymentAcceptors": 59700,
     "components/SubscriptionSchedules": 103900,
     "components/SubscriptionsList": 59300,
     "components/WalletBalances": 105500,

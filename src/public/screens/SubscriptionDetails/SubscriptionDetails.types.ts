@@ -7,6 +7,7 @@ import type {
     PricingPlanSubscriptionExpanded,
 } from '@solvimon/solvimon-types';
 import type { ChargeOnDemandItem } from '@solvimon/solvimon-ui';
+import type { SubscriptionDetailsConfiguration } from './SubscriptionDetails.configuration.types';
 import type { BaseScreenProps } from '@/public/screens/types';
 
 export interface SubscriptionDetailsProps extends BaseScreenProps {
@@ -20,6 +21,7 @@ export interface SubscriptionDetailsProps extends BaseScreenProps {
     hasWalletBalancesError?: boolean;
     avatar?: string;
     showViewInvoiceButton?: boolean;
+    paymentAcceptors?: SubscriptionDetailsConfiguration['paymentAcceptors'];
 }
 
 export interface SubscriptionDetailsEmits {

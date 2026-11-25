@@ -41,6 +41,7 @@ defineProps<SolvimonSubscriptionDetailsEntryProps>();
                     :customer="customer"
                     :avatar="branding?.emblem?.public_url ?? undefined"
                     :show-view-invoice-button="configuration.showViewInvoiceButton"
+                    :payment-acceptors="configuration.paymentAcceptors"
                     :payment-methods="paymentMethods"
                     :wallet-balances="walletBalances"
                     :on-demand-items="onDemandItems"

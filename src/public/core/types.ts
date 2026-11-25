@@ -8,6 +8,8 @@ import type { ExperimentalFeature } from '@/components/providers/ExperimentalFea
 import type { SolvimonBillingInformationEntryProps } from '@/public/components/BillingInformation/BillingInformation.entry.types';
 import type { SolvimonBillingInformationFormEntryProps } from '@/public/components/BillingInformationForm/BillingInformationForm.entry.types';
 import type { SolvimonCustomerPaymentMethodsEntryProps } from '@/public/components/CustomerPaymentMethods/CustomerPaymentMethods.entry.types';
+import type { SolvimonCustomerPaymentAcceptorsEntryProps } from '@/public/components/CustomerPaymentAcceptors/CustomerPaymentAcceptors.entry.types';
+import type { SolvimonSubscriptionPaymentAcceptorsEntryProps } from '@/public/components/SubscriptionPaymentAcceptors/SubscriptionPaymentAcceptors.entry.types';
 import type { SolvimonInvoiceEntryProps } from '@/public/components/Invoice/Invoice.entry.types';
 import type { SolvimonInvoiceHeaderEntryProps } from '@/public/components/InvoiceHeader/InvoiceHeader.entry.types';
 import type { SolvimonInvoiceDetailsEntryProps } from '@/public/components/InvoiceDetails/InvoiceDetails.entry.types';
@@ -66,6 +68,8 @@ interface RegisteredComponentEntryPropsById {
     'subscription-schedules': SolvimonSubscriptionSchedulesEntryProps;
     'subscriptions-list': SolvimonSubscriptionsListEntryProps;
     'customer-payment-methods': SolvimonCustomerPaymentMethodsEntryProps;
+    'customer-payment-acceptors': SolvimonCustomerPaymentAcceptorsEntryProps;
+    'subscription-payment-acceptors': SolvimonSubscriptionPaymentAcceptorsEntryProps;
     'wallet-balances': SolvimonWalletBalancesEntryProps;
     'billing-information': SolvimonBillingInformationEntryProps;
     'billing-information-form': SolvimonBillingInformationFormEntryProps;

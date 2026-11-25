@@ -1,4 +1,5 @@
 import type { PricingPlanSubscription } from '@solvimon/solvimon-types';
+import type { PaymentAcceptorsConfiguration } from '@/public/types/paymentAcceptors';
 
 export interface SubscriptionDetailsConfiguration {
     subscriptionId: PricingPlanSubscription['id'];
@@ -8,4 +9,6 @@ export interface SubscriptionDetailsConfiguration {
      * would only close the order. Defaults to `false`.
      */
     showViewInvoiceButton?: boolean;
+    /** Options for self-billing payment acceptors. Set to false to hide the block and skip its requests. */
+    paymentAcceptors?: false | PaymentAcceptorsConfiguration;
 }

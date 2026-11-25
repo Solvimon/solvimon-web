@@ -7,6 +7,7 @@ import type {
 import { ref, toValue, type MaybeRefOrGetter, type Ref } from 'vue';
 import { useLogger } from '@/components/providers';
 import { createPaymentAcceptorsService } from '@/services/paymentAcceptors';
+import type { SolvimonPaymentAcceptorChangedDetail } from '@/public/core/events.types';
 
 /** What the customer fills in; the owner is added on create, and the portal makes the reference. */
 export type PaymentAcceptorCreateDetails = Omit<
@@ -37,9 +38,11 @@ const byActiveFirst = (a: PaymentAcceptor, b: PaymentAcceptor) =>
  */
 export function usePaymentAcceptors({
     customerId,
+    onChanged,
 }: {
     /** Read on every load, so a host can hand it over before the customer has arrived. */
     customerId: MaybeRefOrGetter<Customer['id'] | undefined>;
+    onChanged?: (detail: Omit<SolvimonPaymentAcceptorChangedDetail, 'componentName'>) => void;
 }): UsePaymentAcceptors {
     const service = createPaymentAcceptorsService();
     const logger = useLogger();
@@ -108,6 +111,7 @@ export function usePaymentAcceptors({
         if (!id) throw new Error('Payment acceptors require a customer');
         const saved = await service.createPaymentAcceptor({ ...details, customer_id: id });
         applyChange(id, saved);
+        onChanged?.({ operation: 'created', customerId: id, paymentAcceptorId: saved.id });
         return saved;
     };
 
@@ -116,18 +120,26 @@ export function usePaymentAcceptors({
         payload: PaymentAcceptorPatchPayload,
     ) => {
         const id = toValue(customerId);
+        if (!id) throw new Error('Payment acceptors require a customer');
         const saved = await service.updatePaymentAcceptor({
             paymentAcceptorId: paymentAcceptor.id,
             payload,
         });
         applyChange(id, saved);
+        onChanged?.({ operation: 'updated', customerId: id, paymentAcceptorId: saved.id });
         return saved;
     };
 
     const remove = async (paymentAcceptor: PaymentAcceptor) => {
         const id = toValue(customerId);
+        if (!id) throw new Error('Payment acceptors require a customer');
         await service.archivePaymentAcceptor({ paymentAcceptorId: paymentAcceptor.id });
         applyChange(id, paymentAcceptor, true);
+        onChanged?.({
+            operation: 'archived',
+            customerId: id,
+            paymentAcceptorId: paymentAcceptor.id,
+        });
     };
 
     return { items, isPending, error, fetchAll, create, update, remove };

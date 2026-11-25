@@ -48,6 +48,10 @@ export const ENDPOINTS = {
         method: 'POST',
         path: /^\/v1\/portal\/pricing-plan-subscriptions\/[^/]+\/update-payment-method$/,
     },
+    setSubscriptionPaymentAcceptors: {
+        method: 'POST',
+        path: /^\/v1\/portal\/pricing-plan-subscriptions\/[^/]+\/set-payment-acceptors$/,
+    },
     changeSubscriptionPlan: {
         method: 'POST',
         path: /^\/v1\/portal\/pricing-plan-subscriptions\/[^/]+\/change-plan$/,
@@ -62,6 +66,7 @@ export const ENDPOINTS = {
     invoicePreview: { method: 'POST', path: '/v1/portal/invoices/preview' },
     changePlanInvoicePreview: { method: 'POST', path: '/v1/portal/invoices/change-plan/preview' },
     paymentMethods: { method: 'GET', path: '/v1/portal/payment-methods' },
+    paymentAcceptors: { method: 'GET', path: '/v1/portal/payment-acceptors' },
     shippingAddresses: { method: 'GET', path: '/v1/portal/shipping-addresses' },
     createShippingAddress: { method: 'POST', path: '/v1/portal/shipping-addresses' },
     deleteShippingAddress: {

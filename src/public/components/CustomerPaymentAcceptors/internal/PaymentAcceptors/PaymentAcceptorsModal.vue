@@ -15,7 +15,7 @@ import type {
     PaymentAcceptorsModalEmits,
     PaymentAcceptorsModalProps,
 } from './PaymentAcceptorsModal.types';
-import PaymentAcceptorForm from '@/components/payments/PaymentAcceptorForm/PaymentAcceptorForm.vue';
+import PaymentAcceptorForm from '@/public/components/CustomerPaymentAcceptors/internal/PaymentAcceptorForm/PaymentAcceptorForm.vue';
 import SlidingPanes from '@/components/shared/SlidingPanes/SlidingPanes.vue';
 import { useLogger } from '@/components/providers';
 import { usePaymentAcceptorErrorMessages } from '@/composables/usePaymentAcceptorErrorMessages';
@@ -59,6 +59,16 @@ const activeAcceptors = computed(() =>
 );
 
 const activeIds = computed(() => activeAcceptors.value.map(({ id }) => id));
+const unavailableAcceptors = computed(() => {
+    const assignment = props.subscription.assignment;
+    if (assignment.mode === 'all-active') return [];
+    return assignment.paymentAcceptorIds
+        .filter((id) => !activeIds.value.includes(id))
+        .map((id) => ({
+            id,
+            name: props.paymentAcceptors.find((acceptor) => acceptor.id === id)?.name ?? id,
+        }));
+});
 
 /** With the toggle on every active acceptor shows ticked, since every one of them applies. */
 const tickedIds = computed(() => (usesAll.value ? activeIds.value : chosenIds.value));
@@ -86,13 +96,15 @@ watch(
     (isShown) => {
         if (!isShown) return;
 
-        usesAll.value = props.subscription.paymentAcceptorIds.length === 0;
-        chosenIds.value = props.subscription.paymentAcceptorIds.filter((id) =>
-            activeIds.value.includes(id),
-        );
+        const assignment = props.subscription.assignment;
+        usesAll.value = assignment.mode === 'all-active';
+        chosenIds.value =
+            assignment.mode === 'selected'
+                ? assignment.paymentAcceptorIds.filter((id) => activeIds.value.includes(id))
+                : [];
         choiceError.value = undefined;
 
-        opensOnAdding.value = activeAcceptors.value.length === 0;
+        opensOnAdding.value = usesAll.value && activeAcceptors.value.length === 0;
         goTo(opensOnAdding.value ? 'ADD' : 'CHOOSE');
     },
     { immediate: true },
@@ -163,7 +175,8 @@ const setChosenIds = (ids: PaymentAcceptor['id'][]) => {
 const saveChoice = async () => {
     if (isWorking.value) return;
 
-    if (!usesAll.value && chosenIds.value.length === 0) {
+    const [first, ...rest] = chosenIds.value.filter((id) => activeIds.value.includes(id));
+    if (!usesAll.value && first === undefined) {
         choiceError.value = $t({
             defaultMessage: 'Select at least one payment acceptor, or turn on Use all.',
             id: 'payment_acceptors_modal.assign.none_selected_error',
@@ -173,9 +186,13 @@ const saveChoice = async () => {
         return;
     }
 
-    const paymentAcceptorIds = usesAll.value ? [] : chosenIds.value;
     const saved = await run(
-        () => props.saveChoice(paymentAcceptorIds),
+        () =>
+            props.saveChoice(
+                first === undefined || usesAll.value
+                    ? { mode: 'all-active' }
+                    : { mode: 'selected', paymentAcceptorIds: [first, ...rest] },
+            ),
         (error) =>
             logger.error(
                 'SUBSCRIPTION_PAYMENT_ACCEPTORS_SAVE_FAILED',
@@ -341,6 +358,28 @@ const cancelButtonText = computed(() =>
                             </Toggle>
 
                             <div class="grid grid-cols-1 gap-2">
+                                <div
+                                    v-if="unavailableAcceptors.length"
+                                    class="sv-payment-acceptors-modal__unavailable"
+                                >
+                                    <Typography tag="p" variant="body-sm">{{
+                                        $t({
+                                            defaultMessage:
+                                                'These assigned payment acceptors are unavailable. Choose replacements or turn on Use all.',
+                                            id: 'payment_acceptors_modal.assign.unavailable',
+                                            description:
+                                                'Explains how to replace previously assigned payment acceptors that can no longer receive payments',
+                                        })
+                                    }}</Typography>
+                                    <ul class="list-disc pl-5">
+                                        <li
+                                            v-for="acceptor in unavailableAcceptors"
+                                            :key="acceptor.id"
+                                        >
+                                            {{ acceptor.name }}
+                                        </li>
+                                    </ul>
+                                </div>
                                 <div
                                     role="group"
                                     :aria-label="

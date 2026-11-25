@@ -3,7 +3,7 @@ import type { FormFieldError } from '@solvimon/solvimon-types';
 import {
     getRefusedShownField,
     isPaymentAcceptorChosenBySubscription,
-} from '@/components/payments/PaymentAcceptorForm/PaymentAcceptorForm.lib';
+} from '@/public/components/CustomerPaymentAcceptors/internal/PaymentAcceptorForm/PaymentAcceptorForm.lib';
 
 /**
  * What the customer is told when the payment acceptors API refuses a change, in the SDK's

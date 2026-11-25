@@ -15,16 +15,19 @@ vi.mock('@/components/providers', () => ({
 }));
 
 // Validates and builds the payload itself; its own spec covers that.
-vi.mock('@/components/payments/PaymentAcceptorForm/PaymentAcceptorForm.vue', () => ({
-    default: defineComponent({
-        name: 'PaymentAcceptorForm',
-        props: { paymentAcceptor: Object, disabled: Boolean, apiError: Object },
-        setup(_, { expose }) {
-            expose({ submit: mockSubmit });
-            return () => h('div', { class: 'payment-acceptor-form-stub' });
-        },
+vi.mock(
+    '@/public/components/CustomerPaymentAcceptors/internal/PaymentAcceptorForm/PaymentAcceptorForm.vue',
+    () => ({
+        default: defineComponent({
+            name: 'PaymentAcceptorForm',
+            props: { paymentAcceptor: Object, disabled: Boolean, apiError: Object },
+            setup(_, { expose }) {
+                expose({ submit: mockSubmit });
+                return () => h('div', { class: 'payment-acceptor-form-stub' });
+            },
+        }),
     }),
-}));
+);
 
 vi.mock('@solvimon/solvimon-ui', async () => {
     const { createSolvimonUiMock } = await import('@/test-utils/solvimonUiMock');

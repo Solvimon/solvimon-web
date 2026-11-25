@@ -9,6 +9,7 @@ import type {
     Environment,
     IntlMessages,
     LogEntry,
+    PaymentAcceptorAssignment,
     PlatformBranding,
     SolvimonBranding,
     SolvimonErrorEvent,
@@ -18,6 +19,8 @@ import type {
 } from '@solvimon/solvimon-web/core';
 import { defineSolvimonInvoicesList } from '@solvimon/solvimon-web/components/invoices-list';
 import { defineSolvimonInvoiceHeader } from '@solvimon/solvimon-web/components/invoice-header';
+import { defineSolvimonCustomerPaymentAcceptors } from '@solvimon/solvimon-web/components/customer-payment-acceptors';
+import { defineSolvimonSubscriptionPaymentAcceptors } from '@solvimon/solvimon-web/components/subscription-payment-acceptors';
 import { defineSolvimonPaymentMethodsManagement } from '@solvimon/solvimon-web/screens/payment-methods-management';
 
 declare const portalObject: CustomerPortalUrl;
@@ -73,6 +76,44 @@ export const notAFeature: ExperimentalFeature[] = ['teleportation'];
 export const componentIds: string[] = getRegisteredComponentIds();
 
 const core = createSolvimonCore({ environment, locale: 'en-US', branding, messages });
+
+defineSolvimonCustomerPaymentAcceptors();
+defineSolvimonSubscriptionPaymentAcceptors('acme-subscription-payment-acceptors');
+
+core.createComponent('customer-payment-acceptors', {
+    container: '#acceptors',
+    portalObject,
+    configuration: { management: 'read-only', maxItems: 5 },
+    on: {
+        'solvimon-payment-acceptor-changed': ({ detail }) => {
+            const operation: 'created' | 'updated' | 'archived' = detail.operation;
+            return operation;
+        },
+    },
+});
+
+core.createComponent('subscription-payment-acceptors', {
+    container: '#subscription-acceptors',
+    portalObject,
+    configuration: { subscriptionId: 'ppsu_1' },
+    on: {
+        'solvimon-subscription-payment-acceptors-changed': ({ detail }) => {
+            const assignment: PaymentAcceptorAssignment = detail.assignment;
+            return assignment;
+        },
+    },
+});
+
+// @ts-expect-error - assignment requires the subscription ID
+core.createComponent('subscription-payment-acceptors', {
+    container: '#subscription-acceptors',
+    portalObject,
+});
+export const emptyAssignment: PaymentAcceptorAssignment = {
+    mode: 'selected',
+    // @ts-expect-error - a fixed assignment contains at least one ID
+    paymentAcceptorIds: [],
+};
 
 // @ts-expect-error - a core needs the environment its portal objects belong to
 createSolvimonCore({ locale: 'en-US' });

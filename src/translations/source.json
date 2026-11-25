@@ -1235,6 +1235,10 @@
     "defaultMessage": "Try again",
     "description": "Retries loading the customer’s payment acceptors"
   },
+  "payment_acceptors.unavailable": {
+    "defaultMessage": "Payment acceptors are unavailable here.",
+    "description": "Shown when the customer or subscription is not eligible for self-billing payment acceptors"
+  },
   "payment_acceptors_modal.assign.confirm_button.label": {
     "defaultMessage": "Assign payment acceptors",
     "description": "Label of the button that stores the bank accounts chosen for the subscription"
@@ -1250,6 +1254,10 @@
   "payment_acceptors_modal.assign.title": {
     "defaultMessage": "Assign payment acceptors",
     "description": "Title of the payment acceptors modal in which the bank accounts of one subscription are chosen"
+  },
+  "payment_acceptors_modal.assign.unavailable": {
+    "defaultMessage": "These assigned payment acceptors are unavailable. Choose replacements or turn on Use all.",
+    "description": "Explains how to replace previously assigned payment acceptors that can no longer receive payments"
   },
   "payment_acceptors_modal.back_button.label": {
     "defaultMessage": "Back",

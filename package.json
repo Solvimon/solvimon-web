@@ -132,6 +132,14 @@
             "types": "./dist/components/CustomerPaymentMethods/CustomerPaymentMethods.ce.d.ts",
             "default": "./dist/components/CustomerPaymentMethods/CustomerPaymentMethods.mjs"
         },
+        "./components/customer-payment-acceptors": {
+            "types": "./dist/components/CustomerPaymentAcceptors/CustomerPaymentAcceptors.ce.d.ts",
+            "default": "./dist/components/CustomerPaymentAcceptors/CustomerPaymentAcceptors.mjs"
+        },
+        "./components/subscription-payment-acceptors": {
+            "types": "./dist/components/SubscriptionPaymentAcceptors/SubscriptionPaymentAcceptors.ce.d.ts",
+            "default": "./dist/components/SubscriptionPaymentAcceptors/SubscriptionPaymentAcceptors.mjs"
+        },
         "./components/wallet-balances": {
             "types": "./dist/components/WalletBalances/WalletBalances.ce.d.ts",
             "default": "./dist/components/WalletBalances/WalletBalances.mjs"

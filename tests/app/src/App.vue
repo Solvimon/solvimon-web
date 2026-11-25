@@ -139,6 +139,8 @@ onMounted(() => {
             container: screenContainer.value,
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             portalObject: portalObject as never,
+            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+            configuration: testConfig.configuration as never,
         }).unmount;
         return;
     }

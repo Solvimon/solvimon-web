@@ -1,20 +1,20 @@
 import type { PaymentAcceptor, PricingPlanSubscription } from '@solvimon/solvimon-types';
 import type { UsePaymentAcceptors } from '@/composables/usePaymentAcceptors';
+import type { PaymentAcceptorAssignment } from '@/public/types/paymentAcceptors';
 
 export interface PaymentAcceptorsModalProps {
     showModal: boolean;
     /** Every acceptor of the customer; only the active ones can be chosen. */
     paymentAcceptors: PaymentAcceptor[];
-    /** The subscription whose acceptors are chosen, the ids it is linked to now and who pays into them. */
+    /** The current assignment and the billing entity that pays into the acceptors. */
     subscription: {
         id: PricingPlanSubscription['id'];
-        paymentAcceptorIds: PaymentAcceptor['id'][];
+        assignment: PaymentAcceptorAssignment;
         payerName?: string;
     };
-    /** Stores a new acceptor and reloads the acceptors. */
+    /** Stores a new acceptor and adds it to the choices. */
     create: UsePaymentAcceptors['create'];
-    /** Stores the acceptors chosen for the subscription; an empty list unlinks them all. */
-    saveChoice: (paymentAcceptorIds: PaymentAcceptor['id'][]) => Promise<unknown>;
+    saveChoice: (assignment: PaymentAcceptorAssignment) => Promise<void>;
 }
 
 export interface PaymentAcceptorsModalEmits {

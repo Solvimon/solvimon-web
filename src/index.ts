@@ -32,12 +32,19 @@ export type {
     SolvimonErrorDetail,
     SolvimonEventListeners,
     SolvimonPaymentMethodAddedDetail,
+    SolvimonPaymentAcceptorChangedDetail,
+    SolvimonSubscriptionPaymentAcceptorsChangedDetail,
     SolvimonInvoiceCreatedDetail,
     SolvimonPaymentSucceededDetail,
     SolvimonPaymentSucceededEvent,
     SolvimonErrorEvent,
     SolvimonEventMap,
 } from '@/public/core/events.types';
+export type {
+    PaymentAcceptorAssignment,
+    PaymentAcceptorsConfiguration,
+    SubscriptionPaymentAcceptorsConfiguration,
+} from '@/public/types/paymentAcceptors';
 export type { ExperimentalFeature } from '@/components/providers/ExperimentalFeatureProvider/ExperimentalFeatureProvider.lib';
 
 export { defineSolvimonCheckout } from './public/screens/Checkout/Checkout.entry.ce';
@@ -51,6 +58,8 @@ export { defineSolvimonPaymentMethodsManagement } from './public/screens/Payment
 export { defineSolvimonBillingInformation } from './public/components/BillingInformation/BillingInformation.entry.ce';
 export { defineSolvimonBillingInformationForm } from './public/components/BillingInformationForm/BillingInformationForm.entry.ce';
 export { defineSolvimonCustomerPaymentMethods } from './public/components/CustomerPaymentMethods/CustomerPaymentMethods.entry.ce';
+export { defineSolvimonCustomerPaymentAcceptors } from './public/components/CustomerPaymentAcceptors/CustomerPaymentAcceptors.entry.ce';
+export { defineSolvimonSubscriptionPaymentAcceptors } from './public/components/SubscriptionPaymentAcceptors/SubscriptionPaymentAcceptors.entry.ce';
 export { defineSolvimonWalletBalances } from './public/components/WalletBalances/WalletBalances.entry.ce';
 export { defineSolvimonInvoice } from './public/components/Invoice/Invoice.entry.ce';
 export { defineSolvimonInvoiceDetails } from './public/components/InvoiceDetails/InvoiceDetails.entry.ce';

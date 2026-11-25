@@ -8,43 +8,56 @@ import {
     useIntl,
 } from '@solvimon/solvimon-ui';
 import type { CustomerPaymentAcceptorsProps } from './CustomerPaymentAcceptors.types';
-import { DEFAULT_MAX_ITEMS, getSubscriptionPaymentAcceptors } from './CustomerPaymentAcceptors.lib';
+import {
+    DEFAULT_MAX_ITEMS,
+    getSubscriptionPaymentAcceptors,
+    toPaymentAcceptorAssignment,
+} from './CustomerPaymentAcceptors.lib';
 import EmptyStatePlaceholder from '@/components/checkout/EmptyStatePlaceholder.vue';
 import LimitedList from '@/components/shared/LimitedList/LimitedList.vue';
 import Skeleton from '@/components/shared/Skeleton.vue';
 import { usePaymentAcceptors } from '@/composables/usePaymentAcceptors';
 import { createSubscriptionsService } from '@/services/subscriptions';
+import { useHostEvent } from '@/components/providers/HostElementProvider/composables/useHostEvent';
+import type { PaymentAcceptorAssignment } from '@/public/types/paymentAcceptors';
 
 /** Most customers never open it, so it is not part of the screen until one does. */
 const PaymentAcceptorsModal = defineAsyncComponent(
-    () => import('@/components/payments/PaymentAcceptors/PaymentAcceptorsModal.vue'),
+    () =>
+        import('@/public/components/CustomerPaymentAcceptors/internal/PaymentAcceptors/PaymentAcceptorsModal.vue'),
 );
 const PaymentAcceptorsManageModal = defineAsyncComponent(
-    () => import('@/components/payments/PaymentAcceptors/PaymentAcceptorsManageModal.vue'),
+    () =>
+        import('@/public/components/CustomerPaymentAcceptors/internal/PaymentAcceptors/PaymentAcceptorsManageModal.vue'),
 );
 
 const props = defineProps<CustomerPaymentAcceptorsProps>();
 
 const { $t } = useIntl();
+const { dispatch, componentName } = useHostEvent();
 
 const customerId = computed(() => props.customerId ?? props.subscription?.customer_id);
 
-const paymentAcceptors = usePaymentAcceptors({ customerId });
+const paymentAcceptors = usePaymentAcceptors({
+    customerId,
+    onChanged: (detail) =>
+        dispatch('solvimon-payment-acceptor-changed', { componentName, ...detail }),
+});
 const { items, isPending, error } = paymentAcceptors;
 
 watch(customerId, () => void paymentAcceptors.fetchAll(), { immediate: true });
 
-const savedChoice = ref<{ subscriptionId: string; paymentAcceptorIds: string[] }>();
+const savedChoice = ref<{ subscriptionId: string; assignment: PaymentAcceptorAssignment }>();
 
 /** The acceptors linked to the subscription; none means every active one applies. */
-const linkedIds = computed(() => {
+const assignment = computed(() => {
     if (savedChoice.value && savedChoice.value.subscriptionId === props.subscription?.id) {
-        return savedChoice.value.paymentAcceptorIds;
+        return savedChoice.value.assignment;
     }
-    return (
+    return toPaymentAcceptorAssignment(
         props.subscription?.payment_acceptor_ids ??
-        props.subscription?.payment_acceptors?.map(({ id }) => id) ??
-        []
+            props.subscription?.payment_acceptors?.map(({ id }) => id) ??
+            [],
     );
 });
 
@@ -53,31 +66,39 @@ const payerName = computed(() => props.subscription?.billing_entity?.legal_name)
 
 const relevantAcceptors = computed(() =>
     props.subscription
-        ? getSubscriptionPaymentAcceptors(items.value, linkedIds.value)
+        ? getSubscriptionPaymentAcceptors(items.value, assignment.value)
         : items.value,
 );
 
-const maxItems = computed(() => props.maxItems ?? DEFAULT_MAX_ITEMS);
+const maxItems = computed(() =>
+    typeof props.maxItems === 'number' && Number.isFinite(props.maxItems)
+        ? Math.max(1, Math.floor(props.maxItems))
+        : DEFAULT_MAX_ITEMS,
+);
 
 const subscriptionsService = createSubscriptionsService();
 
-const saveChoice = async (paymentAcceptorIds: string[]) => {
+const saveChoice = async (selection: PaymentAcceptorAssignment) => {
     if (!props.subscription) return;
 
     const subscriptionId = props.subscription.id;
+    const paymentAcceptorIds =
+        selection.mode === 'selected' ? [...selection.paymentAcceptorIds] : [];
     const saved = await subscriptionsService.setSubscriptionPaymentAcceptors({
         id: subscriptionId,
         paymentAcceptorIds,
     });
-    if (props.subscription?.id === subscriptionId) {
-        savedChoice.value = {
-            subscriptionId,
-            paymentAcceptorIds:
-                saved.payment_acceptor_ids === null
-                    ? []
-                    : (saved.payment_acceptor_ids ?? paymentAcceptorIds),
-        };
-    }
+    const assignment =
+        saved.payment_acceptor_ids === undefined
+            ? selection
+            : toPaymentAcceptorAssignment(saved.payment_acceptor_ids ?? []);
+    if (props.subscription?.id === subscriptionId)
+        savedChoice.value = { subscriptionId, assignment };
+    dispatch('solvimon-subscription-payment-acceptors-changed', {
+        componentName,
+        subscriptionId,
+        assignment,
+    });
 };
 
 const hasOpenedModal = ref(false);
@@ -100,9 +121,22 @@ const openManageModal = (start: 'LIST' | 'ADD') => {
 const manage = () => (props.subscription ? openModal() : openManageModal('LIST'));
 const add = () => (props.subscription ? openModal() : openManageModal('ADD'));
 
-const hasManageButton = computed(() =>
-    props.subscription ? relevantAcceptors.value.length > 0 : items.value.length > 0,
+const canManage = computed(
+    () => props.management !== 'read-only' && !isPending.value && !error.value,
 );
+const hasManageButton = computed(
+    () =>
+        canManage.value &&
+        (relevantAcceptors.value.length > 0 ||
+            (props.subscription && assignment.value.mode === 'selected')),
+);
+
+watch(canManage, (canManage) => {
+    if (!canManage && props.management === 'read-only') {
+        isModalShown.value = false;
+        isManageModalShown.value = false;
+    }
+});
 
 const description = computed(() => {
     if (!props.subscription) {
@@ -150,24 +184,22 @@ const description = computed(() => {
         "
     >
         <template #right>
-            <slot name="action" :manage="manage">
-                <Button
-                    v-if="hasManageButton"
-                    size="xs"
-                    intent="subtle"
-                    type="button"
-                    class="sv-action sv-action--ghost sv-payment-acceptors__manage"
-                    @click="manage"
-                    >{{
-                        $t({
-                            defaultMessage: 'Manage',
-                            id: 'customer_overview.payment_acceptors_block.manage_button_label',
-                            description:
-                                'Label of the button that opens the modal to manage the bank accounts the customer is paid into',
-                        })
-                    }}</Button
-                >
-            </slot>
+            <Button
+                v-if="hasManageButton"
+                size="xs"
+                intent="subtle"
+                type="button"
+                class="sv-action sv-action--ghost sv-payment-acceptors__manage"
+                @click="manage"
+                >{{
+                    $t({
+                        defaultMessage: 'Manage',
+                        id: 'customer_overview.payment_acceptors_block.manage_button_label',
+                        description:
+                            'Label of the button that opens the modal to manage the bank accounts the customer is paid into',
+                    })
+                }}</Button
+            >
         </template>
 
         <div class="grid grid-cols-1 gap-2">
@@ -236,7 +268,7 @@ const description = computed(() => {
                         })
                     }}
                 </template>
-                <template #message>
+                <template v-if="canManage && !hasManageButton" #message>
                     <button
                         type="button"
                         class="sv-action sv-action--link sv-payment-acceptors__add underline"
@@ -256,17 +288,17 @@ const description = computed(() => {
         </div>
 
         <PaymentAcceptorsModal
-            v-if="hasOpenedModal && subscription"
+            v-if="hasOpenedModal && subscription && management !== 'read-only'"
             :show-modal="isModalShown"
             :payment-acceptors="items"
             :create="paymentAcceptors.create"
-            :subscription="{ id: subscription.id, paymentAcceptorIds: linkedIds, payerName }"
+            :subscription="{ id: subscription.id, assignment, payerName }"
             :save-choice="saveChoice"
             @close="isModalShown = false"
         />
 
         <PaymentAcceptorsManageModal
-            v-if="hasOpenedManageModal"
+            v-if="hasOpenedManageModal && management !== 'read-only'"
             :show-modal="isManageModalShown"
             :start="manageModalStart"
             :payment-acceptors="items"

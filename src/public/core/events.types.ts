@@ -1,5 +1,6 @@
 import type { Invoice, PricingPlanSubscription } from '@solvimon/solvimon-types';
 import type { ActionRequestDetail } from './action-request.types';
+import type { PaymentAcceptorAssignment } from '@/public/types/paymentAcceptors';
 import type {
     ErrorCode,
     LogEntry,
@@ -65,6 +66,19 @@ export interface SolvimonShippingAddressSavedDetail {
     shippingAddressId: string;
 }
 
+export interface SolvimonPaymentAcceptorChangedDetail {
+    componentName: string;
+    operation: 'created' | 'updated' | 'archived';
+    customerId: string;
+    paymentAcceptorId: string;
+}
+
+export interface SolvimonSubscriptionPaymentAcceptorsChangedDetail {
+    componentName: string;
+    subscriptionId: string;
+    assignment: PaymentAcceptorAssignment;
+}
+
 /**
  * Every event an SDK element dispatches, by name. Each one bubbles and crosses the shadow root,
  * so a listener on the document or a container hears every element inside it.
@@ -94,6 +108,10 @@ export interface SolvimonEventMap {
     'solvimon-payment-method-added': CustomEvent<SolvimonPaymentMethodAddedDetail>;
     /** The customer added or changed a shipping address in `shipping-address-form`. */
     'solvimon-shipping-address-saved': CustomEvent<SolvimonShippingAddressSavedDetail>;
+    /** A customer payment acceptor was created, updated, or archived. */
+    'solvimon-payment-acceptor-changed': CustomEvent<SolvimonPaymentAcceptorChangedDetail>;
+    /** A subscription's assignment was saved. */
+    'solvimon-subscription-payment-acceptors-changed': CustomEvent<SolvimonSubscriptionPaymentAcceptorsChangedDetail>;
 }
 
 /**

@@ -15,16 +15,19 @@ vi.mock('@/components/providers', () => ({
 }));
 
 // Validates and builds the payload itself; its own spec covers that.
-vi.mock('@/components/payments/PaymentAcceptorForm/PaymentAcceptorForm.vue', () => ({
-    default: defineComponent({
-        name: 'PaymentAcceptorForm',
-        props: { paymentAcceptor: Object, disabled: Boolean, apiError: Object },
-        setup(_, { expose }) {
-            expose({ submit: mockSubmit });
-            return () => h('div', { class: 'payment-acceptor-form-stub' });
-        },
+vi.mock(
+    '@/public/components/CustomerPaymentAcceptors/internal/PaymentAcceptorForm/PaymentAcceptorForm.vue',
+    () => ({
+        default: defineComponent({
+            name: 'PaymentAcceptorForm',
+            props: { paymentAcceptor: Object, disabled: Boolean, apiError: Object },
+            setup(_, { expose }) {
+                expose({ submit: mockSubmit });
+                return () => h('div', { class: 'payment-acceptor-form-stub' });
+            },
+        }),
     }),
-}));
+);
 
 vi.mock('@solvimon/solvimon-ui', async () => {
     const { createSolvimonUiMock } = await import('@/test-utils/solvimonUiMock');
@@ -120,7 +123,11 @@ const acceptor = (id: string, status: PaymentAcceptor['status'] = 'ACTIVE') =>
         bank_account: { type: 'IBAN', iban: `NL00${id}` },
     }) as unknown as PaymentAcceptor;
 
-const subscription = { id: 'ppsu_1', paymentAcceptorIds: ['main'], payerName: 'Tivoli' };
+const subscription: PaymentAcceptorsModalProps['subscription'] = {
+    id: 'ppsu_1',
+    assignment: { mode: 'selected', paymentAcceptorIds: ['main'] },
+    payerName: 'Tivoli',
+};
 
 const mountComponent = (props: Partial<PaymentAcceptorsModalProps> = {}) =>
     mount(PaymentAcceptorsModal, {
@@ -140,7 +147,10 @@ const choices = (wrapper: ReturnType<typeof mountComponent>) =>
 const useAllToggle = (wrapper: ReturnType<typeof mountComponent>) =>
     wrapper.findComponent({ name: 'ToggleStub' });
 
-const usingAll = { ...subscription, paymentAcceptorIds: [] };
+const usingAll = {
+    ...subscription,
+    assignment: { mode: 'all-active' },
+} satisfies PaymentAcceptorsModalProps['subscription'];
 
 describe('PaymentAcceptorsModal', () => {
     beforeEach(() => {
@@ -153,7 +163,7 @@ describe('PaymentAcceptorsModal', () => {
 
     it('validates and creates once when confirmed twice during validation', async () => {
         const create = vi.fn().mockResolvedValue(acceptor('new'));
-        const wrapper = mountComponent({ paymentAcceptors: [], create });
+        const wrapper = mountComponent({ paymentAcceptors: [], subscription: usingAll, create });
         const confirm = wrapper.get('.modal__confirm');
 
         await Promise.all([confirm.trigger('click'), confirm.trigger('click')]);
@@ -203,7 +213,7 @@ describe('PaymentAcceptorsModal', () => {
         await wrapper.find('.modal__confirm').trigger('click');
         await flushPromises();
 
-        expect(saveChoice).toHaveBeenCalledWith([]);
+        expect(saveChoice).toHaveBeenCalledWith({ mode: 'all-active' });
     });
 
     it('ticks every active acceptor when the toggle is turned off', async () => {
@@ -248,7 +258,7 @@ describe('PaymentAcceptorsModal', () => {
         await wrapper.find('.modal__confirm').trigger('click');
         await flushPromises();
 
-        expect(saveChoice).toHaveBeenCalledWith(['main']);
+        expect(saveChoice).toHaveBeenCalledWith({ mode: 'selected', paymentAcceptorIds: ['main'] });
         expect(wrapper.emitted('close')).toHaveLength(1);
     });
 
@@ -298,7 +308,7 @@ describe('PaymentAcceptorsModal', () => {
         await wrapper.find('.modal__confirm').trigger('click');
         await flushPromises();
 
-        expect(saveChoice).toHaveBeenCalledWith([]);
+        expect(saveChoice).toHaveBeenCalledWith({ mode: 'all-active' });
     });
 
     it('stores nothing while the form is incomplete', async () => {
@@ -334,7 +344,7 @@ describe('PaymentAcceptorsModal', () => {
     it('starts on adding when there is nothing to choose from, and cancelling closes', async () => {
         const wrapper = mountComponent({
             paymentAcceptors: [],
-            subscription: { ...subscription, paymentAcceptorIds: [] },
+            subscription: usingAll,
         });
 
         expect(wrapper.find('.modal__title').text()).toBe('New payment acceptor');

@@ -40,6 +40,7 @@ const ChargeOnDemandModal = defineAsyncComponent(
 );
 
 const props = withDefaults(defineProps<SubscriptionDetailsProps>(), {
+    paymentAcceptors: undefined,
     walletBalances: () => [],
     onDemandItems: () => [],
 });
@@ -251,10 +252,16 @@ const title = computed<string>(() =>
             />
 
             <CustomerPaymentAcceptors
-                v-if="subscription?.variant === 'SELF_BILLING'"
+                v-if="subscription?.variant === 'SELF_BILLING' && paymentAcceptors !== false"
                 class="sv-subscription-details__payment-acceptors"
                 :is-loading="isLoading"
                 :subscription="subscription"
+                :max-items="paymentAcceptors?.maxItems"
+                :management="
+                    customer?.roles?.includes('SELF_BILLING')
+                        ? paymentAcceptors?.management
+                        : 'read-only'
+                "
             />
 
             <ChargeOnDemandModal

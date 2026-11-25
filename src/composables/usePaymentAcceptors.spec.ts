@@ -83,7 +83,8 @@ describe('usePaymentAcceptors', () => {
 
     it('shows the server-confirmed acceptor without waiting for a reload', async () => {
         mockService.createPaymentAcceptor.mockResolvedValue(acceptor());
-        const { create, items } = usePaymentAcceptors({ customerId: 'cust_1' });
+        const onChanged = vi.fn();
+        const { create, items } = usePaymentAcceptors({ customerId: 'cust_1', onChanged });
 
         await create(details);
 
@@ -92,16 +93,23 @@ describe('usePaymentAcceptors', () => {
             customer_id: 'cust_1',
         });
         expect(items.value).toEqual([acceptor()]);
+        expect(onChanged).toHaveBeenCalledExactlyOnceWith({
+            operation: 'created',
+            customerId: 'cust_1',
+            paymentAcceptorId: 'paya_1',
+        });
         expect(mockService.getPaymentAcceptors).not.toHaveBeenCalled();
     });
 
     it('passes a failed create on without changing the list', async () => {
         const failure = new Error('down');
         mockService.createPaymentAcceptor.mockRejectedValue(failure);
-        const { create, items } = usePaymentAcceptors({ customerId: 'cust_1' });
+        const onChanged = vi.fn();
+        const { create, items } = usePaymentAcceptors({ customerId: 'cust_1', onChanged });
 
         await expect(create(details)).rejects.toBe(failure);
         expect(items.value).toEqual([]);
+        expect(onChanged).not.toHaveBeenCalled();
     });
 
     it('reconciles updates and archives by id', async () => {

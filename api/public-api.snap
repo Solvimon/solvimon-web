@@ -4,6 +4,9 @@ export * from '../../types/public/components/BillingInformation/BillingInformati
 // components/BillingInformationForm/BillingInformationForm.ce.d.ts
 export * from '../../types/public/components/BillingInformationForm/BillingInformationForm.entry.ce';
 
+// components/CustomerPaymentAcceptors/CustomerPaymentAcceptors.ce.d.ts
+export * from '../../types/public/components/CustomerPaymentAcceptors/CustomerPaymentAcceptors.entry.ce';
+
 // components/CustomerPaymentMethods/CustomerPaymentMethods.ce.d.ts
 export * from '../../types/public/components/CustomerPaymentMethods/CustomerPaymentMethods.entry.ce';
 
@@ -27,6 +30,9 @@ export * from '../../types/public/components/PaymentMethodForm/PaymentMethodForm
 
 // components/ShippingAddressForm/ShippingAddressForm.ce.d.ts
 export * from '../../types/public/components/ShippingAddressForm/ShippingAddressForm.entry.ce';
+
+// components/SubscriptionPaymentAcceptors/SubscriptionPaymentAcceptors.ce.d.ts
+export * from '../../types/public/components/SubscriptionPaymentAcceptors/SubscriptionPaymentAcceptors.entry.ce';
 
 // components/SubscriptionSchedules/SubscriptionSchedules.ce.d.ts
 export * from '../../types/public/components/SubscriptionSchedules/SubscriptionSchedules.entry.ce';
@@ -360,7 +366,8 @@ export type { SolvimonMountConfig, CoreConfiguration, ComponentConfigurationById
 export type { Amount, CheckoutPagePortalUrl, CheckoutPagePortalUrlPayload, CountryCode, CustomerPortalUrl, CustomerPortalUrlPayload, PlatformBranding, PortalUrl, } from './vendor/@solvimon/solvimon-types/index';
 export type { IntlMessages, Environment } from './public/types';
 export type { SolvimonBranding } from './types/branding';
-export type { SolvimonErrorDetail, SolvimonEventListeners, SolvimonPaymentMethodAddedDetail, SolvimonInvoiceCreatedDetail, SolvimonPaymentSucceededDetail, SolvimonPaymentSucceededEvent, SolvimonErrorEvent, SolvimonEventMap, } from './public/core/events.types';
+export type { SolvimonErrorDetail, SolvimonEventListeners, SolvimonPaymentMethodAddedDetail, SolvimonPaymentAcceptorChangedDetail, SolvimonSubscriptionPaymentAcceptorsChangedDetail, SolvimonInvoiceCreatedDetail, SolvimonPaymentSucceededDetail, SolvimonPaymentSucceededEvent, SolvimonErrorEvent, SolvimonEventMap, } from './public/core/events.types';
+export type { PaymentAcceptorAssignment, PaymentAcceptorsConfiguration, SubscriptionPaymentAcceptorsConfiguration, } from './public/types/paymentAcceptors';
 export type { ExperimentalFeature } from './components/providers/ExperimentalFeatureProvider/ExperimentalFeatureProvider.lib';
 export { defineSolvimonCheckout } from './public/screens/Checkout/Checkout.entry.ce';
 export { defineSolvimonCheckoutSession } from './public/screens/CheckoutSession/CheckoutSession.entry.ce';
@@ -372,6 +379,8 @@ export { defineSolvimonPaymentMethodsManagement } from './public/screens/Payment
 export { defineSolvimonBillingInformation } from './public/components/BillingInformation/BillingInformation.entry.ce';
 export { defineSolvimonBillingInformationForm } from './public/components/BillingInformationForm/BillingInformationForm.entry.ce';
 export { defineSolvimonCustomerPaymentMethods } from './public/components/CustomerPaymentMethods/CustomerPaymentMethods.entry.ce';
+export { defineSolvimonCustomerPaymentAcceptors } from './public/components/CustomerPaymentAcceptors/CustomerPaymentAcceptors.entry.ce';
+export { defineSolvimonSubscriptionPaymentAcceptors } from './public/components/SubscriptionPaymentAcceptors/SubscriptionPaymentAcceptors.entry.ce';
 export { defineSolvimonWalletBalances } from './public/components/WalletBalances/WalletBalances.entry.ce';
 export { defineSolvimonInvoice } from './public/components/Invoice/Invoice.entry.ce';
 export { defineSolvimonInvoiceDetails } from './public/components/InvoiceDetails/InvoiceDetails.entry.ce';
@@ -415,6 +424,19 @@ export declare const defineSolvimonBillingInformationForm: (tagName?: string) =>
 import { CustomerPortalUrl } from '../../../vendor/@solvimon/solvimon-types/index';
 import { EntryBaseProps } from '../../../types/EntryBaseProps';
 export type SolvimonBillingInformationFormEntryProps = EntryBaseProps<CustomerPortalUrl>;
+
+// types/public/components/CustomerPaymentAcceptors/CustomerPaymentAcceptors.entry.ce.d.ts
+export type { SolvimonCustomerPaymentAcceptorsEntryProps } from './CustomerPaymentAcceptors.entry.types';
+export type { PaymentAcceptorsConfiguration } from '../../types/paymentAcceptors';
+export declare const defineSolvimonCustomerPaymentAcceptors: (tagName?: string) => string;
+
+// types/public/components/CustomerPaymentAcceptors/CustomerPaymentAcceptors.entry.types.d.ts
+import { CustomerPortalUrl } from '../../../vendor/@solvimon/solvimon-types/index';
+import { EntryBaseProps } from '../../../types/EntryBaseProps';
+import { PaymentAcceptorsConfiguration } from '../../types/paymentAcceptors';
+export interface SolvimonCustomerPaymentAcceptorsEntryProps extends EntryBaseProps<CustomerPortalUrl> {
+    configuration?: PaymentAcceptorsConfiguration;
+}
 
 // types/public/components/CustomerPaymentMethods/CustomerPaymentMethods.entry.ce.d.ts
 export declare const defineSolvimonCustomerPaymentMethods: (tagName?: string) => string;
@@ -689,6 +711,19 @@ export interface ShippingAddressFormConfiguration {
     shippingAddressId?: ShippingAddress['id'];
 }
 
+// types/public/components/SubscriptionPaymentAcceptors/SubscriptionPaymentAcceptors.entry.ce.d.ts
+export type { SolvimonSubscriptionPaymentAcceptorsEntryProps } from './SubscriptionPaymentAcceptors.entry.types';
+export type { PaymentAcceptorAssignment, SubscriptionPaymentAcceptorsConfiguration, } from '../../types/paymentAcceptors';
+export declare const defineSolvimonSubscriptionPaymentAcceptors: (tagName?: string) => string;
+
+// types/public/components/SubscriptionPaymentAcceptors/SubscriptionPaymentAcceptors.entry.types.d.ts
+import { CustomerPortalUrl } from '../../../vendor/@solvimon/solvimon-types/index';
+import { EntryBaseProps } from '../../../types/EntryBaseProps';
+import { SubscriptionPaymentAcceptorsConfiguration } from '../../types/paymentAcceptors';
+export interface SolvimonSubscriptionPaymentAcceptorsEntryProps extends EntryBaseProps<CustomerPortalUrl> {
+    configuration: SubscriptionPaymentAcceptorsConfiguration;
+}
+
 // types/public/components/SubscriptionSchedules/SubscriptionSchedules.entry.ce.d.ts
 export declare const defineSolvimonSubscriptionSchedules: (tagName?: string) => string;
 
@@ -820,6 +855,7 @@ export declare function createSolvimonCore<TConfig extends SolvimonMountConfig>(
 // types/public/core/events.types.d.ts
 import { Invoice, PricingPlanSubscription } from '../../vendor/@solvimon/solvimon-types/index';
 import { ActionRequestDetail } from './action-request.types';
+import { PaymentAcceptorAssignment } from '../types/paymentAcceptors';
 import { ErrorCode, LogEntry } from '../../components/providers/LoggerProvider/LoggerProvider.types';
 /**
  * The `detail` of the `solvimon-error` event: the same facts as the `log` entry the failure is
@@ -874,6 +910,17 @@ export interface SolvimonShippingAddressSavedDetail {
      */
     shippingAddressId: string;
 }
+export interface SolvimonPaymentAcceptorChangedDetail {
+    componentName: string;
+    operation: 'created' | 'updated' | 'archived';
+    customerId: string;
+    paymentAcceptorId: string;
+}
+export interface SolvimonSubscriptionPaymentAcceptorsChangedDetail {
+    componentName: string;
+    subscriptionId: string;
+    assignment: PaymentAcceptorAssignment;
+}
 /**
  * Every event an SDK element dispatches, by name. Each one bubbles and crosses the shadow root,
  * so a listener on the document or a container hears every element inside it.
@@ -903,6 +950,10 @@ export interface SolvimonEventMap {
     'solvimon-payment-method-added': CustomEvent<SolvimonPaymentMethodAddedDetail>;
     /** The customer added or changed a shipping address in `shipping-address-form`. */
     'solvimon-shipping-address-saved': CustomEvent<SolvimonShippingAddressSavedDetail>;
+    /** A customer payment acceptor was created, updated, or archived. */
+    'solvimon-payment-acceptor-changed': CustomEvent<SolvimonPaymentAcceptorChangedDetail>;
+    /** A subscription's assignment was saved. */
+    'solvimon-subscription-payment-acceptors-changed': CustomEvent<SolvimonSubscriptionPaymentAcceptorsChangedDetail>;
 }
 /**
  * Listeners for the `on` option of `createScreen` and `createComponent`, by event name. They are
@@ -932,7 +983,8 @@ export type { ActionRequestDetail, ActionRequestDetailAddPaymentMethod, ActionRe
 export type { Amount, CheckoutPagePortalUrl, CheckoutPagePortalUrlPayload, CountryCode, CustomerPortalUrl, CustomerPortalUrlPayload, PlatformBranding, PortalUrl, } from '../../vendor/@solvimon/solvimon-types/index';
 export type { IntlMessages, Environment } from '../types';
 export type { SolvimonBranding } from '../../types/branding';
-export type { SolvimonErrorDetail, SolvimonEventListeners, SolvimonPaymentMethodAddedDetail, SolvimonInvoiceCreatedDetail, SolvimonPaymentSucceededDetail, SolvimonPaymentSucceededEvent, SolvimonErrorEvent, SolvimonEventMap, } from './events.types';
+export type { SolvimonErrorDetail, SolvimonEventListeners, SolvimonPaymentMethodAddedDetail, SolvimonPaymentAcceptorChangedDetail, SolvimonSubscriptionPaymentAcceptorsChangedDetail, SolvimonInvoiceCreatedDetail, SolvimonPaymentSucceededDetail, SolvimonPaymentSucceededEvent, SolvimonErrorEvent, SolvimonEventMap, } from './events.types';
+export type { PaymentAcceptorAssignment, PaymentAcceptorsConfiguration, SubscriptionPaymentAcceptorsConfiguration, } from '../types/paymentAcceptors';
 export type { ExperimentalFeature } from '../../components/providers/ExperimentalFeatureProvider/ExperimentalFeatureProvider.lib';
 export type { LogEntry, LogLevel, LogSink, ErrorCode, WarnCode, } from '../../components/providers/LoggerProvider/LoggerProvider.types';
 
@@ -951,6 +1003,8 @@ import { ExperimentalFeature } from '../../components/providers/ExperimentalFeat
 import { SolvimonBillingInformationEntryProps } from '../components/BillingInformation/BillingInformation.entry.types';
 import { SolvimonBillingInformationFormEntryProps } from '../components/BillingInformationForm/BillingInformationForm.entry.types';
 import { SolvimonCustomerPaymentMethodsEntryProps } from '../components/CustomerPaymentMethods/CustomerPaymentMethods.entry.types';
+import { SolvimonCustomerPaymentAcceptorsEntryProps } from '../components/CustomerPaymentAcceptors/CustomerPaymentAcceptors.entry.types';
+import { SolvimonSubscriptionPaymentAcceptorsEntryProps } from '../components/SubscriptionPaymentAcceptors/SubscriptionPaymentAcceptors.entry.types';
 import { SolvimonInvoiceEntryProps } from '../components/Invoice/Invoice.entry.types';
 import { SolvimonInvoiceHeaderEntryProps } from '../components/InvoiceHeader/InvoiceHeader.entry.types';
 import { SolvimonInvoiceDetailsEntryProps } from '../components/InvoiceDetails/InvoiceDetails.entry.types';
@@ -1005,6 +1059,8 @@ interface RegisteredComponentEntryPropsById {
     'subscription-schedules': SolvimonSubscriptionSchedulesEntryProps;
     'subscriptions-list': SolvimonSubscriptionsListEntryProps;
     'customer-payment-methods': SolvimonCustomerPaymentMethodsEntryProps;
+    'customer-payment-acceptors': SolvimonCustomerPaymentAcceptorsEntryProps;
+    'subscription-payment-acceptors': SolvimonSubscriptionPaymentAcceptorsEntryProps;
     'wallet-balances': SolvimonWalletBalancesEntryProps;
     'billing-information': SolvimonBillingInformationEntryProps;
     'billing-information-form': SolvimonBillingInformationFormEntryProps;
@@ -1137,9 +1193,12 @@ export interface SolvimonCustomerOverviewEntryProps extends EntryBaseProps<Custo
 
 // types/public/screens/CustomerOverview/CustomerOverview.types.d.ts
 import { CustomerPaymentMethodsConfiguration } from '../../components/CustomerPaymentMethods/CustomerPaymentMethods.types';
+import { PaymentAcceptorsConfiguration } from '../../types/paymentAcceptors';
 export interface CustomerOverviewConfiguration {
     /** The payment methods block, configured as the `customer-payment-methods` element is. */
     paymentMethods?: CustomerPaymentMethodsConfiguration;
+    /** Options for the self-billing block. Set to false to hide it and skip its requests. */
+    paymentAcceptors?: false | PaymentAcceptorsConfiguration;
 }
 export interface CustomerOverviewProps {
     configuration?: CustomerOverviewConfiguration;
@@ -1187,6 +1246,7 @@ export type SolvimonPaymentMethodsManagementEntryProps = EntryBaseProps<Customer
 
 // types/public/screens/SubscriptionDetails/SubscriptionDetails.configuration.types.d.ts
 import { PricingPlanSubscription } from '../../../vendor/@solvimon/solvimon-types/index';
+import { PaymentAcceptorsConfiguration } from '../../types/paymentAcceptors';
 export interface SubscriptionDetailsConfiguration {
     subscriptionId: PricingPlanSubscription['id'];
     /**
@@ -1195,6 +1255,8 @@ export interface SubscriptionDetailsConfiguration {
      * would only close the order. Defaults to `false`.
      */
     showViewInvoiceButton?: boolean;
+    /** Options for self-billing payment acceptors. Set to false to hide the block and skip its requests. */
+    paymentAcceptors?: false | PaymentAcceptorsConfiguration;
 }
 
 // types/public/screens/SubscriptionDetails/SubscriptionDetails.entry.ce.d.ts
@@ -1264,6 +1326,25 @@ export type IntlMessages = Record<string, string>;
  * `src/config/internalEnvironments.ts`.
  */
 export type { PublicEnvironment as Environment } from '../../config/types';
+
+// types/public/types/paymentAcceptors.d.ts
+export interface PaymentAcceptorsConfiguration {
+    /** The number of acceptors shown in the summary. Defaults to 3. */
+    maxItems?: number;
+    /** Whether the SDK offers inline management. Defaults to `inline` for eligible customers. */
+    management?: 'inline' | 'read-only';
+}
+export interface SubscriptionPaymentAcceptorsConfiguration extends PaymentAcceptorsConfiguration {
+    /** The self-billing subscription belonging to the customer authorized by this portal object. */
+    subscriptionId: string;
+}
+/** Whether a subscription uses all current and future active acceptors or a fixed selection. */
+export type PaymentAcceptorAssignment = {
+    mode: 'all-active';
+} | {
+    mode: 'selected';
+    paymentAcceptorIds: readonly [string, ...string[]];
+};
 
 // types/translations/supported.d.ts
 export const SUPPORTED_LOCALES: readonly ["en-US", "nl-NL", "de-DE", "it-IT", "fr-FR"];

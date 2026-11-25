@@ -139,19 +139,31 @@ watch(canManage, (canManage) => {
 const description = computed(() => {
     if (!props.subscription) {
         return $t({
-            defaultMessage: 'Where you receive payments for your self-billing subscriptions.',
-            id: 'customer_overview.payment_acceptors_block.where_paid',
+            defaultMessage: 'Where you can receive payments for your self-billing subscriptions.',
+            id: 'customer_overview.payment_acceptors_block.where_can_be_paid',
             description:
-                'Explains the payment acceptors block on the customer overview and the payment acceptors screen: where the customer is paid',
+                'Explains the payment acceptors block on the customer overview and the payment acceptors screen: the bank accounts the customer can be paid into',
         });
     }
 
-    return $t({
-        defaultMessage: 'Where you receive payments for this subscription.',
-        id: 'subscription_details.payment_acceptors_block.where_paid',
-        description:
-            'Explains the payment acceptors block on a self-billing subscription: where the customer is paid for it',
-    });
+    if (!payerName.value) {
+        return $t({
+            defaultMessage: 'Where you can receive payments for this subscription.',
+            id: 'subscription_details.payment_acceptors_block.where_can_be_paid',
+            description:
+                'Explains the payment acceptors block on a self-billing subscription when the name of whoever pays it is not known',
+        });
+    }
+
+    return $t(
+        {
+            defaultMessage: 'Where {payer} can pay you for this subscription.',
+            id: 'subscription_details.payment_acceptors_block.where_payer_can_pay',
+            description:
+                'Explains the payment acceptors block on a self-billing subscription. {payer} is the legal name of the company that pays the customer',
+        },
+        { payer: payerName.value },
+    );
 });
 </script>
 

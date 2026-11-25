@@ -220,6 +220,24 @@ describe('CustomerPaymentAcceptors', () => {
             );
         });
 
+        it('shows the subscription the screen passes after a choice, not the choice', async () => {
+            mockSetSubscriptionPaymentAcceptors.mockResolvedValue({});
+            const wrapper = await mountBlock({ subscription: subscription(['b']) });
+            await wrapper.find('.sv-payment-acceptors__manage').trigger('click');
+            await flushPromises();
+            await (
+                wrapper.findComponent({ name: 'PaymentAcceptorsModal' }).props('saveChoice') as (
+                    selection: PaymentAcceptorAssignment,
+                ) => Promise<void>
+            )({ mode: 'selected', paymentAcceptorIds: ['a'] });
+            await flushPromises();
+            expect(shownIds(wrapper)).toEqual(['a']);
+
+            await wrapper.setProps({ subscription: subscription(['c']) });
+
+            expect(shownIds(wrapper)).toEqual(['c']);
+        });
+
         it('chooses its acceptors, storing the choice on the subscription', async () => {
             mockSetSubscriptionPaymentAcceptors.mockResolvedValue({});
             const wrapper = await mountBlock({ subscription: subscription(['b']) });

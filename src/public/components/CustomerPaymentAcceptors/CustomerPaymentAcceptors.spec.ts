@@ -75,13 +75,13 @@ vi.mock('@solvimon/solvimon-ui', async () => {
 const acceptor = (id: string) =>
     ({ id, name: id, status: 'ACTIVE', reference: id }) as unknown as PaymentAcceptor;
 
-const subscription = (paymentAcceptorIds?: string[]) =>
+const subscription = (paymentAcceptorIds?: string[], payerName = 'Tivoli') =>
     ({
         id: 'ppsu_1',
         customer_id: 'cust_1',
         variant: 'SELF_BILLING',
         payment_acceptor_ids: paymentAcceptorIds,
-        billing_entity: { legal_name: 'Tivoli' },
+        billing_entity: { legal_name: payerName },
     }) as unknown as PricingPlanSubscriptionExpanded;
 
 const mountBlock = async (props: CustomerPaymentAcceptorsProps = { customerId: 'cust_1' }) => {
@@ -126,7 +126,7 @@ describe('CustomerPaymentAcceptors', () => {
         const wrapper = await mountBlock({ customerId: 'cust_1' });
 
         expect(wrapper.find('.sv-payment-acceptors__description').text()).toBe(
-            'Where you receive payments for your self-billing subscriptions.',
+            'Where you can receive payments for your self-billing subscriptions.',
         );
     });
 
@@ -156,14 +156,22 @@ describe('CustomerPaymentAcceptors', () => {
             const wrapper = await mountBlock({ subscription: subscription(['b']) });
 
             expect(shownIds(wrapper)).toEqual(['b']);
-            expect(wrapper.text()).toContain('Where you receive payments for this subscription.');
+            expect(wrapper.text()).toContain('Where Tivoli can pay you for this subscription.');
         });
 
         it('shows every acceptor and says so when none is linked', async () => {
             const wrapper = await mountBlock({ subscription: subscription() });
 
             expect(shownIds(wrapper)).toEqual(['a', 'b', 'c']);
-            expect(wrapper.text()).toContain('Where you receive payments for this subscription.');
+            expect(wrapper.text()).toContain('Where Tivoli can pay you for this subscription.');
+        });
+
+        it('says where the customer can be paid when the payer is not known', async () => {
+            const wrapper = await mountBlock({ subscription: subscription(['b'], '') });
+
+            expect(wrapper.text()).toContain(
+                'Where you can receive payments for this subscription.',
+            );
         });
 
         it('offers no manage action while there is no payment acceptor to show', async () => {

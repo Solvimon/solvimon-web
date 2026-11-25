@@ -939,9 +939,9 @@
     "defaultMessage": "{count,plural,one{Payment acceptor} other{Payment acceptors}}",
     "description": "Title of the block that lists the bank accounts the customer receives payments on"
   },
-  "customer_overview.payment_acceptors_block.where_paid": {
-    "defaultMessage": "Where you receive payments for your self-billing subscriptions.",
-    "description": "Explains the payment acceptors block on the customer overview and the payment acceptors screen: where the customer is paid"
+  "customer_overview.payment_acceptors_block.where_can_be_paid": {
+    "defaultMessage": "Where you can receive payments for your self-billing subscriptions.",
+    "description": "Explains the payment acceptors block on the customer overview and the payment acceptors screen: the bank accounts the customer can be paid into"
   },
   "customer_overview.payment_methods.title": {
     "defaultMessage": "{count,plural,one{Payment method} other{Payment methods}}",
@@ -1843,9 +1843,13 @@
     "defaultMessage": "Unable to load this subscription. Please try again later.",
     "description": "Error message shown when the subscription cannot be loaded on the subscription details page"
   },
-  "subscription_details.payment_acceptors_block.where_paid": {
-    "defaultMessage": "Where you receive payments for this subscription.",
-    "description": "Explains the payment acceptors block on a self-billing subscription: where the customer is paid for it"
+  "subscription_details.payment_acceptors_block.where_can_be_paid": {
+    "defaultMessage": "Where you can receive payments for this subscription.",
+    "description": "Explains the payment acceptors block on a self-billing subscription when the name of whoever pays it is not known"
+  },
+  "subscription_details.payment_acceptors_block.where_payer_can_pay": {
+    "defaultMessage": "Where {payer} can pay you for this subscription.",
+    "description": "Explains the payment acceptors block on a self-billing subscription. {payer} is the legal name of the company that pays the customer"
   },
   "subscription_details.renew_button.label": {
     "defaultMessage": "Renew subscription",

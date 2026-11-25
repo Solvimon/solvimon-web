@@ -19,8 +19,3 @@ export interface CustomerPaymentAcceptorsProps {
     /** Set while the screen around it is still loading, so the block waits with it. */
     isLoading?: boolean;
 }
-
-export interface CustomerPaymentAcceptorsEmits {
-    /** The acceptors chosen for the subscription changed, so the subscription on screen is stale. */
-    (e: 'subscription-changed'): void;
-}

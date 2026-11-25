@@ -19,7 +19,7 @@ export interface UsePaymentAcceptors {
     isPending: Ref<boolean>;
     error: Ref<unknown>;
     fetchAll: () => Promise<void>;
-    /** Stores a bank account for the customer and reloads the list so it shows up there. */
+    /** Stores a bank account and adds the server-confirmed result to the list. */
     create: (details: PaymentAcceptorCreateDetails) => Promise<PaymentAcceptor>;
     update: (
         paymentAcceptor: PaymentAcceptor,
@@ -33,8 +33,7 @@ const byActiveFirst = (a: PaymentAcceptor, b: PaymentAcceptor) =>
     Number(b.status === 'ACTIVE') - Number(a.status === 'ACTIVE');
 
 /**
- * The payment acceptors of a customer: the bank accounts a self-billing customer is paid into. A
- * change is followed by a reload rather than patched into the list.
+ * The payment acceptors of a customer: the bank accounts a self-billing customer is paid into.
  */
 export function usePaymentAcceptors({
     customerId,
@@ -48,19 +47,32 @@ export function usePaymentAcceptors({
     const items = ref<PaymentAcceptor[]>([]);
     const isPending = ref(false);
     const error = ref<unknown>();
+    let latestLoad = 0;
+    let loadedFor: string | undefined;
 
     const fetchAll = async () => {
         const id = toValue(customerId);
+        const load = ++latestLoad;
+        if (id !== loadedFor) {
+            loadedFor = id;
+            items.value = [];
+        }
+        if (!id) {
+            isPending.value = false;
+            error.value = undefined;
+            return;
+        }
 
-        if (!id) return;
+        const isCurrent = () => load === latestLoad && id === toValue(customerId);
 
         isPending.value = true;
         error.value = undefined;
 
         try {
             const response = await service.getPaymentAcceptors({ customerId: id });
-            items.value = [...response.data].sort(byActiveFirst);
+            if (isCurrent()) items.value = [...response.data].sort(byActiveFirst);
         } catch (loadError) {
+            if (!isCurrent()) return;
             logger.error(
                 'PAYMENT_ACCEPTORS_LOAD_FAILED',
                 'Failed to load the payment acceptors',
@@ -69,41 +81,53 @@ export function usePaymentAcceptors({
             );
             error.value = loadError;
         } finally {
-            isPending.value = false;
+            if (isCurrent()) isPending.value = false;
+        }
+    };
+
+    const applyChange = (id: string | undefined, acceptor: PaymentAcceptor, archived = false) => {
+        if (id !== toValue(customerId)) return;
+
+        // A read started before the write could still return the old list.
+        latestLoad++;
+        isPending.value = false;
+        const index = items.value.findIndex((item) => item.id === acceptor.id);
+        if (archived || acceptor.status === 'ARCHIVED') {
+            items.value = items.value.filter((item) => item.id !== acceptor.id);
+        } else if (index === -1) {
+            items.value = [...items.value, acceptor].sort(byActiveFirst);
+        } else {
+            items.value = items.value
+                .map((item) => (item.id === acceptor.id ? acceptor : item))
+                .sort(byActiveFirst);
         }
     };
 
     const create = async (details: PaymentAcceptorCreateDetails) => {
-        try {
-            return await service.createPaymentAcceptor({
-                ...details,
-                customer_id: toValue(customerId),
-            });
-        } finally {
-            await fetchAll();
-        }
+        const id = toValue(customerId);
+        if (!id) throw new Error('Payment acceptors require a customer');
+        const saved = await service.createPaymentAcceptor({ ...details, customer_id: id });
+        applyChange(id, saved);
+        return saved;
     };
 
     const update = async (
         paymentAcceptor: PaymentAcceptor,
         payload: PaymentAcceptorPatchPayload,
     ) => {
-        try {
-            return await service.updatePaymentAcceptor({
-                paymentAcceptorId: paymentAcceptor.id,
-                payload,
-            });
-        } finally {
-            await fetchAll();
-        }
+        const id = toValue(customerId);
+        const saved = await service.updatePaymentAcceptor({
+            paymentAcceptorId: paymentAcceptor.id,
+            payload,
+        });
+        applyChange(id, saved);
+        return saved;
     };
 
     const remove = async (paymentAcceptor: PaymentAcceptor) => {
-        try {
-            await service.archivePaymentAcceptor({ paymentAcceptorId: paymentAcceptor.id });
-        } finally {
-            await fetchAll();
-        }
+        const id = toValue(customerId);
+        await service.archivePaymentAcceptor({ paymentAcceptorId: paymentAcceptor.id });
+        applyChange(id, paymentAcceptor, true);
     };
 
     return { items, isPending, error, fetchAll, create, update, remove };

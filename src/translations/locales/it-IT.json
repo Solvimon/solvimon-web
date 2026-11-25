@@ -307,6 +307,7 @@
     "payment_acceptor_form.bank_account.title": "Conto bancario",
     "payment_acceptor_form.name.label": "Nome",
     "payment_acceptor_form.name.placeholder": "Ad esempio: conto aziendale principale",
+    "payment_acceptors.retry": "Riprova",
     "payment_acceptors_modal.assign.confirm_button.label": "Assegna i conti di accredito",
     "payment_acceptors_modal.assign.list_label": "Conti di accredito di questo abbonamento",
     "payment_acceptors_modal.assign.none_selected_error": "Seleziona almeno un conto di accredito oppure attiva “Usa tutti”.",

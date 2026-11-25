@@ -255,7 +255,6 @@ const title = computed<string>(() =>
                 class="sv-subscription-details__payment-acceptors"
                 :is-loading="isLoading"
                 :subscription="subscription"
-                @subscription-changed="$emit('subscription-changed')"
             />
 
             <ChargeOnDemandModal

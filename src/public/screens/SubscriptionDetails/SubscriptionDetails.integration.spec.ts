@@ -160,7 +160,6 @@ vi.mock('@/public/components/CustomerPaymentAcceptors/CustomerPaymentAcceptors.v
     default: defineComponent({
         name: 'CustomerPaymentAcceptorsStub',
         props: { subscription: Object, isLoading: Boolean },
-        emits: ['subscription-changed'],
         setup: () => () => h('div', { class: 'payment-acceptors-stub' }),
     }),
 }));
@@ -639,17 +638,6 @@ describe('SubscriptionDetails', () => {
             const block = wrapper.findComponent({ name: 'CustomerPaymentAcceptorsStub' });
             expect(block.exists()).toBe(true);
             expect(block.props('subscription')).toEqual(selfBilling);
-        });
-
-        it('asks for the subscription again once its acceptors are chosen', async () => {
-            const wrapper = mountComponent({ subscription: selfBilling });
-            await flushPromises();
-
-            wrapper
-                .findComponent({ name: 'CustomerPaymentAcceptorsStub' })
-                .vm.$emit('subscription-changed');
-
-            expect(wrapper.emitted('subscription-changed')).toHaveLength(1);
         });
 
         it('leaves them out of any other subscription', async () => {

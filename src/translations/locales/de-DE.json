@@ -307,6 +307,7 @@
     "payment_acceptor_form.bank_account.title": "Bankkonto",
     "payment_acceptor_form.name.label": "Name",
     "payment_acceptor_form.name.placeholder": "Zum Beispiel: Hauptgeschäftskonto",
+    "payment_acceptors.retry": "Erneut versuchen",
     "payment_acceptors_modal.assign.confirm_button.label": "Empfangskonten zuweisen",
     "payment_acceptors_modal.assign.list_label": "Empfangskonten für dieses Abonnement",
     "payment_acceptors_modal.assign.none_selected_error": "Wählen Sie mindestens ein Empfangskonto aus oder aktivieren Sie „Alle verwenden“.",

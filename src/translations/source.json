@@ -1231,6 +1231,10 @@
     "defaultMessage": "For example: Main business account",
     "description": "Placeholder of the name of a bank account the customer is paid on"
   },
+  "payment_acceptors.retry": {
+    "defaultMessage": "Try again",
+    "description": "Retries loading the customer’s payment acceptors"
+  },
   "payment_acceptors_modal.assign.confirm_button.label": {
     "defaultMessage": "Assign payment acceptors",
     "description": "Label of the button that stores the bank accounts chosen for the subscription"

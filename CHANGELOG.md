@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- The top-up modals find the price of a top-up item that is priced per currency or per billing period. Before, they only read a price set on the item itself. A money wallet offers only the prices in its own currency. A credits wallet offers only those in the billing currency of the subscription the top-up is charged on. Showing the **Top up** and **Auto top-up** buttons for such an item also needs the solvimon-ui release that reads the same prices.
+- The top-up modals find the price of a top-up item that is priced per currency or per billing period. Before, they only read a price set on the item itself. A money wallet offers only the prices in its own currency. A credits wallet offers only those in the billing currency of the subscription the top-up is charged on. The **Top up** and **Auto top-up** buttons now show for such an item too (solvimon-ui 1.33.1).
 - `checkout-session` loads again. It read each subscription's plan from its template, which a checkout session's token is refused (`SUBSCRIPTION_LOAD_FAILED`); it now reads the plan from the session, with `expand[]=ALL`, and charges the pricings of the version the session resolves. `CheckoutSessionSubscription` gains the read-only `name`, `billing_currency`, `billing_period`, `billing_entity_id`, `billing_entity` and `pricing_plan_schedule_infos`.
 - `checkout-session` shows that it cannot be loaded when a subscription comes without its plan, instead of loading for good.
 - The SEPA mandate in `checkout` and `checkout-session` names the invoice's billing entity, falling back to the subscription's. A session's billing entity can follow the customer's country, which the subscription's leaves out.

@@ -14,7 +14,7 @@
     "components/WalletBalances": 105500,
     "screens/Checkout": 139600,
     "screens/CheckoutSession": 134800,
-    "screens/CustomerOverview": 118200,
+    "screens/CustomerOverview": 124200,
     "screens/PayInvoice": 81600,
     "screens/PaymentMethodsManagement": 67800,
     "screens/SubscriptionDetails": 117900,

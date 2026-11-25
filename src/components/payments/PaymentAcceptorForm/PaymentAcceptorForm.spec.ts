@@ -104,11 +104,7 @@ describe('PaymentAcceptorForm', () => {
 
         expect(result).toEqual({
             method: 'UPDATE',
-            payload: {
-                type: 'BANK_ACCOUNT',
-                name: 'Renamed',
-                bank_account: { type: 'IBAN', country: 'NL' },
-            },
+            payload: { name: 'Renamed' },
         });
         expect(wrapper.findComponent({ name: 'BankAccountEditorStub' }).props('method')).toBe(
             'UPDATE',

@@ -75,7 +75,14 @@ defineExpose({
         }
 
         return props.paymentAcceptor
-            ? { method: 'UPDATE', payload: toPatchPayload(initialState, toRaw(form.value)) }
+            ? {
+                  method: 'UPDATE',
+                  payload: toPatchPayload(
+                      initialState,
+                      toRaw(form.value),
+                      props.paymentAcceptor.bank_account,
+                  ),
+              }
             : { method: 'CREATE', details: toCreateDetails(toRaw(form.value)) };
     },
 });

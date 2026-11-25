@@ -44,11 +44,13 @@ export const toCreateDetails = (form: PaymentAcceptorFormState): PaymentAcceptor
 
 /**
  * What changed since the form was filled. A cleared field is sent as null so the API clears it too.
- * The bank account always carries its type and country, which the API needs to read the rest.
+ * A bank-account PATCH needs its stored type and country. The endpoint clears an omitted address
+ * within a bank-account PATCH, so carry the existing address when changing other bank fields.
  */
 export const toPatchPayload = (
     initial: PaymentAcceptorFormState,
     form: PaymentAcceptorFormState,
+    storedBankAccount: PaymentAcceptor['bank_account'],
 ): PaymentAcceptorPatchPayload => {
     const changes = objectDiff<PaymentAcceptorFormState>({
         from: initial,
@@ -57,21 +59,30 @@ export const toPatchPayload = (
         nullifyEmptyValues: true,
     });
 
-    const changedBankAccount: NonNullable<PaymentAcceptorPatchPayload['bank_account']> = {
-        ...changes.bank_account,
-        type: form.bank_account.type,
-        country: form.bank_account.country,
-    };
-    const bankAccount = cleanBankAccountVariant(changedBankAccount);
-
-    if (bankAccount?.bank_address && bankAccount.country) {
-        bankAccount.bank_address.country = bankAccount.country;
-    }
+    const bankAccountChanges = changes.bank_account;
+    const storedAddress = storedBankAccount?.bank_address;
+    const addressChanges = bankAccountChanges?.bank_address;
+    const bankAccount =
+        bankAccountChanges &&
+        cleanBankAccountVariant({
+            ...bankAccountChanges,
+            type: storedBankAccount?.type ?? form.bank_account.type,
+            country: form.bank_account.country,
+            ...((storedAddress || addressChanges) && {
+                bank_address: {
+                    ...storedAddress,
+                    ...addressChanges,
+                    country:
+                        bankAccountChanges.country ??
+                        storedAddress?.country ??
+                        form.bank_account.country,
+                },
+            }),
+        });
 
     return {
-        type: 'BANK_ACCOUNT',
         ...(changes.name !== undefined && { name: form.name.trim() }),
-        bank_account: bankAccount,
+        ...(bankAccount && { type: 'BANK_ACCOUNT', bank_account: bankAccount }),
     };
 };
 

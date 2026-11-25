@@ -70,16 +70,12 @@ describe('toCreateDetails', () => {
 });
 
 describe('toPatchPayload', () => {
-    it('sends a changed name, with the type and country the API needs', () => {
+    it('updates the name without touching the bank account', () => {
         const initial = createPaymentAcceptorFormState(stored);
         const form = structuredClone(initial);
         form.name = 'Renamed';
 
-        expect(toPatchPayload(initial, form)).toEqual({
-            type: 'BANK_ACCOUNT',
-            name: 'Renamed',
-            bank_account: { type: 'IBAN', country: 'NL' },
-        });
+        expect(toPatchPayload(initial, form, stored.bank_account)).toEqual({ name: 'Renamed' });
     });
 
     it('clears a field the customer emptied', () => {
@@ -87,8 +83,26 @@ describe('toPatchPayload', () => {
         const form = structuredClone(initial);
         form.bank_account.bank_name = '';
 
-        expect(toPatchPayload(initial, form).bank_account).toMatchObject({ bank_name: null });
+        expect(toPatchPayload(initial, form, stored.bank_account).bank_account).toMatchObject({
+            bank_name: null,
+            bank_address: stored.bank_account?.bank_address,
+        });
     });
+
+    it.each(['US_BANK_ACCOUNT', 'BIC_AND_ACCOUNT_NUMBER'] as const)(
+        'preserves the stored %s type when editing bank details',
+        (type) => {
+            const bankAccount = { ...stored.bank_account, type };
+            const initial = createPaymentAcceptorFormState({
+                ...stored,
+                bank_account: bankAccount,
+            });
+            const form = structuredClone(initial);
+            form.bank_account.bank_name = 'Another bank';
+
+            expect(toPatchPayload(initial, form, bankAccount).bank_account?.type).toBe(type);
+        },
+    );
 });
 
 describe('getRefusedShownField', () => {

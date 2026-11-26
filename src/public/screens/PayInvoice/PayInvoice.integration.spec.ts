@@ -159,7 +159,7 @@ const mockInvoice = {
         country_code: 'NL',
     },
     paid: false,
-    status: 'OPEN',
+    status: 'FINAL',
 } as unknown as Invoice;
 
 const amount = { currency: 'EUR', quantity: '99.00' };
@@ -295,6 +295,24 @@ describe('PayInvoice', () => {
             expect(wrapper.findComponent({ name: 'PayButton' }).exists()).toBe(false);
         },
     );
+
+    it.each([
+        ['a draft', { status: 'DRAFT' }],
+        ['a credit invoice', { type: 'CREDIT' }],
+        [
+            'an invoice with nothing left open',
+            { open_invoice_amount: { currency: 'EUR', quantity: '0.00' } },
+        ],
+    ])('says %s cannot be paid online instead of offering a payment', async (_, change) => {
+        const wrapper = mountComponent({
+            invoice: { ...mockInvoice, ...change } as unknown as Invoice,
+        });
+        await flushPromises();
+
+        expect(wrapper.find('[data-testid="payment-methods-unavailable"]').exists()).toBe(true);
+        expect(wrapper.findComponent({ name: 'PaymentIntegrationForm' }).exists()).toBe(false);
+        expect(wrapper.findComponent({ name: 'PayButton' }).exists()).toBe(false);
+    });
 
     it('shows an error card when the invoice fails to load', () => {
         const wrapper = mountComponent({ invoice: undefined, error: new Error('Network error') });

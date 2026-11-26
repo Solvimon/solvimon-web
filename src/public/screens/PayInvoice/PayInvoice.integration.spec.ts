@@ -281,6 +281,21 @@ describe('PayInvoice', () => {
         expect(wrapper.text()).toContain('EUR 99.00');
     });
 
+    it.each(['PAID', 'OVERPAID'])(
+        'shows a success card and no pay button for payment status %s while paid is still false',
+        (paymentStatus) => {
+            const invoice = {
+                ...mockInvoice,
+                paid: false,
+                payment_status: paymentStatus,
+            } as unknown as Invoice;
+            const wrapper = mountComponent({ invoice });
+
+            expect(wrapper.text()).toContain('Thank you for your payment!');
+            expect(wrapper.findComponent({ name: 'PayButton' }).exists()).toBe(false);
+        },
+    );
+
     it('shows an error card when the invoice fails to load', () => {
         const wrapper = mountComponent({ invoice: undefined, error: new Error('Network error') });
 

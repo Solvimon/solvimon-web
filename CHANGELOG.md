@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0-alpha.33] - 2026-11-26
+
 ### Added
 
 - Self-billing customers manage the bank accounts they are paid into (payment acceptors). The customer overview shows a **Payment acceptors** block (`.sv-payment-acceptors`) to a customer with the `SELF_BILLING` role, with up to three of them and a count of the rest. **Manage** opens a modal that lists every payment acceptor and adds, edits and deletes them in place; without any yet, **Add payment acceptor** opens it on adding. Editing one keeps its stored bank address. Deleting a payment acceptor archives it, so invoices that used it keep it. Only active payment acceptors are listed, since they are the only ones a payer can pay into.

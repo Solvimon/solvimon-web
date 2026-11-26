@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The checkout-session screen no longer fails to render when the session includes an existing customer (an entry by `customer_id`).
 - The top-up modal no longer requests a total for an amount outside the top-up's minimum or maximum, which showed "Unable to calculate the total" beside the amount's own error.
+- The pay-invoice screen recognises an invoice as paid from its `payment_status`, not only from the deprecated `paid` flag. An invoice the API already counted as paid kept offering the pay form, and every attempt was refused.
 
 ## [0.1.0-alpha.32] - 2026-11-25
 

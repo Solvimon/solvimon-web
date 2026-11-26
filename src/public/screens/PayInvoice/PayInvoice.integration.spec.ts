@@ -900,6 +900,27 @@ describe('PayInvoice with stored payment methods', () => {
         expect(storedSelector(wrapper).exists()).toBe(false);
     });
 
+    it('reads as paid from the payment status when the deprecated paid flag still says false', async () => {
+        mockChargeStoredPaymentMethod.mockRejectedValue(
+            new ApiError({ statusCode: 422, message: 'Invoice invo_123 has already been paid' }),
+        );
+        const wrapper = mountComponent({
+            paymentMethods: [storedCard()],
+            refresh: vi.fn().mockResolvedValue(undefined),
+        });
+
+        await payButton(wrapper).trigger('click');
+        await flushPromises();
+        await wrapper.setProps({
+            invoice: { ...wrapper.props('invoice')!, paid: false, payment_status: 'PAID' },
+        });
+
+        expect(wrapper.findComponent({ name: 'PaymentFeedbackCard' }).props('status')).toBe(
+            'success',
+        );
+        expect(storedSelector(wrapper).exists()).toBe(false);
+    });
+
     it('says nothing about a decline until the reloaded invoice can tell it was paid elsewhere', async () => {
         mockChargeStoredPaymentMethod.mockRejectedValue(new ApiError({ statusCode: 422 }));
         const wrapper = mountComponent({

@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - The checkout-session screen no longer fails to render when the session includes an existing customer (an entry by `customer_id`).
+- The top-up modal no longer requests a total for an amount outside the top-up's minimum or maximum, which showed "Unable to calculate the total" beside the amount's own error.
 
 ## [0.1.0-alpha.32] - 2026-11-25
 

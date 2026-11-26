@@ -355,6 +355,11 @@ const validation = useValidation(
     validationState,
 );
 
+// The API refuses an amount outside the bounds, so the preview waits until the field accepts it.
+const previewItems = computed(() =>
+    validation.value.flexibleAmount.$invalid ? undefined : pricingItems.value,
+);
+
 /**
  * What the chosen top-up adds to the wallet, read by the modal for its confirm button and its success
  * step. Credits for a credit based wallet, money otherwise — the customer's own terms either way.
@@ -526,7 +531,7 @@ const { sortedPaymentMethods } = useDefaultPaymentMethod({
             <div>
                 <TopUpInvoicePreview
                     :pricing-plan-schedule-id="pricingPlanScheduleId"
-                    :pricing-items="pricingItems"
+                    :pricing-items="previewItems"
                 />
             </div>
 

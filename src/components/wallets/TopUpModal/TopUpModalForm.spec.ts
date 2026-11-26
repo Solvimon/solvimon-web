@@ -471,6 +471,25 @@ describe('TopUpModalForm', () => {
         });
     });
 
+    it.each(['50', '5000'])(
+        'does not preview %s, an amount outside the bounds',
+        async (quantity) => {
+            const wrapper = mountForm([createFlexibleItem()]);
+            await select(wrapper, 0);
+
+            await enterAmount(wrapper, quantity);
+
+            expect(mockPreview).not.toHaveBeenCalledWith(
+                expect.objectContaining({
+                    pricingItems: [
+                        expect.objectContaining({ flexible_amount: amountOf(quantity) }),
+                    ],
+                }),
+            );
+            expect(wrapper.find('[data-testid="invoice-preview"]').exists()).toBe(false);
+        },
+    );
+
     it('clears the preview again when the amount is removed', async () => {
         const wrapper = mountForm([createFlexibleItem()]);
         await select(wrapper, 0);

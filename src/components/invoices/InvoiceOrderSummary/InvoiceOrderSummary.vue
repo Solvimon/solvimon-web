@@ -11,7 +11,7 @@ import type { InvoiceOrderSummaryProps } from './InvoiceOrderSummary.types';
 import OrderSummaryInvoice from '@/components/subscriptions/OrderSummaryInvoice.vue';
 import TranslationOverride from '@/components/providers/TranslationProvider/TranslationOverride.vue';
 import { sumAmounts } from '@/utils/amount';
-import { getInvoiceTimezone } from '@/utils/invoiceState';
+import { getInvoiceTimezone, isInvoicePaid } from '@/utils/invoiceState';
 
 /** The invoice being paid, laid out as the checkout's order summary lays out what is bought. */
 const props = defineProps<InvoiceOrderSummaryProps>();
@@ -38,7 +38,7 @@ const alreadyPaid = computed(() => {
     const total = props.invoice.tax_summary.total_amount;
     const due = amountDue.value;
 
-    if (props.isPaid || props.invoice.paid || !due) return undefined;
+    if (props.isPaid || isInvoicePaid(props.invoice) || !due) return undefined;
     if (Number(due.quantity) === Number(total.quantity)) return undefined;
 
     return sumAmounts(

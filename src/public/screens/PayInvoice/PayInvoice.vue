@@ -36,6 +36,7 @@ import SecurePaymentsKPI from '@/components/payments/SecurePaymentsKPI/SecurePay
 import PaymentErrorCard from '@/components/payments/PaymentErrorCard/PaymentErrorCard.vue';
 import { createPaymentFailureError } from '@/utils/paymentFailure';
 import type { SdkError } from '@/types/errors';
+import { isInvoicePaid } from '@/utils/invoiceState';
 
 const { $t } = useIntl();
 
@@ -218,7 +219,7 @@ const handlePaymentFailed = (error?: { code?: string }) => {
 
             <!-- invoice fully paid -->
             <PaymentFeedbackCard
-                v-if="invoice?.paid || (invoice && isPaid)"
+                v-if="invoice && (isPaid || isInvoicePaid(invoice))"
                 status="success"
                 :title="
                     $t({
@@ -414,12 +415,12 @@ const handlePaymentFailed = (error?: { code?: string }) => {
                 <InvoiceOrderSummary
                     v-if="invoice"
                     :invoice="invoice"
-                    :is-paid="invoice.paid || isPaid"
+                    :is-paid="isPaid || isInvoicePaid(invoice)"
                 />
             </Skeleton>
 
             <div
-                v-if="invoice && !invoice.paid && !isPaid && availability === 'READY'"
+                v-if="invoice && !isPaid && !isInvoicePaid(invoice) && availability === 'READY'"
                 class="flex flex-col gap-2"
             >
                 <PayButton

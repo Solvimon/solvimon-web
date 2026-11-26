@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import {
-    Button,
     Checkbox,
     DividerText,
     ErrorNotification,
@@ -20,6 +19,7 @@ import {
     getPreselectedPaymentMethodId,
     getStoredPaymentMethodLabel,
 } from './PayInvoice.lib';
+import PayInvoiceDownloadButton from './PayInvoiceDownloadButton.vue';
 import { ContentWithAsideLayout } from '@/layouts';
 import { useHostEvent } from '@/components/providers/HostElementProvider/composables/useHostEvent';
 import PaymentIntegrationForm from '@/components/payments/PaymentIntegrationForm/PaymentIntegrationForm.vue';
@@ -46,9 +46,13 @@ const props = withDefaults(defineProps<PayInvoiceProps>(), {
     paymentMethods: () => [],
 });
 
+/** The API refuses a payment on a draft, a credit invoice, or one with nothing left open. */
+const isPayable = computed(() => !!props.invoice && isInvoicePayable(props.invoice));
+
 const { availability } = usePaymentMethodAvailability({
     paymentMethodOptions: () => props.paymentMethodOptions,
-    isLoading: () => props.isLoading,
+    // No options are fetched for an invoice that takes no payment, so none are reported missing.
+    isLoading: () => props.isLoading || !isPayable.value,
     context: () => ({ invoiceId: props.invoice?.id }),
 });
 
@@ -59,8 +63,6 @@ const isPaymentPending = ref(false);
 const { isFormHeld, handleActionRequired } = usePaymentFormHold(isPaymentPending);
 /** Known from the payment itself, before a refetched invoice can say so. */
 const isPaid = ref(false);
-/** The API refuses a payment on a draft, a credit invoice, or one with nothing left open. */
-const isPayable = computed(() => !!props.invoice && isInvoicePayable(props.invoice));
 
 const notPayableMessage = computed(() => {
     if (!props.invoice || isPayable.value) return undefined;
@@ -338,21 +340,10 @@ const handlePaymentFailed = (error?: { code?: string }) => {
                     <Typography variant="body-xs" color="subtle" class="mt-3">
                         {{ notPayableMessage.description }}
                     </Typography>
-                    <Button
+                    <PayInvoiceDownloadButton
                         v-if="downloadService"
-                        type="button"
-                        intent="secondary"
                         @click="() => downloadService?.(invoice!)"
-                    >
-                        {{
-                            $t({
-                                defaultMessage: 'Download invoice',
-                                description:
-                                    'Button that downloads the invoice when it cannot be paid online',
-                                id: 'pay_invoice.unavailable.download_invoice',
-                            })
-                        }}
-                    </Button>
+                    />
                 </div>
             </PaymentFeedbackCard>
 
@@ -490,21 +481,10 @@ const handlePaymentFailed = (error?: { code?: string }) => {
                     variant="AUTHORIZE"
                     :seller-name="invoice.billing_entity?.legal_name"
                 >
-                    <Button
+                    <PayInvoiceDownloadButton
                         v-if="downloadService"
-                        type="button"
-                        intent="secondary"
                         @click="() => downloadService?.(invoice!)"
-                    >
-                        {{
-                            $t({
-                                defaultMessage: 'Download invoice',
-                                description:
-                                    'Button that downloads the invoice when it cannot be paid online',
-                                id: 'pay_invoice.unavailable.download_invoice',
-                            })
-                        }}
-                    </Button>
+                    />
                 </PaymentMethodsUnavailableCard>
             </template>
         </template>

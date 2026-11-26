@@ -297,21 +297,21 @@ describe('PayInvoice', () => {
     );
 
     it.each([
-        ['a draft', { status: 'DRAFT' }, 'This invoice cannot be paid yet'],
-        ['a credit invoice', { type: 'CREDIT' }, 'This is a credit note'],
+        ['a draft', { status: 'DRAFT' }, 'It can be paid once it has been issued.'],
+        ['a credit invoice', { type: 'CREDIT' }, 'A credit note has nothing to pay.'],
         [
             'an invoice with nothing left open',
             { open_invoice_amount: { currency: 'EUR', quantity: '0.00' } },
-            'Nothing left to pay',
+            'This invoice has no amount left open.',
         ],
-        ['a voided invoice', { status: 'VOID' }, 'This invoice cannot be paid'],
-    ])('says why %s cannot be paid instead of offering a payment', async (_, change, title) => {
+        ['a voided invoice', { status: 'VOID' }, 'It is no longer open for payment.'],
+    ])('says why %s cannot be paid instead of offering a payment', async (_, change, reason) => {
         const wrapper = mountComponent({
             invoice: { ...mockInvoice, ...change } as unknown as Invoice,
         });
         await flushPromises();
 
-        expect(wrapper.get('[data-testid="invoice-not-payable"]').text()).toContain(title);
+        expect(wrapper.get('[data-testid="invoice-not-payable"]').text()).toContain(reason);
         expect(wrapper.findComponent({ name: 'PaymentIntegrationForm' }).exists()).toBe(false);
         expect(wrapper.findComponent({ name: 'PayButton' }).exists()).toBe(false);
     });
@@ -458,6 +458,16 @@ describe('PayInvoice', () => {
                 }),
             );
         });
+    });
+
+    it('reports no missing payment methods for an invoice the API takes no payment on', async () => {
+        mountComponent({
+            invoice: { ...mockInvoice, type: 'CREDIT' } as unknown as Invoice,
+            paymentMethodOptions: [],
+        });
+        await flushPromises();
+
+        expect(mockLogger.error).not.toHaveBeenCalled();
     });
 
     it('shows the loading skeleton rather than the unavailable state while options are still out', async () => {

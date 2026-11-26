@@ -48,6 +48,7 @@ const invoice = {
     id: 'invo_1',
     customer: { id: 'cust_1' },
     open_invoice_amount: { currency: 'EUR', quantity: '99.00' },
+    status: 'FINAL',
 } as unknown as Invoice;
 
 const options: PaymentMethodOptionsResponse = [
@@ -57,10 +58,10 @@ const options: PaymentMethodOptionsResponse = [
 const storedPaymentMethods = [{ id: 'pmet_1', type: 'CARD', status: 'ACTIVE' }];
 
 /** The screen hands its data to the host through a slot; that is what a test reads. */
-const mountEntryView = async () => {
+const mountEntryView = async (loadedInvoice: Invoice = invoice) => {
     mockUseInvoice.mockReturnValue({
-        invoice: ref(invoice),
-        get: mockGetInvoice.mockResolvedValue(invoice),
+        invoice: ref(loadedInvoice),
+        get: mockGetInvoice.mockResolvedValue(loadedInvoice),
         downloadInvoicePdf: vi.fn(),
         error: ref(undefined),
     });
@@ -110,6 +111,13 @@ describe('PayInvoice.entry.view', () => {
             invoiceId: 'invo_1',
             amount: { currency: 'EUR', quantity: '99.00' },
         });
+    });
+
+    it('asks for no options for an invoice the API takes no payment on', async () => {
+        await mountEntryView({ ...invoice, type: 'CREDIT' } as Invoice);
+
+        expect(mockGetInvoice).toHaveBeenCalled();
+        expect(mockGetOptions).not.toHaveBeenCalled();
     });
 
     it('offers what came back to pay the invoice with', async () => {

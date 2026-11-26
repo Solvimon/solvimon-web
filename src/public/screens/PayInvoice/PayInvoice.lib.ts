@@ -62,6 +62,7 @@ export function getInvoiceNotPayableReason(
     invoice: Pick<Invoice, 'status' | 'type'>,
 ): InvoiceNotPayableReason {
     if (isCreditInvoice(invoice)) return 'CREDIT';
-    if (invoice.status === 'FINAL') return 'NOTHING_OPEN';
-    return invoice.status === 'DRAFT' || invoice.status === 'OPEN' ? 'NOT_ISSUED' : 'CLOSED';
+    if (invoice.status === 'FINAL' || invoice.status === 'EMPTY') return 'NOTHING_OPEN';
+    // FUTURE, an invoice for a period not started yet, is a status the types do not list.
+    return ['DRAFT', 'OPEN', 'FUTURE'].includes(invoice.status) ? 'NOT_ISSUED' : 'CLOSED';
 }

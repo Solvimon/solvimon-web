@@ -779,7 +779,7 @@ describe('useCheckoutSession', () => {
                         {
                             ...createSession().customers[0],
                             effective_display: {
-                                ...createSession().customers[0].effective_display,
+                                ...createSession().customers[0].effective_display!,
                                 customer_details: 'READ_ONLY',
                                 tax_ids: 'HIDDEN',
                             },
@@ -1050,7 +1050,7 @@ describe('useCheckoutSession', () => {
                 customer: { ...individualCustomer.customer!, reference },
                 parent_customer: { reference: parent.customer!.reference },
                 effective_display: {
-                    ...individualCustomer.effective_display,
+                    ...individualCustomer.effective_display!,
                     address: 'EDITABLE' as const,
                 },
             });
@@ -1083,6 +1083,15 @@ describe('useCheckoutSession', () => {
             expect(formsOf(result)).toHaveLength(1);
             expect(formsOf(result)[0].key).toBe('0');
             expect(formsOf(result)[0].title).toBeUndefined();
+        });
+
+        it('shows no form for an existing customer, which the session gives no display', async () => {
+            mockGet.mockResolvedValue(
+                portalUrl({ customers: [createSession().customers[0], { customer_id: 'cus_1' }] }),
+            );
+            const result = await loaded();
+
+            expect(formsOf(result).map(({ key }) => key)).toEqual(['0']);
         });
 
         it('gives each customer a form of its own, in session order, named after the customer', async () => {
@@ -1252,7 +1261,7 @@ describe('useCheckoutSession', () => {
                         {
                             ...organizationCustomer({ legal_name: 'Acme' }, ''),
                             effective_display: {
-                                ...createSession().customers[0].effective_display,
+                                ...createSession().customers[0].effective_display!,
                                 address: 'READ_ONLY',
                                 email: 'HIDDEN',
                             },

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- The checkout-session screen no longer fails to render when the session includes an existing customer (an entry by `customer_id`) alongside new ones.
+
 ## [0.1.0-alpha.32] - 2026-11-25
 
 ### Added

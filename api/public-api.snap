@@ -1352,7 +1352,8 @@ export interface CheckoutSessionReadableCustomer {
         reference?: string;
     };
     display?: Partial<CheckoutSessionEffectiveDisplay>;
-    effective_display: CheckoutSessionEffectiveDisplay;
+    /** Only on a `customer` entry. */
+    effective_display?: CheckoutSessionEffectiveDisplay;
 }
 export interface CheckoutSessionMeterBound {
     pricing_item_config_id: string;

@@ -135,13 +135,38 @@ build that gets published.
 
 ## Required GitHub Secrets
 
-| Secret             | Description                                                     |
-| ------------------ | --------------------------------------------------------------- |
-| `GITLAB_NPM_TOKEN` | GitLab token for installing private `@solvimon/*` dependencies  |
-| `NPM_TOKEN`        | npm access token with publish rights to the `@solvimon` npm org |
+| Secret             | Description                                                    |
+| ------------------ | -------------------------------------------------------------- |
+| `GITLAB_NPM_TOKEN` | GitLab token for installing private `@solvimon/*` dependencies |
+
+There is no npm token. The publish authenticates through trusted publishing,
+described below.
 
 Tagging and the GitHub release use the workflow's own `GITHUB_TOKEN`, granted
 `contents: write` in the workflow itself. No separate release token is needed.
+
+## Trusted Publishing
+
+npm accepts the publish through trusted publishing (OIDC). The `Create release
+tag` job has `id-token: write`, and npm exchanges the run's OIDC token for a
+credential that lasts only for that publish. Because the repository is public,
+npm also attaches a provenance attestation to every version.
+
+npm trusts only the publisher configured on npmjs.com, under
+`@solvimon/solvimon-web` → Settings → Trusted Publisher:
+
+| Field                | Value                    |
+| -------------------- | ------------------------ |
+| Organization or user | `Solvimon`               |
+| Repository           | `solvimon-web`           |
+| Workflow filename    | `create-release-tag.yml` |
+| Environment name     | `npm`                    |
+| Allowed actions      | `npm publish`            |
+
+Every field must match exactly. Renaming the workflow file or the `npm`
+environment stops publishing until the trusted publisher is updated to match.
+Trusted publishing needs npm 11.5.1 or later, which the Node version in `.nvmrc`
+ships.
 
 ## Node Version
 
@@ -169,7 +194,9 @@ If the SDK does not publish after merging a version bump:
    workflow only runs for pushes that touch `package.json`.
 2. Check whether `CHANGELOG.md` has a section naming that exact version.
 3. Check whether `v<version>` already exists as a tag.
-4. Check whether `NPM_TOKEN` has publish access to `@solvimon/solvimon-web`.
+4. Check whether the trusted publisher on npmjs.com still matches the
+   repository, `create-release-tag.yml` and the `npm` environment. A mismatch
+   fails the publish with a 404 or an authorization error.
 5. Check whether that version is already on npm. Versions are immutable and
    cannot be republished.
 6. Read the `Create Release Tag` run; a failed `prepublishOnly` gate shows there.

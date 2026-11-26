@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Releases are published from GitHub Actions through npm trusted publishing (OIDC) instead of a stored npm token, and each version carries a provenance attestation linking it to the commit and workflow run that built it.
+
 ## [0.1.0-alpha.33] - 2026-11-26
 
 ### Added

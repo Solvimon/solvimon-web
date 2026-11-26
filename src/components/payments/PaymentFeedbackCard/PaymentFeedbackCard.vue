@@ -5,16 +5,19 @@ import type { PaymentFeedbackCardProps } from './PaymentFeedbackCard.types';
 withDefaults(defineProps<PaymentFeedbackCardProps>(), {
     status: 'success',
 });
+
+const ICONS = { success: 'check_circle', error: 'error', info: 'info' } as const;
 </script>
 
 <template>
     <Section>
         <div class="flex flex-col items-center py-10">
             <Icon
-                :icon="status === 'success' ? 'check_circle' : 'error'"
+                :icon="ICONS[status]"
                 :class="{
                     'text-green-400': status === 'success',
                     'text-red-600': status === 'error',
+                    'text-gray-500': status === 'info',
                 }"
                 size="lg"
             />

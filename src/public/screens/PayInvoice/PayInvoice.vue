@@ -16,6 +16,7 @@ import type { PaymentMethod } from '@solvimon/solvimon-types';
 import type { PayInvoiceProps } from './PayInvoice.types';
 import {
     getChargeableStoredPaymentMethods,
+    getInvoiceNotPayableReason,
     getPreselectedPaymentMethodId,
     getStoredPaymentMethodLabel,
 } from './PayInvoice.lib';
@@ -60,6 +61,71 @@ const { isFormHeld, handleActionRequired } = usePaymentFormHold(isPaymentPending
 const isPaid = ref(false);
 /** The API refuses a payment on a draft, a credit invoice, or one with nothing left open. */
 const isPayable = computed(() => !!props.invoice && isInvoicePayable(props.invoice));
+
+const notPayableMessage = computed(() => {
+    if (!props.invoice || isPayable.value) return undefined;
+
+    switch (getInvoiceNotPayableReason(props.invoice)) {
+        case 'CREDIT':
+            return {
+                title: $t({
+                    id: 'pay_invoice.not_payable.credit.title',
+                    defaultMessage: 'This is a credit note',
+                    description: 'Title shown on the pay invoice screen for a credit note',
+                }),
+                description: $t({
+                    id: 'pay_invoice.not_payable.credit.description',
+                    defaultMessage: 'A credit note has nothing to pay.',
+                    description: 'Body text shown on the pay invoice screen for a credit note',
+                }),
+            };
+        case 'NOT_ISSUED':
+            return {
+                title: $t({
+                    id: 'pay_invoice.not_payable.not_issued.title',
+                    defaultMessage: 'This invoice cannot be paid yet',
+                    description:
+                        'Title shown on the pay invoice screen for an invoice that has not been issued yet',
+                }),
+                description: $t({
+                    id: 'pay_invoice.not_payable.not_issued.description',
+                    defaultMessage: 'It can be paid once it has been issued.',
+                    description:
+                        'Body text shown on the pay invoice screen for an invoice that has not been issued yet',
+                }),
+            };
+        case 'NOTHING_OPEN':
+            return {
+                title: $t({
+                    id: 'pay_invoice.not_payable.nothing_open.title',
+                    defaultMessage: 'Nothing left to pay',
+                    description:
+                        'Title shown on the pay invoice screen for an issued invoice with no amount left open',
+                }),
+                description: $t({
+                    id: 'pay_invoice.not_payable.nothing_open.description',
+                    defaultMessage: 'This invoice has no amount left open.',
+                    description:
+                        'Body text shown on the pay invoice screen for an issued invoice with no amount left open',
+                }),
+            };
+        default:
+            return {
+                title: $t({
+                    id: 'pay_invoice.not_payable.closed.title',
+                    defaultMessage: 'This invoice cannot be paid',
+                    description:
+                        'Title shown on the pay invoice screen for a voided or archived invoice',
+                }),
+                description: $t({
+                    id: 'pay_invoice.not_payable.closed.description',
+                    defaultMessage: 'It is no longer open for payment.',
+                    description:
+                        'Body text shown on the pay invoice screen for a voided or archived invoice',
+                }),
+            };
+    }
+});
 /** The payment may still go through, so paying again could charge the customer twice. */
 const isPaymentUnconfirmed = ref(false);
 
@@ -260,6 +326,36 @@ const handlePaymentFailed = (error?: { code?: string }) => {
                 </Typography>
             </PaymentFeedbackCard>
 
+            <!-- invoice the API takes no payment on -->
+            <PaymentFeedbackCard
+                v-else-if="!isLoading && notPayableMessage"
+                status="info"
+                :title="notPayableMessage.title"
+                class="sv-pay-invoice__not-payable"
+                data-testid="invoice-not-payable"
+            >
+                <div class="flex flex-col items-center gap-4">
+                    <Typography variant="body-xs" color="subtle" class="mt-3">
+                        {{ notPayableMessage.description }}
+                    </Typography>
+                    <Button
+                        v-if="downloadService"
+                        type="button"
+                        intent="secondary"
+                        @click="() => downloadService?.(invoice!)"
+                    >
+                        {{
+                            $t({
+                                defaultMessage: 'Download invoice',
+                                description:
+                                    'Button that downloads the invoice when it cannot be paid online',
+                                id: 'pay_invoice.unavailable.download_invoice',
+                            })
+                        }}
+                    </Button>
+                </div>
+            </PaymentFeedbackCard>
+
             <!-- payment method form -->
             <template v-else-if="!isLoading && countryCode && amount && invoice">
                 <PaymentErrorCard
@@ -268,10 +364,7 @@ const handlePaymentFailed = (error?: { code?: string }) => {
                     :error="storedPaymentUnconfirmed"
                 />
 
-                <div
-                    v-else-if="availability === 'READY' && isPayable"
-                    class="grid grid-cols-1 gap-6"
-                >
+                <div v-else-if="availability === 'READY'" class="grid grid-cols-1 gap-6">
                     <template v-if="storedPaymentMethods.length">
                         <Section
                             class="sv-pay-invoice__stored-payment-methods"

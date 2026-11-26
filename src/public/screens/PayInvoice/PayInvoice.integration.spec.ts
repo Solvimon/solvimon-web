@@ -297,19 +297,21 @@ describe('PayInvoice', () => {
     );
 
     it.each([
-        ['a draft', { status: 'DRAFT' }],
-        ['a credit invoice', { type: 'CREDIT' }],
+        ['a draft', { status: 'DRAFT' }, 'This invoice cannot be paid yet'],
+        ['a credit invoice', { type: 'CREDIT' }, 'This is a credit note'],
         [
             'an invoice with nothing left open',
             { open_invoice_amount: { currency: 'EUR', quantity: '0.00' } },
+            'Nothing left to pay',
         ],
-    ])('says %s cannot be paid online instead of offering a payment', async (_, change) => {
+        ['a voided invoice', { status: 'VOID' }, 'This invoice cannot be paid'],
+    ])('says why %s cannot be paid instead of offering a payment', async (_, change, title) => {
         const wrapper = mountComponent({
             invoice: { ...mockInvoice, ...change } as unknown as Invoice,
         });
         await flushPromises();
 
-        expect(wrapper.find('[data-testid="payment-methods-unavailable"]').exists()).toBe(true);
+        expect(wrapper.get('[data-testid="invoice-not-payable"]').text()).toContain(title);
         expect(wrapper.findComponent({ name: 'PaymentIntegrationForm' }).exists()).toBe(false);
         expect(wrapper.findComponent({ name: 'PayButton' }).exists()).toBe(false);
     });

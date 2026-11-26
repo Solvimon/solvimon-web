@@ -1,6 +1,7 @@
-import type { PaymentMethod } from '@solvimon/solvimon-types';
+import type { Invoice, PaymentMethod } from '@solvimon/solvimon-types';
 import {
     getChargeableStoredPaymentMethods,
+    getInvoiceNotPayableReason,
     getPreselectedPaymentMethodId,
     getStoredPaymentMethodLabel,
 } from './PayInvoice.lib';
@@ -71,5 +72,21 @@ describe('getStoredPaymentMethodLabel', () => {
                 direct_debit: { variant: 'SEPA', owner_name: 'J. Jansen' },
             } as unknown as PaymentMethod),
         ).toBe('Sepa J. Jansen');
+    });
+});
+
+describe('getInvoiceNotPayableReason', () => {
+    it.each([
+        [{ status: 'FINAL', type: 'CREDIT' }, 'CREDIT'],
+        [{ status: 'FINAL', type: 'ONE_OFF_CREDIT' }, 'CREDIT'],
+        [{ status: 'DRAFT', type: 'STANDARD' }, 'NOT_ISSUED'],
+        [{ status: 'OPEN', type: 'STANDARD' }, 'NOT_ISSUED'],
+        [{ status: 'FINAL', type: 'STANDARD' }, 'NOTHING_OPEN'],
+        [{ status: 'VOID', type: 'STANDARD' }, 'CLOSED'],
+        [{ status: 'ARCHIVED', type: 'STANDARD' }, 'CLOSED'],
+    ])('gives %o the reason %s', (invoice, reason) => {
+        expect(getInvoiceNotPayableReason(invoice as Pick<Invoice, 'status' | 'type'>)).toBe(
+            reason,
+        );
     });
 });

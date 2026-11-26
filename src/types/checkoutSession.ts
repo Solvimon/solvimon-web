@@ -69,7 +69,6 @@ export interface CheckoutSessionReadableCustomer {
     /** Another customer of the session by `reference`, or an existing one by `id`. */
     parent_customer?: { id?: string; reference?: string };
     display?: Partial<CheckoutSessionEffectiveDisplay>;
-    /** Only on a `customer` entry. */
     effective_display?: CheckoutSessionEffectiveDisplay | null;
 }
 

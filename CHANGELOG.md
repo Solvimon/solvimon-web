@@ -7,9 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- `CheckoutSessionReadableCustomer.effective_display` may now be absent or `null`, as the API sends it on an existing customer's entry. A host that reads it must handle both.
+
 ### Fixed
 
-- The checkout-session screen no longer fails to render when the session includes an existing customer (an entry by `customer_id`) alongside new ones.
+- The checkout-session screen no longer fails to render when the session includes an existing customer (an entry by `customer_id`).
 
 ## [0.1.0-alpha.32] - 2026-11-25
 

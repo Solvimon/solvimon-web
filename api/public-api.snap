@@ -1352,7 +1352,6 @@ export interface CheckoutSessionReadableCustomer {
         reference?: string;
     };
     display?: Partial<CheckoutSessionEffectiveDisplay>;
-    /** Only on a `customer` entry. */
     effective_display?: CheckoutSessionEffectiveDisplay | null;
 }
 export interface CheckoutSessionMeterBound {

@@ -13,21 +13,6 @@ import {
     subscriptionManagement,
 } from '../support/subscriptionManagement';
 
-/**
- * Violations that sit in `@solvimon/solvimon-ui`, which this repository cannot fix: each is matched
- * by its rule and the element it is on, so the same rule still fails anywhere else. Remove an entry
- * once the library version that fixes it is installed.
- */
-const KNOWN_IN_UI_LIBRARY = [
-    // `ContextMenu` gives its icon-only trigger no accessible name, and takes no label to give it.
-    { rule: 'button-name', element: 'data-testid="context-menu"' },
-    // `CountrySelect` puts `aria-autocomplete` on a div without a role that allows it.
-    { rule: 'aria-allowed-attr', element: 'data-testid="input-country"' },
-];
-
-const isKnown = (rule: string, html: string) =>
-    KNOWN_IN_UI_LIBRARY.some((known) => known.rule === rule && html.includes(known.element));
-
 /** Every WCAG 2.1 A and AA rule axe checks, inside the elements' shadow roots too. */
 async function violations(page: Page) {
     const { violations: found } = await new AxeBuilder({ page })
@@ -37,9 +22,7 @@ async function violations(page: Page) {
         .analyze();
 
     return found.flatMap(({ id, impact, nodes }) =>
-        nodes
-            .filter(({ html }) => !isKnown(id, html))
-            .map(({ html }) => `${impact} ${id}: ${html.slice(0, 160)}`),
+        nodes.map(({ html }) => `${impact} ${id}: ${html.slice(0, 160)}`),
     );
 }
 

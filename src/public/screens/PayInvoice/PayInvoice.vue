@@ -36,7 +36,7 @@ import SecurePaymentsKPI from '@/components/payments/SecurePaymentsKPI/SecurePay
 import PaymentErrorCard from '@/components/payments/PaymentErrorCard/PaymentErrorCard.vue';
 import { createPaymentFailureError } from '@/utils/paymentFailure';
 import type { SdkError } from '@/types/errors';
-import { isInvoicePaid } from '@/utils/invoiceState';
+import { isInvoicePaid, isInvoicePayable } from '@/utils/invoiceState';
 
 const { $t } = useIntl();
 
@@ -58,6 +58,8 @@ const isPaymentPending = ref(false);
 const { isFormHeld, handleActionRequired } = usePaymentFormHold(isPaymentPending);
 /** Known from the payment itself, before a refetched invoice can say so. */
 const isPaid = ref(false);
+/** The API refuses a payment on a draft, a credit invoice, or one with nothing left open. */
+const isPayable = computed(() => !!props.invoice && isInvoicePayable(props.invoice));
 /** The payment may still go through, so paying again could charge the customer twice. */
 const isPaymentUnconfirmed = ref(false);
 
@@ -266,7 +268,10 @@ const handlePaymentFailed = (error?: { code?: string }) => {
                     :error="storedPaymentUnconfirmed"
                 />
 
-                <div v-else-if="availability === 'READY'" class="grid grid-cols-1 gap-6">
+                <div
+                    v-else-if="availability === 'READY' && isPayable"
+                    class="grid grid-cols-1 gap-6"
+                >
                     <template v-if="storedPaymentMethods.length">
                         <Section
                             class="sv-pay-invoice__stored-payment-methods"
@@ -420,7 +425,7 @@ const handlePaymentFailed = (error?: { code?: string }) => {
             </Skeleton>
 
             <div
-                v-if="invoice && !isPaid && !isInvoicePaid(invoice) && availability === 'READY'"
+                v-if="isPayable && !isPaid && availability === 'READY'"
                 class="flex flex-col gap-2"
             >
                 <PayButton

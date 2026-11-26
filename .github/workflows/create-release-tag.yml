@@ -93,6 +93,10 @@ jobs:
         # Waits for a reviewer's approval before anything below runs.
         environment: npm
         runs-on: ubuntu-latest
+        # npm trusted publishing exchanges the run's OIDC token for a short-lived publish credential.
+        permissions:
+            contents: write
+            id-token: write
         steps:
             - uses: actions/checkout@v6
 
@@ -125,8 +129,6 @@ jobs:
                   else
                       echo "exists=false" >> "$GITHUB_OUTPUT"
                   fi
-              env:
-                  NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
             # npm 11 refuses a prerelease without a tag, and `latest` is what a plain install gets, so
             # only a stable version goes there.
@@ -141,8 +143,6 @@ jobs:
                   npm publish --tag "$dist_tag"
               env:
                   VERSION: ${{ needs.version.outputs.current }}
-                  NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-                  NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
             # Tagged only once the publish has gone through: a tag pointing at a version
             # that never reached the registry is what the release has to be dug out of by

@@ -200,4 +200,4 @@ See the [publishing guide](docs/development/publish.md) for the full release flo
 3. Open a PR to `main` and merge after approval.
 4. GitHub Actions creates the release tag and publishes to npm automatically.
 
-**Publishing protection** — npm publishing uses a scoped `NPM_TOKEN` stored as a GitHub secret. Prefer migrating to npm Trusted Publishing (OIDC) when available to eliminate the need for long-lived tokens. npm 2FA is required on all accounts with publish access to `@solvimon`.
+**Publishing protection** — npm publishing uses npm trusted publishing (OIDC): the release workflow gets a short-lived credential per run, so no npm token is stored anywhere. npm 2FA is required on all accounts with publish access to `@solvimon`.

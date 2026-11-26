@@ -1,4 +1,4 @@
 export interface PaymentFeedbackCardProps {
-    status: 'success' | 'error';
+    status: 'success' | 'error' | 'info';
     title: string;
 }

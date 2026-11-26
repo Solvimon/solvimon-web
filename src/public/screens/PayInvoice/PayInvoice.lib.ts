@@ -1,4 +1,5 @@
 import type {
+    Invoice,
     PaymentAcceptor,
     PaymentMethod,
     PaymentMethodOptionsResponse,
@@ -6,6 +7,7 @@ import type {
 import { formatEnum } from '@solvimon/solvimon-ui';
 import { getPaymentMethodName } from '@/components/payments/PaymentMethodSelector/usePaymentMethodSelectorOptions';
 import { isPayablePaymentMethod } from '@/utils/paymentMethods';
+import { isCreditInvoice } from '@/utils/invoiceState';
 
 export interface ChargeableStoredPaymentMethod {
     paymentMethod: PaymentMethod;
@@ -51,4 +53,15 @@ export function getStoredPaymentMethodLabel(paymentMethod: PaymentMethod): strin
     }
 
     return getPaymentMethodName(paymentMethod);
+}
+
+export type InvoiceNotPayableReason = 'CREDIT' | 'NOT_ISSUED' | 'NOTHING_OPEN' | 'CLOSED';
+
+/** Why the API would refuse a payment on an invoice that is neither paid nor payable. */
+export function getInvoiceNotPayableReason(
+    invoice: Pick<Invoice, 'status' | 'type'>,
+): InvoiceNotPayableReason {
+    if (isCreditInvoice(invoice)) return 'CREDIT';
+    if (invoice.status === 'FINAL') return 'NOTHING_OPEN';
+    return invoice.status === 'DRAFT' || invoice.status === 'OPEN' ? 'NOT_ISSUED' : 'CLOSED';
 }

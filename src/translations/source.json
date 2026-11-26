@@ -1151,6 +1151,38 @@
     "defaultMessage": "Pay with a new payment method",
     "description": "Section title for the payment form below the stored payment methods, on the pay invoice screen"
   },
+  "pay_invoice.not_payable.closed.description": {
+    "defaultMessage": "It is no longer open for payment.",
+    "description": "Body text shown on the pay invoice screen for a voided or archived invoice"
+  },
+  "pay_invoice.not_payable.closed.title": {
+    "defaultMessage": "This invoice cannot be paid",
+    "description": "Title shown on the pay invoice screen for a voided or archived invoice"
+  },
+  "pay_invoice.not_payable.credit.description": {
+    "defaultMessage": "A credit note has nothing to pay.",
+    "description": "Body text shown on the pay invoice screen for a credit note"
+  },
+  "pay_invoice.not_payable.credit.title": {
+    "defaultMessage": "This is a credit note",
+    "description": "Title shown on the pay invoice screen for a credit note"
+  },
+  "pay_invoice.not_payable.not_issued.description": {
+    "defaultMessage": "It can be paid once it has been issued.",
+    "description": "Body text shown on the pay invoice screen for an invoice that has not been issued yet"
+  },
+  "pay_invoice.not_payable.not_issued.title": {
+    "defaultMessage": "This invoice cannot be paid yet",
+    "description": "Title shown on the pay invoice screen for an invoice that has not been issued yet"
+  },
+  "pay_invoice.not_payable.nothing_open.description": {
+    "defaultMessage": "This invoice has no amount left open.",
+    "description": "Body text shown on the pay invoice screen for an issued invoice with no amount left open"
+  },
+  "pay_invoice.not_payable.nothing_open.title": {
+    "defaultMessage": "Nothing left to pay",
+    "description": "Title shown on the pay invoice screen for an issued invoice with no amount left open"
+  },
   "pay_invoice.order_summary.already_paid": {
     "defaultMessage": "Already paid",
     "description": "What has been paid on the invoice so far, in its order summary"

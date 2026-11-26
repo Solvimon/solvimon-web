@@ -70,7 +70,7 @@ export interface CheckoutSessionReadableCustomer {
     parent_customer?: { id?: string; reference?: string };
     display?: Partial<CheckoutSessionEffectiveDisplay>;
     /** Only on a `customer` entry. */
-    effective_display?: CheckoutSessionEffectiveDisplay;
+    effective_display?: CheckoutSessionEffectiveDisplay | null;
 }
 
 export interface CheckoutSessionMeterBound {

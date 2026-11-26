@@ -1353,7 +1353,7 @@ export interface CheckoutSessionReadableCustomer {
     };
     display?: Partial<CheckoutSessionEffectiveDisplay>;
     /** Only on a `customer` entry. */
-    effective_display?: CheckoutSessionEffectiveDisplay;
+    effective_display?: CheckoutSessionEffectiveDisplay | null;
 }
 export interface CheckoutSessionMeterBound {
     pricing_item_config_id: string;

@@ -1094,6 +1094,20 @@ describe('useCheckoutSession', () => {
             expect(formsOf(result).map(({ key }) => key)).toEqual(['0']);
         });
 
+        it('shows no form for an existing customer whose display the API sends as null', async () => {
+            mockGet.mockResolvedValue(
+                portalUrl({
+                    customers: [
+                        createSession().customers[0],
+                        { customer_id: 'cus_1', effective_display: null },
+                    ],
+                }),
+            );
+            const result = await loaded();
+
+            expect(formsOf(result).map(({ key }) => key)).toEqual(['0']);
+        });
+
         it('gives each customer a form of its own, in session order, named after the customer', async () => {
             mockGet.mockResolvedValue(
                 portalUrl({ customers: [createSession().customers[0], individualCustomer] }),

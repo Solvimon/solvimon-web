@@ -1296,8 +1296,8 @@ export function useCheckoutSession({ portalUrlId }: { portalUrlId: string }) {
         customerForms: computed(() => {
             const customers = session.value?.customers ?? [];
             const shown = customers.filter(
-                ({ effective_display: display = NOTHING_SHOWN }) =>
-                    !Object.values(display).every((group) => group === 'HIDDEN'),
+                ({ effective_display: display }) =>
+                    !Object.values(display ?? NOTHING_SHOWN).every((group) => group === 'HIDDEN'),
             );
             return customers.flatMap((customer, index): CheckoutCustomerForm[] => {
                 const form = forms.value[index];
@@ -1307,7 +1307,7 @@ export function useCheckoutSession({ portalUrlId }: { portalUrlId: string }) {
                     {
                         key: `${index}`,
                         form,
-                        display: customer.effective_display,
+                        display: customer.effective_display ?? undefined,
                         isTypeLocked: true,
                         ...(shown.length > 1 && { title: titleOf(customer.customer) }),
                     },

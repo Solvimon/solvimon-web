@@ -7,6 +7,7 @@ import { useInvoice } from '@/composables/useInvoice';
 import { usePayments } from '@/composables/usePayments';
 import { usePaymentMethodOptions } from '@/composables/usePaymentMethodOptions';
 import { DEFAULT_PAYMENT_METHOD_FIRST, usePaymentMethods } from '@/composables/usePaymentMethods';
+import { isInvoicePayable } from '@/utils/invoiceState';
 
 const props = defineProps<SolvimonPayInvoiceEntryProps>();
 
@@ -25,6 +26,8 @@ const { items: paymentMethods, fetchAll: getPaymentMethods } = usePaymentMethods
 
 const getInvoiceAndPaymentMethodOptions = async () => {
     const invoice = await getInvoice();
+    // The screen offers no payment on an invoice the API takes none for.
+    if (!isInvoicePayable(invoice)) return;
 
     await getPaymentMethodOptions({
         customerId: invoice.customer.id,

@@ -81,7 +81,9 @@ describe('getInvoiceNotPayableReason', () => {
         [{ status: 'FINAL', type: 'ONE_OFF_CREDIT' }, 'CREDIT'],
         [{ status: 'DRAFT', type: 'STANDARD' }, 'NOT_ISSUED'],
         [{ status: 'OPEN', type: 'STANDARD' }, 'NOT_ISSUED'],
+        [{ status: 'FUTURE', type: 'STANDARD' }, 'NOT_ISSUED'],
         [{ status: 'FINAL', type: 'STANDARD' }, 'NOTHING_OPEN'],
+        [{ status: 'EMPTY', type: 'STANDARD' }, 'NOTHING_OPEN'],
         [{ status: 'VOID', type: 'STANDARD' }, 'CLOSED'],
         [{ status: 'ARCHIVED', type: 'STANDARD' }, 'CLOSED'],
     ])('gives %o the reason %s', (invoice, reason) => {

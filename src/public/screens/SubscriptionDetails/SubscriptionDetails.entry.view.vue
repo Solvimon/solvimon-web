@@ -67,7 +67,11 @@ const schedulesData = computed(() =>
 );
 
 const walletBalanceItems = computed(() =>
-    withTopUpWalletsFromPlan(walletBalances.value?.wallet_balances ?? [], onDemandResponse.value),
+    withTopUpWalletsFromPlan(
+        walletBalances.value?.wallet_balances ?? [],
+        onDemandResponse.value,
+        subscription.value?.billing_currency,
+    ),
 );
 
 const hasWalletBalancesError = computed(() => walletBalancesApiStatus.value === ApiStatus.Failed);

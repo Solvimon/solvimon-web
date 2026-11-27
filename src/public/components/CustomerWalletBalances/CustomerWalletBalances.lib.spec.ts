@@ -152,7 +152,7 @@ describe('withTopUpWalletsFromPlan', () => {
         ],
     });
 
-    const plan = (...items: ReturnType<typeof planItem>[]) =>
+    const plan = (...items: object[]) =>
         ({
             pricing_plan_schedule_id: 'ppsc_1',
             pricing_categories: [{ pricings: [{ items }] }],
@@ -179,6 +179,37 @@ describe('withTopUpWalletsFromPlan', () => {
         expect(row.wallet_balance.balance).toEqual({
             credits: { quantity: '0', credit_type_id: 'ctyp_1' },
         });
+    });
+
+    it("starts a money wallet in the subscription's billing currency", () => {
+        const [row] = withTopUpWalletsFromPlan([], plan(planItem('prii_flex')), 'USD');
+
+        expect(row.wallet_balance.open_balance).toEqual({
+            amount: { quantity: '0', currency: 'USD' },
+        });
+    });
+
+    it('finds a top-up priced per currency in the billing currency only', () => {
+        const pricedPerCurrency = (currency: string) => {
+            const { configs, ...item } = planItem('prii_flex');
+            return {
+                ...item,
+                pricing_currency_configs: [{ currency, configs }],
+            };
+        };
+
+        expect(withTopUpWalletsFromPlan([], plan(pricedPerCurrency('EUR')), 'EUR')).toHaveLength(1);
+        expect(withTopUpWalletsFromPlan([], plan(pricedPerCurrency('USD')), 'EUR')).toEqual([]);
+    });
+
+    it('finds a top-up priced per billing period', () => {
+        const { configs, ...item } = planItem('prii_flex');
+        const pricedPerPeriod = {
+            ...item,
+            billing_period_configs: [{ billing_period: { type: 'MONTH', quantity: 1 }, configs }],
+        };
+
+        expect(withTopUpWalletsFromPlan([], plan(pricedPerPeriod))).toHaveLength(1);
     });
 
     it('offers nothing new for a fixed-price item', () => {

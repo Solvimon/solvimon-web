@@ -1,4 +1,9 @@
+/* The design tokens (colour roles, type, shape, spacing) every ui class reads. */
+@import '@solvimon/design-tokens/tokens.css';
+
 /* Make sure to load the inter font faces in your project */
+
+/* The SDK's own brand defaults, for a host that passes no branding: they override the tokens' Solvimon palette. */
 
 :root {
     --color-primary-50: #eff6ff;

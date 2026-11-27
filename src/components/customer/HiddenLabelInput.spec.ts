@@ -34,7 +34,7 @@ describe('HiddenLabelInput', () => {
         });
 
         expect(wrapper.text()).toContain('The value is required');
-        expect(wrapper.html()).toContain('border-red-500');
+        expect(wrapper.html()).toContain('border-invalid');
     });
 
     it('shows nothing below the input without an error', () => {

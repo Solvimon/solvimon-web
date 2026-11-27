@@ -28,7 +28,7 @@ const echo =
     });
 
 async function selectCountry(page: Page, country: string) {
-    const input = billingInformationForm(page).root.getByRole('textbox', {
+    const input = billingInformationForm(page).root.getByRole('combobox', {
         name: 'Billing country',
     });
     await input.click();

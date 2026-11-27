@@ -106,8 +106,8 @@ describe('CheckoutForm', () => {
         await flushPromises();
 
         expect(fieldRoot(wrapper, 'address_line_1').text()).toContain('The value is required');
-        expect(fieldRoot(wrapper, 'address_line_1').html()).toContain('border-red-500');
-        expect(fieldRoot(wrapper, 'postal_code').html()).not.toContain('border-red-500');
+        expect(fieldRoot(wrapper, 'address_line_1').html()).toContain('border-invalid');
+        expect(fieldRoot(wrapper, 'postal_code').html()).not.toContain('border-invalid');
     });
 
     it('names every address field for assistive technology', () => {
@@ -137,7 +137,7 @@ describe('CheckoutForm', () => {
 
         const postalCode = fieldRoot(wrapper, 'postal_code');
         expect(postalCode.find('label').exists()).toBe(false);
-        expect(postalCode.html()).toContain('border-red-500');
+        expect(postalCode.html()).toContain('border-invalid');
         expect(
             postalCode.find('input').element.compareDocumentPosition(postalCode.find('p').element),
         ).toBe(Node.DOCUMENT_POSITION_FOLLOWING);

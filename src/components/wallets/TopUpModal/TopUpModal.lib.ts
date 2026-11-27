@@ -49,7 +49,7 @@ const getConfigsOfBillingPeriods = (
  * Every config of the item, wherever the plan keeps it. A price per currency only counts in the
  * wallet's currency; a credits wallet names none, so it keeps them all.
  */
-const getItemConfigs = (
+export const getItemConfigs = (
     item: ChargeOnDemandPricingItem['pricing_item'],
     currency?: string,
 ): PricingItemConfigExtended[] => [

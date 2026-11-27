@@ -7,6 +7,7 @@ import type {
 } from '@solvimon/solvimon-types';
 import { getAllPricings, isFlexiblePricing } from '@solvimon/solvimon-ui';
 import { toRaw } from 'vue';
+import { getItemConfigs } from '@/components/wallets/TopUpModal/TopUpModal.lib';
 
 /**
  * The wallet a top-up belongs to. The rows emit the top-up that was picked but not the wallet it
@@ -72,13 +73,12 @@ export const getWalletBalancesForSubscriptions = (
  * The balances plus a zero-balance row for each wallet type the plan's choose-your-amount top-ups
  * grant to but the customer has no wallet of yet, so the first top-up can be bought. Such a row
  * has an empty `wallet_id`: there is no wallet to hang an auto top-up rule on until it is bought.
- *
- * shortcut: two such rows share the empty `wallet_id` the ui keys rows on; give them a key of
- * their own if a plan ever grants top-ups to several wallet types the customer lacks.
+ * A money row is in the subscription's billing currency, as the top-up is charged in it.
  */
 export const withTopUpWalletsFromPlan = (
     walletBalances: CustomerWalletBalanceItem[],
     onDemandPricingItems: OnDemandPricingItemsResponse | undefined,
+    billingCurrency?: string,
 ): CustomerWalletBalanceItem[] => {
     const offeredItemIds = new Set(
         walletBalances.flatMap(({ charge_on_demand_pricing_items }) =>
@@ -89,12 +89,13 @@ export const withTopUpWalletsFromPlan = (
     const newWallets = new Map<string, CustomerWalletBalanceItem>();
 
     for (const item of getAllPricings(onDemandPricingItems).flatMap(({ items }) => items ?? [])) {
-        const config = item.configs?.find(
+        const config = getItemConfigs(item, billingCurrency).find(
             (candidate) => candidate.on_demand && isFlexiblePricing(candidate),
         );
         const grant = config?.wallet_grants?.[0];
         const band = config?.details.bands?.[0];
-        const currency = band?.minimum_amount?.currency ?? band?.maximum_amount?.currency;
+        const currency =
+            billingCurrency ?? band?.minimum_amount?.currency ?? band?.maximum_amount?.currency;
         const creditTypeId =
             grant?.credits_grant?.conversion?.credit_type_id ??
             grant?.credits_grant?.credits?.credit_type_id;
